@@ -54,6 +54,13 @@ import adapter as llm_adapter  # noqa: E402
 import asset_candidate_prompt  # noqa: E402
 import world_delta_prompt  # noqa: E402
 
+MEDIA_DIR = ROOT / "tools" / "media"
+if str(MEDIA_DIR) not in sys.path:
+    sys.path.insert(0, str(MEDIA_DIR))
+
+import image_provider as img_provider  # noqa: E402
+import asset_media_prompt  # noqa: E402
+
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
 
@@ -1362,6 +1369,130 @@ def node_world_state_build_delta_with_llm_guarded(
     return {"output_refs": {"default": ref}}
 
 
+# ---------------------------------------------------------------------------
+# Guarded Live Image Media Generation node (live only, calls provider)
+# ---------------------------------------------------------------------------
+
+
+def node_media_generate_asset_images_guarded(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Call an image provider to generate icon/tower_sprite images for a
+    CompiledAssetCandidate, guarded by the allow_live_provider_call flag.
+
+    This node only works in live mode with allow_live_provider_call=true.
+    It generates images for each configured role, downloads them to the run
+    output directory, and writes a raw_media_sequence.v0.1 metadata artifact.
+    The output artifact kind is media_metadata with media_layer=raw_media.
+    """
+    candidate = _load_artifact(inputs, "candidate")
+    registry = json.loads(DEFAULT_REGISTRY_PATH.read_text(encoding="utf-8"))
+    errs = validate_asset_candidate.validate(candidate, registry)
+    if errs:
+        raise NodeError(
+            "media.generate_asset_images_guarded received invalid candidate: "
+            + "; ".join(errs)
+        )
+
+    allow_live = params.get("allow_live_provider_call", False)
+    if not allow_live:
+        raise NodeError(
+            "media.generate_asset_images_guarded requires "
+            "params.allow_live_provider_call=true to call a real image provider. "
+            "Set it to true only when you explicitly intend to make a live API call."
+        )
+
+    image_profile = str(params.get("image_profile", "agnes_image_flash"))
+    size = str(params.get("size", "1024x1024"))
+    roles = params.get("roles", ["icon", "tower_sprite"])
+    request_timeout = int(params.get("request_timeout", 180))
+
+    if not isinstance(roles, list) or not roles:
+        raise NodeError("params.roles must be a non-empty list of role strings")
+    allowed_roles = {"icon", "tower_sprite"}
+    unknown_roles = [role for role in roles if role not in allowed_roles]
+    if unknown_roles:
+        raise NodeError(f"unknown media role(s): {unknown_roles}")
+
+    profile = img_provider.PROFILES.get(image_profile)
+    if profile is None:
+        raise NodeError(
+            f"unknown image_profile={image_profile!r}; "
+            f"known: {sorted(img_provider.PROFILES)}"
+        )
+
+    try:
+        width, height = img_provider.parse_size(size)
+    except ValueError as exc:
+        raise NodeError(str(exc)) from exc
+
+    img_provider.load_dotenv(ROOT / ".env")
+
+    items: list[dict[str, Any]] = []
+    for role in roles:
+        if role == "icon":
+            prompt = asset_media_prompt.build_icon_prompt(candidate)
+        elif role == "tower_sprite":
+            prompt = asset_media_prompt.build_tower_sprite_prompt(candidate)
+        else:  # pragma: no cover - guarded above
+            raise NodeError(f"unknown media role: {role!r}")
+
+        prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
+
+        try:
+            response = img_provider.generate_image(profile, prompt, size=size, timeout=request_timeout)
+        except Exception as exc:
+            raise NodeError(f"image generation failed for role={role!r}: {exc}") from exc
+
+        try:
+            image_url = img_provider.extract_image_url(response)
+        except RuntimeError as exc:
+            raise NodeError(
+                f"failed to extract image URL for role={role!r}: {exc}"
+            ) from exc
+
+        stable_id = asset_media_prompt.stable_media_id(candidate, role)
+        local_filename = f"{stable_id}.png"
+        local_path = run_dir / local_filename
+        try:
+            img_provider.download_image(image_url, local_path, timeout=request_timeout)
+        except Exception as exc:
+            raise NodeError(
+                f"failed to download image for role={role!r}: {exc}"
+            ) from exc
+
+        item = asset_media_prompt.build_raw_media_item(
+            candidate,
+            role,
+            provider_profile=image_profile,
+            model=profile.model,
+            width=width,
+            height=height,
+            local_path=str(local_path),
+            prompt_summary=prompt_summary,
+        )
+        items.append(item)
+
+    if not items:
+        raise NodeError("no media items were generated")
+
+    sequence = asset_media_prompt.build_raw_media_sequence(candidate, items)
+    out_path = run_dir / f"{node_id}__raw_media_sequence.json"
+    _write_json(out_path, sequence)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__raw_media_sequence",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="raw_media",
+    )
+    return {"output_refs": {"default": ref}}
+
+
 # Registry of node_type -> implementation function.
 NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
@@ -1376,6 +1507,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.publish_stub_manifest": node_media_publish_stub_manifest,
     "narrative.mock_npc_feedback": node_narrative_mock_npc_feedback,
     "narrative.mock_world_growth_event": node_narrative_mock_world_growth_event,
+    "media.generate_asset_images_guarded": node_media_generate_asset_images_guarded,
     "media.remove_background_stub": node_media_remove_background_stub,
     "media.crop_and_pad_stub": node_media_crop_and_pad_stub,
     "media.normalize_canvas_stub": node_media_normalize_canvas_stub,
