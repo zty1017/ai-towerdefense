@@ -57,6 +57,29 @@ PROVIDER_DOMAIN_HINTS = (
 # raw_media and processed_media layers may NOT appear in runtime_public artifacts.
 RUNTIME_FORBIDDEN_MEDIA_LAYERS = frozenset({"raw_media", "processed_media"})
 
+# Allowed key sets mirror shared/schemas/workflow_graph.v0.1.schema.json
+# (additionalProperties: false on each object layer). Keep in sync with the schema.
+TOP_LEVEL_ALLOWED = frozenset(
+    {"schema_version", "workflow_id", "mode", "description", "nodes", "edges"}
+)
+NODE_ALLOWED = frozenset(
+    {"id", "node_type", "params", "inputs", "runtime_public"}
+)
+EDGE_ALLOWED = frozenset({"source", "target", "source_output", "target_input"})
+
+
+def reject_unknown_keys(
+    obj: dict[str, Any], allowed: frozenset[str], path: str, errors: list[str]
+) -> None:
+    """Mirror JSON Schema additionalProperties: false. Reports concrete paths."""
+    for key in obj.keys():
+        if key not in allowed:
+            loc = f"{path}.{key}" if path else key
+            errors.append(
+                f"unknown field '{loc}' is not allowed "
+                f"(allowed: {sorted(allowed)})"
+            )
+
 
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
@@ -150,6 +173,9 @@ def validate_workflow(
 ) -> list[str]:
     errors: list[str] = []
 
+    # --- top-level unknown key check (mirrors additionalProperties:false) ---
+    reject_unknown_keys(workflow, TOP_LEVEL_ALLOWED, "", errors)
+
     # --- schema_version / mode sanity ---
     if workflow.get("schema_version") != "workflow_graph.v0.1":
         errors.append(
@@ -178,6 +204,8 @@ def validate_workflow(
         if not isinstance(node, dict):
             errors.append(f"{npath} must be an object")
             continue
+        # --- node-level unknown key check ---
+        reject_unknown_keys(node, NODE_ALLOWED, npath, errors)
         nid = node.get("id")
         if not isinstance(nid, str) or not nid:
             errors.append(f"{npath}.id must be a non-empty string")
@@ -236,6 +264,8 @@ def validate_workflow(
         if not isinstance(edge, dict):
             errors.append(f"{epath} must be an object")
             continue
+        # --- edge-level unknown key check ---
+        reject_unknown_keys(edge, EDGE_ALLOWED, epath, errors)
         src = edge.get("source")
         dst = edge.get("target")
         if not isinstance(src, str) or not src:

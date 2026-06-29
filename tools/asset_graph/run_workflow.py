@@ -136,8 +136,23 @@ def _resolve_ref(
 
 
 def _scan_runtime_public_forbidden(value: Any, path: str, errors: list[str]) -> None:
-    """Recursively scan a runtime_public artifact for forbidden fields/URLs."""
+    """Recursively scan a runtime_public artifact for forbidden fields/URLs/layers."""
     if isinstance(value, dict):
+        # media_layer policy: raw_media / processed_media may not appear in
+        # runtime_public artifacts. Only published_media is allowed.
+        layer = value.get("media_layer")
+        if layer in ("raw_media", "processed_media"):
+            errors.append(
+                f"runtime_public artifact {path} has media_layer={layer!r} "
+                f"(only published_media may be runtime_public)"
+            )
+        # source_layer is a raw->published provenance field that must not leak
+        # to the runtime side; it should stay in trace/internal only.
+        if "source_layer" in value:
+            errors.append(
+                f"runtime_public artifact {path} contains source_layer field "
+                f"(raw->published provenance must not leak to runtime_public)"
+            )
         for key, child in value.items():
             child_path = f"{path}.{key}" if path else key
             if key in FORBIDDEN_FIELDS:

@@ -394,14 +394,18 @@ def node_media_publish_stub_manifest(
             "url": f"/assets/published/{stable_id}.webp",
             "width": item.get("width", 512),
             "height": item.get("height", 512),
-            "source_layer": "raw_media",
+            # source_layer and raw provenance are intentionally omitted from
+            # the published_media manifest: raw -> published provenance lives
+            # in the execution trace / internal logs only, not in runtime_public
+            # artifacts.
             "fallback_used": item.get("fallback_used", True),
         })
     manifest = {
         "manifest_version": "published_media_manifest.v0.1",
         "published_media": published,
         # raw_media and processed_media layers are intentionally NOT exposed
-        # here; only published_media may be runtime_public.
+        # here; only published_media may be runtime_public. No source_layer
+        # fields leak to the runtime side.
     }
     out_path = run_dir / f"{node_id}__published_media_manifest.json"
     _write_json(out_path, manifest)
