@@ -544,6 +544,8 @@ CodeBuddy 返回结果至少应包含：
 - 仓库级 `user.name` 为 `zty`。
 - 仓库级 `user.email` 为 `25451354054@stu.wzu.edu.cn`。
 - `.env` 已被 `.gitignore` 忽略，不能纳入提交。
+- 当前 `main` worktree 位于 `/home/zty/projects/ai-compiled-towerdefense`，作为 Codex 主会话的架构决策、任务、验收和合并基线。
+- 当前 `develop` worktree 位于 `/home/zty/projects/ai-compiled-towerdefense-develop`，作为 CodeBuddy IDE 主代理工作区。
 
 推荐分支：
 
@@ -572,6 +574,8 @@ local/worktrees/
 - 主代理负责把结果整合到 `develop`。
 - 演示前从 `develop` 合并或挑选到 `main`。
 - 高风险实验放入 `experiment/*`。
+- CodeBuddy IDE 可以打开 `develop` worktree 作为主交互目录。
+- CodeBuddy 主代理可以在 `develop` 阅读上下文、拆分任务和汇总结果，但普通实现改动应交给 `task/*` worktree 中的子代理 / worker 完成。
 
 ### 5.1 分支命名
 
