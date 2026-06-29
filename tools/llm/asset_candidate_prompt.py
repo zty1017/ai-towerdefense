@@ -36,14 +36,14 @@ provenance 必须包含以下字段：
 - proposal_id
 - mode
 - worldbook_id
-- provider（可填 "live_llm" 或 "selected_profile" 或空占位）
-- model（可填 "live_llm" 或 "selected_profile" 或空占位）
+- provider（可填 "selected_profile"，系统会在本地回填）
+- model（可填 "selected_model"，系统会在本地回填）
 - npc_ids（数组）
 - material_ids（数组）
 - validation_status（初始填 "pending"）
 - simulation_report_id（初始填 null）
 
-不要包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content 等字段。
+不要包含 raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content 等字段。
 """
 
 
@@ -148,3 +148,39 @@ def build_user_prompt(
         },
     }
     return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def normalize_candidate_provenance(
+    candidate: dict[str, Any],
+    proposal: dict[str, Any],
+    *,
+    provider: str,
+    model: str,
+) -> dict[str, Any]:
+    """Fill deterministic provenance fields before validation.
+
+    The model is responsible for gameplay/presentation structure, but these
+    fields are known locally and should not depend on model memory.
+    """
+    provenance = candidate.get("provenance")
+    if not isinstance(provenance, dict):
+        return candidate
+    required_inputs = proposal.get("required_inputs")
+    if not isinstance(required_inputs, dict):
+        required_inputs = {}
+    npc_ids = required_inputs.get("npc_ids")
+    material_ids = required_inputs.get("materials")
+    provenance.update(
+        {
+            "proposal_id": proposal.get("id"),
+            "mode": proposal.get("mode"),
+            "worldbook_id": proposal.get("worldbook_id"),
+            "provider": provider,
+            "model": model,
+            "npc_ids": npc_ids if isinstance(npc_ids, list) else [],
+            "material_ids": material_ids if isinstance(material_ids, list) else [],
+            "validation_status": "pending",
+            "simulation_report_id": None,
+        }
+    )
+    return candidate

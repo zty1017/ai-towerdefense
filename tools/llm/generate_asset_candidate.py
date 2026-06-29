@@ -120,6 +120,13 @@ def main() -> int:
         print(f"Provider response text length: {len(raw_text)} characters.", file=sys.stderr)
         return 1
 
+    candidate = asset_candidate_prompt.normalize_candidate_provenance(
+        candidate,
+        proposal,
+        provider=profile.name,
+        model=profile.model,
+    )
+
     # Validate
     errors = validate_asset_candidate.validate(candidate, effect_registry)
     if errors:

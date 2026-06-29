@@ -1172,7 +1172,8 @@ def node_asset_compile_with_llm_guarded(
     This node only works in live mode with allow_live_provider_call=true.
     It calls the configured provider, extracts JSON, validates with
     validate_asset_candidate, and writes the validated candidate.
-    The output artifact never contains provider/model/raw_prompt terms.
+    Internal provenance may record provider/model, but raw prompts, raw
+    provider responses, API keys, and secrets are never written to the output.
     """
     proposal = _load_artifact(inputs, "proposal")
 
@@ -1231,6 +1232,13 @@ def node_asset_compile_with_llm_guarded(
         raise NodeError(
             "failed to extract JSON from LLM provider response"
         )
+
+    candidate = asset_candidate_prompt.normalize_candidate_provenance(
+        candidate,
+        proposal,
+        provider=profile.name,
+        model=profile.model,
+    )
 
     # Validate candidate
     errs = validate_asset_candidate.validate(candidate, registry)
