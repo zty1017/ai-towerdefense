@@ -1,0 +1,32 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_invalid_base_worldbook_mutation_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "system",
+  "created_turn": 2,
+  "summary": "负例：试图直接改写 BaseWorldbook 的世界设定，应被校验器拒绝。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "post_first_defense"
+    },
+    {
+      "op": "mutate_base_worldbook",
+      "target": "worldbook.long_night_lanterns",
+      "patch": {
+        "setting.lanterns": "overwrite"
+      },
+      "reason": "试图绕过受控 Delta 机制直接改写世界书。"
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "should_never_apply",
+        "turn": 2,
+        "kind": "system",
+        "summary": "若该事件被写入，说明校验器未拦截 base worldbook 改写。"
+      }
+    }
+  ]
+}
