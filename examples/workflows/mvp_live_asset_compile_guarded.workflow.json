@@ -1,0 +1,49 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_live_asset_compile_guarded",
+  "mode": "live",
+  "description": "LIVE guarded asset compile: load proposal -> validate -> LLM compile with validation guard -> validate candidate -> simulate -> pipeline summary. WARNING: this workflow calls a real LLM provider and must be explicitly executed by a human.",
+  "nodes": [
+    {
+      "id": "load_proposal",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/proposals/light_slow_field.proposal.json" }
+    },
+    {
+      "id": "validate_proposal",
+      "node_type": "proposal.validate"
+    },
+    {
+      "id": "llm_compile",
+      "node_type": "asset.compile_with_llm_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "provider_profile": "ark_deepseek_v4_flash",
+        "max_tokens": 8192,
+        "request_timeout": 120
+      }
+    },
+    {
+      "id": "validate_candidate",
+      "node_type": "asset.validate_candidate"
+    },
+    {
+      "id": "simulate",
+      "node_type": "asset.simulate_candidate",
+      "params": { "duration_seconds": 30.0 }
+    },
+    {
+      "id": "summary",
+      "node_type": "report.pipeline_summary"
+    }
+  ],
+  "edges": [
+    { "source": "load_proposal", "target": "validate_proposal", "target_input": "proposal" },
+    { "source": "load_proposal", "target": "llm_compile", "target_input": "proposal" },
+    { "source": "llm_compile", "target": "validate_candidate", "target_input": "candidate" },
+    { "source": "llm_compile", "target": "simulate", "target_input": "candidate" },
+    { "source": "validate_proposal", "target": "summary", "target_input": "proposal_validation" },
+    { "source": "validate_candidate", "target": "summary", "target_input": "candidate_validation" },
+    { "source": "simulate", "target": "summary", "target_input": "simulation" }
+  ]
+}

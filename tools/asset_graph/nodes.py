@@ -51,6 +51,7 @@ if str(LLM_DIR) not in sys.path:
     sys.path.insert(0, str(LLM_DIR))
 
 import adapter as llm_adapter  # noqa: E402
+import asset_candidate_prompt  # noqa: E402
 import world_delta_prompt  # noqa: E402
 
 
@@ -1156,6 +1157,110 @@ def node_world_state_apply_delta(
 
 
 # ---------------------------------------------------------------------------
+# Guarded LLM AssetCompile node (live only, calls provider)
+# ---------------------------------------------------------------------------
+
+
+def node_asset_compile_with_llm_guarded(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Call an LLM to generate a CompiledAssetCandidate, guarded by validation.
+
+    This node only works in live mode with allow_live_provider_call=true.
+    It calls the configured provider, extracts JSON, validates with
+    validate_asset_candidate, and writes the validated candidate.
+    Internal provenance may record provider/model, but raw prompts, raw
+    provider responses, API keys, and secrets are never written to the output.
+    """
+    proposal = _load_artifact(inputs, "proposal")
+
+    allow_live = params.get("allow_live_provider_call", False)
+    if not allow_live:
+        raise NodeError(
+            "asset.compile_with_llm_guarded requires "
+            "params.allow_live_provider_call=true to call a real LLM provider. "
+            "Set it to true only when you explicitly intend to make a live API call."
+        )
+
+    provider_profile = str(params.get("provider_profile", "ark_deepseek_v4_flash"))
+    max_tokens = int(params.get("max_tokens", 8192))
+    request_timeout = int(params.get("request_timeout", 120))
+
+    if provider_profile not in llm_adapter.PROFILES:
+        raise NodeError(
+            f"unknown provider_profile={provider_profile!r}; "
+            f"known: {sorted(llm_adapter.PROFILES)}"
+        )
+
+    profile = llm_adapter.PROFILES[provider_profile]
+    llm_adapter.load_dotenv(ROOT / ".env")
+
+    # Optional registry input; default to the shared effect blocks registry.
+    if "registry" in inputs and inputs["registry"] is not None:
+        registry = _load_artifact(inputs, "registry")
+    else:
+        registry = json.loads(DEFAULT_REGISTRY_PATH.read_text(encoding="utf-8"))
+
+    user_prompt = asset_candidate_prompt.build_user_prompt(proposal, registry)
+
+    messages = [
+        {"role": "system", "content": asset_candidate_prompt.SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    try:
+        response_format = (
+            {"type": "json_object"} if profile.supports_json_object else None
+        )
+        response = llm_adapter.chat_completion(
+            profile,
+            messages,
+            max_tokens=max_tokens,
+            timeout=request_timeout,
+            response_format=response_format,
+        )
+    except Exception as exc:
+        raise NodeError(f"LLM provider call failed: {exc}") from exc
+
+    raw_text = llm_adapter.extract_content_from_response(response)
+    candidate = llm_adapter.extract_json(raw_text)
+
+    if candidate is None:
+        raise NodeError(
+            "failed to extract JSON from LLM provider response"
+        )
+
+    candidate = asset_candidate_prompt.normalize_candidate_provenance(
+        candidate,
+        proposal,
+        provider=profile.name,
+        model=profile.model,
+    )
+
+    # Validate candidate
+    errs = validate_asset_candidate.validate(candidate, registry)
+    if errs:
+        raise NodeError(
+            "LLM-produced CompiledAssetCandidate validation failed: "
+            + "; ".join(errs)
+        )
+
+    out_path = run_dir / f"{node_id}__compiled_asset_candidate.json"
+    _write_json(out_path, candidate)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__compiled_asset_candidate",
+        kind="compiled_asset_candidate",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+# ---------------------------------------------------------------------------
 # Guarded LLM WorldStateDelta node (live only, calls provider)
 # ---------------------------------------------------------------------------
 
@@ -1262,6 +1367,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
     "proposal.validate": node_proposal_validate,
     "asset.mock_compile_proposal": node_asset_mock_compile_proposal,
+    "asset.compile_with_llm_guarded": node_asset_compile_with_llm_guarded,
     "asset.validate_candidate": node_asset_validate_candidate,
     "asset.simulate_candidate": node_asset_simulate_candidate,
     "report.pipeline_summary": node_report_pipeline_summary,
