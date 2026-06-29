@@ -1389,6 +1389,13 @@ def node_media_generate_asset_images_guarded(
     The output artifact kind is media_metadata with media_layer=raw_media.
     """
     candidate = _load_artifact(inputs, "candidate")
+    registry = json.loads(DEFAULT_REGISTRY_PATH.read_text(encoding="utf-8"))
+    errs = validate_asset_candidate.validate(candidate, registry)
+    if errs:
+        raise NodeError(
+            "media.generate_asset_images_guarded received invalid candidate: "
+            + "; ".join(errs)
+        )
 
     allow_live = params.get("allow_live_provider_call", False)
     if not allow_live:
@@ -1405,6 +1412,10 @@ def node_media_generate_asset_images_guarded(
 
     if not isinstance(roles, list) or not roles:
         raise NodeError("params.roles must be a non-empty list of role strings")
+    allowed_roles = {"icon", "tower_sprite"}
+    unknown_roles = [role for role in roles if role not in allowed_roles]
+    if unknown_roles:
+        raise NodeError(f"unknown media role(s): {unknown_roles}")
 
     profile = img_provider.PROFILES.get(image_profile)
     if profile is None:
@@ -1413,7 +1424,10 @@ def node_media_generate_asset_images_guarded(
             f"known: {sorted(img_provider.PROFILES)}"
         )
 
-    width, height = (int(x) for x in size.split("x", 1))
+    try:
+        width, height = img_provider.parse_size(size)
+    except ValueError as exc:
+        raise NodeError(str(exc)) from exc
 
     img_provider.load_dotenv(ROOT / ".env")
 
@@ -1423,10 +1437,10 @@ def node_media_generate_asset_images_guarded(
             prompt = asset_media_prompt.build_icon_prompt(candidate)
         elif role == "tower_sprite":
             prompt = asset_media_prompt.build_tower_sprite_prompt(candidate)
-        else:
+        else:  # pragma: no cover - guarded above
             raise NodeError(f"unknown media role: {role!r}")
 
-        prompt_summary = prompt[:120] + "..." if len(prompt) > 120 else prompt
+        prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
 
         try:
             response = img_provider.generate_image(profile, prompt, size=size, timeout=request_timeout)
@@ -1440,7 +1454,7 @@ def node_media_generate_asset_images_guarded(
                 f"failed to extract image URL for role={role!r}: {exc}"
             ) from exc
 
-        stable_id = f"{candidate.get('id', 'unknown')}_{role}"
+        stable_id = asset_media_prompt.stable_media_id(candidate, role)
         local_filename = f"{stable_id}.png"
         local_path = run_dir / local_filename
         try:

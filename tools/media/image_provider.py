@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -81,6 +82,23 @@ def get_api_key(profile: ImageProfile) -> str:
     return key
 
 
+def parse_size(size: str) -> tuple[int, int]:
+    """Parse an image size string like 1024x1024."""
+    parts = size.lower().split("x", 1)
+    if len(parts) != 2:
+        raise ValueError(f"invalid image size {size!r}; expected WIDTHxHEIGHT")
+    try:
+        width = int(parts[0])
+        height = int(parts[1])
+    except ValueError as exc:
+        raise ValueError(f"invalid image size {size!r}; dimensions must be integers") from exc
+    if width <= 0 or height <= 0:
+        raise ValueError(f"invalid image size {size!r}; dimensions must be positive")
+    if width > 4096 or height > 4096:
+        raise ValueError(f"invalid image size {size!r}; maximum supported dimension is 4096")
+    return width, height
+
+
 def generate_image(
     profile: ImageProfile,
     prompt: str,
@@ -143,6 +161,7 @@ def download_image(
     url: str,
     output_path: Path,
     timeout: int = 120,
+    max_bytes: int = 20 * 1024 * 1024,
 ) -> Path:
     """Download an image from a URL to a local file.
 
@@ -151,15 +170,31 @@ def download_image(
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if url.startswith("data:"):
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme == "data":
         _, b64_data = url.split(",", 1)
         image_bytes = base64.b64decode(b64_data)
+        if len(image_bytes) > max_bytes:
+            raise RuntimeError("decoded image exceeds maximum allowed size")
         output_path.write_bytes(image_bytes)
         return output_path
 
+    if parsed.scheme not in {"http", "https"}:
+        raise RuntimeError(f"unsupported image URL scheme: {parsed.scheme!r}")
+
     req = urllib.request.Request(url, method="GET")
     with urllib.request.urlopen(req, timeout=timeout) as response:
-        image_bytes = response.read()
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            chunk = response.read(65536)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise RuntimeError("downloaded image exceeds maximum allowed size")
+            chunks.append(chunk)
+        image_bytes = b"".join(chunks)
 
     output_path.write_bytes(image_bytes)
     return output_path

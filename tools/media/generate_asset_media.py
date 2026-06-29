@@ -113,6 +113,15 @@ def main() -> int:
         output_path = Path(args.output)
 
     roles = [r.strip() for r in args.roles.split(",") if r.strip()]
+    if not roles:
+        print("No media roles requested.", file=sys.stderr)
+        return 1
+    allowed_roles = {"icon", "tower_sprite"}
+    unknown_roles = [role for role in roles if role not in allowed_roles]
+    if unknown_roles:
+        print(f"Unknown media role(s): {', '.join(unknown_roles)}", file=sys.stderr)
+        return 1
+
     profile_name = args.image_profile
     profile = image_provider.PROFILES.get(profile_name)
     if profile is None:
@@ -120,7 +129,11 @@ def main() -> int:
         return 1
 
     size = args.size or profile.default_size
-    width, height = (int(x) for x in size.split("x", 1))
+    try:
+        width, height = image_provider.parse_size(size)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
     # Load dotenv (do not print keys).
     image_provider.load_dotenv(ROOT / ".env")
@@ -131,11 +144,11 @@ def main() -> int:
             prompt = asset_media_prompt.build_icon_prompt(candidate)
         elif role == "tower_sprite":
             prompt = asset_media_prompt.build_tower_sprite_prompt(candidate)
-        else:
-            print(f"Unknown role: {role!r}, skipping.", file=sys.stderr)
-            continue
+        else:  # pragma: no cover - guarded above
+            print(f"Unknown role: {role!r}", file=sys.stderr)
+            return 1
 
-        prompt_summary = prompt[:120] + "..." if len(prompt) > 120 else prompt
+        prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
 
         try:
             response = image_provider.generate_image(profile, prompt, size=size, timeout=args.request_timeout)
@@ -150,7 +163,7 @@ def main() -> int:
             return 1
 
         # Download image to local path.
-        stable_id = f"{candidate.get('id', 'unknown')}_{role}"
+        stable_id = asset_media_prompt.stable_media_id(candidate, role)
         local_filename = f"{stable_id}.png"
         local_path = output_dir / local_filename
         try:

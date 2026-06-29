@@ -11,9 +11,31 @@ import hashlib
 from typing import Any
 
 
-def _stable_id(candidate: dict[str, Any], role: str) -> str:
+def stable_media_id(candidate: dict[str, Any], role: str) -> str:
     raw = f"{candidate.get('id', 'unknown')}_{role}"
     return f"{raw}_{hashlib.sha256(raw.encode()).hexdigest()[:8]}"
+
+
+def build_prompt_summary(candidate: dict[str, Any], role: str) -> str:
+    """Build a short, non-reconstructive prompt summary for metadata."""
+    presentation = candidate.get("presentation", {})
+    gameplay = candidate.get("gameplay", {})
+    effect_blocks = gameplay.get("effect_blocks", [])
+    effect_types = [
+        str(e.get("type"))
+        for e in effect_blocks
+        if isinstance(e, dict) and e.get("type")
+    ]
+    return "; ".join(
+        part
+        for part in (
+            f"role={role}",
+            f"name={presentation.get('name', candidate.get('id', 'unknown'))}",
+            f"asset_type={gameplay.get('asset_type', 'unknown')}",
+            f"effects={','.join(effect_types)}" if effect_types else "",
+        )
+        if part
+    )
 
 
 def build_icon_prompt(candidate: dict[str, Any]) -> str:
@@ -90,7 +112,7 @@ def build_raw_media_item(
     Fields follow the raw_media_sequence.v0.1 format.
     No provider temporary URL is written to metadata.
     """
-    stable_internal_id = _stable_id(candidate, role)
+    stable_internal_id = stable_media_id(candidate, role)
     return {
         "stable_internal_id": stable_internal_id,
         "media_layer": "raw_media",
