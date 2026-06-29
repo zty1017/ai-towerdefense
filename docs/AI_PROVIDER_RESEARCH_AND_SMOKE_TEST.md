@@ -604,6 +604,25 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 - 默认 CLI 路径不调用真实 provider；只有 `--live` 或 AssetGraph 中 `allow_live_provider_call=true` 的 live workflow 才允许联网。
 - 输出 artifact 不包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content。
 
+### 12.5 Guarded LLM 资产候选编译路径
+
+本轮新增 `CompiledAssetCandidate` 的 live 编译路径：
+
+- `tools/llm/asset_candidate_prompt.py` — 共享提示词与输入压缩器，明确候选顶层结构、生命周期、资产类型、effect registry 白名单、provenance 结构和禁止字段。
+- `tools/llm/generate_asset_candidate.py` — CLI 工具。默认拒绝联网；显式 `--live` 后调用 provider，提取 JSON，并用 `validate_asset_candidate.validate()` 校验。
+- `asset.compile_with_llm_guarded` — AssetGraph live 节点。必须设置 `allow_live_provider_call: true`，输出前必须通过 effect registry 校验。
+- `examples/workflows/mvp_live_asset_compile_guarded.workflow.json` — live workflow：proposal -> proposal validation -> LLM compile -> candidate validation -> mock simulation -> summary。
+
+首次真实烟测结果：
+
+| 通道 | 模型 | 结果 | 说明 |
+|---|---|---|---|
+| 方舟 Coding Plan | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `aura_buff` / `power_cost`，通过候选校验和 mock simulation |
+| DeepSeek 官方 | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `power_cost`，通过候选校验和 mock simulation |
+| AssetGraph live workflow | 方舟 `deepseek-v4-flash` | 成功 | `source.load_json -> proposal.validate -> asset.compile_with_llm_guarded -> asset.validate_candidate -> asset.simulate_candidate -> report.pipeline_summary` 全部 passed |
+
+两个候选都被模拟器标记为 `pure_control_requires_damage_partner`，说明当前提案会产出“控场但不能独立击杀”的资产。这类缺陷可以进入玩家侧的世界内反馈，例如 NPC 评审、样品限制、需要搭配伤害塔等，而不是展示 provider/schema 等技术信息。
+
 ## 13. 待确认问题
 
 1. Agnes 的 `GET /v1/models` 是否稳定可用。官方文档未明确承诺，不能作为生产依赖。
