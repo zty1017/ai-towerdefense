@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/locked_manifest.v0.1.schema.json",
+  "title": "LockedManifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "session_id",
+    "worldbook_id",
+    "content_set",
+    "created_at",
+    "locked_assets"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "locked_manifest.v0.1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_set": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "locked_assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/locked_asset"
+      }
+    }
+  },
+  "$defs": {
+    "locked_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "asset_kind",
+        "template_id",
+        "worldbook_id",
+        "session_instance_id",
+        "lifecycle_state",
+        "display",
+        "gameplay_ref",
+        "media_refs",
+        "visual_recipes",
+        "battle_availability"
+      ],
+      "properties": {
+        "stable_internal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "template_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worldbook_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_instance_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle_state": {
+          "type": "string",
+          "enum": ["ephemeral", "session_blueprint", "stabilized_blueprint"]
+        },
+        "display": {
+          "$ref": "#/$defs/display"
+        },
+        "gameplay_ref": {
+          "$ref": "#/$defs/gameplay_ref"
+        },
+        "media_refs": {
+          "$ref": "#/$defs/media_refs"
+        },
+        "visual_recipes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/visual_recipe"
+          }
+        },
+        "battle_availability": {
+          "$ref": "#/$defs/battle_availability"
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "summary", "tags"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "gameplay_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "media_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": {
+          "$ref": "#/$defs/media_icon"
+        },
+        "sprite": {
+          "$ref": "#/$defs/media_sprite"
+        }
+      }
+    },
+    "media_icon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "width", "height", "sha256"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "media_sprite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["texture_key", "atlas", "image"],
+      "properties": {
+        "texture_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "atlas": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        },
+        "image": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        }
+      }
+    },
+    "visual_recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "kind"],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ring_pulse",
+            "beam",
+            "chain_arc",
+            "sprite_flash",
+            "particle_burst",
+            "aura_field",
+            "screen_shake",
+            "floating_text"
+          ]
+        },
+        "palette_token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "secondary_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "intensity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "radius_from_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "particle_density": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "blend_mode": {
+          "type": "string",
+          "enum": ["normal", "additive", "multiply"]
+        },
+        "max_links_from_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arc_style": {
+          "type": "string",
+          "enum": ["straight", "curved", "jagged"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "battle_availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surfaces",
+        "uses_per_battle",
+        "requires_delivery",
+        "delivery_state"
+      ],
+      "properties": {
+        "surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["battle_hotbar", "node_supply"]
+          }
+        },
+        "uses_per_battle": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requires_delivery": {
+          "type": "boolean"
+        },
+        "delivery_state": {
+          "type": "string",
+          "enum": [
+            "research_in_progress",
+            "sample_ready",
+            "sample_delivered",
+            "battle_used"
+          ]
+        }
+      }
+    }
+  }
+}
