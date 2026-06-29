@@ -191,6 +191,21 @@
       ]
     },
     {
+      "node_type": "media.generate_asset_images_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an image provider to generate icon/tower_sprite images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Generates images for each configured role, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Output must flow through the media processing chain before becoming runtime_public.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a raw_media_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
       "node_type": "media.remove_background_stub",
       "category": "media",
       "modes": ["deterministic", "studio", "live"],
