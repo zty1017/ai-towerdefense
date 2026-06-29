@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/simulation_report.v0.1.schema.json",
+  "title": "SimulationReport v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "candidate_id",
+    "simulation_version",
+    "duration_seconds",
+    "estimated_dps",
+    "slow_uptime",
+    "enemies_leaked",
+    "power_peak",
+    "cost_efficiency",
+    "balance_flags"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "candidate_id": {
+      "type": "string"
+    },
+    "simulation_version": {
+      "type": "string"
+    },
+    "duration_seconds": {
+      "type": "number"
+    },
+    "estimated_dps": {
+      "type": "number"
+    },
+    "slow_uptime": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "enemies_leaked": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "power_peak": {
+      "type": "number"
+    },
+    "cost_efficiency": {
+      "type": "number"
+    },
+    "balance_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
+

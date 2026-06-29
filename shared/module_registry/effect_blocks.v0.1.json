@@ -1,0 +1,158 @@
+{
+  "version": "0.1",
+  "effect_blocks": {
+    "damage": {
+      "category": "combat",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["amount"],
+      "numeric_ranges": {
+        "amount": [1, 500]
+      }
+    },
+    "area_damage": {
+      "category": "combat",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["amount", "radius"],
+      "numeric_ranges": {
+        "amount": [1, 300],
+        "radius": [16, 240]
+      }
+    },
+    "slow": {
+      "category": "control",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["slow_ratio", "duration"],
+      "numeric_ranges": {
+        "slow_ratio": [0.05, 0.7],
+        "duration": [0.2, 8.0]
+      }
+    },
+    "damage_over_time": {
+      "category": "combat",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["damage_per_second", "duration"],
+      "numeric_ranges": {
+        "damage_per_second": [1, 120],
+        "duration": [0.5, 12.0]
+      }
+    },
+    "pierce_or_chain": {
+      "category": "combat",
+      "allowed_asset_types": ["tower_blueprint", "temporary_mod"],
+      "required_fields": ["max_targets"],
+      "numeric_ranges": {
+        "max_targets": [2, 8]
+      }
+    },
+    "summon_unit": {
+      "category": "unit",
+      "allowed_asset_types": ["tower_blueprint", "support_item"],
+      "required_fields": ["unit_key", "count"],
+      "numeric_ranges": {
+        "count": [1, 6]
+      }
+    },
+    "shield": {
+      "category": "defense",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["shield_amount"],
+      "numeric_ranges": {
+        "shield_amount": [10, 1000]
+      }
+    },
+    "repair": {
+      "category": "defense",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod"],
+      "required_fields": ["repair_amount"],
+      "numeric_ranges": {
+        "repair_amount": [1, 500]
+      }
+    },
+    "power_cost": {
+      "category": "cost",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"],
+      "required_fields": ["power_per_second"],
+      "numeric_ranges": {
+        "power_per_second": [0.1, 20.0]
+      }
+    },
+    "charge_burst": {
+      "category": "timing",
+      "allowed_asset_types": ["tower_blueprint", "temporary_mod"],
+      "required_fields": ["charge_seconds", "burst_multiplier"],
+      "numeric_ranges": {
+        "charge_seconds": [1.0, 20.0],
+        "burst_multiplier": [1.1, 5.0]
+      }
+    },
+    "mark_vulnerability": {
+      "category": "control",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"],
+      "required_fields": ["vulnerability_ratio", "duration"],
+      "numeric_ranges": {
+        "vulnerability_ratio": [0.05, 0.6],
+        "duration": [0.5, 12.0]
+      }
+    },
+    "trap_tile_effect": {
+      "category": "map",
+      "allowed_asset_types": ["support_item", "temporary_mod"],
+      "required_fields": ["tile_radius", "duration"],
+      "numeric_ranges": {
+        "tile_radius": [1, 5],
+        "duration": [1.0, 30.0]
+      }
+    },
+    "aura_buff": {
+      "category": "aura",
+      "allowed_asset_types": ["tower_blueprint", "temporary_mod"],
+      "required_fields": ["radius", "target"],
+      "numeric_ranges": {
+        "radius": [16, 260]
+      }
+    },
+    "scout_reveal": {
+      "category": "intel",
+      "allowed_asset_types": ["intel_asset", "support_item"],
+      "required_fields": ["reveal_scope"]
+    },
+    "weakness_tag": {
+      "category": "intel",
+      "allowed_asset_types": ["intel_asset", "support_item", "temporary_mod"],
+      "required_fields": ["tag_key", "confidence"],
+      "numeric_ranges": {
+        "confidence": [0.1, 1.0]
+      }
+    },
+    "path_prediction": {
+      "category": "intel",
+      "allowed_asset_types": ["intel_asset", "support_item"],
+      "required_fields": ["prediction_horizon"],
+      "numeric_ranges": {
+        "prediction_horizon": [1, 5]
+      }
+    },
+    "threat_forecast": {
+      "category": "intel",
+      "allowed_asset_types": ["intel_asset", "support_item"],
+      "required_fields": ["forecast_turns"],
+      "numeric_ranges": {
+        "forecast_turns": [1, 5]
+      }
+    },
+    "countermeasure_hint": {
+      "category": "intel",
+      "allowed_asset_types": ["intel_asset", "support_item"],
+      "required_fields": ["hint_scope"]
+    },
+    "risk_modifier": {
+      "category": "risk",
+      "allowed_asset_types": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"],
+      "required_fields": ["risk_delta"],
+      "numeric_ranges": {
+        "risk_delta": [-50, 50]
+      }
+    }
+  }
+}
+

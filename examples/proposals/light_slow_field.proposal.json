@@ -1,0 +1,24 @@
+{
+  "id": "proposal_light_slow_field_001",
+  "mode": "runtime_safe",
+  "title": "光幕迟滞方案",
+  "summary": "使用持续灯光形成减速场，压制高速敌人，但需要稳定供电。",
+  "intended_asset_type": "tower_blueprint",
+  "expected_effect": ["control", "support"],
+  "risk_level": "medium",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": ["engineer_001"],
+    "materials": ["focusing_lens"],
+    "facility": "workshop_level_1",
+    "knowledge_tags": ["basic_power_grid"]
+  },
+  "known_tradeoffs": [
+    "无直接伤害",
+    "持续消耗电力",
+    "对高速敌人收益更高"
+  ],
+  "player_prompt": "我想要一座用灯光减速敌人、但会消耗额外电力的防御塔。",
+  "worldbook_id": "long_night_lanterns"
+}
+

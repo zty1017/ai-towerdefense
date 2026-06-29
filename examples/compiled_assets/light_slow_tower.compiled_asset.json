@@ -1,0 +1,60 @@
+{
+  "id": "asset_light_slow_tower_001",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "tower_blueprint",
+    "base_stats": {
+      "build_cost": 160,
+      "range": 140,
+      "cooldown": 1.0,
+      "targeting": "nearest"
+    },
+    "effect_blocks": [
+      {
+        "type": "slow",
+        "slow_ratio": 0.35,
+        "duration": 1.8,
+        "stacking": "refresh"
+      },
+      {
+        "type": "aura_buff",
+        "radius": 110,
+        "target": "enemy",
+        "effect_ref": "slow"
+      },
+      {
+        "type": "power_cost",
+        "power_per_second": 4,
+        "shutdown_behavior": "disable_effects"
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": true,
+      "max_instances": 2,
+      "allowed_phases": ["battle"]
+    },
+    "type_specific": {
+      "tower_slot": "standard",
+      "upgrade_from": "basic_light_tower"
+    }
+  },
+  "presentation": {
+    "name": "聚光迟滞塔",
+    "short_description": "用稳定灯幕拖慢敌人，但会持续消耗电力。",
+    "icon_prompt": "2D game icon, brass lantern turret, blue-white light beam, clean silhouette",
+    "animation_card_prompt": "A 2D pseudo-isometric lantern turret casting a slow pulsing light field on a dark path",
+    "visual_tags": ["lantern", "blue_light", "control_tower"]
+  },
+  "provenance": {
+    "proposal_id": "proposal_light_slow_field_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark",
+    "model": "deepseek-v4-pro",
+    "npc_ids": ["engineer_001"],
+    "material_ids": ["focusing_lens"],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}
+
