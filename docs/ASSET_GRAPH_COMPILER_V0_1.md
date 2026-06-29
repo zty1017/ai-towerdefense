@@ -1,6 +1,6 @@
 # AssetGraph Compiler v0.1
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## 1. 定位
 
@@ -182,6 +182,27 @@ ProposalJson
 - 临时 URL
 - 本地缓存路径
 - reviewed / locked 状态
+
+2026-06-30 的真实图像烟测确认：媒体 DAG 不能只包含 `generate_image`。
+同一个防御塔候选在 Agnes / GLM / GLMFree 上都能生成图片，但原始产物可能包含背景、水印、
+错误文件扩展名或不适合直接作为 sprite 的构图。因此媒体资产至少需要分层：
+
+```text
+RawGeneratedImage
+  -> DetectFormat / NormalizeFormat
+  -> WatermarkDetect
+  -> Review / Select
+  -> BackgroundRemoval
+  -> CropAndPad
+  -> NormalizeCanvas
+  -> AssignAnchor
+  -> SpriteSheetPack / AtlasJsonBuild
+  -> PublishedMediaManifest
+```
+
+第一版实现可以先保留 stub 链路，但节点命名和 trace 边界应按真实后处理链路设计。
+`icon`、`tower_sprite`、`battle_preview`、`animation_card` 应作为不同媒体角色处理，
+不能用一个 prompt 同时承担“可抠图塔体”和“战斗展示图”。
 
 ### 5.4 人类 / 审查节点
 
@@ -395,5 +416,4 @@ gameplay package 构建
 - `runtime.build_package_stub` 不依赖 `media.publish_stub_manifest` 完成。
 - 媒体缺失时使用 fallback 占位。
 - 媒体子图的 trace 独立记录，可供证据导出读取。
-
 

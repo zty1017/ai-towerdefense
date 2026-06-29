@@ -1,6 +1,6 @@
 # AI Provider 调研与烟测基线
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## 1. 目标
 
@@ -250,6 +250,45 @@ ProviderAdapter
 | CodeBuddy 图像候选 | CodeBuddy `ImageGen` + `hunyuan-image-v3.0` | 主要用于开发期、比赛合规记录和离线素材候选 |
 | 视频原型 | MVP 不进入核心闭环；开场动画预制，后续离线生成与 reviewed / locked |
 | 开发编码辅助 | 方舟 Coding Plan |
+
+### 8.0a 图像生成真实烟测：防御塔候选媒体包
+
+2026-06-30 已授权对 `examples/compiled_assets/light_slow_tower.compiled_asset.json`
+派生的视觉 prompt 进行真实图像 provider 调用。测试目标不是选最终美术，而是验证：
+
+1. `CompiledAssetCandidate` 可以派生 `icon` / `tower_sprite` 两类视觉 prompt。
+2. 图像 provider adapter 可以真实生成并下载图片。
+3. 生成图片可以写入 `raw_media_sequence.v0.1`。
+4. `raw_media_sequence` 可以通过媒体处理 DAG 进入 `published_media_manifest.v0.1`。
+5. 最终 runtime-public manifest 不泄漏 provider 临时 URL、prompt、provider_profile 或本地路径。
+
+本轮真实调用结果：
+
+| Provider profile | 模型 | 输出尺寸 | 状态 | 主要观察 |
+|---|---|---:|---|---|
+| `agnes_image_flash` | `agnes-image-2.1-flash` | 1024x1024 | 通过 | 画面质量高，无明显水印；`tower_sprite` 更像战斗预览，仍带场景背景 |
+| `glmfree_cogview_3_flash` | `cogview-3-flash` | 1024x1024 | 通过 | 塔体干净度较好，但存在“AI生成”水印；实际下载内容为 JPEG |
+| `glm_image` | `glm-image` | 1280x1280 | 通过 | 可生成，但主题贴合度弱于 Agnes；存在水印；实际下载内容为 JPEG |
+
+本地烟测产物：
+
+```text
+/tmp/live_asset_media_agnes/raw_media_sequence.v0.1.json
+/tmp/live_asset_media_glmfree/raw_media_sequence.v0.1.json
+/tmp/live_asset_media_glm/raw_media_sequence.v0.1.json
+
+/tmp/live_asset_media_agnes_processed/mvp_live_asset_media_agnes_process/build_atlas__published_media_manifest.json
+/tmp/live_asset_media_glmfree_processed/mvp_live_asset_media_glmfree_process/build_atlas__published_media_manifest.json
+/tmp/live_asset_media_glm_processed/mvp_live_asset_media_glm_process/build_atlas__published_media_manifest.json
+```
+
+关键结论：
+
+- Agnes 当前更适合做 MVP 默认图像 provider。
+- GLM / GLMFree 已验证可接入，适合 fallback 或对照候选，但需要水印检测与裁切。
+- 图像 provider 不一定按请求返回 PNG；adapter 不能固定使用 `.png` 扩展名，应按响应头或 magic bytes 归一化。
+- `tower_sprite` prompt 需要进一步收紧为“可抠图的干净塔体”，另设 `battle_preview` / `animation_card` 承载带背景的演示图。
+- 当前媒体处理节点仍是 stub。进入前端实用前，至少需要实现格式归一化、背景去除、裁切留白、锚点分配和水印检测。
 
 ### 8.0 运行时设置与离线导入
 
