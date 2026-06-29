@@ -298,6 +298,23 @@
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the next RunWorldState JSON." }
       ]
+    },
+    {
+      "node_type": "world_state.build_delta_with_llm_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to generate a WorldStateDelta v0.1. Requires params.allow_live_provider_call=true and workflow mode=live. Validates the delta with jsonschema + world delta rules before writing. Output artifact is a world_state_delta with no provider/model/raw_prompt terms.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validated WorldStateDelta v0.1 JSON." }
+      ]
     }
   ]
 }
