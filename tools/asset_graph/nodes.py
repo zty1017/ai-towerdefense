@@ -1,7 +1,8 @@
 """Node implementations for the AssetGraph Kernel v0.1.
 
-All nodes in this module are deterministic / mock. None call a real LLM or
-provider. Each node function takes:
+Most nodes in this module are deterministic / mock. Live-only nodes can call
+external providers, but only when the workflow and node params explicitly
+enable that path. Each node function takes:
 - inputs: dict[input_name, ArtifactRef dict] (resolved refs pointing at files in run dir)
 - params: dict (literal params from the workflow node)
 - run_dir: Path (where this node should write its output artifact)
@@ -1270,12 +1271,15 @@ def node_world_state_build_delta_with_llm_guarded(
     ]
 
     try:
+        response_format = (
+            {"type": "json_object"} if profile.supports_json_object else None
+        )
         response = llm_adapter.chat_completion(
             profile,
             messages,
             max_tokens=max_tokens,
             timeout=request_timeout,
-            response_format={"type": "json_object"},
+            response_format=response_format,
         )
     except Exception as exc:
         raise NodeError(f"LLM provider call failed: {exc}") from exc

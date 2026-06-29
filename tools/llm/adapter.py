@@ -22,6 +22,7 @@ class ProviderProfile:
     env_key: str
     base_url: str
     model: str
+    supports_json_object: bool = True
 
 
 PROFILES: dict[str, ProviderProfile] = {
@@ -30,12 +31,14 @@ PROFILES: dict[str, ProviderProfile] = {
         env_key="ARK_API_KEY",
         base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
         model="deepseek-v4-flash",
+        supports_json_object=False,
     ),
     "ark_deepseek_v4_pro": ProviderProfile(
         name="ark_deepseek_v4_pro",
         env_key="ARK_API_KEY",
         base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
         model="deepseek-v4-pro",
+        supports_json_object=False,
     ),
     "ark_glm_5_2": ProviderProfile(
         name="ark_glm_5_2",
@@ -106,22 +109,16 @@ def extract_json(text: str) -> dict[str, Any] | None:
         except json.JSONDecodeError:
             pass
 
-    # Try first JSON object in text (find first { and match braces)
-    brace_start = text.find("{")
-    if brace_start >= 0:
-        depth = 0
-        for i in range(brace_start, len(text)):
-            ch = text[i]
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    candidate = text[brace_start : i + 1]
-                    try:
-                        return json.loads(candidate)
-                    except json.JSONDecodeError:
-                        pass
+    # Try JSON objects embedded in explanatory text. raw_decode handles braces
+    # inside quoted strings correctly, unlike a naive brace counter.
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", text):
+        try:
+            obj, _ = decoder.raw_decode(text[match.start() :])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict):
+            return obj
     return None
 
 

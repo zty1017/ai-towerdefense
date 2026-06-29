@@ -166,6 +166,9 @@ def main() -> int:
     ]
 
     print(f"Calling provider profile={profile.name!r} model={profile.model!r} ...", file=sys.stderr)
+    response_format = (
+        {"type": "json_object"} if profile.supports_json_object else None
+    )
 
     try:
         response = adapter.chat_completion(
@@ -173,7 +176,7 @@ def main() -> int:
             messages,
             max_tokens=args.max_tokens,
             timeout=args.request_timeout,
-            response_format={"type": "json_object"},
+            response_format=response_format,
         )
     except Exception as exc:
         print(f"Provider call failed: {exc}", file=sys.stderr)
@@ -184,7 +187,7 @@ def main() -> int:
 
     if delta is None:
         print("Failed to extract JSON from provider response.", file=sys.stderr)
-        print(f"Raw text (first 500 chars): {raw_text[:500]}", file=sys.stderr)
+        print(f"Provider response text length: {len(raw_text)} characters.", file=sys.stderr)
         return 1
 
     # Validate

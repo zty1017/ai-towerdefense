@@ -301,9 +301,9 @@
     },
     {
       "node_type": "world_state.build_delta_with_llm_guarded",
-      "category": "pure",
+      "category": "provider",
       "modes": ["live"],
-      "has_side_effects": false,
+      "has_side_effects": true,
       "calls_provider": true,
       "version": "v0.1",
       "description": "Call an LLM provider to generate a WorldStateDelta v0.1. Requires params.allow_live_provider_call=true and workflow mode=live. Validates the delta with jsonschema + world delta rules before writing. Output artifact is a world_state_delta with no provider/model/raw_prompt terms.",

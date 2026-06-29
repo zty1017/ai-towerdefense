@@ -567,6 +567,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 - `tools/llm/adapter.py` — 最小 LLM adapter，支持 OpenAI-compatible chat completions。
   - 5 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`deepseek_v4_flash`、`deepseek_v4_pro`。
   - `load_dotenv()` 从 `.env` 加载环境变量，日志只显示 env key 名称。
+  - 方舟 `deepseek-v4-*` profile 默认不发送 `response_format=json_object`，改走 prompt-only JSON + 本地 JSON parser + Schema 校验；`ark_glm_5_2` 与 DeepSeek 官方 profile 可发送 JSON mode。
   - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
   - `chat_completion()` 使用 stdlib `urllib`，无额外依赖。
 - `tools/llm/generate_world_delta.py` — CLI 工具。
@@ -598,8 +599,8 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 
 ### 12.4 安全与隐私
 
-- 本实现从不读取 `.env` 中的 API key 真实值（`load_dotenv` 仅设置环境变量，日志只显示 key 名称）。
-- 从不调用真实 provider（dry-run 是默认模式，`--live` 或 `allow_live_provider_call=true` 才允许联网）。
+- 本实现只在显式 live 路径读取 `.env` / 环境变量中的 API key，且不记录、不打印、不写入 artifact；日志只显示 env key 名称。
+- 默认 CLI 路径不调用真实 provider；只有 `--live` 或 AssetGraph 中 `allow_live_provider_call=true` 的 live workflow 才允许联网。
 - 输出 artifact 不包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content。
 
 ## 13. 待确认问题
