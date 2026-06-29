@@ -1,0 +1,42 @@
+{
+  "npcs_version": "npcs.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "npcs": [
+    {
+      "stable_internal_id": "npc_gray_lantern_keeper",
+      "display_name": "灰灯驿站守灯人",
+      "role": "field_npc",
+      "location_node_id": "gray_lantern_station",
+      "voice": "焦急、务实，习惯用灯塔术语描述战况。",
+      "default_address_by_origin": {
+        "lampwright_apprentice": "守灯技师",
+        "flow_engineer": "工程师",
+        "signal_dispatcher": "调度员"
+      },
+      "sample_lines": [
+        "影潮比预想快，驿站信标快撑不住了。",
+        "如果你能在路径转角放个临时装置，我们就能多拖一会儿。",
+        "样品还在封装？那就先用基础手段顶着。"
+      ],
+      "battle_role": "提供节点战况播报与样品送达提示"
+    },
+    {
+      "stable_internal_id": "npc_workshop_mentor",
+      "display_name": "临时工坊老师傅",
+      "role": "craft_mentor",
+      "location_node_id": "temporary_workshop",
+      "voice": "沉稳、保守，强调工艺稳定性，对实验性方案持保留态度。",
+      "default_address_by_origin": {
+        "lampwright_apprentice": "小技师",
+        "flow_engineer": "外乡工程师",
+        "signal_dispatcher": "年轻的调度员"
+      },
+      "sample_lines": [
+        "灯芯碎片够用，但别浪费在花哨想法上。",
+        "稳健的工艺更靠得住，实验性的东西我持保留意见。",
+        "折光绊索？嗯，思路不错，但稳定性需要现场验证。"
+      ],
+      "battle_role": "现场研发阶段提供 NPC 初步判断与材料建议"
+    }
+  ]
+}
