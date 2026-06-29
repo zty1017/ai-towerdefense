@@ -1,0 +1,34 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_temporary_trap_delivery",
+  "mode": "deterministic",
+  "description": "locked manifest + first battle config -> research delivery payload stub",
+  "nodes": [
+    {
+      "id": "load_locked_manifest",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json" }
+    },
+    {
+      "id": "load_battle_config",
+      "node_type": "source.load_json",
+      "params": { "path": "game_data/demo/first_battle_config.json" }
+    },
+    {
+      "id": "build_runtime_package",
+      "node_type": "runtime.build_package_stub",
+      "runtime_public": true
+    },
+    {
+      "id": "build_delivery_payload",
+      "node_type": "research.build_delivery_payload_stub",
+      "runtime_public": true
+    }
+  ],
+  "edges": [
+    { "source": "load_locked_manifest", "target": "build_runtime_package", "target_input": "locked_manifest" },
+    { "source": "load_battle_config", "target": "build_runtime_package", "target_input": "battle_config" },
+    { "source": "load_locked_manifest", "target": "build_delivery_payload", "target_input": "locked_manifest" },
+    { "source": "load_battle_config", "target": "build_delivery_payload", "target_input": "battle_config" }
+  ]
+}
