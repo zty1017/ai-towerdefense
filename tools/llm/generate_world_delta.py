@@ -29,85 +29,13 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import adapter  # noqa: E402
+import world_delta_prompt  # noqa: E402
 
 WORLD_STATE_DIR = ROOT / "tools" / "world_state"
 if str(WORLD_STATE_DIR) not in sys.path:
     sys.path.insert(0, str(WORLD_STATE_DIR))
 
 import validate_world_delta as v_wd  # noqa: E402
-
-SYSTEM_PROMPT = """你是塔防世界状态编译器。你负责根据战斗结果、会话上下文和当前世界状态，生成一个 WorldStateDelta v0.1。
-
-WorldStateDelta 是一组受控操作，用于更新 RunWorldState。只允许以下 9 种操作：
-- append_event: 追加一个事件到 event_log
-- set_map_node_state: 更新地图节点状态（status, threat_level, visibility, available_actions）
-- adjust_resource: 调整资源数量（amount_delta 可以为负数）
-- set_flag: 设置一个布尔/字符串/数字标志
-- unlock_fact: 解锁一个事实（fact_id, source, visibility, summary）
-- update_npc_relationship: 更新 NPC 关系（trust 增量）
-- add_temporary_sample: 添加一个临时样品
-- set_progress_phase: 设置进度阶段
-- adjust_global_state: 调整全局状态（pressure, hope, visibility）
-
-输出必须是纯 JSON，schema_version 为 "world_state_delta.v0.1"。
-不要使用 markdown 代码块，只返回 JSON 对象。
-不要包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret 等字段。
-所有玩家可见文本必须使用世界内语言（中文叙事风格），不能出现技术术语。"""
-
-
-def build_user_prompt(
-    run_world_state: dict,
-    battle_result: dict,
-    session_context: dict,
-) -> str:
-    return json.dumps(
-        {
-            "instruction": "根据以下输入生成 WorldStateDelta v0.1",
-            "run_world_state": {
-                "run_id": run_world_state.get("run_id"),
-                "worldbook_id": run_world_state.get("worldbook_id"),
-                "progress": run_world_state.get("progress"),
-                "global_state": run_world_state.get("global_state"),
-                "resources": run_world_state.get("resources"),
-                "map_nodes": [
-                    {
-                        "node_id": n.get("node_id"),
-                        "status": n.get("status"),
-                        "threat_level": n.get("threat_level"),
-                        "visibility": n.get("visibility"),
-                        "available_actions": n.get("available_actions"),
-                    }
-                    for n in (run_world_state.get("map_nodes") or [])
-                ],
-                "npcs": [
-                    {
-                        "npc_id": n.get("npc_id"),
-                        "relationship": n.get("relationship"),
-                    }
-                    for n in (run_world_state.get("npcs") or [])
-                ],
-                "unlocked_facts": run_world_state.get("unlocked_facts"),
-                "event_log": run_world_state.get("event_log"),
-                "flags": run_world_state.get("flags"),
-            },
-            "battle_result": {
-                "winner": battle_result.get("winner"),
-                "core_damaged": battle_result.get("core_damaged"),
-                "enemies_leaked": battle_result.get("enemies_leaked"),
-                "waves_survived": battle_result.get("waves_survived"),
-                "sample_triggered": battle_result.get("sample_triggered"),
-                "node_id": battle_result.get("node_id"),
-            },
-            "session_context": {
-                "player_origin": session_context.get("player_origin"),
-                "node_id": session_context.get("node_id"),
-                "prior_events": session_context.get("prior_events"),
-            },
-        },
-        ensure_ascii=False,
-        indent=2,
-    )
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -161,8 +89,13 @@ def main() -> int:
 
     # Build messages
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": build_user_prompt(run_world_state, battle_result, session_context)},
+        {"role": "system", "content": world_delta_prompt.SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": world_delta_prompt.build_user_prompt(
+                run_world_state, battle_result, session_context
+            ),
+        },
     ]
 
     print(f"Calling provider profile={profile.name!r} model={profile.model!r} ...", file=sys.stderr)

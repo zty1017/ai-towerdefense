@@ -576,6 +576,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
   - 没有 `--live` 时拒绝联网并返回非 0 退出码。
   - live 模式下调用 provider，提取 JSON，执行 `validate_with_jsonschema` + `validate_world_delta`。
   - 校验不通过则退出非 0，并将失败 artifact 写入 `/tmp/failed_delta_*.json`。
+- `tools/llm/world_delta_prompt.py` — WorldStateDelta 共享提示词与输入压缩器，CLI 和 AssetGraph live 节点共用同一套顶层字段、operation 模板和禁止形态约束。
 
 ### 12.2 新增 AssetGraph 节点
 
