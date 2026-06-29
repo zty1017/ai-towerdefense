@@ -1,0 +1,46 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_media_processing_publish",
+  "mode": "deterministic",
+  "description": "media processing publish: raw_media -> remove_background -> crop_and_pad -> normalize_canvas -> assign_anchor -> pack_sprite_sheet -> build_atlas_json (published_media, runtime_public)",
+  "nodes": [
+    {
+      "id": "load_raw",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/raw_media_sequence.sample.json" }
+    },
+    {
+      "id": "remove_bg",
+      "node_type": "media.remove_background_stub"
+    },
+    {
+      "id": "crop_pad",
+      "node_type": "media.crop_and_pad_stub"
+    },
+    {
+      "id": "normalize",
+      "node_type": "media.normalize_canvas_stub"
+    },
+    {
+      "id": "assign_anchor",
+      "node_type": "media.assign_anchor_stub"
+    },
+    {
+      "id": "pack_sheet",
+      "node_type": "media.pack_sprite_sheet_stub"
+    },
+    {
+      "id": "build_atlas",
+      "node_type": "media.build_atlas_json_stub",
+      "runtime_public": true
+    }
+  ],
+  "edges": [
+    { "source": "load_raw", "target": "remove_bg", "target_input": "media_metadata" },
+    { "source": "remove_bg", "target": "crop_pad", "target_input": "media_metadata" },
+    { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },
+    { "source": "normalize", "target": "assign_anchor", "target_input": "media_metadata" },
+    { "source": "assign_anchor", "target": "pack_sheet", "target_input": "media_metadata" },
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" }
+  ]
+}

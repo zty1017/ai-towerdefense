@@ -108,7 +108,7 @@
         { "name": "battle_config", "kind": "artifact_ref", "required": true }
       ],
       "outputs": [
-        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to runtime_package_stub.json." }
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to runtime_package.json." }
       ]
     },
     {
@@ -140,6 +140,128 @@
       ],
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to published_media_manifest.json (media_layer=published_media)." }
+      ]
+    },
+    {
+      "node_type": "narrative.mock_npc_feedback",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock of NPC feedback after a battle. Reads battle_result + session_context and produces world-in-language NPC reactions. Does not call a real LLM. Output is narrative-only; no provider/schema/prompt/trace terms.",
+      "inputs": [
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative artifact JSON (npc_feedback[], battle_summary, world_events[])." }
+      ]
+    },
+    {
+      "node_type": "narrative.mock_world_growth_event",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock of post-battle world growth events. Reads battle_result + session_context and produces world-in-language world state change events. Does not call a real LLM. Output is narrative-only; no provider/schema/prompt/trace terms.",
+      "inputs": [
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative artifact JSON (npc_feedback[], battle_summary, world_events[])." }
+      ]
+    },
+    {
+      "node_type": "media.remove_background_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: remove background from raw_media items. Only processes JSON metadata; no real image processing. Promotes media_layer raw_media -> processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=raw_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.crop_and_pad_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: crop and pad processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.normalize_canvas_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: normalize canvas dimensions for processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.assign_anchor_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: assign anchor points to processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.pack_sprite_sheet_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: pack processed_media items into a sprite sheet descriptor. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.build_atlas_json_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic stub: build the final published atlas manifest from processed_media items. Only processes JSON metadata; no real image processing. Promotes media_layer processed_media -> published_media and assigns local /assets/ paths. Output is runtime_public-eligible.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a published_media manifest JSON (media_layer=published_media)." }
       ]
     }
   ]

@@ -1,0 +1,34 @@
+{
+  "metadata_version": "raw_media_sequence.v0.1",
+  "media_layer": "raw_media",
+  "description": "Stub raw_media sequence for the mvp_media_processing_publish workflow. Items live in the raw_media layer and must flow through remove_background -> crop_and_pad -> normalize_canvas -> assign_anchor -> pack_sprite_sheet -> build_atlas_json before they may be referenced by runtime_public artifacts.",
+  "items": [
+    {
+      "stable_internal_id": "sample_trap_7f3a_icon",
+      "source_layer": "raw_media",
+      "source_kind": "imported_stub",
+      "width": 512,
+      "height": 512,
+      "fallback_used": true,
+      "notes": "Placeholder icon for the 折光绊索 sample trap. No real image generation was invoked."
+    },
+    {
+      "stable_internal_id": "sample_trap_7f3a_sprite",
+      "source_layer": "raw_media",
+      "source_kind": "imported_stub",
+      "width": 256,
+      "height": 256,
+      "fallback_used": true,
+      "notes": "Placeholder sprite for the 折光绊索 sample trap."
+    },
+    {
+      "stable_internal_id": "basic_lantern_barricade_icon",
+      "source_layer": "raw_media",
+      "source_kind": "imported_stub",
+      "width": 512,
+      "height": 512,
+      "fallback_used": true,
+      "notes": "Placeholder icon for the 基础灯栏."
+    }
+  ]
+}
