@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api import health as health_api
+from .api import research as research_api
 from .api import sessions as sessions_api
 from .config import get_app_title, get_app_version
 from .db import init_db
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(health_api.router)
     app.include_router(sessions_api.router)
+    app.include_router(research_api.router)
     return app
 
 
