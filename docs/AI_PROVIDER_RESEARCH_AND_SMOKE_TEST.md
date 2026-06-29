@@ -557,7 +557,52 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | Agnes | `agnes-video-v2.0` | 部分成功 | 提交成功，查询接口成功；最近一次查询状态为 `in_progress`，进度 30% |
 | CodeBuddy ImageGen | `hunyuan-image-v3.0` | 可调用但被限流 | `glm-5.1` 能发现并调用 ImageGen；需 `-y` 或允许 `DeferExecuteTool`；最近一次返回 `Too many requests` |
 
-## 12. 待确认问题
+## 12. Guarded LLM WorldStateDelta 实现说明
+
+本轮实现新增了一条受控的 LLM 世界状态 delta 生成路径，位于 `tools/llm/`。
+
+### 12.1 新增文件
+
+- `tools/llm/__init__.py` — 空包初始化。
+- `tools/llm/adapter.py` — 最小 LLM adapter，支持 OpenAI-compatible chat completions。
+  - 5 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`deepseek_v4_flash`、`deepseek_v4_pro`。
+  - `load_dotenv()` 从 `.env` 加载环境变量，日志只显示 env key 名称。
+  - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
+  - `chat_completion()` 使用 stdlib `urllib`，无额外依赖。
+- `tools/llm/generate_world_delta.py` — CLI 工具。
+  - 输入：`--run-world-state`、`--battle-result`、`--session-context`、`--output`。
+  - 参数：`--provider-profile`、`--max-tokens`、`--request-timeout`、`--live`。
+  - 没有 `--live` 时拒绝联网并返回非 0 退出码。
+  - live 模式下调用 provider，提取 JSON，执行 `validate_with_jsonschema` + `validate_world_delta`。
+  - 校验不通过则退出非 0，并将失败 artifact 写入 `/tmp/failed_delta_*.json`。
+
+### 12.2 新增 AssetGraph 节点
+
+- `tools/asset_graph/nodes.py` 新增 `node_world_state_build_delta_with_llm_guarded`。
+  - node_type：`world_state.build_delta_with_llm_guarded`。
+  - inputs：`run_world_state`、`battle_result`、`session_context`。
+  - params：`allow_live_provider_call`（必须为 true）、`provider_profile`（默认 `ark_deepseek_v4_flash`）、`max_tokens`（默认 4096）、`request_timeout`（默认 90）。
+  - `allow_live_provider_call` 不为 true 时抛出 NodeError，要求显式开启。
+  - 调用 provider 后执行 JSON 提取 + 双重校验（jsonschema + 规则校验）。
+  - 输出 artifact kind 为 `world_state_delta`，不含 provider/model/raw_prompt 字段。
+- `shared/asset_graph/node_registry.v0.1.json` 注册该节点，`calls_provider: true`，`modes: ["live"]`。
+
+### 12.3 新增示例 workflow
+
+- `examples/workflows/mvp_live_world_delta_guarded.workflow.json`
+  - mode 为 `live`。
+  - 加载 demo state / battle result / session context。
+  - 调用 `world_state.build_delta_with_llm_guarded`（`allow_live_provider_call: true`）。
+  - 调用 `world_state.apply_delta` 应用 delta。
+  - 文档强调该 workflow 会真实联网，由人工显式执行。
+
+### 12.4 安全与隐私
+
+- 本实现从不读取 `.env` 中的 API key 真实值（`load_dotenv` 仅设置环境变量，日志只显示 key 名称）。
+- 从不调用真实 provider（dry-run 是默认模式，`--live` 或 `allow_live_provider_call=true` 才允许联网）。
+- 输出 artifact 不包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content。
+
+## 13. 待确认问题
 
 1. Agnes 的 `GET /v1/models` 是否稳定可用。官方文档未明确承诺，不能作为生产依赖。
 2. 方舟 Coding Plan 已验证可调用长上下文候选模型；仍需确认长期作为游戏运行时主通道时的套餐边界、并发限制、日志归因和费用策略。

@@ -45,6 +45,12 @@ import validate_run_world_state as v_rws  # noqa: E402
 import validate_world_delta as v_wd  # noqa: E402
 import apply_world_delta as a_wd  # noqa: E402
 
+LLM_DIR = ROOT / "tools" / "llm"
+if str(LLM_DIR) not in sys.path:
+    sys.path.insert(0, str(LLM_DIR))
+
+import adapter as llm_adapter  # noqa: E402
+
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
 
@@ -1147,6 +1153,169 @@ def node_world_state_apply_delta(
     return {"output_refs": {"default": ref}}
 
 
+# ---------------------------------------------------------------------------
+# Guarded LLM WorldStateDelta node (live only, calls provider)
+# ---------------------------------------------------------------------------
+
+_WORLD_DELTA_SYSTEM_PROMPT = (
+    "你是塔防世界状态编译器。你负责根据战斗结果、会话上下文和当前世界状态，"
+    "生成一个 WorldStateDelta v0.1。\n\n"
+    "WorldStateDelta 是一组受控操作，用于更新 RunWorldState。"
+    "只允许以下 9 种操作：\n"
+    "- append_event: 追加一个事件到 event_log\n"
+    "- set_map_node_state: 更新地图节点状态（status, threat_level, visibility, available_actions）\n"
+    "- adjust_resource: 调整资源数量（amount_delta 可以为负数）\n"
+    "- set_flag: 设置一个布尔/字符串/数字标志\n"
+    "- unlock_fact: 解锁一个事实（fact_id, source, visibility, summary）\n"
+    "- update_npc_relationship: 更新 NPC 关系（trust 增量）\n"
+    "- add_temporary_sample: 添加一个临时样品\n"
+    "- set_progress_phase: 设置进度阶段\n"
+    "- adjust_global_state: 调整全局状态（pressure, hope, visibility）\n\n"
+    "输出必须是纯 JSON，schema_version 为 \"world_state_delta.v0.1\"。\n"
+    "不要使用 markdown 代码块，只返回 JSON 对象。\n"
+    "不要包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret 等字段。\n"
+    "所有玩家可见文本必须使用世界内语言（中文叙事风格），不能出现技术术语。"
+)
+
+
+def node_world_state_build_delta_with_llm_guarded(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Call an LLM to generate a WorldStateDelta, guarded by validation.
+
+    This node only works in live mode with allow_live_provider_call=true.
+    It calls the configured provider, extracts JSON, validates with
+    jsonschema + world delta rules, and writes the validated delta.
+    The output artifact never contains provider/model/raw_prompt terms.
+    """
+    run_world_state = _load_artifact(inputs, "run_world_state")
+    battle_result = _load_artifact(inputs, "battle_result")
+    session_context = _load_artifact(inputs, "session_context")
+
+    allow_live = params.get("allow_live_provider_call", False)
+    if not allow_live:
+        raise NodeError(
+            "world_state.build_delta_with_llm_guarded requires "
+            "params.allow_live_provider_call=true to call a real LLM provider. "
+            "Set it to true only when you explicitly intend to make a live API call."
+        )
+
+    provider_profile = str(params.get("provider_profile", "ark_deepseek_v4_flash"))
+    max_tokens = int(params.get("max_tokens", 4096))
+    request_timeout = int(params.get("request_timeout", 90))
+
+    if provider_profile not in llm_adapter.PROFILES:
+        raise NodeError(
+            f"unknown provider_profile={provider_profile!r}; "
+            f"known: {sorted(llm_adapter.PROFILES)}"
+        )
+
+    profile = llm_adapter.PROFILES[provider_profile]
+    llm_adapter.load_dotenv(ROOT / ".env")
+
+    user_prompt = json.dumps(
+        {
+            "instruction": "根据以下输入生成 WorldStateDelta v0.1",
+            "run_world_state": {
+                "run_id": run_world_state.get("run_id"),
+                "worldbook_id": run_world_state.get("worldbook_id"),
+                "progress": run_world_state.get("progress"),
+                "global_state": run_world_state.get("global_state"),
+                "resources": run_world_state.get("resources"),
+                "map_nodes": [
+                    {
+                        "node_id": n.get("node_id"),
+                        "status": n.get("status"),
+                        "threat_level": n.get("threat_level"),
+                        "visibility": n.get("visibility"),
+                        "available_actions": n.get("available_actions"),
+                    }
+                    for n in (run_world_state.get("map_nodes") or [])
+                ],
+                "npcs": [
+                    {
+                        "npc_id": n.get("npc_id"),
+                        "relationship": n.get("relationship"),
+                    }
+                    for n in (run_world_state.get("npcs") or [])
+                ],
+                "unlocked_facts": run_world_state.get("unlocked_facts"),
+                "event_log": run_world_state.get("event_log"),
+                "flags": run_world_state.get("flags"),
+            },
+            "battle_result": {
+                "winner": battle_result.get("winner"),
+                "core_damaged": battle_result.get("core_damaged"),
+                "enemies_leaked": battle_result.get("enemies_leaked"),
+                "waves_survived": battle_result.get("waves_survived"),
+                "sample_triggered": battle_result.get("sample_triggered"),
+                "node_id": battle_result.get("node_id"),
+            },
+            "session_context": {
+                "player_origin": session_context.get("player_origin"),
+                "node_id": session_context.get("node_id"),
+                "prior_events": session_context.get("prior_events"),
+            },
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    messages = [
+        {"role": "system", "content": _WORLD_DELTA_SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    try:
+        response = llm_adapter.chat_completion(
+            profile,
+            messages,
+            max_tokens=max_tokens,
+            timeout=request_timeout,
+            response_format={"type": "json_object"},
+        )
+    except Exception as exc:
+        raise NodeError(f"LLM provider call failed: {exc}") from exc
+
+    raw_text = llm_adapter.extract_content_from_response(response)
+    delta = llm_adapter.extract_json(raw_text)
+
+    if delta is None:
+        raise NodeError(
+            "failed to extract JSON from LLM provider response"
+        )
+
+    # Validate delta
+    delta_errors: list[str] = []
+    delta_errors.extend(v_wd.validate_with_jsonschema(delta))
+    delta_errors.extend(v_wd.validate_world_delta(delta))
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for e in delta_errors:
+        if e not in seen:
+            seen.add(e)
+            deduped.append(e)
+    if deduped:
+        raise NodeError(
+            "LLM-produced WorldStateDelta validation failed: "
+            + "; ".join(deduped)
+        )
+
+    out_path = run_dir / f"{node_id}__world_state_delta.json"
+    _write_json(out_path, delta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__world_state_delta",
+        kind="world_state_delta",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
 # Registry of node_type -> implementation function.
 NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
@@ -1167,5 +1336,6 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.pack_sprite_sheet_stub": node_media_pack_sprite_sheet_stub,
     "media.build_atlas_json_stub": node_media_build_atlas_json_stub,
     "world_state.build_delta_from_narrative_stub": node_world_state_build_delta_from_narrative_stub,
+    "world_state.build_delta_with_llm_guarded": node_world_state_build_delta_with_llm_guarded,
     "world_state.apply_delta": node_world_state_apply_delta,
 }
