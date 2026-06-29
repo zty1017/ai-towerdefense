@@ -47,6 +47,22 @@
       ]
     },
     {
+      "node_type": "asset.compile_with_llm_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to generate a CompiledAssetCandidate v0.1 from a Proposal. Requires params.allow_live_provider_call=true and workflow mode=live. Validates the candidate with validate_asset_candidate before writing. Output artifact kind is compiled_asset_candidate.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a Proposal JSON." },
+        { "name": "registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to an effect_blocks registry. Defaults to shared/module_registry/effect_blocks.v0.1.json." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validated CompiledAssetCandidate JSON." }
+      ]
+    },
+    {
       "node_type": "asset.validate_candidate",
       "category": "pure",
       "modes": ["deterministic", "studio", "live"],
