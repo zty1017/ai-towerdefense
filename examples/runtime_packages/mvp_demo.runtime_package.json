@@ -1,0 +1,130 @@
+{
+  "schema_version": "runtime_package.v0.1",
+  "package_id": "package_session_lampwright_7f3a_001",
+  "session_id": "session_lampwright_7f3a",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "battle_display_name": "灰灯驿站·第一场战斗",
+  "created_at": "2026-06-29T00:00:00Z",
+  "source_refs": {
+    "locked_manifest_id": "manifest_session_lampwright_7f3a_001",
+    "battle_config_version": "first_battle.v0.1"
+  },
+  "assets": [
+    {
+      "stable_internal_id": "sample_trap_7f3a",
+      "asset_kind": "temporary_trap_sample",
+      "lifecycle_state": "ephemeral",
+      "display": {
+        "name": "折光绊索",
+        "summary": "用灯光编织的临时绊线，能让经过的影潮短暂迟滞。",
+        "tags": ["陷阱", "减速", "试作品"]
+      },
+      "gameplay_ref": {
+        "kind": "compiled_asset_candidate",
+        "path": "game_data/compiled_assets/sample_trap_7f3a.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/icons/sample_trap_7f3a.webp",
+          "width": 512,
+          "height": 512,
+          "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        "sprite": {
+          "texture_key": "sample_trap_7f3a",
+          "atlas": "/assets/atlases/traps.json",
+          "image": "/assets/atlases/traps.webp"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_activate",
+          "kind": "ring_pulse",
+          "palette_token": "light.control.cold",
+          "color": "#9edcff",
+          "secondary_color": "#ffffff",
+          "intensity": "medium",
+          "radius": 96,
+          "duration_ms": 900,
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_active",
+          "kind": "aura_field",
+          "palette_token": "light.control.cold",
+          "color": "#9edcff",
+          "secondary_color": "#cfeeff",
+          "intensity": "medium",
+          "radius_from_effect": "slow.radius",
+          "duration_ms": 1200,
+          "particle_density": "low",
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_expire",
+          "kind": "sprite_flash",
+          "palette_token": "light.control.cold",
+          "color": "#ffffff",
+          "intensity": "low",
+          "duration_ms": 240,
+          "blend_mode": "normal"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": ["battle_hotbar"],
+        "uses_per_battle": 2,
+        "requires_delivery": true,
+        "delivery_state": "research_in_progress"
+      }
+    }
+  ],
+  "battle_context": {
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 16,
+      "height_cells": 9,
+      "cell_size": 64
+    },
+    "paths": [
+      {
+        "stable_internal_id": "path_main_road",
+        "display_name": "主路径",
+        "waypoints": [
+          { "x": 15, "y": 4 },
+          { "x": 10, "y": 4 },
+          { "x": 10, "y": 2 },
+          { "x": 5, "y": 2 },
+          { "x": 5, "y": 6 },
+          { "x": 1, "y": 6 }
+        ],
+        "entry_label": "影潮涌入方向",
+        "exit_label": "驿站核心方向"
+      }
+    ],
+    "core_target": {
+      "stable_internal_id": "target_node_core",
+      "display_name": "驿站核心",
+      "position": { "x": 0, "y": 6 },
+      "durability": 10
+    },
+    "optional_targets": [
+      {
+        "stable_internal_id": "target_signal_beacon",
+        "display_name": "信标天线",
+        "position": { "x": 3, "y": 2 },
+        "durability": 4
+      }
+    ],
+    "sample_delivery": {
+      "delivery_delay_ms": 30000,
+      "delivery_progress_messages": [
+        "现场试作中。",
+        "材料校准中。",
+        "样品封装中。",
+        "正在送达战场。"
+      ]
+    }
+  }
+}

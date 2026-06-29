@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import secrets
 import sys
 import time
 from datetime import datetime, timezone
@@ -27,11 +28,14 @@ ROOT = SCRIPT_DIR.parents[1]
 CONTENT_PIPELINE = ROOT / "tools" / "content_pipeline"
 if str(CONTENT_PIPELINE) not in sys.path:
     sys.path.insert(0, str(CONTENT_PIPELINE))
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 import mock_compile_proposal  # noqa: E402
 import simulate_asset_candidate  # noqa: E402
 import validate_asset_candidate  # noqa: E402
 import validate_proposal  # noqa: E402
+import runtime_package as rp  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -297,34 +301,47 @@ def node_runtime_build_package_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
+    """Build a real RuntimePackage v0.1 from upstream locked_manifest + battle_config.
+
+    The node_type name is kept as ``runtime.build_package_stub`` for backwards
+    compatibility with existing v0.1 workflows, but the implementation now
+    delegates to the formal builder in ``runtime_package.build_runtime_package``
+    and validates the result with the same safety rules used by the
+    ``validate_runtime_package`` CLI. The output artifact is runtime_public
+    safe: no provider/trace fields, no raw_media/processed_media, no
+    source_layer, no external URLs, only /assets/ media refs.
+    """
     manifest = _load_artifact(inputs, "locked_manifest")
     battle = _load_artifact(inputs, "battle_config")
-    # Build a minimal runtime package stub. No raw_media, no provider URLs.
-    locked_assets = manifest.get("locked_assets", [])
-    package = {
-        "package_version": "runtime_package_stub.v0.1",
-        "worldbook_id": manifest.get("worldbook_id"),
-        "session_id": manifest.get("session_id"),
-        "node_id": battle.get("node_id"),
-        "battle_display_name": battle.get("display_name"),
-        "sample_assets": [
-            {
-                "stable_internal_id": a.get("stable_internal_id"),
-                "display_name": a.get("display", {}).get("name"),
-                "uses_per_battle": a.get("battle_availability", {}).get("uses_per_battle"),
-                "requires_delivery": a.get("battle_availability", {}).get("requires_delivery"),
-                "delivery_state": a.get("battle_availability", {}).get("delivery_state"),
-            }
-            for a in locked_assets
-        ],
-        # No raw_media, no processed_media, no provider URLs.
-        "media_refs": [],
-    }
-    out_path = run_dir / f"{node_id}__runtime_package_stub.json"
+    package_id = f"package_{manifest.get('session_id', 'session')}_{secrets.token_hex(4)}"
+    package = rp.build_runtime_package(
+        manifest,
+        battle,
+        package_id=package_id,
+        created_at=_now_iso(),
+    )
+    # Validate before writing so a runtime_public post-check failure never
+    # surfaces from a builder bug; raise NodeError with concrete paths instead.
+    schema_path = ROOT / "shared/schemas/runtime_package.v0.1.schema.json"
+    schema: dict[str, Any] | None = None
+    if schema_path.exists():
+        try:
+            with schema_path.open("r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                schema = loaded
+        except (OSError, json.JSONDecodeError):
+            pass
+    errors = rp.validate_package(package, schema)
+    if errors:
+        raise NodeError(
+            f"runtime package validation failed: {'; '.join(errors)}"
+        )
+    out_path = run_dir / f"{node_id}__runtime_package.json"
     _write_json(out_path, package)
     ref = _make_ref(
-        artifact_id=f"{node_id}__runtime_package_stub",
-        kind="runtime_package_stub",
+        artifact_id=f"{node_id}__runtime_package",
+        kind="runtime_package",
         path=out_path,
         run_dir=run_dir,
         produced_by_node=node_id,
