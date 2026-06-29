@@ -319,3 +319,81 @@ node validate_asset_candidate failed: unknown effect "time_freeze"
 
 这样现有脚本就可以从“顺序脚本”升级成“执行 graph JSON”。
 
+## 11. 媒体后处理节点是 AssetGraph 一等节点（已确认）
+
+媒体后处理不是临时补丁，而是 AssetGraph 的一等节点类别。
+
+AI 生成图不能直接进入 runtime package。它必须经过显式的后处理与发布流程，才能成为前端可加载的已锁定媒体资产。
+
+### 11.1 媒体三层结构
+
+```text
+raw_media
+  AI 生成或外部导入的原始图片 / 视频 / 音频。
+  不可被 runtime package 引用。
+  不可暴露给玩家侧。
+
+processed_media
+  经过裁剪、抠底、归一化、锚点对齐等中间处理的媒体。
+  仍不可被 runtime package 直接引用。
+  可以被媒体子图内部节点之间传递。
+
+published_media
+  已打包、已签名（v0.2 起）、已分配本地 /assets/ 路径的发布态媒体。
+  只有 published_media 可以出现在 runtime_public artifact 中。
+  只有 published_media 可以被前端运行时加载。
+```
+
+### 11.2 MVP 内的轻量流程
+
+MVP 不实现完整媒体后处理管线。MVP 内只做：
+
+```text
+validate
+  -> normalize（轻量归一化，例如尺寸 / 命名 / 路径）
+  -> publish（分配 /assets/ 路径，写入 published_media manifest）
+  -> fallback（如果上游缺失或失败，使用占位图标 / 统一 sprite）
+```
+
+对应已注册节点：`media.publish_stub_manifest`。
+
+`media.publish_stub_manifest` 接受 raw_media_metadata（stub），产出一个 published_media manifest（stub）。它不调用真实图像处理，只用占位路径与 fallback 标记。
+
+### 11.3 MVP 后第一梯队节点
+
+MVP 跑通后，按以下顺序补齐真实媒体后处理节点：
+
+```text
+remove_background      抠底 / 去背景
+crop_and_pad           裁剪与留白
+normalize_canvas       画布尺寸归一化
+assign_anchor          锚点 / 站位点对齐
+pack_sprite_sheet      打包 sprite sheet
+build_atlas_json       生成 atlas 元数据 JSON
+```
+
+这些节点在 v0.2 进入 NodeRegistry，并接受 `processed_media` 作为输入、产出 `processed_media` 或 `published_media`。
+
+### 11.4 媒体子图默认异步
+
+媒体后处理子图默认异步执行，不阻塞 gameplay package 发布。
+
+```text
+gameplay package 构建
+  -> 不等待媒体子图
+  -> 媒体子图在后台推进
+  -> 媒体 published 后，下一次 runtime package 构建再纳入
+
+如果媒体子图未完成或失败：
+  runtime package 使用 fallback 占位媒体
+  不阻塞战斗加载
+  失败信息进入内部 trace 与证据导出
+```
+
+这意味着：
+
+- `runtime.build_package_stub` 不依赖 `media.publish_stub_manifest` 完成。
+- 媒体缺失时使用 fallback 占位。
+- 媒体子图的 trace 独立记录，可供证据导出读取。
+
+

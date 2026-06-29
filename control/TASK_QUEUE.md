@@ -527,3 +527,135 @@ P0-006 可以与后端并行。
 P0-007 等前端骨架完成后开始。
 P0-010 可以在后端 run 记录结构确定后开始。
 ```
+
+## 7. 下一批 P0 任务（AssetGraph Kernel 之后）
+
+以下任务在 AssetGraph Kernel v0.1（task/assetgraph-kernel）落地后推进。已完成的 P0-001/P0-002/P0-003 不再改写。
+
+### P0-011 AssetGraph Kernel
+
+任务类型：实现
+
+推荐执行：CodeBuddy
+
+目标：
+
+```text
+建立可跑通的 AssetGraph Kernel v0.1，能用 DAG 执行现有 mock 编译管线，
+产生 artifact 与 execution trace。
+```
+
+允许修改：
+
+- `docs/ASSET_GRAPH_COMPILER_V0_1.md`
+- `control/TASK_QUEUE.md`
+- `shared/schemas/`
+- `shared/asset_graph/`
+- `examples/workflows/`
+- `examples/asset_graph/`
+- `tools/asset_graph/`
+- `tools/content_pipeline/`（仅必要可复用函数适配，不破坏现有 CLI）
+
+禁止修改：
+
+- `.env`
+- `backend/`
+- `frontend/`
+- `content/`
+- `game_data/`
+- 已有 provider 配置与密钥
+
+验收命令：
+
+```bash
+python3 tools/asset_graph/validate_workflow.py examples/workflows/mvp_mock_asset_compile.workflow.json
+python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_mock_asset_compile.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/mock_asset_compile
+python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_temporary_trap_delivery.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/trap_delivery
+python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_media_stub_publish.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/media_stub
+python3 -m compileall tools/asset_graph tools/content_pipeline
+python3 tools/content_pipeline/run_mock_pipeline.py examples/proposals/light_slow_field.proposal.json --output-dir /tmp/ai_compiled_td_mock_runs
+```
+
+完成标准：
+
+- DAG 拓扑排序执行，无循环。
+- 节点间传 ArtifactRef，不在边上塞大对象。
+- 每个节点写 artifact 到 output_dir，trace 记录 status/start/end/input refs/output refs/errors。
+- 只实现 deterministic/mock 节点，不调用真实 LLM/provider。
+- runtime_public artifact 不得引用 raw_media 或 provider 临时 URL。
+- 不允许 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content 出现在 runtime_public artifact。
+- 现有 content_pipeline CLI 仍然可用。
+
+### P0-012 RuntimePackage v0.1 schema/builder
+
+任务类型：实现
+
+目标：
+
+```text
+基于 AssetGraph 的 runtime.build_package_stub 节点产出，定义
+RuntimePackage v0.1 schema 与正式 builder，作为前端运行时加载的已锁定
+资产包。RuntimePackage 必须只引用 published_media，不得引用 raw_media /
+processed_media 或 provider 临时 URL。
+```
+
+允许修改：
+
+- `shared/schemas/`
+- `tools/asset_graph/`
+- `examples/`
+
+验收命令（建议）：
+
+```bash
+python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json
+python3 -m py_compile tools/asset_graph/validate_runtime_package.py
+```
+
+### P0-013 ResearchJob API 接入 AssetGraph
+
+任务类型：实现 / 集成
+
+目标：
+
+```text
+把后端 ResearchJob 状态机接入 AssetGraph Kernel。玩家确认试作后，
+后端创建 ResearchJob 并触发 mvp_mock_asset_compile workflow；
+研发倒计时结束后，runtime.build_package_stub / research.build_delivery_payload_stub
+节点产出的 artifact 写回 session 状态。
+```
+
+允许修改：
+
+- `backend/`
+- `tools/asset_graph/`
+- `shared/`
+
+完成标准：
+
+- ResearchJob 状态机驱动 workflow 执行。
+- 玩家侧不出现 AI/provider/schema/prompt。
+- 内部 trace 可供证据导出读取。
+
+### P0-014 DAG templates 扩展：defense / narrative / media
+
+任务类型：实现 / 内容
+
+目标：
+
+```text
+在 AssetGraph Kernel 上扩展三类 DAG 模板：
+- defense：防御塔蓝图编译流程（提案 -> 编译 -> 校验 -> 模拟 -> runtime package）。
+- narrative：NPC 反馈 / 战后结算 / 世界生长事件生成流程。
+- media：raw_media -> processed_media -> published_media 完整媒体发布子图，
+  体现 MVP 后第一梯队节点（remove_background、crop_and_pad、normalize_canvas、
+  assign_anchor、pack_sprite_sheet、build_atlas_json）的占位与边界。
+```
+
+允许修改：
+
+- `examples/workflows/`
+- `examples/asset_graph/`
+- `shared/asset_graph/`
+- `tools/asset_graph/`（仅必要时新增节点实现）
+

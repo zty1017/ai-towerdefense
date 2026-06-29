@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/execution_trace.v0.1.schema.json",
+  "title": "ExecutionTrace v0.1",
+  "description": "Per-node execution record produced by the workflow runner.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trace_id", "workflow_id", "started_at", "ended_at", "status", "node_runs"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "execution_trace.v0.1" },
+    "trace_id": { "type": "string", "minLength": 1 },
+    "workflow_id": { "type": "string", "minLength": 1 },
+    "mode": { "type": "string", "enum": ["deterministic", "studio", "live"] },
+    "started_at": { "type": "string" },
+    "ended_at": { "type": "string" },
+    "status": { "type": "string", "enum": ["passed", "failed", "partial"] },
+    "error": { "type": "string" },
+    "node_runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node_run" }
+    }
+  },
+  "$defs": {
+    "node_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "node_type", "status", "started_at", "ended_at"],
+      "properties": {
+        "node_id": { "type": "string" },
+        "node_type": { "type": "string" },
+        "status": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "started_at": { "type": "string" },
+        "ended_at": { "type": "string" },
+        "input_refs": { "type": "array", "items": { "$ref": "artifact_ref.v0.1.schema.json" } },
+        "output_refs": { "type": "array", "items": { "$ref": "artifact_ref.v0.1.schema.json" } },
+        "errors": { "type": "array", "items": { "type": "string" } },
+        "fallback_used": { "type": "boolean" }
+      }
+    }
+  }
+}

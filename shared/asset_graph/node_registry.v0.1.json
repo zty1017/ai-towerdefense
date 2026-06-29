@@ -1,0 +1,146 @@
+{
+  "schema_version": "node_registry.v0.1",
+  "nodes": [
+    {
+      "node_type": "source.load_json",
+      "category": "io",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Load a JSON file from disk and expose it as an artifact_ref.",
+      "inputs": [
+        { "name": "path", "kind": "string", "required": true, "description": "Absolute or repo-relative path to a JSON file." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef pointing at the loaded JSON payload (copied into run output dir)." }
+      ]
+    },
+    {
+      "node_type": "proposal.validate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a Proposal JSON against proposal.v0.1 using tools/content_pipeline/validate_proposal.validate.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a proposal JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validation_result.json (status + errors)." }
+      ]
+    },
+    {
+      "node_type": "asset.mock_compile_proposal",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock compile of a Proposal into a CompiledAssetCandidate. Does not call a real LLM.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to compiled_asset.json." }
+      ]
+    },
+    {
+      "node_type": "asset.validate_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a CompiledAssetCandidate against effect_blocks registry using validate_asset_candidate.validate.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "registry", "kind": "artifact_ref", "required": false, "description": "Defaults to shared/module_registry/effect_blocks.v0.1.json." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to validation_result.json." }
+      ]
+    },
+    {
+      "node_type": "asset.simulate_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Run a deterministic mock simulation of a CompiledAssetCandidate using simulate_asset_candidate.simulate.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "duration_seconds", "kind": "number", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to simulation_report.json." }
+      ]
+    },
+    {
+      "node_type": "report.pipeline_summary",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Aggregate upstream artifacts into a pipeline_summary.json (status, paths, balance_flags).",
+      "inputs": [
+        { "name": "proposal_validation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true }
+      ]
+    },
+    {
+      "node_type": "runtime.build_package_stub",
+      "category": "runtime",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a stub RuntimePackage from upstream locked_manifest + first_battle_config. Output is runtime_public-eligible but must not carry raw_media or provider URLs.",
+      "inputs": [
+        { "name": "locked_manifest", "kind": "artifact_ref", "required": true },
+        { "name": "battle_config", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to runtime_package_stub.json." }
+      ]
+    },
+    {
+      "node_type": "research.build_delivery_payload_stub",
+      "category": "runtime",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a research delivery payload stub from locked_manifest + first_battle_config. Carries sample trap metadata with delivery_state; never exposes provider/trace.",
+      "inputs": [
+        { "name": "locked_manifest", "kind": "artifact_ref", "required": true },
+        { "name": "battle_config", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to research_delivery_payload_stub.json." }
+      ]
+    },
+    {
+      "node_type": "media.publish_stub_manifest",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Publish a stub media manifest from raw_media stub metadata. Enforces raw_media -> processed_media -> published_media layering. Output published_media may be runtime_public; raw/processed may not.",
+      "inputs": [
+        { "name": "raw_media_metadata", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to published_media_manifest.json (media_layer=published_media)." }
+      ]
+    }
+  ]
+}
