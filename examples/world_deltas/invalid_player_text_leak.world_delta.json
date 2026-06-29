@@ -1,0 +1,38 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_invalid_player_text_leak_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "narrative_event",
+  "created_turn": 2,
+  "summary": "负例：玩家可见摘要中混入了 provider 与 prompt 等技术词，应被校验器拒绝。",
+  "operations": [
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "leaky_event",
+        "turn": 2,
+        "kind": "story",
+        "summary": "系统 provider 返回了未经审查的 prompt 片段，trace 信息泄露到玩家侧。"
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "leaky_fact",
+        "source": "first_battle",
+        "visibility": "player_known",
+        "summary": "该事实摘要误把 model 调用细节写入了玩家可见文案。"
+      }
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "leaky_sample",
+        "display_name": "raw_prompt 残片",
+        "source_delta_id": "delta_invalid_player_text_leak_001",
+        "summary": "样本名与摘要中含 token 与 compiler 等禁用词。"
+      }
+    }
+  ]
+}
