@@ -263,6 +263,41 @@
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a published_media manifest JSON (media_layer=published_media)." }
       ]
+    },
+    {
+      "node_type": "world_state.build_delta_from_narrative_stub",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock: build a WorldStateDelta from battle_result + session_context + narrative artifacts (npc_feedback, world_growth). Validates the delta before writing. Does not call a real LLM. Output is a world_state_delta.v0.1 JSON artifact with no provider/model/raw_prompt/trace terms.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON." },
+        { "name": "npc_feedback", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative npc_feedback artifact." },
+        { "name": "world_growth", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative world_growth artifact." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a world_state_delta.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "world_state.apply_delta",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic: apply a validated WorldStateDelta to a RunWorldState. Delegates to apply_world_delta.apply_delta and validates both input and output state. Raises NodeError on failure. Does not call a real LLM. Output is a next RunWorldState JSON artifact.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a WorldStateDelta JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the next RunWorldState JSON." }
+      ]
     }
   ]
 }

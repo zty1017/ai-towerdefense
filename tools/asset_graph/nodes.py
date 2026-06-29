@@ -37,6 +37,14 @@ import validate_asset_candidate  # noqa: E402
 import validate_proposal  # noqa: E402
 import runtime_package as rp  # noqa: E402
 
+WORLD_STATE_DIR = ROOT / "tools" / "world_state"
+if str(WORLD_STATE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORLD_STATE_DIR))
+
+import validate_run_world_state as v_rws  # noqa: E402
+import validate_world_delta as v_wd  # noqa: E402
+import apply_world_delta as a_wd  # noqa: E402
+
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
 
@@ -879,6 +887,266 @@ def node_media_build_atlas_json_stub(
     return {"output_refs": {"default": ref}}
 
 
+# ---------------------------------------------------------------------------
+# World State Delta nodes (deterministic, no real LLM)
+# ---------------------------------------------------------------------------
+
+
+def _derive_delta_id(run_id: str, node_id: str, battle_result: dict[str, Any]) -> str:
+    """Stable delta_id derived from run_id/node_id/battle_result — no random."""
+    raw = f"{run_id}/{node_id}/{battle_result.get('winner', 'unknown')}/{battle_result.get('waves_survived', 0)}"
+    return f"delta_{hashlib.sha256(raw.encode()).hexdigest()[:12]}"
+
+
+def node_world_state_build_delta_from_narrative_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Deterministic mock: build a WorldStateDelta from battle_result +
+    session_context + narrative artifacts (npc_feedback, world_growth).
+
+    The delta is assembled from input fields, validated with
+    validate_world_delta, and written as a world_state_delta.v0.1 artifact.
+    No real LLM is called. No provider/model/raw_prompt/trace terms leak into
+    the output.
+    """
+    run_world_state = _load_artifact(inputs, "run_world_state")
+    battle_result = _load_artifact(inputs, "battle_result")
+    session_context = _load_artifact(inputs, "session_context")
+    npc_feedback = _load_artifact(inputs, "npc_feedback") if inputs.get("npc_feedback") else None
+    world_growth = _load_artifact(inputs, "world_growth") if inputs.get("world_growth") else None
+
+    run_id = run_world_state.get("run_id", "run_unknown")
+    worldbook_id = run_world_state.get("worldbook_id", "unknown")
+    current_turn = run_world_state.get("progress", {}).get("turn", 1)
+    winner = battle_result.get("winner", "player")
+    core_damaged = bool(battle_result.get("core_damaged", False))
+    enemies_leaked = int(battle_result.get("enemies_leaked", 0) or 0)
+    waves_survived = int(battle_result.get("waves_survived", 0) or 0)
+    sample_triggered = bool(battle_result.get("sample_triggered", False))
+    node_id_battle = battle_result.get("node_id", session_context.get("node_id", "gray_lantern_station"))
+
+    delta_id = _derive_delta_id(run_id, node_id, battle_result)
+    created_turn = current_turn + 1
+
+    # Build summary in world-in language
+    if winner == "player":
+        summary = "影潮被击退，驿站核心安全，灯匠记录下战斗数据。"
+        if enemies_leaked > 0:
+            summary = f"影潮被击退，但有 {enemies_leaked} 股漏过灯栏，驿站核心承受了压力。"
+    else:
+        summary = "影潮压过驿站，灯匠带着残余灯火撤离，长夜更浓了。"
+
+    node_status = "secured" if winner == "player" else "contested"
+    threat_level = 0 if winner == "player" else 2
+
+    # Build operations
+    operations: list[dict[str, Any]] = [
+        {"op": "set_progress_phase", "phase": "post_first_defense"},
+        {
+            "op": "set_map_node_state",
+            "node_id": node_id_battle,
+            "patch": {
+                "status": node_status,
+                "threat_level": threat_level,
+                "visibility": "visible",
+                "available_actions": ["field_research", "rest", "talk_to_engineer"],
+            },
+        },
+        {
+            "op": "adjust_global_state",
+            "field": "hope",
+            "amount_delta": 0.08 if winner == "player" else -0.15,
+        },
+        {
+            "op": "adjust_global_state",
+            "field": "pressure",
+            "amount_delta": -0.10 if winner == "player" else 0.20,
+        },
+        {
+            "op": "update_npc_relationship",
+            "npc_id": "engineer_001",
+            "relationship_delta": {"trust": 0.08 if winner == "player" else -0.10},
+        },
+        {
+            "op": "unlock_fact",
+            "fact": {
+                "fact_id": "engineer_lamp_calibration",
+                "source": "first_battle",
+                "visibility": "player_known",
+                "summary": "工程师承认灯阵校准与玩家的现场判断一致。",
+            },
+        },
+        {
+            "op": "add_temporary_sample",
+            "sample": {
+                "sample_id": "sample_refraction_chard",
+                "display_name": "焦黑的折射碎片",
+                "source_delta_id": delta_id,
+                "summary": "战后从灯座边缘拾得的碎片，表面有规则的灼烧纹路。",
+            },
+        },
+        {
+            "op": "append_event",
+            "event": {
+                "event_id": "first_battle_resolved",
+                "turn": created_turn,
+                "kind": "battle",
+                "summary": "灰灯驿站首战告捷，夜雾暂退半步。" if winner == "player" else "灰灯驿站失守，夜雾涌入。",
+            },
+        },
+        {
+            "op": "set_flag",
+            "flag": "tutorial_first_battle_completed",
+            "value": True,
+        },
+    ]
+
+    # Adjust resources: consume lamp_oil, gain iron_scrap
+    operations.append({
+        "op": "adjust_resource",
+        "resource_id": "lamp_oil",
+        "amount_delta": -3,
+    })
+    operations.append({
+        "op": "adjust_resource",
+        "resource_id": "iron_scrap",
+        "amount_delta": 2,
+    })
+
+    delta: dict[str, Any] = {
+        "schema_version": "world_state_delta.v0.1",
+        "delta_id": delta_id,
+        "run_id": run_id,
+        "worldbook_id": worldbook_id,
+        "source": "battle_result",
+        "created_turn": created_turn,
+        "summary": summary,
+        "operations": operations,
+    }
+
+    # Validate delta before writing
+    delta_errors: list[str] = []
+    delta_errors.extend(v_wd.validate_with_jsonschema(delta))
+    delta_errors.extend(v_wd.validate_world_delta(delta))
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for e in delta_errors:
+        if e not in seen:
+            seen.add(e)
+            deduped.append(e)
+    if deduped:
+        raise NodeError(
+            f"build_delta_from_narrative_stub produced invalid delta: "
+            + "; ".join(deduped)
+        )
+
+    out_path = run_dir / f"{node_id}__world_state_delta.json"
+    _write_json(out_path, delta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__world_state_delta",
+        kind="world_state_delta",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_world_state_apply_delta(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Deterministic: apply a validated WorldStateDelta to a RunWorldState.
+
+    Delegates to apply_world_delta.apply_delta and validates both input and
+    output state. Raises NodeError on any failure so the workflow status
+    becomes failed.
+    """
+    run_world_state = _load_artifact(inputs, "run_world_state")
+    world_state_delta = _load_artifact(inputs, "world_state_delta")
+
+    # Validate input state
+    state_errors: list[str] = []
+    state_errors.extend(v_rws.validate_with_jsonschema(run_world_state))
+    state_errors.extend(v_rws.validate_run_world_state(run_world_state))
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for e in state_errors:
+        if e not in seen:
+            seen.add(e)
+            deduped.append(e)
+    if deduped:
+        raise NodeError(
+            f"apply_delta: input RunWorldState invalid: " + "; ".join(deduped)
+        )
+
+    # Validate input delta
+    delta_errors: list[str] = []
+    delta_errors.extend(v_wd.validate_with_jsonschema(world_state_delta))
+    delta_errors.extend(v_wd.validate_world_delta(world_state_delta))
+    seen2: set[str] = set()
+    deduped2: list[str] = []
+    for e in delta_errors:
+        if e not in seen2:
+            seen2.add(e)
+            deduped2.append(e)
+    if deduped2:
+        raise NodeError(
+            f"apply_delta: input WorldStateDelta invalid: " + "; ".join(deduped2)
+        )
+
+    # Check run_id / worldbook_id consistency
+    if world_state_delta.get("run_id") != run_world_state.get("run_id"):
+        raise NodeError(
+            f"apply_delta: delta.run_id ({world_state_delta.get('run_id')!r}) "
+            f"does not match state.run_id ({run_world_state.get('run_id')!r})"
+        )
+    if world_state_delta.get("worldbook_id") != run_world_state.get("worldbook_id"):
+        raise NodeError(
+            f"apply_delta: delta.worldbook_id ({world_state_delta.get('worldbook_id')!r}) "
+            f"does not match state.worldbook_id ({run_world_state.get('worldbook_id')!r})"
+        )
+
+    # Apply
+    next_state, apply_errors = a_wd.apply_delta(run_world_state, world_state_delta)
+    if apply_errors:
+        raise NodeError(
+            f"apply_delta: errors while applying operations: " + "; ".join(apply_errors)
+        )
+
+    # Validate next state
+    next_errors: list[str] = []
+    next_errors.extend(v_rws.validate_with_jsonschema(next_state))
+    next_errors.extend(v_rws.validate_run_world_state(next_state))
+    seen3: set[str] = set()
+    deduped3: list[str] = []
+    for e in next_errors:
+        if e not in seen3:
+            seen3.add(e)
+            deduped3.append(e)
+    if deduped3:
+        raise NodeError(
+            f"apply_delta: next RunWorldState invalid after apply: "
+            + "; ".join(deduped3)
+        )
+
+    out_path = run_dir / f"{node_id}__run_world_state.json"
+    _write_json(out_path, next_state)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__run_world_state",
+        kind="run_world_state",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
 # Registry of node_type -> implementation function.
 NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
@@ -898,4 +1166,6 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.assign_anchor_stub": node_media_assign_anchor_stub,
     "media.pack_sprite_sheet_stub": node_media_pack_sprite_sheet_stub,
     "media.build_atlas_json_stub": node_media_build_atlas_json_stub,
+    "world_state.build_delta_from_narrative_stub": node_world_state_build_delta_from_narrative_stub,
+    "world_state.apply_delta": node_world_state_apply_delta,
 }
