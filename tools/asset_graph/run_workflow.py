@@ -46,6 +46,24 @@ FORBIDDEN_FIELDS = frozenset(
     }
 )
 
+# Extra field names that must not appear in runtime_public artifacts. These are
+# player-facing-safety terms beyond the core forbidden set: the runtime package
+# is what the frontend loads, so technical terms like prompt/schema/traceback/
+# mock/simulation/trace/compiler/token must never leak into it even as field
+# names. Checked in addition to FORBIDDEN_FIELDS during the runtime_public scan.
+RUNTIME_PUBLIC_EXTRA_FORBIDDEN_FIELDS = frozenset(
+    {
+        "prompt",
+        "schema",
+        "traceback",
+        "mock",
+        "simulation",
+        "trace",
+        "compiler",
+        "token",
+    }
+)
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -158,6 +176,11 @@ def _scan_runtime_public_forbidden(value: Any, path: str, errors: list[str]) -> 
             if key in FORBIDDEN_FIELDS:
                 errors.append(
                     f"runtime_public artifact forbidden field '{child_path}'"
+                )
+            elif key in RUNTIME_PUBLIC_EXTRA_FORBIDDEN_FIELDS:
+                errors.append(
+                    f"runtime_public artifact forbidden field '{child_path}' "
+                    f"(player-facing-safety term '{key}' must not leak to runtime)"
                 )
             _scan_runtime_public_forbidden(child, child_path, errors)
     elif isinstance(value, list):

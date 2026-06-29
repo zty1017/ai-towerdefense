@@ -437,6 +437,448 @@ def node_media_publish_stub_manifest(
     return {"output_refs": {"default": ref}}
 
 
+# ---------------------------------------------------------------------------
+# Narrative nodes (deterministic, world-in-language, no provider/trace terms)
+# ---------------------------------------------------------------------------
+
+# Narrative player-visible output must never leak technical terms. This set is
+# stricter than the runner's FORBIDDEN_FIELDS: it also bans prompt/schema/
+# traceback/simulation/trace/mock anywhere in the narrative artifact (as field
+# names OR as substrings inside string values). Enforced before the artifact
+# is written so a forbidden term never reaches the runtime_public layer.
+NARRATIVE_FORBIDDEN_TERMS = frozenset(
+    {
+        "provider",
+        "raw_prompt",
+        "full_trace",
+        "raw_json",
+        "api_key",
+        "secret",
+        "schema",
+        "traceback",
+        "prompt",
+        "mock",
+        "simulation",
+        "trace",
+    }
+)
+
+
+def _scan_narrative_forbidden(value: Any, path: str, errors: list[str]) -> None:
+    """Recursively reject narrative-forbidden terms in field names or strings."""
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}" if path else key
+            if isinstance(key, str) and key.lower() in NARRATIVE_FORBIDDEN_TERMS:
+                errors.append(
+                    f"narrative output forbidden field {child_path!r} "
+                    f"(term {key!r} is not player-visible-safe)"
+                )
+            _scan_narrative_forbidden(child, child_path, errors)
+    elif isinstance(value, list):
+        for i, child in enumerate(value):
+            _scan_narrative_forbidden(child, f"{path}[{i}]", errors)
+    elif isinstance(value, str):
+        lowered = value.lower()
+        for term in NARRATIVE_FORBIDDEN_TERMS:
+            if term in lowered:
+                errors.append(
+                    f"narrative output {path}={value!r} contains forbidden "
+                    f"term {term!r}"
+                )
+
+
+def _enforce_narrative_safe(payload: dict[str, Any], node_id: str) -> None:
+    """Raise NodeError if the narrative payload carries any forbidden term."""
+    errors: list[str] = []
+    _scan_narrative_forbidden(payload, "", errors)
+    if errors:
+        raise NodeError(
+            f"narrative node {node_id!r} produced forbidden content: "
+            + "; ".join(errors[:5])
+        )
+
+
+def _narrative_context(
+    battle_result: dict[str, Any], session_context: dict[str, Any]
+) -> dict[str, Any]:
+    return {
+        "worldbook_id": session_context.get(
+            "worldbook_id", battle_result.get("worldbook_id", "long_night_lanterns")
+        ),
+        "node_id": session_context.get(
+            "node_id", battle_result.get("node_id", "gray_lantern_station")
+        ),
+        "session_id": session_context.get(
+            "session_id", battle_result.get("session_id", "session_lampwright_7f3a")
+        ),
+        "player_origin": session_context.get("player_origin", "lampwright"),
+    }
+
+
+def _narrative_outcome_phrases(battle_result: dict[str, Any]) -> dict[str, list[str]]:
+    """Map battle_result flags to world-in-language phrases. Deterministic."""
+    winner = battle_result.get("winner", "player")
+    core_damaged = bool(battle_result.get("core_damaged", False))
+    sample_triggered = bool(battle_result.get("sample_triggered", False))
+    enemies_leaked = int(battle_result.get("enemies_leaked", 0) or 0)
+    waves_survived = int(battle_result.get("waves_survived", 0) or 0)
+
+    if winner == "player":
+        summary_core = "驿站核心未受损。" if not core_damaged else "驿站核心虽有损耗，但仍在点亮。"
+        summary_leak = "影潮无一漏过。" if enemies_leaked == 0 else f"仍有 {enemies_leaked} 股影潮漏过灯栏。"
+        summary_wave = f"共守住 {waves_survived} 波影潮。" if waves_survived else "影潮被击退。"
+        battle_summary = (
+            "影潮涌至灰灯驿站，灯匠以灯火与折光绊索守御。"
+            + summary_core
+            + summary_leak
+            + summary_wave
+        )
+        lampwright_line = (
+            "折光绊索在战场上迟滞了影潮，但样品已经用尽，需要重新试作。"
+            if sample_triggered
+            else "这一战没有动用折光绊索，灯栏勉强支撑住了。"
+        )
+        world_reinforce = "灰灯驿站的灯栏经此一役得到加固，邻近路径的能见度略有提升。"
+    else:
+        battle_summary = (
+            "影潮压过灰灯驿站，灯栏熄灭，驿站核心陷入黑暗。灯匠带着残留的灯火与记录撤离。"
+        )
+        lampwright_line = "驿站没能守住，但样品的实战表现已被记录，留待来日再战。"
+        world_reinforce = "灰灯驿站暂时陷入沉寂，邻近路径的灯火黯淡，影潮活动有所增强。"
+
+    sample_event = (
+        "折光绊索的实战数据被灯匠归档，为后续正式研发留下线索。"
+        if sample_triggered
+        else "灯匠整理了这一战的守御记录，准备改进灯栏结构。"
+    )
+
+    return {
+        "battle_summary": [battle_summary],
+        "lampwright_line": [lampwright_line],
+        "world_reinforce": [world_reinforce],
+        "sample_event": [sample_event],
+    }
+
+
+def _apply_narrative_test_inject(
+    payload: dict[str, Any], params: dict[str, Any]
+) -> None:
+    """Test-only hook: merge a single forbidden field into the payload so the
+    narrative content guard can be exercised end-to-end via a workflow JSON.
+
+    Never set in production workflows. The injected field is scanned by
+    _enforce_narrative_safe immediately after, so the forbidden term never
+    reaches the artifact file.
+    """
+    field = params.get("_test_inject_field")
+    if not isinstance(field, str) or not field:
+        return
+    payload[field] = params.get("_test_inject_value")
+
+
+def node_narrative_mock_npc_feedback(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    battle_result = _load_artifact(inputs, "battle_result")
+    session_context = _load_artifact(inputs, "session_context")
+    ctx = _narrative_context(battle_result, session_context)
+    phrases = _narrative_outcome_phrases(battle_result)
+
+    payload: dict[str, Any] = {
+        "narrative_version": "narrative.v0.1",
+        "focus": "npc_feedback",
+        "worldbook_id": ctx["worldbook_id"],
+        "node_id": ctx["node_id"],
+        "session_id": ctx["session_id"],
+        "player_origin": ctx["player_origin"],
+        "npc_feedback": [
+            {
+                "npc_id": "engineer_001",
+                "name": "灯匠",
+                "text": phrases["lampwright_line"][0],
+            }
+        ],
+        "battle_summary": phrases["battle_summary"][0],
+        "world_events": [
+            {
+                "event_id": "npc_lampwright_acknowledge_hold",
+                "kind": "npc_reaction",
+                "text": "灯匠确认驿站核心的状况，并记录下这一战的实战表现。",
+            }
+        ],
+    }
+    _apply_narrative_test_inject(payload, params)
+    _enforce_narrative_safe(payload, node_id)
+
+    out_path = run_dir / f"{node_id}__narrative_npc_feedback.json"
+    _write_json(out_path, payload)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__narrative_npc_feedback",
+        kind="narrative_artifact",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_narrative_mock_world_growth_event(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    battle_result = _load_artifact(inputs, "battle_result")
+    session_context = _load_artifact(inputs, "session_context")
+    ctx = _narrative_context(battle_result, session_context)
+    phrases = _narrative_outcome_phrases(battle_result)
+
+    payload: dict[str, Any] = {
+        "narrative_version": "narrative.v0.1",
+        "focus": "world_growth",
+        "worldbook_id": ctx["worldbook_id"],
+        "node_id": ctx["node_id"],
+        "session_id": ctx["session_id"],
+        "player_origin": ctx["player_origin"],
+        "npc_feedback": [
+            {
+                "npc_id": "engineer_001",
+                "name": "灯匠",
+                "text": "影潮退去后，驿站的灯火比先前更稳了一些。",
+            }
+        ],
+        "battle_summary": phrases["battle_summary"][0],
+        "world_events": [
+            {
+                "event_id": "world_gray_lantern_reinforced",
+                "kind": "world_state_change",
+                "text": phrases["world_reinforce"][0],
+            },
+            {
+                "event_id": "world_sample_data_archived",
+                "kind": "world_state_change",
+                "text": phrases["sample_event"][0],
+            },
+        ],
+    }
+    _apply_narrative_test_inject(payload, params)
+    _enforce_narrative_safe(payload, node_id)
+
+    out_path = run_dir / f"{node_id}__narrative_world_growth.json"
+    _write_json(out_path, payload)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__narrative_world_growth",
+        kind="narrative_artifact",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+# ---------------------------------------------------------------------------
+# Media stub nodes (JSON metadata only, no real image processing)
+# ---------------------------------------------------------------------------
+
+
+def _media_stub_step(
+    inputs: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+    *,
+    step_name: str,
+    input_layer: str,
+    output_layer: str,
+    output_filename: str,
+    output_kind: str,
+) -> dict[str, Any]:
+    """Generic media stub: read media_metadata, advance media_layer, strip
+    source_layer, append a processing step marker. No real image processing."""
+    meta = _load_artifact(inputs, "media_metadata")
+    actual_layer = meta.get("media_layer") if isinstance(meta, dict) else None
+    if actual_layer != input_layer:
+        raise NodeError(
+            f"{step_name} expected media_layer={input_layer!r}, "
+            f"got {actual_layer!r}"
+        )
+    items_in = meta.get("items", []) if isinstance(meta, dict) else []
+    items_out: list[dict[str, Any]] = []
+    for item in items_in:
+        if not isinstance(item, dict):
+            continue
+        # source_layer (raw->published provenance) must NOT leak to products;
+        # it lives only in trace/internal.
+        new_item = {k: v for k, v in item.items() if k != "source_layer"}
+        new_item["media_layer"] = output_layer
+        steps = list(new_item.get("processing_steps", []))
+        steps.append(step_name)
+        new_item["processing_steps"] = steps
+        items_out.append(new_item)
+    out_meta: dict[str, Any] = {
+        "metadata_version": "media_metadata.v0.1",
+        "media_layer": output_layer,
+        "items": items_out,
+    }
+    out_path = run_dir / f"{node_id}__{output_filename}"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__{output_kind}",
+        kind=output_kind,
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer=output_layer,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_media_remove_background_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    return _media_stub_step(
+        inputs,
+        run_dir,
+        node_id,
+        step_name="remove_background",
+        input_layer="raw_media",
+        output_layer="processed_media",
+        output_filename="media_remove_background.json",
+        output_kind="media_metadata",
+    )
+
+
+def node_media_crop_and_pad_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    return _media_stub_step(
+        inputs,
+        run_dir,
+        node_id,
+        step_name="crop_and_pad",
+        input_layer="processed_media",
+        output_layer="processed_media",
+        output_filename="media_crop_and_pad.json",
+        output_kind="media_metadata",
+    )
+
+
+def node_media_normalize_canvas_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    return _media_stub_step(
+        inputs,
+        run_dir,
+        node_id,
+        step_name="normalize_canvas",
+        input_layer="processed_media",
+        output_layer="processed_media",
+        output_filename="media_normalize_canvas.json",
+        output_kind="media_metadata",
+    )
+
+
+def node_media_assign_anchor_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    return _media_stub_step(
+        inputs,
+        run_dir,
+        node_id,
+        step_name="assign_anchor",
+        input_layer="processed_media",
+        output_layer="processed_media",
+        output_filename="media_assign_anchor.json",
+        output_kind="media_metadata",
+    )
+
+
+def node_media_pack_sprite_sheet_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    return _media_stub_step(
+        inputs,
+        run_dir,
+        node_id,
+        step_name="pack_sprite_sheet",
+        input_layer="processed_media",
+        output_layer="processed_media",
+        output_filename="media_pack_sprite_sheet.json",
+        output_kind="media_metadata",
+    )
+
+
+def node_media_build_atlas_json_stub(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Final publish step: processed_media -> published_media manifest with
+    local /assets/ paths. No source_layer, no external URLs. runtime_public-safe."""
+    meta = _load_artifact(inputs, "media_metadata")
+    actual_layer = meta.get("media_layer") if isinstance(meta, dict) else None
+    if actual_layer != "processed_media":
+        raise NodeError(
+            f"build_atlas_json expected media_layer='processed_media', "
+            f"got {actual_layer!r}"
+        )
+    items_in = meta.get("items", []) if isinstance(meta, dict) else []
+    published: list[dict[str, Any]] = []
+    for item in items_in:
+        if not isinstance(item, dict):
+            continue
+        stable_id = item.get("stable_internal_id", "media_unknown")
+        published.append(
+            {
+                "stable_internal_id": stable_id,
+                "media_layer": "published_media",
+                "url": f"/assets/published/{stable_id}.webp",
+                "width": item.get("width", 512),
+                "height": item.get("height", 512),
+                "fallback_used": item.get("fallback_used", True),
+            }
+        )
+    manifest: dict[str, Any] = {
+        "manifest_version": "published_media_manifest.v0.1",
+        "media_layer": "published_media",
+        "published_media": published,
+        "atlas": {
+            "image": "/assets/atlases/published.webp",
+            "descriptor": "/assets/atlases/published.json",
+        },
+    }
+    out_path = run_dir / f"{node_id}__published_media_manifest.json"
+    _write_json(out_path, manifest)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__published_media_manifest",
+        kind="published_media_manifest",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="published_media",
+    )
+    return {"output_refs": {"default": ref}}
+
+
 # Registry of node_type -> implementation function.
 NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
@@ -448,4 +890,12 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "runtime.build_package_stub": node_runtime_build_package_stub,
     "research.build_delivery_payload_stub": node_research_build_delivery_payload_stub,
     "media.publish_stub_manifest": node_media_publish_stub_manifest,
+    "narrative.mock_npc_feedback": node_narrative_mock_npc_feedback,
+    "narrative.mock_world_growth_event": node_narrative_mock_world_growth_event,
+    "media.remove_background_stub": node_media_remove_background_stub,
+    "media.crop_and_pad_stub": node_media_crop_and_pad_stub,
+    "media.normalize_canvas_stub": node_media_normalize_canvas_stub,
+    "media.assign_anchor_stub": node_media_assign_anchor_stub,
+    "media.pack_sprite_sheet_stub": node_media_pack_sprite_sheet_stub,
+    "media.build_atlas_json_stub": node_media_build_atlas_json_stub,
 }

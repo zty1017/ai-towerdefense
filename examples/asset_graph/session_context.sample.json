@@ -1,0 +1,27 @@
+{
+  "session_context_version": "session_context.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "player_origin": "lampwright",
+  "node_id": "gray_lantern_station",
+  "session_id": "session_lampwright_7f3a",
+  "player_origin_summary": "灯匠出身，携灯火技艺行走于长夜。",
+  "prior_events": [
+    {
+      "event_id": "arrival_at_gray_lantern",
+      "kind": "travel",
+      "text": "灯匠抵达灰灯驿站，灯火尚未熄灭。"
+    },
+    {
+      "event_id": "first_sample_draft",
+      "kind": "craft",
+      "text": "灯匠在驿站工坊试作出第一份折光绊索样品。"
+    }
+  ],
+  "known_npcs": [
+    {
+      "npc_id": "engineer_001",
+      "name": "灯匠",
+      "role": "player_avatar"
+    }
+  ]
+}

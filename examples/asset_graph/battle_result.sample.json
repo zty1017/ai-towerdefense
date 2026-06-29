@@ -1,0 +1,36 @@
+{
+  "battle_result_version": "battle_result.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "session_id": "session_lampwright_7f3a",
+  "winner": "player",
+  "core_damaged": false,
+  "core_durability_remaining": 10,
+  "sample_triggered": true,
+  "sample_uses_remaining": 0,
+  "enemies_leaked": 0,
+  "waves_survived": 2,
+  "battle_duration_ms": 42000,
+  "waves": [
+    {
+      "wave_index": 1,
+      "display_name": "第一波·前锋",
+      "enemy_archetype": "shadow_tide_runner",
+      "count": 6,
+      "leaked": 0
+    },
+    {
+      "wave_index": 2,
+      "display_name": "第二波·残影",
+      "enemy_archetype": "shadow_tide_shade",
+      "count": 4,
+      "leaked": 0
+    }
+  ],
+  "sample_performance": {
+    "stable_internal_id": "sample_trap_7f3a",
+    "display_name": "折光绊索",
+    "uses_consumed": 2,
+    "enemies_slowed": 7
+  }
+}

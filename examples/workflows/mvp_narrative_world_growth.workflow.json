@@ -1,0 +1,34 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_narrative_world_growth",
+  "mode": "deterministic",
+  "description": "narrative world growth: battle_result + session_context -> NPC feedback + world growth events (player-visible, world-in-language only)",
+  "nodes": [
+    {
+      "id": "load_battle_result",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/battle_result.sample.json" }
+    },
+    {
+      "id": "load_session_context",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/session_context.sample.json" }
+    },
+    {
+      "id": "npc_feedback",
+      "node_type": "narrative.mock_npc_feedback",
+      "runtime_public": true
+    },
+    {
+      "id": "world_growth",
+      "node_type": "narrative.mock_world_growth_event",
+      "runtime_public": true
+    }
+  ],
+  "edges": [
+    { "source": "load_battle_result", "target": "npc_feedback", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "npc_feedback", "target_input": "session_context" },
+    { "source": "load_battle_result", "target": "world_growth", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "world_growth", "target_input": "session_context" }
+  ]
+}
