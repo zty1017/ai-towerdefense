@@ -1,0 +1,54 @@
+{
+  "config_version": "world_instance_config.v0.1",
+  "worldbook_template_id": "long_night_lanterns",
+  "worldbook_display_name": "长夜灯火",
+  "visual_style_id": "lantern_wasteland_pseudo3d",
+  "visual_style_display_name": "灯塬遗景·伪三维",
+  "creativity_mode": {
+    "selected": "stable",
+    "options": [
+      {
+        "id": "stable",
+        "display_name": "稳健",
+        "summary": "倾向使用已被验证的灯塬工艺，方案更稳定但变化较少。"
+      },
+      {
+        "id": "experimental",
+        "display_name": "实验性",
+        "summary": "允许尝试非常规改写与稀疏配比，可能产出意外样品。"
+      }
+    ]
+  },
+  "player_origin": {
+    "selected": "lampwright_apprentice",
+    "options": [
+      {
+        "id": "lampwright_apprentice",
+        "display_name": "守灯技师",
+        "summary": "熟悉灯塔结构与灯火工艺，善于在余灯中枢附近进行临时改造。"
+      },
+      {
+        "id": "flow_engineer",
+        "display_name": "流亡工程师",
+        "summary": "曾在远方驿站维护补给线，对导线与输送装置更有心得。"
+      },
+      {
+        "id": "signal_dispatcher",
+        "display_name": "见习调度员",
+        "summary": "负责观测影潮边缘与驿站信标，擅长判断敌潮动向。"
+      }
+    ]
+  },
+  "recommended_defaults": {
+    "creativity_mode": "stable",
+    "player_origin": "lampwright_apprentice",
+    "visual_style_id": "lantern_wasteland_pseudo3d"
+  },
+  "effects": {
+    "npc_address": "根据所选身份调整 NPC 对玩家的称呼。",
+    "opening_text": "根据所选身份调整开场文字口吻。",
+    "initial_materials": "根据所选身份调整开局材料侧重。",
+    "proposal_constraints": "实验性模式允许更宽的改写空间，稳健模式倾向熟工艺。"
+  },
+  "content_lifecycle_note": "本配置写入 world_instance_config，后续世界生长以本配置为初始基线。"
+}

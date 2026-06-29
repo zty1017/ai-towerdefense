@@ -1,0 +1,118 @@
+{
+  "map_version": "initial_map.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "display_name": "余灯中枢态势图",
+  "summary": "长夜未结束，灯火稀疏。余灯中枢是唯一稳定的光源据点，灰灯驿站正发出急报。",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "projection": "pseudo3d_oblique"
+  },
+  "nodes": [
+    {
+      "stable_internal_id": "residual_lantern_hub",
+      "display_name": "余灯中枢",
+      "kind": "main_city",
+      "position": { "x": 320, "y": 360 },
+      "state": "controlled",
+      "summary": "主城与中枢设施所在，灯火仍亮，是补给线起点。",
+      "icons": ["main_city", "lantern_glow"]
+    },
+    {
+      "stable_internal_id": "gray_lantern_station",
+      "display_name": "灰灯驿站",
+      "kind": "battle_hotspot",
+      "position": { "x": 880, "y": 300 },
+      "state": "crisis_active",
+      "summary": "第一危机节点。高速影潮正在接近，驿站信标忽明忽暗。",
+      "icons": ["battle_alert", "crisis_pulse"]
+    },
+    {
+      "stable_internal_id": "temporary_workshop",
+      "display_name": "临时工坊",
+      "kind": "research_facility",
+      "position": { "x": 460, "y": 260 },
+      "state": "available",
+      "summary": "可在节点现场进行应急改造的小型设施。",
+      "icons": ["workshop", "craft_bench"]
+    },
+    {
+      "stable_internal_id": "lamp_wick_store",
+      "display_name": "灯芯仓",
+      "kind": "resource_storage",
+      "position": { "x": 560, "y": 440 },
+      "state": "controlled",
+      "summary": "储存灯芯碎片与备品，是当前最关键的资源存储设施。",
+      "icons": ["resource_storage", "lamp_ware"]
+    }
+  ],
+  "supply_lines": [
+    {
+      "stable_internal_id": "supply_line_hub_to_gray",
+      "display_name": "中枢至灰灯补给线",
+      "from_node_id": "residual_lantern_hub",
+      "to_node_id": "gray_lantern_station",
+      "state": "active",
+      "summary": "连接余灯中枢与灰灯驿站的主要补给通道。"
+    }
+  ],
+  "dark_regions": [
+    {
+      "stable_internal_id": "dark_unknown_east",
+      "display_name": "东侧未知黑暗",
+      "polygon": [ { "x": 700, "y": 500 }, { "x": 1200, "y": 500 }, { "x": 1200, "y": 700 }, { "x": 700, "y": 700 } ],
+      "state": "hidden",
+      "summary": "尚未探明的黑暗区域，灯塔光芒无法抵达。"
+    },
+    {
+      "stable_internal_id": "dark_unknown_north",
+      "display_name": "北方深暗",
+      "polygon": [ { "x": 0, "y": 0 }, { "x": 1280, "y": 0 }, { "x": 1280, "y": 180 }, { "x": 0, "y": 180 } ],
+      "state": "hidden",
+      "summary": "北方深处灯火尽熄，传闻影潮由此滋生。"
+    }
+  ],
+  "threat_edges": [
+    {
+      "stable_internal_id": "shadow_tide_edge_southeast",
+      "display_name": "影潮移动边缘",
+      "position": { "x": 1100, "y": 600 },
+      "direction": "northwest",
+      "severity": "high",
+      "summary": "右下角高速影潮正在向中枢方向推进。"
+    }
+  ],
+  "floating_events": [
+    {
+      "stable_internal_id": "event_gray_lantern_distress",
+      "display_name": "灰灯驿站急报",
+      "kind": "distress_call",
+      "anchor_node_id": "gray_lantern_station",
+      "summary": "驿站守灯人发来急报，请求立即支援。"
+    },
+    {
+      "stable_internal_id": "event_npc_lampwright_request",
+      "display_name": "守灯技师请求",
+      "kind": "npc_request",
+      "anchor_node_id": "temporary_workshop",
+      "summary": "临时工坊的技师希望与你会面，讨论临时改造方案。"
+    },
+    {
+      "stable_internal_id": "event_main_quest_first_crisis",
+      "display_name": "当前任务：驰援灰灯驿站",
+      "kind": "main_quest",
+      "anchor_node_id": "gray_lantern_station",
+      "summary": "前往灰灯驿站，在影潮抵达前组织防线。"
+    }
+  ],
+  "legend_token_map": {
+    "main_city": "主城",
+    "battle_hotspot": "战斗热点",
+    "research_facility": "设施",
+    "resource_storage": "资源存储节点",
+    "supply_line": "补给线",
+    "dark_region": "黑暗未知区",
+    "threat_edge": "移动威胁边缘",
+    "floating_event": "悬浮事件"
+  }
+}

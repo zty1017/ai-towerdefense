@@ -1,0 +1,78 @@
+{
+  "worldbook_version": "worldbook.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "display_name": "长夜灯火",
+  "summary": "长夜没有结束，灯塔一座接一座熄灭。余灯中枢是最后稳定的光源据点，影潮正在逼近。",
+  "tone_and_taboos": {
+    "voice": "克制、压抑、带着微光般的希望。NPC 用世界内语言称呼玩家，不出现现代技术词。",
+    "forbidden_terms_in_player_text": ["AI", "provider", "schema", "prompt", "compiler", "token", "trace", "mock", "simulation"],
+    "naming_style": "灯火、光、影、潮、驿站、灯芯、导线、绊索等世界内意象。"
+  },
+  "phase_mapping": {
+    "preparation": "白天修缮：检查设施、整理材料、讨论临时改造。",
+    "battle": "入夜防守：影潮来袭，守住节点核心与资源设施。",
+    "resolution": "黎明巡记录：清点损伤、记录样品表现、整理研发线索。"
+  },
+  "resource_mapping": {
+    "lamp_shard": { "display_name": "灯芯碎片", "summary": "熄灭灯塔残留的灯芯碎段，是临时改造的基础材料。" },
+    "conductor_filament": { "display_name": "导线", "summary": "从废弃驿站拆下的金属导线，用于连接与传导。" },
+    "lantern_ash": { "display_name": "灯灰", "summary": "灯火燃尽后的灰烬，少量可用作稳定剂。" },
+    "glow_crystal": { "display_name": "微光晶", "summary": "稀有的发光晶体，可作为临时光源核心。" }
+  },
+  "node_mapping": {
+    "residual_lantern_hub": { "display_name": "余灯中枢", "role": "main_city" },
+    "gray_lantern_station": { "display_name": "灰灯驿站", "role": "battle_hotspot" },
+    "temporary_workshop": { "display_name": "临时工坊", "role": "research_facility" },
+    "lamp_wick_store": { "display_name": "灯芯仓", "role": "resource_storage" }
+  },
+  "enemy_mapping": {
+    "shadow_tide_runner": {
+      "display_name": "影潮奔行者",
+      "summary": "高速低耐久的影潮前锋，移动极快，难以被基础手段留住。",
+      "archetype": "fast_swarm"
+    },
+    "shadow_tide_shade": {
+      "display_name": "影潮残影",
+      "summary": "影潮主体中的一缕残影，耐久略高但速度较慢。",
+      "archetype": "basic"
+    }
+  },
+  "npc_archetypes": [
+    {
+      "stable_internal_id": "npc_gray_lantern_keeper",
+      "display_name": "灰灯驿站守灯人",
+      "role": "field_npc",
+      "voice": "焦急、务实，习惯用灯塔术语描述战况。"
+    },
+    {
+      "stable_internal_id": "npc_workshop_mentor",
+      "display_name": "临时工坊老师傅",
+      "role": "craft_mentor",
+      "voice": "沉稳、保守，强调工艺稳定性，对实验性方案持保留态度。"
+    }
+  ],
+  "asset_naming_rules": {
+    "temporary_trap_sample": "用光、绊、索、缠、灯芯等意象命名。示例：折光绊索、灯芯绊线、灰灯陷索。",
+    "tower_blueprint": "用灯塔、光幕、守卫等意象命名。示例：余灯守卫、光幕塔。"
+  },
+  "visual_rules": {
+    "palette": {
+      "cold_blue": "减速、冻结、稳定场",
+      "warm_gold": "灯火、治疗、护盾",
+      "red_orange": "爆裂、过载、燃烧",
+      "purple_black": "腐蚀、影潮、诅咒",
+      "green": "修复、生长、毒素",
+      "white": "净化、眩光、暴露"
+    },
+    "style": "灯塬遗景·伪三维，斜视角，暗色主调，灯火为暖金高光。"
+  },
+  "gameplay_tilt": {
+    "default_creativity": "stable",
+    "trap_sample_first": true,
+    "formal_research_institute_unlocked": false
+  },
+  "event_style": {
+    "opening": "黑屏白字 + 动画卡，建立长夜氛围与第一危机。",
+    "after_battle": "NPC 口头反馈 + 节点状态变化，不使用调试式日志。"
+  }
+}
