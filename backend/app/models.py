@@ -43,3 +43,53 @@ class SessionResetResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str = "ok"
     version: str
+
+
+# ---------------------------------------------------------------------------
+# Research job / proposal models
+# ---------------------------------------------------------------------------
+
+# Status values a research job may hold over its lifecycle. MVP runs
+# synchronously to "completed" but the field is reserved for future async
+# workers.
+JOB_STATUSES = ("queued", "running", "completed", "failed", "delayed", "unstable")
+
+
+class ResearchProposalRequest(BaseModel):
+    """Body for POST /api/sessions/{session_id}/research/proposals."""
+
+    intent_text: str = Field(
+        ..., description="Player-authored description of the desired asset behavior."
+    )
+    node_id: str = Field(
+        ..., description="World node the proposal targets (e.g. gray_lantern_station)."
+    )
+
+
+class ResearchProposalResponse(BaseModel):
+    proposal_id: str
+    session_id: str
+    node_id: str
+    display_name: str
+    summary: str
+    risk_note: str
+    player_state_message: str
+
+
+class ResearchJobResponse(BaseModel):
+    """Shared shape for confirm and get-job responses."""
+
+    job_id: str
+    session_id: str
+    proposal_id: str
+    status: str
+    player_state_message: str
+    runtime_package_path: Optional[str] = None
+    delivery_payload_path: Optional[str] = None
+    trace_paths: list[str] = Field(default_factory=list)
+
+
+class ResearchJobInfo(ResearchJobResponse):
+    created_at: datetime
+    updated_at: datetime
+    completed_at: Optional[datetime] = None

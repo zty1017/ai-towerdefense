@@ -23,6 +23,8 @@ router = APIRouter()
 
 # Tables whose rows belong to a session and should be wiped on reset.
 _SESSION_SCOPED_TABLES = (
+    "research_jobs",
+    "research_proposals",
     "studio_logs",
     "provider_logs",
     "battle_results",

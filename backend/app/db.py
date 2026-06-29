@@ -108,6 +108,38 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS research_proposals (
+                proposal_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                node_id TEXT,
+                intent_text TEXT,
+                display_name TEXT,
+                summary TEXT,
+                risk_note TEXT,
+                player_state_message TEXT,
+                status TEXT NOT NULL,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS research_jobs (
+                job_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                proposal_id TEXT,
+                status TEXT NOT NULL,
+                player_state_message TEXT,
+                runtime_package_path TEXT,
+                delivery_payload_path TEXT,
+                trace_paths TEXT,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                completed_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+            );
+
             CREATE INDEX IF NOT EXISTS idx_world_instance_session
                 ON world_instance(session_id);
             CREATE INDEX IF NOT EXISTS idx_campaign_state_session
@@ -120,6 +152,10 @@ def init_db(path: str | None = None) -> None:
                 ON provider_logs(session_id);
             CREATE INDEX IF NOT EXISTS idx_studio_logs_session
                 ON studio_logs(session_id);
+            CREATE INDEX IF NOT EXISTS idx_research_proposals_session
+                ON research_proposals(session_id);
+            CREATE INDEX IF NOT EXISTS idx_research_jobs_session
+                ON research_jobs(session_id);
             """
         )
         conn.commit()
