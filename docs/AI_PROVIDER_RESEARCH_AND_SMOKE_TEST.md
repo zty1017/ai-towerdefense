@@ -391,8 +391,10 @@ manifest 草案：
 | 1 | 方舟 Coding Plan | `deepseek-v4-pro` | 世界书一致性审查、复杂设定冲突检查、高质量内容生长 |
 | 2 | 方舟 Coding Plan | `glm-5.2` | 长上下文综合、中文叙事质量、设定润色与结构化整理 |
 | 3 | 方舟 Coding Plan | `deepseek-v4-flash` | 大批量候选生成、较低成本预处理、草稿扩展 |
-| 4 | DeepSeek 官方 API | `deepseek-v4-pro` | 方舟不可用、限流、套餐策略变化时的质量 fallback |
-| 5 | DeepSeek 官方 API | `deepseek-v4-flash` | 方舟不可用时的低成本 fallback |
+| 4 | 方舟 Coding Plan | `kimi-k2.6` | 世界书推理、叙事生长、复杂方案评审候选 |
+| 5 | 方舟 Coding Plan | `kimi-k2.7-code` | 开发期编译器规则、Schema、DAG 节点、结构化资产转换候选 |
+| 6 | DeepSeek 官方 API | `deepseek-v4-pro` | 方舟不可用、限流、套餐策略变化时的质量 fallback |
+| 7 | DeepSeek 官方 API | `deepseek-v4-flash` | 方舟不可用时的低成本 fallback |
 
 运行时策略：
 
@@ -401,6 +403,7 @@ manifest 草案：
 3. fallback 必须记录在 `AI_GENERATION_LOG`，包括原 provider、目标 provider、原因、模型名、输入摘要和输出摘要。
 4. 对世界书内容生长，模型输出仍然只能进入 `generated` 状态，必须经过 reviewed / locked 流程。
 5. 对需要严格 JSON 的任务，方舟某些模型可能不支持 `response_format=json_object`，应优先使用 prompt-only JSON + 本地 JSON parser + Schema 校验；如果失败，再切 DeepSeek 官方 JSON mode。
+6. Kimi 系列在方舟 Coding Plan 中已验证文本和 JSON 输出可用；运行时 artifact 只允许读取 `message.content`，不得保存 `reasoning_content`。
 
 ### 8.2 图像生成任务路由
 
@@ -604,7 +607,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 
 - `tools/llm/__init__.py` — 空包初始化。
 - `tools/llm/adapter.py` — 最小 LLM adapter，支持 OpenAI-compatible chat completions。
-  - 5 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`deepseek_v4_flash`、`deepseek_v4_pro`。
+  - 7 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`ark_kimi_k2_6`、`ark_kimi_k2_7_code`、`deepseek_v4_flash`、`deepseek_v4_pro`。
   - `load_dotenv()` 从 `.env` 加载环境变量，日志只显示 env key 名称。
   - 方舟 `deepseek-v4-*` profile 默认不发送 `response_format=json_object`，改走 prompt-only JSON + 本地 JSON parser + Schema 校验；`ark_glm_5_2` 与 DeepSeek 官方 profile 可发送 JSON mode。
   - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
@@ -659,6 +662,10 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | 方舟 Coding Plan | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `aura_buff` / `power_cost`，通过候选校验和 mock simulation |
 | DeepSeek 官方 | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `power_cost`，通过候选校验和 mock simulation |
 | AssetGraph live workflow | 方舟 `deepseek-v4-flash` | 成功 | `source.load_json -> proposal.validate -> asset.compile_with_llm_guarded -> asset.validate_candidate -> asset.simulate_candidate -> report.pipeline_summary` 全部 passed |
+| 方舟 Coding Plan | `kimi-k2.6` | 成功 | 文本 chat 可用；较低 `max_tokens` 时可能只返回 `reasoning_content` 并被截断，正常上限下返回 `message.content` |
+| 方舟 Coding Plan | `kimi-k2.6` | 成功 | `response_format=json_object` 结构化输出可用，返回可解析 JSON |
+| 方舟 Coding Plan | `kimi-k2.7-code` | 成功 | `response_format=json_object` 结构化输出可用，适合作为开发期/编译器规则候选模型 |
+| AssetGraph live workflow | 方舟 `kimi-k2.6` | 成功 | `mvp_live_asset_compile_kimi_guarded.workflow.json` 全节点 passed；生成 `asset_luminous_slow_tower`，评分 `72.9`，建议进入 `generate_media` |
 
 两个候选都被模拟器标记为 `pure_control_requires_damage_partner`，说明当前提案会产出“控场但不能独立击杀”的资产。这类缺陷可以进入玩家侧的世界内反馈，例如 NPC 评审、样品限制、需要搭配伤害塔等，而不是展示 provider/schema 等技术信息。
 
@@ -666,7 +673,8 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 
 1. Agnes 的 `GET /v1/models` 是否稳定可用。官方文档未明确承诺，不能作为生产依赖。
 2. 方舟 Coding Plan 已验证可调用长上下文候选模型；仍需确认长期作为游戏运行时主通道时的套餐边界、并发限制、日志归因和费用策略。
-3. 智谱免费模型在两个账户中的真实限流、每日额度和账单延迟。
-4. 图像/视频生成结果的存储策略：本地缓存、对象存储、还是只保存远程 URL。
-5. 资产编译的主结构化模型应以 DeepSeek JSON mode、GLM 旗舰，还是双模型交叉评审为第一版。
-6. CodeBuddy ImageGen / `hunyuan-image-v3.0` 的真实限流、稳定 output_dir 行为和是否适合进入运行时 fallback。
+3. 方舟 Coding Plan 暴露的 `kimi-k2.6` / `kimi-k2.7-code` 已验证文本与 JSON 调用，但是否支持图片输入仍未确认；视觉素材审查暂不依赖 Kimi。
+4. 智谱免费模型在两个账户中的真实限流、每日额度和账单延迟。
+5. 图像/视频生成结果的存储策略：本地缓存、对象存储、还是只保存远程 URL。
+6. 资产编译的主结构化模型应以 DeepSeek JSON mode、GLM 旗舰，还是双模型交叉评审为第一版。
+7. CodeBuddy ImageGen / `hunyuan-image-v3.0` 的真实限流、稳定 output_dir 行为和是否适合进入运行时 fallback。

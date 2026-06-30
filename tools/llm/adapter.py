@@ -46,6 +46,18 @@ PROFILES: dict[str, ProviderProfile] = {
         base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
         model="glm-5.2",
     ),
+    "ark_kimi_k2_6": ProviderProfile(
+        name="ark_kimi_k2_6",
+        env_key="ARK_API_KEY",
+        base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+        model="kimi-k2.6",
+    ),
+    "ark_kimi_k2_7_code": ProviderProfile(
+        name="ark_kimi_k2_7_code",
+        env_key="ARK_API_KEY",
+        base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+        model="kimi-k2.7-code",
+    ),
     "deepseek_v4_flash": ProviderProfile(
         name="deepseek_v4_flash",
         env_key="DEEPSEEK_API_KEY",

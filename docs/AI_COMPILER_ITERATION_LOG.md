@@ -302,7 +302,61 @@ MediaConsistencyReport.consistency_score = 97.5
 解释：角色覆盖、provider/model、尺寸和身份链接都一致；但 `ui_card` 仍需要 OCR 文本检测，
 `effect_preview` 仍需要世界观语义复核。
 
-## 6. 下一步建议
+## 6. Kimi 接入与真实资产编译闭环
+
+本轮把方舟 Coding Plan 中的 Kimi 纳入统一 LLM adapter：
+
+```text
+ark_kimi_k2_6      -> kimi-k2.6
+ark_kimi_k2_7_code -> kimi-k2.7-code
+```
+
+真实 smoke 结论：
+
+- `kimi-k2.6` 普通 chat 可调用。
+- `kimi-k2.6` 支持 `response_format=json_object` 结构化输出。
+- `kimi-k2.7-code` 支持 `response_format=json_object` 结构化输出，更适合作为开发期编译器规则、Schema、DAG 节点和结构化资产转换候选。
+- `kimi-k2.6` 会返回 `reasoning_content`；管线只能读取 `message.content`，不能把推理内容写入玩家侧产物。
+
+新增 Kimi live workflow：
+
+```text
+examples/workflows/mvp_live_asset_compile_kimi_guarded.workflow.json
+```
+
+真实 AssetGraph 闭环结果：
+
+```text
+/tmp/live_asset_compile_kimi_check/mvp_live_asset_compile_kimi_guarded/
+```
+
+节点全部通过：
+
+```text
+source.load_json
+proposal.validate
+asset.compile_with_llm_guarded
+asset.validate_candidate
+asset.simulate_candidate
+asset.score_candidate
+report.pipeline_summary
+```
+
+Kimi 生成候选：
+
+```text
+id: asset_luminous_slow_tower
+name: 光幕迟滞塔
+asset_type: tower_blueprint
+score: 72.9
+recommendation: generate_media
+balance_flag: pure_control_requires_damage_partner
+```
+
+质量判断：候选结构合法，世界观贴合度和玩法匹配度较好；但它仍是纯控场塔，不能独立击杀敌人，
+因此应在玩家侧表现为“需要搭配伤害来源”的样品限制，而不是技术错误。
+
+## 7. 下一步建议
 
 短期最值得继续做：
 
