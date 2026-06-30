@@ -546,7 +546,55 @@ media.build_atlas_json_stub
 因此现在已经可以自动产出“受控 PNG sprite_source / cutout_source”的前端可加载素材；
 但 AI 自由生成的复杂场景图仍应作为 `ui_card` / `effect_preview`，不能直接当 runtime sprite。
 
-## 10. 下一步建议
+## 10. AssetGraph + 有界 ReAct AgentNode 决策
+
+本轮确认：AI 编译器不应走“纯自由 agent”，也不应被限制为“所有智能都必须是纯 DAG 节点”。
+
+最终架构决策：
+
+```text
+外层 WorkflowGraph / AssetGraph
+  -> 继续保持 DAG
+  -> 负责缓存、校验、回放、失败恢复和证据 trace
+
+内层 AgentNode
+  -> 封装有界 ReAct 循环
+  -> 可查询工具、观察结果、修复候选、选择下一步
+  -> 只能输出结构化 artifact
+```
+
+新增 schema：
+
+```text
+shared/schemas/agent_node_contract.v0.1.schema.json
+```
+
+新增示例：
+
+```text
+examples/asset_graph/asset_compile_react_agent_node.contract.json
+```
+
+关键约束：
+
+- 图级 workflow 仍然禁止循环。
+- ReAct 只能在单个 AgentNode 内部运行。
+- AgentNode 必须声明 max steps、max tool calls、max seconds、stop conditions。
+- AgentNode 必须声明工具白名单和禁止动作。
+- AgentNode 不能直接写 `runtime_public` artifact。
+- AgentNode 输出必须经过 schema validation / simulation / score / review。
+- trace 可以服务 Studio 和演示证据，但必须脱敏，不进入玩家侧。
+
+第一批适用位置：
+
+1. `asset_compile_react_node`：玩家构想 + 世界状态 + 玩法约束 -> `CompiledAssetCandidate`。
+2. `media_repair_react_node`：视觉审查失败 -> 修复计划 / 重生成策略。
+3. `world_delta_react_node`：战斗结果 -> 服务玩法进度的世界增量。
+
+这意味着当前的 `asset.compile_with_llm_guarded` 和 `media.build_prompt_repair_plan`
+可以作为准 AgentNode 的前身，后续逐步升级，不需要推翻现有 AssetGraph。
+
+## 11. 下一步建议
 
 短期最值得继续做：
 

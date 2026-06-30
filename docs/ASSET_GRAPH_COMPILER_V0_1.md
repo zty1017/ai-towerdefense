@@ -75,7 +75,9 @@ AssetGraph Compiler 是 AI 资产编译器的底层工作流系统。
 
 由节点和边组成。边定义数据如何从一个节点流向另一个节点。
 
-v0.1 只要求 DAG，不支持循环。后续如果需要 agent loop，要显式声明最大迭代次数和停止条件。
+v0.1 的外层 WorkflowGraph 只要求 DAG，不支持图级循环。
+
+后续如果需要 agent loop，应封装为单个 AgentNode 的内部实现，并显式声明最大迭代次数、工具权限、停止条件、失败回退和 trace 脱敏策略。也就是说，外层仍是可验证 DAG，内层可以是有界 ReAct。
 
 ### 3.3 WorkflowNode
 
@@ -355,7 +357,7 @@ node validate_asset_candidate failed: unknown effect "time_freeze"
 - 可视化节点编辑器
 - 用户拖拽连线
 - 运行时动态注册新节点
-- 循环 agent graph
+- 图级循环 agent graph
 - 分布式执行
 - 并行调度优化
 - 复杂权限系统
@@ -483,3 +485,124 @@ gameplay package 构建
 - `runtime.build_package_stub` 不依赖 `media.publish_stub_manifest` 完成。
 - 媒体缺失时使用 fallback 占位。
 - 媒体子图的 trace 独立记录，可供证据导出读取。
+
+## 12. AgentNode 与有界 ReAct（已确认）
+
+现代 agent 系统常见的形态不是“纯自由 agent”，也不是“纯 DAG”，而是：
+
+```text
+外层 WorkflowGraph / AssetGraph
+  -> 负责确定性编排、缓存、并发、校验、回放、失败恢复
+
+内层 AgentNode
+  -> 在单个节点内部执行有界 ReAct 循环
+  -> 查询工具 / 观察结果 / 修复候选 / 选择下一步
+  -> 只输出结构化 artifact
+```
+
+因此本项目采用混合模式：
+
+```text
+AssetGraph = 可验证图编排
+AgentNode = 有预算、有工具白名单、有输出 schema 的局部 ReAct
+Compiler Runtime = 图执行器 + checkpoint + trace + artifact store
+```
+
+关键原则：
+
+1. 外层 `WorkflowGraph` 继续保持 DAG，便于验证、缓存和回放。
+2. ReAct 循环只能存在于 `AgentNode` 内部，不能跨节点自由跳转。
+3. `AgentNode` 不能直接写 `runtime_public` artifact。
+4. `AgentNode` 的输出必须进入后续 schema 校验、simulation、评分或审查节点。
+5. 玩家侧永远不展示 provider、schema、prompt、raw trace、工具日志等技术词。
+6. Studio / 演示证据可以读取脱敏后的 trace，用于证明 AI 编译管线真实运行。
+
+### 12.1 AgentNodeContract
+
+新增机器可读合约：
+
+```text
+shared/schemas/agent_node_contract.v0.1.schema.json
+```
+
+它规定：
+
+- `agent_kind`：资产编译、媒体修复、世界演化、候选选择、工具开发等。
+- `runtime_modes`：只允许 `studio` / `live`，不进入 deterministic mock 路径。
+- `loop_policy`：`bounded_react`、最大 step、最大工具调用、最大耗时、停止条件。
+- `provider_policy`：是否允许真实 provider 调用、主 provider、fallback provider、输出预算。
+- `tool_policy`：工具白名单和禁止动作。
+- `input_artifacts`：可读取的结构化输入。
+- `output_artifact`：唯一结构化输出及其 schema，且 `runtime_public=false`。
+- `failure_policy`：预算耗尽、schema 失败、工具失败时如何回退。
+- `trace_policy`：记录哪些步骤、哪些字段必须脱敏、trace 不进入玩家侧。
+
+示例：
+
+```text
+examples/asset_graph/asset_compile_react_agent_node.contract.json
+```
+
+### 12.2 第一批适用位置
+
+MVP 后优先把 AgentNode 用在两个位置：
+
+```text
+asset_compile_react_node
+  -> 玩家构想 + 世界状态 + 玩法约束
+  -> 查询材料 / NPC / 技术 / runtime 能力
+  -> 产出 CompiledAssetCandidate
+  -> 后接 validate / simulate / score
+
+media_repair_react_node
+  -> 读取 media quality / consistency / vision review
+  -> 决定复用哪些图、重生成哪些图、如何改 provider-safe prompt
+  -> 产出 MediaPromptRepairPlan 或 repaired raw_media sequence
+  -> 后接 media processing / vision review
+```
+
+后续再扩展到：
+
+- `world_delta_react_node`：根据战斗结果和进度生成服务玩法的世界增量。
+- `candidate_selection_react_node`：多 provider / 多候选统一比较，选择默认候选。
+- `tool_development_agent_node`：开发者模式下尝试生成新节点或新 workflow，但必须走测试、审查和注册流程。
+
+### 12.3 与纯 DAG 的关系
+
+外层仍然是：
+
+```text
+proposal
+  -> agent.asset_compile_react
+  -> validate_candidate
+  -> simulate_candidate
+  -> score_candidate
+  -> media_generate
+  -> media_postprocess
+  -> lock_manifest
+  -> runtime_package
+```
+
+其中 `agent.asset_compile_react` 内部可以循环：
+
+```text
+think
+  -> query_world_state
+  -> query_runtime_capabilities
+  -> draft_candidate
+  -> validate_candidate
+  -> repair_candidate
+  -> stop
+```
+
+但这个循环只出现在节点内部 trace 中。对外部 workflow 来说，它仍然是一个普通节点：输入 artifact，输出 artifact，失败或成功。
+
+### 12.4 MVP 实现顺序
+
+短期不需要立刻实现完整 agent runtime。建议顺序：
+
+1. 先维护 `AgentNodeContract` schema 和示例。
+2. 给现有 `asset.compile_with_llm_guarded` 增加“准 AgentNode”输入压缩和多轮修复接口。
+3. 把媒体 repair 现在的 deterministic plan 升级为可选 `media_repair_react_node`。
+4. 执行器层增加 agent step trace，但默认只写脱敏摘要。
+5. 再考虑真正支持 checkpoint、resume、human-in-the-loop。
