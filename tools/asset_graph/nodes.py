@@ -38,6 +38,7 @@ import score_asset_candidate  # noqa: E402
 import simulate_asset_candidate  # noqa: E402
 import validate_asset_candidate  # noqa: E402
 import validate_proposal  # noqa: E402
+import asset_promotion_policy  # noqa: E402
 import runtime_package as rp  # noqa: E402
 
 WORLD_STATE_DIR = ROOT / "tools" / "world_state"
@@ -297,7 +298,7 @@ def node_report_pipeline_summary(
         "status": "passed",
         "stages": {},
     }
-    for name in ("proposal_validation", "candidate_validation", "simulation", "candidate_score"):
+    for name in ("proposal_validation", "candidate_validation", "simulation", "candidate_score", "asset_promotion"):
         ref = inputs.get(name)
         if ref is None:
             summary["stages"][name] = {"status": "skipped"}
@@ -323,6 +324,11 @@ def node_report_pipeline_summary(
             summary["total_score"] = data.get("total_score")
             summary["recommendation"] = data.get("recommendation")
             summary["score_reasons"] = data.get("reasons", [])
+        if name == "asset_promotion" and isinstance(data, dict):
+            summary["promotion_state"] = data.get("promotion_state")
+            summary["playable"] = data.get("playable")
+            summary["uses_fallback_media"] = data.get("uses_fallback_media")
+            summary["promotion_actions"] = data.get("required_next_actions", [])
     out_path = run_dir / f"{node_id}__pipeline_summary.json"
     _write_json(out_path, summary)
     ref = _make_ref(
@@ -370,6 +376,55 @@ def node_asset_score_candidate(
         run_dir=run_dir,
         produced_by_node=node_id,
     )
+    return {"output_refs": {"default": ref}}
+
+
+def node_asset_evaluate_promotion_policy(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Decide whether a compiled asset is deliverable to the player runtime."""
+    candidate = _load_artifact(inputs, "candidate")
+    validation = _load_artifact(inputs, "validation") if inputs.get("validation") else None
+    simulation = _load_artifact(inputs, "simulation") if inputs.get("simulation") else None
+    candidate_score = _load_artifact(inputs, "candidate_score") if inputs.get("candidate_score") else None
+    runtime_readiness = (
+        _load_artifact(inputs, "runtime_readiness")
+        if inputs.get("runtime_readiness")
+        else None
+    )
+    vision_review = (
+        _load_artifact(inputs, "vision_review")
+        if inputs.get("vision_review")
+        else None
+    )
+    consistency_report = (
+        _load_artifact(inputs, "consistency_report")
+        if inputs.get("consistency_report")
+        else None
+    )
+    report = asset_promotion_policy.evaluate_promotion(
+        candidate,
+        validation=validation,
+        simulation=simulation,
+        candidate_score=candidate_score,
+        runtime_readiness=runtime_readiness,
+        vision_review=vision_review,
+        consistency_report=consistency_report,
+    )
+    out_path = run_dir / f"{node_id}__asset_promotion_report.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__asset_promotion_report",
+        kind="asset_promotion_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    if report.get("promotion_state") == "failed" and params.get("fail_on_reject", True):
+        raise NodeError(f"asset promotion failed: {report.get('blockers', [])}")
     return {"output_refs": {"default": ref}}
 
 
@@ -2118,6 +2173,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "asset.validate_candidate": node_asset_validate_candidate,
     "asset.simulate_candidate": node_asset_simulate_candidate,
     "asset.score_candidate": node_asset_score_candidate,
+    "asset.evaluate_promotion_policy": node_asset_evaluate_promotion_policy,
     "report.pipeline_summary": node_report_pipeline_summary,
     "runtime.build_package_stub": node_runtime_build_package_stub,
     "research.build_delivery_payload_stub": node_research_build_delivery_payload_stub,

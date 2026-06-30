@@ -660,7 +660,70 @@ examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json
 - 两者都过，才能 promotion。
 - 任一失败，进入 repair / regenerate / fallback。
 
-## 12. 下一步建议
+## 12. Asset Promotion Policy：一次玩家请求必须可交付
+
+本轮确认并落地硬规则：玩家一次构想请求不能被图片生成失败阻断。系统内部可以多步生成、修复、审查和回退，但玩家侧必须尽量收到一个可进入战斗的资产。
+
+新增代码：
+
+```text
+tools/content_pipeline/asset_promotion_policy.py
+tools/content_pipeline/tests/test_asset_promotion_policy.py
+shared/schemas/asset_promotion_report.v0.1.schema.json
+```
+
+新增 AssetGraph 节点：
+
+```text
+asset.evaluate_promotion_policy
+```
+
+输出状态：
+
+```text
+runtime_ready
+fallback_ready
+preview_only
+failed
+```
+
+当前策略：
+
+- gameplay_core 由 validation / simulation / score 判断。
+- media_skin 由 runtime_readiness / vision_review / consistency 判断。
+- gameplay_core 失败才 `failed`。
+- gameplay_core 可用但媒体缺失或失败时，输出 `fallback_ready`。
+- `fallback_ready` 带 `fallback_media_strategy`，前端/runtime builder 可使用 deterministic shape sprite、模板 icon 和 visual recipe。
+
+已接入 promotion policy 的 workflow：
+
+```text
+examples/workflows/mvp_mock_asset_compile.workflow.json
+examples/workflows/mvp_defense_asset_compile.workflow.json
+examples/workflows/mvp_live_asset_compile_guarded.workflow.json
+examples/workflows/mvp_live_asset_compile_kimi_guarded.workflow.json
+examples/workflows/mvp_live_support_item_compile_guarded.workflow.json
+examples/workflows/mvp_live_temporary_mod_compile_guarded.workflow.json
+examples/workflows/mvp_live_intel_asset_compile_guarded.workflow.json
+```
+
+本地 smoke：
+
+```text
+examples/workflows/mvp_mock_asset_compile.workflow.json
+```
+
+结果：
+
+```text
+promotion_state = fallback_ready
+playable = true
+uses_fallback_media = true
+```
+
+说明：在媒体尚未生成时，资产仍可用确定性 fallback skin 进入战斗，媒体生成/修复在后台继续推进。
+
+## 13. 下一步建议
 
 短期最值得继续做：
 

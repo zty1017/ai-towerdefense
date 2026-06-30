@@ -583,6 +583,7 @@ proposal
   -> score_candidate
   -> media_generate
   -> media_postprocess
+  -> evaluate_promotion_policy
   -> lock_manifest
   -> runtime_package
 ```
@@ -610,3 +611,47 @@ think
 3. 把媒体 repair 现在的 deterministic plan 升级为可选 `media_repair_react_node`。
 4. 执行器层增加 agent step trace，但默认只写脱敏摘要。
 5. 再考虑真正支持 checkpoint、resume、human-in-the-loop。
+
+## 13. Asset Promotion Policy（已确认）
+
+玩家一次构想必须尽量得到可战斗资产。因此资产交付不能依赖单次图片生成成功。
+
+新增节点：
+
+```text
+asset.evaluate_promotion_policy
+```
+
+新增报告：
+
+```text
+shared/schemas/asset_promotion_report.v0.1.schema.json
+```
+
+它把资产交付拆成两层：
+
+```text
+gameplay_core
+  -> validation / simulation / score
+  -> 决定是否有可玩的数值、效果、部署规则和 visual_recipe
+
+media_skin
+  -> runtime_readiness / vision_review / consistency
+  -> 决定是否使用 AI 生成媒体，还是回退到确定性 fallback skin
+```
+
+输出状态：
+
+```text
+runtime_ready   gameplay_core 与 media_skin 都可用
+fallback_ready  gameplay_core 可用，media_skin 缺失或失败，使用 fallback skin
+preview_only    需要审查，暂不进入战斗
+failed          gameplay_core 不可用，不能交付给玩家
+```
+
+硬规则：
+
+- `failed` 只应该由 gameplay_core 阻断触发，例如 candidate validation 失败或严重 simulation flag。
+- 图片生成、抠图、atlas、vision review 失败不能直接阻断玩家流程；只要 gameplay_core 可用，就应进入 `fallback_ready`。
+- `fallback_ready` 必须带 `fallback_media_strategy`，前端或 runtime package builder 可以使用 deterministic shape sprite、模板 icon 和 visual recipe。
+- 媒体管线可在后台继续 repair / regenerate，成功后再升级到 `runtime_ready`。

@@ -225,7 +225,62 @@ media_consistency.status != failed
 - `provider_error`：切 fallback provider。
 - 多次失败：使用稳定 fallback sprite，不阻塞 gameplay package。
 
-## 7. 对前端的承诺
+## 7. 玩家一次请求的硬性交付规则
+
+玩家发起一次构想后，系统必须尽量交付一个可进入战斗的资产。这里的“一次性”不是指一次图片模型调用，而是指一次玩家请求内部可以运行多步编译、审查、修复和回退。
+
+资产交付拆成两层：
+
+```text
+gameplay_core
+  -> 数值、效果、部署规则、visual_recipe
+  -> 必须可校验、可模拟、可 fallback
+
+media_skin
+  -> icon / sprite / card / atlas
+  -> 通过 runtime_readiness 后 promotion
+  -> 失败时不阻塞玩法，使用 fallback skin
+```
+
+新增交付策略节点：
+
+```text
+asset.evaluate_promotion_policy
+```
+
+新增报告：
+
+```text
+shared/schemas/asset_promotion_report.v0.1.schema.json
+```
+
+promotion 状态：
+
+```text
+runtime_ready
+  gameplay_core 可用，生成媒体也通过 runtime readiness / review，可直接进入运行时包。
+
+fallback_ready
+  gameplay_core 可用，但生成媒体缺失、失败或需要修复；使用确定性 fallback skin，后台继续生成/修复媒体。
+
+preview_only
+  gameplay_core 需要审查，只能展示或等待人工 / agent 复核，不能直接进战斗。
+
+failed
+  gameplay_core 本身不可用，不能交付给玩家。
+```
+
+当前默认策略：
+
+- candidate validation 失败：`failed`。
+- 严重 simulation flag：`failed`。
+- gameplay_core 通过但没有媒体：`fallback_ready`。
+- runtime readiness 失败但 gameplay_core 通过：`fallback_ready`。
+- runtime readiness 通过且语义审查没有失败：`runtime_ready`。
+
+这条规则比“图片必须一次成功”更可靠。玩家看到的是一次研发完成；系统内部可以用 fallback skin 保证战斗不断流。
+
+## 8. 对前端的承诺
 
 前端只应该消费：
 

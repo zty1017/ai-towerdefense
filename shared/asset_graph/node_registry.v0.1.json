@@ -113,6 +113,27 @@
       ]
     },
     {
+      "node_type": "asset.evaluate_promotion_policy",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic delivery policy: decide whether a compiled asset is runtime_ready, fallback_ready, preview_only, or failed. Gameplay core may be playable even when generated media falls back.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_score", "kind": "artifact_ref", "required": false },
+        { "name": "runtime_readiness", "kind": "artifact_ref", "required": false },
+        { "name": "vision_review", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_promotion_report.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "report.pipeline_summary",
       "category": "report",
       "modes": ["deterministic", "studio", "live"],
@@ -123,7 +144,9 @@
       "inputs": [
         { "name": "proposal_validation", "kind": "artifact_ref", "required": false },
         { "name": "candidate_validation", "kind": "artifact_ref", "required": false },
-        { "name": "simulation", "kind": "artifact_ref", "required": false }
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_score", "kind": "artifact_ref", "required": false },
+        { "name": "asset_promotion", "kind": "artifact_ref", "required": false }
       ],
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true }
