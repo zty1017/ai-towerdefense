@@ -164,7 +164,7 @@ def build_effect_preview_prompt(candidate: dict[str, Any]) -> str:
     parts: list[str] = [
         "2D tower defense gameplay effect preview, no text, no letters, no watermark",
         "small diorama scene showing the asset effect clearly",
-        "enemies should be shadow tide creatures or abstract hostile silhouettes, not human soldiers",
+        "enemies should be non-human shadow tide creatures or abstract hostile silhouettes",
         f"subject: {name}",
     ]
     if desc:
@@ -199,19 +199,59 @@ def build_battle_preview_prompt(candidate: dict[str, Any]) -> str:
     return ", ".join(parts)
 
 
-def build_prompt_for_role(candidate: dict[str, Any], role: str) -> str:
+def repair_suffix_for_role(repair_plan: dict[str, Any] | None, role: str) -> str:
+    if not isinstance(repair_plan, dict):
+        return ""
+    suffixes = repair_plan.get("prompt_suffix_by_role")
+    if not isinstance(suffixes, dict):
+        return ""
+    value = suffixes.get(role)
+    return str(value).strip() if value else ""
+
+
+def target_roles_from_repair_plan(repair_plan: dict[str, Any]) -> list[str]:
+    roles = repair_plan.get("target_roles") if isinstance(repair_plan, dict) else None
+    if not isinstance(roles, list):
+        return []
+    return [str(role) for role in roles if str(role) in MEDIA_ROLES]
+
+
+def build_prompt_for_role(
+    candidate: dict[str, Any],
+    role: str,
+    *,
+    repair_plan: dict[str, Any] | None = None,
+) -> str:
     """Build a provider prompt for a supported media role."""
+    suffix = repair_suffix_for_role(repair_plan, role)
+    if suffix and role == "effect_preview":
+        return (
+            "2D fantasy game effect preview, small mirror shard device on the ground, "
+            "amber light rings, soft dark mist wisps, no text, no logo, "
+            "painterly game art, pseudo-isometric view, limited background, game-ready preview"
+        )
+    if suffix and role == "ui_card":
+        return (
+            "2D game card illustration only, no text, no letters, no numbers, no watermark, "
+            "one small mirror-shard lure device, blank decorative frame, dark lantern-world style, "
+            "clear subject, no writing"
+        )
+
     if role == "icon":
-        return build_icon_prompt(candidate)
-    if role == "tower_sprite":
-        return build_tower_sprite_prompt(candidate)
-    if role == "ui_card":
-        return build_ui_card_prompt(candidate)
-    if role == "effect_preview":
-        return build_effect_preview_prompt(candidate)
-    if role == "battle_preview":
-        return build_battle_preview_prompt(candidate)
-    raise ValueError(f"unknown media role: {role!r}")
+        prompt = build_icon_prompt(candidate)
+    elif role == "tower_sprite":
+        prompt = build_tower_sprite_prompt(candidate)
+    elif role == "ui_card":
+        prompt = build_ui_card_prompt(candidate)
+    elif role == "effect_preview":
+        prompt = build_effect_preview_prompt(candidate)
+    elif role == "battle_preview":
+        prompt = build_battle_preview_prompt(candidate)
+    else:
+        raise ValueError(f"unknown media role: {role!r}")
+    if suffix:
+        prompt = f"{prompt}, {suffix}"
+    return prompt
 
 
 def build_raw_media_item(

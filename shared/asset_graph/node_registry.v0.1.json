@@ -215,9 +215,10 @@
       "has_side_effects": true,
       "calls_provider": true,
       "version": "v0.1",
-      "description": "Call an image provider to generate media images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Supports roles auto/icon/tower_sprite/ui_card/effect_preview/battle_preview, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Output must flow through the media processing chain before becoming runtime_public.",
+      "description": "Call an image provider to generate media images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Supports roles auto/icon/tower_sprite/ui_card/effect_preview/battle_preview/repair_failed, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Optional repair_plan input appends deterministic prompt repair constraints. Output must flow through the media processing chain before becoming runtime_public.",
       "inputs": [
-        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." }
+        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." },
+        { "name": "repair_plan", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a MediaPromptRepairPlan JSON. Required when params.roles='repair_failed'." }
       ],
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a raw_media_sequence.v0.1 JSON (media_layer=raw_media)." }
@@ -289,6 +290,42 @@
       ],
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_vision_review_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.build_prompt_repair_plan",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a deterministic MediaPromptRepairPlan from quality, consistency, and vision review reports. The plan identifies failed roles, reusable roles, negative constraints, and role-specific prompt suffixes for a repair generation pass.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false },
+        { "name": "vision_review_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_prompt_repair_plan.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.merge_repaired_sequence",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Merge original raw media with regenerated repair media by media_role. Reuses passed roles, replaces target_roles from MediaPromptRepairPlan, and outputs a complete raw_media_sequence for re-review.",
+      "inputs": [
+        { "name": "original_media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "repair_media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "repair_plan", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a merged raw_media_sequence.v0.1 JSON." }
       ]
     },
     {

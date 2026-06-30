@@ -63,6 +63,7 @@ import image_provider as img_provider  # noqa: E402
 import asset_media_prompt  # noqa: E402
 import media_review  # noqa: E402
 import vision_review  # noqa: E402
+import prompt_repair  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -967,6 +968,165 @@ def node_media_review_with_vision_guarded(
     return {"output_refs": {"default": ref}}
 
 
+def node_media_build_prompt_repair_plan(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Build a deterministic prompt repair plan from review reports."""
+    candidate = _load_artifact(inputs, "candidate")
+    visual_identity = _load_artifact(inputs, "visual_identity")
+    quality_report = (
+        _load_artifact(inputs, "quality_report")
+        if inputs.get("quality_report")
+        else None
+    )
+    consistency_report = (
+        _load_artifact(inputs, "consistency_report")
+        if inputs.get("consistency_report")
+        else None
+    )
+    vision_review_report = (
+        _load_artifact(inputs, "vision_review_report")
+        if inputs.get("vision_review_report")
+        else None
+    )
+    plan = prompt_repair.build_prompt_repair_plan(
+        candidate,
+        visual_identity,
+        quality_report=quality_report if isinstance(quality_report, dict) else None,
+        consistency_report=consistency_report if isinstance(consistency_report, dict) else None,
+        vision_review_report=vision_review_report if isinstance(vision_review_report, dict) else None,
+    )
+    out_path = run_dir / f"{node_id}__media_prompt_repair_plan.json"
+    _write_json(out_path, plan)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_prompt_repair_plan",
+        kind="media_prompt_repair_plan",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_media_merge_repaired_sequence(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Merge original raw media with regenerated repair media by role."""
+    original = _load_artifact(inputs, "original_media_metadata")
+    repair = _load_artifact(inputs, "repair_media_metadata")
+    repair_plan = _load_artifact(inputs, "repair_plan")
+    if original.get("media_layer") != "raw_media":
+        raise NodeError("original_media_metadata must have media_layer='raw_media'")
+    if repair.get("media_layer") != "raw_media":
+        raise NodeError("repair_media_metadata must have media_layer='raw_media'")
+    target_roles = set(asset_media_prompt.target_roles_from_repair_plan(repair_plan))
+    if not target_roles:
+        merged_items: list[dict[str, Any]] = []
+        for item in original.get("items", []):
+            if not isinstance(item, dict):
+                continue
+            new_item = dict(item)
+            steps = list(new_item.get("processing_steps", []))
+            steps.append("repair_noop_reused")
+            new_item["processing_steps"] = steps
+            merged_items.append(new_item)
+        merged = {
+            "metadata_version": "raw_media_sequence.v0.1",
+            "media_layer": "raw_media",
+            "items": merged_items,
+            "repair_merge": {
+                "target_roles": [],
+                "reused_roles": sorted(
+                    {
+                        str(item.get("media_role"))
+                        for item in merged_items
+                        if item.get("media_role")
+                    }
+                ),
+                "replaced_roles": [],
+                "source_plan": repair_plan.get("plan_version"),
+            },
+        }
+        out_path = run_dir / f"{node_id}__raw_media_sequence.json"
+        _write_json(out_path, merged)
+        ref = _make_ref(
+            artifact_id=f"{node_id}__raw_media_sequence",
+            kind="media_metadata",
+            path=out_path,
+            run_dir=run_dir,
+            produced_by_node=node_id,
+            media_layer="raw_media",
+        )
+        return {"output_refs": {"default": ref}}
+
+    repair_items_by_role: dict[str, dict[str, Any]] = {}
+    for item in repair.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("media_role", ""))
+        if role in target_roles:
+            new_item = dict(item)
+            steps = list(new_item.get("processing_steps", []))
+            steps.append("repair_regenerated")
+            new_item["processing_steps"] = steps
+            repair_items_by_role[role] = new_item
+
+    missing_repairs = sorted(target_roles - set(repair_items_by_role))
+    if missing_repairs:
+        raise NodeError(f"repair media missing target role(s): {missing_repairs}")
+
+    merged_items: list[dict[str, Any]] = []
+    kept_roles: set[str] = set()
+    replaced_roles: set[str] = set()
+    for item in original.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("media_role", ""))
+        if role in target_roles:
+            merged_items.append(repair_items_by_role[role])
+            replaced_roles.add(role)
+        else:
+            new_item = dict(item)
+            steps = list(new_item.get("processing_steps", []))
+            steps.append("repair_reused")
+            new_item["processing_steps"] = steps
+            merged_items.append(new_item)
+            kept_roles.add(role)
+
+    for role in sorted(target_roles - replaced_roles):
+        merged_items.append(repair_items_by_role[role])
+        replaced_roles.add(role)
+
+    merged = {
+        "metadata_version": "raw_media_sequence.v0.1",
+        "media_layer": "raw_media",
+        "items": merged_items,
+        "repair_merge": {
+            "target_roles": sorted(target_roles),
+            "reused_roles": sorted(kept_roles),
+            "replaced_roles": sorted(replaced_roles),
+            "source_plan": repair_plan.get("plan_version"),
+        },
+    }
+    out_path = run_dir / f"{node_id}__raw_media_sequence.json"
+    _write_json(out_path, merged)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__raw_media_sequence",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="raw_media",
+    )
+    return {"output_refs": {"default": ref}}
+
+
 def node_media_crop_and_pad_stub(
     inputs: dict[str, Any],
     params: dict[str, Any],
@@ -1599,9 +1759,39 @@ def node_media_generate_asset_images_guarded(
     size = str(params.get("size", "1024x1024"))
     roles = params.get("roles", "auto")
     request_timeout = int(params.get("request_timeout", 180))
+    repair_plan = (
+        _load_artifact(inputs, "repair_plan")
+        if inputs.get("repair_plan")
+        else None
+    )
 
     if roles == "auto":
         roles = asset_media_prompt.default_media_roles(candidate)
+    elif roles == "repair_failed":
+        if not isinstance(repair_plan, dict):
+            raise NodeError("roles='repair_failed' requires input repair_plan")
+        roles = asset_media_prompt.target_roles_from_repair_plan(repair_plan)
+        if not roles:
+            sequence = {
+                "metadata_version": "raw_media_sequence.v0.1",
+                "media_layer": "raw_media",
+                "items": [],
+                "repair_noop": {
+                    "reason": "repair_plan has no target_roles",
+                    "source_plan": repair_plan.get("plan_version"),
+                },
+            }
+            out_path = run_dir / f"{node_id}__raw_media_sequence.json"
+            _write_json(out_path, sequence)
+            ref = _make_ref(
+                artifact_id=f"{node_id}__raw_media_sequence",
+                kind="media_metadata",
+                path=out_path,
+                run_dir=run_dir,
+                produced_by_node=node_id,
+                media_layer="raw_media",
+            )
+            return {"output_refs": {"default": ref}}
     if not isinstance(roles, list) or not roles:
         raise NodeError("params.roles must be 'auto' or a non-empty list of role strings")
     allowed_roles = asset_media_prompt.MEDIA_ROLES
@@ -1626,11 +1816,17 @@ def node_media_generate_asset_images_guarded(
     items: list[dict[str, Any]] = []
     for role in roles:
         try:
-            prompt = asset_media_prompt.build_prompt_for_role(candidate, role)
+            prompt = asset_media_prompt.build_prompt_for_role(
+                candidate,
+                role,
+                repair_plan=repair_plan if isinstance(repair_plan, dict) else None,
+            )
         except ValueError as exc:  # pragma: no cover - guarded above
             raise NodeError(str(exc)) from exc
 
         prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
+        if isinstance(repair_plan, dict) and asset_media_prompt.repair_suffix_for_role(repair_plan, role):
+            prompt_summary = f"{prompt_summary}; repair_plan=applied"
 
         try:
             response = img_provider.generate_image(profile, prompt, size=size, timeout=request_timeout)
@@ -1703,6 +1899,8 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.check_quality": node_media_check_quality,
     "media.check_consistency": node_media_check_consistency,
     "media.review_with_vision_guarded": node_media_review_with_vision_guarded,
+    "media.build_prompt_repair_plan": node_media_build_prompt_repair_plan,
+    "media.merge_repaired_sequence": node_media_merge_repaired_sequence,
     "media.remove_background_stub": node_media_remove_background_stub,
     "media.crop_and_pad_stub": node_media_crop_and_pad_stub,
     "media.normalize_canvas_stub": node_media_normalize_canvas_stub,

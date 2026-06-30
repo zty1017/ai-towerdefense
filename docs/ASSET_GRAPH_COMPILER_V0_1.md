@@ -195,6 +195,9 @@ RawGeneratedImage
   -> QualityReport
   -> ConsistencyReport
   -> VisionReview
+  -> PromptRepairPlan
+  -> RegenerateFailedRoles
+  -> MergeRepairedSequence
   -> Review / Select
   -> BackgroundRemoval
   -> CropAndPad
@@ -221,6 +224,17 @@ RawGeneratedImage
 
 重要约束：`MediaConsistencyReport` 的高分只说明元数据、尺寸、provider / model 和 prompt 链路一致，
 不能证明图片语义可用。`MediaVisionReviewReport.status = failed` 时，媒体不得进入 locked / runtime package。
+
+2026-06-30 已新增确定性修复节点：`media.build_prompt_repair_plan` 和 `media.merge_repaired_sequence`。
+前者把视觉审查失败原因转成 `media_prompt_repair_plan.v0.1`，后者把“复用通过角色 + 替换失败角色”
+合并成新的完整 `raw_media_sequence`。
+
+修复链路的关键经验：
+
+- repair plan 可以保留完整诊断、失败原因和负面约束。
+- 真正发送给图像 provider 的 prompt 必须短、正向、provider-safe。
+- 详细负面词可能触发 provider 内容策略，不能把审查报告原文直接拼进图像 prompt。
+- `roles: repair_failed` 只重生成 `target_roles`，并允许 target 为空时 no-op 通过。
 
 ### 5.4 人类 / 审查节点
 
@@ -391,6 +405,7 @@ MVP 不实现完整媒体后处理管线。MVP 内只做：
 validate
   -> normalize（轻量归一化，例如尺寸 / 命名 / 路径）
   -> vision_review（live，可选但强烈建议，用于关键素材）
+  -> prompt_repair / regenerate_failed_roles / merge_repaired_sequence（按需）
   -> publish（分配 /assets/ 路径，写入 published_media manifest）
   -> fallback（如果上游缺失或失败，使用占位图标 / 统一 sprite）
 ```
@@ -406,9 +421,11 @@ media.build_visual_identity_spec
 media.check_quality
 media.check_consistency
 media.review_with_vision_guarded
+media.build_prompt_repair_plan
+media.merge_repaired_sequence
 ```
 
-其中前三个是确定性节点；`media.review_with_vision_guarded` 会调用视觉模型，默认不进入玩家运行时包，只作为编译证据和素材门禁。
+其中 `media.review_with_vision_guarded` 会调用视觉模型；其他节点为确定性节点。它们默认不进入玩家运行时包，只作为编译证据和素材门禁。
 
 ### 11.3 MVP 后第一梯队节点
 

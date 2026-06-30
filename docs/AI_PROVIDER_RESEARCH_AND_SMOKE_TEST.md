@@ -440,6 +440,14 @@ manifest 草案：
 6. 生成结果不能直接成为正式资产，应进入 `generated -> reviewed -> locked` 流程。
 7. CodeBuddy ImageGen 当前建议由 `glm-5.1` 驱动，并用 `-y` 或权限配置允许工具执行；实测 `deepseek-v4-flash` 不稳定触发图像工具。
 
+2026-06-30 媒体 repair loop 发现：Agnes 对某些过度负面的修复 prompt 会返回
+`content_policy_violation`。因此 repair plan 可以保存完整诊断，但发送到图像 provider 的 prompt
+必须压缩为更短、更正向、更安全的视觉描述，例如“镜片装置、灯光环、暗雾、无文字、无 logo”，
+不要把视觉审查报告原文直接拼进图像 prompt。
+
+`tools/media/image_provider.py` 已补充 HTTPError body 捕获，便于区分普通网络错误、参数错误和
+provider 内容策略拒绝。
+
 CodeBuddy ImageGen 非交互调用示例：
 
 ```bash

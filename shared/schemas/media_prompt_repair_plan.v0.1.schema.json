@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_prompt_repair_plan.v0.1.schema.json",
+  "title": "MediaPromptRepairPlan v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_version",
+    "candidate_id",
+    "asset_type",
+    "source_review_status",
+    "next_action",
+    "target_roles",
+    "reuse_roles",
+    "global_negative_constraints",
+    "role_repairs",
+    "prompt_suffix_by_role"
+  ],
+  "properties": {
+    "plan_version": { "type": "string", "const": "media_prompt_repair_plan.v0.1" },
+    "candidate_id": { "type": "string" },
+    "asset_type": { "type": "string" },
+    "source_review_status": { "type": "string" },
+    "next_action": {
+      "type": "string",
+      "enum": ["none", "regenerate_failed_roles", "manual_review", "reject"]
+    },
+    "target_roles": { "type": "array", "items": { "type": "string" } },
+    "reuse_roles": { "type": "array", "items": { "type": "string" } },
+    "global_negative_constraints": { "type": "array", "items": { "type": "string" } },
+    "role_repairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "media_role",
+          "regenerate",
+          "reason_codes",
+          "positive_additions",
+          "negative_constraints",
+          "composition_constraints",
+          "reference_strategy"
+        ],
+        "properties": {
+          "media_role": { "type": "string" },
+          "regenerate": { "type": "boolean" },
+          "reason_codes": { "type": "array", "items": { "type": "string" } },
+          "positive_additions": { "type": "array", "items": { "type": "string" } },
+          "negative_constraints": { "type": "array", "items": { "type": "string" } },
+          "composition_constraints": { "type": "array", "items": { "type": "string" } },
+          "reference_strategy": { "type": "string" }
+        }
+      }
+    },
+    "prompt_suffix_by_role": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

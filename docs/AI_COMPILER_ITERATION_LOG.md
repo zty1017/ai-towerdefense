@@ -420,12 +420,82 @@ recommended_action = regenerate_media
 决策：`MediaConsistencyReport` 分数高只能说明元数据和 prompt 链路一致，不能证明素材可用。
 视觉审查失败时，候选不得进入 locked / runtime package，应回到 prompt 修订或重新生成媒体。
 
-## 8. 下一步建议
+## 8. 媒体 Prompt Repair 与修复闭环
+
+本轮新增确定性修复节点，把视觉审查失败原因转成下一轮图像生成可用的修复计划。
+
+新增文件：
+
+```text
+tools/media/prompt_repair.py
+shared/schemas/media_prompt_repair_plan.v0.1.schema.json
+examples/asset_graph/mirror_lure_trap.media_vision_review.sample.json
+```
+
+新增 / 更新节点与工作流：
+
+```text
+media.build_prompt_repair_plan
+media.merge_repaired_sequence
+examples/workflows/mvp_media_prompt_repair.workflow.json
+examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json
+```
+
+`MediaPromptRepairPlan` 会输出：
+
+- `target_roles`：需要重生成的媒体角色。
+- `reuse_roles`：可以复用的媒体角色。
+- `global_negative_constraints`：审查诊断用的全局负面约束。
+- `role_repairs`：每个角色的失败原因、正向补充、构图约束和参考策略。
+- `prompt_suffix_by_role`：可接回图像生成节点的修复 prompt 片段。
+
+真实修复闭环：
+
+```text
+/tmp/live_media_repair_retry_safe_check_2/mvp_media_repair_retry_existing/
+```
+
+流程：
+
+```text
+原始 raw media
+  -> vision_review failed / 65.0
+  -> build_prompt_repair_plan
+  -> regenerate_failed_roles(effect_preview)
+  -> merge_repaired_sequence(icon + ui_card 复用，effect_preview 替换)
+  -> vision_review_after_repair passed / 88.0
+```
+
+二次审查结果：
+
+```text
+MediaVisionReviewReport.status = passed
+vision_score = 88.0
+recommended_action = promote
+```
+
+修复后的 `effect_preview` 已移除现代人类士兵、文字和水印问题，主体也与镜片诱饵更一致。
+剩余警告是画面缺少被影响目标，表现力可以继续增强，但已经不再阻塞 promotion。
+
+重要实现经验：
+
+- 详细失败原因可以保存在 repair plan 中。
+- 直接发给图像 provider 的 prompt 必须更短、更正向、更安全。
+- 负面词越多，越容易触发 provider content policy。Agnes 对一版 repair prompt 返回过：
+
+```text
+content_policy_violation
+```
+
+- 因此当前实现把 `provider-safe repair prompt` 与 `diagnostic repair plan` 分离：计划可以详细，
+  生成 prompt 只描述“镜片装置、灯光环、暗雾、无文字、无 logo”等安全视觉目标。
+
+## 9. 下一步建议
 
 短期最值得继续做：
 
 1. 给 `CompiledAssetCandidate` 增加更严格的 asset-type-specific schema。
 2. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
-3. 增加媒体 prompt repair 节点：把视觉审查失败原因转成下一轮图像生成的负面约束和参考图策略。
+3. 为媒体 repair loop 增加最多 N 次重试 / provider fallback 策略。
 4. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
-5. 把 score / media role / published media manifest / consistency report / vision review 接到前端研发台和战斗 UI mock。
+5. 把 score / media role / published media manifest / consistency report / vision review / repair plan 接到前端研发台和战斗 UI mock。

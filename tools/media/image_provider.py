@@ -125,11 +125,16 @@ def generate_image(
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        body = response.read().decode("utf-8")
-        if not body:
-            raise RuntimeError("empty response from image provider")
-        return json.loads(body)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            body = response.read().decode("utf-8")
+            if not body:
+                raise RuntimeError("empty response from image provider")
+            return json.loads(body)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        detail = body[:1000] if body else ""
+        raise RuntimeError(f"image provider HTTP {exc.code}: {detail}") from exc
 
 
 def extract_image_url(response: dict[str, Any]) -> str:

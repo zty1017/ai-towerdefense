@@ -1,0 +1,69 @@
+{
+  "report_version": "media_vision_review_report.v0.1",
+  "candidate_id": "asset_mirror_lure_trap_001",
+  "asset_type": "support_item",
+  "status": "failed",
+  "vision_score": 25.0,
+  "reviewer_profile": "glm_5v_turbo",
+  "checked_roles": ["icon", "ui_card", "effect_preview"],
+  "item_reviews": [
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+      "media_role": "icon",
+      "status": "passed",
+      "text_detected": false,
+      "watermark_detected": false,
+      "same_subject": true,
+      "world_fit": "unknown",
+      "role_fit": "unknown",
+      "issues": [],
+      "warnings": [],
+      "notes": []
+    },
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+      "media_role": "ui_card",
+      "status": "failed",
+      "text_detected": true,
+      "watermark_detected": false,
+      "same_subject": false,
+      "world_fit": "unknown",
+      "role_fit": "unknown",
+      "issues": [
+        "Detected readable generated text/pseudo-text in the label area.",
+        "Subject inconsistency: The asset appears as a complex stone altar/tower rather than a simple deployable trap."
+      ],
+      "warnings": [
+        "Visual complexity is too high for a consumable trap identity."
+      ],
+      "notes": []
+    },
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_effect_preview_f762412d",
+      "media_role": "effect_preview",
+      "status": "failed",
+      "text_detected": false,
+      "watermark_detected": false,
+      "same_subject": false,
+      "world_fit": "unknown",
+      "role_fit": "unknown",
+      "issues": [
+        "Forbidden element detected: Enemies are clearly modern human soldiers in tactical gear.",
+        "Subject inconsistency: The trap shape changed to a giant crystal hook/fish-hook, losing the original mirror shard motif.",
+        "Worldview mismatch: Modern soldiers do not fit the Long Night Lantern dark fantasy setting."
+      ],
+      "warnings": [],
+      "notes": []
+    }
+  ],
+  "global_issues": [
+    "Critical violation of forbidden elements: Readable text found in ui_card.",
+    "Critical worldview mismatch: Modern human soldiers present in effect_preview instead of shadow-tide creatures.",
+    "Severe visual inconsistency across media roles."
+  ],
+  "global_warnings": [
+    "The image generator seems to be hallucinating text and misinterpreting enemies as modern military units."
+  ],
+  "recommended_action": "regenerate_media",
+  "notes": []
+}
