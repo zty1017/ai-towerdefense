@@ -399,20 +399,40 @@ published_media
 
 ### 11.2 MVP 内的轻量流程
 
-MVP 不实现完整媒体后处理管线。MVP 内只做：
+MVP 内先实现 PNG v0.1 媒体后处理管线。它不等于完整美术生产管线，但已经能把受控 PNG
+素材转成前端可加载的 published media。
 
 ```text
 validate
-  -> normalize（轻量归一化，例如尺寸 / 命名 / 路径）
+  -> remove_background（纯色 / 近纯色 matte 背景抠透明）
+  -> crop_and_pad（按 alpha bbox 裁切并留白）
+  -> normalize_canvas（方形补边 / bottom-center 对齐）
+  -> assign_anchor（sprite 默认 bottom_center，UI 图默认 center）
+  -> pack_sprite_sheet（横向 PNG atlas + JSON frames）
   -> vision_review（live，可选但强烈建议，用于关键素材）
   -> prompt_repair / regenerate_failed_roles / merge_repaired_sequence（按需）
   -> publish（分配 /assets/ 路径，写入 published_media manifest）
   -> fallback（如果上游缺失或失败，使用占位图标 / 统一 sprite）
 ```
 
-对应已注册节点：`media.publish_stub_manifest`。
+PNG v0.1 的已注册节点仍沿用旧名，避免打断已有 workflow：
 
-`media.publish_stub_manifest` 接受 raw_media_metadata（stub），产出一个 published_media manifest（stub）。它不调用真实图像处理，只用占位路径与 fallback 标记。
+```text
+media.remove_background_stub
+media.crop_and_pad_stub
+media.normalize_canvas_stub
+media.assign_anchor_stub
+media.pack_sprite_sheet_stub
+media.build_atlas_json_stub
+```
+
+这些节点现在会写真实 PNG / atlas JSON / published manifest。当前限制：
+
+- 只支持 8-bit、非隔行 RGB/RGBA PNG。
+- 适合纯白、纯黑、纯灰或近纯色背景的 `sprite_source` / `cutout_source`。
+- 不支持 JPEG/WebP 转 PNG；这需要 Pillow 或浏览器侧工具补齐。
+- 不支持复杂背景自动抠图；这需要 rembg、视觉分割模型或人工处理。
+- 不负责生成攻击特效；特效应优先走 visual recipe 或单独透明特效层。
 
 关键媒体的审查节点：
 
@@ -429,7 +449,7 @@ media.merge_repaired_sequence
 
 ### 11.3 MVP 后第一梯队节点
 
-MVP 跑通后，按以下顺序补齐真实媒体后处理节点：
+MVP 跑通后，按以下顺序补齐更强媒体后处理节点：
 
 ```text
 remove_background      抠底 / 去背景
@@ -440,7 +460,7 @@ pack_sprite_sheet      打包 sprite sheet
 build_atlas_json       生成 atlas 元数据 JSON
 ```
 
-这些节点在 v0.2 进入 NodeRegistry，并接受 `processed_media` 作为输入、产出 `processed_media` 或 `published_media`。
+PNG v0.1 已覆盖其中最基础的路径；v0.2 需要把节点名从 `_stub` 迁移到正式名，并补齐 JPEG/WebP、缩放重采样、复杂背景抠图和多帧动画。
 
 ### 11.4 媒体子图默认异步
 

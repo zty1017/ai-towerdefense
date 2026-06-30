@@ -490,12 +490,69 @@ content_policy_violation
 - 因此当前实现把 `provider-safe repair prompt` 与 `diagnostic repair plan` 分离：计划可以详细，
   生成 prompt 只描述“镜片装置、灯光环、暗雾、无文字、无 logo”等安全视觉目标。
 
-## 9. 下一步建议
+## 9. PNG v0.1 像素级后处理管线
+
+本轮把原先只改 JSON 的媒体后处理 stub，升级为可运行的 PNG v0.1 处理管线。
+
+新增文件：
+
+```text
+tools/media/png_pipeline.py
+```
+
+能力范围：
+
+- 纯 Python 读取 / 写入 8-bit、非隔行 RGB/RGBA PNG。
+- 根据四角颜色估算 matte 背景，去除纯色 / 近纯色背景并写入 alpha。
+- 根据 alpha bbox 裁切主体并留白。
+- 方形画布归一，支持 bottom-center 对齐。
+- 按媒体角色写入 anchor；sprite 默认 `bottom_center`，UI / preview 默认 `center`。
+- 横向打包 PNG atlas，并生成 atlas JSON frames。
+- 发布真实 `published_media_manifest`，包含 `/assets/generated/...` URL、sha256、anchor、atlas frame。
+
+仍沿用旧节点名以兼容已有 workflow：
+
+```text
+media.remove_background_stub
+media.crop_and_pad_stub
+media.normalize_canvas_stub
+media.assign_anchor_stub
+media.pack_sprite_sheet_stub
+media.build_atlas_json_stub
+```
+
+真实 deterministic smoke：
+
+```text
+/tmp/png_pipeline_run/tmp_png_processing_check/
+```
+
+验证内容：
+
+- 输入：64x64 白底红色主体 PNG。
+- `remove_background` 后：3489 个像素 alpha=0，607 个像素 alpha=255。
+- `crop_and_pad` / `normalize_canvas` 后：输出 38x38。
+- `assign_anchor`：`bottom_center`，pixel anchor `(19.0, 38.0)`。
+- `build_atlas`：生成真实 `published/asset_test_sprite_icon.png`、`published/build_atlas__atlas.png`、`published/build_atlas__atlas.json`。
+- published manifest 含真实 sha256 和 atlas frame。
+
+当前限制：
+
+- 不支持 JPEG/WebP 读取和转换。
+- 不支持复杂背景抠图。
+- 不做缩放重采样，只做裁切和补边。
+- 不处理多帧动画的逐帧对齐。
+
+因此现在已经可以自动产出“受控 PNG sprite_source / cutout_source”的前端可加载素材；
+但 AI 自由生成的复杂场景图仍应作为 `ui_card` / `effect_preview`，不能直接当 runtime sprite。
+
+## 10. 下一步建议
 
 短期最值得继续做：
 
 1. 给 `CompiledAssetCandidate` 增加更严格的 asset-type-specific schema。
 2. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
-3. 为媒体 repair loop 增加最多 N 次重试 / provider fallback 策略。
-4. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
-5. 把 score / media role / published media manifest / consistency report / vision review / repair plan 接到前端研发台和战斗 UI mock。
+3. 增加 `sprite_source` / `cutout_source` 专用媒体角色和 prompt。
+4. 为媒体 repair loop 增加最多 N 次重试 / provider fallback 策略。
+5. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
+6. 把 score / media role / published media manifest / consistency report / vision review / repair plan 接到前端研发台和战斗 UI mock。

@@ -300,7 +300,7 @@ ProviderAdapter
 - GLM / GLMFree 已验证可接入，适合 fallback 或对照候选，但需要水印检测与裁切。
 - 图像 provider 不一定按请求返回 PNG；adapter 不能固定使用 `.png` 扩展名，应按响应头或 magic bytes 归一化。
 - `tower_sprite` prompt 需要进一步收紧为“可抠图的干净塔体”，另设 `battle_preview` / `animation_card` 承载带背景的演示图。
-- 当前媒体处理节点仍是 stub。进入前端实用前，至少需要实现格式归一化、背景去除、裁切留白、锚点分配和水印检测。
+- 媒体处理节点已具备 PNG v0.1 实处理能力：纯色背景去除、alpha 裁切留白、画布归一、锚点、atlas 和 published manifest 已可自动产出。仍需补齐 JPEG/WebP 格式归一化、复杂背景抠图、缩放重采样和水印检测。
 
 ### 8.0 运行时设置与离线导入
 

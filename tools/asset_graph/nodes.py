@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import secrets
+import shutil
 import sys
 import time
 from datetime import datetime, timezone
@@ -64,6 +65,7 @@ import asset_media_prompt  # noqa: E402
 import media_review  # noqa: E402
 import vision_review  # noqa: E402
 import prompt_repair  # noqa: E402
+import png_pipeline  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -473,9 +475,9 @@ def node_media_publish_stub_manifest(
     node_id: str,
 ) -> dict[str, Any]:
     raw_meta = _load_artifact(inputs, "raw_media_metadata")
-    # raw_media_metadata is a stub describing imported/raw media. We "process"
-    # it deterministically by assigning local /assets/ paths and producing a
-    # published_media manifest. No real image processing occurs.
+    # Legacy JSON-only publisher kept for old workflows that do not yet provide
+    # local PNG files. New media workflows should use the PNG processing chain
+    # ending in media.build_atlas_json_stub.
     raw_items = raw_meta.get("raw_media_items", []) if isinstance(raw_meta, dict) else []
     published: list[dict[str, Any]] = []
     for item in raw_items:
@@ -756,59 +758,43 @@ def node_narrative_mock_world_growth_event(
 
 
 # ---------------------------------------------------------------------------
-# Media stub nodes (JSON metadata only, no real image processing)
+# Media processing nodes
 # ---------------------------------------------------------------------------
 
 
-def _media_stub_step(
-    inputs: dict[str, Any],
-    run_dir: Path,
-    node_id: str,
+def _media_metadata(layer: str, items: list[dict[str, Any]], **extra: Any) -> dict[str, Any]:
+    meta: dict[str, Any] = {
+        "metadata_version": "media_metadata.v0.1",
+        "media_layer": layer,
+        "items": items,
+    }
+    meta.update(extra)
+    return meta
+
+
+def _processed_media_item(
+    item: dict[str, Any],
+    local_path: Path,
+    image: png_pipeline.PngImage,
     *,
     step_name: str,
-    input_layer: str,
-    output_layer: str,
-    output_filename: str,
-    output_kind: str,
 ) -> dict[str, Any]:
-    """Generic media stub: read media_metadata, advance media_layer, strip
-    source_layer, append a processing step marker. No real image processing."""
-    meta = _load_artifact(inputs, "media_metadata")
-    actual_layer = meta.get("media_layer") if isinstance(meta, dict) else None
-    if actual_layer != input_layer:
-        raise NodeError(
-            f"{step_name} expected media_layer={input_layer!r}, "
-            f"got {actual_layer!r}"
-        )
-    items_in = meta.get("items", []) if isinstance(meta, dict) else []
-    items_out: list[dict[str, Any]] = []
-    for item in items_in:
-        if not isinstance(item, dict):
-            continue
-        # source_layer (raw->published provenance) must NOT leak to products;
-        # it lives only in trace/internal.
-        new_item = {k: v for k, v in item.items() if k != "source_layer"}
-        new_item["media_layer"] = output_layer
-        steps = list(new_item.get("processing_steps", []))
-        steps.append(step_name)
-        new_item["processing_steps"] = steps
-        items_out.append(new_item)
-    out_meta: dict[str, Any] = {
-        "metadata_version": "media_metadata.v0.1",
-        "media_layer": output_layer,
-        "items": items_out,
-    }
-    out_path = run_dir / f"{node_id}__{output_filename}"
-    _write_json(out_path, out_meta)
-    ref = _make_ref(
-        artifact_id=f"{node_id}__{output_kind}",
-        kind=output_kind,
-        path=out_path,
-        run_dir=run_dir,
-        produced_by_node=node_id,
-        media_layer=output_layer,
-    )
-    return {"output_refs": {"default": ref}}
+    new_item = {k: v for k, v in item.items() if k != "source_layer"}
+    new_item["media_layer"] = "processed_media"
+    new_item["local_path"] = str(local_path)
+    new_item["width"] = image.width
+    new_item["height"] = image.height
+    new_item["detected_format"] = "png"
+    steps = list(new_item.get("processing_steps", []))
+    steps.append(step_name)
+    new_item["processing_steps"] = steps
+    return new_item
+
+
+def _default_anchor_for_role(role: str) -> dict[str, Any]:
+    if role in {"tower_sprite", "unit_sprite", "npc_sprite", "monster_sprite", "subject_sprite", "cutout_source"}:
+        return {"preset": "bottom_center", "x": 0.5, "y": 1.0}
+    return {"preset": "center", "x": 0.5, "y": 0.5}
 
 
 def node_media_remove_background_stub(
@@ -817,16 +803,44 @@ def node_media_remove_background_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    return _media_stub_step(
-        inputs,
-        run_dir,
-        node_id,
-        step_name="remove_background",
-        input_layer="raw_media",
-        output_layer="processed_media",
-        output_filename="media_remove_background.json",
-        output_kind="media_metadata",
+    meta = _load_artifact(inputs, "media_metadata")
+    if meta.get("media_layer") != "raw_media":
+        raise NodeError("remove_background expected media_layer='raw_media'")
+    threshold = int(params.get("threshold", 28))
+    items_out: list[dict[str, Any]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        local_path = item.get("local_path")
+        if not isinstance(local_path, str) or not local_path:
+            raise NodeError(f"media item {item.get('stable_internal_id')} has no local_path")
+        src_path = Path(local_path)
+        if not src_path.exists():
+            raise NodeError(f"media file not found: {src_path}")
+        try:
+            image = png_pipeline.read_png(src_path)
+            processed = png_pipeline.remove_matte_background(image, threshold=threshold)
+        except ValueError as exc:
+            raise NodeError(f"remove_background supports PNG only: {src_path}: {exc}") from exc
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        out_path = run_dir / f"{node_id}__{stable_id}.png"
+        png_pipeline.write_png(out_path, processed)
+        new_item = _processed_media_item(item, out_path, processed, step_name="remove_background")
+        new_item["background_removed"] = True
+        new_item["background_threshold"] = threshold
+        items_out.append(new_item)
+    out_meta = _media_metadata("processed_media", items_out)
+    out_path = run_dir / f"{node_id}__media_remove_background.json"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_metadata",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="processed_media",
     )
+    return {"output_refs": {"default": ref}}
 
 
 def node_media_build_visual_identity_spec(
@@ -1133,16 +1147,42 @@ def node_media_crop_and_pad_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    return _media_stub_step(
-        inputs,
-        run_dir,
-        node_id,
-        step_name="crop_and_pad",
-        input_layer="processed_media",
-        output_layer="processed_media",
-        output_filename="media_crop_and_pad.json",
-        output_kind="media_metadata",
+    meta = _load_artifact(inputs, "media_metadata")
+    if meta.get("media_layer") != "processed_media":
+        raise NodeError("crop_and_pad expected media_layer='processed_media'")
+    padding = int(params.get("padding", 24))
+    alpha_threshold = int(params.get("alpha_threshold", 8))
+    items_out: list[dict[str, Any]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        src_path = Path(str(item.get("local_path", "")))
+        if not src_path.exists():
+            raise NodeError(f"media file not found: {src_path}")
+        image = png_pipeline.read_png(src_path)
+        cropped = png_pipeline.crop_and_pad(
+            image,
+            padding=padding,
+            alpha_threshold=alpha_threshold,
+        )
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        out_path = run_dir / f"{node_id}__{stable_id}.png"
+        png_pipeline.write_png(out_path, cropped)
+        new_item = _processed_media_item(item, out_path, cropped, step_name="crop_and_pad")
+        new_item["crop_padding"] = padding
+        items_out.append(new_item)
+    out_meta = _media_metadata("processed_media", items_out)
+    out_path = run_dir / f"{node_id}__media_crop_and_pad.json"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_metadata",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="processed_media",
     )
+    return {"output_refs": {"default": ref}}
 
 
 def node_media_normalize_canvas_stub(
@@ -1151,16 +1191,48 @@ def node_media_normalize_canvas_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    return _media_stub_step(
-        inputs,
-        run_dir,
-        node_id,
-        step_name="normalize_canvas",
-        input_layer="processed_media",
-        output_layer="processed_media",
-        output_filename="media_normalize_canvas.json",
-        output_kind="media_metadata",
+    meta = _load_artifact(inputs, "media_metadata")
+    if meta.get("media_layer") != "processed_media":
+        raise NodeError("normalize_canvas expected media_layer='processed_media'")
+    square = bool(params.get("square", True))
+    min_size = int(params.get("min_size", 1))
+    bottom_padding = int(params.get("bottom_padding", 0))
+    items_out: list[dict[str, Any]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        src_path = Path(str(item.get("local_path", "")))
+        if not src_path.exists():
+            raise NodeError(f"media file not found: {src_path}")
+        image = png_pipeline.read_png(src_path)
+        role = str(item.get("media_role", "unknown"))
+        anchor = item.get("anchor") if isinstance(item.get("anchor"), dict) else _default_anchor_for_role(role)
+        align = "bottom_center" if anchor.get("preset") == "bottom_center" else "center"
+        normalized = png_pipeline.normalize_canvas(
+            image,
+            square=square,
+            min_size=min_size,
+            align=align,
+            bottom_padding=bottom_padding,
+        )
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        out_path = run_dir / f"{node_id}__{stable_id}.png"
+        png_pipeline.write_png(out_path, normalized)
+        new_item = _processed_media_item(item, out_path, normalized, step_name="normalize_canvas")
+        new_item["canvas_normalized"] = {"square": square, "min_size": min_size, "align": align}
+        items_out.append(new_item)
+    out_meta = _media_metadata("processed_media", items_out)
+    out_path = run_dir / f"{node_id}__media_normalize_canvas.json"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_metadata",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="processed_media",
     )
+    return {"output_refs": {"default": ref}}
 
 
 def node_media_assign_anchor_stub(
@@ -1169,16 +1241,37 @@ def node_media_assign_anchor_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    return _media_stub_step(
-        inputs,
-        run_dir,
-        node_id,
-        step_name="assign_anchor",
-        input_layer="processed_media",
-        output_layer="processed_media",
-        output_filename="media_assign_anchor.json",
-        output_kind="media_metadata",
+    meta = _load_artifact(inputs, "media_metadata")
+    if meta.get("media_layer") != "processed_media":
+        raise NodeError("assign_anchor expected media_layer='processed_media'")
+    items_out: list[dict[str, Any]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("media_role", "unknown"))
+        anchor = _default_anchor_for_role(role)
+        width = int(item.get("width", 1))
+        height = int(item.get("height", 1))
+        anchor["pixel_x"] = round(anchor["x"] * width, 3)
+        anchor["pixel_y"] = round(anchor["y"] * height, 3)
+        new_item = dict(item)
+        new_item["anchor"] = anchor
+        steps = list(new_item.get("processing_steps", []))
+        steps.append("assign_anchor")
+        new_item["processing_steps"] = steps
+        items_out.append(new_item)
+    out_meta = _media_metadata("processed_media", items_out)
+    out_path = run_dir / f"{node_id}__media_assign_anchor.json"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_metadata",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="processed_media",
     )
+    return {"output_refs": {"default": ref}}
 
 
 def node_media_pack_sprite_sheet_stub(
@@ -1187,16 +1280,60 @@ def node_media_pack_sprite_sheet_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    return _media_stub_step(
-        inputs,
-        run_dir,
-        node_id,
-        step_name="pack_sprite_sheet",
-        input_layer="processed_media",
-        output_layer="processed_media",
-        output_filename="media_pack_sprite_sheet.json",
-        output_kind="media_metadata",
+    meta = _load_artifact(inputs, "media_metadata")
+    if meta.get("media_layer") != "processed_media":
+        raise NodeError("pack_sprite_sheet expected media_layer='processed_media'")
+    pack_items: list[tuple[str, Path, dict[str, Any]]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        local_path = Path(str(item.get("local_path", "")))
+        if not local_path.exists():
+            raise NodeError(f"media file not found: {local_path}")
+        pack_items.append((stable_id, local_path, item))
+    atlas, descriptor = png_pipeline.pack_horizontal(pack_items)
+    atlas_path = run_dir / f"{node_id}__atlas.png"
+    descriptor_path = run_dir / f"{node_id}__atlas.json"
+    png_pipeline.write_png(atlas_path, atlas)
+    png_pipeline.write_json(descriptor_path, descriptor)
+    items_out: list[dict[str, Any]] = []
+    for item in meta.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        new_item = dict(item)
+        new_item["texture_key"] = f"{node_id}__atlas"
+        new_item["atlas_local_path"] = str(atlas_path)
+        new_item["atlas_json_local_path"] = str(descriptor_path)
+        if stable_id in descriptor["frames"]:
+            new_item["atlas_frame"] = descriptor["frames"][stable_id]["frame"]
+        steps = list(new_item.get("processing_steps", []))
+        steps.append("pack_sprite_sheet")
+        new_item["processing_steps"] = steps
+        items_out.append(new_item)
+    out_meta = _media_metadata(
+        "processed_media",
+        items_out,
+        atlas={
+            "texture_key": f"{node_id}__atlas",
+            "image_local_path": str(atlas_path),
+            "descriptor_local_path": str(descriptor_path),
+            "width": atlas.width,
+            "height": atlas.height,
+        },
     )
+    out_path = run_dir / f"{node_id}__media_pack_sprite_sheet.json"
+    _write_json(out_path, out_meta)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_metadata",
+        kind="media_metadata",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+        media_layer="processed_media",
+    )
+    return {"output_refs": {"default": ref}}
 
 
 def node_media_build_atlas_json_stub(
@@ -1205,8 +1342,11 @@ def node_media_build_atlas_json_stub(
     run_dir: Path,
     node_id: str,
 ) -> dict[str, Any]:
-    """Final publish step: processed_media -> published_media manifest with
-    local /assets/ paths. No source_layer, no external URLs. runtime_public-safe."""
+    """Final publish step: processed_media -> published_media manifest.
+
+    Copies processed PNGs plus atlas files into a local published directory and
+    writes runtime-safe /assets/ URLs with hashes. No provider/raw fields leak.
+    """
     meta = _load_artifact(inputs, "media_metadata")
     actual_layer = meta.get("media_layer") if isinstance(meta, dict) else None
     if actual_layer != "processed_media":
@@ -1215,20 +1355,60 @@ def node_media_build_atlas_json_stub(
             f"got {actual_layer!r}"
         )
     items_in = meta.get("items", []) if isinstance(meta, dict) else []
+    published_dir = run_dir / "published"
+    published_dir.mkdir(parents=True, exist_ok=True)
+
+    atlas_info = meta.get("atlas") if isinstance(meta.get("atlas"), dict) else {}
+    atlas_image_src = Path(str(atlas_info.get("image_local_path", ""))) if atlas_info else None
+    atlas_json_src = Path(str(atlas_info.get("descriptor_local_path", ""))) if atlas_info else None
+    if not atlas_image_src or not atlas_image_src.exists() or not atlas_json_src or not atlas_json_src.exists():
+        pack_items: list[tuple[str, Path, dict[str, Any]]] = []
+        for item in items_in:
+            if not isinstance(item, dict):
+                continue
+            stable_id = str(item.get("stable_internal_id", "media_unknown"))
+            local_path = Path(str(item.get("local_path", "")))
+            if not local_path.exists():
+                raise NodeError(f"media file not found: {local_path}")
+            pack_items.append((stable_id, local_path, item))
+        atlas_image, descriptor = png_pipeline.pack_horizontal(pack_items)
+        atlas_image_src = run_dir / f"{node_id}__atlas.png"
+        atlas_json_src = run_dir / f"{node_id}__atlas.json"
+        png_pipeline.write_png(atlas_image_src, atlas_image)
+        png_pipeline.write_json(atlas_json_src, descriptor)
+
+    atlas_image_name = f"{node_id}__atlas.png"
+    atlas_json_name = f"{node_id}__atlas.json"
+    atlas_image_dst = published_dir / atlas_image_name
+    atlas_json_dst = published_dir / atlas_json_name
+    shutil.copyfile(atlas_image_src, atlas_image_dst)
+    shutil.copyfile(atlas_json_src, atlas_json_dst)
+
     published: list[dict[str, Any]] = []
     for item in items_in:
         if not isinstance(item, dict):
             continue
-        stable_id = item.get("stable_internal_id", "media_unknown")
+        stable_id = str(item.get("stable_internal_id", "media_unknown"))
+        local_path = Path(str(item.get("local_path", "")))
+        if not local_path.exists():
+            raise NodeError(f"media file not found: {local_path}")
+        file_name = f"{stable_id}.png"
+        file_dst = published_dir / file_name
+        shutil.copyfile(local_path, file_dst)
         published.append(
             {
                 "stable_internal_id": stable_id,
                 "media_role": item.get("media_role", "unknown"),
                 "media_layer": "published_media",
-                "url": f"/assets/published/{stable_id}.webp",
+                "url": f"/assets/generated/{file_name}",
+                "file": f"published/{file_name}",
                 "width": item.get("width", 512),
                 "height": item.get("height", 512),
                 "fallback_used": item.get("fallback_used", True),
+                "sha256": _sha256_file(file_dst),
+                "anchor": item.get("anchor"),
+                "texture_key": item.get("texture_key", f"{node_id}__atlas"),
+                "atlas_frame": item.get("atlas_frame"),
             }
         )
     manifest: dict[str, Any] = {
@@ -1236,8 +1416,13 @@ def node_media_build_atlas_json_stub(
         "media_layer": "published_media",
         "published_media": published,
         "atlas": {
-            "image": "/assets/atlases/published.webp",
-            "descriptor": "/assets/atlases/published.json",
+            "texture_key": atlas_info.get("texture_key", f"{node_id}__atlas") if isinstance(atlas_info, dict) else f"{node_id}__atlas",
+            "image": f"/assets/generated/{atlas_image_name}",
+            "descriptor": f"/assets/generated/{atlas_json_name}",
+            "image_file": f"published/{atlas_image_name}",
+            "descriptor_file": f"published/{atlas_json_name}",
+            "image_sha256": _sha256_file(atlas_image_dst),
+            "descriptor_sha256": _sha256_file(atlas_json_dst),
         },
     }
     out_path = run_dir / f"{node_id}__published_media_manifest.json"

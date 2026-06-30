@@ -335,7 +335,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: remove background from raw_media items. Only processes JSON metadata; no real image processing. Promotes media_layer raw_media -> processed_media.",
+      "description": "PNG v0.1 processor: remove pure/near-pure matte background from raw_media PNG items, write transparent PNG files, and promote media_layer raw_media -> processed_media. Node name is kept for workflow compatibility.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=raw_media)." }
       ],
@@ -350,7 +350,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: crop and pad processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "description": "PNG v0.1 processor: crop processed_media PNG items to alpha bounds, add padding, write updated PNG files, and keep media_layer=processed_media. Node name is kept for workflow compatibility.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
       ],
@@ -365,7 +365,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: normalize canvas dimensions for processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "description": "PNG v0.1 processor: normalize processed_media PNG item canvas dimensions, optionally square-pad and bottom-align sprites. media_layer stays processed_media. Node name is kept for workflow compatibility.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
       ],
@@ -380,7 +380,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: assign anchor points to processed_media items. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "description": "PNG v0.1 metadata processor: assign anchor points to processed_media items. Sprites default to bottom_center; UI/preview media default to center. media_layer stays processed_media.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
       ],
@@ -395,7 +395,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: pack processed_media items into a sprite sheet descriptor. Only processes JSON metadata; no real image processing. media_layer stays processed_media.",
+      "description": "PNG v0.1 processor: pack processed_media PNG items into a horizontal atlas PNG plus JSON descriptor, and attach atlas frames to item metadata. media_layer stays processed_media.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
       ],
@@ -410,7 +410,7 @@
       "has_side_effects": false,
       "calls_provider": false,
       "version": "v0.1",
-      "description": "Deterministic stub: build the final published atlas manifest from processed_media items. Only processes JSON metadata; no real image processing. Promotes media_layer processed_media -> published_media and assigns local /assets/ paths. Output is runtime_public-eligible.",
+      "description": "PNG v0.1 publisher: copy processed PNG items and atlas files into a published directory, write hashes, anchors, atlas frames, and local /assets/generated paths. Promotes processed_media -> published_media. Output is runtime_public-eligible.",
       "inputs": [
         { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
       ],
