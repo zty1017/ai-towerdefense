@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_vision_review_report.v0.1.schema.json",
+  "title": "MediaVisionReviewReport v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "candidate_id",
+    "asset_type",
+    "status",
+    "vision_score",
+    "reviewer_profile",
+    "checked_roles",
+    "item_reviews",
+    "global_issues",
+    "global_warnings",
+    "recommended_action"
+  ],
+  "properties": {
+    "report_version": { "type": "string", "const": "media_vision_review_report.v0.1" },
+    "candidate_id": { "type": "string" },
+    "asset_type": { "type": "string" },
+    "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+    "vision_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "reviewer_profile": { "type": "string" },
+    "checked_roles": { "type": "array", "items": { "type": "string" } },
+    "item_reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stable_internal_id",
+          "media_role",
+          "status",
+          "text_detected",
+          "watermark_detected",
+          "same_subject",
+          "world_fit",
+          "role_fit",
+          "issues",
+          "warnings",
+          "notes"
+        ],
+        "properties": {
+          "stable_internal_id": { "type": "string" },
+          "media_role": { "type": "string" },
+          "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+          "text_detected": { "type": ["boolean", "null"] },
+          "watermark_detected": { "type": ["boolean", "null"] },
+          "same_subject": { "type": ["boolean", "null"] },
+          "world_fit": { "type": "string", "enum": ["passed", "needs_review", "failed", "unknown"] },
+          "role_fit": { "type": "string", "enum": ["passed", "needs_review", "failed", "unknown"] },
+          "issues": { "type": "array", "items": { "type": "string" } },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "global_issues": { "type": "array", "items": { "type": "string" } },
+    "global_warnings": { "type": "array", "items": { "type": "string" } },
+    "recommended_action": {
+      "type": "string",
+      "enum": ["promote", "manual_review", "revise_prompt", "regenerate_media", "reject"]
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

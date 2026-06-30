@@ -202,6 +202,18 @@ GLM_API_KEY_FREE  -> 免费模型隔离账户
 
 不要用后缀简单判断是否免费。例如 `glm-4.7-flashx` 是收费模型，不等同于 `glm-4.7-flash`。
 
+2026-06-30 已用 `glm-5v-turbo` 完成真实素材视觉审查闭环。当前项目内 profile：
+
+```text
+glm_5v_turbo        -> GLM_API_KEY
+glmfree_4_6v_flash  -> GLM_API_KEY_FREE
+agnes_multimodal_flash -> AGNES_API_KEY
+```
+
+`media.review_with_vision_guarded` 会把本地生成图片以内联图片输入发送给视觉模型，
+输出 `media_vision_review_report.v0.1`。该报告用于检查可读文字、水印、主体漂移、
+世界观语义和媒体角色匹配度，不进入玩家运行时包。
+
 ## 8. 建议的项目内 Provider 架构
 
 建议后端逐步形成如下结构：

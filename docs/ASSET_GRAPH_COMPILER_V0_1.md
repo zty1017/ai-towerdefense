@@ -191,6 +191,10 @@ ProposalJson
 RawGeneratedImage
   -> DetectFormat / NormalizeFormat
   -> WatermarkDetect
+  -> VisualIdentitySpec
+  -> QualityReport
+  -> ConsistencyReport
+  -> VisionReview
   -> Review / Select
   -> BackgroundRemoval
   -> CropAndPad
@@ -203,6 +207,20 @@ RawGeneratedImage
 第一版实现可以先保留 stub 链路，但节点命名和 trace 边界应按真实后处理链路设计。
 `icon`、`tower_sprite`、`battle_preview`、`animation_card` 应作为不同媒体角色处理，
 不能用一个 prompt 同时承担“可抠图塔体”和“战斗展示图”。
+
+2026-06-30 已新增视觉模型审查节点：`media.review_with_vision_guarded`。
+它只允许在 `live` mode 下执行，且必须显式设置 `allow_live_provider_call: true`。
+该节点读取本地 raw media 图片、VisualIdentitySpec、规则质量报告和规则一致性报告，
+输出 `media_vision_review_report.v0.1`。它用于检查规则版无法确认的内容：
+
+- 可读文字 / 伪文字 / 数字。
+- 水印或模型标识。
+- 多个媒体角色是否仍是同一个主体。
+- 敌人、场景和构图是否符合世界书语义。
+- 图片是否符合 `icon`、`ui_card`、`effect_preview` 等角色。
+
+重要约束：`MediaConsistencyReport` 的高分只说明元数据、尺寸、provider / model 和 prompt 链路一致，
+不能证明图片语义可用。`MediaVisionReviewReport.status = failed` 时，媒体不得进入 locked / runtime package。
 
 ### 5.4 人类 / 审查节点
 
@@ -372,6 +390,7 @@ MVP 不实现完整媒体后处理管线。MVP 内只做：
 ```text
 validate
   -> normalize（轻量归一化，例如尺寸 / 命名 / 路径）
+  -> vision_review（live，可选但强烈建议，用于关键素材）
   -> publish（分配 /assets/ 路径，写入 published_media manifest）
   -> fallback（如果上游缺失或失败，使用占位图标 / 统一 sprite）
 ```
@@ -379,6 +398,17 @@ validate
 对应已注册节点：`media.publish_stub_manifest`。
 
 `media.publish_stub_manifest` 接受 raw_media_metadata（stub），产出一个 published_media manifest（stub）。它不调用真实图像处理，只用占位路径与 fallback 标记。
+
+关键媒体的审查节点：
+
+```text
+media.build_visual_identity_spec
+media.check_quality
+media.check_consistency
+media.review_with_vision_guarded
+```
+
+其中前三个是确定性节点；`media.review_with_vision_guarded` 会调用视觉模型，默认不进入玩家运行时包，只作为编译证据和素材门禁。
 
 ### 11.3 MVP 后第一梯队节点
 
@@ -416,4 +446,3 @@ gameplay package 构建
 - `runtime.build_package_stub` 不依赖 `media.publish_stub_manifest` 完成。
 - 媒体缺失时使用 fallback 占位。
 - 媒体子图的 trace 独立记录，可供证据导出读取。
-

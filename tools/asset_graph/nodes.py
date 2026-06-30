@@ -62,6 +62,7 @@ if str(MEDIA_DIR) not in sys.path:
 import image_provider as img_provider  # noqa: E402
 import asset_media_prompt  # noqa: E402
 import media_review  # noqa: E402
+import vision_review  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -899,6 +900,73 @@ def node_media_check_consistency(
     )
     return {"output_refs": {"default": ref}}
 
+
+def node_media_review_with_vision_guarded(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Call a vision model to review local raw media images.
+
+    This node is live-only and requires allow_live_provider_call=true. It sends
+    local generated image files plus compact identity context to a multimodal
+    model, then stores only a normalized MediaVisionReviewReport.
+    """
+    allow_live = params.get("allow_live_provider_call", False)
+    if not allow_live:
+        raise NodeError(
+            "media.review_with_vision_guarded requires "
+            "params.allow_live_provider_call=true to call a real vision provider."
+        )
+
+    candidate = _load_artifact(inputs, "candidate")
+    media_metadata = _load_artifact(inputs, "media_metadata")
+    visual_identity = _load_artifact(inputs, "visual_identity")
+    quality_report = (
+        _load_artifact(inputs, "quality_report")
+        if inputs.get("quality_report")
+        else None
+    )
+    consistency_report = (
+        _load_artifact(inputs, "consistency_report")
+        if inputs.get("consistency_report")
+        else None
+    )
+
+    profile_name = str(params.get("vision_profile", "glm_5v_turbo"))
+    max_images = int(params.get("max_images", 4))
+    max_tokens = int(params.get("max_tokens", 4096))
+    request_timeout = int(params.get("request_timeout", 180))
+
+    vision_review.load_dotenv(ROOT / ".env")
+    try:
+        report = vision_review.review_media_with_vision(
+            candidate,
+            media_metadata,
+            visual_identity,
+            quality_report=quality_report if isinstance(quality_report, dict) else None,
+            consistency_report=consistency_report if isinstance(consistency_report, dict) else None,
+            profile_name=profile_name,
+            max_images=max_images,
+            max_tokens=max_tokens,
+            timeout=request_timeout,
+        )
+    except Exception as exc:
+        raise NodeError(f"vision media review failed: {exc}") from exc
+
+    out_path = run_dir / f"{node_id}__media_vision_review_report.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_vision_review_report",
+        kind="media_vision_review_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
 def node_media_crop_and_pad_stub(
     inputs: dict[str, Any],
     params: dict[str, Any],
@@ -1634,6 +1702,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.build_visual_identity_spec": node_media_build_visual_identity_spec,
     "media.check_quality": node_media_check_quality,
     "media.check_consistency": node_media_check_consistency,
+    "media.review_with_vision_guarded": node_media_review_with_vision_guarded,
     "media.remove_background_stub": node_media_remove_background_stub,
     "media.crop_and_pad_stub": node_media_crop_and_pad_stub,
     "media.normalize_canvas_stub": node_media_normalize_canvas_stub,

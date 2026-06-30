@@ -35,6 +35,17 @@
       "node_type": "media.check_consistency"
     },
     {
+      "id": "vision_review",
+      "node_type": "media.review_with_vision_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "vision_profile": "glm_5v_turbo",
+        "max_images": 4,
+        "max_tokens": 4096,
+        "request_timeout": 180
+      }
+    },
+    {
       "id": "remove_bg",
       "node_type": "media.remove_background_stub"
     },
@@ -69,6 +80,11 @@
     { "source": "generate_images", "target": "consistency", "target_input": "media_metadata" },
     { "source": "visual_identity", "target": "consistency", "target_input": "visual_identity" },
     { "source": "quality", "target": "consistency", "target_input": "quality_report" },
+    { "source": "load_candidate", "target": "vision_review", "target_input": "candidate" },
+    { "source": "generate_images", "target": "vision_review", "target_input": "media_metadata" },
+    { "source": "visual_identity", "target": "vision_review", "target_input": "visual_identity" },
+    { "source": "quality", "target": "vision_review", "target_input": "quality_report" },
+    { "source": "consistency", "target": "vision_review", "target_input": "consistency_report" },
     { "source": "generate_images", "target": "remove_bg", "target_input": "media_metadata" },
     { "source": "remove_bg", "target": "crop_pad", "target_input": "media_metadata" },
     { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },

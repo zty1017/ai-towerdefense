@@ -356,12 +356,76 @@ balance_flag: pure_control_requires_damage_partner
 质量判断：候选结构合法，世界观贴合度和玩法匹配度较好；但它仍是纯控场塔，不能独立击杀敌人，
 因此应在玩家侧表现为“需要搭配伤害来源”的样品限制，而不是技术错误。
 
-## 7. 下一步建议
+## 7. 视觉模型审查节点
+
+本轮新增 `media.review_with_vision_guarded`，用于把本地生成图片、VisualIdentitySpec、
+规则质量报告和规则一致性报告交给视觉模型审查。
+
+新增文件：
+
+```text
+tools/media/vision_review.py
+shared/schemas/media_vision_review_report.v0.1.schema.json
+```
+
+新增 / 更新节点与工作流：
+
+```text
+media.review_with_vision_guarded
+examples/workflows/mvp_live_asset_media_auto_guarded.workflow.json
+```
+
+节点约束：
+
+- 只在 `live` mode 可用。
+- 必须设置 `allow_live_provider_call: true`。
+- 默认视觉 profile 为 `glm_5v_turbo`，同时预留 `glmfree_4_6v_flash` 和 `agnes_multimodal_flash`。
+- 输出 `media_vision_review_report.v0.1`，不保存 raw prompt、raw provider response 或 API key。
+
+真实审查对象：
+
+```text
+/tmp/live_asset_media_auto_support_agnes/mvp_live_asset_media_auto_guarded/generate_images__raw_media_sequence.json
+```
+
+规则版审查结果：
+
+```text
+MediaQualityReport.status = needs_review
+MediaConsistencyReport.status = needs_review
+MediaConsistencyReport.consistency_score = 97.5
+```
+
+视觉模型审查结果：
+
+```text
+/tmp/real_mirror_vision_review_glm_5v.json
+/tmp/live_media_vision_review_node_check/mvp_media_vision_review_existing/vision_review__media_vision_review_report.json
+```
+
+核心结论：
+
+```text
+MediaVisionReviewReport.status = failed
+MediaVisionReviewReport.vision_score = 25.0
+recommended_action = regenerate_media
+```
+
+视觉模型抓到了规则版无法确认的问题：
+
+- `ui_card` 出现生成式伪文字 / 可读文字。
+- `effect_preview` 中敌人被生成成现代人类士兵，不符合“影潮 / 抽象敌意轮廓”。
+- `icon`、`ui_card`、`effect_preview` 的主体发生严重漂移：碎片、祭坛、鱼钩状晶体不是同一个小型陷阱。
+
+决策：`MediaConsistencyReport` 分数高只能说明元数据和 prompt 链路一致，不能证明素材可用。
+视觉审查失败时，候选不得进入 locked / runtime package，应回到 prompt 修订或重新生成媒体。
+
+## 8. 下一步建议
 
 短期最值得继续做：
 
 1. 给 `CompiledAssetCandidate` 增加更严格的 asset-type-specific schema。
 2. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
-3. 接入视觉模型审查节点，真正检查文字、水印、敌人形态和风格一致性。
+3. 增加媒体 prompt repair 节点：把视觉审查失败原因转成下一轮图像生成的负面约束和参考图策略。
 4. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
-5. 把 score / media role / published media manifest / consistency report 接到前端研发台和战斗 UI mock。
+5. 把 score / media role / published media manifest / consistency report / vision review 接到前端研发台和战斗 UI mock。

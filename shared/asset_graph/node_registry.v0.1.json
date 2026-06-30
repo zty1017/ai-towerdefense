@@ -273,6 +273,25 @@
       ]
     },
     {
+      "node_type": "media.review_with_vision_guarded",
+      "category": "media",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call a vision model to review local generated images for OCR/text, watermark, same-subject consistency, world fit, and role fit. Produces a MediaVisionReviewReport and never writes raw prompts or raw provider responses.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_vision_review_report.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "media.remove_background_stub",
       "category": "media",
       "modes": ["deterministic", "studio", "live"],
