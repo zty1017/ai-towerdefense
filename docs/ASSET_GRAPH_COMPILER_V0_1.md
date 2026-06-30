@@ -414,6 +414,7 @@ validate
   -> vision_review（live，可选但强烈建议，用于关键素材）
   -> prompt_repair / regenerate_failed_roles / merge_repaired_sequence（按需）
   -> publish（分配 /assets/ 路径，写入 published_media manifest）
+  -> runtime_readiness（检查透明度、anchor、atlas、hash、/assets 引用）
   -> fallback（如果上游缺失或失败，使用占位图标 / 统一 sprite）
 ```
 
@@ -445,9 +446,12 @@ media.check_consistency
 media.review_with_vision_guarded
 media.build_prompt_repair_plan
 media.merge_repaired_sequence
+media.check_runtime_readiness
 ```
 
 其中 `media.review_with_vision_guarded` 会调用视觉模型；其他节点为确定性节点。它们默认不进入玩家运行时包，只作为编译证据和素材门禁。
+
+`media.check_runtime_readiness` 是发布后硬门禁：它不判断审美，只检查 published PNG、`/assets/generated/...`、sha256、透明度、主体 bbox、anchor、texture key 和 atlas frame。它回答的是“前端是否可以直接加载并摆放这个素材”。
 
 ### 11.3 MVP 后第一梯队节点
 

@@ -594,7 +594,73 @@ examples/asset_graph/asset_compile_react_agent_node.contract.json
 这意味着当前的 `asset.compile_with_llm_guarded` 和 `media.build_prompt_repair_plan`
 可以作为准 AgentNode 的前身，后续逐步升级，不需要推翻现有 AssetGraph。
 
-## 11. 下一步建议
+## 11. 媒体资产 runtime-ready 门禁
+
+本轮继续优化图片资产质量，重点不是“更好看”，而是“几乎无人工干预地变成游戏可用素材”。
+
+外部调研吸收：
+
+- `rembg` 适合作为后续背景移除增强节点。
+- `SAM 2` 适合后续复杂主体分割和多帧一致性处理。
+- `ComfyUI` 的启发是节点化图像生成 / 后处理工作流，不一定需要 UI。
+- Phaser 运行时更需要 texture、atlas、frame、anchor，而不是 provider 原图。
+
+新增文档：
+
+```text
+docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md
+```
+
+新增代码：
+
+```text
+tools/media/runtime_readiness.py
+tools/media/tests/test_runtime_readiness.py
+shared/schemas/media_runtime_readiness_report.v0.1.schema.json
+```
+
+新增 AssetGraph 节点：
+
+```text
+media.check_runtime_readiness
+```
+
+它检查：
+
+- published PNG 文件是否存在并可读。
+- `/assets/generated/...` runtime 引用是否存在。
+- sha256 是否匹配。
+- sprite 是否有透明背景。
+- 主体 bbox 是否过小或过满。
+- 主体是否贴边。
+- `tower_sprite` 是否使用 `bottom_center` anchor。
+- `texture_key` / `atlas_frame` 是否存在。
+- atlas image / descriptor 是否存在。
+
+同时收紧了 `icon` / `tower_sprite` 的图像生成 prompt：
+
+- 单一主体。
+- 纯白 matte 背景。
+- 无场景、无投影、无特效烘焙。
+- 无文字、logo、水印。
+- 特效后续走 visual recipe 或独立透明层。
+
+已接入 runtime readiness gate 的 live workflow：
+
+```text
+examples/workflows/mvp_live_asset_media_guarded.workflow.json
+examples/workflows/mvp_live_asset_media_auto_guarded.workflow.json
+examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json
+```
+
+关键结论：
+
+- 语义一致性靠 vision review。
+- 游戏可用性靠 runtime readiness。
+- 两者都过，才能 promotion。
+- 任一失败，进入 repair / regenerate / fallback。
+
+## 12. 下一步建议
 
 短期最值得继续做：
 

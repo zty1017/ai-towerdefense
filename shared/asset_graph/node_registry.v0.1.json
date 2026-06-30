@@ -419,6 +419,21 @@
       ]
     },
     {
+      "node_type": "media.check_runtime_readiness",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic runtime media gate: check published PNG files, /assets paths, sha256, alpha coverage, subject bounds, anchors, texture keys, and atlas frames before media is considered game-loadable.",
+      "inputs": [
+        { "name": "published_media", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a published_media_manifest JSON produced by media.build_atlas_json_stub." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_runtime_readiness_report.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "world_state.build_delta_from_narrative_stub",
       "category": "pure",
       "modes": ["deterministic", "studio", "live"],

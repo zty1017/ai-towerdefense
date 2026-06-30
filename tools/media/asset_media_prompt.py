@@ -19,6 +19,13 @@ MEDIA_ROLES = {
 }
 
 
+CUTOUT_GENERATION_RULES = (
+    "single isolated subject only, solid pure white matte background, no scenery, "
+    "no cast shadow, no ground shadow, no particles, no aura baked into the image, "
+    "no text, no letters, no watermark, leave clean empty padding around the subject"
+)
+
+
 def asset_type(candidate: dict[str, Any]) -> str:
     gameplay = candidate.get("gameplay", {})
     if isinstance(gameplay, dict):
@@ -77,8 +84,8 @@ def build_icon_prompt(candidate: dict[str, Any]) -> str:
     visual_tags = presentation.get("visual_tags", [])
 
     parts: list[str] = [
-        "2D game icon, square, clean silhouette, no text, no letters, no watermark",
-        "plain solid background, centered object, game-ready UI asset",
+        "2D game icon, square, clean silhouette, centered object, game-ready UI asset",
+        CUTOUT_GENERATION_RULES,
     ]
     if icon_prompt:
         parts.append(icon_prompt)
@@ -108,8 +115,8 @@ def build_tower_sprite_prompt(candidate: dict[str, Any]) -> str:
 
     parts: list[str] = [
         "2D tower defense tower sprite, isolated object, single frame, pseudo-isometric view",
-        "no text, no letters, no watermark, no battlefield background",
-        "plain transparent-looking or solid neutral background, centered base, game-ready cutout",
+        CUTOUT_GENERATION_RULES,
+        "centered base, game-ready cutout, effects must be separate overlay recipes not painted on the tower body",
     ]
     if anim_prompt:
         parts.append(anim_prompt)

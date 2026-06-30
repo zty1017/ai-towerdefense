@@ -2,7 +2,7 @@
   "schema_version": "workflow_graph.v0.1",
   "workflow_id": "mvp_live_asset_media_guarded",
   "mode": "live",
-  "description": "LIVE guarded asset media generation: load compiled candidate -> generate images with image provider -> remove_background_stub -> crop_and_pad_stub -> normalize_canvas_stub -> assign_anchor_stub -> pack_sprite_sheet_stub -> build_atlas_json_stub (runtime_public). WARNING: this workflow calls a real image provider and must be explicitly executed by a human. The generated raw media flows through the processing chain; only the final published manifest is runtime_public.",
+  "description": "LIVE guarded asset media generation: load compiled candidate -> generate images with image provider -> remove_background_stub -> crop_and_pad_stub -> normalize_canvas_stub -> assign_anchor_stub -> pack_sprite_sheet_stub -> build_atlas_json_stub (runtime_public) -> check_runtime_readiness. WARNING: this workflow calls a real image provider and must be explicitly executed by a human. The generated raw media flows through the processing chain; only the final published manifest is runtime_public.",
   "nodes": [
     {
       "id": "load_candidate",
@@ -44,6 +44,10 @@
       "id": "build_atlas",
       "node_type": "media.build_atlas_json_stub",
       "runtime_public": true
+    },
+    {
+      "id": "runtime_readiness",
+      "node_type": "media.check_runtime_readiness"
     }
   ],
   "edges": [
@@ -53,6 +57,7 @@
     { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },
     { "source": "normalize", "target": "assign_anchor", "target_input": "media_metadata" },
     { "source": "assign_anchor", "target": "pack_sheet", "target_input": "media_metadata" },
-    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" }
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" },
+    { "source": "build_atlas", "target": "runtime_readiness", "target_input": "published_media" }
   ]
 }

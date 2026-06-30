@@ -66,6 +66,7 @@ import media_review  # noqa: E402
 import vision_review  # noqa: E402
 import prompt_repair  # noqa: E402
 import png_pipeline  # noqa: E402
+import runtime_readiness  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -1438,6 +1439,50 @@ def node_media_build_atlas_json_stub(
     return {"output_refs": {"default": ref}}
 
 
+def node_media_check_runtime_readiness(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Check that published media is directly loadable by the game runtime."""
+    manifest = _load_artifact(inputs, "published_media")
+    ref = inputs.get("published_media")
+    if not isinstance(ref, dict) or "path" not in ref:
+        raise NodeError("published_media input must be an ArtifactRef")
+    manifest_path = Path(str(ref["path"]))
+    artifact_dir = manifest_path.parent
+    report = runtime_readiness.assess_runtime_readiness(
+        manifest,
+        artifact_dir=artifact_dir,
+        alpha_threshold=int(params.get("alpha_threshold", 8)),
+        min_size=int(params.get("min_size", 16)),
+        max_size=int(params.get("max_size", 1024)),
+        min_subject_coverage=float(params.get("min_subject_coverage", 0.05)),
+        max_subject_coverage=float(params.get("max_subject_coverage", 0.92)),
+    )
+    out_path = run_dir / f"{node_id}__media_runtime_readiness_report.json"
+    _write_json(out_path, report)
+    out_ref = _make_ref(
+        artifact_id=f"{node_id}__media_runtime_readiness_report",
+        kind="media_runtime_readiness_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    if report.get("status") == "failed":
+        failed_items = [
+            item.get("stable_internal_id")
+            for item in report.get("items", [])
+            if isinstance(item, dict) and item.get("status") == "failed"
+        ]
+        raise NodeError(
+            "media runtime readiness failed"
+            + (f": {failed_items}" if failed_items else "")
+        )
+    return {"output_refs": {"default": out_ref}}
+
+
 # ---------------------------------------------------------------------------
 # World State Delta nodes (deterministic, no real LLM)
 # ---------------------------------------------------------------------------
@@ -2092,6 +2137,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.assign_anchor_stub": node_media_assign_anchor_stub,
     "media.pack_sprite_sheet_stub": node_media_pack_sprite_sheet_stub,
     "media.build_atlas_json_stub": node_media_build_atlas_json_stub,
+    "media.check_runtime_readiness": node_media_check_runtime_readiness,
     "world_state.build_delta_from_narrative_stub": node_world_state_build_delta_from_narrative_stub,
     "world_state.build_delta_with_llm_guarded": node_world_state_build_delta_with_llm_guarded,
     "world_state.apply_delta": node_world_state_apply_delta,

@@ -2,7 +2,7 @@
   "schema_version": "workflow_graph.v0.1",
   "workflow_id": "mvp_live_asset_media_repair_guarded",
   "mode": "live",
-  "description": "LIVE guarded media repair loop: generate media -> deterministic/vision review -> build repair plan -> regenerate failed roles -> merge -> re-review. WARNING: calls real image and vision providers.",
+  "description": "LIVE guarded media repair loop: generate media -> deterministic/vision review -> build repair plan -> regenerate failed roles -> merge -> re-review -> media processing -> published manifest -> runtime readiness gate. WARNING: calls real image and vision providers.",
   "nodes": [
     {
       "id": "load_candidate",
@@ -107,6 +107,10 @@
       "id": "build_atlas",
       "node_type": "media.build_atlas_json_stub",
       "runtime_public": true
+    },
+    {
+      "id": "runtime_readiness",
+      "node_type": "media.check_runtime_readiness"
     }
   ],
   "edges": [
@@ -149,6 +153,7 @@
     { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },
     { "source": "normalize", "target": "assign_anchor", "target_input": "media_metadata" },
     { "source": "assign_anchor", "target": "pack_sheet", "target_input": "media_metadata" },
-    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" }
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" },
+    { "source": "build_atlas", "target": "runtime_readiness", "target_input": "published_media" }
   ]
 }
