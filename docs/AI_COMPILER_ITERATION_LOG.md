@@ -206,12 +206,108 @@ effect_preview
 | 无媒体 | 71.2 | `generate_media` |
 | 覆盖 `icon/ui_card/effect_preview` | 80.9 | `promote_candidate` |
 
-## 5. 下一步建议
+## 5. 素材一致性与质量检查
+
+本轮新增三类媒体审查产物：
+
+```text
+VisualIdentitySpec v0.1
+MediaQualityReport v0.1
+MediaConsistencyReport v0.1
+```
+
+对应实现：
+
+```text
+tools/media/media_review.py
+shared/schemas/visual_identity_spec.v0.1.schema.json
+shared/schemas/media_quality_report.v0.1.schema.json
+shared/schemas/media_consistency_report.v0.1.schema.json
+```
+
+新增 AssetGraph 节点：
+
+```text
+media.build_visual_identity_spec
+media.check_quality
+media.check_consistency
+```
+
+新增工作流：
+
+```text
+examples/workflows/mvp_media_consistency_check.workflow.json
+```
+
+`mvp_live_asset_media_auto_guarded.workflow.json` 也已接入这三个旁路节点：生成图像后会同时产出
+visual identity、quality report、consistency report，再继续进入 raw -> processed -> published 的媒体链路。
+
+### 5.1 VisualIdentitySpec
+
+`VisualIdentitySpec` 是每个资产的小型视觉设定稿。它从 `CompiledAssetCandidate` 中抽取：
+
+- subject name
+- asset_type
+- identity tokens
+- silhouette
+- materials
+- palette
+- light effects
+- required motifs
+- forbidden elements
+- role directives
+
+它的作用是防止 `icon`、`ui_card`、`effect_preview` 各画各的。
+
+### 5.2 MediaQualityReport
+
+当前规则版会检查：
+
+- 需要的媒体角色是否齐全。
+- `media_role` 是否合法。
+- 宽高是否存在且有效。
+- 有 `local_path` 时读取文件头，检查 PNG/JPEG/WEBP/GIF 与扩展名是否一致。
+- 标记 `ui_card` 需要 OCR 文本检测。
+- 标记 `effect_preview` / `battle_preview` 需要水印与世界观语义复核。
+- 标记 `tower_sprite` 需要背景和锚点复核。
+
+它不会假装能完全理解图片内容。文字、水印和“敌人是否像影潮生物”仍需要视觉模型或人工复核。
+
+### 5.3 MediaConsistencyReport
+
+当前规则版会检查：
+
+- 角色覆盖是否完整。
+- 多张图是否来自同一 provider / model，避免风格漂移。
+- 尺寸是否一致。
+- `stable_internal_id` 是否以候选资产 ID 为前缀。
+- `prompt_summary` 是否与视觉身份有基本链接。
+- 质量报告是否要求进一步复核。
+
+对真实 Agnes 生成的折光诱饵陷阱 raw media 进行检查：
+
+```text
+/tmp/real_mirror_quality.json
+/tmp/real_mirror_consistency.json
+```
+
+结果：
+
+```text
+MediaQualityReport.status = needs_review
+MediaConsistencyReport.status = needs_review
+MediaConsistencyReport.consistency_score = 97.5
+```
+
+解释：角色覆盖、provider/model、尺寸和身份链接都一致；但 `ui_card` 仍需要 OCR 文本检测，
+`effect_preview` 仍需要世界观语义复核。
+
+## 6. 下一步建议
 
 短期最值得继续做：
 
 1. 给 `CompiledAssetCandidate` 增加更严格的 asset-type-specific schema。
 2. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
-3. 增加媒体质量检测节点：文字/水印检测、格式识别、透明背景/裁切检查。
+3. 接入视觉模型审查节点，真正检查文字、水印、敌人形态和风格一致性。
 4. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
-5. 把 score / media role / published media manifest 接到前端研发台和战斗 UI mock。
+5. 把 score / media role / published media manifest / consistency report 接到前端研发台和战斗 UI mock。

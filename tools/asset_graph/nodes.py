@@ -61,6 +61,7 @@ if str(MEDIA_DIR) not in sys.path:
 
 import image_provider as img_provider  # noqa: E402
 import asset_media_prompt  # noqa: E402
+import media_review  # noqa: E402
 
 
 DEFAULT_REGISTRY_PATH = ROOT / "shared/module_registry/effect_blocks.v0.1.json"
@@ -826,6 +827,78 @@ def node_media_remove_background_stub(
     )
 
 
+def node_media_build_visual_identity_spec(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    candidate = _load_artifact(inputs, "candidate")
+    spec = media_review.build_visual_identity_spec(candidate)
+    out_path = run_dir / f"{node_id}__visual_identity_spec.json"
+    _write_json(out_path, spec)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__visual_identity_spec",
+        kind="visual_identity_spec",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_media_check_quality(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    candidate = _load_artifact(inputs, "candidate")
+    media_metadata = _load_artifact(inputs, "media_metadata")
+    report = media_review.assess_media_quality(candidate, media_metadata)
+    out_path = run_dir / f"{node_id}__media_quality_report.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_quality_report",
+        kind="media_quality_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_media_check_consistency(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    candidate = _load_artifact(inputs, "candidate")
+    media_metadata = _load_artifact(inputs, "media_metadata")
+    visual_identity = _load_artifact(inputs, "visual_identity")
+    quality_report = (
+        _load_artifact(inputs, "quality_report")
+        if inputs.get("quality_report")
+        else None
+    )
+    report = media_review.assess_media_consistency(
+        candidate,
+        media_metadata,
+        visual_identity,
+        quality_report=quality_report,
+    )
+    out_path = run_dir / f"{node_id}__media_consistency_report.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__media_consistency_report",
+        kind="media_consistency_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
 def node_media_crop_and_pad_stub(
     inputs: dict[str, Any],
     params: dict[str, Any],
@@ -1558,6 +1631,9 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "narrative.mock_npc_feedback": node_narrative_mock_npc_feedback,
     "narrative.mock_world_growth_event": node_narrative_mock_world_growth_event,
     "media.generate_asset_images_guarded": node_media_generate_asset_images_guarded,
+    "media.build_visual_identity_spec": node_media_build_visual_identity_spec,
+    "media.check_quality": node_media_check_quality,
+    "media.check_consistency": node_media_check_consistency,
     "media.remove_background_stub": node_media_remove_background_stub,
     "media.crop_and_pad_stub": node_media_crop_and_pad_stub,
     "media.normalize_canvas_stub": node_media_normalize_canvas_stub,

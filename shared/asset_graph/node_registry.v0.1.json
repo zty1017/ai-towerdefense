@@ -224,6 +224,55 @@
       ]
     },
     {
+      "node_type": "media.build_visual_identity_spec",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a deterministic VisualIdentitySpec from a CompiledAssetCandidate. The spec fixes subject, silhouette, materials, palette, required motifs, forbidden elements, and role directives before media generation or review.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to visual_identity_spec.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.check_quality",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Check media metadata and local file headers when available. Reports role coverage, dimensions, format/extension mismatch, fallback use, and required visual/OCR review flags.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_quality_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.check_consistency",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Check role coverage, provider/model/style consistency, dimensions, stable IDs, and VisualIdentitySpec linkage. Produces a MediaConsistencyReport.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_consistency_report.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "media.remove_background_stub",
       "category": "media",
       "modes": ["deterministic", "studio", "live"],

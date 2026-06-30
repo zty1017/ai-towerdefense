@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/visual_identity_spec.v0.1.schema.json",
+  "title": "VisualIdentitySpec v0.1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "spec_version",
+    "candidate_id",
+    "asset_type",
+    "subject_name",
+    "identity_tokens",
+    "forbidden_elements",
+    "role_directives"
+  ],
+  "properties": {
+    "spec_version": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "asset_type": { "type": "string" },
+    "worldbook_id": { "type": ["string", "null"] },
+    "subject_name": { "type": "string" },
+    "identity_tokens": { "type": "array", "items": { "type": "string" } },
+    "silhouette": { "type": "string" },
+    "materials": { "type": "array", "items": { "type": "string" } },
+    "palette": { "type": "array", "items": { "type": "string" } },
+    "light_effects": { "type": "array", "items": { "type": "string" } },
+    "required_motifs": { "type": "array", "items": { "type": "string" } },
+    "forbidden_elements": { "type": "array", "items": { "type": "string" } },
+    "role_directives": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

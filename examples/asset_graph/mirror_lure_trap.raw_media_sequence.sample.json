@@ -1,0 +1,46 @@
+{
+  "metadata_version": "raw_media_sequence.v0.1",
+  "media_layer": "raw_media",
+  "description": "Sample raw media sequence for mirror_lure_trap consistency checks. This is metadata-only and does not point to real generated files.",
+  "items": [
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+      "media_layer": "raw_media",
+      "source_layer": "raw_media",
+      "source_kind": "generated_image",
+      "media_role": "icon",
+      "width": 1024,
+      "height": 1024,
+      "fallback_used": false,
+      "provider_profile": "agnes_image_flash",
+      "model": "agnes-image-2.1-flash",
+      "prompt_summary": "role=icon; name=折光诱饵陷阱; asset_type=support_item; effects=trap_tile_effect,slow,risk_modifier"
+    },
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+      "media_layer": "raw_media",
+      "source_layer": "raw_media",
+      "source_kind": "generated_image",
+      "media_role": "ui_card",
+      "width": 1024,
+      "height": 1024,
+      "fallback_used": false,
+      "provider_profile": "agnes_image_flash",
+      "model": "agnes-image-2.1-flash",
+      "prompt_summary": "role=ui_card; name=折光诱饵陷阱; asset_type=support_item; effects=trap_tile_effect,slow,risk_modifier"
+    },
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001_effect_preview_f762412d",
+      "media_layer": "raw_media",
+      "source_layer": "raw_media",
+      "source_kind": "generated_image",
+      "media_role": "effect_preview",
+      "width": 1024,
+      "height": 1024,
+      "fallback_used": false,
+      "provider_profile": "agnes_image_flash",
+      "model": "agnes-image-2.1-flash",
+      "prompt_summary": "role=effect_preview; name=折光诱饵陷阱; asset_type=support_item; effects=trap_tile_effect,slow,risk_modifier"
+    }
+  ]
+}

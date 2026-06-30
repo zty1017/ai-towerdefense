@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_quality_report.v0.1.schema.json",
+  "title": "MediaQualityReport v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "candidate_id",
+    "asset_type",
+    "status",
+    "expected_roles",
+    "roles_present",
+    "missing_roles",
+    "critical_count",
+    "warning_count",
+    "review_count",
+    "items"
+  ],
+  "properties": {
+    "report_version": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "asset_type": { "type": "string" },
+    "media_layer": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+    "expected_roles": { "type": "array", "items": { "type": "string" } },
+    "roles_present": { "type": "array", "items": { "type": "string" } },
+    "missing_roles": { "type": "array", "items": { "type": "string" } },
+    "unknown_roles": { "type": "array", "items": { "type": "string" } },
+    "critical_count": { "type": "integer", "minimum": 0 },
+    "warning_count": { "type": "integer", "minimum": 0 },
+    "review_count": { "type": "integer", "minimum": 0 },
+    "items": { "type": "array", "items": { "type": "object" } },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}
