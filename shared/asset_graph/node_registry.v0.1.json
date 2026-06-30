@@ -95,6 +95,24 @@
       ]
     },
     {
+      "node_type": "asset.score_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Score a CompiledAssetCandidate using validation, simulation, world-fit, media readiness, and risk guardrails. Produces candidate_score.v0.1.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to candidate_score.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "report.pipeline_summary",
       "category": "report",
       "modes": ["deterministic", "studio", "live"],
@@ -197,7 +215,7 @@
       "has_side_effects": true,
       "calls_provider": true,
       "version": "v0.1",
-      "description": "Call an image provider to generate icon/tower_sprite images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Generates images for each configured role, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Output must flow through the media processing chain before becoming runtime_public.",
+      "description": "Call an image provider to generate media images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Supports roles auto/icon/tower_sprite/ui_card/effect_preview/battle_preview, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Output must flow through the media processing chain before becoming runtime_public.",
       "inputs": [
         { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." }
       ],

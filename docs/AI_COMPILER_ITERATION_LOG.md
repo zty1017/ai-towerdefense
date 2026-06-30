@@ -102,12 +102,116 @@ examples/workflows/mvp_live_intel_asset_compile_guarded.workflow.json
 
 这样 Studio/证据导出可以直接比较候选，而不必深入打开每个 simulation report。
 
-## 4. 下一步建议
+## 4. 候选评分器与媒体角色迭代
+
+### 4.1 CandidateScore v0.1
+
+本轮新增 `candidate_score.v0.1`：
+
+```text
+tools/content_pipeline/score_asset_candidate.py
+shared/schemas/candidate_score.v0.1.schema.json
+```
+
+评分维度：
+
+| 维度 | 权重 | 含义 |
+|---|---:|---|
+| validation | 0.20 | 结构校验是否通过 |
+| gameplay_fit | 0.20 | 是否符合 asset_type 应有字段和效果 |
+| simulation | 0.20 | utility / DPS / cost efficiency / balance flags |
+| world_fit | 0.15 | 是否有世界书、NPC、材料上下文，玩家文案是否无技术词 |
+| media_readiness | 0.15 | 是否覆盖该 asset_type 所需媒体角色 |
+| risk_control | 0.10 | 运行模式与风险是否匹配 |
+
+推荐结果：
+
+```text
+reject
+revise
+generate_media
+needs_review
+promote_candidate
+```
+
+`asset.score_candidate` 已加入 AssetGraph，编译类 workflow 现在会输出 `score__candidate_score.json`，
+`report.pipeline_summary` 会带上 `total_score` 和 `recommendation`。
+
+真实工作流烟测：
+
+```text
+examples/workflows/mvp_live_support_item_compile_guarded.workflow.json
+/tmp/live_support_compile_score_glm_check/mvp_live_support_item_compile_guarded/score__candidate_score.json
+```
+
+结果：`total_score=77.6`，`recommendation=generate_media`。说明结构和玩法已经可用，
+但缺媒体时仍会被引导进入媒体生成阶段。
+
+### 4.2 媒体角色自动选择
+
+图像生成从固定 `icon/tower_sprite` 扩展为：
+
+```text
+icon
+tower_sprite
+ui_card
+effect_preview
+battle_preview
+```
+
+`roles: "auto"` 会按 asset_type 选择：
+
+| asset_type | 默认媒体角色 |
+|---|---|
+| `tower_blueprint` | `icon`、`tower_sprite`、`battle_preview` |
+| `support_item` | `icon`、`ui_card`、`effect_preview` |
+| `temporary_mod` | `icon`、`ui_card`、`effect_preview` |
+| `intel_asset` | `icon`、`ui_card`、`effect_preview` |
+
+新增 workflow：
+
+```text
+examples/workflows/mvp_live_asset_media_auto_guarded.workflow.json
+```
+
+### 4.3 真实 Agnes 媒体烟测：折光诱饵陷阱
+
+对 `examples/compiled_assets/mirror_lure_trap.compiled_asset.json` 使用 Agnes 真实生成：
+
+```text
+/tmp/live_asset_media_auto_support_agnes/mvp_live_asset_media_auto_guarded/generate_images__raw_media_sequence.json
+/tmp/live_asset_media_auto_support_agnes/mvp_live_asset_media_auto_guarded/build_atlas__published_media_manifest.json
+```
+
+生成角色：
+
+```text
+icon
+ui_card
+effect_preview
+```
+
+结果观察：
+
+- `icon` 语义准确，碎镜、灯芯灰和诱饵光源都清晰。
+- `ui_card` 视觉表现强，但模型生成了中文伪文案，违反 `no text`，已进一步收紧 prompt。
+- `effect_preview` 能表达诱饵吸引效果，但敌人偏人类士兵，已要求使用影潮生物或抽象敌影。
+- published manifest 已保留 `media_role`，方便前端区分图标、卡图和预览图。
+- runtime-public manifest 未泄漏 provider 临时 URL、prompt_summary 或 local_path。
+
+评分变化：
+
+| 状态 | total_score | recommendation |
+|---|---:|---|
+| 无媒体 | 71.2 | `generate_media` |
+| 覆盖 `icon/ui_card/effect_preview` | 80.9 | `promote_candidate` |
+
+## 5. 下一步建议
 
 短期最值得继续做：
 
 1. 给 `CompiledAssetCandidate` 增加更严格的 asset-type-specific schema。
-2. 把 `simulation_focus` 纳入 Studio/证据导出。
-3. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
-4. 用这些新对象继续跑媒体生成，但按对象类型拆分媒体角色：`icon`、`battle_preview`、`ui_card`、`effect_preview`。
-5. 增加“候选评分器”：综合 validation、simulation、世界书一致性、媒体可生成性，选出默认候选。
+2. 为 `support_item`、`temporary_mod`、`intel_asset` 各做一条 RuntimePackage / 前端消费示例。
+3. 增加媒体质量检测节点：文字/水印检测、格式识别、透明背景/裁切检查。
+4. 增加候选排序 workflow：同一 proposal 多 provider 生成多个候选，统一评分后选择默认候选。
+5. 把 score / media role / published media manifest 接到前端研发台和战斗 UI mock。

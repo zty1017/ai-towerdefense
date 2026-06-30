@@ -1,6 +1,6 @@
 """Media prompt and metadata helpers for CompiledAssetCandidate image generation.
 
-Generates image prompts for icon and tower_sprite roles based on a
+Generates image prompts for multiple media roles based on a
 CompiledAssetCandidate's presentation and gameplay fields.
 Produces raw media item metadata compatible with the media processing pipeline.
 """
@@ -9,6 +9,33 @@ from __future__ import annotations
 
 import hashlib
 from typing import Any
+
+MEDIA_ROLES = {
+    "icon",
+    "tower_sprite",
+    "ui_card",
+    "effect_preview",
+    "battle_preview",
+}
+
+
+def asset_type(candidate: dict[str, Any]) -> str:
+    gameplay = candidate.get("gameplay", {})
+    if isinstance(gameplay, dict):
+        return str(gameplay.get("asset_type", "unknown"))
+    return "unknown"
+
+
+def default_media_roles(candidate: dict[str, Any]) -> list[str]:
+    """Return role defaults that match the asset type."""
+    kind = asset_type(candidate)
+    if kind == "tower_blueprint":
+        return ["icon", "tower_sprite", "battle_preview"]
+    if kind in {"support_item", "temporary_mod"}:
+        return ["icon", "ui_card", "effect_preview"]
+    if kind == "intel_asset":
+        return ["icon", "ui_card", "effect_preview"]
+    return ["icon", "ui_card"]
 
 
 def stable_media_id(candidate: dict[str, Any], role: str) -> str:
@@ -50,17 +77,18 @@ def build_icon_prompt(candidate: dict[str, Any]) -> str:
     visual_tags = presentation.get("visual_tags", [])
 
     parts: list[str] = [
-        "2D game icon, square, clean silhouette, no text, no letters",
+        "2D game icon, square, clean silhouette, no text, no letters, no watermark",
+        "plain solid background, centered object, game-ready UI asset",
     ]
     if icon_prompt:
         parts.append(icon_prompt)
     else:
-        parts.append(f"tower defense turret, {name}")
+        parts.append(f"tower defense game asset, {name}")
     if desc:
         parts.append(desc)
     if visual_tags:
         parts.append(", ".join(str(t) for t in visual_tags))
-    parts.append("game asset icon, flat design, clear background")
+    parts.append("flat-to-painterly game icon, readable at small size")
     return ", ".join(parts)
 
 
@@ -79,7 +107,9 @@ def build_tower_sprite_prompt(candidate: dict[str, Any]) -> str:
     effect_blocks = gameplay.get("effect_blocks", [])
 
     parts: list[str] = [
-        "2D tower defense sprite, single frame, pseudo-isometric view, no text, no letters",
+        "2D tower defense tower sprite, isolated object, single frame, pseudo-isometric view",
+        "no text, no letters, no watermark, no battlefield background",
+        "plain transparent-looking or solid neutral background, centered base, game-ready cutout",
     ]
     if anim_prompt:
         parts.append(anim_prompt)
@@ -92,8 +122,96 @@ def build_tower_sprite_prompt(candidate: dict[str, Any]) -> str:
     effect_types = [e.get("type", "") for e in effect_blocks if isinstance(e, dict)]
     if effect_types:
         parts.append(f"effects: {', '.join(effect_types)}")
-    parts.append("game asset sprite, battlefield ready")
+    parts.append("clean tower body sprite, anchor at bottom center")
     return ", ".join(parts)
+
+
+def build_ui_card_prompt(candidate: dict[str, Any]) -> str:
+    """Build a prompt for a player-facing inventory/research card image."""
+    presentation = candidate.get("presentation", {})
+    gameplay = candidate.get("gameplay", {})
+    name = presentation.get("name", "asset")
+    desc = presentation.get("short_description", "")
+    anim_prompt = presentation.get("animation_card_prompt", "")
+    visual_tags = presentation.get("visual_tags", [])
+    kind = gameplay.get("asset_type", "asset") if isinstance(gameplay, dict) else "asset"
+
+    parts: list[str] = [
+        "2D game card illustration only, no text, no letters, no numbers, no watermark",
+        "no readable glyphs, no captions, no UI labels, no generated writing",
+        "portrait card composition for a tower defense strategy game, empty decorative frame allowed",
+        f"asset type: {kind}, {name}",
+    ]
+    if anim_prompt:
+        parts.append(str(anim_prompt))
+    if desc:
+        parts.append(str(desc))
+    if visual_tags:
+        parts.append(", ".join(str(t) for t in visual_tags))
+    parts.append("dark fantasy lantern-world style, clear subject, polished card art with blank label areas")
+    return ", ".join(parts)
+
+
+def build_effect_preview_prompt(candidate: dict[str, Any]) -> str:
+    """Build a prompt for the asset's gameplay effect preview."""
+    presentation = candidate.get("presentation", {})
+    gameplay = candidate.get("gameplay", {})
+    name = presentation.get("name", "asset")
+    desc = presentation.get("short_description", "")
+    effect_blocks = gameplay.get("effect_blocks", []) if isinstance(gameplay, dict) else []
+    effect_types = [e.get("type", "") for e in effect_blocks if isinstance(e, dict)]
+
+    parts: list[str] = [
+        "2D tower defense gameplay effect preview, no text, no letters, no watermark",
+        "small diorama scene showing the asset effect clearly",
+        "enemies should be shadow tide creatures or abstract hostile silhouettes, not human soldiers",
+        f"subject: {name}",
+    ]
+    if desc:
+        parts.append(str(desc))
+    if effect_types:
+        parts.append(f"gameplay effects: {', '.join(effect_types)}")
+    parts.append("pseudo-isometric 2D, readable action, limited background, game-ready preview")
+    return ", ".join(parts)
+
+
+def build_battle_preview_prompt(candidate: dict[str, Any]) -> str:
+    """Build a prompt for battle preview / animation card media."""
+    presentation = candidate.get("presentation", {})
+    gameplay = candidate.get("gameplay", {})
+    name = presentation.get("name", "asset")
+    desc = presentation.get("short_description", "")
+    anim_prompt = presentation.get("animation_card_prompt", "")
+    effect_blocks = gameplay.get("effect_blocks", []) if isinstance(gameplay, dict) else []
+    effect_types = [e.get("type", "") for e in effect_blocks if isinstance(e, dict)]
+
+    parts: list[str] = [
+        "2D pseudo-isometric tower defense battle preview, no text, no letters, no watermark",
+        f"asset in action: {name}",
+    ]
+    if anim_prompt:
+        parts.append(str(anim_prompt))
+    if desc:
+        parts.append(str(desc))
+    if effect_types:
+        parts.append(f"effects visible: {', '.join(effect_types)}")
+    parts.append("dark path battlefield, lantern light, cinematic but readable")
+    return ", ".join(parts)
+
+
+def build_prompt_for_role(candidate: dict[str, Any], role: str) -> str:
+    """Build a provider prompt for a supported media role."""
+    if role == "icon":
+        return build_icon_prompt(candidate)
+    if role == "tower_sprite":
+        return build_tower_sprite_prompt(candidate)
+    if role == "ui_card":
+        return build_ui_card_prompt(candidate)
+    if role == "effect_preview":
+        return build_effect_preview_prompt(candidate)
+    if role == "battle_preview":
+        return build_battle_preview_prompt(candidate)
+    raise ValueError(f"unknown media role: {role!r}")
 
 
 def build_raw_media_item(

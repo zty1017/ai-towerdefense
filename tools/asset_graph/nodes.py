@@ -33,6 +33,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import mock_compile_proposal  # noqa: E402
+import score_asset_candidate  # noqa: E402
 import simulate_asset_candidate  # noqa: E402
 import validate_asset_candidate  # noqa: E402
 import validate_proposal  # noqa: E402
@@ -290,7 +291,7 @@ def node_report_pipeline_summary(
         "status": "passed",
         "stages": {},
     }
-    for name in ("proposal_validation", "candidate_validation", "simulation"):
+    for name in ("proposal_validation", "candidate_validation", "simulation", "candidate_score"):
         ref = inputs.get(name)
         if ref is None:
             summary["stages"][name] = {"status": "skipped"}
@@ -312,11 +313,53 @@ def node_report_pipeline_summary(
             summary["utility_score"] = data.get("utility_score")
             summary["cost_efficiency"] = data.get("cost_efficiency")
             summary["estimated_dps"] = data.get("estimated_dps")
+        if name == "candidate_score" and isinstance(data, dict):
+            summary["total_score"] = data.get("total_score")
+            summary["recommendation"] = data.get("recommendation")
+            summary["score_reasons"] = data.get("reasons", [])
     out_path = run_dir / f"{node_id}__pipeline_summary.json"
     _write_json(out_path, summary)
     ref = _make_ref(
         artifact_id=f"{node_id}__pipeline_summary",
         kind="pipeline_summary",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_asset_score_candidate(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Score a candidate using deterministic guardrails.
+
+    Inputs are optional except candidate: validation/simulation/media_metadata
+    improve the score fidelity, but the node can still produce a report while
+    clearly marking missing dimensions.
+    """
+    candidate = _load_artifact(inputs, "candidate")
+    validation = _load_artifact(inputs, "validation") if inputs.get("validation") else None
+    simulation = _load_artifact(inputs, "simulation") if inputs.get("simulation") else None
+    media_metadata = (
+        _load_artifact(inputs, "media_metadata")
+        if inputs.get("media_metadata")
+        else None
+    )
+    report = score_asset_candidate.score_candidate(
+        candidate,
+        validation=validation,
+        simulation=simulation,
+        media_metadata=media_metadata,
+    )
+    out_path = run_dir / f"{node_id}__candidate_score.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__candidate_score",
+        kind="candidate_score",
         path=out_path,
         run_dir=run_dir,
         produced_by_node=node_id,
@@ -879,6 +922,7 @@ def node_media_build_atlas_json_stub(
         published.append(
             {
                 "stable_internal_id": stable_id,
+                "media_role": item.get("media_role", "unknown"),
                 "media_layer": "published_media",
                 "url": f"/assets/published/{stable_id}.webp",
                 "width": item.get("width", 512),
@@ -1412,12 +1456,14 @@ def node_media_generate_asset_images_guarded(
 
     image_profile = str(params.get("image_profile", "agnes_image_flash"))
     size = str(params.get("size", "1024x1024"))
-    roles = params.get("roles", ["icon", "tower_sprite"])
+    roles = params.get("roles", "auto")
     request_timeout = int(params.get("request_timeout", 180))
 
+    if roles == "auto":
+        roles = asset_media_prompt.default_media_roles(candidate)
     if not isinstance(roles, list) or not roles:
-        raise NodeError("params.roles must be a non-empty list of role strings")
-    allowed_roles = {"icon", "tower_sprite"}
+        raise NodeError("params.roles must be 'auto' or a non-empty list of role strings")
+    allowed_roles = asset_media_prompt.MEDIA_ROLES
     unknown_roles = [role for role in roles if role not in allowed_roles]
     if unknown_roles:
         raise NodeError(f"unknown media role(s): {unknown_roles}")
@@ -1438,12 +1484,10 @@ def node_media_generate_asset_images_guarded(
 
     items: list[dict[str, Any]] = []
     for role in roles:
-        if role == "icon":
-            prompt = asset_media_prompt.build_icon_prompt(candidate)
-        elif role == "tower_sprite":
-            prompt = asset_media_prompt.build_tower_sprite_prompt(candidate)
-        else:  # pragma: no cover - guarded above
-            raise NodeError(f"unknown media role: {role!r}")
+        try:
+            prompt = asset_media_prompt.build_prompt_for_role(candidate, role)
+        except ValueError as exc:  # pragma: no cover - guarded above
+            raise NodeError(str(exc)) from exc
 
         prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
 
@@ -1506,6 +1550,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "asset.compile_with_llm_guarded": node_asset_compile_with_llm_guarded,
     "asset.validate_candidate": node_asset_validate_candidate,
     "asset.simulate_candidate": node_asset_simulate_candidate,
+    "asset.score_candidate": node_asset_score_candidate,
     "report.pipeline_summary": node_report_pipeline_summary,
     "runtime.build_package_stub": node_runtime_build_package_stub,
     "research.build_delivery_payload_stub": node_research_build_delivery_payload_stub,

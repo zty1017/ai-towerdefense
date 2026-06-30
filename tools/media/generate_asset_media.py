@@ -63,8 +63,8 @@ def main() -> int:
     parser.add_argument("--request-timeout", type=int, default=180, help="Request timeout in seconds.")
     parser.add_argument(
         "--roles",
-        default="icon,tower_sprite",
-        help="Comma-separated list of media roles to generate.",
+        default="auto",
+        help="Comma-separated media roles, or 'auto' to choose roles from asset_type.",
     )
     parser.add_argument(
         "--live",
@@ -112,11 +112,14 @@ def main() -> int:
     if args.output:
         output_path = Path(args.output)
 
-    roles = [r.strip() for r in args.roles.split(",") if r.strip()]
+    if args.roles.strip().lower() == "auto":
+        roles = asset_media_prompt.default_media_roles(candidate)
+    else:
+        roles = [r.strip() for r in args.roles.split(",") if r.strip()]
     if not roles:
         print("No media roles requested.", file=sys.stderr)
         return 1
-    allowed_roles = {"icon", "tower_sprite"}
+    allowed_roles = asset_media_prompt.MEDIA_ROLES
     unknown_roles = [role for role in roles if role not in allowed_roles]
     if unknown_roles:
         print(f"Unknown media role(s): {', '.join(unknown_roles)}", file=sys.stderr)
@@ -140,12 +143,10 @@ def main() -> int:
 
     items: list[dict[str, Any]] = []
     for role in roles:
-        if role == "icon":
-            prompt = asset_media_prompt.build_icon_prompt(candidate)
-        elif role == "tower_sprite":
-            prompt = asset_media_prompt.build_tower_sprite_prompt(candidate)
-        else:  # pragma: no cover - guarded above
-            print(f"Unknown role: {role!r}", file=sys.stderr)
+        try:
+            prompt = asset_media_prompt.build_prompt_for_role(candidate, role)
+        except ValueError as exc:  # pragma: no cover - guarded above
+            print(str(exc), file=sys.stderr)
             return 1
 
         prompt_summary = asset_media_prompt.build_prompt_summary(candidate, role)
