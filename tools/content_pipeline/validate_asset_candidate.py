@@ -55,6 +55,12 @@ def validate(candidate: dict[str, Any], registry: dict[str, Any]) -> list[str]:
     if candidate.get("lifecycle") not in LIFECYCLES:
         errors.append(f"lifecycle must be one of {sorted(LIFECYCLES)}")
 
+    candidate_id = candidate.get("id")
+    if not isinstance(candidate_id, str) or not candidate_id.strip():
+        errors.append("id must be a non-empty string")
+    elif candidate_id.startswith("proposal_"):
+        errors.append("id must be a compiled asset id, not a proposal id")
+
     gameplay = require_object(candidate.get("gameplay"), "gameplay", errors)
     presentation = require_object(candidate.get("presentation"), "presentation", errors)
     provenance = require_object(candidate.get("provenance"), "provenance", errors)
@@ -73,6 +79,8 @@ def validate(candidate: dict[str, Any], registry: dict[str, Any]) -> list[str]:
         errors.append(f"provenance.mode must be one of {sorted(MODES)}")
     if not provenance.get("worldbook_id"):
         errors.append("provenance.worldbook_id is required")
+    if isinstance(candidate_id, str) and candidate_id == provenance.get("proposal_id"):
+        errors.append("id must not equal provenance.proposal_id")
 
     effects = gameplay.get("effect_blocks")
     if not isinstance(effects, list) or not effects:
@@ -142,4 +150,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,0 +1,53 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_live_intel_asset_compile_guarded",
+  "mode": "live",
+  "description": "LIVE guarded intel asset compile: load intel_asset proposal -> validate -> LLM compile -> validate candidate -> simulate -> pipeline summary.",
+  "nodes": [
+    {
+      "id": "load_proposal",
+      "node_type": "source.load_json",
+      "params": {
+        "path": "examples/proposals/shadow_tide_survey.proposal.json"
+      }
+    },
+    {
+      "id": "validate_proposal",
+      "node_type": "proposal.validate"
+    },
+    {
+      "id": "llm_compile",
+      "node_type": "asset.compile_with_llm_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "provider_profile": "ark_glm_5_2",
+        "max_tokens": 8192,
+        "request_timeout": 240
+      }
+    },
+    {
+      "id": "validate_candidate",
+      "node_type": "asset.validate_candidate"
+    },
+    {
+      "id": "simulate",
+      "node_type": "asset.simulate_candidate",
+      "params": {
+        "duration_seconds": 30.0
+      }
+    },
+    {
+      "id": "summary",
+      "node_type": "report.pipeline_summary"
+    }
+  ],
+  "edges": [
+    { "source": "load_proposal", "target": "validate_proposal", "target_input": "proposal" },
+    { "source": "load_proposal", "target": "llm_compile", "target_input": "proposal" },
+    { "source": "llm_compile", "target": "validate_candidate", "target_input": "candidate" },
+    { "source": "llm_compile", "target": "simulate", "target_input": "candidate" },
+    { "source": "validate_proposal", "target": "summary", "target_input": "proposal_validation" },
+    { "source": "validate_candidate", "target": "summary", "target_input": "candidate_validation" },
+    { "source": "simulate", "target": "summary", "target_input": "simulation" }
+  ]
+}

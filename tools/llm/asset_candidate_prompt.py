@@ -17,6 +17,9 @@ SYSTEM_PROMPT = """你是塔防资产编译器。你负责根据研发提案和�
 - presentation
 - provenance
 
+id 必须是新的游戏资产内部 ID，不能直接复用 proposal.id，不能以 "proposal_" 开头。
+建议使用 "asset_"、"mod_" 或 "intel_" 等清晰前缀。
+
 lifecycle 只允许以下值：
 - "ephemeral"
 - "session_blueprint"
@@ -31,6 +34,14 @@ gameplay.asset_type 只允许以下值：
 应优先遵循 proposal 中的 intended_asset_type。
 
 effect_blocks 只能使用提供的 effect_registry 中的 effect type。每个 effect 必须包含该 type 的 required_fields，数值必须在 numeric_ranges 内。不要发明新的 effect type。
+
+不同 asset_type 必须填写适合该类型的 base_stats 和 type_specific：
+- tower_blueprint: base_stats 建议包含 build_cost、range、cooldown、targeting；type_specific 建议包含 tower_slot、upgrade_from。
+- support_item: base_stats 建议包含 deploy_cost、cooldown、use_count 或 charges、cast_range；type_specific 建议包含 item_slot、delivery_method、target_rule。
+- temporary_mod: base_stats 建议包含 activation_cost、duration_seconds、cooldown；type_specific 建议包含 target_asset_type、stacking、rollback_behavior。
+- intel_asset: base_stats 建议包含 action_cost、valid_turns、confidence；type_specific 建议包含 reveal_mode、applies_to、consumer_hint。
+
+如果资产没有直接伤害，也应通过 scouting、control、defense、risk 等 effect_blocks 表达它对塔防玩法的贡献。
 
 provenance 必须包含以下字段：
 - proposal_id
@@ -144,6 +155,20 @@ def build_user_prompt(
                 "material_ids": ["focusing_lens"],
                 "validation_status": "pending",
                 "simulation_report_id": None,
+            },
+        },
+        "asset_type_guidance": {
+            "support_item": {
+                "base_stats": ["deploy_cost", "cooldown", "use_count", "cast_range"],
+                "type_specific": ["item_slot", "delivery_method", "target_rule"]
+            },
+            "temporary_mod": {
+                "base_stats": ["activation_cost", "duration_seconds", "cooldown"],
+                "type_specific": ["target_asset_type", "stacking", "rollback_behavior"]
+            },
+            "intel_asset": {
+                "base_stats": ["action_cost", "valid_turns", "confidence"],
+                "type_specific": ["reveal_mode", "applies_to", "consumer_hint"]
             },
         },
     }

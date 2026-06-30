@@ -1,0 +1,23 @@
+{
+  "id": "proposal_overload_chain_mod_001",
+  "mode": "runtime_experimental",
+  "title": "过载连弧改造",
+  "summary": "临时改造现有灯塔线圈，让下一轮攻击在多个目标之间跳转，但会显著增加供电压力并带来失稳风险。",
+  "intended_asset_type": "temporary_mod",
+  "expected_effect": ["damage", "risk"],
+  "risk_level": "high",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": ["engineer_001"],
+    "materials": ["charged_copper_coil", "cracked_insulator"],
+    "facility": "workshop_level_1",
+    "knowledge_tags": ["basic_power_grid", "unsafe_overload"]
+  },
+  "known_tradeoffs": [
+    "持续时间短",
+    "电力消耗高",
+    "可能导致被改造塔短暂停摆"
+  ],
+  "player_prompt": "我想把现有防御塔临时过载一下，让攻击能连锁跳到几个敌人身上，哪怕风险高一点也可以。",
+  "worldbook_id": "long_night_lanterns"
+}

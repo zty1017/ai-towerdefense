@@ -307,6 +307,11 @@ def node_report_pipeline_summary(
         }
         if name == "simulation" and isinstance(data, dict):
             summary["balance_flags"] = data.get("balance_flags", [])
+            summary["simulation_focus"] = data.get("simulation_focus")
+            summary["asset_type"] = data.get("asset_type")
+            summary["utility_score"] = data.get("utility_score")
+            summary["cost_efficiency"] = data.get("cost_efficiency")
+            summary["estimated_dps"] = data.get("estimated_dps")
     out_path = run_dir / f"{node_id}__pipeline_summary.json"
     _write_json(out_path, summary)
     ref = _make_ref(

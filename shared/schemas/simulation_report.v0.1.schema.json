@@ -26,6 +26,18 @@
     "simulation_version": {
       "type": "string"
     },
+    "asset_type": {
+      "type": "string"
+    },
+    "simulation_focus": {
+      "type": "string",
+      "enum": [
+        "combat_output",
+        "single_use_support",
+        "modifier_risk_reward",
+        "intel_utility"
+      ]
+    },
     "duration_seconds": {
       "type": "number"
     },
@@ -33,6 +45,11 @@
       "type": "number"
     },
     "slow_uptime": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "utility_score": {
       "type": "number",
       "minimum": 0,
       "maximum": 1
@@ -61,4 +78,3 @@
     }
   }
 }
-

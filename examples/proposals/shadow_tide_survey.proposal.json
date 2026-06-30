@@ -1,0 +1,23 @@
+{
+  "id": "proposal_shadow_tide_survey_001",
+  "mode": "runtime_safe",
+  "title": "影潮测绘札记",
+  "summary": "把哨兵的观察、旧路标和灯火读数整理成临时情报，用于揭示下一波敌潮路径和一个可利用弱点。",
+  "intended_asset_type": "intel_asset",
+  "expected_effect": ["scouting", "support"],
+  "risk_level": "medium",
+  "estimated_cost": "low",
+  "required_inputs": {
+    "npc_ids": ["scout_001", "archivist_001"],
+    "materials": ["charcoal_map", "signal_wick"],
+    "facility": "watch_post",
+    "knowledge_tags": ["enemy_route_memory", "field_notes"]
+  },
+  "known_tradeoffs": [
+    "不直接造成伤害",
+    "情报可能只适用于短期战斗",
+    "需要斥候在场才能更新"
+  ],
+  "player_prompt": "我想先知道下一波敌人可能从哪条路来，以及它们有没有可以利用的弱点。",
+  "worldbook_id": "long_night_lanterns"
+}

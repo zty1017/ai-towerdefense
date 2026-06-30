@@ -1,0 +1,58 @@
+{
+  "id": "mod_overload_chain_arc_001",
+  "lifecycle": "session_blueprint",
+  "gameplay": {
+    "asset_type": "temporary_mod",
+    "base_stats": {
+      "activation_cost": 120,
+      "duration_seconds": 4.0,
+      "cooldown": 15.0
+    },
+    "effect_blocks": [
+      {
+        "type": "pierce_or_chain",
+        "max_targets": 4
+      },
+      {
+        "type": "damage",
+        "amount": 85
+      },
+      {
+        "type": "power_cost",
+        "power_per_second": 12.0
+      },
+      {
+        "type": "risk_modifier",
+        "risk_delta": 25
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": true,
+      "allowed_phases": ["battle"],
+      "target_asset_type_filter": "tower_blueprint"
+    },
+    "type_specific": {
+      "target_asset_type": "tower_blueprint",
+      "stacking": "replace",
+      "rollback_behavior": "restore_with_cooldown_penalty"
+    }
+  },
+  "presentation": {
+    "name": "过载连弧改造",
+    "short_description": "临时改造线圈使攻击连锁跳转，显著提升伤害但极度消耗电力并带来高风险。",
+    "icon_prompt": "2D game icon, lightning chain arc over a glowing tower coil, unstable energy, cracked insulator, tower defense mod",
+    "animation_card_prompt": "2D animation card for an overloaded chain lightning tower mod, high-voltage arcs, sparks, tower defense",
+    "visual_tags": ["temporary_mod", "overload", "chain_lightning", "compiled_asset"]
+  },
+  "provenance": {
+    "proposal_id": "proposal_overload_chain_mod_001",
+    "mode": "runtime_experimental",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_glm_5_2",
+    "model": "glm-5.2",
+    "npc_ids": ["engineer_001"],
+    "material_ids": ["charged_copper_coil", "cracked_insulator"],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

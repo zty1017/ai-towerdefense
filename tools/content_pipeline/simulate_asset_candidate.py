@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-SIMULATION_VERSION = "mock_sim_v0.1"
+SIMULATION_VERSION = "mock_sim_v0.2"
 DEFAULT_DURATION_SECONDS = 30.0
 
 ENEMY_SAMPLES = [
@@ -49,11 +49,31 @@ def base_stats(candidate: dict[str, Any]) -> dict[str, Any]:
     return stats if isinstance(stats, dict) else {}
 
 
+def asset_type(candidate: dict[str, Any]) -> str:
+    gameplay = candidate.get("gameplay", {})
+    value = gameplay.get("asset_type", "unknown")
+    return str(value)
+
+
+def asset_cost(candidate: dict[str, Any]) -> float:
+    stats = base_stats(candidate)
+    for key in ("build_cost", "deploy_cost", "activation_cost", "research_cost"):
+        value = stats.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return max(float(value), 1.0)
+    action_cost = stats.get("action_cost")
+    if isinstance(action_cost, (int, float)) and not isinstance(action_cost, bool):
+        # Action points are scarcer than raw materials in the MVP loop.
+        return max(float(action_cost) * 40.0, 20.0)
+    return 100.0
+
+
 def estimate_dps(candidate: dict[str, Any]) -> float:
     stats = base_stats(candidate)
     cooldown = float(stats.get("cooldown") or 1.0)
     cooldown = max(cooldown, 0.1)
     dps = 0.0
+    chain_targets = 0
     for effect in effects(candidate):
         effect_type = effect.get("type")
         if effect_type == "damage":
@@ -67,7 +87,64 @@ def estimate_dps(candidate: dict[str, Any]) -> float:
             multiplier = float(effect.get("burst_multiplier", 1.0))
             charge = max(float(effect.get("charge_seconds", 1.0)), 1.0)
             dps += 18.0 * multiplier / charge
+        elif effect_type == "pierce_or_chain":
+            chain_targets = max(chain_targets, int(effect.get("max_targets", 0) or 0))
+    if dps == 0 and asset_type(candidate) == "temporary_mod" and chain_targets > 1:
+        # Temporary mods may amplify an existing tower instead of carrying a
+        # damage number themselves. Use a conservative baseline tower proxy.
+        baseline_tower_dps = 35.0
+        dps += baseline_tower_dps * min(chain_targets - 1, 5) * 0.35
     return round(dps, 2)
+
+
+def estimate_utility_score(
+    candidate: dict[str, Any],
+    dps: float,
+    slow_uptime: float,
+    slow_ratio: float,
+    power_peak: float,
+) -> float:
+    """Estimate non-DPS utility on a 0..1 scale.
+
+    The mock simulator is a guardrail, not a battle runtime. This score lets
+    support and intel assets be evaluated without pretending they are towers.
+    """
+    score = 0.0
+    for effect in effects(candidate):
+        effect_type = effect.get("type")
+        if effect_type == "slow":
+            score += slow_uptime * slow_ratio * 0.45
+        elif effect_type == "trap_tile_effect":
+            radius = float(effect.get("tile_radius", 0))
+            duration = float(effect.get("duration", 0))
+            score += min(0.35, (radius / 5.0) * (duration / 30.0) * 0.5)
+        elif effect_type == "shield":
+            score += min(0.35, float(effect.get("shield_amount", 0)) / 1000.0)
+        elif effect_type == "repair":
+            score += min(0.3, float(effect.get("repair_amount", 0)) / 500.0)
+        elif effect_type == "summon_unit":
+            score += min(0.3, float(effect.get("count", 0)) / 6.0)
+        elif effect_type == "pierce_or_chain":
+            score += min(0.25, float(effect.get("max_targets", 0)) / 8.0 * 0.25)
+        elif effect_type == "scout_reveal":
+            score += 0.25
+        elif effect_type == "path_prediction":
+            score += min(0.3, float(effect.get("prediction_horizon", 0)) / 5.0 * 0.3)
+        elif effect_type == "threat_forecast":
+            score += min(0.25, float(effect.get("forecast_turns", 0)) / 5.0 * 0.25)
+        elif effect_type == "weakness_tag":
+            score += min(0.3, float(effect.get("confidence", 0)) * 0.3)
+        elif effect_type == "countermeasure_hint":
+            score += 0.2
+        elif effect_type == "risk_modifier":
+            risk_delta = float(effect.get("risk_delta", 0))
+            if risk_delta < 0:
+                score += min(0.2, abs(risk_delta) / 50.0 * 0.2)
+    if dps > 0:
+        score += min(0.35, dps / 240.0)
+    if power_peak > 10:
+        score -= min(0.25, (power_peak - 10) / 40.0)
+    return round(max(0.0, min(1.0, score)), 3)
 
 
 def estimate_slow_uptime(candidate: dict[str, Any]) -> tuple[float, float]:
@@ -116,33 +193,68 @@ def estimate_leaks(candidate: dict[str, Any], dps: float, slow_uptime: float, sl
     return max(total_leaks, 0)
 
 
-def estimate_cost_efficiency(candidate: dict[str, Any], dps: float, slow_uptime: float, slow_ratio: float, power_peak: float) -> float:
-    stats = base_stats(candidate)
-    build_cost = max(float(stats.get("build_cost") or 100.0), 1.0)
-    utility = dps + (slow_uptime * slow_ratio * 140.0)
+def estimate_cost_efficiency(
+    candidate: dict[str, Any],
+    dps: float,
+    slow_uptime: float,
+    slow_ratio: float,
+    power_peak: float,
+    utility_score: float,
+) -> float:
+    cost = asset_cost(candidate)
+    utility = dps + (slow_uptime * slow_ratio * 140.0) + (utility_score * 120.0)
     penalty = 1.0 + power_peak * 0.08
-    return round((utility / build_cost) / penalty, 3)
+    return round((utility / cost) / penalty, 3)
 
 
-def balance_flags(candidate: dict[str, Any], dps: float, slow_uptime: float, slow_ratio: float, power_peak: float, cost_efficiency: float) -> list[str]:
+def simulation_focus(candidate: dict[str, Any]) -> str:
+    kind = asset_type(candidate)
+    if kind == "intel_asset":
+        return "intel_utility"
+    if kind == "support_item":
+        return "single_use_support"
+    if kind == "temporary_mod":
+        return "modifier_risk_reward"
+    return "combat_output"
+
+
+def balance_flags(
+    candidate: dict[str, Any],
+    dps: float,
+    slow_uptime: float,
+    slow_ratio: float,
+    power_peak: float,
+    cost_efficiency: float,
+    utility_score: float,
+) -> list[str]:
     flags: list[str] = []
     stats = base_stats(candidate)
-    build_cost = float(stats.get("build_cost") or 0)
+    kind = asset_type(candidate)
+    cost = asset_cost(candidate)
     effect_count = len(effects(candidate))
+    has_intel = any(
+        effect.get("type") in {"scout_reveal", "weakness_tag", "path_prediction", "threat_forecast", "countermeasure_hint"}
+        for effect in effects(candidate)
+    )
+    has_consumable_limit = any(key in stats for key in ("use_count", "charges", "duration_seconds", "valid_turns"))
 
-    if dps == 0 and slow_uptime == 0:
+    if kind == "intel_asset" and not has_intel:
+        flags.append("intel_asset_without_intel_effect")
+    if kind == "intel_asset" and utility_score < 0.25:
+        flags.append("weak_intel_value")
+    if kind != "intel_asset" and dps == 0 and slow_uptime == 0 and utility_score < 0.2:
         flags.append("no_direct_impact")
-    if dps == 0 and slow_uptime > 0:
+    if kind == "tower_blueprint" and dps == 0 and slow_uptime > 0:
         flags.append("pure_control_requires_damage_partner")
     if slow_uptime > 0.85 and slow_ratio > 0.45:
         flags.append("control_may_be_too_strong")
-    if slow_uptime > 0.85 and power_peak < 2:
+    if kind == "tower_blueprint" and slow_uptime > 0.85 and power_peak < 2:
         flags.append("control_has_weak_cost")
     if power_peak > 10:
         flags.append("high_power_demand")
-    if build_cost < 120 and effect_count >= 3:
+    if cost < 120 and effect_count >= 3 and not has_consumable_limit:
         flags.append("possibly_underpriced")
-    if cost_efficiency < 0.05:
+    if cost_efficiency < 0.05 and kind not in {"intel_asset", "support_item"}:
         flags.append("low_cost_efficiency")
     if cost_efficiency > 0.6:
         flags.append("high_cost_efficiency")
@@ -155,21 +267,26 @@ def simulate(candidate: dict[str, Any], duration: float) -> dict[str, Any]:
     dps = estimate_dps(candidate)
     slow_uptime, slow_ratio = estimate_slow_uptime(candidate)
     power_peak = estimate_power_peak(candidate)
+    utility_score = estimate_utility_score(candidate, dps, slow_uptime, slow_ratio, power_peak)
     leaked = estimate_leaks(candidate, dps, slow_uptime, slow_ratio, duration)
-    cost_efficiency = estimate_cost_efficiency(candidate, dps, slow_uptime, slow_ratio, power_peak)
-    flags = balance_flags(candidate, dps, slow_uptime, slow_ratio, power_peak, cost_efficiency)
+    cost_efficiency = estimate_cost_efficiency(candidate, dps, slow_uptime, slow_ratio, power_peak, utility_score)
+    flags = balance_flags(candidate, dps, slow_uptime, slow_ratio, power_peak, cost_efficiency, utility_score)
 
     notes = [
         "mock simulation is deterministic and intentionally coarse",
-        "Phaser runtime combat remains the source of truth for final battle behavior"
+        "Phaser runtime combat remains the source of truth for final battle behavior",
+        "non-tower assets are scored by utility guardrails, not only direct kills"
     ]
     return {
         "id": f"sim_{candidate_id}_{SIMULATION_VERSION}",
         "candidate_id": candidate_id,
         "simulation_version": SIMULATION_VERSION,
+        "asset_type": asset_type(candidate),
+        "simulation_focus": simulation_focus(candidate),
         "duration_seconds": duration,
         "estimated_dps": dps,
         "slow_uptime": slow_uptime,
+        "utility_score": utility_score,
         "enemies_leaked": leaked,
         "power_peak": power_peak,
         "cost_efficiency": cost_efficiency,
@@ -202,4 +319,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
