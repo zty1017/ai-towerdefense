@@ -1,0 +1,23 @@
+{
+  "id": "proposal_wick_barrier_pylon_001",
+  "mode": "runtime_safe",
+  "title": "灯芯护幕桩方案",
+  "summary": "用灯芯碎片和导线做成短程护幕桩，增强保护目标周围的防线稳定性。",
+  "intended_asset_type": "tower_blueprint",
+  "expected_effect": ["defense", "support"],
+  "risk_level": "low",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": ["npc_gray_lantern_keeper", "npc_workshop_mentor"],
+    "materials": ["lamp_shard", "conductor_filament"],
+    "facility": "temporary_workshop",
+    "knowledge_tags": ["target_protection", "barrier_field"]
+  },
+  "known_tradeoffs": [
+    "直接伤害有限",
+    "更适合放在保护目标附近",
+    "护幕持续时会占用导线"
+  ],
+  "player_prompt": "我想要一个能保护驿站核心的小型塔，不一定要杀敌，但要能帮目标多撑一会儿。",
+  "worldbook_id": "long_night_lanterns"
+}

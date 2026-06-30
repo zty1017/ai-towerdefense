@@ -1,0 +1,70 @@
+{
+  "id": "asset_wick_barrier_pylon",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "tower_blueprint",
+    "base_stats": {
+      "build_cost": 180,
+      "range": 100,
+      "cooldown": 2.5,
+      "targeting": "nearest_ally"
+    },
+    "effect_blocks": [
+      {
+        "type": "shield",
+        "shield_amount": 120
+      },
+      {
+        "type": "repair",
+        "repair_amount": 15
+      },
+      {
+        "type": "aura_buff",
+        "radius": 80,
+        "target": "ally"
+      },
+      {
+        "type": "power_cost",
+        "power_per_second": 3.0
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": false,
+      "max_instances": 3,
+      "allowed_phases": [
+        "battle"
+      ]
+    },
+    "type_specific": {
+      "tower_slot": "support",
+      "upgrade_from": null
+    }
+  },
+  "presentation": {
+    "name": "灯芯护幕桩",
+    "short_description": "短程护幕桩，用灯芯碎片和导线生成屏障，持续修复并保护附近友军。",
+    "icon_prompt": "2D game icon, small tower-defense pylon with glowing barrier, clean silhouette, dark background",
+    "animation_card_prompt": "2D animation card for barrier pylon tower, tower defense strategy game, shield pulse effect",
+    "visual_tags": [
+      "tower_blueprint",
+      "compiled_asset"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_wick_barrier_pylon_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_deepseek_v4_flash",
+    "model": "deepseek-v4-flash",
+    "npc_ids": [
+      "npc_gray_lantern_keeper",
+      "npc_workshop_mentor"
+    ],
+    "material_ids": [
+      "lamp_shard",
+      "conductor_filament"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

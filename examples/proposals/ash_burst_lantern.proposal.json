@@ -1,0 +1,23 @@
+{
+  "id": "proposal_ash_burst_lantern_001",
+  "mode": "runtime_safe",
+  "title": "灯灰爆鸣塔方案",
+  "summary": "把灯灰压入短促爆鸣腔，敌人聚集时释放一次暖金色冲击，适合作为第一关的范围伤害塔。",
+  "intended_asset_type": "tower_blueprint",
+  "expected_effect": ["damage", "defense"],
+  "risk_level": "medium",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": ["npc_workshop_mentor"],
+    "materials": ["lantern_ash", "lamp_shard"],
+    "facility": "temporary_workshop",
+    "knowledge_tags": ["ash_pressure", "lane_control"]
+  },
+  "known_tradeoffs": [
+    "爆鸣间隔较长",
+    "对高速小群敌人效果更好",
+    "需要少量灯灰稳定"
+  ],
+  "player_prompt": "做一座不用精密镜片的范围伤害塔，用灯灰和碎片在敌群里爆开，最好能守住资源点入口。",
+  "worldbook_id": "long_night_lanterns"
+}

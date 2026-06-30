@@ -122,6 +122,9 @@ def estimate_utility_score(
             score += min(0.35, float(effect.get("shield_amount", 0)) / 1000.0)
         elif effect_type == "repair":
             score += min(0.3, float(effect.get("repair_amount", 0)) / 500.0)
+        elif effect_type == "aura_buff":
+            radius = float(effect.get("radius", 0))
+            score += min(0.25, 0.08 + (radius / 320.0) * 0.17)
         elif effect_type == "summon_unit":
             score += min(0.3, float(effect.get("count", 0)) / 6.0)
         elif effect_type == "pierce_or_chain":
