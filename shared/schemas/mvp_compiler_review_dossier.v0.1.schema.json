@@ -16,7 +16,7 @@
     "pipeline_overview",
     "stage_reviews",
     "content_inventory",
-    "runtime_package_summary",
+    "runtime_package_summaries",
     "workflow_reviews",
     "runtime_state_summary",
     "readiness_summary",
@@ -163,8 +163,12 @@
     "runtime_state_summary": {
       "$ref": "#/$defs/runtime_state_summary"
     },
-    "runtime_package_summary": {
-      "$ref": "#/$defs/runtime_package_summary"
+    "runtime_package_summaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/runtime_package_summary"
+      }
     },
     "workflow_reviews": {
       "type": "array",

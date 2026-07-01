@@ -32,7 +32,10 @@ DOSSIER_VERSION = "mvp_compiler_review_dossier.v0.1"
 DEFAULT_REVIEW_PACK = ROOT / "examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
 DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
-DEFAULT_RUNTIME_PACKAGE = ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json"
+DEFAULT_RUNTIME_PACKAGES = [
+    ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
+    ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+]
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
 SCHEMA_PATH = ROOT / "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json"
 
@@ -619,7 +622,7 @@ def build_dossier(
     review_pack_path: Path,
     promotion_report_path: Path,
     final_state_path: Path,
-    runtime_package_path: Path,
+    runtime_package_paths: list[Path],
 ) -> dict[str, Any]:
     review_pack = load_json(review_pack_path)
     promotion_report = load_json(promotion_report_path)
@@ -638,7 +641,6 @@ def build_dossier(
         (rel(review_pack_path), "review_pack"),
         (rel(promotion_report_path), "promotion_report"),
         (rel(final_state_path), "run_world_state"),
-        (rel(runtime_package_path), "runtime_package"),
         ("shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json", "schema"),
         ("docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md", "architecture_doc"),
         ("docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md", "architecture_doc"),
@@ -647,6 +649,8 @@ def build_dossier(
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
         ("tools/world_state/replay_mvp_delta_chain.py", "validator"),
     ]
+    for runtime_package_path in runtime_package_paths:
+        evidence_paths.append((rel(runtime_package_path), "runtime_package"))
     for stage in stages:
         evidence_paths.append((stage["bundle_file"], "narrative_bundle"))
         if stage["world_delta_file"]:
@@ -678,7 +682,9 @@ def build_dossier(
         "pipeline_overview": pipeline_overview(),
         "stage_reviews": stages,
         "content_inventory": inventory,
-        "runtime_package_summary": runtime_package_summary(runtime_package_path),
+        "runtime_package_summaries": [
+            runtime_package_summary(path) for path in runtime_package_paths
+        ],
         "workflow_reviews": workflow_reviews(),
         "runtime_state_summary": {
             "state_file": rel(final_state_path),
@@ -732,7 +738,12 @@ def main() -> int:
     parser.add_argument("--review-pack", default=str(DEFAULT_REVIEW_PACK))
     parser.add_argument("--promotion-report", default=str(DEFAULT_PROMOTION_REPORT))
     parser.add_argument("--final-state", default=str(DEFAULT_FINAL_STATE))
-    parser.add_argument("--runtime-package", default=str(DEFAULT_RUNTIME_PACKAGE))
+    parser.add_argument(
+        "--runtime-package",
+        action="append",
+        dest="runtime_packages",
+        help="Runtime package path. May be supplied multiple times; defaults to MVP packages.",
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument(
         "--validate",
@@ -741,11 +752,16 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    runtime_package_paths = (
+        [Path(path) for path in args.runtime_packages]
+        if args.runtime_packages
+        else DEFAULT_RUNTIME_PACKAGES
+    )
     dossier = build_dossier(
         Path(args.review_pack),
         Path(args.promotion_report),
         Path(args.final_state),
-        Path(args.runtime_package),
+        runtime_package_paths,
     )
     output = Path(args.output)
     write_json(output, dossier)

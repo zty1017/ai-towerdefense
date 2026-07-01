@@ -1,0 +1,122 @@
+{
+  "battle_config_version": "wick_store_pressure_battle.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "lamp_wick_store",
+  "display_name": "灯芯仓·压力防守",
+  "grid": {
+    "projection": "pseudo3d_oblique",
+    "width_cells": 18,
+    "height_cells": 10,
+    "cell_size": 64
+  },
+  "paths": [
+    {
+      "stable_internal_id": "path_wick_store_main_pipe",
+      "display_name": "旧管线主路",
+      "waypoints": [
+        { "x": 17, "y": 4 },
+        { "x": 13, "y": 4 },
+        { "x": 13, "y": 2 },
+        { "x": 8, "y": 2 },
+        { "x": 8, "y": 6 },
+        { "x": 3, "y": 6 },
+        { "x": 1, "y": 5 }
+      ],
+      "entry_label": "影潮沿旧管线渗入",
+      "exit_label": "灯芯仓门"
+    },
+    {
+      "stable_internal_id": "path_wick_store_service_lane",
+      "display_name": "仓外窄道",
+      "waypoints": [
+        { "x": 17, "y": 8 },
+        { "x": 12, "y": 8 },
+        { "x": 10, "y": 7 },
+        { "x": 6, "y": 7 },
+        { "x": 2, "y": 5 }
+      ],
+      "entry_label": "残影绕行方向",
+      "exit_label": "补给线接点"
+    }
+  ],
+  "core_target": {
+    "stable_internal_id": "target_wick_store_core",
+    "display_name": "灯芯仓核心库存",
+    "position": { "x": 0, "y": 5 },
+    "durability": 14
+  },
+  "optional_targets": [
+    {
+      "stable_internal_id": "target_supply_line_coupler",
+      "display_name": "补给线接点",
+      "position": { "x": 2, "y": 7 },
+      "durability": 6
+    },
+    {
+      "stable_internal_id": "target_lamp_oil_shelf",
+      "display_name": "灯油架",
+      "position": { "x": 4, "y": 3 },
+      "durability": 5
+    }
+  ],
+  "waves": [
+    {
+      "wave_index": 1,
+      "display_name": "第一波·管线前锋",
+      "enemy_archetype": "shadow_tide_runner",
+      "count": 8,
+      "spawn_interval_ms": 1050,
+      "speed_cells_per_sec": 1.7,
+      "durability": 3,
+      "delay_before_wave_ms": 2500
+    },
+    {
+      "wave_index": 2,
+      "display_name": "第二波·重影压仓",
+      "enemy_archetype": "shadow_tide_shade",
+      "count": 6,
+      "spawn_interval_ms": 1500,
+      "speed_cells_per_sec": 1.15,
+      "durability": 5,
+      "delay_before_wave_ms": 9000
+    },
+    {
+      "wave_index": 3,
+      "display_name": "第三波·聚暗冲击",
+      "enemy_archetype": "shadow_tide_cluster",
+      "count": 4,
+      "spawn_interval_ms": 2200,
+      "speed_cells_per_sec": 0.95,
+      "durability": 8,
+      "delay_before_wave_ms": 17000
+    }
+  ],
+  "recommended_assets": [
+    "asset_signal_wick_decoy",
+    "asset_wick_barrier_pylon",
+    "asset_ash_burst_lantern"
+  ],
+  "sample_asset": {
+    "stable_internal_id": "asset_ash_burst_lantern",
+    "asset_kind": "tower_blueprint",
+    "template_id": "tower_blueprint",
+    "lifecycle_state": "session_blueprint",
+    "display_name": "灯灰爆鸣塔",
+    "uses_per_battle": 2,
+    "requires_delivery": false,
+    "delivery_state": "sample_ready",
+    "delivery_delay_ms": 0,
+    "delivery_progress_messages": [
+      "灯灰爆鸣塔已封装。",
+      "可在灯芯仓节点部署。"
+    ],
+    "effect_summary": "对聚集敌人造成范围爆鸣，并短暂撑起灰灯护盾。",
+    "visual_recipes": ["particle_burst", "screen_shake", "aura_field"]
+  },
+  "victory_condition": "守住灯芯仓核心库存，并尽量保住补给线接点。",
+  "failure_condition": "灯芯仓核心库存耐久归零。",
+  "post_battle": {
+    "on_victory": "灯芯仓守住，补给线恢复，灰烬下发现辉晶。",
+    "on_failure": "灯芯仓库存受损，但仍记录诱饵、护幕和爆鸣塔的组合表现。"
+  }
+}

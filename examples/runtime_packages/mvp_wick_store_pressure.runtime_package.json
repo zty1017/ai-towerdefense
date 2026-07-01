@@ -1,0 +1,322 @@
+{
+  "schema_version": "runtime_package.v0.1",
+  "package_id": "package_session_lampwright_wick_store_001",
+  "session_id": "session_lampwright_7f3a",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "lamp_wick_store",
+  "battle_display_name": "灯芯仓·压力防守",
+  "created_at": "2026-07-01T00:00:00Z",
+  "source_refs": {
+    "locked_manifest_id": "manifest_session_lampwright_wick_store_001",
+    "battle_config_version": "wick_store_pressure_battle.v0.1"
+  },
+  "assets": [
+    {
+      "stable_internal_id": "asset_signal_wick_decoy",
+      "asset_kind": "support_item",
+      "lifecycle_state": "session_blueprint",
+      "display": {
+        "name": "信标灯芯诱饵",
+        "summary": "短时吸引前锋并拖慢路径压力的灯芯诱饵。",
+        "tags": [
+          "诱饵",
+          "减速",
+          "支援道具"
+        ]
+      },
+      "gameplay_ref": {
+        "kind": "compiled_asset_candidate",
+        "path": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "sha256": "03b07a16e55d2334f7fa9288135815c571e6347b47cafac12f2a8ad18cc540d5"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_icon_9fac3cb5.png",
+          "width": 763,
+          "height": 763,
+          "sha256": "3cbffc18df5a19ead16fb481d04e4de142de1b28fbd096268c157532466d0aae"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_place",
+          "kind": "ring_pulse",
+          "palette_token": "light.decoy.warm",
+          "color": "#f2c14e",
+          "secondary_color": "#fff2b8",
+          "intensity": "medium",
+          "radius": 88,
+          "duration_ms": 700,
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_lure",
+          "kind": "aura_field",
+          "palette_token": "light.decoy.warm",
+          "color": "#f2c14e",
+          "secondary_color": "#ffdf7a",
+          "intensity": "medium",
+          "radius_from_effect": "slow.radius",
+          "duration_ms": 1200,
+          "particle_density": "low",
+          "blend_mode": "additive"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": [
+          "battle_hotbar"
+        ],
+        "uses_per_battle": 3,
+        "requires_delivery": false,
+        "delivery_state": "sample_ready"
+      }
+    },
+    {
+      "stable_internal_id": "asset_wick_barrier_pylon",
+      "asset_kind": "tower_blueprint",
+      "lifecycle_state": "session_blueprint",
+      "display": {
+        "name": "灯芯护幕桩",
+        "summary": "支撑补给线的短程护幕塔，能修复并保护附近防线。",
+        "tags": [
+          "防御塔",
+          "护盾",
+          "修复"
+        ]
+      },
+      "gameplay_ref": {
+        "kind": "compiled_asset_candidate",
+        "path": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "sha256": "2c85a2eb1ca5de65db6371f85c560d18c58b2cff62d9e87fffdc4162fec3eb0a"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_icon_09e6177c.png",
+          "width": 859,
+          "height": 859,
+          "sha256": "9d4829493027a6cd4cbc32a9696fea9b4117a09e6075bbb657793e106d10c838"
+        },
+        "sprite": {
+          "texture_key": "asset_wick_barrier_pylon_tower_sprite_7472556d",
+          "atlas": "/assets/frontend_mock/atlases/mvp_stage04_towers.json",
+          "image": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_activate",
+          "kind": "aura_field",
+          "palette_token": "light.guard.green",
+          "color": "#6fd08c",
+          "secondary_color": "#c8ffd6",
+          "intensity": "medium",
+          "radius_from_effect": "shield.radius",
+          "duration_ms": 1500,
+          "particle_density": "low",
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_repair",
+          "kind": "sprite_flash",
+          "palette_token": "light.guard.green",
+          "color": "#c8ffd6",
+          "intensity": "low",
+          "duration_ms": 260,
+          "blend_mode": "normal"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": [
+          "battle_hotbar",
+          "node_supply"
+        ],
+        "uses_per_battle": 3,
+        "requires_delivery": false,
+        "delivery_state": "sample_ready"
+      }
+    },
+    {
+      "stable_internal_id": "asset_ash_burst_lantern",
+      "asset_kind": "tower_blueprint",
+      "lifecycle_state": "session_blueprint",
+      "display": {
+        "name": "灯灰爆鸣塔",
+        "summary": "用灯灰引爆聚集影潮的爆鸣塔，适合处理第三波重压。",
+        "tags": [
+          "防御塔",
+          "范围伤害",
+          "护盾"
+        ]
+      },
+      "gameplay_ref": {
+        "kind": "compiled_asset_candidate",
+        "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "sha256": "ab36e901d175509eef19b149914b02cdeeed7789e0a52bea417d23b736c57a9d"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_icon_5045e492.png",
+          "width": 826,
+          "height": 826,
+          "sha256": "ffc76673f47613aef4257d6209ea13fbdada2c6db08fee98d3842a9c31fd6f29"
+        },
+        "sprite": {
+          "texture_key": "asset_ash_burst_lantern_tower_sprite_9263019f",
+          "atlas": "/assets/frontend_mock/atlases/mvp_stage04_towers.json",
+          "image": "/assets/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_fire",
+          "kind": "particle_burst",
+          "palette_token": "light.burst.orange",
+          "color": "#ff6b3d",
+          "secondary_color": "#ffc36b",
+          "intensity": "high",
+          "radius_from_effect": "damage.radius",
+          "duration_ms": 520,
+          "particle_density": "medium",
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_fire",
+          "kind": "screen_shake",
+          "intensity": "low",
+          "duration_ms": 180
+        },
+        {
+          "trigger": "on_shield",
+          "kind": "aura_field",
+          "palette_token": "light.burst.white",
+          "color": "#f8f7ef",
+          "secondary_color": "#ffffff",
+          "intensity": "low",
+          "radius_from_effect": "shield.radius",
+          "duration_ms": 900,
+          "particle_density": "low",
+          "blend_mode": "additive"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": [
+          "battle_hotbar",
+          "node_supply"
+        ],
+        "uses_per_battle": 2,
+        "requires_delivery": false,
+        "delivery_state": "sample_ready"
+      }
+    }
+  ],
+  "battle_context": {
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 18,
+      "height_cells": 10,
+      "cell_size": 64
+    },
+    "paths": [
+      {
+        "stable_internal_id": "path_wick_store_main_pipe",
+        "display_name": "旧管线主路",
+        "waypoints": [
+          {
+            "x": 17,
+            "y": 4
+          },
+          {
+            "x": 13,
+            "y": 4
+          },
+          {
+            "x": 13,
+            "y": 2
+          },
+          {
+            "x": 8,
+            "y": 2
+          },
+          {
+            "x": 8,
+            "y": 6
+          },
+          {
+            "x": 3,
+            "y": 6
+          },
+          {
+            "x": 1,
+            "y": 5
+          }
+        ],
+        "entry_label": "影潮沿旧管线渗入",
+        "exit_label": "灯芯仓门"
+      },
+      {
+        "stable_internal_id": "path_wick_store_service_lane",
+        "display_name": "仓外窄道",
+        "waypoints": [
+          {
+            "x": 17,
+            "y": 8
+          },
+          {
+            "x": 12,
+            "y": 8
+          },
+          {
+            "x": 10,
+            "y": 7
+          },
+          {
+            "x": 6,
+            "y": 7
+          },
+          {
+            "x": 2,
+            "y": 5
+          }
+        ],
+        "entry_label": "残影绕行方向",
+        "exit_label": "补给线接点"
+      }
+    ],
+    "core_target": {
+      "stable_internal_id": "target_wick_store_core",
+      "display_name": "灯芯仓核心库存",
+      "position": {
+        "x": 0,
+        "y": 5
+      },
+      "durability": 14
+    },
+    "optional_targets": [
+      {
+        "stable_internal_id": "target_supply_line_coupler",
+        "display_name": "补给线接点",
+        "position": {
+          "x": 2,
+          "y": 7
+        },
+        "durability": 6
+      },
+      {
+        "stable_internal_id": "target_lamp_oil_shelf",
+        "display_name": "灯油架",
+        "position": {
+          "x": 4,
+          "y": 3
+        },
+        "durability": 5
+      }
+    ],
+    "sample_delivery": {
+      "delivery_delay_ms": 0,
+      "delivery_progress_messages": [
+        "灯灰爆鸣塔已封装。",
+        "可在灯芯仓节点部署。"
+      ]
+    }
+  }
+}

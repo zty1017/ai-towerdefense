@@ -1476,38 +1476,100 @@
       }
     ]
   },
-  "runtime_package_summary": {
-    "package_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
-    "package_id": "package_session_lampwright_7f3a_001",
-    "session_id": "session_lampwright_7f3a",
-    "worldbook_id": "long_night_lanterns",
-    "node_id": "gray_lantern_station",
-    "asset_count": 1,
-    "assets": [
-      {
-        "stable_internal_id": "sample_trap_7f3a",
-        "asset_kind": "temporary_trap_sample",
-        "lifecycle_state": "ephemeral",
-        "display_name": "折光绊索",
-        "battle_surfaces": [
-          "battle_hotbar"
-        ],
-        "visual_recipe_kinds": [
-          "aura_field",
-          "ring_pulse",
-          "sprite_flash"
-        ]
+  "runtime_package_summaries": [
+    {
+      "package_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "package_id": "package_session_lampwright_7f3a_001",
+      "session_id": "session_lampwright_7f3a",
+      "worldbook_id": "long_night_lanterns",
+      "node_id": "gray_lantern_station",
+      "asset_count": 1,
+      "assets": [
+        {
+          "stable_internal_id": "sample_trap_7f3a",
+          "asset_kind": "temporary_trap_sample",
+          "lifecycle_state": "ephemeral",
+          "display_name": "折光绊索",
+          "battle_surfaces": [
+            "battle_hotbar"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "ring_pulse",
+            "sprite_flash"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 16,
+        "height_cells": 9,
+        "path_count": 1,
+        "optional_target_count": 1,
+        "sample_delivery_delay_ms": 30000
       }
-    ],
-    "battle_context_summary": {
-      "projection": "pseudo3d_oblique",
-      "width_cells": 16,
-      "height_cells": 9,
-      "path_count": 1,
-      "optional_target_count": 1,
-      "sample_delivery_delay_ms": 30000
+    },
+    {
+      "package_file": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "package_id": "package_session_lampwright_wick_store_001",
+      "session_id": "session_lampwright_7f3a",
+      "worldbook_id": "long_night_lanterns",
+      "node_id": "lamp_wick_store",
+      "asset_count": 3,
+      "assets": [
+        {
+          "stable_internal_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "信标灯芯诱饵",
+          "battle_surfaces": [
+            "battle_hotbar"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "ring_pulse"
+          ]
+        },
+        {
+          "stable_internal_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "灯芯护幕桩",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "sprite_flash"
+          ]
+        },
+        {
+          "stable_internal_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "灯灰爆鸣塔",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "particle_burst",
+            "screen_shake"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "path_count": 2,
+        "optional_target_count": 2,
+        "sample_delivery_delay_ms": 0
+      }
     }
-  },
+  ],
   "workflow_reviews": [
     {
       "workflow_file": "examples/workflows/mvp_battle_to_world_state.workflow.json",
@@ -2672,7 +2734,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "c93fd6f9c2d998bf05c6c6af109f5a936a21af09d4b9af32b68c16b3fa0b7c7f"
+      "sha256": "3889edfd6f3c3f89f60345b42b3a11a63b3318fccd34d5c9079a0b4a6df068dc"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2756,7 +2818,7 @@
       "path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
       "kind": "review_pack",
       "exists": true,
-      "sha256": "c9ff8cbb64b2cd432828b187f5e3e7ccac82dea79fa1087dd8ea10487992557a"
+      "sha256": "1c50ccdc3055f1a80b2130e678553ad33e8e1b7e555d81706a9ac577529ce8f4"
     },
     {
       "path": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
@@ -2769,6 +2831,12 @@
       "kind": "runtime_package",
       "exists": true,
       "sha256": "d60fe202037fec1afd035aff90bc3e5d6d09352269f62d1fef8b6a53d6167b60"
+    },
+    {
+      "path": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "kind": "runtime_package",
+      "exists": true,
+      "sha256": "0417d78adec0b2831e3f5854ddf397617f16e4e9ad39d809c66c476725aa7f62"
     },
     {
       "path": "examples/workflows/mvp_battle_to_world_state.workflow.json",
@@ -2936,7 +3004,7 @@
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "0a4057f1cd1f639aa1b898b53d92c3286aacfb8b638a6865b01e13ed49380ba1"
+      "sha256": "ce53b1fc78d2fc14d5d9440ecc93d21ec24f520fcc323c15424f923a38a9ee9f"
     },
     {
       "path": "tools/world_state/replay_mvp_delta_chain.py",

@@ -332,7 +332,7 @@
       "battle_nodes": [
         {
           "node_id": "lamp_wick_store",
-          "fixture": "needed",
+          "fixture": "game_data/demo/wick_store_pressure_battle_config.json",
           "purpose": "Second battle config should protect a resource facility and test combined defenses."
         }
       ],
@@ -401,12 +401,12 @@
   ],
   "next_required_artifacts": [
     {
-      "artifact": "game_data/demo/second_battle_config.json",
-      "reason": "Stage 04 needs a battle fixture that protects lamp_wick_store and uses combined defenses."
+      "artifact": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "reason": "Completed Stage 04 runtime package that protects lamp_wick_store and uses combined defenses."
     },
     {
-      "artifact": "examples/world_deltas/stage_02_to_04_*.world_delta.json",
-      "reason": "Narrative bundles currently propose operations; reviewed deltas should be generated before runtime promotion."
+      "artifact": "future_world_deltas_after_stage_04",
+      "reason": "Stage 02/03/04 reviewed deltas now exist; future work should extend beyond the current tutorial chain."
     },
     {
       "artifact": "candidate NPC registration packs",
