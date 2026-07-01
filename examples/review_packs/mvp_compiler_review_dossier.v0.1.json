@@ -2845,7 +2845,7 @@
     "asset_policy_recommendation_counts": {
       "generate_media": 3
     },
-    "initial_state_file": "missing",
+    "initial_state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
     "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
   },
@@ -3072,7 +3072,7 @@
       "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
       "kind": "multistage_content_pack",
       "exists": true,
-      "sha256": "1703e5d0ed01c5d95823ac70d3205c80636404f12fde44305dfaf94944cf7e02"
+      "sha256": "ccfd25a3a2054926921cd69683ed52172b650360bfb9af6d064a36d4ba139b7e"
     },
     {
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
