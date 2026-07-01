@@ -17,6 +17,7 @@
 - `tools/content_pipeline/build_compilable_object_catalog.py`
 - `tools/content_pipeline/build_compilable_object_plan.py`
 - `tools/content_pipeline/build_mvp_compiler_review_dossier.py`
+- `tools/content_pipeline/build_stage05_plan_realization.py`
 - `tools/content_pipeline/validate_compilable_object_catalog.py`
 - `tools/content_pipeline/validate_compilable_object_plan.py`
 - `tools/content_pipeline/build_stage_candidate_pack.py`
@@ -25,6 +26,7 @@
 - `tools/world_state/replay_mvp_delta_chain.py`
 - `docs/COMPILABLE_OBJECT_MODEL_V0_1.md`
 - `docs/COMPILABLE_OBJECT_PLAN_V0_1.md`
+- `docs/STAGE05_PLAN_REALIZATION_V0_1.md`
 - `docs/STAGE_CANDIDATE_PACK_V0_1.md`
 - `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
 - `game_data/demo/wick_store_pressure_battle_config.json`
@@ -59,6 +61,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - `stage_candidate_pack_summary`：阶段候选包摘要，证明每个阶段的剧情、WorldStateDelta、玩法对象、资产和 runtime 引用已经被合并成可审查单元。
 - `compilable_object_catalog_summary`：可编译对象目录摘要，统计当前 MVP 已证明的表现、实体、行为、叙事、关卡、经济、成长和规则对象。
 - `compilable_object_plan_summary`：下一阶段对象化生成计划摘要，说明 Stage 05 需要生成哪些对象、哪些需要 LLM、媒体和人工审查。
+- `Stage 05 计划落地样例`：把下一阶段计划转成可审查叙事包、世界状态变化、下一运行态、资产提案和候选资产，但暂不晋升进正式阶段候选包。
 - `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
 - `runtime_package_summaries`：第一战和灯芯仓压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产。
@@ -77,6 +80,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - 每个阶段都能被整理为 `StageCandidatePack` 候选单元，后续真实 LLM 生成新阶段时也应提交同形态候选，而不是只提交剧情文本。
 - 当前内容能被整理为 `CompilableObjectCatalog`，证明 MVP 已覆盖塔 / 道具 / 样品、任务、随机事件、地图节点、素材、NPC、研发任务、蓝图、事实和 flag 等多类可编译对象。
 - 当前已有 `CompilableObjectPlan` 作为下一阶段生成前的施工图，避免 LLM 直接跳到松散剧情或越权对象。
+- 当前已有 Stage 05 计划落地样例，证明剧情、任务、随机事件、临时样本和防御塔候选可以从同一个计划进入受控验证链路。
 - 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
 - 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
 - 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
@@ -143,6 +147,22 @@ python3 tools/content_pipeline/build_compilable_object_plan.py --validate
 
 ```bash
 python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json
+```
+
+构建并校验 Stage 05 计划落地样例：
+
+```bash
+python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
+```
+
+单独校验 Stage 05 的叙事包、世界状态变化和资产候选：
+
+```bash
+python3 tools/narrative/validate_narrative_bundle.py examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json
+python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json --run-state examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json
+python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json
+python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json
 ```
 
 校验最终运行态：

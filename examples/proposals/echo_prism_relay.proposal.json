@@ -1,0 +1,33 @@
+{
+  "id": "proposal_echo_prism_relay",
+  "mode": "runtime_experimental",
+  "title": "回光棱镜中继塔方案",
+  "summary": "把辉晶压入临时棱镜底座，引导旧信号塔的回光扰动，使来敌短暂显形并减速。",
+  "intended_asset_type": "tower_blueprint",
+  "expected_effect": [
+    "control",
+    "scouting"
+  ],
+  "risk_level": "medium",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": [
+      "npc_road_scout"
+    ],
+    "materials": [
+      "glow_crystal",
+      "conductor_filament"
+    ],
+    "facility": "field_workshop",
+    "knowledge_tags": [
+      "old_signal_tower_pressure_hint",
+      "glow_crystal_discovered"
+    ]
+  },
+  "known_tradeoffs": [
+    "需要消耗辉晶样本，正式蓝图前只能少量试作。",
+    "控制效果依赖旧信号塔附近的回光环境，离开该区域后需要重新校准。"
+  ],
+  "player_prompt": "我想把辉晶做成一个能标记并拖慢敌人的折射中继塔，帮助守住旧信号塔。",
+  "worldbook_id": "long_night_lanterns"
+}

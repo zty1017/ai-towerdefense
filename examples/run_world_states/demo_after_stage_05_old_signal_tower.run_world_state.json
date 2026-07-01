@@ -1,0 +1,452 @@
+{
+  "schema_version": "run_world_state.v0.1",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "progress": {
+    "chapter": 1,
+    "turn": 1,
+    "phase": "old_signal_tower_pressure_planned"
+  },
+  "global_state": {
+    "pressure": 0.38,
+    "hope": 0.65,
+    "visibility": 0.33
+  },
+  "resources": [
+    {
+      "resource_id": "lamp_oil",
+      "amount": 11
+    },
+    {
+      "resource_id": "iron_scrap",
+      "amount": 5
+    },
+    {
+      "resource_id": "rationed_food",
+      "amount": 8
+    },
+    {
+      "resource_id": "lantern_ash",
+      "amount": 0
+    },
+    {
+      "resource_id": "lamp_shard",
+      "amount": 2
+    },
+    {
+      "resource_id": "conductor_filament",
+      "amount": 1
+    },
+    {
+      "resource_id": "glow_crystal",
+      "amount": 0
+    }
+  ],
+  "map_nodes": [
+    {
+      "node_id": "gray_lantern_station",
+      "status": "secured",
+      "threat_level": 0,
+      "visibility": "visible",
+      "available_actions": [
+        "field_research",
+        "rest"
+      ]
+    },
+    {
+      "node_id": "northern_road_crossing",
+      "status": "known",
+      "threat_level": 1,
+      "visibility": "scouted",
+      "available_actions": [
+        "scout",
+        "field_research",
+        "prepare_route"
+      ]
+    },
+    {
+      "node_id": "old_signal_tower",
+      "status": "contested",
+      "threat_level": 3,
+      "visibility": "visible",
+      "available_actions": [
+        "prepare_defense",
+        "field_research",
+        "stabilize_signal"
+      ]
+    },
+    {
+      "node_id": "supply_line_hub_to_gray",
+      "status": "secured",
+      "threat_level": 0,
+      "visibility": "visible",
+      "available_actions": [
+        "repair_route",
+        "talk_to_wire_mender"
+      ]
+    },
+    {
+      "node_id": "lamp_wick_store",
+      "status": "secured",
+      "threat_level": 0,
+      "visibility": "visible",
+      "available_actions": [
+        "collect_reward",
+        "field_research",
+        "prepare_next_route"
+      ]
+    }
+  ],
+  "npcs": [
+    {
+      "npc_id": "engineer_001",
+      "location_node_id": "gray_lantern_station",
+      "narrative_roles": [
+        "battle_feedback"
+      ],
+      "gameplay_roles": [
+        "field_engineer"
+      ],
+      "relationship": {
+        "trust": 0.45
+      },
+      "availability": "present"
+    },
+    {
+      "npc_id": "scout_002",
+      "location_node_id": "northern_road_crossing",
+      "narrative_roles": [
+        "world_observation"
+      ],
+      "gameplay_roles": [
+        "scout"
+      ],
+      "relationship": {
+        "trust": 0.3
+      },
+      "availability": "present"
+    },
+    {
+      "npc_id": "npc_wire_mender_003",
+      "location_node_id": "supply_line_hub_to_gray",
+      "narrative_roles": [
+        "route_pressure_hint",
+        "workshop_witness"
+      ],
+      "gameplay_roles": [
+        "route_repair",
+        "material_adjustment",
+        "field_review"
+      ],
+      "relationship": {
+        "trust": 0.35
+      },
+      "availability": "present"
+    },
+    {
+      "npc_id": "npc_road_scout",
+      "location_node_id": "northern_road_crossing",
+      "narrative_roles": [
+        "dark_edge_witness",
+        "route_warning"
+      ],
+      "gameplay_roles": [
+        "path_prediction",
+        "weakness_hint",
+        "scouting_reliability"
+      ],
+      "relationship": {
+        "trust": 0.28
+      },
+      "availability": "present"
+    }
+  ],
+  "unlocked_facts": [
+    {
+      "fact_id": "refraction_trap_observed",
+      "source": "first_battle",
+      "visibility": "player_known",
+      "summary": "灰灯驿站的折射陷阱在夜雾中第一次显形。"
+    },
+    {
+      "fact_id": "sample_trap_tested_in_battle",
+      "source": "first_battle",
+      "visibility": "player_known",
+      "summary": "折光绊索在灰灯驿站实战中成功拖慢了来犯影潮。"
+    },
+    {
+      "fact_id": "refraction_snare_consumes_too_fast",
+      "source": "dawn_review_supply_line",
+      "visibility": "player_known",
+      "summary": "折光绊索能拖慢影潮前锋，但灯灰消耗过快，后续需要护线和诱饵类方案分担压力。"
+    },
+    {
+      "fact_id": "wire_mender_candidate_seen",
+      "source": "dawn_review_supply_line",
+      "visibility": "hinted",
+      "summary": "补线人出现在受损补给线上，可以评估护线装置和材料替换。"
+    },
+    {
+      "fact_id": "east_dark_echo_survey_ready",
+      "source": "northern_road_scouting",
+      "visibility": "player_known",
+      "summary": "东暗回声测记可以短暂揭示路径压力和敌群弱点，但不能直接清除黑暗。"
+    },
+    {
+      "fact_id": "old_signal_tower_pressure_hint",
+      "source": "northern_road_scouting",
+      "visibility": "hinted",
+      "summary": "旧信号塔附近有回光扰动，后续可能成为压力源或可选战斗节点。"
+    },
+    {
+      "fact_id": "wick_store_defense_combo_validated",
+      "source": "wick_store_pressure_battle",
+      "visibility": "player_known",
+      "summary": "诱饵拖延、护幕稳线、灯灰爆鸣塔处理聚集敌人的组合在灯芯仓防守中通过实战检验。"
+    },
+    {
+      "fact_id": "glow_crystal_discovered",
+      "source": "wick_store_pressure_battle",
+      "visibility": "player_known",
+      "summary": "守住灯芯仓后，灰烬下出现少量辉晶，可作为后续正式研发的稀有材料。"
+    },
+    {
+      "fact_id": "old_signal_tower_resonance_measured",
+      "source": "old_signal_tower_pressure",
+      "visibility": "player_known",
+      "summary": "旧信号塔的回光扰动可以短暂显形来敌，也会让影潮更快锁定塔脚。"
+    }
+  ],
+  "event_log": [
+    {
+      "event_id": "intro_arrival",
+      "turn": 1,
+      "kind": "story",
+      "summary": "玩家抵达灰灯驿站，长夜尚未散去。"
+    },
+    {
+      "event_id": "gray_lantern_first_defense_success",
+      "turn": 2,
+      "kind": "battle",
+      "summary": "灰灯驿站首战告捷，折光绊索拖慢了夜雾来影，驿站灯火仍亮。"
+    },
+    {
+      "event_id": "dawn_review_supply_line_opened",
+      "turn": 3,
+      "kind": "resource",
+      "summary": "清晨复盘完成，补给线与灯芯仓被纳入下一轮防守计划。"
+    },
+    {
+      "event_id": "northern_road_scouting_completed",
+      "turn": 4,
+      "kind": "world",
+      "summary": "北路黑暗边缘被短暂照亮，旧信号塔的风险被标记。"
+    },
+    {
+      "event_id": "wick_store_pressure_battle_resolved",
+      "turn": 5,
+      "kind": "battle",
+      "summary": "灯芯仓守住，补给线恢复，辉晶线索浮出灰烬。"
+    },
+    {
+      "event_id": "old_signal_tower_pressure_planned",
+      "turn": 2,
+      "kind": "world",
+      "summary": "旧信号塔的回光压力被纳入下一轮防守计划，现场试作任务开启。"
+    }
+  ],
+  "research": {
+    "active_jobs": [
+      {
+        "job_id": "research_signal_wick_decoy_trial",
+        "status": "completed",
+        "started_turn": 3,
+        "source_task_id": "task_repair_supply_line_hub",
+        "source_sample_id": "sample_trap_7f3a_repaired",
+        "expected_turns": 1,
+        "expected_output": "信标灯芯诱饵试作"
+      },
+      {
+        "job_id": "research_dark_echo_survey",
+        "status": "completed",
+        "started_turn": 4,
+        "source_task_id": "task_scout_northern_road",
+        "expected_turns": 1,
+        "expected_output": "东暗回声测记"
+      },
+      {
+        "job_id": "research_ash_burst_lantern_blueprint",
+        "status": "completed",
+        "started_turn": 5,
+        "source_task_id": "task_formalize_ash_burst_lantern",
+        "source_sample_id": "asset_ash_burst_lantern_trial",
+        "expected_turns": 1,
+        "expected_output": "灯灰爆鸣塔蓝图"
+      },
+      {
+        "job_id": "research_echo_prism_relay_trial",
+        "status": "queued",
+        "started_turn": 2,
+        "source_task_id": "task_stabilize_old_signal_tower",
+        "source_sample_id": "sample_resonant_glass_shard_trial",
+        "expected_turns": 1,
+        "expected_output": "回光棱镜中继塔试作"
+      }
+    ],
+    "known_blueprints": [
+      {
+        "blueprint_id": "asset_ash_burst_lantern",
+        "unlocked_turn": 5,
+        "source": "research_ash_burst_lantern_blueprint"
+      }
+    ],
+    "temporary_samples": [
+      {
+        "sample_id": "sample_trap_7f3a_repaired",
+        "display_name": "折光绊索",
+        "source_delta_id": "delta_stage_01_gray_lantern_first_defense",
+        "summary": "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
+      },
+      {
+        "sample_id": "intel_dark_echo_survey_001",
+        "display_name": "东暗回声测记",
+        "source_delta_id": "delta_stage_03_northern_road_scouting",
+        "summary": "用灯灰和导线记录的短期侦测札记，可辅助下一场防守布置。"
+      },
+      {
+        "sample_id": "asset_ash_burst_lantern_trial",
+        "display_name": "灯灰爆鸣塔试作",
+        "source_delta_id": "delta_stage_04_wick_store_pressure_battle",
+        "summary": "灯芯仓防守中临时装配的爆鸣装置，适合继续整理成正式蓝图。"
+      },
+      {
+        "sample_id": "sample_resonant_glass_shard_trial",
+        "display_name": "回光玻片样本",
+        "source_delta_id": "delta_stage_05_old_signal_tower_pressure",
+        "summary": "辉晶被磨成薄片并贴合旧塔铜槽后，形成一份只能支撑现场试作的回光样本。"
+      }
+    ]
+  },
+  "flags": {
+    "tutorial_first_battle_started": false,
+    "tutorial_first_battle_completed": true,
+    "stage_02_supply_line_review_completed": true,
+    "stage_03_northern_scouting_completed": true,
+    "stage_04_wick_store_defense_completed": true,
+    "stage_05_old_signal_tower_pressure_planned": true
+  },
+  "tasks": [
+    {
+      "task_id": "task_repair_supply_line_hub",
+      "kind": "resource",
+      "status": "completed",
+      "title": "抢修受损补给线",
+      "summary": "补给线在清晨复盘中被确认受损，需要护线装置和临时材料调配来维持下一场防守。",
+      "node_id": "supply_line_hub_to_gray",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "supply_line_hub_to_gray",
+        "asset_wick_barrier_pylon"
+      ],
+      "reward_refs": [
+        "lantern_ash",
+        "asset_signal_wick_decoy"
+      ]
+    },
+    {
+      "task_id": "task_prepare_wick_store_defense",
+      "kind": "defense",
+      "status": "completed",
+      "title": "准备灯芯仓防守",
+      "summary": "灯芯仓是灰灯驿站的资源节点，下一轮影潮可能转向这里，需要提前布置诱饵与护幕。",
+      "node_id": "lamp_wick_store",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "lamp_wick_store",
+        "asset_signal_wick_decoy",
+        "asset_wick_barrier_pylon"
+      ],
+      "reward_refs": [
+        "glow_crystal"
+      ]
+    },
+    {
+      "task_id": "task_scout_northern_road",
+      "kind": "scouting",
+      "status": "completed",
+      "title": "确认北路黑暗边缘",
+      "summary": "北路斥候愿意带回一段短程测记，用来判断下一场敌潮是否会绕向旧信号塔。",
+      "node_id": "northern_road_crossing",
+      "npc_id": "npc_road_scout",
+      "objective_refs": [
+        "northern_road_crossing",
+        "old_signal_tower"
+      ],
+      "reward_refs": [
+        "intel_dark_echo_survey_001"
+      ]
+    },
+    {
+      "task_id": "task_formalize_ash_burst_lantern",
+      "kind": "research",
+      "status": "completed",
+      "title": "整理灯灰爆鸣塔蓝图",
+      "summary": "灯芯仓实战证明爆鸣装置能处理聚集敌人，余下工作是把试作品整理为可复用蓝图。",
+      "node_id": "lamp_wick_store",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "asset_ash_burst_lantern_trial",
+        "glow_crystal"
+      ],
+      "reward_refs": [
+        "asset_ash_burst_lantern"
+      ]
+    },
+    {
+      "task_id": "task_stabilize_old_signal_tower",
+      "kind": "defense",
+      "status": "active",
+      "title": "稳定旧信号塔回光",
+      "summary": "旧信号塔的回光扰动正在引来新的影潮，需要在塔脚布置临时棱座，并保护样品完成一次现场稳定试作。",
+      "node_id": "old_signal_tower",
+      "npc_id": "npc_road_scout",
+      "objective_refs": [
+        "old_signal_tower",
+        "glow_crystal"
+      ],
+      "reward_refs": [
+        "sample_resonant_glass_shard_trial",
+        "asset_echo_prism_relay"
+      ]
+    }
+  ],
+  "random_events": [
+    {
+      "random_event_id": "random_event_wick_store_pressure_hint",
+      "event_type": "threat_warning",
+      "status": "resolved",
+      "summary": "灯芯仓外侧的影潮开始试探旧管线，若继续放任，下一场压力会转向资源库存。",
+      "node_id": "lamp_wick_store",
+      "trigger_turn": 4,
+      "related_task_id": "task_prepare_wick_store_defense"
+    },
+    {
+      "random_event_id": "random_event_old_signal_tower_pressure",
+      "event_type": "map_pressure",
+      "status": "available",
+      "summary": "旧信号塔附近的回光扰动增强，若继续侦察，可能打开新的压力节点或捷径。",
+      "node_id": "old_signal_tower",
+      "trigger_turn": 5,
+      "related_task_id": "task_scout_northern_road"
+    },
+    {
+      "random_event_id": "random_event_signal_backwash",
+      "event_type": "research_opportunity",
+      "status": "pending",
+      "summary": "回光玻片完成试作后，可能出现一次短暂回流，可用于强化折射类装置，也可能提高旧塔压力。",
+      "node_id": "old_signal_tower",
+      "trigger_turn": 2,
+      "related_task_id": "task_stabilize_old_signal_tower"
+    }
+  ]
+}

@@ -117,6 +117,24 @@
       "gate": "mvp_compiler_review_dossier.v0.1 schema"
     },
     {
+      "step_id": "08_stage05_plan_realization",
+      "name": "下一阶段计划落地样例",
+      "purpose": "把 CompilableObjectPlan 中的 Stage 05 计划转成可审查叙事包、世界状态变化、下一运行态和资产候选，证明叙事、任务、资产都可作为受控可编译对象。",
+      "inputs": [
+        "CompilableObjectPlan",
+        "current RunWorldState",
+        "review boundaries"
+      ],
+      "outputs": [
+        "NarrativeEventBundle",
+        "WorldStateDelta",
+        "next RunWorldState",
+        "Proposal",
+        "CompiledAssetCandidate"
+      ],
+      "gate": "build_stage05_plan_realization.py --validate"
+    },
+    {
       "step_id": "mvp_controlled_narrative_world_progression.workflow",
       "name": "mvp_controlled_narrative_world_progression.workflow",
       "purpose": "battle result + RunWorldState -> controlled NarrativeEventBundle -> WorldStateDelta -> next RunWorldState. No live provider calls.",
@@ -2832,7 +2850,7 @@
       "path": "docs/COMPILABLE_OBJECT_PLAN_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "0220b16d2515eb03a0d660fdebf45f920356f58a3eb55a42158111a99260ffd2"
+      "sha256": "86345dbf5e0086a7a5b4a13cf18c6e3db9ea3c0665803ddcf0ad69ae9c431395"
     },
     {
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
@@ -2850,7 +2868,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "6eab814ef62a5ecc00515ccf661c788a55dce80a35574d1208b9819f31182d98"
+      "sha256": "da705faefc879a6a08afe9ac630e74e17f3f9b207495af39246da89db1a94c79"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2871,6 +2889,12 @@
       "sha256": "650b826f6ff95cf2126b599e3817008b2aa401339a3727e10a445d3e64986c12"
     },
     {
+      "path": "docs/STAGE05_PLAN_REALIZATION_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "e4eb556c091710f65354226c36aeb009eba191e51a031ebb9b8e87de6d7cbaad"
+    },
+    {
       "path": "docs/STAGE_CANDIDATE_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
@@ -2887,6 +2911,12 @@
       "kind": "asset_source",
       "exists": true,
       "sha256": "30077c45b083636e7151814cc310bafc903cc36e1029a07a2be01e1e8af56d2b"
+    },
+    {
+      "path": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "9c6fa6b90913ce4fc30902bac8a3716ecc80873d9519af045176b65e783b0d24"
     },
     {
       "path": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
@@ -2937,6 +2967,18 @@
       "sha256": "ad91f6169fd6a9859336183229d6fdf6634176fe52fe736a3eb109c1ec7070ad"
     },
     {
+      "path": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "722708527b59c7070c950602fc9ae0164831af04f695d901fd2b0a7665243b75"
+    },
+    {
+      "path": "examples/proposals/echo_prism_relay.proposal.json",
+      "kind": "proposal",
+      "exists": true,
+      "sha256": "9a34321fbb86e8470b5b054d2fa8890a8cf9f35387ddadfddb5b160d80446f6a"
+    },
+    {
       "path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
       "kind": "compilable_object_catalog",
       "exists": true,
@@ -2947,6 +2989,12 @@
       "kind": "compilable_object_plan",
       "exists": true,
       "sha256": "ec3d0e801dcbe620a68ebe7137c06af7d5b45a47398e85e9036fbe0390e0c0ac"
+    },
+    {
+      "path": "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json",
+      "kind": "stage05_plan_realization_report",
+      "exists": true,
+      "sha256": "eac0b439bb470c1a64ed99a597c793d1fe90ed7e6824d5c0b23419eb0b442e91"
     },
     {
       "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
@@ -2971,6 +3019,12 @@
       "kind": "run_world_state",
       "exists": true,
       "sha256": "714d944a3fe245514ec812f19a7316a2e990b21f3e4ff8d26487c92863e4d847"
+    },
+    {
+      "path": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
+      "kind": "run_world_state",
+      "exists": true,
+      "sha256": "e2dd128d2ef277fd7767590787ce651aa77f41cca8ae1a54fd8ea87f4b4fb443"
     },
     {
       "path": "examples/runtime_packages/mvp_demo.runtime_package.json",
@@ -3147,6 +3201,12 @@
       "sha256": "235ef448f3cd830423b38c6ab770d1fa80dbb2bab4d3649a12361b909a0e9b4f"
     },
     {
+      "path": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "8f9054134fc51ed9a4c1bd9bf759de0ab6445ef6525d035779295b834f00d92a"
+    },
+    {
       "path": "shared/schemas/compilable_object_catalog.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
@@ -3181,6 +3241,12 @@
       "kind": "builder",
       "exists": true,
       "sha256": "da6b58e5da57785fe598c4e9c1d0f7f1827ab303c0868e754855f2398f9d2313"
+    },
+    {
+      "path": "tools/content_pipeline/build_stage05_plan_realization.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "77602eac69094fdfb019e55be8f2b7e9daf4d3ca16522184942ac6598ae1f1a5"
     },
     {
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",
@@ -3255,6 +3321,22 @@
     {
       "purpose": "校验下一阶段可编译对象计划",
       "command": "python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
+    },
+    {
+      "purpose": "构建并校验 Stage 05 计划落地样例",
+      "command": "python3 tools/content_pipeline/build_stage05_plan_realization.py --validate"
+    },
+    {
+      "purpose": "校验 Stage 05 叙事包",
+      "command": "python3 tools/narrative/validate_narrative_bundle.py examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json"
+    },
+    {
+      "purpose": "校验 Stage 05 WorldStateDelta 语义门",
+      "command": "python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json --run-state examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+    },
+    {
+      "purpose": "校验 Stage 05 资产提案和候选资产",
+      "command": "python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json && python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

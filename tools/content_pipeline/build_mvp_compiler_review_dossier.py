@@ -35,6 +35,7 @@ DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick
 DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
 DEFAULT_COMPILABLE_OBJECT_CATALOG = ROOT / "examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
 DEFAULT_COMPILABLE_OBJECT_PLAN = ROOT / "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
+DEFAULT_STAGE05_PLAN_REALIZATION_REPORT = ROOT / "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json"
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -556,6 +557,14 @@ def pipeline_overview() -> list[dict[str, Any]]:
             "outputs": ["MVP Compiler Review Dossier"],
             "gate": "mvp_compiler_review_dossier.v0.1 schema",
         },
+        {
+            "step_id": "08_stage05_plan_realization",
+            "name": "下一阶段计划落地样例",
+            "purpose": "把 CompilableObjectPlan 中的 Stage 05 计划转成可审查叙事包、世界状态变化、下一运行态和资产候选，证明叙事、任务、资产都可作为受控可编译对象。",
+            "inputs": ["CompilableObjectPlan", "current RunWorldState", "review boundaries"],
+            "outputs": ["NarrativeEventBundle", "WorldStateDelta", "next RunWorldState", "Proposal", "CompiledAssetCandidate"],
+            "gate": "build_stage05_plan_realization.py --validate",
+        },
     ] + [workflow_step(path) for path in CORE_WORKFLOWS if repo_path(path).is_file()]
 
 
@@ -596,6 +605,22 @@ def validation_commands() -> list[dict[str, str]]:
         {
             "purpose": "校验下一阶段可编译对象计划",
             "command": "python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+        },
+        {
+            "purpose": "构建并校验 Stage 05 计划落地样例",
+            "command": "python3 tools/content_pipeline/build_stage05_plan_realization.py --validate",
+        },
+        {
+            "purpose": "校验 Stage 05 叙事包",
+            "command": "python3 tools/narrative/validate_narrative_bundle.py examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+        },
+        {
+            "purpose": "校验 Stage 05 WorldStateDelta 语义门",
+            "command": "python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json --run-state examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+        },
+        {
+            "purpose": "校验 Stage 05 资产提案和候选资产",
+            "command": "python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json && python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json",
         },
         {
             "purpose": "重建资产晋升报告到 /tmp",
@@ -692,6 +717,30 @@ def compilable_object_plan_summary(plan_path: Path) -> dict[str, Any]:
     }
 
 
+def stage05_plan_realization_evidence(report_path: Path) -> list[tuple[str, str]]:
+    evidence = [
+        ("tools/content_pipeline/build_stage05_plan_realization.py", "builder"),
+        ("docs/STAGE05_PLAN_REALIZATION_V0_1.md", "architecture_doc"),
+        (rel(report_path), "stage05_plan_realization_report"),
+    ]
+    if not report_path.is_file():
+        return evidence
+
+    report = load_json(report_path)
+    outputs = as_obj(report.get("outputs"))
+    for key, kind in (
+        ("narrative_bundle", "narrative_bundle"),
+        ("world_delta", "world_delta"),
+        ("next_run_state", "run_world_state"),
+        ("proposal", "proposal"),
+        ("compiled_asset_candidate", "asset_source"),
+    ):
+        value = outputs.get(key)
+        if isinstance(value, str) and value:
+            evidence.append((value, kind))
+    return evidence
+
+
 def known_risks(promotion_report: dict[str, Any]) -> list[dict[str, str]]:
     summary = as_obj(promotion_report.get("summary"))
     candidate_count = int(summary.get("candidate_or_blocked_reference_count") or 0)
@@ -751,6 +800,7 @@ def build_dossier(
         ("docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md", "architecture_doc"),
         ("docs/COMPILABLE_OBJECT_MODEL_V0_1.md", "architecture_doc"),
         ("docs/COMPILABLE_OBJECT_PLAN_V0_1.md", "architecture_doc"),
+        ("docs/STAGE05_PLAN_REALIZATION_V0_1.md", "architecture_doc"),
         ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
         ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
@@ -758,6 +808,7 @@ def build_dossier(
         ("shared/schemas/stage_candidate_pack.v0.1.schema.json", "schema"),
         ("tools/content_pipeline/build_compilable_object_catalog.py", "builder"),
         ("tools/content_pipeline/build_compilable_object_plan.py", "builder"),
+        ("tools/content_pipeline/build_stage05_plan_realization.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
         ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_plan.py", "validator"),
@@ -768,6 +819,9 @@ def build_dossier(
         (rel(compilable_object_catalog_path), "compilable_object_catalog"),
         (rel(compilable_object_plan_path), "compilable_object_plan"),
     ]
+    evidence_paths.extend(
+        stage05_plan_realization_evidence(DEFAULT_STAGE05_PLAN_REALIZATION_REPORT)
+    )
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
     for stage in stages:

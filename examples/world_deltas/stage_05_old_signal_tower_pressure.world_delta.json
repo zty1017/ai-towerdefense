@@ -1,0 +1,137 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_stage_05_old_signal_tower_pressure",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "narrative_event",
+  "created_turn": 2,
+  "summary": "旧信号塔的回光压力被转为可处理节点，并开启一次现场稳定试作。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "old_signal_tower_pressure_planned"
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "old_signal_tower",
+      "patch": {
+        "status": "contested",
+        "threat_level": 3,
+        "visibility": "visible",
+        "available_actions": [
+          "prepare_defense",
+          "field_research",
+          "stabilize_signal"
+        ]
+      }
+    },
+    {
+      "op": "set_random_event_status",
+      "random_event_id": "random_event_old_signal_tower_pressure",
+      "status": "available"
+    },
+    {
+      "op": "update_npc_relationship",
+      "npc_id": "npc_road_scout",
+      "relationship_delta": {
+        "trust": 0.08
+      }
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_stabilize_old_signal_tower",
+        "kind": "defense",
+        "status": "active",
+        "title": "稳定旧信号塔回光",
+        "summary": "旧信号塔的回光扰动正在引来新的影潮，需要在塔脚布置临时棱座，并保护样品完成一次现场稳定试作。",
+        "node_id": "old_signal_tower",
+        "npc_id": "npc_road_scout",
+        "objective_refs": [
+          "old_signal_tower",
+          "glow_crystal"
+        ],
+        "reward_refs": [
+          "sample_resonant_glass_shard_trial",
+          "asset_echo_prism_relay"
+        ]
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "glow_crystal",
+      "amount_delta": -1
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "sample_resonant_glass_shard_trial",
+        "display_name": "回光玻片样本",
+        "source_delta_id": "delta_stage_05_old_signal_tower_pressure",
+        "summary": "辉晶被磨成薄片并贴合旧塔铜槽后，形成一份只能支撑现场试作的回光样本。"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_echo_prism_relay_trial",
+        "status": "queued",
+        "started_turn": 2,
+        "source_task_id": "task_stabilize_old_signal_tower",
+        "source_sample_id": "sample_resonant_glass_shard_trial",
+        "expected_turns": 1,
+        "expected_output": "回光棱镜中继塔试作"
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "old_signal_tower_resonance_measured",
+        "source": "old_signal_tower_pressure",
+        "visibility": "player_known",
+        "summary": "旧信号塔的回光扰动可以短暂显形来敌，也会让影潮更快锁定塔脚。"
+      }
+    },
+    {
+      "op": "schedule_random_event",
+      "random_event": {
+        "random_event_id": "random_event_signal_backwash",
+        "event_type": "research_opportunity",
+        "status": "pending",
+        "summary": "回光玻片完成试作后，可能出现一次短暂回流，可用于强化折射类装置，也可能提高旧塔压力。",
+        "node_id": "old_signal_tower",
+        "trigger_turn": 2,
+        "related_task_id": "task_stabilize_old_signal_tower"
+      }
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "old_signal_tower_pressure_planned",
+        "turn": 2,
+        "kind": "world",
+        "summary": "旧信号塔的回光压力被纳入下一轮防守计划，现场试作任务开启。"
+      }
+    },
+    {
+      "op": "set_flag",
+      "flag": "stage_05_old_signal_tower_pressure_planned",
+      "value": true
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "pressure",
+      "amount_delta": 0.08
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "visibility",
+      "amount_delta": 0.05
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "hope",
+      "amount_delta": -0.02
+    }
+  ]
+}

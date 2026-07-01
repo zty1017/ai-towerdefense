@@ -1,0 +1,50 @@
+{
+  "schema_version": "stage05_plan_realization_report.v0.1",
+  "report_id": "mvp_stage05_plan_realization_report_001",
+  "visibility": "review_only",
+  "source_plan": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+  "target_stage_id": "act_1_stage_05_old_signal_tower_pressure",
+  "core_decisions": [
+    "叙事对象按状态转移对象处理，必须落到 WorldStateDelta 或可审查的后续对象。",
+    "本阶段只使用已在运行态或审查边界内的 NPC 和资源；候选材料先进入临时样本。",
+    "对象依赖由 Object Graph 表达，单个对象的生成再进入 Compile DAG。",
+    "玩家侧运行时不暴露底层调用、调试记录或审查字段。"
+  ],
+  "planned_request_counts": {
+    "compile_report": 1,
+    "material": 1,
+    "npc": 1,
+    "quest_task": 1,
+    "stage_candidate": 1,
+    "tower_blueprint": 1
+  },
+  "compile_actor_counts": {
+    "player": 1,
+    "system": 5
+  },
+  "outputs": {
+    "narrative_bundle": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+    "world_delta": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+    "next_run_state": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
+    "proposal": "examples/proposals/echo_prism_relay.proposal.json",
+    "compiled_asset_candidate": "examples/compiled_assets/echo_prism_relay.compiled_asset.json"
+  },
+  "runtime_contract_summary": {
+    "new_task_id": "task_stabilize_old_signal_tower",
+    "new_sample_id": "sample_resonant_glass_shard_trial",
+    "new_research_job_id": "research_echo_prism_relay_trial",
+    "asset_candidate_id": "asset_echo_prism_relay",
+    "state_commit": "review_draft_delta_applied_to_next_state_snapshot",
+    "promotion_status": "not_promoted_to_stage_candidate_pack"
+  },
+  "validation_results": {
+    "stage_context": "passed",
+    "narrative_bundle": "passed",
+    "world_delta": "passed",
+    "proposal": "passed",
+    "asset_candidate": "passed",
+    "next_run_state": "passed",
+    "world_delta_semantics": "passed",
+    "world_delta_apply": "passed"
+  }
+}

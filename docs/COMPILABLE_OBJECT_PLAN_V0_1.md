@@ -39,6 +39,14 @@ python3 tools/content_pipeline/build_compilable_object_plan.py --validate
 python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json
 ```
 
+计划落地样例：
+
+```bash
+python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
+```
+
+该样例不会把 Stage 05 自动晋升为正式阶段候选，只证明计划可以转成可审查的 `NarrativeEventBundle`、`WorldStateDelta`、下一运行态快照、资产提案和候选资产。详见 `docs/STAGE05_PLAN_REALIZATION_V0_1.md`。
+
 ## 边界
 
 构建器明确保证：
@@ -98,7 +106,7 @@ act_1_stage_05_old_signal_tower_pressure
 ```text
 CompilableObjectCatalog
   -> CompilableObjectPlan
-  -> LLM 填充 NarrativeEventBundle / Proposal / ObjectSpec
+  -> LLM 或离线 builder 填充 NarrativeEventBundle / Proposal / ObjectSpec
   -> deterministic legalize
   -> WorldStateDelta / CompiledAssetCandidate
   -> Validator / Simulation / Promotion
