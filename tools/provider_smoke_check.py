@@ -36,6 +36,7 @@ class Provider:
     video_model: str | None = None
     video_status_path: str | None = None
     extra_payload: dict[str, Any] = field(default_factory=dict)
+    supports_json_object: bool = True
 
 
 PROVIDERS: dict[str, Provider] = {
@@ -61,6 +62,7 @@ PROVIDERS: dict[str, Provider] = {
         chat_path="/chat/completions",
         default_model="doubao-seed-2.0-code",
         models_path=None,
+        supports_json_object=False,
     ),
     "deepseek": Provider(
         name="deepseek",
@@ -101,6 +103,16 @@ PROVIDERS: dict[str, Provider] = {
         video_status_path="/async-result/{id}",
         extra_payload={"thinking": {"type": "disabled"}},
     ),
+    "longcat": Provider(
+        name="longcat",
+        env_key="LONGCAT_API_KEY",
+        base_url="https://api.longcat.chat/openai/v1",
+        chat_path="/chat/completions",
+        default_model="LongCat-2.0",
+        models_path="/models",
+        extra_payload={"thinking": {"type": "disabled"}},
+        supports_json_object=False,
+    ),
 }
 
 TOKEN_BUDGETS: dict[str, int] = {
@@ -110,6 +122,7 @@ TOKEN_BUDGETS: dict[str, int] = {
     "review": 16384,
     "world": 32768,
     "large": 65536,
+    "huge": 131072,
 }
 
 
@@ -227,10 +240,11 @@ def live_structured(name: str, prompt: str, max_tokens: int, model_override: str
             {"role": "system", "content": "你是塔防游戏资产编译器。只输出合法 JSON，不要 Markdown。"},
             {"role": "user", "content": prompt},
         ],
-        "response_format": {"type": "json_object"},
         "max_tokens": max_tokens,
         "stream": False,
     }
+    if provider.supports_json_object:
+        payload["response_format"] = {"type": "json_object"}
     payload.update(provider.extra_payload)
     data = request_json("POST", endpoint(provider, provider.chat_path), key, payload, timeout=timeout)
     print(json.dumps(data, ensure_ascii=False, indent=2))

@@ -23,6 +23,7 @@ class ProviderProfile:
     base_url: str
     model: str
     supports_json_object: bool = True
+    extra_payload: dict[str, Any] = field(default_factory=dict)
 
 
 PROFILES: dict[str, ProviderProfile] = {
@@ -69,6 +70,14 @@ PROFILES: dict[str, ProviderProfile] = {
         env_key="DEEPSEEK_API_KEY",
         base_url="https://api.deepseek.com",
         model="deepseek-v4-pro",
+    ),
+    "longcat_2_0": ProviderProfile(
+        name="longcat_2_0",
+        env_key="LONGCAT_API_KEY",
+        base_url="https://api.longcat.chat/openai/v1",
+        model="LongCat-2.0",
+        supports_json_object=False,
+        extra_payload={"thinking": {"type": "disabled"}},
     ),
 }
 
@@ -157,6 +166,7 @@ def chat_completion(
     }
     if response_format is not None:
         payload["response_format"] = response_format
+    payload.update(profile.extra_payload)
 
     headers = {
         "Authorization": f"Bearer {api_key}",

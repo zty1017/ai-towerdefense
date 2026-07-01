@@ -1,6 +1,6 @@
 # AI Provider 调研与烟测基线
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 ## 1. 目标
 
@@ -14,6 +14,7 @@ ARK_API_KEY
 DEEPSEEK_API_KEY
 GLM_API_KEY
 GLM_API_KEY_FREE
+LONGCAT_API_KEY
 ```
 
 文档、日志、测试输出都不能打印 API key 的真实值。
@@ -36,6 +37,7 @@ GLM_API_KEY_FREE
 | DeepSeek | `DEEPSEEK_API_KEY` | 低成本文本、结构化内容、推理/非推理切换 | OpenAI-compatible | 旧模型别名有明确下线日期 |
 | 智谱 GLM | `GLM_API_KEY` | 高质量文本、多模态、图像/视频能力 | `zai-sdk` / HTTP v4 | 主账户生成额度有限 |
 | 智谱 GLM Free | `GLM_API_KEY_FREE` | 免费模型隔离账户 | `zai-sdk` / HTTP v4 | 免费模型也可能限流或占用账户配额 |
+| LongCat | `LONGCAT_API_KEY` | 大额度长上下文文本、世界书演化、批量资产编译/审查 | OpenAI-compatible `/openai/v1` | 当前主要作为文本模型；结构化输出需本地 parser / Schema 校验 |
 | CodeBuddy / 混元图像 | CodeBuddy 本地配置 | 比赛合规、开发期图像候选、离线素材生成 | CodeBuddy `ImageGen` tool | 当前实测可调用但遇到限流，暂不作为默认运行时主通道 |
 
 ## 4. Agnes
@@ -214,6 +216,54 @@ agnes_multimodal_flash -> AGNES_API_KEY
 输出 `media_vision_review_report.v0.1`。该报告用于检查可读文字、水印、主体漂移、
 世界观语义和媒体角色匹配度，不进入玩家运行时包。
 
+## 7.1 LongCat
+
+官方信息：
+
+- 文档首页：[LongCat API Docs](https://longcat.chat/platform/docs/zh/)
+- 聊天补全：[POST 聊天补全](https://longcat.chat/platform/docs/zh/api/chat.html)
+- 模型列表：[GET 模型列表](https://longcat.chat/platform/docs/zh/api/models.html)
+- Codex 配置：[接入 Codex](https://longcat.chat/platform/docs/zh/Codex.html)
+- Base URL：`https://api.longcat.chat/openai/v1`
+- 鉴权：`Authorization: Bearer <LONGCAT_API_KEY>`
+
+当前开放平台模型：
+
+| 模型 | API 格式 | 上下文 / 输出能力 | 建议用途 |
+|---|---|---|---|
+| `LongCat-2.0` | OpenAI / Anthropic | 1M 上下文，最大输出 128K Tokens | 世界书长上下文、批量剧情/事件/资产草稿、低成本审查与修复 |
+
+OpenAI-compatible 端点：
+
+```text
+GET  https://api.longcat.chat/openai/v1/models
+POST https://api.longcat.chat/openai/v1/chat/completions
+```
+
+Anthropic-compatible 端点：
+
+```text
+GET  https://api.longcat.chat/anthropic/v1/models
+POST https://api.longcat.chat/anthropic/v1/messages
+```
+
+项目内先按文本模型接入：
+
+```text
+profile: longcat_2_0
+env_key: LONGCAT_API_KEY
+model:   LongCat-2.0
+json_object: 暂不默认依赖；使用 prompt-only JSON + 本地 parser / Schema 校验
+```
+
+推荐定位：
+
+1. 世界书和运行态世界状态的长上下文审查。
+2. 大批量 NPC / 材料 / 任务 / 事件候选生成。
+3. 资产编译失败后的低成本修复 pass。
+4. 前端 mock 内容包批量扩写。
+5. 不作为图像/视频默认通道；图像仍按 Agnes / GLM / CodeBuddy 策略处理。
+
 ## 8. 建议的项目内 Provider 架构
 
 建议后端逐步形成如下结构：
@@ -225,6 +275,7 @@ backend/app/ai_gateway/
     ark.py
     deepseek.py
     glm.py
+    longcat.py
   model_catalog.py
   task_policy.py
   quota_guard.py
@@ -250,18 +301,18 @@ ProviderAdapter
 | 任务 | 初期建议 |
 |---|---|
 | 玩家自然语言解析 | Agnes / DeepSeek Flash / GLM Free 低成本模型 |
-| 防御塔蓝图结构化编译 | DeepSeek JSON mode / GLM 旗舰 |
-| 蓝图规则评审 | DeepSeek Pro / GLM 旗舰 / 方舟编码模型 |
-| 内容草稿生成 | Agnes / DeepSeek Flash / GLM Free |
-| 世界书一致性审查 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `glm-5.2` 优先，DeepSeek 官方 API fallback |
-| 世界书内容生长 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `deepseek-v4-flash` / `glm-5.2` 优先，按成本与质量切换 |
-| 弱主线 / 长剧情节点生成 | 方舟 Coding Plan 内的 1M 上下文模型优先，必要时拆分成多轮 reviewed 候选 |
+| 防御塔蓝图结构化编译 | DeepSeek JSON mode / GLM 旗舰；LongCat 作为 prompt-only JSON 修复/批量候选 |
+| 蓝图规则评审 | DeepSeek Pro / GLM 旗舰 / 方舟编码模型；LongCat 可做低成本第二评审 |
+| 内容草稿生成 | Agnes / DeepSeek Flash / GLM Free / LongCat |
+| 世界书一致性审查 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `glm-5.2` 优先，LongCat / DeepSeek 官方 API fallback |
+| 世界书内容生长 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `deepseek-v4-flash` / `glm-5.2` 优先；LongCat 适合大额度批量生成和修复 |
+| 弱主线 / 长剧情节点生成 | 方舟 Coding Plan 内的 1M 上下文模型和 LongCat 优先，必要时拆分成多轮 reviewed 候选 |
 | 图像 prompt 扩写 | Agnes / GLM Free |
 | 关键图像生成 | Agnes Image 优先，智谱主账户 fallback，智谱免费模型二级 fallback |
 | 批量图像草稿 | Agnes Image 优先，智谱免费模型 fallback，必要时才用智谱主账户 |
 | CodeBuddy 图像候选 | CodeBuddy `ImageGen` + `hunyuan-image-v3.0` | 主要用于开发期、比赛合规记录和离线素材候选 |
 | 视频原型 | MVP 不进入核心闭环；开场动画预制，后续离线生成与 reviewed / locked |
-| 开发编码辅助 | 方舟 Coding Plan |
+| 开发编码辅助 | 方舟 Coding Plan；LongCat 可作为额外 Codex/OpenAI-compatible 候选 |
 
 ### 8.0a 图像生成真实烟测：防御塔候选媒体包
 
@@ -511,11 +562,12 @@ python3 tools/provider_smoke_check.py --provider all --mode dry
 | `review` | 16384 | 蓝图评审、规则解释、平衡说明 |
 | `world` | 32768 | 世界书内容生长、剧情节点生成 |
 | `large` | 65536 | 长文档、批量内容、较长审查 |
+| `huge` | 131072 | 明确支持 128K 输出的模型；只用于专项验证或大批量离线内容 |
 
 如果某个模型明确支持更高输出，例如 128k 级别输出，直接使用：
 
 ```bash
-python3 tools/provider_smoke_check.py --provider glm --mode structured --live --max-tokens 128000
+python3 tools/provider_smoke_check.py --provider longcat --mode structured --live --budget huge
 ```
 
 建议初期任务级输出预算：
@@ -544,10 +596,12 @@ python3 tools/provider_smoke_check.py --provider deepseek --mode chat --live
 python3 tools/provider_smoke_check.py --provider ark --mode chat --live
 python3 tools/provider_smoke_check.py --provider glm --mode chat --live
 python3 tools/provider_smoke_check.py --provider glmfree --mode chat --live
+python3 tools/provider_smoke_check.py --provider longcat --mode chat --live
 
 # 贴近项目核心的结构化资产编译
 python3 tools/provider_smoke_check.py --provider deepseek --mode structured --live
 python3 tools/provider_smoke_check.py --provider glm --mode structured --live
+python3 tools/provider_smoke_check.py --provider longcat --mode structured --live
 ```
 
 图像和视频不建议放入自动 CI 烟测。它们更适合手动触发，并把任务 ID、结果 URL、耗时、控制台用量写入 `AI_GENERATION_LOG`。
@@ -591,6 +645,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | 方舟 Coding Plan | `deepseek-v4-pro` | 成功 | 作为方舟内长上下文候选模型可调用 |
 | 方舟 Coding Plan | `deepseek-v4-flash` | 成功 | 作为方舟内低成本长上下文候选模型可调用 |
 | 方舟 Coding Plan | `glm-5.2` | 成功 | 作为方舟内长上下文候选模型可调用，但会返回较多 reasoning tokens |
+| LongCat | `LongCat-2.0` | 成功 | `/models` 返回 `LongCat-2.0`；OpenAI-compatible chat 可用；`thinking.disabled` 可用 |
 
 ### 11.2 结构化资产编译
 
@@ -606,6 +661,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | 火山方舟 Coding Plan | `glm-5.2` | 支持 | 成功返回 JSON，但仍应经过本地 parser / Schema 校验 |
 | 智谱主账户 | `glm-5.2` | 支持 | 成功返回合法 JSON |
 | 智谱免费账户 | `glm-4.7-flash` | 未稳定验证 | 一次返回 429 模型繁忙，需稍后重试 |
+| LongCat | `LongCat-2.0` | 不作为默认依赖 | prompt-only JSON 成功；AssetGraph guarded compile 通过，候选 `光幕迟滞塔` 晋级 `fallback_ready` |
 
 ### 11.3 图像与视频
 
@@ -627,7 +683,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 
 - `tools/llm/__init__.py` — 空包初始化。
 - `tools/llm/adapter.py` — 最小 LLM adapter，支持 OpenAI-compatible chat completions。
-  - 7 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`ark_kimi_k2_6`、`ark_kimi_k2_7_code`、`deepseek_v4_flash`、`deepseek_v4_pro`。
+  - 8 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`ark_kimi_k2_6`、`ark_kimi_k2_7_code`、`deepseek_v4_flash`、`deepseek_v4_pro`、`longcat_2_0`。
   - `load_dotenv()` 从 `.env` 加载环境变量，日志只显示 env key 名称。
   - 方舟 `deepseek-v4-*` profile 默认不发送 `response_format=json_object`，改走 prompt-only JSON + 本地 JSON parser + Schema 校验；`ark_glm_5_2` 与 DeepSeek 官方 profile 可发送 JSON mode。
   - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
