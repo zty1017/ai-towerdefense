@@ -88,11 +88,25 @@
     },
     {
       "step_id": "06_review_dossier",
-      "name": "审查交付包构建",
-      "purpose": "把阶段、玩法对象、资产和验证命令汇总成可审查证据。",
+      "name": "阶段候选包构建",
+      "purpose": "把单阶段剧情、状态变化、玩法对象、资产和 runtime 引用合并成可审查候选单元。",
       "inputs": [
-        "review packs",
+        "review pack",
         "world deltas",
+        "promotion report",
+        "runtime packages"
+      ],
+      "outputs": [
+        "StageCandidatePack"
+      ],
+      "gate": "stage_candidate_pack.v0.1 schema + validate_stage_candidate_pack.py"
+    },
+    {
+      "step_id": "07_review_dossier",
+      "name": "总审查交付包构建",
+      "purpose": "把阶段候选包、运行态、资产和验证命令汇总成总审查证据。",
+      "inputs": [
+        "StageCandidatePack",
         "final run state",
         "workflows"
       ],
@@ -2699,6 +2713,20 @@
       ]
     }
   ],
+  "stage_candidate_pack_summary": {
+    "pack_file": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+    "stage_count": 4,
+    "status_counts": {
+      "reviewed_fixture": 4
+    },
+    "validation_gate_counts": {
+      "not_applicable": 2,
+      "passed": 16,
+      "warning": 2
+    },
+    "runtime_package_reference_count": 2,
+    "review_recommendation": "needs_human_review"
+  },
   "runtime_state_summary": {
     "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "progress": {
@@ -2748,7 +2776,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "68b5a09f3c1ecf23ab502502c7c17c6c692d089335b9670f4dd6d82308967e83"
+      "sha256": "2ed4f7e0888a950d47a0023cc9b1eaf280999cc03b39361ac389e9057fadce47"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2767,6 +2795,12 @@
       "kind": "architecture_doc",
       "exists": true,
       "sha256": "650b826f6ff95cf2126b599e3817008b2aa401339a3727e10a445d3e64986c12"
+    },
+    {
+      "path": "docs/STAGE_CANDIDATE_PACK_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "4f2901815c96202e3caa8d50fdb6bcc993bcfd58c15e07e07d04f2eaa485921d"
     },
     {
       "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
@@ -2827,6 +2861,12 @@
       "kind": "narrative_bundle",
       "exists": true,
       "sha256": "ad91f6169fd6a9859336183229d6fdf6634176fe52fe736a3eb109c1ec7070ad"
+    },
+    {
+      "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+      "kind": "stage_candidate_pack",
+      "exists": true,
+      "sha256": "45943ac866e6fe8c3e4e7867713d87a36d7ecd89ec39885f3f4e9b42555fe4a3"
     },
     {
       "path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
@@ -3024,7 +3064,25 @@
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "ce53b1fc78d2fc14d5d9440ecc93d21ec24f520fcc323c15424f923a38a9ee9f"
+      "sha256": "f056ee4d3f435bb392e2be2e57e03424d3b7b3f80ecccf0a8e45df1558f84705"
+    },
+    {
+      "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "b5d8a73d0013b7579ba0ed28358d8315aacf7344192d6576ed5ec7d52cd0cf47"
+    },
+    {
+      "path": "tools/content_pipeline/build_stage_candidate_pack.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "acec65876775e094df70eda97524a341ba5bbdae39f630782a18558dda0854c4"
+    },
+    {
+      "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "49c10eff268ca0d37dc75971f42f6d823e199ecdf66a85dd7b0d51f27367c008"
     },
     {
       "path": "tools/narrative/validate_narrative_gameplay_contract.py",
@@ -3051,6 +3109,14 @@
     {
       "purpose": "校验剧情到玩法对象的跨文件契约",
       "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
+    },
+    {
+      "purpose": "构建并校验阶段候选包",
+      "command": "python3 tools/content_pipeline/build_stage_candidate_pack.py --validate"
+    },
+    {
+      "purpose": "校验阶段候选包",
+      "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

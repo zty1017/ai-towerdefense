@@ -32,6 +32,7 @@ DOSSIER_VERSION = "mvp_compiler_review_dossier.v0.1"
 DEFAULT_REVIEW_PACK = ROOT / "examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
 DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -539,9 +540,17 @@ def pipeline_overview() -> list[dict[str, Any]]:
         },
         {
             "step_id": "06_review_dossier",
-            "name": "审查交付包构建",
-            "purpose": "把阶段、玩法对象、资产和验证命令汇总成可审查证据。",
-            "inputs": ["review packs", "world deltas", "final run state", "workflows"],
+            "name": "阶段候选包构建",
+            "purpose": "把单阶段剧情、状态变化、玩法对象、资产和 runtime 引用合并成可审查候选单元。",
+            "inputs": ["review pack", "world deltas", "promotion report", "runtime packages"],
+            "outputs": ["StageCandidatePack"],
+            "gate": "stage_candidate_pack.v0.1 schema + validate_stage_candidate_pack.py",
+        },
+        {
+            "step_id": "07_review_dossier",
+            "name": "总审查交付包构建",
+            "purpose": "把阶段候选包、运行态、资产和验证命令汇总成总审查证据。",
+            "inputs": ["StageCandidatePack", "final run state", "workflows"],
             "outputs": ["MVP Compiler Review Dossier"],
             "gate": "mvp_compiler_review_dossier.v0.1 schema",
         },
@@ -561,6 +570,14 @@ def validation_commands() -> list[dict[str, str]]:
         {
             "purpose": "校验剧情到玩法对象的跨文件契约",
             "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+        },
+        {
+            "purpose": "构建并校验阶段候选包",
+            "command": "python3 tools/content_pipeline/build_stage_candidate_pack.py --validate",
+        },
+        {
+            "purpose": "校验阶段候选包",
+            "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
         },
         {
             "purpose": "重建资产晋升报告到 /tmp",
@@ -609,6 +626,21 @@ def validation_commands() -> list[dict[str, str]]:
     ]
 
 
+def stage_candidate_pack_summary(pack_path: Path) -> dict[str, Any]:
+    pack = load_json(pack_path)
+    readiness = as_obj(pack.get("readiness_summary"))
+    return {
+        "pack_file": rel(pack_path),
+        "stage_count": int(readiness.get("stage_count") or len(as_list(pack.get("stage_candidates")))),
+        "status_counts": as_obj(readiness.get("status_counts")),
+        "validation_gate_counts": as_obj(readiness.get("validation_gate_counts")),
+        "runtime_package_reference_count": int(
+            readiness.get("runtime_package_reference_count") or 0
+        ),
+        "review_recommendation": str(readiness.get("review_recommendation") or "needs_human_review"),
+    }
+
+
 def known_risks(promotion_report: dict[str, Any]) -> list[dict[str, str]]:
     summary = as_obj(promotion_report.get("summary"))
     candidate_count = int(summary.get("candidate_or_blocked_reference_count") or 0)
@@ -638,6 +670,7 @@ def build_dossier(
     review_pack_path: Path,
     promotion_report_path: Path,
     final_state_path: Path,
+    stage_candidate_pack_path: Path,
     runtime_package_paths: list[Path],
 ) -> dict[str, Any]:
     review_pack = load_json(review_pack_path)
@@ -663,9 +696,14 @@ def build_dossier(
         ("docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md", "architecture_doc"),
         ("docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md", "architecture_doc"),
         ("docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md", "architecture_doc"),
+        ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
+        ("shared/schemas/stage_candidate_pack.v0.1.schema.json", "schema"),
+        ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
+        ("tools/content_pipeline/validate_stage_candidate_pack.py", "validator"),
         ("tools/narrative/validate_narrative_gameplay_contract.py", "validator"),
         ("tools/world_state/replay_mvp_delta_chain.py", "validator"),
+        (rel(stage_candidate_pack_path), "stage_candidate_pack"),
     ]
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
@@ -704,6 +742,7 @@ def build_dossier(
             runtime_package_summary(path) for path in runtime_package_paths
         ],
         "workflow_reviews": workflow_reviews(),
+        "stage_candidate_pack_summary": stage_candidate_pack_summary(stage_candidate_pack_path),
         "runtime_state_summary": {
             "state_file": rel(final_state_path),
             "progress": as_obj(final_state.get("progress")),
@@ -756,6 +795,7 @@ def main() -> int:
     parser.add_argument("--review-pack", default=str(DEFAULT_REVIEW_PACK))
     parser.add_argument("--promotion-report", default=str(DEFAULT_PROMOTION_REPORT))
     parser.add_argument("--final-state", default=str(DEFAULT_FINAL_STATE))
+    parser.add_argument("--stage-candidate-pack", default=str(DEFAULT_STAGE_CANDIDATE_PACK))
     parser.add_argument(
         "--runtime-package",
         action="append",
@@ -779,6 +819,7 @@ def main() -> int:
         Path(args.review_pack),
         Path(args.promotion_report),
         Path(args.final_state),
+        Path(args.stage_candidate_pack),
         runtime_package_paths,
     )
     output = Path(args.output)

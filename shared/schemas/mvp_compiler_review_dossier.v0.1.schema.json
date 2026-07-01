@@ -18,6 +18,7 @@
     "content_inventory",
     "runtime_package_summaries",
     "workflow_reviews",
+    "stage_candidate_pack_summary",
     "runtime_state_summary",
     "readiness_summary",
     "source_evidence",
@@ -177,6 +178,26 @@
         "$ref": "#/$defs/workflow_review"
       }
     },
+    "stage_candidate_pack_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_file",
+        "stage_count",
+        "status_counts",
+        "validation_gate_counts",
+        "runtime_package_reference_count",
+        "review_recommendation"
+      ],
+      "properties": {
+        "pack_file": { "type": "string", "minLength": 1 },
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "status_counts": { "$ref": "#/$defs/count_map" },
+        "validation_gate_counts": { "$ref": "#/$defs/count_map" },
+        "runtime_package_reference_count": { "type": "integer", "minimum": 0 },
+        "review_recommendation": { "type": "string", "minLength": 1 }
+      }
+    },
     "readiness_summary": {
       "type": "object",
       "additionalProperties": false,
@@ -230,6 +251,13 @@
     }
   },
   "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
     "pipeline_step": {
       "type": "object",
       "additionalProperties": false,

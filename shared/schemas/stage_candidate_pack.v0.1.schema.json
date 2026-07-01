@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/stage_candidate_pack.v0.1.schema.json",
+  "title": "StageCandidatePack v0.1",
+  "description": "A review-only package that groups staged narrative, gameplay deltas, generated gameplay objects, asset readiness, runtime package refs, validation gates, and next actions. It is not a frontend runtime package.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "generation_boundary",
+    "source_refs",
+    "stage_candidates",
+    "readiness_summary",
+    "validation_commands"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "stage_candidate_pack.v0.1"
+    },
+    "pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visibility": {
+      "type": "string",
+      "const": "review_only"
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "pack_builder_reads_env",
+        "pack_builder_calls_provider",
+        "base_worldbook_mutation",
+        "runtime_package_included",
+        "llm_candidate_shape_supported"
+      ],
+      "properties": {
+        "front_end_integration": { "type": "string", "const": "not_included" },
+        "pack_builder_reads_env": { "type": "boolean", "const": false },
+        "pack_builder_calls_provider": { "type": "boolean", "const": false },
+        "base_worldbook_mutation": { "type": "boolean", "const": false },
+        "runtime_package_included": {
+          "type": "string",
+          "enum": ["referenced_only", "not_included"]
+        },
+        "llm_candidate_shape_supported": { "type": "boolean" }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_pack", "promotion_report", "final_run_state"],
+      "properties": {
+        "review_pack": { "type": "string", "minLength": 1 },
+        "promotion_report": { "type": "string", "minLength": 1 },
+        "final_run_state": { "type": "string", "minLength": 1 },
+        "runtime_packages": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "stage_candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/stage_candidate" }
+    },
+    "readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_count",
+        "status_counts",
+        "validation_gate_counts",
+        "playable_asset_reference_count",
+        "runtime_package_reference_count",
+        "contract_warnings",
+        "review_recommendation"
+      ],
+      "properties": {
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "status_counts": { "$ref": "#/$defs/count_map" },
+        "validation_gate_counts": { "$ref": "#/$defs/count_map" },
+        "playable_asset_reference_count": { "type": "integer", "minimum": 0 },
+        "runtime_package_reference_count": { "type": "integer", "minimum": 0 },
+        "contract_warnings": { "type": "integer", "minimum": 0 },
+        "review_recommendation": {
+          "type": "string",
+          "enum": ["review_ready", "needs_human_review", "blocked"]
+        }
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validation_command" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "stage_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_order",
+        "stage_id",
+        "title",
+        "status",
+        "source_files",
+        "lane_coverage",
+        "narrative_summary",
+        "delta_summary",
+        "gameplay_outputs",
+        "asset_outputs",
+        "runtime_package_refs",
+        "validation_gates",
+        "next_actions"
+      ],
+      "properties": {
+        "stage_order": { "type": "integer", "minimum": 1 },
+        "stage_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["reviewed_fixture", "llm_candidate", "needs_review", "blocked"]
+        },
+        "source_files": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["narrative_bundle", "world_delta"],
+          "properties": {
+            "narrative_bundle": { "type": "string", "minLength": 1 },
+            "world_delta": { "type": "string", "minLength": 1 },
+            "battle_config": { "type": "string", "minLength": 1 }
+          }
+        },
+        "lane_coverage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["world_line", "player_line", "shared"]
+          }
+        },
+        "narrative_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["node_count", "gameplay_purposes", "gameplay_hooks"],
+          "properties": {
+            "node_count": { "type": "integer", "minimum": 0 },
+            "gameplay_purposes": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "gameplay_hooks": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "delta_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operation_count", "operation_counts"],
+          "properties": {
+            "operation_count": { "type": "integer", "minimum": 0 },
+            "operation_counts": { "$ref": "#/$defs/count_map" }
+          }
+        },
+        "gameplay_outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "map_nodes",
+            "npcs",
+            "resources",
+            "facts",
+            "flags",
+            "tasks",
+            "random_events",
+            "research_jobs",
+            "samples",
+            "blueprints"
+          ],
+          "properties": {
+            "map_nodes": { "$ref": "#/$defs/string_list" },
+            "npcs": { "$ref": "#/$defs/string_list" },
+            "resources": { "$ref": "#/$defs/string_list" },
+            "facts": { "$ref": "#/$defs/string_list" },
+            "flags": { "$ref": "#/$defs/string_list" },
+            "tasks": { "$ref": "#/$defs/string_list" },
+            "random_events": { "$ref": "#/$defs/string_list" },
+            "research_jobs": { "$ref": "#/$defs/string_list" },
+            "samples": { "$ref": "#/$defs/string_list" },
+            "blueprints": { "$ref": "#/$defs/string_list" }
+          }
+        },
+        "asset_outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/asset_output" }
+        },
+        "runtime_package_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/runtime_package_ref" }
+        },
+        "validation_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/validation_gate" }
+        },
+        "next_actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "string_list": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "asset_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "asset_kind", "source_file", "promotion_state", "playable"],
+      "properties": {
+        "asset_id": { "type": "string", "minLength": 1 },
+        "asset_kind": { "type": "string", "minLength": 1 },
+        "source_file": { "type": "string", "minLength": 1 },
+        "promotion_state": { "type": "string", "minLength": 1 },
+        "playable": { "type": "boolean" },
+        "uses_fallback_media": { "type": "boolean" },
+        "required_next_actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "runtime_package_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_file", "package_id", "node_id", "asset_count"],
+      "properties": {
+        "package_file": { "type": "string", "minLength": 1 },
+        "package_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "asset_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "validation_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "status", "summary"],
+      "properties": {
+        "gate": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["passed", "warning", "not_applicable", "blocked"]
+        },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

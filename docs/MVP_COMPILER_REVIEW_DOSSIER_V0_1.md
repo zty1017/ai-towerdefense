@@ -7,10 +7,15 @@
 ## 产出文件
 
 - `examples/review_packs/mvp_compiler_review_dossier.v0.1.json`
+- `examples/review_packs/mvp_stage_candidate_pack.v0.1.json`
 - `shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json`
+- `shared/schemas/stage_candidate_pack.v0.1.schema.json`
 - `tools/content_pipeline/build_mvp_compiler_review_dossier.py`
+- `tools/content_pipeline/build_stage_candidate_pack.py`
+- `tools/content_pipeline/validate_stage_candidate_pack.py`
 - `tools/narrative/validate_narrative_gameplay_contract.py`
 - `tools/world_state/replay_mvp_delta_chain.py`
+- `docs/STAGE_CANDIDATE_PACK_V0_1.md`
 - `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
 - `game_data/demo/wick_store_pressure_battle_config.json`
 - `examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json`
@@ -41,6 +46,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 
 - `pipeline_overview`：从剧情节点、WorldStateDelta、资产编译、媒体管线到审查交付包的流水线说明。
 - `stage_reviews`：四个 MVP 阶段的世界线 / 玩家线覆盖、玩法目的、玩法 hook、Delta op 统计、关联资产、NPC、材料、地图节点。
+- `stage_candidate_pack_summary`：阶段候选包摘要，证明每个阶段的剧情、WorldStateDelta、玩法对象、资产和 runtime 引用已经被合并成可审查单元。
 - `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
 - `runtime_package_summaries`：第一战和灯芯仓压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产。
@@ -56,6 +62,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 
 - 已有四阶段剧情演示链。
 - 每个阶段都能关联 `NarrativeEventBundle` 和受控 `WorldStateDelta`。
+- 每个阶段都能被整理为 `StageCandidatePack` 候选单元，后续真实 LLM 生成新阶段时也应提交同形态候选，而不是只提交剧情文本。
 - 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
 - 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
 - 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
@@ -86,6 +93,18 @@ python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/
 
 ```bash
 python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+```
+
+构建并校验阶段候选包：
+
+```bash
+python3 tools/content_pipeline/build_stage_candidate_pack.py --validate
+```
+
+单独校验阶段候选包：
+
+```bash
+python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json
 ```
 
 校验最终运行态：
