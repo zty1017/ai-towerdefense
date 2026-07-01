@@ -19,6 +19,7 @@
     "runtime_package_summaries",
     "workflow_reviews",
     "stage_candidate_pack_summary",
+    "compilable_object_catalog_summary",
     "runtime_state_summary",
     "readiness_summary",
     "source_evidence",
@@ -196,6 +197,30 @@
         "validation_gate_counts": { "$ref": "#/$defs/count_map" },
         "runtime_package_reference_count": { "type": "integer", "minimum": 0 },
         "review_recommendation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "compilable_object_catalog_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog_file",
+        "total_objects",
+        "layer_counts",
+        "permission_level_counts",
+        "runtime_export_counts",
+        "risk_counts",
+        "player_exposed_count",
+        "review_required_count"
+      ],
+      "properties": {
+        "catalog_file": { "type": "string", "minLength": 1 },
+        "total_objects": { "type": "integer", "minimum": 0 },
+        "layer_counts": { "$ref": "#/$defs/count_map" },
+        "permission_level_counts": { "$ref": "#/$defs/count_map" },
+        "runtime_export_counts": { "$ref": "#/$defs/count_map" },
+        "risk_counts": { "$ref": "#/$defs/count_map" },
+        "player_exposed_count": { "type": "integer", "minimum": 0 },
+        "review_required_count": { "type": "integer", "minimum": 0 }
       }
     },
     "readiness_summary": {

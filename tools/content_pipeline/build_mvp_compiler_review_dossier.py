@@ -33,6 +33,7 @@ DEFAULT_REVIEW_PACK = ROOT / "examples/review_packs/mvp_story_asset_review_pack.
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
 DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
 DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
+DEFAULT_COMPILABLE_OBJECT_CATALOG = ROOT / "examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -549,8 +550,8 @@ def pipeline_overview() -> list[dict[str, Any]]:
         {
             "step_id": "07_review_dossier",
             "name": "总审查交付包构建",
-            "purpose": "把阶段候选包、运行态、资产和验证命令汇总成总审查证据。",
-            "inputs": ["StageCandidatePack", "final run state", "workflows"],
+            "purpose": "把阶段候选包、可编译对象目录、运行态、资产和验证命令汇总成总审查证据。",
+            "inputs": ["StageCandidatePack", "CompilableObjectCatalog", "final run state", "workflows"],
             "outputs": ["MVP Compiler Review Dossier"],
             "gate": "mvp_compiler_review_dossier.v0.1 schema",
         },
@@ -578,6 +579,14 @@ def validation_commands() -> list[dict[str, str]]:
         {
             "purpose": "校验阶段候选包",
             "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+        },
+        {
+            "purpose": "构建并校验可编译对象目录",
+            "command": "python3 tools/content_pipeline/build_compilable_object_catalog.py --validate",
+        },
+        {
+            "purpose": "校验可编译对象目录",
+            "command": "python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
         },
         {
             "purpose": "重建资产晋升报告到 /tmp",
@@ -641,6 +650,21 @@ def stage_candidate_pack_summary(pack_path: Path) -> dict[str, Any]:
     }
 
 
+def compilable_object_catalog_summary(catalog_path: Path) -> dict[str, Any]:
+    catalog = load_json(catalog_path)
+    summary = as_obj(catalog.get("summary"))
+    return {
+        "catalog_file": rel(catalog_path),
+        "total_objects": int(summary.get("total_objects") or 0),
+        "layer_counts": as_obj(summary.get("layer_counts")),
+        "permission_level_counts": as_obj(summary.get("permission_level_counts")),
+        "runtime_export_counts": as_obj(summary.get("runtime_export_counts")),
+        "risk_counts": as_obj(summary.get("risk_counts")),
+        "player_exposed_count": int(summary.get("player_exposed_count") or 0),
+        "review_required_count": int(summary.get("review_required_count") or 0),
+    }
+
+
 def known_risks(promotion_report: dict[str, Any]) -> list[dict[str, str]]:
     summary = as_obj(promotion_report.get("summary"))
     candidate_count = int(summary.get("candidate_or_blocked_reference_count") or 0)
@@ -671,6 +695,7 @@ def build_dossier(
     promotion_report_path: Path,
     final_state_path: Path,
     stage_candidate_pack_path: Path,
+    compilable_object_catalog_path: Path,
     runtime_package_paths: list[Path],
 ) -> dict[str, Any]:
     review_pack = load_json(review_pack_path)
@@ -696,14 +721,19 @@ def build_dossier(
         ("docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md", "architecture_doc"),
         ("docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md", "architecture_doc"),
         ("docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md", "architecture_doc"),
+        ("docs/COMPILABLE_OBJECT_MODEL_V0_1.md", "architecture_doc"),
         ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
+        ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
         ("shared/schemas/stage_candidate_pack.v0.1.schema.json", "schema"),
+        ("tools/content_pipeline/build_compilable_object_catalog.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
+        ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_stage_candidate_pack.py", "validator"),
         ("tools/narrative/validate_narrative_gameplay_contract.py", "validator"),
         ("tools/world_state/replay_mvp_delta_chain.py", "validator"),
         (rel(stage_candidate_pack_path), "stage_candidate_pack"),
+        (rel(compilable_object_catalog_path), "compilable_object_catalog"),
     ]
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
@@ -743,6 +773,9 @@ def build_dossier(
         ],
         "workflow_reviews": workflow_reviews(),
         "stage_candidate_pack_summary": stage_candidate_pack_summary(stage_candidate_pack_path),
+        "compilable_object_catalog_summary": compilable_object_catalog_summary(
+            compilable_object_catalog_path
+        ),
         "runtime_state_summary": {
             "state_file": rel(final_state_path),
             "progress": as_obj(final_state.get("progress")),
@@ -796,6 +829,7 @@ def main() -> int:
     parser.add_argument("--promotion-report", default=str(DEFAULT_PROMOTION_REPORT))
     parser.add_argument("--final-state", default=str(DEFAULT_FINAL_STATE))
     parser.add_argument("--stage-candidate-pack", default=str(DEFAULT_STAGE_CANDIDATE_PACK))
+    parser.add_argument("--compilable-object-catalog", default=str(DEFAULT_COMPILABLE_OBJECT_CATALOG))
     parser.add_argument(
         "--runtime-package",
         action="append",
@@ -820,6 +854,7 @@ def main() -> int:
         Path(args.promotion_report),
         Path(args.final_state),
         Path(args.stage_candidate_pack),
+        Path(args.compilable_object_catalog),
         runtime_package_paths,
     )
     output = Path(args.output)

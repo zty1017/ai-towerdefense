@@ -104,9 +104,10 @@
     {
       "step_id": "07_review_dossier",
       "name": "总审查交付包构建",
-      "purpose": "把阶段候选包、运行态、资产和验证命令汇总成总审查证据。",
+      "purpose": "把阶段候选包、可编译对象目录、运行态、资产和验证命令汇总成总审查证据。",
       "inputs": [
         "StageCandidatePack",
+        "CompilableObjectCatalog",
         "final run state",
         "workflows"
       ],
@@ -2727,6 +2728,39 @@
     "runtime_package_reference_count": 2,
     "review_recommendation": "needs_human_review"
   },
+  "compilable_object_catalog_summary": {
+    "catalog_file": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
+    "total_objects": 69,
+    "layer_counts": {
+      "behavior": 1,
+      "economy": 7,
+      "entity": 9,
+      "level": 5,
+      "narrative": 22,
+      "progression": 4,
+      "rule": 5,
+      "visual": 16
+    },
+    "permission_level_counts": {
+      "L1_presentation": 16,
+      "L2_entity": 9,
+      "L3_behavior": 19,
+      "L4_system_rule": 25
+    },
+    "runtime_export_counts": {
+      "candidate_only": 7,
+      "fallback_ready": 15,
+      "review_only": 4,
+      "runtime_ready": 43
+    },
+    "risk_counts": {
+      "high": 7,
+      "low": 43,
+      "medium": 19
+    },
+    "player_exposed_count": 51,
+    "review_required_count": 11
+  },
   "runtime_state_summary": {
     "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "progress": {
@@ -2761,10 +2795,16 @@
   },
   "source_evidence": [
     {
+      "path": "docs/COMPILABLE_OBJECT_MODEL_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "27e9582d9d6e694180dac26580635c02ec403d0c4e5d294bf0fefb4cd3a5f2cb"
+    },
+    {
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "7a34514dd6f12525798f774ed86d45d1068b830af0a08bb5a9630e5b9c4ea952"
+      "sha256": "cf40073b26141e4c37ff0a2784052d7f8c833c847f576ae8d445af45f8d19f4f"
     },
     {
       "path": "docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md",
@@ -2776,7 +2816,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "2ed4f7e0888a950d47a0023cc9b1eaf280999cc03b39361ac389e9057fadce47"
+      "sha256": "d90ffc6281ff2bf68cdaa6c367c71efff1be9114ad114bcf6003f4be5992c90b"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2861,6 +2901,12 @@
       "kind": "narrative_bundle",
       "exists": true,
       "sha256": "ad91f6169fd6a9859336183229d6fdf6634176fe52fe736a3eb109c1ec7070ad"
+    },
+    {
+      "path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
+      "kind": "compilable_object_catalog",
+      "exists": true,
+      "sha256": "ba0bfdee5f691d46a3cfed19dd6a4bf3712323b352c77beeaa779139434b415c"
     },
     {
       "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
@@ -3061,10 +3107,16 @@
       "sha256": "235ef448f3cd830423b38c6ab770d1fa80dbb2bab4d3649a12361b909a0e9b4f"
     },
     {
+      "path": "shared/schemas/compilable_object_catalog.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "a17ac9846a4163247a3d5ed24cbdef605c930468d76e3395d651283e1f8ec4e4"
+    },
+    {
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "f056ee4d3f435bb392e2be2e57e03424d3b7b3f80ecccf0a8e45df1558f84705"
+      "sha256": "8f43d05fa80205a5aedfdcc9d6d77000268ee0ab9fc39133a445ca1773fcb821"
     },
     {
       "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
@@ -3073,10 +3125,22 @@
       "sha256": "b5d8a73d0013b7579ba0ed28358d8315aacf7344192d6576ed5ec7d52cd0cf47"
     },
     {
+      "path": "tools/content_pipeline/build_compilable_object_catalog.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "2cf0e059507b311c45eff6f1169a523336bb74f0b9a7a306516c425fd9f9dafa"
+    },
+    {
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",
       "kind": "builder",
       "exists": true,
       "sha256": "acec65876775e094df70eda97524a341ba5bbdae39f630782a18558dda0854c4"
+    },
+    {
+      "path": "tools/content_pipeline/validate_compilable_object_catalog.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "323fb65245fe5551836e7af50d362803707abd9c8dd46d9bc5812d7823e6dd1d"
     },
     {
       "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
@@ -3117,6 +3181,14 @@
     {
       "purpose": "校验阶段候选包",
       "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
+    },
+    {
+      "purpose": "构建并校验可编译对象目录",
+      "command": "python3 tools/content_pipeline/build_compilable_object_catalog.py --validate"
+    },
+    {
+      "purpose": "校验可编译对象目录",
+      "command": "python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

@@ -95,3 +95,18 @@
 - 增加任务链 / 事件链的图结构，便于前端呈现大地图节点和日志。
 - 让真实 LLM 先产出候选 GameplayObjectPlan，再经 deterministic legalize 转成 Delta op。
 - 让前端只消费 `RunWorldState` 和 locked manifest，不暴露 AI 编译细节。
+
+## 与可编译对象目录的关系
+
+`CompilableObjectCatalog v0.1` 是本文件的上层索引：它不只登记任务和随机事件，也把资产、地图节点、NPC、素材、研发任务、蓝图、事实和 flag 统一登记为可编译对象。
+
+这能回答两个审查问题：
+
+- 当前 MVP 到底有哪些对象已经进入运行态或审查态。
+- 每个对象属于哪个权限等级，能否被玩家影响，是否需要人工复核，是否已经可以进入 runtime。
+
+相关文档：
+
+```text
+docs/COMPILABLE_OBJECT_MODEL_V0_1.md
+```

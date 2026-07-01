@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/compilable_object_catalog.v0.1.schema.json",
+  "title": "CompilableObjectCatalog v0.1",
+  "description": "A review-only catalog of AI-compilable game objects, their permission level, source evidence, dependencies, validators, and runtime contract summaries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "catalog_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "generation_boundary",
+    "object_model",
+    "objects",
+    "summary",
+    "validation_commands"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "compilable_object_catalog.v0.1" },
+    "catalog_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "catalog_builder_reads_env",
+        "catalog_builder_calls_provider",
+        "base_worldbook_mutation",
+        "runtime_export_included"
+      ],
+      "properties": {
+        "front_end_integration": { "type": "string", "const": "not_included" },
+        "catalog_builder_reads_env": { "type": "boolean", "const": false },
+        "catalog_builder_calls_provider": { "type": "boolean", "const": false },
+        "base_worldbook_mutation": { "type": "boolean", "const": false },
+        "runtime_export_included": {
+          "type": "string",
+          "enum": ["referenced_only", "not_included"]
+        }
+      }
+    },
+    "object_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition", "permission_levels", "object_layers"],
+      "properties": {
+        "definition": { "type": "string", "minLength": 1 },
+        "permission_levels": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "$ref": "#/$defs/permission_level_def" }
+        },
+        "object_layers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/object_layer_def" }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/compilable_object" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_objects",
+        "layer_counts",
+        "permission_level_counts",
+        "runtime_export_counts",
+        "risk_counts",
+        "player_exposed_count",
+        "review_required_count"
+      ],
+      "properties": {
+        "total_objects": { "type": "integer", "minimum": 0 },
+        "layer_counts": { "$ref": "#/$defs/count_map" },
+        "permission_level_counts": { "$ref": "#/$defs/count_map" },
+        "runtime_export_counts": { "$ref": "#/$defs/count_map" },
+        "risk_counts": { "$ref": "#/$defs/count_map" },
+        "player_exposed_count": { "type": "integer", "minimum": 0 },
+        "review_required_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validation_command" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "permission_level": {
+      "type": "string",
+      "enum": ["L1_presentation", "L2_entity", "L3_behavior", "L4_system_rule", "L5_engine"]
+    },
+    "object_layer": {
+      "type": "string",
+      "enum": [
+        "visual",
+        "entity",
+        "behavior",
+        "rule",
+        "level",
+        "narrative",
+        "progression",
+        "economy",
+        "adaptive",
+        "ui_explanation",
+        "toolchain"
+      ]
+    },
+    "permission_level_def": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "name", "player_open_policy", "description"],
+      "properties": {
+        "level": { "$ref": "#/$defs/permission_level" },
+        "name": { "type": "string", "minLength": 1 },
+        "player_open_policy": {
+          "type": "string",
+          "enum": ["open", "guarded", "system_assisted", "developer_only"]
+        },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "object_layer_def": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer", "default_permission_level", "player_exposure", "description", "example_types"],
+      "properties": {
+        "layer": { "$ref": "#/$defs/object_layer" },
+        "default_permission_level": { "$ref": "#/$defs/permission_level" },
+        "player_exposure": {
+          "type": "string",
+          "enum": ["player_visible", "player_influenced", "system_side", "developer_side"]
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "example_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "compilable_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_id",
+        "object_type",
+        "object_layer",
+        "compile_permission_level",
+        "compile_actor",
+        "source_kind",
+        "source_files",
+        "source_ids",
+        "stage_refs",
+        "dependency_refs",
+        "validators",
+        "runtime_contract",
+        "review_status"
+      ],
+      "properties": {
+        "object_id": { "type": "string", "minLength": 1 },
+        "object_type": { "type": "string", "minLength": 1 },
+        "object_layer": { "$ref": "#/$defs/object_layer" },
+        "compile_permission_level": { "$ref": "#/$defs/permission_level" },
+        "compile_actor": {
+          "type": "string",
+          "enum": ["player", "system", "developer", "review_only"]
+        },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "source_files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "source_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "stage_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "dependency_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "runtime_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "load_surface",
+            "state_effects",
+            "export_status",
+            "rollback_policy",
+            "player_visible",
+            "risk_level"
+          ],
+          "properties": {
+            "load_surface": {
+              "type": "string",
+              "enum": [
+                "battle_runtime",
+                "run_world_state",
+                "stage_candidate_pack",
+                "review_pack",
+                "asset_graph",
+                "none"
+              ]
+            },
+            "state_effects": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "export_status": {
+              "type": "string",
+              "enum": [
+                "runtime_ready",
+                "fallback_ready",
+                "candidate_only",
+                "review_only",
+                "not_exported"
+              ]
+            },
+            "rollback_policy": {
+              "type": "string",
+              "enum": ["delta_replay", "remove_from_runtime_package", "manual_review", "not_needed"]
+            },
+            "player_visible": { "type": "boolean" },
+            "risk_level": { "type": "string", "enum": ["low", "medium", "high"] }
+          }
+        },
+        "review_status": { "type": "string", "minLength": 1 },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
