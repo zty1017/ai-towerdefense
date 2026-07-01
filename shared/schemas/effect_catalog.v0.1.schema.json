@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/effect_catalog.v0.1.schema.json",
+  "title": "EffectCatalog v0.1",
+  "description": "Runtime visual effect primitive catalog for player-safe frontend rendering. The catalog defines whitelisted effect primitives, palettes, optional texture tokens, and performance budgets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "catalog_id",
+    "runtime_target",
+    "policy",
+    "palettes",
+    "texture_tokens",
+    "primitives"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "effect_catalog.v0.1" },
+    "catalog_id": { "type": "string", "minLength": 1 },
+    "runtime_target": { "type": "string", "minLength": 1 },
+    "policy": { "type": "object" },
+    "palettes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "primary", "secondary", "usage"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "primary": { "type": "string", "minLength": 1 },
+          "secondary": { "type": "string", "minLength": 1 },
+          "usage": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "texture_tokens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["token", "role", "source_type", "license", "required"],
+        "properties": {
+          "token": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "source_type": { "type": "string", "enum": ["procedural", "bundled_local"] },
+          "license": { "type": "string", "minLength": 1 },
+          "required": { "type": "boolean" },
+          "local_path": { "type": ["string", "null"] },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "primitives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "render_family",
+          "default_texture_token",
+          "allowed_palettes",
+          "default_params",
+          "budget",
+          "frontend_hint"
+        ],
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "render_family": { "type": "string", "minLength": 1 },
+          "default_texture_token": { "type": ["string", "null"] },
+          "allowed_palettes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "default_params": { "type": "object" },
+          "budget": { "type": "object" },
+          "frontend_hint": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@ FORBIDDEN_FRONTEND_KEYS = {
     "secret",
     "unreviewed_content",
 }
+EFFECT_CATALOG_PATH = ROOT / "shared/module_registry/effect_catalog.v0.1.json"
 
 
 def load_json(path: Path) -> Any:
@@ -52,118 +53,139 @@ def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
-def visual_recipe_for_effect(effect: dict[str, Any], index: int) -> dict[str, Any] | None:
+def with_effect_catalog_defaults(recipe: dict[str, Any], effect_catalog: dict[str, Any]) -> dict[str, Any]:
+    primitive_by_type = {
+        str(primitive.get("type")): primitive
+        for primitive in as_list(effect_catalog.get("primitives"))
+        if isinstance(primitive, dict)
+    }
+    primitive = as_obj(primitive_by_type.get(str(recipe.get("type"))))
+    texture_token = primitive.get("default_texture_token")
+    if texture_token and "texture_token" not in recipe:
+        recipe["texture_token"] = texture_token
+    default_params = as_obj(primitive.get("default_params"))
+    recipe_params = as_obj(recipe.pop("runtime_params", {}))
+    if default_params or recipe_params:
+        recipe["runtime_params"] = {**default_params, **recipe_params}
+    return recipe
+
+
+def visual_recipe_for_effect(effect: dict[str, Any], index: int, effect_catalog: dict[str, Any]) -> dict[str, Any] | None:
     effect_type = str(effect.get("type", ""))
     if effect_type == "slow":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_slow_{index}",
             "type": "aura_field",
             "palette": "cold_blue",
-            "summary": "冷蓝色减速光场，作用于范围内敌人。"
-        }
+            "summary": "冷蓝色减速光场，作用于范围内敌人。",
+            "runtime_params": {"duration_ms": int(float(effect.get("duration", 2.0)) * 1000)}
+        }, effect_catalog)
     if effect_type == "aura_buff":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_aura_{index}",
             "type": "ring_pulse",
             "palette": "cold_blue",
-            "summary": "从塔底向外扩散的环形灯纹。"
-        }
+            "summary": "从塔底向外扩散的环形灯纹。",
+            "runtime_params": {"radius_px": int(float(effect.get("radius", 64)))}
+        }, effect_catalog)
     if effect_type == "area_damage":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_area_damage_{index}",
             "type": "particle_burst",
             "palette": "red_orange",
-            "summary": "范围命中时爆开短促粒子。"
-        }
+            "summary": "范围命中时爆开短促粒子。",
+            "runtime_params": {"radius_px": int(float(effect.get("radius", 56)))}
+        }, effect_catalog)
     if effect_type == "damage":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_damage_{index}",
             "type": "sprite_flash",
             "palette": "warm_gold",
             "summary": "命中时短促闪光。"
-        }
+        }, effect_catalog)
     if effect_type == "shield":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_shield_{index}",
             "type": "aura_field",
             "palette": "warm_gold",
             "summary": "保护目标周围形成暖金色护幕。"
-        }
+        }, effect_catalog)
     if effect_type == "repair":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_repair_{index}",
             "type": "floating_text",
             "palette": "white",
             "summary": "维修触发时显示短暂恢复反馈。"
-        }
+        }, effect_catalog)
     if effect_type == "pierce_or_chain":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_chain_{index}",
             "type": "chain_arc",
             "palette": "red_orange",
-            "summary": "过载能量在多个目标间跳转。"
-        }
+            "summary": "过载能量在多个目标间跳转。",
+            "runtime_params": {"max_links": int(effect.get("max_targets", 5) or 5)}
+        }, effect_catalog)
     if effect_type == "charge_burst":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_burst_{index}",
             "type": "particle_burst",
             "palette": "red_orange",
             "summary": "短时蓄能后爆发火花。"
-        }
+        }, effect_catalog)
     if effect_type == "trap_tile_effect":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_trap_{index}",
             "type": "ring_pulse",
             "palette": "warm_gold",
             "summary": "地面陷阱触发时亮起灯纹。"
-        }
+        }, effect_catalog)
     if effect_type in {"scout_reveal", "path_prediction", "threat_forecast"}:
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_intel_{index}",
             "type": "floating_text",
             "palette": "white",
             "summary": "地图上浮现短暂情报标记。"
-        }
+        }, effect_catalog)
     if effect_type == "weakness_tag":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_weakness_{index}",
             "type": "sprite_flash",
             "palette": "white",
             "summary": "目标弱点被短暂描边。"
-        }
+        }, effect_catalog)
     if effect_type == "countermeasure_hint":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_countermeasure_{index}",
             "type": "floating_text",
             "palette": "white",
             "summary": "路径附近浮现短暂战术提示。"
-        }
+        }, effect_catalog)
     if effect_type == "risk_modifier":
-        return {
+        return with_effect_catalog_defaults({
             "recipe_id": f"visual_risk_modifier_{index}",
             "type": "screen_shake",
             "palette": "cold_blue",
             "summary": "威胁压力变化时触发轻量反馈。"
-        }
+        }, effect_catalog)
     return None
 
 
-def visual_recipes(candidate: dict[str, Any]) -> list[dict[str, Any]]:
+def visual_recipes(candidate: dict[str, Any], effect_catalog: dict[str, Any]) -> list[dict[str, Any]]:
     effects = as_list(as_obj(candidate.get("gameplay")).get("effect_blocks"))
     recipes: list[dict[str, Any]] = []
     for index, effect in enumerate(effects):
         if not isinstance(effect, dict):
             continue
-        recipe = visual_recipe_for_effect(effect, index)
+        recipe = visual_recipe_for_effect(effect, index, effect_catalog)
         if recipe:
             recipes.append(recipe)
     if not recipes:
-        recipes.append({
+        recipes.append(with_effect_catalog_defaults({
             "recipe_id": "visual_default_flash",
             "type": "sprite_flash",
             "palette": "warm_gold",
             "summary": "默认命中反馈。"
-        })
+        }, effect_catalog))
     return recipes
 
 
@@ -210,7 +232,7 @@ def fallback_media(candidate: dict[str, Any], promotion: dict[str, Any]) -> dict
     }
 
 
-def build_compiled_asset_entry(candidate: dict[str, Any], registry: dict[str, Any]) -> dict[str, Any]:
+def build_compiled_asset_entry(candidate: dict[str, Any], registry: dict[str, Any], effect_catalog: dict[str, Any]) -> dict[str, Any]:
     validation_errors = validate_asset_candidate.validate(candidate, registry)
     validation = {
         "status": "passed" if not validation_errors else "failed",
@@ -245,7 +267,7 @@ def build_compiled_asset_entry(candidate: dict[str, Any], registry: dict[str, An
             "rarity_hint": presentation.get("rarity_hint", "prototype")
         },
         "gameplay": gameplay,
-        "visual_recipes": visual_recipes(candidate),
+        "visual_recipes": visual_recipes(candidate, effect_catalog),
         "media_refs": fallback_media(candidate, promotion),
         "promotion": {
             "promotion_state": promotion.get("promotion_state"),
@@ -328,6 +350,7 @@ def scan_forbidden_keys(value: Any, path: str = "") -> list[str]:
 
 def build_pack(created_at: str) -> dict[str, Any]:
     registry = load_json(ROOT / "shared/module_registry/effect_blocks.v0.1.json")
+    effect_catalog = load_json(EFFECT_CATALOG_PATH)
     worldbook = load_json(ROOT / "content/worldbooks/long_night_lanterns/worldbook.json")
     npcs = load_json(ROOT / "content/worldbooks/long_night_lanterns/npcs.json")
     materials = load_json(ROOT / "content/worldbooks/long_night_lanterns/materials.json")
@@ -338,7 +361,7 @@ def build_pack(created_at: str) -> dict[str, Any]:
 
     asset_paths = sorted((ROOT / "examples/compiled_assets").glob("*.compiled_asset.json"))
     assets = [
-        build_compiled_asset_entry(load_json(path), registry)
+        build_compiled_asset_entry(load_json(path), registry, effect_catalog)
         for path in asset_paths
     ]
     playable_count = sum(1 for asset in assets if asset["promotion"].get("playable"))
@@ -372,8 +395,10 @@ def build_pack(created_at: str) -> dict[str, Any]:
             "first_screen": "local_profile_or_world_start",
             "primary_flow": ["opening", "world_map", "node_briefing", "workshop", "battle", "settlement"],
             "runtime_assumption": "Every asset with promotion.playable=true can be rendered with fallback media tokens and visual_recipes.",
+            "effect_catalog_id": effect_catalog.get("catalog_id"),
             "forbidden_player_terms": worldbook.get("tone_and_taboos", {}).get("forbidden_terms_in_player_text", []),
         },
+        "effect_catalog": effect_catalog,
         "world": {
             "display_name": worldbook.get("display_name"),
             "summary": worldbook.get("summary"),

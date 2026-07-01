@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import validate_effect_catalog
+
 
 FORBIDDEN_KEYS = {
     "provider",
@@ -48,9 +50,28 @@ def validate(pack: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if pack.get("schema_version") != "frontend_mock_pack.v0.1":
         errors.append("schema_version must be frontend_mock_pack.v0.1")
-    for key in ("pack_id", "worldbook_id", "compiler_summary", "frontend_contract", "world", "map", "npcs", "materials", "story", "assets"):
+    for key in ("pack_id", "worldbook_id", "compiler_summary", "frontend_contract", "effect_catalog", "world", "map", "npcs", "materials", "story", "assets"):
         if key not in pack:
             errors.append(f"missing top-level key: {key}")
+
+    effect_catalog = pack.get("effect_catalog")
+    primitive_types: set[str] = set()
+    texture_tokens: set[str] = set()
+    if isinstance(effect_catalog, dict):
+        catalog_errors = validate_effect_catalog.validate(effect_catalog)
+        errors.extend(f"effect_catalog: {error}" for error in catalog_errors)
+        primitive_types = {
+            str(primitive.get("type"))
+            for primitive in effect_catalog.get("primitives", [])
+            if isinstance(primitive, dict) and primitive.get("type")
+        }
+        texture_tokens = {
+            str(texture.get("token"))
+            for texture in effect_catalog.get("texture_tokens", [])
+            if isinstance(texture, dict) and texture.get("token")
+        }
+    else:
+        errors.append("effect_catalog must be object")
 
     assets = pack.get("assets")
     if not isinstance(assets, list) or not assets:
@@ -81,6 +102,16 @@ def validate(pack: dict[str, Any]) -> list[str]:
             errors.append(f"assets[{index}] is not deliverable: promotion_state={state!r}")
         if not asset.get("visual_recipes"):
             errors.append(f"assets[{index}] missing visual_recipes")
+        for recipe_index, recipe in enumerate(asset.get("visual_recipes") or []):
+            if not isinstance(recipe, dict):
+                errors.append(f"assets[{index}].visual_recipes[{recipe_index}] must be object")
+                continue
+            recipe_type = str(recipe.get("type", ""))
+            if primitive_types and recipe_type not in primitive_types:
+                errors.append(f"assets[{index}].visual_recipes[{recipe_index}] references unknown effect type: {recipe_type}")
+            texture_token = recipe.get("texture_token")
+            if texture_token is not None and texture_tokens and str(texture_token) not in texture_tokens:
+                errors.append(f"assets[{index}].visual_recipes[{recipe_index}] references unknown texture_token: {texture_token}")
         media_refs = asset.get("media_refs")
         if not isinstance(media_refs, dict) or not media_refs.get("icon_token"):
             errors.append(f"assets[{index}] missing fallback icon_token")
