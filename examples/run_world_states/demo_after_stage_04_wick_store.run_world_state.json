@@ -168,7 +168,7 @@
       "summary": "灰灯驿站的折射陷阱在夜雾中第一次显形。"
     },
     {
-      "fact_id": "sample_trap_tested_in_battle_repaired",
+      "fact_id": "sample_trap_tested_in_battle",
       "source": "first_battle",
       "visibility": "player_known",
       "summary": "折光绊索在灰灯驿站实战中成功拖慢了来犯影潮。"
@@ -218,7 +218,7 @@
       "summary": "玩家抵达灰灯驿站，长夜尚未散去。"
     },
     {
-      "event_id": "gray_lantern_first_defense_repaired_success",
+      "event_id": "gray_lantern_first_defense_success",
       "turn": 2,
       "kind": "battle",
       "summary": "灰灯驿站首战告捷，折光绊索拖慢了夜雾来影，驿站灯火仍亮。"
@@ -282,7 +282,7 @@
       {
         "sample_id": "sample_trap_7f3a_repaired",
         "display_name": "折光绊索",
-        "source_delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+        "source_delta_id": "delta_stage_01_gray_lantern_first_defense",
         "summary": "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
       },
       {

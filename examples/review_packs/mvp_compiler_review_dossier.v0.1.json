@@ -43,7 +43,21 @@
       "gate": "validate_world_delta.py + validate_world_delta_semantics.py + apply_world_delta.py"
     },
     {
-      "step_id": "03_asset_compile",
+      "step_id": "03_narrative_gameplay_contract",
+      "name": "剧情玩法联合契约",
+      "purpose": "证明剧情节点不是纯文本，而是闭环到任务、随机事件、研究、资源、NPC、地图节点或蓝图。",
+      "inputs": [
+        "NarrativeEventBundle",
+        "WorldStateDelta",
+        "final RunWorldState"
+      ],
+      "outputs": [
+        "contract validation report"
+      ],
+      "gate": "validate_narrative_gameplay_contract.py"
+    },
+    {
+      "step_id": "04_asset_compile",
       "name": "游戏资产编译",
       "purpose": "把提案或玩家构想编译为防御塔、道具、情报资产或临时改造候选。",
       "inputs": [
@@ -58,7 +72,7 @@
       "gate": "validate_asset_candidate.py + simulate_asset_candidate.py + score_asset_candidate.py + asset_promotion_policy.py"
     },
     {
-      "step_id": "04_media_compile",
+      "step_id": "05_media_compile",
       "name": "媒体与特效管线",
       "purpose": "为可用资产生成图像、视频帧、抠图后处理和 runtime media manifest。",
       "inputs": [
@@ -73,7 +87,7 @@
       "gate": "media consistency / readiness validators; MVP 可 fallback"
     },
     {
-      "step_id": "05_review_dossier",
+      "step_id": "06_review_dossier",
       "name": "审查交付包构建",
       "purpose": "把阶段、玩法对象、资产和验证命令汇总成可审查证据。",
       "inputs": [
@@ -178,7 +192,7 @@
       "stage_id": "act_1_stage_01_gray_lantern_first_defense",
       "title": "灰灯驿站首防",
       "bundle_file": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
-      "world_delta_file": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+      "world_delta_file": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
       "lane_counts": {
         "player_line": 1,
         "shared": 1,
@@ -2722,7 +2736,7 @@
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "d4043f1c7ee6756066547dcdff9e4642824e18f0859ff1370ac4d50322b455e9"
+      "sha256": "7a34514dd6f12525798f774ed86d45d1068b830af0a08bb5a9630e5b9c4ea952"
     },
     {
       "path": "docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md",
@@ -2734,7 +2748,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "3889edfd6f3c3f89f60345b42b3a11a63b3318fccd34d5c9079a0b4a6df068dc"
+      "sha256": "68b5a09f3c1ecf23ab502502c7c17c6c692d089335b9670f4dd6d82308967e83"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2746,7 +2760,13 @@
       "path": "docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "a4f06c61595e60b6f070de09c631f5acf27d3b6b846ab59063236e48bdc4ad0f"
+      "sha256": "c90127af2e2608f691467cd051dc14966bc0d4fbb442aed349dab4f97ac27dc3"
+    },
+    {
+      "path": "docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "90768adf86b6262dcc8ac2fbc9d0aae8fc0bac9a7179f6bb84f0f5216387b32f"
     },
     {
       "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
@@ -2788,25 +2808,25 @@
       "path": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
-      "sha256": "d53d5cbc8f43e1b44be36184091a931396664054725ee87d734739ce31f0b204"
+      "sha256": "12610e8e867bbd29ee8776e9782bdaf8262c4638e17733704fcb93a6d7e52ae9"
     },
     {
       "path": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
-      "sha256": "dc0284efbe86f5f15a72d39e3d5dffc06f15b70e70bc8bf8497a982ce9a9015a"
+      "sha256": "278e99aed515dea9d2e9ebf81527bb2a938aa95987e858e16e7c1379ea91da16"
     },
     {
       "path": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
-      "sha256": "cc2837e6ffd6dcf7834e67df5ffd01e8141d99b7efb7938a89cd7171102420f7"
+      "sha256": "67d72b3eafb5224c342c5363d54954b76b53b594128184db29ad3e04c4ea2f19"
     },
     {
       "path": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
-      "sha256": "c4db7ef3ea92358d9f5b5986cb83a2f37ecd345e4ea197aaf610e33415a0a315"
+      "sha256": "ad91f6169fd6a9859336183229d6fdf6634176fe52fe736a3eb109c1ec7070ad"
     },
     {
       "path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
@@ -2824,7 +2844,7 @@
       "path": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
       "kind": "run_world_state",
       "exists": true,
-      "sha256": "82269781b39135555749e7199880190e26f88011aa9c01c0e7a77bca7970e2e1"
+      "sha256": "714d944a3fe245514ec812f19a7316a2e990b21f3e4ff8d26487c92863e4d847"
     },
     {
       "path": "examples/runtime_packages/mvp_demo.runtime_package.json",
@@ -2977,10 +2997,10 @@
       "sha256": "fa1aa661f6195250cb68ee98e4b93697ffccc7003ea4bcb8f97387ce4e2c123c"
     },
     {
-      "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+      "path": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
       "kind": "world_delta",
       "exists": true,
-      "sha256": "82cbdd4dea51f417ece7d1f07ba22e6ee2ec49c1514bfb8735140243ecd03c16"
+      "sha256": "a334dc8f3ba1dc2fa21207bc3bc76f2bd3fc86255157fc7044c2d96349ebfb73"
     },
     {
       "path": "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json",
@@ -3007,10 +3027,16 @@
       "sha256": "ce53b1fc78d2fc14d5d9440ecc93d21ec24f520fcc323c15424f923a38a9ee9f"
     },
     {
+      "path": "tools/narrative/validate_narrative_gameplay_contract.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "81bac95ca666ab92173784c953c805ef175f920c3b8632c1e202b7fae3143db6"
+    },
+    {
       "path": "tools/world_state/replay_mvp_delta_chain.py",
       "kind": "validator",
       "exists": true,
-      "sha256": "c007697b07041dfcd7edab90161c075e6a004d3d1cf825e743bb9d851029ecbe"
+      "sha256": "5b96986874bab1085a46040ad91f9e7055bcd6234258946822add51be7ee31ad"
     }
   ],
   "validation_commands": [
@@ -3023,6 +3049,10 @@
       "command": "python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
     },
     {
+      "purpose": "校验剧情到玩法对象的跨文件契约",
+      "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
+    },
+    {
       "purpose": "重建资产晋升报告到 /tmp",
       "command": "python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --output /tmp/mvp_story_asset_promotion_report.check.json"
     },
@@ -3033,6 +3063,10 @@
     {
       "purpose": "校验 runtime package",
       "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json"
+    },
+    {
+      "purpose": "校验阶段 1 WorldStateDelta",
+      "command": "python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json"
     },
     {
       "purpose": "校验阶段 2 WorldStateDelta",

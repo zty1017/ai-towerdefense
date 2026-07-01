@@ -61,7 +61,7 @@
         },
         {
           "hook": "increase_threat",
-          "target_ref": "shadow_tide_edge_southeast",
+          "target_ref": "random_event_wick_store_pressure_hint",
           "summary": "记录影潮未退，只是改变了压迫方向。"
         }
       ],
@@ -72,8 +72,7 @@
       "proposed_world_delta_ref": "delta_stage_02_dawn_review_supply_line",
       "proposed_delta_summary": {
         "expected_operations": [
-          "set_map_node_state",
-          "adjust_global_state",
+          "introduce_map_node",
           "append_event"
         ],
         "summary": "提交补给线受损、灯芯仓重要性提升与世界压力变化。"
@@ -117,7 +116,7 @@
       "gameplay_hooks": [
         {
           "hook": "explain_battle_result",
-          "target_ref": "sample_trap_7f3a",
+          "target_ref": "sample_trap_7f3a_repaired",
           "summary": "说明首个样品解决了迟滞问题，但暴露耐久缺陷。"
         },
         {
@@ -140,7 +139,6 @@
         "expected_operations": [
           "adjust_resource",
           "unlock_fact",
-          "update_npc_relationship",
           "append_event"
         ],
         "summary": "提交灯灰入账、样品缺陷事实、老师傅信任变化与复盘事件。"
@@ -183,7 +181,7 @@
         },
         {
           "hook": "create_quest_hook",
-          "target_ref": "quest_find_wire_mender",
+          "target_ref": "task_repair_supply_line_hub",
           "summary": "给北路侦察留下可追踪的人物线索。"
         },
         {

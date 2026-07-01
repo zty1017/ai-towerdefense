@@ -41,7 +41,7 @@ SCHEMA_PATH = ROOT / "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.jso
 
 STAGE_DELTA_MAP = {
     "act_1_stage_01_gray_lantern_first_defense": (
-        "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json"
+        "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json"
     ),
     "act_1_stage_02_dawn_review_supply_line": (
         "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json"
@@ -514,7 +514,15 @@ def pipeline_overview() -> list[dict[str, Any]]:
             "gate": "validate_world_delta.py + validate_world_delta_semantics.py + apply_world_delta.py",
         },
         {
-            "step_id": "03_asset_compile",
+            "step_id": "03_narrative_gameplay_contract",
+            "name": "剧情玩法联合契约",
+            "purpose": "证明剧情节点不是纯文本，而是闭环到任务、随机事件、研究、资源、NPC、地图节点或蓝图。",
+            "inputs": ["NarrativeEventBundle", "WorldStateDelta", "final RunWorldState"],
+            "outputs": ["contract validation report"],
+            "gate": "validate_narrative_gameplay_contract.py",
+        },
+        {
+            "step_id": "04_asset_compile",
             "name": "游戏资产编译",
             "purpose": "把提案或玩家构想编译为防御塔、道具、情报资产或临时改造候选。",
             "inputs": ["Proposal", "worldbook boundary", "effect catalog"],
@@ -522,7 +530,7 @@ def pipeline_overview() -> list[dict[str, Any]]:
             "gate": "validate_asset_candidate.py + simulate_asset_candidate.py + score_asset_candidate.py + asset_promotion_policy.py",
         },
         {
-            "step_id": "04_media_compile",
+            "step_id": "05_media_compile",
             "name": "媒体与特效管线",
             "purpose": "为可用资产生成图像、视频帧、抠图后处理和 runtime media manifest。",
             "inputs": ["CompiledAssetCandidate", "visual identity", "media prompt"],
@@ -530,7 +538,7 @@ def pipeline_overview() -> list[dict[str, Any]]:
             "gate": "media consistency / readiness validators; MVP 可 fallback",
         },
         {
-            "step_id": "05_review_dossier",
+            "step_id": "06_review_dossier",
             "name": "审查交付包构建",
             "purpose": "把阶段、玩法对象、资产和验证命令汇总成可审查证据。",
             "inputs": ["review packs", "world deltas", "final run state", "workflows"],
@@ -551,6 +559,10 @@ def validation_commands() -> list[dict[str, str]]:
             "command": "python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
         },
         {
+            "purpose": "校验剧情到玩法对象的跨文件契约",
+            "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+        },
+        {
             "purpose": "重建资产晋升报告到 /tmp",
             "command": "python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --output /tmp/mvp_story_asset_promotion_report.check.json",
         },
@@ -561,6 +573,10 @@ def validation_commands() -> list[dict[str, str]]:
         {
             "purpose": "校验 runtime package",
             "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json",
+        },
+        {
+            "purpose": "校验阶段 1 WorldStateDelta",
+            "command": "python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
         },
         {
             "purpose": "校验阶段 2 WorldStateDelta",
@@ -643,10 +659,12 @@ def build_dossier(
         (rel(final_state_path), "run_world_state"),
         ("shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json", "schema"),
         ("docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md", "architecture_doc"),
+        ("docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md", "architecture_doc"),
         ("docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md", "architecture_doc"),
         ("docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md", "architecture_doc"),
         ("docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
+        ("tools/narrative/validate_narrative_gameplay_contract.py", "validator"),
         ("tools/world_state/replay_mvp_delta_chain.py", "validator"),
     ]
     for runtime_package_path in runtime_package_paths:

@@ -1,9 +1,10 @@
 # MVP 多阶段 WorldStateDelta 审查包 v0.1
 
-本文档说明阶段 2 到阶段 4 的世界状态推进包。它们不接入前端，不调用真实模型服务，不读取 `.env`，只把已经审查过的 `NarrativeEventBundle` 和玩法对象边界落成可验证、可连续应用的 `WorldStateDelta`。
+本文档说明阶段 1 到阶段 4 的世界状态推进包。它们不接入前端，不调用真实模型服务，不读取 `.env`，只把已经审查过的 `NarrativeEventBundle` 和玩法对象边界落成可验证、可连续应用的 `WorldStateDelta`。
 
 ## 产出文件
 
+- `examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json`
 - `examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json`
 - `examples/world_deltas/stage_03_northern_road_scouting.world_delta.json`
 - `examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json`
@@ -12,7 +13,6 @@
 前置状态使用：
 
 - `examples/run_world_states/demo_initial.run_world_state.json`
-- `examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json`
 
 ## 生产流水线
 
@@ -20,7 +20,7 @@
 
 ```text
 MVP Story Asset Review Pack
-  -> NarrativeEventBundle stage 2/3/4
+  -> NarrativeEventBundle stage 1/2/3/4
   -> 人类确认的玩法目的与对象边界
   -> WorldStateDelta fixture
   -> validate_world_delta.py
@@ -59,6 +59,13 @@ MVP Story Asset Review Pack
 
 ## 阶段摘要
 
+阶段 1：`stage_01_gray_lantern_first_defense`
+
+- 结算灰灯驿站首战，推进 `gray_lantern_station` 到守住状态。
+- 登记首战教学样品 `sample_trap_7f3a_repaired`。
+- 写入首战完成标志、战斗事件和样品事实。
+- 调整基础资源与压力 / 希望状态，为阶段 2 复盘和研发提供输入。
+
 阶段 2：`stage_02_dawn_review_supply_line`
 
 - 引入 `supply_line_hub_to_gray` 与 `lamp_wick_store`。
@@ -88,6 +95,7 @@ MVP Story Asset Review Pack
 结构校验：
 
 ```bash
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json
 python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json
 python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_03_northern_road_scouting.world_delta.json
 python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json
@@ -96,9 +104,10 @@ python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_04
 连续语义校验与应用顺序：
 
 ```bash
-python3 tools/world_state/apply_world_delta.py examples/run_world_states/demo_initial.run_world_state.json examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json /tmp/run_demo_stage_01_repaired.run_world_state.json
-python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json --run-state /tmp/run_demo_stage_01_repaired.run_world_state.json
-python3 tools/world_state/apply_world_delta.py /tmp/run_demo_stage_01_repaired.run_world_state.json examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json /tmp/run_demo_stage_02_supply_line.run_world_state.json
+python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json --run-state examples/run_world_states/demo_initial.run_world_state.json
+python3 tools/world_state/apply_world_delta.py examples/run_world_states/demo_initial.run_world_state.json examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json /tmp/run_demo_stage_01_gray_lantern.run_world_state.json
+python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json --run-state /tmp/run_demo_stage_01_gray_lantern.run_world_state.json
+python3 tools/world_state/apply_world_delta.py /tmp/run_demo_stage_01_gray_lantern.run_world_state.json examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json /tmp/run_demo_stage_02_supply_line.run_world_state.json
 python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_03_northern_road_scouting.world_delta.json --run-state /tmp/run_demo_stage_02_supply_line.run_world_state.json
 python3 tools/world_state/apply_world_delta.py /tmp/run_demo_stage_02_supply_line.run_world_state.json examples/world_deltas/stage_03_northern_road_scouting.world_delta.json /tmp/run_demo_stage_03_scouting.run_world_state.json
 python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json --run-state /tmp/run_demo_stage_03_scouting.run_world_state.json

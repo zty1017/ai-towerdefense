@@ -41,7 +41,7 @@ DEFAULT_EXPECTED_FINAL_STATE = (
 )
 DEFAULT_OUTPUT = Path("/tmp/mvp_replayed_stage_04_wick_store.run_world_state.json")
 DEFAULT_DELTAS = [
-    ROOT / "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+    ROOT / "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
     ROOT / "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json",
     ROOT / "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
     ROOT / "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",

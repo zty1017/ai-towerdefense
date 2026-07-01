@@ -9,7 +9,9 @@
 - `examples/review_packs/mvp_compiler_review_dossier.v0.1.json`
 - `shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json`
 - `tools/content_pipeline/build_mvp_compiler_review_dossier.py`
+- `tools/narrative/validate_narrative_gameplay_contract.py`
 - `tools/world_state/replay_mvp_delta_chain.py`
+- `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
 - `game_data/demo/wick_store_pressure_battle_config.json`
 - `examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json`
 - `examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json`
@@ -39,6 +41,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 
 - `pipeline_overview`：从剧情节点、WorldStateDelta、资产编译、媒体管线到审查交付包的流水线说明。
 - `stage_reviews`：四个 MVP 阶段的世界线 / 玩家线覆盖、玩法目的、玩法 hook、Delta op 统计、关联资产、NPC、材料、地图节点。
+- `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
 - `runtime_package_summaries`：第一战和灯芯仓压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产。
 - `runtime_state_summary`：最终运行态的进度、全局状态和对象数量。
@@ -53,7 +56,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 
 - 已有四阶段剧情演示链。
 - 每个阶段都能关联 `NarrativeEventBundle` 和受控 `WorldStateDelta`。
-- 世界线和玩家线都不是纯文本，而是能落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
+- 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
 - 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
 - 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
 - 默认 MVP 可以按 `runtime_fixture` + `fallback_ready` 资产组织审查；候选 / 受阻资产不应默认进入战斗。
@@ -79,6 +82,12 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
 ```
 
+校验剧情到玩法对象的跨文件契约：
+
+```bash
+python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+```
+
 校验最终运行态：
 
 ```bash
@@ -93,6 +102,15 @@ python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/
 ```
 
 校验 WorldStateDelta 语义门示例：
+
+```bash
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_03_northern_road_scouting.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json
+```
+
+校验 WorldStateDelta 语义门 DAG 示例：
 
 ```bash
 python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json --output-dir /tmp/mvp_world_delta_semantic_gate_demo
@@ -117,5 +135,5 @@ done
 优先审查三个问题：
 
 1. `pipeline_overview` 的流水线逻辑是否符合项目定位：自然语言 / 世界书 / 玩家行为 -> 受控结构化对象 -> 可玩资产。
-2. `stage_reviews` 里的每一阶段是否真的服务玩法，而不是只写剧情。
+2. `stage_reviews` 和 `NarrativeGameplayContract` 是否证明每一阶段真的服务玩法，而不是只写剧情。
 3. `known_risks` 是否覆盖了 MVP 前必须处理的风险，尤其是媒体 readiness 和旧 fixture NPC 迁移。

@@ -57,12 +57,12 @@
         },
         {
           "hook": "advance_main_pressure",
-          "target_ref": "shadow_tide_edge_southeast",
+          "target_ref": "gray_lantern_station",
           "summary": "记录东南影潮逼近，使首战成为必须处理的危机。"
         },
         {
           "hook": "teach_mechanic",
-          "target_ref": "first_crisis_node",
+          "target_ref": "gray_lantern_station",
           "summary": "让玩家理解地图节点、保护目标与入夜防守的关系。"
         }
       ],
@@ -188,7 +188,7 @@
         },
         {
           "hook": "teach_mechanic",
-          "target_ref": "trap_tile_effect",
+          "target_ref": "sample_trap_7f3a",
           "summary": "通过中途送达展示临时样品的战斗部署方式。"
         },
         {

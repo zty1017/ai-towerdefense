@@ -57,7 +57,7 @@
         },
         {
           "hook": "increase_threat",
-          "target_ref": "shadow_tide_flanking_pressure",
+          "target_ref": "random_event_wick_store_pressure_hint",
           "summary": "记录影潮开始绕行，提升地图层威胁。"
         },
         {
@@ -74,7 +74,7 @@
       "proposed_delta_summary": {
         "expected_operations": [
           "set_map_node_state",
-          "adjust_global_state",
+          "set_random_event_status",
           "append_event"
         ],
         "summary": "提交灯芯仓受威胁、绕行压力和第二战斗节点开启。"
@@ -124,7 +124,7 @@
         },
         {
           "hook": "reward_player_choice",
-          "target_ref": "lamp_wick_store_defense_plan",
+          "target_ref": "task_prepare_wick_store_defense",
           "summary": "让前几阶段获得的资产进入同一场防守。"
         },
         {
@@ -191,12 +191,12 @@
         },
         {
           "hook": "reward_player_choice",
-          "target_ref": "lamp_wick_store_defended",
+          "target_ref": "stage_04_wick_store_defense_completed",
           "summary": "奖励玩家保护资源设施的选择。"
         },
         {
           "hook": "create_quest_hook",
-          "target_ref": "next_night_route_decision",
+          "target_ref": "random_event_old_signal_tower_pressure",
           "summary": "把微光晶用途延后到下一阶段路线判断和正式研发。"
         }
       ],
