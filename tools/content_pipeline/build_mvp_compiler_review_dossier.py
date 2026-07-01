@@ -595,6 +595,14 @@ def validation_commands() -> list[dict[str, str]]:
             "command": "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate",
         },
         {
+            "purpose": "运行 MVP handoff 一键审查",
+            "command": "python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate",
+        },
+        {
+            "purpose": "校验 MVP handoff 审查报告",
+            "command": "python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/review_packs/mvp_handoff_audit_report.v0.1.json",
+        },
+        {
             "purpose": "校验故事资产审查包",
             "command": "python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
         },
@@ -916,6 +924,8 @@ def build_dossier(
         ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
         ("docs/FRONTEND_MOCK_PACK_V0_1.md", "architecture_doc"),
+        ("docs/MVP_REVIEW_HANDOFF_V0_1.md", "architecture_doc"),
+        ("shared/schemas/mvp_handoff_audit_report.v0.1.schema.json", "schema"),
         ("shared/schemas/frontend_mock_pack.v0.1.schema.json", "schema"),
         ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
         ("shared/schemas/compilable_object_plan.v0.1.schema.json", "schema"),
@@ -928,7 +938,9 @@ def build_dossier(
         ("tools/content_pipeline/build_multistage_content_pack.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
         ("tools/content_pipeline/mock_compile_proposal.py", "builder"),
+        ("tools/content_pipeline/run_mvp_handoff_audit.py", "builder"),
         ("tools/content_pipeline/validate_frontend_mock_pack.py", "validator"),
+        ("tools/content_pipeline/validate_mvp_handoff_audit_report.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_plan.py", "validator"),
         ("tools/content_pipeline/validate_multistage_content_pack.py", "validator"),

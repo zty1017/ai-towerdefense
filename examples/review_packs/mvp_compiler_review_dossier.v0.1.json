@@ -3034,7 +3034,13 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "1c77893d6b6b30b300fa5299e8fb7d7fd983c983af00333d9a61f977b33536e9"
+      "sha256": "7bd037fcc666051e2dce52feb56ca19e8fbe5e15dcd1d3dfe5f83ed7c1dc794f"
+    },
+    {
+      "path": "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "6372e7445c097d7970b1ef7e0febc90f8e11099e59410470fee1d7f0eb98ef2b"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -3517,6 +3523,12 @@
       "sha256": "c79e80363ca292a7c441d1e36d3e6b034ff338bb0738651696fdacb95add1091"
     },
     {
+      "path": "shared/schemas/mvp_handoff_audit_report.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "c6f449fb40456c593a5e0710352aaaeb5b1940cb1c33b787a167964461ec8c9c"
+    },
+    {
       "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
@@ -3565,6 +3577,12 @@
       "sha256": "255175da62b109c0343da84383807070fa045c571f1430762871e10ac590120e"
     },
     {
+      "path": "tools/content_pipeline/run_mvp_handoff_audit.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "6cee334366cb64b0241d5eabfb4547558b5350c3e53615b7d5a1e871545289c4"
+    },
+    {
       "path": "tools/content_pipeline/validate_compilable_object_catalog.py",
       "kind": "validator",
       "exists": true,
@@ -3589,6 +3607,12 @@
       "sha256": "511b6faea1bae3eff1536b5d1371c3fc7cfc321788a72211bef42e4c3587756c"
     },
     {
+      "path": "tools/content_pipeline/validate_mvp_handoff_audit_report.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "afe23f64601a9fb11a716acec109ee50d8bbfdc364f38e1dfafdeb1e77f9cbbe"
+    },
+    {
       "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
       "kind": "validator",
       "exists": true,
@@ -3611,6 +3635,14 @@
     {
       "purpose": "构建并校验总审查交付包",
       "command": "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate"
+    },
+    {
+      "purpose": "运行 MVP handoff 一键审查",
+      "command": "python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate"
+    },
+    {
+      "purpose": "校验 MVP handoff 审查报告",
+      "command": "python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/review_packs/mvp_handoff_audit_report.v0.1.json"
     },
     {
       "purpose": "校验故事资产审查包",
