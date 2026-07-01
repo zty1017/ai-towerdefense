@@ -61,11 +61,13 @@ python3 tools/world_state/apply_world_delta.py examples/run_world_states/demo_in
 
 ## 后续 Gate
 
-下一轮应加入 `WorldStateDeltaSemanticGate`：
+已新增 `WorldStateDeltaSemanticGate v0.1` 原型，详见 `docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md`。该 gate 位于 `validate_world_delta.py` 之后、`apply_world_delta.py` 之前，用于把本次真实 LLM 烟测暴露出的结构外问题沉淀为本地校验规则。
+
+核心校验包括：
 
 - 校验 `npc_id`、`resource_id`、`node_id`、`sample_id` 是否来自当前 run world state、世界书 registry 或显式候选白名单。
 - 校验 flag 命名和状态流转，例如 `started`、`completed`、`failed` 不应互相混用。
 - 校验战斗结果类 delta 不得把旧兼容 fixture ID 写入正式状态。
-- 校验每个操作都能说明它服务的玩法目的，例如地图解锁、研发推进、资源压力、NPC 关系或样品登记。
+- 扫描玩家 / 世界可见文本值，避免泄漏 provider、schema、prompt、raw_json、api_key、trace 等技术词。
 
-这道 gate 应位于真实 LLM 输出和 `apply_world_delta.py` 之间：真实模型可以提出变化，但正式提交前必须经过结构校验与语义校验两层。
+这道 gate 的原则是：真实模型可以提出变化，但正式提交前必须经过结构校验与语义校验两层。

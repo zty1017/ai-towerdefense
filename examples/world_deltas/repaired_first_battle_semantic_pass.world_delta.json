@@ -1,0 +1,72 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "battle_result",
+  "created_turn": 2,
+  "summary": "灰灯驿站首战结束，防线稳住，战后样品被登记为后续研发线索。",
+  "operations": [
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "gray_lantern_first_defense_repaired_success",
+        "turn": 2,
+        "kind": "battle",
+        "summary": "灰灯驿站首战告捷，折光绊索拖慢了夜雾来影，驿站灯火仍亮。"
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "gray_lantern_station",
+      "patch": {
+        "status": "secured",
+        "threat_level": 0,
+        "visibility": "visible",
+        "available_actions": ["field_research", "rest"]
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "lamp_oil",
+      "amount_delta": -1
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "sample_trap_tested_in_battle_repaired",
+        "source": "first_battle",
+        "visibility": "player_known",
+        "summary": "折光绊索在灰灯驿站实战中成功拖慢了来犯影潮。"
+      }
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "sample_trap_7f3a_repaired",
+        "display_name": "折光绊索",
+        "source_delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+        "summary": "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
+      }
+    },
+    {
+      "op": "set_progress_phase",
+      "phase": "post_first_defense"
+    },
+    {
+      "op": "set_flag",
+      "flag": "tutorial_first_battle_completed",
+      "value": true
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "hope",
+      "amount_delta": 0.05
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "pressure",
+      "amount_delta": -0.05
+    }
+  ]
+}
