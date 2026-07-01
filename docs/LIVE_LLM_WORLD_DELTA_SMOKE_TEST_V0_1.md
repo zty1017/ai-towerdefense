@@ -61,7 +61,7 @@ python3 tools/world_state/apply_world_delta.py examples/run_world_states/demo_in
 
 ## 后续 Gate
 
-已新增 `WorldStateDeltaSemanticGate v0.1` 原型，详见 `docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md`。该 gate 位于 `validate_world_delta.py` 之后、`apply_world_delta.py` 之前，用于把本次真实 LLM 烟测暴露出的结构外问题沉淀为本地校验规则。
+已新增 `WorldStateDeltaSemanticGate v0.1` 原型，详见 `docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md`。该 gate 位于 `validate_world_delta.py` 之后、`apply_world_delta.py` 之前，用于把本次真实 LLM 烟测暴露出的结构外问题沉淀为本地校验规则。当前它既有 CLI，也已作为 `world_state.validate_delta_semantics` 节点接入 `mvp_live_world_delta_guarded.workflow.json`。
 
 核心校验包括：
 

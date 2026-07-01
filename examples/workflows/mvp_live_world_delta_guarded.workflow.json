@@ -30,6 +30,10 @@
       }
     },
     {
+      "id": "semantic_gate",
+      "node_type": "world_state.validate_delta_semantics"
+    },
+    {
       "id": "apply_delta",
       "node_type": "world_state.apply_delta"
     }
@@ -38,7 +42,9 @@
     { "source": "load_run_state", "target": "build_delta", "target_input": "run_world_state" },
     { "source": "load_battle_result", "target": "build_delta", "target_input": "battle_result" },
     { "source": "load_session_context", "target": "build_delta", "target_input": "session_context" },
+    { "source": "load_run_state", "target": "semantic_gate", "target_input": "run_world_state" },
+    { "source": "build_delta", "target": "semantic_gate", "target_input": "world_state_delta" },
     { "source": "load_run_state", "target": "apply_delta", "target_input": "run_world_state" },
-    { "source": "build_delta", "target": "apply_delta", "target_input": "world_state_delta" }
+    { "source": "semantic_gate", "target": "apply_delta", "target_input": "world_state_delta" }
   ]
 }

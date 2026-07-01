@@ -707,6 +707,24 @@
       ]
     },
     {
+      "node_type": "world_state.validate_delta_semantics",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic semantic gate for WorldStateDelta v0.1. Checks run/worldbook alignment, map/resource/NPC references, sample source, battle_result flag semantics, legacy fixture NPC refs, and player/world visible technical text before apply_delta. Writes a validation report and forwards the delta only when the gate passes.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the current RunWorldState JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a structurally valid WorldStateDelta JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the semantic-validated WorldStateDelta JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "Alias of default: semantic-validated WorldStateDelta JSON." },
+        { "name": "validation_report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to world_state_delta_semantic_gate.v0.1 validation report JSON." }
+      ]
+    },
+    {
       "node_type": "world_state.build_delta_with_llm_guarded",
       "category": "provider",
       "modes": ["live"],

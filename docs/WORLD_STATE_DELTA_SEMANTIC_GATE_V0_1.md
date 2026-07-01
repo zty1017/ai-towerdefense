@@ -22,6 +22,22 @@ python3 tools/world_state/validate_world_delta_semantics.py <delta.json> \
   --run-state examples/run_world_states/demo_initial.run_world_state.json
 ```
 
+AssetGraph 节点：
+
+```text
+world_state.validate_delta_semantics
+```
+
+节点输入：
+
+- `run_world_state`：当前运行态。
+- `world_state_delta`：结构校验后的变化包。
+
+节点输出：
+
+- `default` / `world_state_delta`：通过语义门后转交给 `world_state.apply_delta` 的 delta。
+- `validation_report`：语义门审查报告，保留在 execution trace 的产物目录中。
+
 当前实现先复用 `validate_world_delta.py` 的完整结构校验；结构不合法时直接失败，不继续做语义判断。
 
 语义检查包括：
@@ -64,6 +80,20 @@ python3 tools/world_state/validate_world_delta_semantics.py examples/world_delta
 ```bash
 python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json --run-state examples/run_world_states/demo_initial.run_world_state.json
 ```
+
+DAG passing 示例：
+
+```bash
+python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json --output-dir /tmp/world_delta_semantic_gate_demo
+```
+
+真实 LLM world delta workflow 已在 `mvp_live_world_delta_guarded.workflow.json` 中接入该 gate：
+
+```text
+build_delta_with_llm_guarded -> validate_delta_semantics -> apply_delta
+```
+
+这意味着真实 provider 产出的 delta 即使通过结构校验，也必须先通过语义门，才会进入运行态 apply。
 
 ## 后续扩展
 

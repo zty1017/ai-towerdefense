@@ -47,6 +47,7 @@ if str(WORLD_STATE_DIR) not in sys.path:
 
 import validate_run_world_state as v_rws  # noqa: E402
 import validate_world_delta as v_wd  # noqa: E402
+import validate_world_delta_semantics as v_wds  # noqa: E402
 import apply_world_delta as a_wd  # noqa: E402
 
 NARRATIVE_DIR = ROOT / "tools" / "narrative"
@@ -2132,6 +2133,106 @@ def node_world_state_apply_delta(
     return {"output_refs": {"default": ref}}
 
 
+def node_world_state_validate_delta_semantics(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Deterministic semantic gate before applying a WorldStateDelta.
+
+    This node sits between any delta producer, including live LLM nodes, and
+    world_state.apply_delta. It writes a validation report for traceability and
+    forwards a copied delta only when semantic checks pass.
+    """
+    run_world_state = _load_artifact(inputs, "run_world_state")
+    world_state_delta = _load_artifact(inputs, "world_state_delta")
+
+    review_pack_raw = params.get(
+        "review_pack",
+        "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+    )
+    if not isinstance(review_pack_raw, str) or not review_pack_raw:
+        raise NodeError("validate_delta_semantics: params.review_pack must be a non-empty string")
+    review_pack_path = Path(review_pack_raw)
+    if not review_pack_path.is_absolute():
+        review_pack_path = ROOT / review_pack_path
+
+    state_errors: list[str] = []
+    state_errors.extend(v_rws.validate_with_jsonschema(run_world_state))
+    state_errors.extend(v_rws.validate_run_world_state(run_world_state))
+    state_errors = list(dict.fromkeys(state_errors))
+
+    delta_errors: list[str] = []
+    delta_errors.extend(v_wd.validate_with_jsonschema(world_state_delta))
+    delta_errors.extend(v_wd.validate_world_delta(world_state_delta))
+    delta_errors = list(dict.fromkeys(delta_errors))
+
+    semantic_errors: list[str] = []
+    registry_counts: dict[str, int] = {}
+    if not state_errors and not delta_errors:
+        registry = v_wds.build_reference_registry(run_world_state, review_pack_path)
+        semantic_errors = v_wds.validate_world_delta_semantics(
+            world_state_delta, run_world_state, registry
+        )
+        registry_counts = {
+            "run_map_nodes": len(registry.run_map_node_ids),
+            "allowed_resources": len(registry.allowed_resource_ids),
+            "allowed_npcs": len(registry.allowed_npc_ids),
+        }
+
+    errors = [*state_errors, *delta_errors, *semantic_errors]
+    report = {
+        "semantic_gate_version": "world_state_delta_semantic_gate.v0.1",
+        "status": "passed" if not errors else "failed",
+        "delta_id": world_state_delta.get("delta_id"),
+        "run_id": world_state_delta.get("run_id"),
+        "worldbook_id": world_state_delta.get("worldbook_id"),
+        "review_pack": str(review_pack_path.relative_to(ROOT))
+        if review_pack_path.is_relative_to(ROOT)
+        else str(review_pack_path),
+        "structure_errors": {
+            "run_state": state_errors,
+            "world_state_delta": delta_errors,
+        },
+        "semantic_errors": semantic_errors,
+        "registry_counts": registry_counts,
+    }
+    report_path = run_dir / f"{node_id}__world_delta_semantic_gate_report.json"
+    _write_json(report_path, report)
+    report_ref = _make_ref(
+        artifact_id=f"{node_id}__world_delta_semantic_gate_report",
+        kind="semantic_validation_report",
+        path=report_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+
+    if errors and params.get("fail_on_error", True):
+        raise NodeError(
+            "world_state semantic gate failed: " + "; ".join(errors)
+        )
+
+    out_path = run_dir / f"{node_id}__world_state_delta.semantic_validated.json"
+    _write_json(out_path, world_state_delta)
+    delta_ref = _make_ref(
+        artifact_id=f"{node_id}__world_state_delta_semantic_validated",
+        kind="world_state_delta",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    delta_alias_ref = dict(delta_ref)
+    delta_alias_ref["artifact_id"] = f"{node_id}__world_state_delta"
+    return {
+        "output_refs": {
+            "default": delta_ref,
+            "world_state_delta": delta_alias_ref,
+            "validation_report": report_ref,
+        }
+    }
+
+
 # ---------------------------------------------------------------------------
 # Guarded LLM AssetCompile node (live only, calls provider)
 # ---------------------------------------------------------------------------
@@ -3030,6 +3131,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.check_runtime_readiness": node_media_check_runtime_readiness,
     "world_state.build_delta_from_narrative_stub": node_world_state_build_delta_from_narrative_stub,
     "world_state.build_delta_with_llm_guarded": node_world_state_build_delta_with_llm_guarded,
+    "world_state.validate_delta_semantics": node_world_state_validate_delta_semantics,
     "world_state.apply_delta": node_world_state_apply_delta,
     "asset.legalize_design_spec": node_asset_legalize_design_spec,
     "asset.build_asset_plan": node_asset_build_asset_plan,
