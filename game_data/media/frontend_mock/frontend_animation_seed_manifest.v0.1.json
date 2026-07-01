@@ -17,7 +17,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_ash_burst_lantern_icon_5045e492.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "12ae6a2e47a4851cd66920c168c1b90989baffbcd0a9356acd8f6214190e6d32",
+      "sha256": "1bfb931210edf4d7ccffdc36eec7f91566267bb1ebeadfd3474b2f6248a57ae3",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -31,7 +31,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_ash_burst_lantern_tower_sprite_9263019f.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "ff22210581881e4bed0f3e49aa7cf1adc44dfbdb97cdddbd670641a74b29d340",
+      "sha256": "c428573bc70301ebf01c5fe0b4f0cbadf27d3ca4ff3f9baca0932ce86ecf3e27",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -45,7 +45,7 @@
       "local_path": "game_data/media/frontend_mock/generated/intel_dark_echo_survey_001_icon_cec61ac8.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "88a120608398515a8820a66271cf599832030635f0080f4eb2a9ae9eb70f863f",
+      "sha256": "304c98d13f3345c99f774bc9f7756f6eedcf991b57ac8d62a04b72d2e8438791",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -59,7 +59,35 @@
       "local_path": "game_data/media/frontend_mock/generated/intel_dark_echo_survey_001_ui_card_7219d045.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "542e4d41e5f976a8d7480868943ffa560c6757fd8bf3dbba27a1415169f86fb0",
+      "sha256": "747c83eaf5f8bb0f20b15c1f2fc76682e737c89c38a817f06ec43a58250db022",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_echo_prism_relay_icon_da5766a5",
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "url": "/assets/frontend_mock/generated/asset_echo_prism_relay_icon_da5766a5.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_echo_prism_relay_icon_da5766a5.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "62979cc8f99f9cb53a55af4956e303bb42ca8f234a200788617a887f3d6767a7",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_echo_prism_relay_tower_sprite_4424527e",
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "url": "/assets/frontend_mock/generated/asset_echo_prism_relay_tower_sprite_4424527e.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_echo_prism_relay_tower_sprite_4424527e.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "36411477528a9666a3a8f0099a2e0ac465865711bc03329b89d3e6e841897349",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -73,7 +101,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_light_slow_tower_001_icon_1a0e42e9.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "eff63b5ac90b64ecb5917af2df6038d8b264d3721b457d3530e919e01d4ffc0a",
+      "sha256": "761538321355009a721bb2662de86b3a72eb79970fd0ce1358d8ad667e14a984",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -87,7 +115,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "75ceac4b86fb93904960b69bb8c85c07a9938303377bc8e9c9f5d0aed68240d7",
+      "sha256": "3178fb4eccbaf32b51e44356eacce0865f5ebfa7a8d4fa5f5b5e5a5bfe86749c",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -101,7 +129,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_mirror_lure_trap_001_icon_a0e4455b.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "db82f5ab98a4dbb032fc5a97915737143ff68b11baf5102d135d05e28283525b",
+      "sha256": "2db91b9896dd6f4184a2f00eefd599a8bb320a7928c3a4ff6cb2c4da6fa386b7",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -115,7 +143,35 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "bc81386c514903a7db066eeb1123cc0c46eecaeb78f91e79756642b11189386f",
+      "sha256": "9126fce1046ef556b5ebb05959915265a515c2912d6b59acc191470538631c94",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_overload_chain_breaker_icon_7234f228",
+      "asset_id": "asset_overload_chain_breaker",
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "icon",
+      "url": "/assets/frontend_mock/generated/asset_overload_chain_breaker_icon_7234f228.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_overload_chain_breaker_icon_7234f228.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "8e04269ee1b14b92640d5e2fc3996a3c6df534300fed066b70b2b104db66a88c",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_overload_chain_breaker_ui_card_cda4e2c7",
+      "asset_id": "asset_overload_chain_breaker",
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "ui_card",
+      "url": "/assets/frontend_mock/generated/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "5423663693a6a5096516329d3dc079aff3e49d0bda100bf1eae4885bdddd43a1",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -129,7 +185,7 @@
       "local_path": "game_data/media/frontend_mock/generated/mod_overload_chain_arc_001_icon_6c776311.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "53493cf6c14f2c115a3fa7a13f71df1b9bde4943447dd0829b3faf9add2a330a",
+      "sha256": "64692c3e2310df668f6b7dabca451e4223126a3b95e3065e6a56cd36f0a3bcfb",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -143,7 +199,7 @@
       "local_path": "game_data/media/frontend_mock/generated/mod_overload_chain_arc_001_ui_card_6d142b71.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "fc40842d66a211ae477d912d24da79176c68dfdeec597263e62521ce1d60cd28",
+      "sha256": "1e31360f61214c2d67baa1f62e47b0d9de3aeae5858e0a8819411366c0828b25",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -157,7 +213,7 @@
       "local_path": "game_data/media/frontend_mock/generated/intel_shadow_tide_survey_icon_3ba77691.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "7a92ca0638c3709a3c7104bbda88175ffee3d406690991d6ee79cba2e8900c79",
+      "sha256": "46bc112f1a6130d244d5c84a2b5141569d76f841732cbe15920ab61862ef28ea",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -171,7 +227,35 @@
       "local_path": "game_data/media/frontend_mock/generated/intel_shadow_tide_survey_ui_card_192910c1.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "6fac6dfe24fdeb446118d5211df1412d0308ae38132d7149574f843a2b5131e5",
+      "sha256": "a0e1fe147a983dea72659f84e0945196c7cc8df3cd4f95f5d30ae81630eb67a6",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_signal_echo_marker_icon_e71e85ac",
+      "asset_id": "asset_signal_echo_marker",
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "url": "/assets/frontend_mock/generated/asset_signal_echo_marker_icon_e71e85ac.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_signal_echo_marker_icon_e71e85ac.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "b1f0e3869ca671ce0545c8b81af7a71b07f9be7f960326c839adf197960585b9",
+      "source_kind": "generated_image",
+      "seed_kind": "image_to_video_or_animation_card"
+    },
+    {
+      "stable_internal_id": "asset_signal_echo_marker_ui_card_75f14373",
+      "asset_id": "asset_signal_echo_marker",
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "url": "/assets/frontend_mock/generated/asset_signal_echo_marker_ui_card_75f14373.png",
+      "local_path": "game_data/media/frontend_mock/generated/asset_signal_echo_marker_ui_card_75f14373.png",
+      "width": 1024,
+      "height": 1024,
+      "sha256": "918e7575c60f03af217cc6310103becd7591509e761697ae2eb7dd97bdc48035",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -185,7 +269,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_signal_wick_decoy_icon_9fac3cb5.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "f838490b78d1ee175144c957dfc121bb398524f786ce1b3ce7fcc5b9459df084",
+      "sha256": "f48868eb3074a3e0ffe37d75831cd580967072060a7649845e6ac65b6d1a6841",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -199,7 +283,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "d7fa631267446b3aab28f170e549872f24b1a8eeccc13e8dd0329ba671090759",
+      "sha256": "ae1071be6e632c94c5fba7d6bf3a0ab9d92656d24daf4949f14abd41c0ea0cbf",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -213,7 +297,7 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_wick_barrier_pylon_icon_09e6177c.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "2118565de82a5181b9965331dcf966f24abbb15fa01ccd282615253505c2b141",
+      "sha256": "306116ee3a99f8a028eddddd5bd1fdf17ae87b3f23b20cb66e87a9ebb3613c28",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     },
@@ -227,13 +311,13 @@
       "local_path": "game_data/media/frontend_mock/generated/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
       "width": 1024,
       "height": 1024,
-      "sha256": "a4c06d1d5f72dd94da91adf89a08ce7df2bc020bbb5095ee0e930cfd0a672c1e",
+      "sha256": "7bf29da2dbe624a734ed9aa76234a1df8661e838ab0fdcc25e20115043eff88e",
       "source_kind": "generated_image",
       "seed_kind": "image_to_video_or_animation_card"
     }
   ],
   "summary": {
-    "asset_count": 8,
-    "media_count": 16
+    "asset_count": 11,
+    "media_count": 22
   }
 }

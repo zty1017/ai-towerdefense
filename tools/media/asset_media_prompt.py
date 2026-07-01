@@ -21,7 +21,8 @@ MEDIA_ROLES = {
 
 CUTOUT_GENERATION_RULES = (
     "single isolated subject only, solid pure white matte background, no scenery, "
-    "no cast shadow, no ground shadow, no particles, no aura baked into the image, "
+    "no cast shadow, no ground shadow, no particles, no detached debris, no sparks, "
+    "no flame, no smoke, no aura baked into the image, "
     "no enemies, no monsters, no human characters, no text, no letters, no numbers, "
     "no Chinese characters, no watermark, leave clean empty padding around the subject"
 )
@@ -30,7 +31,8 @@ CLEAN_ASSET_NEGATIVE_RULES = (
     "no battlefield, no environment, no UI frame, no card border, no title plaque, "
     "no captions, no symbols, no readable glyphs, no speech bubble, no extra objects, "
     "no beam, no explosion, no smoke, no sparks, no floating debris, "
-    "no readable runes, no engraved letters, no compass letters, no map markings"
+    "no readable runes, no rune-like marks, no engraved letters, no alphanumeric markings, "
+    "no compass letters, no map markings, no clock face, no gauge numerals, no dial numbers"
 )
 
 
@@ -89,11 +91,11 @@ def candidate_motifs(candidate: dict[str, Any]) -> list[str]:
         motifs.append("mirror shard housing")
         motifs.append("small decoy lantern")
     if "signal" in raw or "decoy" in raw:
-        motifs.append("signal wick beacon")
+        motifs.append("unlit signal wick beacon")
         motifs.append("folded tripod base")
     if "survey" in raw or "intel" in raw:
-        motifs.append("sealed brass survey meter")
-        motifs.append("blank smooth dial plate")
+        motifs.append("sealed rectangular brass signal scanner")
+        motifs.append("blank frosted glass window")
     if "chain" in raw or "arc" in raw or "overload" in raw:
         motifs.append("coiled conductor module")
         motifs.append("insulated copper clamps")
@@ -109,24 +111,26 @@ def clean_subject_description(candidate: dict[str, Any]) -> str:
         return (
             "subject: one dormant lantern-inspired tower defense device only, "
             "inactive mechanical body, pseudo-isometric body, sturdy base, clear bottom anchor, "
+            "unlit source body with no active flame and no separate energy effect, "
             f"visible motifs: {motif_text}"
         )
     if kind == "support_item":
         return (
             "subject: one small deployable trap or utility device only, "
             "portable game item, readable silhouette, "
+            "inactive source body with no active flame and no separate energy effect, "
             f"visible motifs: {motif_text}"
         )
     if kind == "temporary_mod":
         return (
             "subject: one compact tower upgrade module only, mechanical component, "
-            "readable silhouette, "
+            "readable silhouette, plain copper and brass parts with no markings, "
             f"visible motifs: {motif_text}"
         )
     if kind == "intel_asset":
         return (
-            "subject: one portable survey instrument only, sealed brass meter with blank glass lens, "
-            "smooth blank plates, no compass face, no map sheet, no writing or map labels, "
+            "subject: one portable intelligence instrument only, sealed rectangular brass scanner with blank frosted glass window, "
+            "smooth blank plates, no round compass face, no clock face, no needle, no map sheet, no writing or map labels, "
             f"visible motifs: {motif_text}"
         )
     return (
@@ -167,7 +171,7 @@ def build_icon_prompt(candidate: dict[str, Any]) -> str:
         CUTOUT_GENERATION_RULES,
         CLEAN_ASSET_NEGATIVE_RULES,
         clean_subject_description(candidate),
-        "dormant object before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "dormant object before gameplay effects are applied, plain attached ornament only, no glyphs or rune-like marks",
         "plain white background, no baked gameplay effects, no glow rings, no beams, no explosions",
         "clean production sprite reference, readable at small size, brass and weathered metal materials",
     ]
@@ -189,7 +193,7 @@ def build_tower_sprite_prompt(candidate: dict[str, Any]) -> str:
         CLEAN_ASSET_NEGATIVE_RULES,
         clean_subject_description(candidate),
         "centered base, game-ready cutout, anchor at bottom center",
-        "dormant tower before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "dormant tower before gameplay effects are applied, plain attached ornament only, no glyphs or rune-like marks",
         "effects are separate frontend overlays, do not paint beams, shockwaves, rings, smoke, sparks, enemies, or paths",
         "plain white background, no floor tile, no terrain, no shadows",
     ]
@@ -207,7 +211,7 @@ def build_ui_card_prompt(candidate: dict[str, Any]) -> str:
         CLEAN_ASSET_NEGATIVE_RULES,
         clean_subject_description(candidate),
         "frontend will draw all UI frames and labels separately",
-        "dormant object before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "dormant object before gameplay effects are applied, plain attached ornament only, no glyphs or rune-like marks",
         "plain white background, no baked gameplay effects, no glow rings, no beams, no explosions",
         "clean production sprite reference, clear subject, polished item illustration, brass and weathered metal materials",
     ]

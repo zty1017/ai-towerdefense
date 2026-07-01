@@ -3130,7 +3130,7 @@
       "path": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
       "kind": "frontend_mock_pack",
       "exists": true,
-      "sha256": "b6ce457cb6c5249e1faf029515e411a57415b0bb29fae723d52652dc50dfa4fa"
+      "sha256": "8a3e96018b962ddf725120aa26ec2cdabaaab12517dc7897dbf90bef1e07c1af"
     },
     {
       "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json",
