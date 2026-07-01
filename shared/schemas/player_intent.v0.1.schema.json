@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/player_intent.v0.1.schema.json",
+  "title": "PlayerIntent v0.1",
+  "description": "LLM-parsed semantic intent from player utterance. This is a hidden intermediate representation and must not be runtime_public. It must not contain provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "utterance_id",
+    "asset_kind",
+    "summary",
+    "desired_mechanics",
+    "desired_theme"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "player_intent.v0.1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "utterance_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "asset_kind": {
+      "type": "string",
+      "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "desired_mechanics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "desired_theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archetype", "tone"],
+      "properties": {
+        "archetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "world_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tone": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "desired_role": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["area_damage", "single_target_damage", "soft_control", "hard_control", "support", "scouting", "economy", "defense", "summon", "debuff"]
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    }
+  }
+}

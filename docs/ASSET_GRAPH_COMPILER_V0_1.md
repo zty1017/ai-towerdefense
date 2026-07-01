@@ -797,3 +797,66 @@ failed          gameplay_core 不可用，不能交付给玩家
 - 图片生成、抠图、atlas、vision review 失败不能直接阻断玩家流程；只要 gameplay_core 可用，就应进入 `fallback_ready`。
 - `fallback_ready` 必须带 `fallback_media_strategy`，前端或 runtime package builder 可以使用 deterministic shape sprite、模板 icon 和 visual recipe。
 - 媒体管线可在后台继续 repair / regenerate，成功后再升级到 `runtime_ready`。
+
+## 14. 模板注册与 ReAct 修复协议（v0.1 落地）
+
+2026-07-01 落地了模板注册、模板选择 fixture 和 ReAct 修复计划协议。
+
+### 14.1 对象级 DAG 模板
+
+对象级编译模板是 WorkflowGraph 的预定义实例，存放在 `examples/compile_templates/` 下。
+
+| 模板文件 | 模板名 | 对应资产类型 |
+|---|---|---|
+| `tower_compile_graph.v0.1.json` | `TowerCompileGraph` | 防御塔 |
+| `support_item_compile_graph.v0.1.json` | `SupportItemCompileGraph` | 支援物品 |
+| `temporary_mod_compile_graph.v0.1.json` | `TemporaryModCompileGraph` | 临时改制 |
+| `intel_asset_compile_graph.v0.1.json` | `IntelAssetCompileGraph` | 情报资产 |
+
+模板使用 `{{placeholder}}` 标记可替换参数，例如 `{{proposal_path}}` 和 `{{provider_profile}}`。
+MVP 只允许选择注册模板并填充参数，不允许 LLM 内嵌任意未验证 workflow。
+
+### 14.2 模板选择协议
+
+`compile_template_selection.v0.1` 是机器可读 artifact，由 `graph.select_compile_template_guarded` 产生。
+
+它必须包含：
+
+- `template_name`：已注册模板名。
+- `budgets`：至少包含 `max_iterations`、`max_provider_calls`、`max_seconds`。
+- 可选 `parameter_overrides`：模板参数填充，不得包含被禁止字段。
+
+Schema 位于 `shared/schemas/compile_template_selection.v0.1.schema.json`。
+校验脚本位于 `tools/asset_graph/validate_compile_template_selection.py`。
+示例 fixture 位于 `examples/intent_specs/alchemy_furnace_tower.compile_template_selection.json`。
+
+### 14.3 有界 ReAct 修复协议
+
+`repair_action_plan.v0.1` 是机器可读 artifact，由 `graph.repair_with_react_guarded` 产生。
+
+它必须包含：
+
+- `triggered_by`：触发修复的验证失败原因。
+- `budgets`：至少包含 `max_iterations`、`max_provider_calls`、`max_seconds`。
+- `actions`：修复动作列表，每个 `action_type` 必须来自有限 action set。
+
+Schema 位于 `shared/schemas/repair_action_plan.v0.1.schema.json`。
+校验脚本位于 `tools/asset_graph/validate_repair_action_plan.py`。
+示例 fixture 位于 `examples/intent_specs/alchemy_furnace_tower.repair_action_plan.json`。
+
+### 14.4 协议路径总结
+
+```text
+intent.parse_player_utterance_guarded
+  -> asset.build_design_spec_guarded
+  -> asset.legalize_design_spec
+  -> asset.build_asset_plan
+  -> graph.select_compile_template_guarded
+  -> proposal.build_from_legalized_spec
+  -> proposal.validate
+  -> [按模板执行 DAG]
+  -> [校验失败时]
+  -> graph.repair_with_react_guarded
+  -> [按修复计划重试]
+  -> [预算耗尽时 fallback]
+```

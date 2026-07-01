@@ -1,0 +1,47 @@
+{
+  "schema_version": "repair_action_plan.v0.1",
+  "plan_id": "repair_alchemy_furnace_vfx_contamination",
+  "triggered_by": [
+    {
+      "type": "vfx_contamination",
+      "message": "tower body contains visible attack effect",
+      "node_id": "validate_candidate",
+      "severity": "error"
+    },
+    {
+      "type": "background_residue",
+      "message": "non-transparent background remains around bottom edge",
+      "node_id": "validate_candidate",
+      "severity": "error"
+    }
+  ],
+  "budgets": {
+    "max_iterations": 2,
+    "max_provider_calls": 3,
+    "max_seconds": 300,
+    "fallback_on_exhausted": "abort_compile"
+  },
+  "actions": [
+    {
+      "action_type": "patch_prompt",
+      "target_node_id": "llm_compile",
+      "target_field": "params.prompt_suffix",
+      "patch_value": "Ensure the tower body sprite shows only the clean furnace structure. No attack effects, no flames, no projectiles on the body. The background must be fully transparent (pure alpha).",
+      "rationale": "The generated tower body contained attack VFX and non-transparent background. Adding explicit negative constraints to the prompt.",
+      "order": 0
+    },
+    {
+      "action_type": "rerun_node",
+      "target_node_id": "llm_compile",
+      "rationale": "Regenerate the compiled asset candidate with the repaired prompt constraints.",
+      "order": 1
+    },
+    {
+      "action_type": "rerun_node",
+      "target_node_id": "validate_candidate",
+      "rationale": "Re-validate the regenerated candidate to confirm VFX contamination and background residue are resolved.",
+      "order": 2
+    }
+  ],
+  "overall_rationale": "The compiled tower candidate failed validation due to VFX contamination on the body sprite and non-transparent background residue. The repair plan patches the LLM prompt with explicit negative constraints, then re-runs the compile and validate nodes. If the repair fails after budget exhaustion, the compile will abort."
+}

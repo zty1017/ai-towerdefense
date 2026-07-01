@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/compile_template_selection.v0.1.schema.json",
+  "title": "CompileTemplateSelection v0.1",
+  "description": "Selection of a registered object-level compile graph template. Produced by graph.select_compile_template_guarded. Must not carry provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "template_name", "budgets"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "compile_template_selection.v0.1" },
+    "template_name": {
+      "type": "string",
+      "enum": [
+        "TowerCompileGraph",
+        "SupportItemCompileGraph",
+        "TemporaryModCompileGraph",
+        "IntelAssetCompileGraph",
+        "SkillVFXCompileGraph",
+        "IconCompileGraph",
+        "MapModifierCompileGraph"
+      ]
+    },
+    "template_version": { "type": "string" },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "rationale": { "type": "string" },
+    "parameter_overrides": {
+      "type": "object",
+      "description": "Optional overrides for template parameter slots (e.g. provider_profile, max_tokens). Must not contain forbidden fields.",
+      "additionalProperties": true
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_iterations", "max_provider_calls", "max_seconds"],
+      "properties": {
+        "max_iterations": { "type": "integer", "minimum": 1 },
+        "max_provider_calls": { "type": "integer", "minimum": 0 },
+        "max_seconds": { "type": "number", "minimum": 1 },
+        "max_candidates": { "type": "integer", "minimum": 1 },
+        "max_repair_rounds": { "type": "integer", "minimum": 0 },
+        "fallback_on_budget_exhausted": { "type": "boolean", "default": true }
+      }
+    },
+    "selected_branch": {
+      "type": "string",
+      "description": "Optional branch within the template (e.g. projectile, beam, aura)."
+    }
+  }
+}

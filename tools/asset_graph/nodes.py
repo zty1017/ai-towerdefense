@@ -2164,6 +2164,505 @@ def node_media_generate_asset_images_guarded(
     return {"output_refs": {"default": ref}}
 
 
+# ---------------------------------------------------------------------------
+# Free-input controlled compilation nodes
+# ---------------------------------------------------------------------------
+
+KNOWN_ATTACK_PATTERNS = frozenset(
+    {
+        "single_target",
+        "cone_damage",
+        "cone_damage_over_time",
+        "area_burst",
+        "beam",
+        "chain",
+        "aura",
+        "projectile",
+        "melee",
+        "summon",
+    }
+)
+KNOWN_CONTROL_EFFECTS = frozenset(
+    {"pull_in", "push_back", "slow", "stun", "root", "fear", "taunt"}
+)
+KNOWN_GROWTH_MECHANICS = frozenset(
+    {"gain_stack_on_kill", "gain_stack_on_hit", "charge_over_time", "absorb_enemy_stat"}
+)
+KNOWN_TARGETING = frozenset(
+    {"nearest", "dense_area", "lowest_health", "highest_threat", "random", "last_on_path"}
+)
+ARCHETYPE_DISPLAY_NAMES = {
+    "alchemy_furnace": "炼丹炉",
+    "field_device": "野战装置",
+}
+
+
+def _effect_blocks_from_gameplay(gameplay: dict[str, Any]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    attack = gameplay.get("attack_pattern")
+    control = gameplay.get("control_effect")
+    growth = gameplay.get("growth_mechanic")
+
+    if attack == "cone_damage_over_time":
+        blocks.append(
+            {
+                "type": "damage_over_time",
+                "params": {
+                    "damage_per_tick": 15,
+                    "tick_interval": 1.0,
+                    "duration": 3.0,
+                    "element": "purple_fire",
+                },
+            }
+        )
+    elif attack in {"cone_damage", "area_burst", "beam"}:
+        blocks.append({"type": "area_damage", "params": {"damage": 30}})
+    elif attack == "chain":
+        blocks.append({"type": "pierce_or_chain", "params": {"jumps": 3}})
+    elif attack == "summon":
+        blocks.append({"type": "summon_unit", "params": {"duration": 8.0}})
+    else:
+        blocks.append({"type": "damage", "params": {"damage": 20}})
+
+    if control == "pull_in":
+        blocks.append(
+            {
+                "type": "aura_buff",
+                "params": {"radius": 120, "effect": "pull_in", "strength": "medium"},
+            }
+        )
+    elif control == "slow":
+        blocks.append(
+            {"type": "slow", "params": {"slow_ratio": 0.3, "duration": 2.0}}
+        )
+
+    if growth in {"gain_stack_on_kill", "gain_stack_on_hit", "charge_over_time"}:
+        blocks.append(
+            {
+                "type": "charge_burst",
+                "params": {
+                    "stacks_on_kill": growth == "gain_stack_on_kill",
+                    "max_stacks": 10,
+                    "damage_bonus_per_stack": 0.05,
+                },
+            }
+        )
+    return blocks
+
+
+def node_asset_legalize_design_spec(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    design_spec = _load_artifact(inputs, "design_spec")
+    mode = params.get("legalization_mode", "runtime_safe")
+    if mode not in {"runtime_safe", "runtime_experimental", "studio_mode"}:
+        raise NodeError(f"unsupported legalization_mode: {mode!r}")
+
+    theme = dict(design_spec.get("theme", {}))
+    visual = dict(design_spec.get("visual", {}))
+    gameplay = dict(design_spec.get("gameplay", {}))
+    balance = dict(design_spec.get("balance", {}))
+    world_fit = dict(design_spec.get("world_fit", {}))
+
+    issues: list[dict[str, Any]] = []
+    fixes: list[dict[str, Any]] = []
+    unmapped: list[str] = []
+    degraded_fields: list[str] = []
+    proposal_new_effects: list[str] = []
+
+    constraints = dict(visual.get("constraints", {}))
+    media_defaults = {
+        "single_subject": True,
+        "clean_background": True,
+        "no_enemy_in_sprite": True,
+        "no_attack_effect_on_body_sprite": True,
+    }
+    for key, value in media_defaults.items():
+        if key not in constraints:
+            constraints[key] = value
+            fixes.append(
+                {
+                    "action": "media_constraint_enforcement",
+                    "description": f"Applied media constraint {key}.",
+                    "field_path": f"visual.constraints.{key}",
+                }
+            )
+    visual["constraints"] = constraints
+
+    attack = gameplay.get("attack_pattern")
+    if attack not in KNOWN_ATTACK_PATTERNS:
+        unmapped.append(str(attack))
+        gameplay["attack_pattern"] = "area_burst"
+        degraded_fields.append("gameplay.attack_pattern")
+        issues.append(
+            {
+                "type": "unknown_mechanism",
+                "severity": "warning",
+                "message": "Unknown attack pattern was mapped to area burst.",
+                "field_path": "gameplay.attack_pattern",
+                "original_value": attack,
+                "resolved_value": "area_burst",
+            }
+        )
+
+    control = gameplay.get("control_effect")
+    if control and control not in KNOWN_CONTROL_EFFECTS:
+        unmapped.append(str(control))
+        proposal_new_effects.append(str(control))
+        degraded_fields.append("gameplay.control_effect")
+        gameplay.pop("control_effect", None)
+        issues.append(
+            {
+                "type": "fallback_mapping",
+                "severity": "warning",
+                "message": "Unknown control effect was kept as a proposal-only idea.",
+                "field_path": "gameplay.control_effect",
+                "original_value": control,
+                "resolved_value": None,
+            }
+        )
+
+    growth = gameplay.get("growth_mechanic")
+    if growth and growth not in KNOWN_GROWTH_MECHANICS:
+        unmapped.append(str(growth))
+        proposal_new_effects.append(str(growth))
+        degraded_fields.append("gameplay.growth_mechanic")
+        gameplay.pop("growth_mechanic", None)
+
+    targeting = gameplay.get("targeting")
+    if targeting not in KNOWN_TARGETING:
+        gameplay["targeting"] = "nearest"
+        fixes.append(
+            {
+                "action": "fallback_mapping",
+                "description": "Unknown targeting was mapped to nearest.",
+                "field_path": "gameplay.targeting",
+            }
+        )
+
+    if (
+        "area_damage" in gameplay.get("intended_role", [])
+        and "soft_control" in gameplay.get("intended_role", [])
+        and balance.get("cost_band") in {"cheap", "low"}
+        and balance.get("growth_cap") == "unlimited"
+    ):
+        balance["cost_band"] = "medium"
+        balance["growth_cap"] = "limited"
+        balance["budget_clamped"] = True
+        issues.append(
+            {
+                "type": "budget_clamp",
+                "severity": "warning",
+                "message": "High damage, control, cheap cost, and unlimited growth exceeded runtime_safe budget.",
+                "field_path": "balance",
+                "original_value": "cheap/unlimited",
+                "resolved_value": "medium/limited",
+            }
+        )
+        fixes.append(
+            {
+                "action": "budget_clamp",
+                "description": "Raised cost band and capped growth for runtime safety.",
+                "field_path": "balance",
+            }
+        )
+
+    if mode == "runtime_safe" and balance.get("growth_cap") == "unlimited":
+        balance["growth_cap"] = "limited"
+        balance["budget_clamped"] = True
+        issues.append(
+            {
+                "type": "budget_clamp",
+                "severity": "warning",
+                "message": "Unlimited growth is capped in runtime_safe mode.",
+                "field_path": "balance.growth_cap",
+                "original_value": "unlimited",
+                "resolved_value": "limited",
+            }
+        )
+        fixes.append(
+            {
+                "action": "budget_clamp",
+                "description": "Capped growth from unlimited to limited.",
+                "field_path": "balance.growth_cap",
+            }
+        )
+
+    if not gameplay.get("effect_blocks"):
+        gameplay["effect_blocks"] = _effect_blocks_from_gameplay(gameplay)
+        fixes.append(
+            {
+                "action": "field_completion",
+                "description": "Populated effect blocks from legalized gameplay fields.",
+                "field_path": "gameplay.effect_blocks",
+            }
+        )
+
+    legalized = {
+        "schema_version": "legalized_design_spec.v0.1",
+        "asset_kind": design_spec.get("asset_kind", "tower_blueprint"),
+        "legalization_mode": mode,
+        "theme": theme,
+        "visual": visual,
+        "gameplay": gameplay,
+        "balance": balance,
+        "world_fit": world_fit,
+        "media_constraints": constraints,
+        "fallback_mapping": {
+            "unmapped_mechanics": unmapped,
+            "degraded_fields": degraded_fields,
+            "proposal_new_effects": proposal_new_effects,
+        },
+    }
+    report = {
+        "schema_version": "legalization_report.v0.1",
+        "legalization_mode": mode,
+        "passed": not any(i.get("severity") == "error" for i in issues),
+        "issues": issues,
+        "applied_fixes": fixes,
+        "fallback_summary": {
+            "unmapped_mechanics": unmapped,
+            "degraded_to_proposal": bool(proposal_new_effects),
+            "stable_enough_for_compile": not proposal_new_effects,
+        },
+    }
+
+    legalized_path = run_dir / f"{node_id}__legalized_design_spec.json"
+    _write_json(legalized_path, legalized)
+    legalized_ref = _make_ref(
+        artifact_id=f"{node_id}__legalized_design_spec",
+        kind="legalized_design_spec",
+        path=legalized_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    report_path = run_dir / f"{node_id}__legalization_report.json"
+    _write_json(report_path, report)
+    report_ref = _make_ref(
+        artifact_id=f"{node_id}__legalization_report",
+        kind="legalization_report",
+        path=report_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": legalized_ref, "report": report_ref}}
+
+
+def node_asset_build_asset_plan(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    legalized = _load_artifact(inputs, "legalized_design_spec")
+    gameplay = legalized.get("gameplay", {})
+    visual = legalized.get("visual", {})
+    theme = legalized.get("theme", {})
+    balance = legalized.get("balance", {})
+
+    cost_band = balance.get("cost_band", "medium")
+    build_cost = {"cheap": 90, "low": 90, "medium": 150, "expensive": 220}.get(
+        cost_band, 150
+    )
+    archetype = theme.get("archetype", "field_device")
+    element = visual.get("core_element", "compiled_light")
+
+    asset_plan = {
+        "schema_version": "asset_plan.v0.1",
+        "asset_kind": legalized.get("asset_kind", "tower_blueprint"),
+        "gameplay": {
+            "effect_blocks": gameplay.get("effect_blocks", []),
+            "targeting": gameplay.get("targeting", "nearest"),
+            "range": 150,
+            "cooldown": 2.5 if cost_band == "expensive" else 1.8,
+            "build_cost": build_cost,
+            "growth_mechanic": gameplay.get("growth_mechanic", "none"),
+        },
+        "presentation": {
+            "name": "炼丹炉" if archetype == "alchemy_furnace" else archetype,
+            "short_description": "将玩家构想整理成可试作的防御设施。",
+            "detailed_description": "该方案会先生成稳定的战斗规则，再异步准备塔体、图标与特效素材。",
+            "visual_style_ref": visual.get("style_id", "compiler_td_v1"),
+        },
+        "media_roles": {
+            "tower_body": {
+                "role": "tower_body",
+                "required": True,
+                "prompt_hint": f"isometric {archetype}, {element}, clean background, single subject",
+                "fallback_strategy": "placeholder_sprite",
+            },
+            "tower_icon": {
+                "role": "tower_icon",
+                "required": True,
+                "prompt_hint": f"2D game icon, {archetype}, clean silhouette",
+                "fallback_strategy": "placeholder_sprite",
+            },
+            "attack_vfx": {
+                "role": "attack_vfx",
+                "required": True,
+                "prompt_hint": f"{element} attack effect, transparent background",
+                "fallback_strategy": "visual_recipe",
+            },
+            "impact_vfx": {
+                "role": "impact_vfx",
+                "required": False,
+                "prompt_hint": f"{element} impact burst",
+                "fallback_strategy": "visual_recipe",
+            },
+            "projectile": {
+                "role": "projectile",
+                "required": False,
+                "prompt_hint": f"{element} projectile",
+                "fallback_strategy": "visual_recipe",
+            },
+            "selection_ring": {
+                "role": "selection_ring",
+                "required": False,
+                "prompt_hint": "",
+                "fallback_strategy": "deterministic_shape",
+            },
+            "shadow": {
+                "role": "shadow",
+                "required": False,
+                "prompt_hint": "",
+                "fallback_strategy": "deterministic_shape",
+            },
+        },
+        "runtime_metadata": {
+            "anchor_point": "bottom_center",
+            "footprint": {"width": 1, "height": 1},
+            "collision_box": {"width": 0.8, "height": 0.8},
+            "attack_socket": {"x": 0, "y": 0.5},
+        },
+        "fallback_plan": {
+            "media_fallback_strategy": "placeholder_sprite",
+            "gameplay_fallback_strategy": "skip_unregistered_effects",
+            "can_degrade_to_proposal": False,
+        },
+    }
+
+    out_path = run_dir / f"{node_id}__asset_plan.json"
+    _write_json(out_path, asset_plan)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__asset_plan",
+        kind="asset_plan",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_proposal_build_from_legalized_spec(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    legalized = _load_artifact(inputs, "legalized_design_spec")
+    asset_plan = _load_artifact(inputs, "asset_plan")
+    run_world_state = None
+    if inputs.get("run_world_state") is not None:
+        try:
+            run_world_state = _load_artifact(inputs, "run_world_state")
+        except NodeError:
+            run_world_state = None
+
+    gameplay = legalized.get("gameplay", {})
+    theme = legalized.get("theme", {})
+    balance = legalized.get("balance", {})
+    world_fit = legalized.get("world_fit", {})
+    presentation = asset_plan.get("presentation", {})
+    roles = gameplay.get("intended_role", [])
+    archetype = theme.get("archetype", "field_device")
+    archetype_display = ARCHETYPE_DISPLAY_NAMES.get(archetype, archetype.replace("_", " "))
+
+    expected: list[str] = []
+    if "area_damage" in roles or "single_target_damage" in roles:
+        expected.append("damage")
+    if "soft_control" in roles or "hard_control" in roles:
+        expected.append("control")
+    if not expected:
+        expected.append("damage")
+
+    title = presentation.get("name") or archetype
+    cost = {"cheap": "low", "low": "low", "medium": "medium", "expensive": "high"}.get(
+        balance.get("cost_band", "medium"), "medium"
+    )
+    worldbook_id = "long_night_lanterns"
+    if isinstance(run_world_state, dict):
+        worldbook_id = run_world_state.get("worldbook_id", worldbook_id)
+
+    proposal = {
+        "id": f"proposal_{archetype}_001",
+        "mode": legalized.get("legalization_mode", "runtime_safe"),
+        "title": title,
+        "summary": f"把{archetype_display}构想整理为一件可试作的防御方案。",
+        "intended_asset_type": legalized.get("asset_kind", "tower_blueprint"),
+        "expected_effect": expected,
+        "risk_level": balance.get("risk_tier", "medium"),
+        "estimated_cost": cost,
+        "required_inputs": {
+            "npc_ids": [],
+            "materials": world_fit.get("source_materials", []),
+            "facility": world_fit.get("facility_requirement", "field_workbench"),
+            "knowledge_tags": theme.get("world_tags", []),
+        },
+        "known_tradeoffs": [
+            "试作品会先保证战斗规则可用，外观素材可稍后稳定化",
+            "成长类效果会受到上限约束",
+        ],
+        "player_prompt": f"我想试作一个以{archetype_display}为原型的防御设施。",
+        "worldbook_id": worldbook_id,
+    }
+    _enforce_narrative_safe(proposal, node_id)
+
+    out_path = run_dir / f"{node_id}__proposal.json"
+    _write_json(out_path, proposal)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__proposal",
+        kind="proposal",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
+def node_graph_validate_planned_workflow(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    from validate_workflow import DEFAULT_REGISTRY, validate_workflow
+
+    workflow_graph = _load_artifact(inputs, "workflow_graph")
+    registry = json.loads(DEFAULT_REGISTRY.read_text(encoding="utf-8"))
+    errors = validate_workflow(workflow_graph, registry)
+    report = {
+        "schema_version": "workflow_validation_report.v0.1",
+        "workflow_id": workflow_graph.get("workflow_id", "unknown"),
+        "status": "passed" if not errors else "failed",
+        "issues": [{"type": "workflow_validation", "message": e} for e in errors],
+    }
+    out_path = run_dir / f"{node_id}__workflow_validation_report.json"
+    _write_json(out_path, report)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__workflow_validation_report",
+        kind="workflow_validation_report",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    if errors:
+        raise NodeError("workflow validation failed: " + "; ".join(errors))
+    return {"output_refs": {"default": ref}}
+
+
 # Registry of node_type -> implementation function.
 NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "source.load_json": node_source_load_json,
@@ -2197,4 +2696,8 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "world_state.build_delta_from_narrative_stub": node_world_state_build_delta_from_narrative_stub,
     "world_state.build_delta_with_llm_guarded": node_world_state_build_delta_with_llm_guarded,
     "world_state.apply_delta": node_world_state_apply_delta,
+    "asset.legalize_design_spec": node_asset_legalize_design_spec,
+    "asset.build_asset_plan": node_asset_build_asset_plan,
+    "proposal.build_from_legalized_spec": node_proposal_build_from_legalized_spec,
+    "graph.validate_planned_workflow": node_graph_validate_planned_workflow,
 }

@@ -1,0 +1,82 @@
+{
+  "schema_version": "legalized_design_spec.v0.1",
+  "asset_kind": "tower_blueprint",
+  "legalization_mode": "runtime_safe",
+  "theme": {
+    "archetype": "alchemy_furnace",
+    "world_tags": ["field_research", "night_fire"],
+    "tone": "dangerous_but_useful"
+  },
+  "visual": {
+    "view": "isometric_3_4",
+    "style_id": "compiler_td_v1",
+    "body_archetype": "furnace",
+    "materials": ["dark_metal", "ceramic_core"],
+    "core_element": "purple_fire",
+    "body_layers": ["base", "furnace_body", "core_window", "ornament"],
+    "vfx_layers": ["pull_ring", "flame_cone", "stack_glow"],
+    "constraints": {
+      "single_subject": true,
+      "clean_background": true,
+      "no_enemy_in_sprite": true,
+      "no_attack_effect_on_body_sprite": true
+    }
+  },
+  "gameplay": {
+    "attack_pattern": "cone_damage_over_time",
+    "control_effect": "pull_in",
+    "growth_mechanic": "gain_stack_on_kill",
+    "targeting": "dense_area",
+    "intended_role": ["area_damage", "soft_control"],
+    "effect_blocks": [
+      {
+        "type": "damage_over_time",
+        "params": {
+          "damage_per_tick": 15,
+          "tick_interval": 1.0,
+          "duration": 3.0,
+          "element": "purple_fire"
+        }
+      },
+      {
+        "type": "aura_buff",
+        "params": {
+          "radius": 120,
+          "effect": "pull_in",
+          "strength": "medium"
+        }
+      },
+      {
+        "type": "charge_burst",
+        "params": {
+          "stacks_on_kill": true,
+          "max_stacks": 10,
+          "damage_bonus_per_stack": 0.05
+        }
+      }
+    ]
+  },
+  "balance": {
+    "risk_tier": "high",
+    "cost_band": "expensive",
+    "control_strength_cap": "medium",
+    "growth_cap": "limited",
+    "budget_clamped": true
+  },
+  "world_fit": {
+    "source_materials": ["unstable_core", "ash_residue"],
+    "npc_disciplines": ["field_engineer", "occult_researcher"],
+    "facility_requirement": "field_workbench"
+  },
+  "media_constraints": {
+    "single_subject": true,
+    "clean_background": true,
+    "no_enemy_in_sprite": true,
+    "no_attack_effect_on_body_sprite": true
+  },
+  "fallback_mapping": {
+    "unmapped_mechanics": [],
+    "degraded_fields": ["growth_mechanic"],
+    "proposal_new_effects": []
+  }
+}

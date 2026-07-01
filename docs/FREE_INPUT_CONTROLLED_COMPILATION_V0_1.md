@@ -400,3 +400,52 @@ rerun_node(body validator)
 ```
 
 这样系统可以复现、调试和解释每次修复，而不是把失败掩盖成一次新的不可控生成。
+
+## 11. Schema 与示例路径
+
+v0.1 的协议 Schema 和示例 fixture 路径如下。
+
+### 11.1 JSON Schema
+
+```text
+shared/schemas/player_utterance.v0.1.schema.json
+shared/schemas/player_intent.v0.1.schema.json
+shared/schemas/asset_design_spec.v0.1.schema.json
+shared/schemas/legalized_design_spec.v0.1.schema.json
+shared/schemas/legalization_report.v0.1.schema.json
+shared/schemas/asset_plan.v0.1.schema.json
+shared/schemas/compile_template_selection.v0.1.schema.json
+shared/schemas/repair_action_plan.v0.1.schema.json
+```
+
+Schema 默认使用 `additionalProperties: false` 收紧结构。隐藏编译 artifact 不得包含
+`provider`、`model`、`raw_prompt`、`full_trace`、`raw_json`、`api_key`、`secret`、
+`unreviewed_content`。
+
+### 11.2 示例 Fixture
+
+```text
+examples/player_inputs/alchemy_furnace_tower.player_utterance.json
+examples/intent_specs/alchemy_furnace_tower.player_intent.json
+examples/intent_specs/alchemy_furnace_tower.asset_design_spec.json
+examples/intent_specs/alchemy_furnace_tower.legalized_design_spec.json
+examples/intent_specs/alchemy_furnace_tower.legalization_report.json
+examples/intent_specs/alchemy_furnace_tower.asset_plan.json
+examples/intent_specs/alchemy_furnace_tower.compile_template_selection.json
+examples/intent_specs/alchemy_furnace_tower.repair_action_plan.json
+```
+
+`asset_plan` 必须包含 gameplay、presentation、media_roles、runtime_metadata、fallback_plan。
+`compile_template_selection.template_name` 只能引用已注册模板名，并且必须携带 budgets。
+`repair_action_plan.actions[].action_type` 必须来自第 10.2 节定义的有限 action set。
+
+### 11.3 校验脚本
+
+```text
+tools/asset_graph/validate_intent_compile_artifacts.py
+tools/asset_graph/validate_compile_template_selection.py
+tools/asset_graph/validate_repair_action_plan.py
+```
+
+`validate_intent_compile_artifacts.py` 支持传入一个或多个 JSON 文件，并依据 `schema_version`
+自动选择对应 Schema。若本地没有 `jsonschema` 库，它会降级到基础字段检查。

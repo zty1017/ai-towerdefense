@@ -1,11 +1,12 @@
 # AI 工具使用记录
 
-Last updated: 2026-06-29
+Last updated: 2026-07-01
 
 用于记录比赛期间 CodeBuddy、OpenCode、Codex 等 AI 工具的使用情况。CodeBuddy 相关任务优先记录，以满足比赛合规需要。
 
 | 日期 | 工具 | 任务 | 使用方式 / 模型 | 输入摘要 | 输出摘要 | 修改文件 | 验收命令 | 状态 | 证据路径 |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-07-01 | OpenCode + Codex 审查整合 | 自由输入受控编译协议与 deterministic DAG 闭环 | OpenCode headless：`volcengine-plan/deepseek-v4-flash`、`volcengine-plan/deepseek-v4-pro`；Codex 负责隔离、验收、整合 | 拆分为 schema/fixture、确定性节点、模板与 ReAct 协议三条任务；用户明确授权外部委派 | OpenCode 产出候选实现，Codex 合并为 schema、fixture、对象级模板、校验脚本、确定性 legalize/asset_plan/proposal 节点和 deterministic workflow | `shared/schemas/*intent*`, `examples/intent_specs/`, `examples/compile_templates/`, `tools/asset_graph/*`, `docs/*` | `validate_intent_compile_artifacts.py`; `validate_workflow.py`; `run_workflow.py`; 全 workflow 校验 | passed | `/tmp/opencode_intent_schema_v0.log`; `/tmp/opencode_intent_deterministic_nodes.log`; `/tmp/opencode_react_template_protocol.log` |
 | 2026-06-29 | CodeBuddy | 待确认 CodeBuddy headless/API 能力 | 调研 | 查询是否存在 CLI/headless/API/MCP | 暂未找到稳定官方 headless/API 文档，先按手动流程设计 | docs/AGENT_COLLABORATION_AND_GIT_GOVERNANCE.md | N/A | recorded | N/A |
 | 2026-06-29 | OpenCode | 记录 headless 模型白名单与工具优先级 | 用户提供模型列表 | CodeBuddy 优先，OpenCode 候选，Codex 高难度兜底；OpenCode 内部优先使用 `volcengine-plan/*` | 已更新治理文档中的 OpenCode 模型白名单和分配规则 | docs/AGENT_COLLABORATION_AND_GIT_GOVERNANCE.md | N/A | recorded | N/A |
 | 2026-06-29 | CodeBuddy | 验证 CLI 非交互调用 | `codebuddy 2.113.0`, `-p --output-format json --tools "" --model deepseek-v4-flash` | 最小 prompt 返回成功；确认 CLI 可 headless/print 调用 | 更新治理文档 CodeBuddy 能力与模型列表 | `codebuddy --help`; 最小 OK 调用 | passed | 本地终端输出 |

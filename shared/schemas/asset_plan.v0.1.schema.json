@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/asset_plan.v0.1.schema.json",
+  "title": "AssetPlan v0.1",
+  "description": "Asset plan that splits an asset into gameplay, presentation, media_roles, runtime_metadata, and fallback_plan. This is a hidden intermediate representation and must not be runtime_public. Must not contain provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "asset_kind",
+    "gameplay",
+    "presentation",
+    "media_roles",
+    "runtime_metadata",
+    "fallback_plan"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "asset_plan.v0.1"
+    },
+    "asset_kind": {
+      "type": "string",
+      "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+    },
+    "gameplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_blocks", "targeting", "range", "cooldown"],
+      "properties": {
+        "effect_blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["damage", "area_damage", "slow", "damage_over_time", "pierce_or_chain", "summon_unit", "shield", "repair", "power_cost", "charge_burst", "mark_vulnerability", "trap_tile_effect", "aura_buff", "scout_reveal", "weakness_tag", "path_prediction", "threat_forecast", "countermeasure_hint", "risk_modifier"]
+              },
+              "params": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "targeting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "range": {
+          "type": "number"
+        },
+        "cooldown": {
+          "type": "number"
+        },
+        "build_cost": {
+          "type": "number"
+        },
+        "growth_mechanic": {
+          "type": "string"
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "short_description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "short_description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detailed_description": {
+          "type": "string"
+        },
+        "visual_style_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "media_roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tower_body", "tower_icon"],
+      "properties": {
+        "tower_body": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "tower_body"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape"]
+            }
+          }
+        },
+        "tower_icon": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "tower_icon"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape"]
+            }
+          }
+        },
+        "attack_vfx": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "attack_vfx"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape", "visual_recipe"]
+            }
+          }
+        },
+        "impact_vfx": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "impact_vfx"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape", "visual_recipe"]
+            }
+          }
+        },
+        "projectile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "projectile"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape", "visual_recipe"]
+            }
+          }
+        },
+        "selection_ring": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "selection_ring"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape"]
+            }
+          }
+        },
+        "shadow": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "required"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "const": "shadow"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "prompt_hint": {
+              "type": "string"
+            },
+            "fallback_strategy": {
+              "type": "string",
+              "enum": ["placeholder_sprite", "silhouette", "deterministic_shape"]
+            }
+          }
+        }
+      }
+    },
+    "runtime_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchor_point", "footprint", "collision_box"],
+      "properties": {
+        "anchor_point": {
+          "type": "string",
+          "enum": ["bottom_center", "center", "top_center"]
+        },
+        "footprint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          }
+        },
+        "collision_box": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            }
+          }
+        },
+        "attack_socket": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "fallback_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media_fallback_strategy", "gameplay_fallback_strategy"],
+      "properties": {
+        "media_fallback_strategy": {
+          "type": "string",
+          "enum": ["placeholder_sprite", "silhouette", "deterministic_shape", "visual_recipe"]
+        },
+        "gameplay_fallback_strategy": {
+          "type": "string",
+          "enum": ["use_default_stats", "degrade_effect", "skip_unregistered_effects", "abort_compile"]
+        },
+        "can_degrade_to_proposal": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
