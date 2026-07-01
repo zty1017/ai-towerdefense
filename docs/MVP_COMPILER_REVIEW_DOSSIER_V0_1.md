@@ -21,8 +21,10 @@
 - `tools/content_pipeline/build_mvp_compiler_review_dossier.py`
 - `tools/content_pipeline/build_stage05_plan_realization.py`
 - `tools/content_pipeline/build_multistage_content_pack.py`
+- `tools/content_pipeline/build_frontend_mock_pack.py`
 - `tools/content_pipeline/validate_compilable_object_catalog.py`
 - `tools/content_pipeline/validate_compilable_object_plan.py`
+- `tools/content_pipeline/validate_frontend_mock_pack.py`
 - `tools/content_pipeline/build_stage_candidate_pack.py`
 - `tools/content_pipeline/validate_stage_candidate_pack.py`
 - `tools/narrative/validate_narrative_gameplay_contract.py`
@@ -31,6 +33,7 @@
 - `docs/COMPILABLE_OBJECT_PLAN_V0_1.md`
 - `docs/STAGE05_PLAN_REALIZATION_V0_1.md`
 - `docs/MULTISTAGE_CONTENT_PACK_V0_1.md`
+- `docs/FRONTEND_MOCK_PACK_V0_1.md`
 - `docs/STAGE_CANDIDATE_PACK_V0_1.md`
 - `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
 - `game_data/demo/wick_store_pressure_battle_config.json`
@@ -39,6 +42,7 @@
 - `game_data/demo/old_signal_tower_pressure_battle_config.json`
 - `examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json`
 - `examples/runtime_packages/mvp_old_signal_tower.runtime_package.json`
+- `examples/frontend_mock/frontend_mock_pack.v0.1.json`
 
 默认构建命令：
 
@@ -70,6 +74,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - `compilable_object_plan_summary`：下一阶段对象化生成计划摘要，说明 Stage 05 需要生成哪些对象、哪些需要 LLM、媒体和人工审查。
 - `Stage 05 计划落地样例`：把下一阶段计划转成可审查叙事包、世界状态变化、下一运行态、资产提案和候选资产；后续多阶段包会把 Stage 05 / 06 / 07 统一导出为标准阶段候选包。
 - `多阶段内容生产包`：串行生产 Stage 05 / 06 / 07 的剧情线、任务、随机事件、临时样本和三类资产候选，并导出标准阶段候选包供人工审查。
+- `前端 Mock 内容包`：从当前编译产物、三阶段候选包和 runtime package 中抽取玩家安全数据，包含 11 个可玩资产、3 个阶段摘要和 3 个 runtime package 摘要，用于前端并行开发和演示，不代表正式前端已接入。
 - `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
 - `runtime_package_summaries`：第一战、灯芯仓压力战和旧信号塔压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产；旧信号塔压力战包含回光棱镜中继塔一件人工晋升后的运行时证据资产。
@@ -92,6 +97,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - 当前已有多阶段内容生产包，证明同一套流水线可以连续生产防御塔、支援道具和高风险临时改造候选，并串行推进世界线与玩家线。
 - 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
 - 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
+- 当前已有前端 mock 内容包，证明这些候选资产、阶段摘要和 runtime package 引用可以被抽取为玩家安全的统一数据包。
 - 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
 - 旧信号塔压力战已有 runtime package 引用证据，能验证 Stage 05 候选资产可被封装进 locked manifest、battle config 和 runtime package；它仍不代表 Stage 05 世界线自动解锁最终蓝图。
 - 默认 MVP 可以按 `runtime_fixture` + `fallback_ready` 资产组织审查；候选 / 受阻资产不应默认进入战斗。
@@ -191,6 +197,13 @@ python3 tools/content_pipeline/validate_multistage_content_pack.py examples/revi
 
 ```bash
 python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json
+```
+
+构建并校验前端 mock 内容包：
+
+```bash
+python3 tools/content_pipeline/build_frontend_mock_pack.py
+python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json
 ```
 
 校验最终运行态：

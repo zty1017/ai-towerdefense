@@ -77,7 +77,22 @@ def validate(pack: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if pack.get("schema_version") != "frontend_mock_pack.v0.1":
         errors.append("schema_version must be frontend_mock_pack.v0.1")
-    for key in ("pack_id", "worldbook_id", "compiler_summary", "frontend_contract", "effect_catalog", "world", "map", "npcs", "materials", "story", "assets"):
+    for key in (
+        "pack_id",
+        "worldbook_id",
+        "compiler_summary",
+        "frontend_contract",
+        "content_sources",
+        "effect_catalog",
+        "world",
+        "map",
+        "npcs",
+        "materials",
+        "story",
+        "stage_outline",
+        "runtime_packages",
+        "assets",
+    ):
         if key not in pack:
             errors.append(f"missing top-level key: {key}")
 
@@ -108,6 +123,11 @@ def validate(pack: dict[str, Any]) -> list[str]:
         str(asset.get("asset_type"))
         for asset in assets
         if isinstance(asset, dict) and asset.get("asset_type")
+    }
+    asset_ids = {
+        str(asset.get("stable_internal_id"))
+        for asset in assets
+        if isinstance(asset, dict) and asset.get("stable_internal_id")
     }
     missing_types = sorted(REQUIRED_ASSET_TYPES - asset_types)
     if missing_types:
@@ -173,6 +193,70 @@ def validate(pack: dict[str, Any]) -> list[str]:
     story = pack.get("story")
     if not isinstance(story, dict) or not story.get("questline"):
         errors.append("story.questline must not be empty")
+
+    content_sources = pack.get("content_sources")
+    if isinstance(content_sources, dict):
+        boundary = content_sources.get("source_boundary")
+        if not isinstance(boundary, dict):
+            errors.append("content_sources.source_boundary must be object")
+        else:
+            if boundary.get("player_safe") is not True:
+                errors.append("content_sources.source_boundary.player_safe must be true")
+            if boundary.get("reads_env") is not False:
+                errors.append("content_sources.source_boundary.reads_env must be false")
+            if boundary.get("calls_external_service") is not False:
+                errors.append("content_sources.source_boundary.calls_external_service must be false")
+            if boundary.get("contains_raw_external_payload") is not False:
+                errors.append("content_sources.source_boundary.contains_raw_external_payload must be false")
+        if not content_sources.get("review_packs"):
+            errors.append("content_sources.review_packs must not be empty")
+    else:
+        errors.append("content_sources must be object")
+
+    stage_outline = pack.get("stage_outline")
+    if not isinstance(stage_outline, list) or not stage_outline:
+        errors.append("stage_outline must be a non-empty array")
+        stage_outline = []
+    runtime_packages = pack.get("runtime_packages")
+    if not isinstance(runtime_packages, list):
+        errors.append("runtime_packages must be array")
+        runtime_packages = []
+    if isinstance(summary, dict):
+        if summary.get("stage_count") != len(stage_outline):
+            errors.append("compiler_summary.stage_count mismatch")
+        if summary.get("runtime_package_count") != len(runtime_packages):
+            errors.append("compiler_summary.runtime_package_count mismatch")
+
+    runtime_package_files = {
+        str(package.get("package_file"))
+        for package in runtime_packages
+        if isinstance(package, dict) and package.get("package_file")
+    }
+    for index, stage in enumerate(stage_outline):
+        if not isinstance(stage, dict):
+            errors.append(f"stage_outline[{index}] must be object")
+            continue
+        if not stage.get("stage_id"):
+            errors.append(f"stage_outline[{index}] missing stage_id")
+        for asset in stage.get("asset_outputs") or []:
+            if not isinstance(asset, dict):
+                errors.append(f"stage_outline[{index}].asset_outputs item must be object")
+                continue
+            asset_id = asset.get("asset_id")
+            if asset_id and str(asset_id) not in asset_ids:
+                errors.append(f"stage_outline[{index}] references missing asset: {asset_id}")
+        for package_ref in stage.get("runtime_package_refs") or []:
+            if not isinstance(package_ref, dict):
+                errors.append(f"stage_outline[{index}].runtime_package_refs item must be object")
+                continue
+            package_file = package_ref.get("package_file")
+            if package_file and str(package_file) not in runtime_package_files:
+                errors.append(f"stage_outline[{index}] references missing runtime package: {package_file}")
+
+    if isinstance(story, dict):
+        multistage_outline = story.get("multistage_outline")
+        if not isinstance(multistage_outline, list) or len(multistage_outline) != len(stage_outline):
+            errors.append("story.multistage_outline must mirror stage_outline count")
 
     scan_forbidden(pack, "", errors)
     return errors

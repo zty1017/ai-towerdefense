@@ -3007,6 +3007,12 @@
       "sha256": "86345dbf5e0086a7a5b4a13cf18c6e3db9ea3c0665803ddcf0ad69ae9c431395"
     },
     {
+      "path": "docs/FRONTEND_MOCK_PACK_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "42d17ffc0c30c7a1f1113d87c4f1a0e4899b881b68c241f0c3fd4a7f0b64820e"
+    },
+    {
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
@@ -3028,7 +3034,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "05640ec3320549f59048500a8b6091c961c5d7fbc5fa7a9b4de7a59c9557209a"
+      "sha256": "1c77893d6b6b30b300fa5299e8fb7d7fd983c983af00333d9a61f977b33536e9"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -3113,6 +3119,12 @@
       "kind": "asset_source",
       "exists": true,
       "sha256": "2c85a2eb1ca5de65db6371f85c560d18c58b2cff62d9e87fffdc4162fec3eb0a"
+    },
+    {
+      "path": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "kind": "frontend_mock_pack",
+      "exists": true,
+      "sha256": "b6ce457cb6c5249e1faf029515e411a57415b0bb29fae723d52652dc50dfa4fa"
     },
     {
       "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json",
@@ -3487,6 +3499,12 @@
       "sha256": "0a633c10d8ccaa39935faa53efac4f736189a52fc5c6bf61ed06cabf535b6503"
     },
     {
+      "path": "shared/schemas/frontend_mock_pack.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "fb8172d4b8a01e5a505385d7e519fc317b81ced6ae5ac600bbd2c15563b2029c"
+    },
+    {
       "path": "shared/schemas/multistage_content_pack.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
@@ -3515,6 +3533,12 @@
       "kind": "builder",
       "exists": true,
       "sha256": "da6b58e5da57785fe598c4e9c1d0f7f1827ab303c0868e754855f2398f9d2313"
+    },
+    {
+      "path": "tools/content_pipeline/build_frontend_mock_pack.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "3b75228756fbd1993428b625e5074ec04954486805a2a03f28bbef03ca2350da"
     },
     {
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
@@ -3551,6 +3575,12 @@
       "kind": "validator",
       "exists": true,
       "sha256": "deeb86d5eca7111f8819f8f15aad4a69d95a98a7c79883658e4d93a653f7323b"
+    },
+    {
+      "path": "tools/content_pipeline/validate_frontend_mock_pack.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "9e7b91fc7ff901f143b4e2ea6149935923cbefab3ada41c08e0065110ab26ed6"
     },
     {
       "path": "tools/content_pipeline/validate_multistage_content_pack.py",
@@ -3641,6 +3671,14 @@
     {
       "purpose": "校验多阶段阶段候选包",
       "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+    },
+    {
+      "purpose": "构建前端 mock 内容包",
+      "command": "python3 tools/content_pipeline/build_frontend_mock_pack.py"
+    },
+    {
+      "purpose": "校验前端 mock 内容包",
+      "command": "python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

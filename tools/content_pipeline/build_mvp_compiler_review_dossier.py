@@ -38,6 +38,7 @@ DEFAULT_COMPILABLE_OBJECT_PLAN = ROOT / "examples/review_packs/mvp_next_stage_co
 DEFAULT_STAGE05_PLAN_REALIZATION_REPORT = ROOT / "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json"
 DEFAULT_MULTISTAGE_CONTENT_PACK = ROOT / "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
 DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+DEFAULT_FRONTEND_MOCK_PACK = ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json"
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -654,6 +655,14 @@ def validation_commands() -> list[dict[str, str]]:
             "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
         },
         {
+            "purpose": "构建前端 mock 内容包",
+            "command": "python3 tools/content_pipeline/build_frontend_mock_pack.py",
+        },
+        {
+            "purpose": "校验前端 mock 内容包",
+            "command": "python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json",
+        },
+        {
             "purpose": "重建资产晋升报告到 /tmp",
             "command": "python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --output /tmp/mvp_story_asset_promotion_report.check.json",
         },
@@ -906,16 +915,20 @@ def build_dossier(
         ("docs/MULTISTAGE_CONTENT_PACK_V0_1.md", "architecture_doc"),
         ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
+        ("docs/FRONTEND_MOCK_PACK_V0_1.md", "architecture_doc"),
+        ("shared/schemas/frontend_mock_pack.v0.1.schema.json", "schema"),
         ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
         ("shared/schemas/compilable_object_plan.v0.1.schema.json", "schema"),
         ("shared/schemas/multistage_content_pack.v0.1.schema.json", "schema"),
         ("shared/schemas/stage_candidate_pack.v0.1.schema.json", "schema"),
+        ("tools/content_pipeline/build_frontend_mock_pack.py", "builder"),
         ("tools/content_pipeline/build_compilable_object_catalog.py", "builder"),
         ("tools/content_pipeline/build_compilable_object_plan.py", "builder"),
         ("tools/content_pipeline/build_stage05_plan_realization.py", "builder"),
         ("tools/content_pipeline/build_multistage_content_pack.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
         ("tools/content_pipeline/mock_compile_proposal.py", "builder"),
+        ("tools/content_pipeline/validate_frontend_mock_pack.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_plan.py", "validator"),
         ("tools/content_pipeline/validate_multistage_content_pack.py", "validator"),
@@ -937,6 +950,7 @@ def build_dossier(
     )
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
+    evidence_paths.append((rel(DEFAULT_FRONTEND_MOCK_PACK), "frontend_mock_pack"))
     for path, kind in DEFAULT_RUNTIME_SOURCE_FILES:
         evidence_paths.append((rel(path), kind))
     for stage in stages:

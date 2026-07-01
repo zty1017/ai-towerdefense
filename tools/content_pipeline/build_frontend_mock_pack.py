@@ -33,6 +33,13 @@ FORBIDDEN_FRONTEND_KEYS = {
 EFFECT_CATALOG_PATH = ROOT / "shared/module_registry/effect_catalog.v0.1.json"
 FRONTEND_MEDIA_MANIFEST_PATH = ROOT / "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json"
 FRONTEND_ANIMATION_SEED_MANIFEST_PATH = ROOT / "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json"
+MULTISTAGE_CONTENT_PACK_PATH = ROOT / "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+MULTISTAGE_STAGE_CANDIDATE_PACK_PATH = ROOT / "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+RUNTIME_PACKAGE_PATHS = [
+    ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
+    ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+    ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+]
 
 
 def load_json(path: Path) -> Any:
@@ -53,6 +60,13 @@ def as_obj(value: Any) -> dict[str, Any]:
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def with_effect_catalog_defaults(recipe: dict[str, Any], effect_catalog: dict[str, Any]) -> dict[str, Any]:
@@ -338,7 +352,75 @@ def build_compiled_asset_entry(
     }
 
 
-def build_story(opening: dict[str, Any], first_crisis: dict[str, Any]) -> dict[str, Any]:
+def stage_outline(stage_candidate_pack: dict[str, Any]) -> list[dict[str, Any]]:
+    stages: list[dict[str, Any]] = []
+    for stage in as_list(stage_candidate_pack.get("stage_candidates")):
+        if not isinstance(stage, dict):
+            continue
+        gates = [
+            gate
+            for gate in as_list(stage.get("validation_gates"))
+            if isinstance(gate, dict)
+        ]
+        stages.append({
+            "stage_order": stage.get("stage_order"),
+            "stage_id": stage.get("stage_id"),
+            "title": stage.get("title"),
+            "status": stage.get("status"),
+            "source_files": as_obj(stage.get("source_files")),
+            "lane_coverage": as_list(stage.get("lane_coverage")),
+            "narrative_summary": as_obj(stage.get("narrative_summary")),
+            "gameplay_outputs": as_obj(stage.get("gameplay_outputs")),
+            "asset_outputs": as_list(stage.get("asset_outputs")),
+            "runtime_package_refs": as_list(stage.get("runtime_package_refs")),
+            "validation_gate_counts": {
+                status: sum(1 for gate in gates if gate.get("status") == status)
+                for status in sorted({str(gate.get("status")) for gate in gates if gate.get("status")})
+            },
+            "next_actions": as_list(stage.get("next_actions")),
+        })
+    return stages
+
+
+def runtime_package_summaries(paths: list[Path]) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for path in paths:
+        if not path.exists():
+            continue
+        package = load_json(path)
+        assets = [
+            {
+                "stable_internal_id": asset.get("stable_internal_id"),
+                "asset_kind": asset.get("asset_kind"),
+                "lifecycle_state": asset.get("lifecycle_state"),
+                "display_name": as_obj(asset.get("display")).get("name"),
+                "battle_surfaces": as_list(as_obj(asset.get("battle_availability")).get("surfaces")),
+            }
+            for asset in as_list(package.get("assets"))
+            if isinstance(asset, dict)
+        ]
+        battle_context = as_obj(package.get("battle_context"))
+        grid = as_obj(battle_context.get("grid"))
+        summaries.append({
+            "package_file": rel(path),
+            "package_id": package.get("package_id"),
+            "node_id": package.get("node_id"),
+            "battle_display_name": package.get("battle_display_name"),
+            "asset_count": len(assets),
+            "assets": assets,
+            "battle_context_summary": {
+                "projection": grid.get("projection"),
+                "width_cells": grid.get("width_cells"),
+                "height_cells": grid.get("height_cells"),
+                "path_count": len(as_list(battle_context.get("paths"))),
+                "optional_target_count": len(as_list(battle_context.get("optional_targets"))),
+                "sample_delivery_delay_ms": as_obj(battle_context.get("sample_delivery")).get("delivery_delay_ms"),
+            },
+        })
+    return summaries
+
+
+def build_story(opening: dict[str, Any], first_crisis: dict[str, Any], stages: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "opening": opening,
         "questline": [
@@ -356,6 +438,22 @@ def build_story(opening: dict[str, Any], first_crisis: dict[str, Any]) -> dict[s
                     "查看战后反馈与世界状态变化"
                 ]
             }
+        ],
+        "multistage_outline": [
+            {
+                "stage_id": stage.get("stage_id"),
+                "title": stage.get("title"),
+                "status": stage.get("status"),
+                "primary_asset_ids": [
+                    asset.get("asset_id")
+                    for asset in as_list(stage.get("asset_outputs"))
+                    if isinstance(asset, dict) and asset.get("asset_id")
+                ],
+                "task_ids": as_list(as_obj(stage.get("gameplay_outputs")).get("tasks")),
+                "random_event_ids": as_list(as_obj(stage.get("gameplay_outputs")).get("random_events")),
+                "runtime_package_refs": as_list(stage.get("runtime_package_refs")),
+            }
+            for stage in stages
         ],
         "battle_dialogue_beats": [
             {
@@ -413,6 +511,10 @@ def build_pack(created_at: str) -> dict[str, Any]:
     initial_map = load_json(ROOT / "game_data/demo/initial_map.json")
     first_crisis = load_json(ROOT / "game_data/demo/first_crisis_node.json")
     run_world_state = load_json(ROOT / "examples/run_world_states/demo_initial.run_world_state.json")
+    multistage_content_pack = load_json(MULTISTAGE_CONTENT_PACK_PATH)
+    multistage_stage_candidate_pack = load_json(MULTISTAGE_STAGE_CANDIDATE_PACK_PATH)
+    stages = stage_outline(multistage_stage_candidate_pack)
+    runtime_packages = runtime_package_summaries(RUNTIME_PACKAGE_PATHS)
 
     asset_paths = sorted((ROOT / "examples/compiled_assets").glob("*.compiled_asset.json"))
     assets = [
@@ -439,6 +541,8 @@ def build_pack(created_at: str) -> dict[str, Any]:
             "asset_count": len(assets),
             "playable_count": playable_count,
             "asset_count_by_type": by_type,
+            "stage_count": len(stages),
+            "runtime_package_count": len(runtime_packages),
             "promotion_states": {
                 state: sum(1 for asset in assets if asset["promotion"].get("promotion_state") == state)
                 for state in ("runtime_ready", "fallback_ready", "preview_only", "failed")
@@ -458,6 +562,25 @@ def build_pack(created_at: str) -> dict[str, Any]:
             "runtime_assumption": "Every asset with promotion.playable=true can be rendered with fallback media tokens and visual_recipes.",
             "effect_catalog_id": effect_catalog.get("catalog_id"),
             "forbidden_player_terms": worldbook.get("tone_and_taboos", {}).get("forbidden_terms_in_player_text", []),
+            "stage_outline_surface": "Frontend may show stage_outline as review/demo navigation data, but it is not a live campaign router.",
+        },
+        "content_sources": {
+            "review_packs": [
+                rel(MULTISTAGE_CONTENT_PACK_PATH),
+                rel(MULTISTAGE_STAGE_CANDIDATE_PACK_PATH),
+            ],
+            "runtime_packages": [summary["package_file"] for summary in runtime_packages],
+            "source_boundary": {
+                "player_safe": True,
+                "reads_env": False,
+                "calls_external_service": False,
+                "contains_raw_external_payload": False,
+            },
+            "multistage_pack_summary": {
+                "pack_id": multistage_content_pack.get("pack_id"),
+                "stage_count": as_obj(multistage_content_pack.get("summary")).get("stage_count"),
+                "final_state_file": as_obj(multistage_content_pack.get("summary")).get("final_state_file"),
+            },
         },
         "effect_catalog": effect_catalog,
         "world": {
@@ -473,7 +596,9 @@ def build_pack(created_at: str) -> dict[str, Any]:
         },
         "npcs": as_list(npcs.get("npcs")),
         "materials": as_list(materials.get("materials")),
-        "story": build_story(opening, first_crisis),
+        "story": build_story(opening, first_crisis, stages),
+        "stage_outline": stages,
+        "runtime_packages": runtime_packages,
         "assets": assets,
     }
 
