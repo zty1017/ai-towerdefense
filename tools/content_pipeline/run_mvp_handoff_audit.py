@@ -123,7 +123,8 @@ def as_list(value: Any) -> list[Any]:
 
 
 def tail(value: str) -> str:
-    return value[-MAX_TAIL_CHARS:]
+    normalized = value.replace(str(ROOT), "$REPO_ROOT")
+    return normalized[-MAX_TAIL_CHARS:]
 
 
 def run_core_commands() -> list[dict[str, Any]]:

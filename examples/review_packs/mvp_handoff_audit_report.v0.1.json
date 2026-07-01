@@ -49,7 +49,7 @@
       "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate",
       "return_code": 0,
       "status": "passed",
-      "stdout_tail": "OK: /home/zty/projects/ai-compiled-towerdefense-worktrees/task-mvp-handoff-audit/examples/review_packs/mvp_multistage_content_pack.v0.1.json\n- stages: 3\n- asset_type_counts: {'support_item': 1, 'temporary_mod': 1, 'tower_blueprint': 1}\n- final_state_file: examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json\n- validation: passed\n",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_multistage_content_pack.v0.1.json\n- stages: 3\n- asset_type_counts: {'support_item': 1, 'temporary_mod': 1, 'tower_blueprint': 1}\n- final_state_file: examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json\n- validation: passed\n",
       "stderr_tail": ""
     },
     {
@@ -65,7 +65,7 @@
       "command": "python3 tools/content_pipeline/build_compilable_object_catalog.py --validate",
       "return_code": 0,
       "status": "passed",
-      "stdout_tail": "OK: /home/zty/projects/ai-compiled-towerdefense-worktrees/task-mvp-handoff-audit/examples/review_packs/mvp_compilable_object_catalog.v0.1.json\n- schema_version: compilable_object_catalog.v0.1\n- objects: 104\n- layers: {'behavior': 2, 'economy': 7, 'entity': 14, 'level': 6, 'narrative': 34, 'progression': 8, 'rule': 8, 'visual': 25}\n- validation: passed\n",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_compilable_object_catalog.v0.1.json\n- schema_version: compilable_object_catalog.v0.1\n- objects: 104\n- layers: {'behavior': 2, 'economy': 7, 'entity': 14, 'level': 6, 'narrative': 34, 'progression': 8, 'rule': 8, 'visual': 25}\n- validation: passed\n",
       "stderr_tail": ""
     },
     {
@@ -73,7 +73,7 @@
       "command": "python3 tools/content_pipeline/build_frontend_mock_pack.py",
       "return_code": 0,
       "status": "passed",
-      "stdout_tail": "Wrote /home/zty/projects/ai-compiled-towerdefense-worktrees/task-mvp-handoff-audit/examples/frontend_mock/frontend_mock_pack.v0.1.json\n- assets: 11\n- playable: 11\n",
+      "stdout_tail": "Wrote $REPO_ROOT/examples/frontend_mock/frontend_mock_pack.v0.1.json\n- assets: 11\n- playable: 11\n",
       "stderr_tail": ""
     },
     {
@@ -129,7 +129,7 @@
       "command": "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate",
       "return_code": 0,
       "status": "passed",
-      "stdout_tail": "OK: /home/zty/projects/ai-compiled-towerdefense-worktrees/task-mvp-handoff-audit/examples/review_packs/mvp_compiler_review_dossier.v0.1.json\n- schema_version: mvp_compiler_review_dossier.v0.1\n- stages: 4\n- assets: 7\n- tasks: 7\n- random_events: 5\n- source_evidence: 106\n- validation: passed\n",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_compiler_review_dossier.v0.1.json\n- schema_version: mvp_compiler_review_dossier.v0.1\n- stages: 4\n- assets: 7\n- tasks: 7\n- random_events: 5\n- source_evidence: 106\n- validation: passed\n",
       "stderr_tail": ""
     }
   ],

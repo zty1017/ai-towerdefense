@@ -3580,7 +3580,7 @@
       "path": "tools/content_pipeline/run_mvp_handoff_audit.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "6cee334366cb64b0241d5eabfb4547558b5350c3e53615b7d5a1e871545289c4"
+      "sha256": "876168592c67c2ae6cd1de0899bc3d08ad91321af9b676dd0c857b0e0d14e6d8"
     },
     {
       "path": "tools/content_pipeline/validate_compilable_object_catalog.py",
