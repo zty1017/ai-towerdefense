@@ -127,14 +127,16 @@ python3 tools/content_pipeline/build_compilable_object_catalog.py --validate
 当前目录从以下证据构建：
 
 - `mvp_stage_candidate_pack.v0.1.json`
+- `mvp_multistage_content_pack.v0.1.json`
+- `mvp_multistage_stage_candidate_pack.v0.1.json`
 - `mvp_story_asset_promotion_report.v0.1.json`
-- `demo_after_stage_04_wick_store.run_world_state.json`
+- `demo_after_stage_07_split_tide.run_world_state.json`
 
 它不是前端数据，不读取 `.env`，不调用 provider，不修改基础世界书。
 
 ## 当前 MVP 结论
 
-当前目录覆盖 69 个可编译对象，包含表现、实体、行为、经济、关卡、叙事、成长、规则八层。
+当前目录覆盖 104 个可编译对象，包含表现、实体、行为、经济、关卡、叙事、成长、规则八层。它已经吸收 Stage 05 / Stage 06 / Stage 07 的多阶段内容生产结果，因此能在一个统一 Object Graph 里审查旧四阶段纵切和后续三阶段候选链。
 
 这说明当前系统已经不只是能审查“防御塔资产”，也能审查：
 
@@ -143,6 +145,7 @@ python3 tools/content_pipeline/build_compilable_object_catalog.py --validate
 - 研发任务、蓝图、样品是否形成成长链。
 - 素材和资源是否作为编译能力与约束存在。
 - 哪些资产可以 runtime_ready / fallback_ready，哪些仍是 candidate_only。
+- 多阶段新增的支援道具、临时改造、研发任务、临时样本、蓝图和地图节点是否与其来源阶段、依赖对象和晋级证据对应。
 
 后续真实 LLM 生成新阶段或新资产时，应尽量提交同类目录证据，方便主代理和人工审查。
 

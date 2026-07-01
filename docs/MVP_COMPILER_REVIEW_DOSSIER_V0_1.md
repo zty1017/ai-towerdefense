@@ -63,14 +63,14 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - `pipeline_overview`：从剧情节点、WorldStateDelta、资产编译、媒体管线到审查交付包的流水线说明。
 - `stage_reviews`：四个 MVP 阶段的世界线 / 玩家线覆盖、玩法目的、玩法 hook、Delta op 统计、关联资产、NPC、材料、地图节点。
 - `stage_candidate_pack_summary`：阶段候选包摘要，证明每个阶段的剧情、WorldStateDelta、玩法对象、资产和 runtime 引用已经被合并成可审查单元。
-- `compilable_object_catalog_summary`：可编译对象目录摘要，统计当前 MVP 已证明的表现、实体、行为、叙事、关卡、经济、成长和规则对象。
+- `compilable_object_catalog_summary`：可编译对象目录摘要，统计当前 MVP 已证明的表现、实体、行为、叙事、关卡、经济、成长和规则对象；当前目录已吸收 Stage 05 / 06 / 07 多阶段内容生产结果。
 - `compilable_object_plan_summary`：下一阶段对象化生成计划摘要，说明 Stage 05 需要生成哪些对象、哪些需要 LLM、媒体和人工审查。
-- `Stage 05 计划落地样例`：把下一阶段计划转成可审查叙事包、世界状态变化、下一运行态、资产提案和候选资产，但暂不晋升进正式阶段候选包。
+- `Stage 05 计划落地样例`：把下一阶段计划转成可审查叙事包、世界状态变化、下一运行态、资产提案和候选资产；后续多阶段包会把 Stage 05 / 06 / 07 统一导出为标准阶段候选包。
 - `多阶段内容生产包`：串行生产 Stage 05 / 06 / 07 的剧情线、任务、随机事件、临时样本和三类资产候选，并导出标准阶段候选包供人工审查。
 - `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
 - `runtime_package_summaries`：第一战和灯芯仓压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产。
-- `runtime_state_summary`：最终运行态的进度、全局状态和对象数量。
+- `runtime_state_summary`：Stage 07 后最终运行态的进度、全局状态和对象数量。
 - `readiness_summary`：当前是否足以支撑 MVP 审查。
 - `source_evidence`：被汇总的关键文件与 sha256。
 - `validation_commands`：建议复验命令。
@@ -83,7 +83,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - 已有四阶段剧情演示链。
 - 每个阶段都能关联 `NarrativeEventBundle` 和受控 `WorldStateDelta`。
 - 每个阶段都能被整理为 `StageCandidatePack` 候选单元，后续真实 LLM 生成新阶段时也应提交同形态候选，而不是只提交剧情文本。
-- 当前内容能被整理为 `CompilableObjectCatalog`，证明 MVP 已覆盖塔 / 道具 / 样品、任务、随机事件、地图节点、素材、NPC、研发任务、蓝图、事实和 flag 等多类可编译对象。
+- 当前内容能被整理为 `CompilableObjectCatalog`，证明 MVP 已覆盖塔 / 道具 / 样品、任务、随机事件、地图节点、素材、NPC、研发任务、蓝图、事实和 flag 等多类可编译对象；当前目录汇总 104 个对象。
 - 当前已有 `CompilableObjectPlan` 作为下一阶段生成前的施工图，避免 LLM 直接跳到松散剧情或越权对象。
 - 当前已有 Stage 05 计划落地样例，证明剧情、任务、随机事件、临时样本和防御塔候选可以从同一个计划进入受控验证链路。
 - 当前已有多阶段内容生产包，证明同一套流水线可以连续生产防御塔、支援道具和高风险临时改造候选，并串行推进世界线与玩家线。
@@ -177,6 +177,12 @@ python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_ass
 python3 tools/content_pipeline/build_multistage_content_pack.py --validate
 ```
 
+单独校验多阶段内容生产包：
+
+```bash
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
+```
+
 单独校验多阶段标准阶段候选包：
 
 ```bash
@@ -186,7 +192,7 @@ python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_
 校验最终运行态：
 
 ```bash
-python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json
+python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json
 ```
 
 校验灯芯仓压力战 locked manifest 和 runtime package：
@@ -215,6 +221,7 @@ python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_world_delta_sem
 
 ```bash
 python3 tools/world_state/replay_mvp_delta_chain.py --compare-final examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
 ```
 
 校验所有 workflow：

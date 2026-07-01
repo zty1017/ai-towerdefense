@@ -31,7 +31,7 @@ from validation_common import load_json, validate_json_schema  # noqa: E402
 DOSSIER_VERSION = "mvp_compiler_review_dossier.v0.1"
 DEFAULT_REVIEW_PACK = ROOT / "examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
-DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
 DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
 DEFAULT_COMPILABLE_OBJECT_CATALOG = ROOT / "examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
 DEFAULT_COMPILABLE_OBJECT_PLAN = ROOT / "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
@@ -674,7 +674,7 @@ def validation_commands() -> list[dict[str, str]]:
         },
         {
             "purpose": "校验最终运行态",
-            "command": "python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+            "command": "python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
         },
         {
             "purpose": "校验语义门 DAG 示例",

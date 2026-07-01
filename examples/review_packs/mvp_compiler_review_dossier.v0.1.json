@@ -1454,6 +1454,11 @@
         "id": "lamp_wick_store",
         "kind": "map_node",
         "status": "final_run_state"
+      },
+      {
+        "id": "east_dark_ridge",
+        "kind": "map_node",
+        "status": "final_run_state"
       }
     ],
     "tasks": [
@@ -1488,6 +1493,30 @@
         "summary": "整理灯灰爆鸣塔蓝图",
         "node_id": "lamp_wick_store",
         "npc_id": "npc_wire_mender_003"
+      },
+      {
+        "id": "task_stabilize_old_signal_tower",
+        "kind": "defense",
+        "status": "completed",
+        "summary": "稳定旧信号塔回光",
+        "node_id": "old_signal_tower",
+        "npc_id": "npc_road_scout"
+      },
+      {
+        "id": "task_map_signal_backwash",
+        "kind": "scouting",
+        "status": "active",
+        "summary": "记录旧塔回流方向",
+        "node_id": "old_signal_tower",
+        "npc_id": "npc_road_scout"
+      },
+      {
+        "id": "task_contain_split_tide",
+        "kind": "defense",
+        "status": "active",
+        "summary": "遏制东侧分潮",
+        "node_id": "east_dark_ridge",
+        "npc_id": "npc_wire_mender_003"
       }
     ],
     "random_events": [
@@ -1501,9 +1530,30 @@
       {
         "id": "random_event_old_signal_tower_pressure",
         "kind": "map_pressure",
-        "status": "pending",
+        "status": "available",
         "summary": "旧信号塔附近的回光扰动增强，若继续侦察，可能打开新的压力节点或捷径。",
         "node_id": "old_signal_tower"
+      },
+      {
+        "id": "random_event_signal_backwash",
+        "kind": "research_opportunity",
+        "status": "available",
+        "summary": "回光玻片完成试作后，可能出现一次短暂回流，可用于强化折射类装置，也可能提高旧塔压力。",
+        "node_id": "old_signal_tower"
+      },
+      {
+        "id": "random_event_split_tide_pressure",
+        "kind": "threat_warning",
+        "status": "available",
+        "summary": "旧塔回流照出一条新的分潮线，北路外缘可能出现更强的分散冲击。",
+        "node_id": "old_signal_tower"
+      },
+      {
+        "id": "random_event_east_ridge_pressure",
+        "kind": "map_pressure",
+        "status": "pending",
+        "summary": "东侧暗脊压力继续升高，下一场防守需要兼顾旧路和新节点。",
+        "node_id": "east_dark_ridge"
       }
     ],
     "research_jobs": [
@@ -1529,11 +1579,40 @@
         "summary": "灯灰爆鸣塔蓝图",
         "source_task_id": "task_formalize_ash_burst_lantern",
         "source_sample_id": "asset_ash_burst_lantern_trial"
+      },
+      {
+        "id": "research_echo_prism_relay_trial",
+        "kind": "research_job",
+        "status": "completed",
+        "summary": "回光棱镜中继塔试作",
+        "source_task_id": "task_stabilize_old_signal_tower",
+        "source_sample_id": "sample_resonant_glass_shard_trial"
+      },
+      {
+        "id": "research_signal_echo_marker_trial",
+        "kind": "research_job",
+        "status": "queued",
+        "summary": "回声测标短札试作",
+        "source_task_id": "task_map_signal_backwash",
+        "source_sample_id": "sample_signal_echo_marker_trial"
+      },
+      {
+        "id": "research_overload_chain_breaker_trial",
+        "kind": "research_job",
+        "status": "queued",
+        "summary": "过载连弧断潮改造",
+        "source_task_id": "task_contain_split_tide",
+        "source_sample_id": "sample_charged_copper_coil_trial"
       }
     ],
     "blueprints": [
       {
         "id": "asset_ash_burst_lantern",
+        "kind": "blueprint",
+        "status": "known"
+      },
+      {
+        "id": "asset_echo_prism_relay",
         "kind": "blueprint",
         "status": "known"
       }
@@ -2764,36 +2843,36 @@
   },
   "compilable_object_catalog_summary": {
     "catalog_file": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
-    "total_objects": 69,
+    "total_objects": 104,
     "layer_counts": {
-      "behavior": 1,
+      "behavior": 2,
       "economy": 7,
-      "entity": 9,
-      "level": 5,
-      "narrative": 22,
-      "progression": 4,
-      "rule": 5,
-      "visual": 16
+      "entity": 14,
+      "level": 6,
+      "narrative": 34,
+      "progression": 8,
+      "rule": 8,
+      "visual": 25
     },
     "permission_level_counts": {
-      "L1_presentation": 16,
-      "L2_entity": 9,
-      "L3_behavior": 19,
-      "L4_system_rule": 25
+      "L1_presentation": 25,
+      "L2_entity": 14,
+      "L3_behavior": 29,
+      "L4_system_rule": 36
     },
     "runtime_export_counts": {
       "candidate_only": 7,
-      "fallback_ready": 15,
-      "review_only": 4,
-      "runtime_ready": 43
+      "fallback_ready": 27,
+      "review_only": 7,
+      "runtime_ready": 63
     },
     "risk_counts": {
       "high": 7,
-      "low": 43,
-      "medium": 19
+      "low": 59,
+      "medium": 38
     },
-    "player_exposed_count": 51,
-    "review_required_count": 11
+    "player_exposed_count": 80,
+    "review_required_count": 14
   },
   "compilable_object_plan_summary": {
     "plan_file": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -2850,24 +2929,24 @@
     "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
   },
   "runtime_state_summary": {
-    "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+    "state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
     "progress": {
       "chapter": 1,
       "turn": 1,
-      "phase": "post_wick_store_defense"
+      "phase": "split_tide_containment_planned"
     },
     "global_state": {
-      "pressure": 0.3,
-      "hope": 0.67,
-      "visibility": 0.28
+      "pressure": 0.47,
+      "hope": 0.66,
+      "visibility": 0.45
     },
-    "map_node_count": 5,
+    "map_node_count": 6,
     "npc_count": 4,
-    "event_count": 5,
-    "task_count": 4,
-    "random_event_count": 2,
-    "temporary_sample_count": 3,
-    "blueprint_count": 1
+    "event_count": 8,
+    "task_count": 7,
+    "random_event_count": 5,
+    "temporary_sample_count": 6,
+    "blueprint_count": 2
   },
   "readiness_summary": {
     "stage_count": 4,
@@ -2875,10 +2954,10 @@
     "fallback_ready_asset_references": 6,
     "runtime_fixture_asset_references": 1,
     "candidate_or_blocked_asset_references": 2,
-    "task_count": 4,
-    "random_event_count": 2,
-    "research_job_count": 3,
-    "blueprint_count": 1,
+    "task_count": 7,
+    "random_event_count": 5,
+    "research_job_count": 6,
+    "blueprint_count": 2,
     "mvp_support_level": "reviewable_vertical_slice"
   },
   "source_evidence": [
@@ -2886,7 +2965,7 @@
       "path": "docs/COMPILABLE_OBJECT_MODEL_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "25d18d98cdcf82afc6754210b67220a71cd28316201b4c28398ce7cdb4f0b6bd"
+      "sha256": "7c4ac4ce50a4647e06766c6e2e5c0f4eee65847985b27937e39b09a95cd41645"
     },
     {
       "path": "docs/COMPILABLE_OBJECT_PLAN_V0_1.md",
@@ -2916,7 +2995,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "b6e38c1fb3806933a5b222da84e3aa770e538b5ed413feccbe7e25c500d51c45"
+      "sha256": "b5f403864f31ca85f977a5cb8e4f8167019d8214d70e48c8f3a963a8d1064ecc"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -3066,7 +3145,7 @@
       "path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
       "kind": "compilable_object_catalog",
       "exists": true,
-      "sha256": "ba0bfdee5f691d46a3cfed19dd6a4bf3712323b352c77beeaa779139434b415c"
+      "sha256": "87c30e24cada0019b53ba9280bf79e45774f252fc22214c7402ef903ad81dde9"
     },
     {
       "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
@@ -3078,7 +3157,7 @@
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
       "kind": "stage_candidate_pack",
       "exists": true,
-      "sha256": "97c99845e1d6e41fe533ad72aee5076b36b6619525215b74615190ca88b30139"
+      "sha256": "0184089294cc85fd61355791d5e1288349644ab4040f9f898de825856fca96e5"
     },
     {
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -3109,12 +3188,6 @@
       "kind": "review_pack",
       "exists": true,
       "sha256": "1c50ccdc3055f1a80b2130e678553ad33e8e1b7e555d81706a9ac577529ce8f4"
-    },
-    {
-      "path": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
-      "kind": "run_world_state",
-      "exists": true,
-      "sha256": "714d944a3fe245514ec812f19a7316a2e990b21f3e4ff8d26487c92863e4d847"
     },
     {
       "path": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
@@ -3360,7 +3433,7 @@
       "path": "tools/content_pipeline/build_compilable_object_catalog.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "2cf0e059507b311c45eff6f1169a523336bb74f0b9a7a306516c425fd9f9dafa"
+      "sha256": "e5e59e59b3baf245886673bda80c6e1501973c5ca6e5c857e5ba5fc8cf3ee808"
     },
     {
       "path": "tools/content_pipeline/build_compilable_object_plan.py",
@@ -3372,7 +3445,7 @@
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "901297f554d9c3d742cf8442b223e3b2311624ba4e46300e4375731fa968f8ae"
+      "sha256": "59dae9d0df995bfd8b6284c96204cac0345b33791c15134c4456197535e2af33"
     },
     {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",
@@ -3414,7 +3487,7 @@
       "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
       "kind": "validator",
       "exists": true,
-      "sha256": "49c10eff268ca0d37dc75971f42f6d823e199ecdf66a85dd7b0d51f27367c008"
+      "sha256": "369ca8ba203c20dab1ad18f9f7a1fca481dc524be63ed9d5fcac5287246125f4"
     },
     {
       "path": "tools/narrative/validate_narrative_gameplay_contract.py",
@@ -3524,7 +3597,7 @@
     },
     {
       "purpose": "校验最终运行态",
-      "command": "python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+      "command": "python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
     },
     {
       "purpose": "校验语义门 DAG 示例",

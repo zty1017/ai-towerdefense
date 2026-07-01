@@ -26,8 +26,10 @@ from validate_compilable_object_catalog import validate_compilable_object_catalo
 CATALOG_VERSION = "compilable_object_catalog.v0.1"
 SCHEMA_PATH = ROOT / "shared/schemas/compilable_object_catalog.v0.1.schema.json"
 DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
+DEFAULT_MULTISTAGE_CONTENT_PACK = ROOT / "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
-DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+DEFAULT_FINAL_STATE = ROOT / "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
 
 
@@ -376,7 +378,7 @@ def asset_objects(promotion_report: dict[str, Any]) -> list[dict[str, Any]]:
     return objects
 
 
-def stage_objects(stage_pack: dict[str, Any]) -> list[dict[str, Any]]:
+def stage_objects(stage_pack: dict[str, Any], stage_pack_path: Path) -> list[dict[str, Any]]:
     objects: list[dict[str, Any]] = []
     for stage in as_list(stage_pack.get("stage_candidates")):
         if not isinstance(stage, dict):
@@ -398,7 +400,7 @@ def stage_objects(stage_pack: dict[str, Any]) -> list[dict[str, Any]]:
                 compile_actor="system",
                 source_kind="stage_candidate_pack",
                 source_files=[
-                    rel(DEFAULT_STAGE_CANDIDATE_PACK),
+                    rel(stage_pack_path),
                     str(source_files.get("narrative_bundle") or ""),
                     str(source_files.get("world_delta") or ""),
                     str(source_files.get("battle_config") or ""),
@@ -429,8 +431,147 @@ def stage_objects(stage_pack: dict[str, Any]) -> list[dict[str, Any]]:
     return objects
 
 
-def run_state_objects(final_state: dict[str, Any]) -> list[dict[str, Any]]:
-    source = rel(DEFAULT_FINAL_STATE)
+def stage_policy_evidence_by_asset(content_pack: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    evidence_by_asset: dict[str, dict[str, Any]] = {}
+    for stage in as_list(content_pack.get("stage_summaries")):
+        if not isinstance(stage, dict):
+            continue
+        evidence = as_obj(stage.get("asset_policy_evidence"))
+        asset_id = str(evidence.get("candidate_id") or stage.get("asset_candidate_id") or "")
+        if asset_id:
+            evidence_by_asset[asset_id] = evidence
+    return evidence_by_asset
+
+
+def multistage_asset_objects(
+    stage_pack: dict[str, Any],
+    content_pack: dict[str, Any],
+    stage_pack_path: Path,
+    content_pack_path: Path,
+) -> list[dict[str, Any]]:
+    evidence_by_asset = stage_policy_evidence_by_asset(content_pack)
+    dependency_prefixes = {
+        "map_nodes": "map_node",
+        "npcs": "npc",
+        "resources": "material",
+        "facts": "fact",
+        "flags": "flag",
+        "tasks": "task",
+        "random_events": "random_event",
+        "research_jobs": "research_job",
+        "samples": "sample",
+        "blueprints": "blueprint",
+    }
+    objects: list[dict[str, Any]] = []
+    for stage in as_list(stage_pack.get("stage_candidates")):
+        if not isinstance(stage, dict):
+            continue
+        stage_id = str(stage.get("stage_id") or "")
+        gameplay_outputs = as_obj(stage.get("gameplay_outputs"))
+        output_deps = [
+            f"{dependency_prefixes.get(kind, kind)}:{value}"
+            for kind, values in sorted(gameplay_outputs.items())
+            for value in as_list(values)
+            if isinstance(value, str)
+        ]
+        for asset in as_list(stage.get("asset_outputs")):
+            if not isinstance(asset, dict):
+                continue
+            asset_id = str(asset.get("asset_id") or "")
+            if not asset_id:
+                continue
+            asset_kind = str(asset.get("asset_kind") or "compiled_asset")
+            layer, level, actor = asset_layer_and_level(asset_kind)
+            export_status = str(asset.get("promotion_state") or "review_only")
+            if export_status not in {"runtime_ready", "fallback_ready", "candidate_only", "review_only", "not_exported"}:
+                export_status = "fallback_ready" if asset.get("playable") else "review_only"
+            evidence = as_obj(evidence_by_asset.get(asset_id))
+            score = as_obj(evidence.get("score"))
+            promotion = as_obj(evidence.get("promotion"))
+            risk_level = "medium" if asset.get("uses_fallback_media") else "low"
+            if promotion.get("promotion_state") == "failed" or promotion.get("blockers"):
+                risk_level = "high"
+            objects.append(
+                make_object(
+                    object_id=f"asset:{asset_id}",
+                    object_type=asset_kind,
+                    object_layer=layer,
+                    compile_permission_level=level,
+                    compile_actor=actor,
+                    source_kind="multistage_asset_candidate",
+                    source_files=[
+                        str(asset.get("source_file") or ""),
+                        rel(stage_pack_path),
+                        rel(content_pack_path),
+                    ],
+                    source_ids=[asset_id],
+                    stage_refs=[stage_id],
+                    dependency_refs=output_deps,
+                    validators=[
+                        "validate_asset_candidate.py",
+                        "simulate_asset_candidate.py",
+                        "score_asset_candidate.py",
+                        "asset_promotion_policy.py",
+                        "validate_multistage_content_pack.py",
+                    ],
+                    contract=runtime_contract(
+                        load_surface="battle_runtime" if asset.get("playable") else "review_pack",
+                        state_effects=["battle_capability", asset_kind],
+                        export_status=export_status,
+                        rollback_policy="remove_from_runtime_package",
+                        player_visible=bool(asset.get("playable")),
+                        risk_level=risk_level,
+                    ),
+                    review_status=str(asset.get("promotion_state") or "review_needed"),
+                    notes=[
+                        *stable_strings(as_list(asset.get("required_next_actions"))),
+                        *stable_strings(as_list(promotion.get("warnings"))),
+                        str(score.get("recommendation") or ""),
+                    ],
+                )
+            )
+            for role in stable_strings(as_list(score.get("expected_media_roles"))):
+                objects.append(
+                    make_object(
+                        object_id=f"visual:{asset_id}:{role}",
+                        object_type=role,
+                        object_layer="visual",
+                        compile_permission_level="L1_presentation",
+                        compile_actor="system",
+                        source_kind="multistage_expected_media_role",
+                        source_files=[
+                            str(asset.get("source_file") or ""),
+                            rel(content_pack_path),
+                        ],
+                        source_ids=[asset_id, role],
+                        stage_refs=[stage_id],
+                        dependency_refs=[f"asset:{asset_id}"],
+                        validators=[
+                            "score_asset_candidate.py",
+                            "asset_promotion_policy.py",
+                            "media_runtime_readiness_report.v0.1",
+                        ],
+                        contract=runtime_contract(
+                            load_surface="battle_runtime" if asset.get("playable") else "review_pack",
+                            state_effects=["visual_presentation", role],
+                            export_status=export_status,
+                            rollback_policy="remove_from_runtime_package",
+                            player_visible=bool(asset.get("playable")),
+                            risk_level="medium" if asset.get("uses_fallback_media") else "low",
+                        ),
+                        review_status=(
+                            "fallback_media_role"
+                            if asset.get("uses_fallback_media")
+                            else "media_review_needed"
+                        ),
+                        notes=["expected_media_role", str(score.get("recommendation") or "")],
+                    )
+                )
+    return objects
+
+
+def run_state_objects(final_state: dict[str, Any], final_state_path: Path) -> list[dict[str, Any]]:
+    source = rel(final_state_path)
     objects: list[dict[str, Any]] = []
     for node in as_list(final_state.get("map_nodes")):
         if not isinstance(node, dict):
@@ -746,6 +887,10 @@ def validation_commands() -> list[dict[str, str]]:
             "purpose": "单独校验可编译对象目录",
             "command": "python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
         },
+        {
+            "purpose": "校验多阶段内容生产包",
+            "command": "python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+        },
     ]
 
 
@@ -793,15 +938,31 @@ def build_catalog(
     stage_candidate_pack_path: Path,
     promotion_report_path: Path,
     final_state_path: Path,
+    multistage_content_pack_path: Path,
+    multistage_stage_candidate_pack_path: Path,
     created_at: str,
 ) -> dict[str, Any]:
     stage_pack = load_json(stage_candidate_pack_path)
     promotion_report = load_json(promotion_report_path)
     final_state = load_json(final_state_path)
+    extra_objects: list[dict[str, Any]] = []
+    if multistage_content_pack_path.is_file() and multistage_stage_candidate_pack_path.is_file():
+        multistage_content_pack = load_json(multistage_content_pack_path)
+        multistage_stage_pack = load_json(multistage_stage_candidate_pack_path)
+        extra_objects.extend(stage_objects(multistage_stage_pack, multistage_stage_candidate_pack_path))
+        extra_objects.extend(
+            multistage_asset_objects(
+                multistage_stage_pack,
+                multistage_content_pack,
+                multistage_stage_candidate_pack_path,
+                multistage_content_pack_path,
+            )
+        )
     objects = merge_objects([
-        *stage_objects(stage_pack),
+        *stage_objects(stage_pack, stage_candidate_pack_path),
         *asset_objects(promotion_report),
-        *run_state_objects(final_state),
+        *extra_objects,
+        *run_state_objects(final_state, final_state_path),
     ])
     return {
         "schema_version": CATALOG_VERSION,
@@ -839,6 +1000,8 @@ def validate_catalog(catalog: dict[str, Any]) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build CompilableObjectCatalog v0.1.")
     parser.add_argument("--stage-candidate-pack", default=str(DEFAULT_STAGE_CANDIDATE_PACK))
+    parser.add_argument("--multistage-content-pack", default=str(DEFAULT_MULTISTAGE_CONTENT_PACK))
+    parser.add_argument("--multistage-stage-candidate-pack", default=str(DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK))
     parser.add_argument("--promotion-report", default=str(DEFAULT_PROMOTION_REPORT))
     parser.add_argument("--final-state", default=str(DEFAULT_FINAL_STATE))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
@@ -850,6 +1013,8 @@ def main() -> int:
         Path(args.stage_candidate_pack),
         Path(args.promotion_report),
         Path(args.final_state),
+        Path(args.multistage_content_pack),
+        Path(args.multistage_stage_candidate_pack),
         args.created_at,
     )
     output = Path(args.output)

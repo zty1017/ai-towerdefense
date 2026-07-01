@@ -480,7 +480,7 @@
       "passed": 18,
       "warning": 3
     },
-    "playable_asset_reference_count": 0,
+    "playable_asset_reference_count": 3,
     "runtime_package_reference_count": 0,
     "contract_warnings": 0,
     "review_recommendation": "needs_human_review"

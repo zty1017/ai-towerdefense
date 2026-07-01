@@ -1197,6 +1197,18 @@ def build_multistage_stage_candidate_pack(
     gate_counts = Counter(
         gate["status"] for stage in stages for gate in stage["validation_gates"]
     )
+    playable_asset_count = sum(
+        1
+        for stage in stages
+        for asset in as_list(stage.get("asset_outputs"))
+        if isinstance(asset, dict) and asset.get("playable") is True
+    )
+    runtime_package_count = sum(
+        1
+        for stage in stages
+        for package in as_list(stage.get("runtime_package_refs"))
+        if isinstance(package, dict)
+    )
     final_state = stage_summaries[-1]["next_state_file"] if stage_summaries else ""
     recommendation = "blocked" if gate_counts.get("blocked") else "needs_human_review"
     pack = {
@@ -1225,8 +1237,8 @@ def build_multistage_stage_candidate_pack(
             "stage_count": len(stages),
             "status_counts": dict(sorted(status_counts.items())),
             "validation_gate_counts": dict(sorted(gate_counts.items())),
-            "playable_asset_reference_count": 0,
-            "runtime_package_reference_count": 0,
+            "playable_asset_reference_count": playable_asset_count,
+            "runtime_package_reference_count": runtime_package_count,
             "contract_warnings": 0,
             "review_recommendation": recommendation,
         },

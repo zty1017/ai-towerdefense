@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +49,10 @@ def _dedupe(errors: list[str]) -> list[str]:
             seen.add(error)
             out.append(error)
     return out
+
+
+def as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
 
 
 def _repo_path(ref: str) -> Path:
@@ -149,9 +154,26 @@ def _validate_stage_order(pack: dict[str, Any], errors: list[str]) -> None:
 def _validate_gate_readiness(pack: dict[str, Any], errors: list[str]) -> None:
     blocked_count = 0
     stage_ids: set[str] = set()
+    stages = [stage for stage in as_list(pack.get("stage_candidates")) if isinstance(stage, dict)]
+    readiness = pack.get("readiness_summary") if isinstance(pack.get("readiness_summary"), dict) else {}
+    status_counts: Counter[str] = Counter()
+    gate_counts: Counter[str] = Counter()
+    playable_asset_count = 0
+    runtime_package_count = 0
     for stage_index, stage in enumerate(pack.get("stage_candidates", []) or []):
         if not isinstance(stage, dict):
             continue
+        status_counts[str(stage.get("status"))] += 1
+        playable_asset_count += sum(
+            1
+            for asset in as_list(stage.get("asset_outputs"))
+            if isinstance(asset, dict) and asset.get("playable") is True
+        )
+        runtime_package_count += sum(
+            1
+            for package in as_list(stage.get("runtime_package_refs"))
+            if isinstance(package, dict)
+        )
         stage_id = stage.get("stage_id")
         if isinstance(stage_id, str):
             if stage_id in stage_ids:
@@ -173,7 +195,11 @@ def _validate_gate_readiness(pack: dict[str, Any], errors: list[str]) -> None:
                 f"stage_candidates[{stage_index}].validation_gates missing required gates: {missing}"
             )
         for gate in gates:
-            if isinstance(gate, dict) and gate.get("status") == "blocked":
+            if not isinstance(gate, dict):
+                continue
+            gate_status = str(gate.get("status"))
+            gate_counts[gate_status] += 1
+            if gate_status == "blocked":
                 blocked_count += 1
         if stage.get("status") == "reviewed_fixture" and any(
             isinstance(gate, dict) and gate.get("status") == "blocked" for gate in gates
@@ -181,7 +207,27 @@ def _validate_gate_readiness(pack: dict[str, Any], errors: list[str]) -> None:
             errors.append(
                 f"stage_candidates[{stage_index}] cannot be reviewed_fixture with blocked gates"
             )
-    recommendation = (pack.get("readiness_summary") or {}).get("review_recommendation")
+    if isinstance(readiness, dict):
+        if readiness.get("stage_count") != len(stages):
+            errors.append(
+                "readiness_summary.stage_count mismatch: "
+                f"expected {len(stages)}, got {readiness.get('stage_count')}"
+            )
+        if readiness.get("status_counts") != dict(sorted(status_counts.items())):
+            errors.append("readiness_summary.status_counts does not match stage_candidates")
+        if readiness.get("validation_gate_counts") != dict(sorted(gate_counts.items())):
+            errors.append("readiness_summary.validation_gate_counts does not match validation_gates")
+        if readiness.get("playable_asset_reference_count") != playable_asset_count:
+            errors.append(
+                "readiness_summary.playable_asset_reference_count mismatch: "
+                f"expected {playable_asset_count}, got {readiness.get('playable_asset_reference_count')}"
+            )
+        if readiness.get("runtime_package_reference_count") != runtime_package_count:
+            errors.append(
+                "readiness_summary.runtime_package_reference_count mismatch: "
+                f"expected {runtime_package_count}, got {readiness.get('runtime_package_reference_count')}"
+            )
+    recommendation = readiness.get("review_recommendation") if isinstance(readiness, dict) else None
     if blocked_count and recommendation == "review_ready":
         errors.append("readiness_summary.review_recommendation cannot be review_ready with blocked gates")
 
