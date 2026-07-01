@@ -33,6 +33,11 @@ class VisionProfile:
     model: str
     path: str = "/chat/completions"
     supports_json_object: bool = True
+    fallback_env_keys: tuple[str, ...] = ()
+
+    @property
+    def env_keys(self) -> tuple[str, ...]:
+        return (self.env_key, *self.fallback_env_keys)
 
 
 PROFILES: dict[str, VisionProfile] = {
@@ -54,6 +59,7 @@ PROFILES: dict[str, VisionProfile] = {
         base_url="https://apihub.agnes-ai.com/v1",
         model="agnes-2.0-flash",
         supports_json_object=False,
+        fallback_env_keys=("AGNES_API_KEY_2", "AGNES_API_KEY_3"),
     ),
 }
 
@@ -85,13 +91,15 @@ def load_dotenv(path: Path) -> None:
 
 
 def get_api_key(profile: VisionProfile) -> str:
-    key = os.environ.get(profile.env_key)
-    if not key:
-        raise RuntimeError(
-            f"Missing environment variable: {profile.env_key} "
-            f"(required for profile {profile.name!r})"
-        )
-    return key
+    for env_key in profile.env_keys:
+        key = os.environ.get(env_key)
+        if key and key.strip():
+            return key
+    env_names = " or ".join(profile.env_keys)
+    raise RuntimeError(
+        f"Missing environment variable: {env_names} "
+        f"(required for profile {profile.name!r})"
+    )
 
 
 def as_obj(value: Any) -> dict[str, Any]:

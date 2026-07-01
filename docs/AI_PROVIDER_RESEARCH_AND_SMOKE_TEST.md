@@ -10,6 +10,8 @@ Last updated: 2026-07-01
 
 ```text
 AGNES_API_KEY
+AGNES_API_KEY_2
+AGNES_API_KEY_3
 ARK_API_KEY
 DEEPSEEK_API_KEY
 GLM_API_KEY
@@ -32,7 +34,7 @@ LONGCAT_API_KEY
 
 | Provider | 环境变量 | 主要用途 | 推荐接入方式 | 关键风险 |
 |---|---|---|---|---|
-| Agnes | `AGNES_API_KEY` | 免费文本、图像、视频、多模态原型 | OpenAI-compatible + 视频异步接口 | 免费策略和 RPM 可能变化 |
+| Agnes | `AGNES_API_KEY` / `_2` / `_3` | 免费文本、图像、视频、多模态原型 | OpenAI-compatible + 视频异步接口 | 免费策略和 RPM 可能变化 |
 | 火山方舟 Coding Plan | `ARK_API_KEY` | 编码模型、开发辅助、可能的内部编译评审 | OpenAI-compatible `/api/coding/v3` 或 Anthropic-compatible `/api/coding` | 用错 Base URL 会产生额外费用 |
 | DeepSeek | `DEEPSEEK_API_KEY` | 低成本文本、结构化内容、推理/非推理切换 | OpenAI-compatible | 旧模型别名有明确下线日期 |
 | 智谱 GLM | `GLM_API_KEY` | 高质量文本、多模态、图像/视频能力 | `zai-sdk` / HTTP v4 | 主账户生成额度有限 |
@@ -49,6 +51,16 @@ LONGCAT_API_KEY
 - 控制台：[platform.agnes-ai.com](https://platform.agnes-ai.com)
 - Base URL：`https://apihub.agnes-ai.com/v1`
 - 鉴权：`Authorization: Bearer <AGNES_API_KEY>`
+
+项目内 Agnes profile 支持多个环境变量候选，按以下顺序选择第一个存在且非空的 key：
+
+```text
+AGNES_API_KEY
+AGNES_API_KEY_2
+AGNES_API_KEY_3
+```
+
+dry-run 和错误信息只能展示环境变量名，不能展示 key 值。`AGNES_API_KEY_2`、`AGNES_API_KEY_3` 仅用于同一个 Agnes provider 的额度/限流分摊，不应静默 fallback 到其他付费 provider。
 
 模型与接口：
 
@@ -209,7 +221,7 @@ GLM_API_KEY_FREE  -> 免费模型隔离账户
 ```text
 glm_5v_turbo        -> GLM_API_KEY
 glmfree_4_6v_flash  -> GLM_API_KEY_FREE
-agnes_multimodal_flash -> AGNES_API_KEY
+agnes_multimodal_flash -> AGNES_API_KEY / AGNES_API_KEY_2 / AGNES_API_KEY_3
 ```
 
 `media.review_with_vision_guarded` 会把本地生成图片以内联图片输入发送给视觉模型，
@@ -603,6 +615,8 @@ python3 tools/provider_smoke_check.py --provider deepseek --mode structured --li
 python3 tools/provider_smoke_check.py --provider glm --mode structured --live
 python3 tools/provider_smoke_check.py --provider longcat --mode structured --live
 ```
+
+`--mode dry` 不会加载 `.env`，只检查当前进程环境中是否存在对应变量名；真实 provider 调用仍必须显式加 `--live`。
 
 图像和视频不建议放入自动 CI 烟测。它们更适合手动触发，并把任务 ID、结果 URL、耗时、控制台用量写入 `AI_GENERATION_LOG`。
 
