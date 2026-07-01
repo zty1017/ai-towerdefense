@@ -106,6 +106,7 @@ CompiledAssetCandidate
   -> GenerateVideoFromImage
   -> ExtractVideoKeyframes
   -> SelectKeyframes
+  -> LoopContinuityCheck
   -> PostprocessFrameSequence
   -> AlignFrames
   -> PackSpriteSheet
@@ -140,6 +141,7 @@ MVP 可以拆成两条并行线：
 输入：
 
 - `image_seed_media`
+- 可选 `end_frame_media`
 - 可选 `candidate`
 
 输出：
@@ -152,6 +154,9 @@ MVP 可以拆成两条并行线：
 - 必须显式设置 `allow_live_provider_call: true`。
 - 如果 provider 要求公网图片 URL，必须先把本地 seed 图发布到临时可访问地址，且该地址不得进入 runtime public artifact。
 - provider 返回的视频必须下载到本地 artifact store。
+- 面向循环动画时，prompt 必须要求 `seamless loop`、`return to the original pose`、`no camera cut`、`no scene transition`、`stable centered subject`。
+- 如果 provider 支持首尾帧控制，应优先把同一张 `image_seed_media` 同时作为首帧和尾帧，或显式传入经过审核的 `end_frame_media`。
+- 如果 provider 只支持单图生视频，则 prompt 必须强调最后一帧回到首帧姿态；后续由 `LoopContinuityCheck` 判定是否可循环。
 
 ### 3.2 `media.extract_video_keyframes`
 
@@ -196,7 +201,44 @@ MVP 优先使用 `ffmpeg` CLI，因为它稳定、可复现、易调试。
 
 输出仍是 `frame_sequence.v0.1`。
 
-### 3.4 `media.postprocess_frame_sequence`
+### 3.4 `media.loop_continuity_check`
+
+检查抽帧结果是否适合循环播放。
+
+输入：
+
+- `frame_sequence.v0.1`
+- `image_seed_media`
+
+输出：
+
+- `loop_continuity_report.v0.1`
+
+检查项：
+
+- 首帧与末帧主体 bbox 差异不能过大。
+- 首帧与末帧 anchor 差异不能过大。
+- 首帧与末帧平均颜色 / alpha 覆盖差异不能过大。
+- 不能出现明显镜头切换、主体消失、背景突变。
+- 对塔、道具、NPC idle 动画，默认要求 `loopable = true`。
+
+失败处理：
+
+```text
+轻微失败:
+  丢弃末尾突变帧
+  或反向追加短序列 ping-pong
+  或首尾 crossfade 生成补间帧
+
+严重失败:
+  进入 prompt repair
+  重生成视频
+  或退回单帧 processed PNG + visual recipe 动效
+```
+
+MVP 后实现可以先用确定性像素指标；后续再接视觉模型判断“是否肉眼跳帧”。
+
+### 3.5 `media.postprocess_frame_sequence`
 
 批量处理帧序列。
 
