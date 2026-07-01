@@ -248,6 +248,67 @@
       ]
     },
     {
+      "node_type": "media.generate_video_from_image_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an image-to-video provider to animate selected raw image seeds. Requires params.allow_live_provider_call=true and workflow mode=live. Input seed images must already be local, reviewed enough for animation use, and published to a provider-accessible URL when the provider requires it. Writes a raw_video_sequence.v0.1 metadata artifact (media_layer=raw_media). Output is never runtime_public directly.",
+      "inputs": [
+        { "name": "image_seed_media", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw or animation-seed media metadata containing local image seed paths." },
+        { "name": "candidate", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a CompiledAssetCandidate for motion intent and role metadata." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw_video_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.extract_video_keyframes",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Extract ordered PNG keyframes from local raw video files. The implementation may use ffmpeg, browser media APIs, or a bundled decoder, but output must be local frame_sequence.v0.1 metadata and must not include provider temporary URLs.",
+      "inputs": [
+        { "name": "video_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw_video_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to frame_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.select_keyframes",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Select a short, stable subset of extracted frames for gameplay animation states. Rules may include first/middle/last, motion delta, blur rejection, and max_frames. Output remains frame_sequence.v0.1.",
+      "inputs": [
+        { "name": "frame_sequence", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to extracted frame_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to selected frame_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.postprocess_frame_sequence",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Batch-process selected PNG frames with matte removal, near-white island cleanup, crop/pad, normalized canvas, frame alignment, and role anchors. Promotes raw frame_sequence to processed_media suitable for atlas packing.",
+      "inputs": [
+        { "name": "frame_sequence", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to selected frame_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to processed frame_sequence or media_metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
       "node_type": "media.build_visual_identity_spec",
       "category": "media",
       "modes": ["deterministic", "studio", "live"],

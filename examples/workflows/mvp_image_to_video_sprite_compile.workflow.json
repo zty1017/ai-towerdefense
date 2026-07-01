@@ -1,0 +1,86 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_image_to_video_sprite_compile",
+  "mode": "live",
+  "description": "LIVE guarded route: animation seed image -> image-to-video -> keyframe extraction -> keyframe selection -> batch cutout/alignment -> sprite sheet/atlas -> runtime readiness. Calls video provider only when allow_live_provider_call=true.",
+  "nodes": [
+    {
+      "id": "load_candidate",
+      "node_type": "source.load_json",
+      "params": {
+        "path": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json"
+      }
+    },
+    {
+      "id": "load_animation_seed",
+      "node_type": "source.load_json",
+      "params": {
+        "path": "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json"
+      }
+    },
+    {
+      "id": "generate_video",
+      "node_type": "media.generate_video_from_image_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "video_profile": "agnes_image_to_video",
+        "target_asset_id": "asset_wick_barrier_pylon",
+        "target_role": "tower_sprite",
+        "duration_seconds": 3,
+        "request_timeout": 600
+      }
+    },
+    {
+      "id": "extract_keyframes",
+      "node_type": "media.extract_video_keyframes",
+      "params": {
+        "fps": 8,
+        "max_frames": 24,
+        "format": "png"
+      }
+    },
+    {
+      "id": "select_keyframes",
+      "node_type": "media.select_keyframes",
+      "params": {
+        "max_frames": 12,
+        "reject_blurry_frames": true,
+        "strategy": "motion_even"
+      }
+    },
+    {
+      "id": "postprocess_frames",
+      "node_type": "media.postprocess_frame_sequence",
+      "params": {
+        "matte_strategy": "edge_flood_fill",
+        "near_white_island_cleanup": true,
+        "align": "bottom_center",
+        "padding": 36,
+        "min_size": 512
+      }
+    },
+    {
+      "id": "pack_sheet",
+      "node_type": "media.pack_sprite_sheet_stub"
+    },
+    {
+      "id": "build_atlas",
+      "node_type": "media.build_atlas_json_stub",
+      "runtime_public": true
+    },
+    {
+      "id": "runtime_readiness",
+      "node_type": "media.check_runtime_readiness"
+    }
+  ],
+  "edges": [
+    { "source": "load_candidate", "target": "generate_video", "target_input": "candidate" },
+    { "source": "load_animation_seed", "target": "generate_video", "target_input": "image_seed_media" },
+    { "source": "generate_video", "target": "extract_keyframes", "target_input": "video_metadata" },
+    { "source": "extract_keyframes", "target": "select_keyframes", "target_input": "frame_sequence" },
+    { "source": "select_keyframes", "target": "postprocess_frames", "target_input": "frame_sequence" },
+    { "source": "postprocess_frames", "target": "pack_sheet", "target_input": "media_metadata" },
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" },
+    { "source": "build_atlas", "target": "runtime_readiness", "target_input": "published_media" }
+  ]
+}

@@ -453,7 +453,48 @@ media.check_runtime_readiness
 
 `media.check_runtime_readiness` 是发布后硬门禁：它不判断审美，只检查 published PNG、`/assets/generated/...`、sha256、透明度、主体 bbox、anchor、texture key 和 atlas frame。它回答的是“前端是否可以直接加载并摆放这个素材”。
 
-### 11.3 MVP 后第一梯队节点
+### 11.3 图片到视频帧序列路线（已固化）
+
+Agnes 等图像 provider 生成的白底图可以作为母图，不必强行要求它一次性成为最终 sprite。
+当前路线固化为：
+
+```text
+raw generated image
+  -> animation seed
+  -> image-to-video
+  -> extract keyframes
+  -> select keyframes
+  -> batch matte removal / cutout
+  -> frame alignment
+  -> sprite sheet / atlas
+  -> animation_states
+  -> runtime_readiness
+```
+
+对应协议节点：
+
+```text
+media.generate_video_from_image_guarded
+media.extract_video_keyframes
+media.select_keyframes
+media.postprocess_frame_sequence
+```
+
+这条路线的完整决策见：
+
+```text
+docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md
+```
+
+约束：
+
+- 图生视频调用只能在 `live` mode 下执行，并需要 `allow_live_provider_call: true`。
+- provider 如果要求公网图片 URL，该 URL 只能作为 provider 输入和内部 trace 证据，不得进入 runtime_public。
+- 视频产物必须先下载到本地 artifact store，再抽帧。
+- 抽帧结果仍属于 `raw_media`，不能直接给前端。
+- 只有经过批量抠图、帧间对齐、atlas 打包和 runtime readiness 的 published media 才能进入 runtime package。
+
+### 11.4 MVP 后第一梯队节点
 
 MVP 跑通后，按以下顺序补齐更强媒体后处理节点：
 
@@ -468,7 +509,7 @@ build_atlas_json       生成 atlas 元数据 JSON
 
 PNG v0.1 已覆盖其中最基础的路径；v0.2 需要把节点名从 `_stub` 迁移到正式名，并补齐 JPEG/WebP、缩放重采样、复杂背景抠图和多帧动画。
 
-### 11.4 媒体子图默认异步
+### 11.5 媒体子图默认异步
 
 媒体后处理子图默认异步执行，不阻塞 gameplay package 发布。
 

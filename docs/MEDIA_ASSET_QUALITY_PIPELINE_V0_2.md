@@ -4,6 +4,12 @@
 
 核心判断：图片模型产出的图不能直接等同于游戏资产。必须经过生成约束、后处理、确定性门禁、视觉审查和修复循环，最后才进入 runtime package。
 
+补充决策：Agnes 等图像 provider 稳定产出的白底图已经足够作为 MVP 母图。后续应固化“生成图片 -> 图生视频 -> 抽取关键帧 -> 批量抠图 -> atlas / animation state”的路线，而不是要求图片模型一次性产出完美动画资产。详见：
+
+```text
+docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md
+```
+
 ## 1. 外部方案调研结论
 
 可参考的外部方向：
@@ -181,6 +187,11 @@ shared/schemas/media_runtime_readiness_report.v0.1.schema.json
 - 增加 `sprite_source` / `cutout_source` 专用角色：
   - 与 `ui_card`、`battle_preview` 明确分离。
   - 生成图时默认纯色背景。
+- 固化视频帧路线：
+  - `animation_seed` 使用 raw generated image。
+  - 图生视频产物必须下载为本地 raw video。
+  - 抽帧后进入批量抠图、帧间对齐、atlas 打包。
+  - 视频帧失败时回退到单帧 processed PNG + visual recipe。
 
 ### 5.3 第二梯队
 
