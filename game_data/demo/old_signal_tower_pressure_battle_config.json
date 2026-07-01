@@ -1,0 +1,120 @@
+{
+  "battle_config_version": "old_signal_tower_pressure_battle.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "old_signal_tower",
+  "display_name": "旧信号塔·回光压力",
+  "grid": {
+    "projection": "pseudo3d_oblique",
+    "width_cells": 18,
+    "height_cells": 10,
+    "cell_size": 64
+  },
+  "paths": [
+    {
+      "stable_internal_id": "path_old_signal_north_ridge",
+      "display_name": "北脊旧线",
+      "waypoints": [
+        { "x": 17, "y": 2 },
+        { "x": 14, "y": 2 },
+        { "x": 12, "y": 4 },
+        { "x": 8, "y": 4 },
+        { "x": 5, "y": 5 },
+        { "x": 2, "y": 5 }
+      ],
+      "entry_label": "影潮沿北脊显形",
+      "exit_label": "旧塔基座"
+    },
+    {
+      "stable_internal_id": "path_old_signal_copper_trench",
+      "display_name": "铜槽回流",
+      "waypoints": [
+        { "x": 16, "y": 8 },
+        { "x": 13, "y": 7 },
+        { "x": 10, "y": 7 },
+        { "x": 7, "y": 6 },
+        { "x": 3, "y": 6 },
+        { "x": 2, "y": 5 }
+      ],
+      "entry_label": "回流牵出残影",
+      "exit_label": "临时棱座"
+    }
+  ],
+  "core_target": {
+    "stable_internal_id": "target_old_signal_tower_base",
+    "display_name": "旧信号塔基座",
+    "position": { "x": 1, "y": 5 },
+    "durability": 12
+  },
+  "optional_targets": [
+    {
+      "stable_internal_id": "target_resonant_glass_fixture",
+      "display_name": "回光玻片夹具",
+      "position": { "x": 4, "y": 4 },
+      "durability": 5
+    },
+    {
+      "stable_internal_id": "target_copper_grounding_pin",
+      "display_name": "旧铜接地点",
+      "position": { "x": 6, "y": 7 },
+      "durability": 4
+    }
+  ],
+  "waves": [
+    {
+      "wave_index": 1,
+      "display_name": "第一波·显形前锋",
+      "enemy_archetype": "shadow_tide_runner",
+      "count": 7,
+      "spawn_interval_ms": 1050,
+      "speed_cells_per_sec": 1.75,
+      "durability": 3,
+      "delay_before_wave_ms": 2200
+    },
+    {
+      "wave_index": 2,
+      "display_name": "第二波·回光游影",
+      "enemy_archetype": "shadow_tide_shade",
+      "count": 6,
+      "spawn_interval_ms": 1450,
+      "speed_cells_per_sec": 1.2,
+      "durability": 5,
+      "delay_before_wave_ms": 8500
+    },
+    {
+      "wave_index": 3,
+      "display_name": "第三波·锁塔重影",
+      "enemy_archetype": "shadow_tide_cluster",
+      "count": 4,
+      "spawn_interval_ms": 2100,
+      "speed_cells_per_sec": 1.0,
+      "durability": 8,
+      "delay_before_wave_ms": 16000
+    }
+  ],
+  "recommended_assets": [
+    "asset_echo_prism_relay"
+  ],
+  "sample_asset": {
+    "stable_internal_id": "asset_echo_prism_relay",
+    "asset_kind": "tower_blueprint",
+    "template_id": "tower_blueprint",
+    "lifecycle_state": "session_blueprint",
+    "display_name": "回光棱镜中继塔",
+    "uses_per_battle": 2,
+    "requires_delivery": false,
+    "delivery_state": "sample_ready",
+    "delivery_delay_ms": 0,
+    "delivery_progress_messages": [
+      "回光棱镜中继塔已完成现场封装。",
+      "可在旧信号塔节点部署，用于显形和减速。"
+    ],
+    "effect_summary": "在旧信号塔回光范围内显形来敌，并通过回光环场降低路径压力。",
+    "visual_recipes": ["ring_pulse", "beam", "aura_field"]
+  },
+  "victory_condition": "守住旧信号塔基座，并尽量保住回光玻片夹具。",
+  "failure_condition": "旧信号塔基座耐久归零。",
+  "post_battle": {
+    "on_victory": "旧信号塔短暂稳定，回流方向被记录为下一阶段测标线索。",
+    "on_failure": "旧塔回光失稳，但仍记录中继塔对显形和减速的表现。"
+  }
+}

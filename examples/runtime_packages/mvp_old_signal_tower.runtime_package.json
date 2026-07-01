@@ -1,0 +1,202 @@
+{
+  "schema_version": "runtime_package.v0.1",
+  "package_id": "package_session_lampwright_old_signal_tower_001",
+  "session_id": "session_lampwright_7f3a",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "old_signal_tower",
+  "battle_display_name": "旧信号塔·回光压力",
+  "created_at": "2026-07-01T00:00:00Z",
+  "source_refs": {
+    "locked_manifest_id": "manifest_session_lampwright_old_signal_tower_001",
+    "battle_config_version": "old_signal_tower_pressure_battle.v0.1"
+  },
+  "assets": [
+    {
+      "stable_internal_id": "asset_echo_prism_relay",
+      "asset_kind": "tower_blueprint",
+      "lifecycle_state": "session_blueprint",
+      "display": {
+        "name": "回光棱镜中继塔",
+        "summary": "把辉晶压入临时棱镜底座，引导旧信号塔回光，使来敌短暂显形并减速。",
+        "tags": [
+          "防御塔",
+          "减速",
+          "侦测",
+          "回光"
+        ]
+      },
+      "gameplay_ref": {
+        "kind": "compiled_asset_candidate",
+        "path": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        "sha256": "9c6fa6b90913ce4fc30902bac8a3716ecc80873d9519af045176b65e783b0d24"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_icon_1a0e42e9.png",
+          "width": 822,
+          "height": 822,
+          "sha256": "7db5c89749b1d03f8c2d0e0fe962881da142caecdaeaec0a41530ce4429a47f4"
+        },
+        "sprite": {
+          "texture_key": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
+          "atlas": "/assets/frontend_mock/atlases/mvp_stage04_towers.json",
+          "image": "/assets/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_place",
+          "kind": "ring_pulse",
+          "palette_token": "light.prism.white",
+          "color": "#f8f7ef",
+          "secondary_color": "#b9e4ff",
+          "intensity": "medium",
+          "radius": 96,
+          "duration_ms": 720,
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_reveal",
+          "kind": "beam",
+          "palette_token": "light.prism.blue",
+          "color": "#b9e4ff",
+          "secondary_color": "#ffffff",
+          "intensity": "medium",
+          "duration_ms": 520,
+          "blend_mode": "additive"
+        },
+        {
+          "trigger": "on_slow",
+          "kind": "aura_field",
+          "palette_token": "light.prism.white",
+          "color": "#f8f7ef",
+          "secondary_color": "#b9e4ff",
+          "intensity": "low",
+          "radius_from_effect": "aura_buff.radius",
+          "duration_ms": 1200,
+          "particle_density": "low",
+          "blend_mode": "additive"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": [
+          "battle_hotbar",
+          "node_supply"
+        ],
+        "uses_per_battle": 2,
+        "requires_delivery": false,
+        "delivery_state": "sample_ready"
+      }
+    }
+  ],
+  "battle_context": {
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 18,
+      "height_cells": 10,
+      "cell_size": 64
+    },
+    "paths": [
+      {
+        "stable_internal_id": "path_old_signal_north_ridge",
+        "display_name": "北脊旧线",
+        "waypoints": [
+          {
+            "x": 17,
+            "y": 2
+          },
+          {
+            "x": 14,
+            "y": 2
+          },
+          {
+            "x": 12,
+            "y": 4
+          },
+          {
+            "x": 8,
+            "y": 4
+          },
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 2,
+            "y": 5
+          }
+        ],
+        "entry_label": "影潮沿北脊显形",
+        "exit_label": "旧塔基座"
+      },
+      {
+        "stable_internal_id": "path_old_signal_copper_trench",
+        "display_name": "铜槽回流",
+        "waypoints": [
+          {
+            "x": 16,
+            "y": 8
+          },
+          {
+            "x": 13,
+            "y": 7
+          },
+          {
+            "x": 10,
+            "y": 7
+          },
+          {
+            "x": 7,
+            "y": 6
+          },
+          {
+            "x": 3,
+            "y": 6
+          },
+          {
+            "x": 2,
+            "y": 5
+          }
+        ],
+        "entry_label": "回流牵出残影",
+        "exit_label": "临时棱座"
+      }
+    ],
+    "core_target": {
+      "stable_internal_id": "target_old_signal_tower_base",
+      "display_name": "旧信号塔基座",
+      "position": {
+        "x": 1,
+        "y": 5
+      },
+      "durability": 12
+    },
+    "optional_targets": [
+      {
+        "stable_internal_id": "target_resonant_glass_fixture",
+        "display_name": "回光玻片夹具",
+        "position": {
+          "x": 4,
+          "y": 4
+        },
+        "durability": 5
+      },
+      {
+        "stable_internal_id": "target_copper_grounding_pin",
+        "display_name": "旧铜接地点",
+        "position": {
+          "x": 6,
+          "y": 7
+        },
+        "durability": 4
+      }
+    ],
+    "sample_delivery": {
+      "delivery_delay_ms": 0,
+      "delivery_progress_messages": [
+        "回光棱镜中继塔已完成现场封装。",
+        "可在旧信号塔节点部署，用于显形和减速。"
+      ]
+    }
+  }
+}

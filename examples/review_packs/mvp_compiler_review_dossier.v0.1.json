@@ -1710,6 +1710,39 @@
         "optional_target_count": 2,
         "sample_delivery_delay_ms": 0
       }
+    },
+    {
+      "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+      "package_id": "package_session_lampwright_old_signal_tower_001",
+      "session_id": "session_lampwright_7f3a",
+      "worldbook_id": "long_night_lanterns",
+      "node_id": "old_signal_tower",
+      "asset_count": 1,
+      "assets": [
+        {
+          "stable_internal_id": "asset_echo_prism_relay",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "回光棱镜中继塔",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "beam",
+            "ring_pulse"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "path_count": 2,
+        "optional_target_count": 2,
+        "sample_delivery_delay_ms": 0
+      }
     }
   ],
   "workflow_reviews": [
@@ -2965,7 +2998,7 @@
       "path": "docs/COMPILABLE_OBJECT_MODEL_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "7c4ac4ce50a4647e06766c6e2e5c0f4eee65847985b27937e39b09a95cd41645"
+      "sha256": "719fad8a2effc7c415b85bd5b07220551a9bdb3ad77f86bb4ee9b177adb310db"
     },
     {
       "path": "docs/COMPILABLE_OBJECT_PLAN_V0_1.md",
@@ -2989,13 +3022,13 @@
       "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "0cca95c91a7133e5a12328da4df687df6d6350183aef03e5d8a77c009c42fcd0"
+      "sha256": "8737d4c1d633546f56665bac2a7f92438b5dd8f3a5b28f79aa01d928c02c8e48"
     },
     {
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "b5f403864f31ca85f977a5cb8e4f8167019d8214d70e48c8f3a963a8d1064ecc"
+      "sha256": "05640ec3320549f59048500a8b6091c961c5d7fbc5fa7a9b4de7a59c9557209a"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -3082,6 +3115,24 @@
       "sha256": "2c85a2eb1ca5de65db6371f85c560d18c58b2cff62d9e87fffdc4162fec3eb0a"
     },
     {
+      "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json",
+      "kind": "locked_manifest",
+      "exists": true,
+      "sha256": "b8f33435e4a2dd738755c1d2d44bd04ad0914d123e44f19af572a4996491eda5"
+    },
+    {
+      "path": "examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json",
+      "kind": "locked_manifest",
+      "exists": true,
+      "sha256": "a3396f6553ea289c69f76bdcdfe262b92dcc72e433e3468c9b2165056051db70"
+    },
+    {
+      "path": "examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json",
+      "kind": "locked_manifest",
+      "exists": true,
+      "sha256": "7e4b5b2b07cf8792674e727361f6b0522edc7815ce184da6da239d87213732c2"
+    },
+    {
       "path": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
@@ -3145,7 +3196,7 @@
       "path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
       "kind": "compilable_object_catalog",
       "exists": true,
-      "sha256": "87c30e24cada0019b53ba9280bf79e45774f252fc22214c7402ef903ad81dde9"
+      "sha256": "e8b316fd2516c2ec8fe27db24b2221397278086c86398d1086ac545243e8ec0c"
     },
     {
       "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
@@ -3157,7 +3208,7 @@
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
       "kind": "stage_candidate_pack",
       "exists": true,
-      "sha256": "0184089294cc85fd61355791d5e1288349644ab4040f9f898de825856fca96e5"
+      "sha256": "6cd5dba31e787a110093d2f43959cf81e9fc4d61fac69b7803fd716b1ea2d85a"
     },
     {
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -3212,6 +3263,12 @@
       "kind": "runtime_package",
       "exists": true,
       "sha256": "d60fe202037fec1afd035aff90bc3e5d6d09352269f62d1fef8b6a53d6167b60"
+    },
+    {
+      "path": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+      "kind": "runtime_package",
+      "exists": true,
+      "sha256": "792e4a1e44a851b064798faaeb314defb08a61d74a2844a3dee16db246890a27"
     },
     {
       "path": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -3400,6 +3457,24 @@
       "sha256": "affd8c559305090f530285f7320dec8c2cf4fa538be41271a7eb0364da6c4a27"
     },
     {
+      "path": "game_data/demo/first_battle_config.json",
+      "kind": "battle_config",
+      "exists": true,
+      "sha256": "8034cbda4d734dae742fb7902d45b4e8b2e93c667680436a3adc59effe9cd57e"
+    },
+    {
+      "path": "game_data/demo/old_signal_tower_pressure_battle_config.json",
+      "kind": "battle_config",
+      "exists": true,
+      "sha256": "a90747dc5229b0786b4c1a2f2b656b8d2794b7237e6251e8516b71c1293ecf72"
+    },
+    {
+      "path": "game_data/demo/wick_store_pressure_battle_config.json",
+      "kind": "battle_config",
+      "exists": true,
+      "sha256": "cc9b4bef9e386619ba542714d52fcea2cd666eb6de248b7454f08fcd054b29e5"
+    },
+    {
       "path": "shared/schemas/compilable_object_catalog.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
@@ -3445,7 +3520,7 @@
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "59dae9d0df995bfd8b6284c96204cac0345b33791c15134c4456197535e2af33"
+      "sha256": "3579bea6e09bc8e3e7fce2fcb35bee293c671001bb70a4bb9fa558edd2a63a34"
     },
     {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",

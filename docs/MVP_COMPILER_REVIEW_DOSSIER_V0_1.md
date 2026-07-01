@@ -36,6 +36,9 @@
 - `game_data/demo/wick_store_pressure_battle_config.json`
 - `examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json`
 - `examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json`
+- `game_data/demo/old_signal_tower_pressure_battle_config.json`
+- `examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json`
+- `examples/runtime_packages/mvp_old_signal_tower.runtime_package.json`
 
 默认构建命令：
 
@@ -69,7 +72,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - `多阶段内容生产包`：串行生产 Stage 05 / 06 / 07 的剧情线、任务、随机事件、临时样本和三类资产候选，并导出标准阶段候选包供人工审查。
 - `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
 - `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
-- `runtime_package_summaries`：第一战和灯芯仓压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产。
+- `runtime_package_summaries`：第一战、灯芯仓压力战和旧信号塔压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产；旧信号塔压力战包含回光棱镜中继塔一件人工晋升后的运行时证据资产。
 - `runtime_state_summary`：Stage 07 后最终运行态的进度、全局状态和对象数量。
 - `readiness_summary`：当前是否足以支撑 MVP 审查。
 - `source_evidence`：被汇总的关键文件与 sha256。
@@ -90,6 +93,7 @@ python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 - 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
 - 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
 - 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
+- 旧信号塔压力战已有 runtime package 引用证据，能验证 Stage 05 候选资产可被封装进 locked manifest、battle config 和 runtime package；它仍不代表 Stage 05 世界线自动解锁最终蓝图。
 - 默认 MVP 可以按 `runtime_fixture` + `fallback_ready` 资产组织审查；候选 / 受阻资产不应默认进入战斗。
 
 当前仍不证明：
@@ -200,6 +204,13 @@ python3 tools/world_state/validate_run_world_state.py examples/run_world_states/
 ```bash
 python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json
 python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json
+```
+
+校验旧信号塔压力战 locked manifest 和 runtime package：
+
+```bash
+python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json
+python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_old_signal_tower.runtime_package.json
 ```
 
 校验 WorldStateDelta 语义门示例：

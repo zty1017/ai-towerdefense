@@ -41,6 +41,15 @@ DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_mult
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+    ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+]
+DEFAULT_RUNTIME_SOURCE_FILES = [
+    (ROOT / "examples/locked_manifests/mvp_light_snare.locked_manifest.json", "locked_manifest"),
+    (ROOT / "game_data/demo/first_battle_config.json", "battle_config"),
+    (ROOT / "examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json", "locked_manifest"),
+    (ROOT / "game_data/demo/wick_store_pressure_battle_config.json", "battle_config"),
+    (ROOT / "examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json", "locked_manifest"),
+    (ROOT / "game_data/demo/old_signal_tower_pressure_battle_config.json", "battle_config"),
 ]
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
 SCHEMA_PATH = ROOT / "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json"
@@ -928,6 +937,8 @@ def build_dossier(
     )
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
+    for path, kind in DEFAULT_RUNTIME_SOURCE_FILES:
+        evidence_paths.append((rel(path), kind))
     for stage in stages:
         evidence_paths.append((stage["bundle_file"], "narrative_bundle"))
         if stage["world_delta_file"]:

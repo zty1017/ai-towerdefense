@@ -10,14 +10,16 @@
     "pack_builder_reads_env": false,
     "pack_builder_calls_provider": false,
     "base_worldbook_mutation": false,
-    "runtime_package_included": "not_included",
+    "runtime_package_included": "referenced_only",
     "llm_candidate_shape_supported": true
   },
   "source_refs": {
     "review_pack": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
     "promotion_report": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
     "final_run_state": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
-    "runtime_packages": []
+    "runtime_packages": [
+      "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
+    ]
   },
   "stage_candidates": [
     {
@@ -27,7 +29,8 @@
       "status": "needs_review",
       "source_files": {
         "narrative_bundle": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
-        "world_delta": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json"
+        "world_delta": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+        "battle_config": "game_data/demo/old_signal_tower_pressure_battle_config.json"
       },
       "lane_coverage": [
         "player_line",
@@ -118,7 +121,14 @@
           ]
         }
       ],
-      "runtime_package_refs": [],
+      "runtime_package_refs": [
+        {
+          "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+          "package_id": "package_session_lampwright_old_signal_tower_001",
+          "node_id": "old_signal_tower",
+          "asset_count": 1
+        }
+      ],
       "validation_gates": [
         {
           "gate": "narrative_bundle",
@@ -157,8 +167,8 @@
         },
         {
           "gate": "runtime_package_ref",
-          "status": "not_applicable",
-          "summary": "该阶段尚未生成战斗 runtime package。"
+          "status": "passed",
+          "summary": "该阶段已有旧信号塔压力战 runtime package 引用；它是人工晋升后的运行时证据包，不代表 Stage 05 世界线自动解锁最终蓝图。"
         }
       ],
       "next_actions": [
@@ -476,12 +486,12 @@
       "needs_review": 3
     },
     "validation_gate_counts": {
-      "not_applicable": 3,
-      "passed": 18,
+      "not_applicable": 2,
+      "passed": 19,
       "warning": 3
     },
     "playable_asset_reference_count": 3,
-    "runtime_package_reference_count": 0,
+    "runtime_package_reference_count": 1,
     "contract_warnings": 0,
     "review_recommendation": "needs_human_review"
   },
@@ -493,6 +503,10 @@
     {
       "purpose": "校验多阶段阶段候选包",
       "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+    },
+    {
+      "purpose": "校验 Stage 05 旧信号塔 runtime package",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
     }
   ]
 }

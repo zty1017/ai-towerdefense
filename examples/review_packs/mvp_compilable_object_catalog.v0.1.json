@@ -2743,7 +2743,8 @@
       "source_files": [
         "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
         "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
-        "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json"
+        "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+        "game_data/demo/old_signal_tower_pressure_battle_config.json"
       ],
       "source_ids": [
         "act_1_stage_05_old_signal_tower_pressure"
@@ -2752,7 +2753,8 @@
         "act_1_stage_05_old_signal_tower_pressure"
       ],
       "dependency_refs": [
-        "asset:asset_echo_prism_relay"
+        "asset:asset_echo_prism_relay",
+        "runtime_package:package_session_lampwright_old_signal_tower_001"
       ],
       "validators": [
         "validate_narrative_bundle.py",

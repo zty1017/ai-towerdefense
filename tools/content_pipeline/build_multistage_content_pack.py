@@ -62,6 +62,8 @@ DEFAULT_EFFECT_REGISTRY = ROOT / "shared/module_registry/effect_blocks.v0.1.json
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
 DEFAULT_STAGE_CANDIDATE_OUTPUT = ROOT / "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
 DEFAULT_PROMOTION_REPORT = ROOT / "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+STAGE05_BATTLE_CONFIG = ROOT / "game_data/demo/old_signal_tower_pressure_battle_config.json"
+STAGE05_RUNTIME_PACKAGE = ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
 
 STAGE06_ID = "act_1_stage_06_signal_resonance_trial"
 STAGE06_DELTA_ID = "delta_stage_06_signal_resonance_trial"
@@ -97,6 +99,16 @@ def rel(path: Path) -> str:
         return str(path.relative_to(ROOT))
     except ValueError:
         return str(path)
+
+
+def runtime_package_ref(path: Path) -> dict[str, Any]:
+    package = load_json(path)
+    return {
+        "package_file": rel(path),
+        "package_id": str(package.get("package_id")),
+        "node_id": str(package.get("node_id")),
+        "asset_count": len(as_list(package.get("assets"))),
+    }
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -1099,6 +1111,22 @@ def stage_candidate_from_summary(
         if policy_gate_status != "blocked"
         else "资产候选缺少可用晋级证据或已被策略阻断。"
     )
+    source_files = {
+        "narrative_bundle": str(stage["bundle_file"]),
+        "world_delta": str(stage["world_delta_file"]),
+    }
+    runtime_package_refs: list[dict[str, Any]] = []
+    runtime_gate_status = "not_applicable"
+    runtime_gate_summary = "该阶段尚未生成战斗 runtime package。"
+    if stage_label == "stage05" and STAGE05_RUNTIME_PACKAGE.exists():
+        runtime_package_refs = [runtime_package_ref(STAGE05_RUNTIME_PACKAGE)]
+        runtime_gate_status = "passed"
+        runtime_gate_summary = (
+            "该阶段已有旧信号塔压力战 runtime package 引用；它是人工晋升后的运行时证据包，"
+            "不代表 Stage 05 世界线自动解锁最终蓝图。"
+        )
+        if STAGE05_BATTLE_CONFIG.exists():
+            source_files["battle_config"] = rel(STAGE05_BATTLE_CONFIG)
     gates = [
         {
             "gate": "narrative_bundle",
@@ -1137,8 +1165,8 @@ def stage_candidate_from_summary(
         },
         {
             "gate": "runtime_package_ref",
-            "status": "not_applicable",
-            "summary": "该阶段尚未生成战斗 runtime package。",
+            "status": runtime_gate_status,
+            "summary": runtime_gate_summary,
         },
     ]
     blocked = any(gate["status"] == "blocked" for gate in gates)
@@ -1147,10 +1175,7 @@ def stage_candidate_from_summary(
         "stage_id": str(stage["stage_id"]),
         "title": title,
         "status": "blocked" if blocked else "needs_review",
-        "source_files": {
-            "narrative_bundle": str(stage["bundle_file"]),
-            "world_delta": str(stage["world_delta_file"]),
-        },
+        "source_files": source_files,
         "lane_coverage": sorted(str(key) for key in as_obj(stage.get("lane_counts")).keys()),
         "narrative_summary": narrative_summary_from_bundle(bundle),
         "delta_summary": {
@@ -1171,7 +1196,7 @@ def stage_candidate_from_summary(
                 ],
             }
         ],
-        "runtime_package_refs": [],
+        "runtime_package_refs": runtime_package_refs,
         "validation_gates": gates,
         "next_actions": [
             "human_review_stage_content",
@@ -1211,6 +1236,7 @@ def build_multistage_stage_candidate_pack(
     )
     final_state = stage_summaries[-1]["next_state_file"] if stage_summaries else ""
     recommendation = "blocked" if gate_counts.get("blocked") else "needs_human_review"
+    runtime_packages = [rel(STAGE05_RUNTIME_PACKAGE)] if STAGE05_RUNTIME_PACKAGE.exists() else []
     pack = {
         "schema_version": "stage_candidate_pack.v0.1",
         "pack_id": "mvp_multistage_stage_candidate_pack_001",
@@ -1223,14 +1249,14 @@ def build_multistage_stage_candidate_pack(
             "pack_builder_reads_env": False,
             "pack_builder_calls_provider": False,
             "base_worldbook_mutation": False,
-            "runtime_package_included": "not_included",
+            "runtime_package_included": "referenced_only" if runtime_packages else "not_included",
             "llm_candidate_shape_supported": True,
         },
         "source_refs": {
             "review_pack": rel(review_pack),
             "promotion_report": rel(promotion_report),
             "final_run_state": final_state,
-            "runtime_packages": [],
+            "runtime_packages": runtime_packages,
         },
         "stage_candidates": stages,
         "readiness_summary": {
@@ -1250,6 +1276,10 @@ def build_multistage_stage_candidate_pack(
             {
                 "purpose": "校验多阶段阶段候选包",
                 "command": f"python3 tools/content_pipeline/validate_stage_candidate_pack.py {rel(output)}",
+            },
+            {
+                "purpose": "校验 Stage 05 旧信号塔 runtime package",
+                "command": f"python3 tools/asset_graph/validate_runtime_package.py {rel(STAGE05_RUNTIME_PACKAGE)}",
             },
         ],
     }
