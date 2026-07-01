@@ -32,6 +32,142 @@
       ]
     },
     {
+      "node_type": "intent.parse_player_utterance_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to parse free player utterance into a hidden PlayerIntent v0.1. Requires params.allow_live_provider_call=true and workflow mode=live. Output must not be runtime_public.",
+      "inputs": [
+        { "name": "player_utterance", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a player_utterance.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON used for world/progression context." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to player_intent.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.build_design_spec_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to compile PlayerIntent + world/progression context into a hidden AssetDesignSpec v0.1. This is a DSL/specification artifact, not a playable asset.",
+      "inputs": [
+        { "name": "player_intent", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to player_intent.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "module_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to gameplay/effect module registry for available design space." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_design_spec.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.legalize_design_spec",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic hard gate: convert AssetDesignSpec into LegalizedDesignSpec by conflict detection, dimension reduction, missing-field completion, budget clamps, world-fit checks, media constraints, and fallback mapping.",
+      "inputs": [
+        { "name": "design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_design_spec.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "module_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to available effect blocks and asset modules." },
+        { "name": "budget_rules", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to progression and balance budget rules." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalization_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.build_asset_plan",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build an AssetPlan v0.1 from LegalizedDesignSpec. Splits the asset into gameplay, presentation, media roles, visual recipes, runtime metadata, and fallback requirements.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "legalization_report", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to legalization_report.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "proposal.build_from_legalized_spec",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a player-visible Proposal from LegalizedDesignSpec and AssetPlan. The proposal explains direction, costs, tradeoffs, and NPC review in world language, but does not expose provider, prompt, schema, or runtime internals.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "asset_plan", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to current RunWorldState JSON for localized naming and NPC framing." },
+        { "name": "template_selection", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to compile_template_selection.v0.1 JSON for explaining execution approach without exposing technical details to players." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to proposal.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.select_compile_template_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Select a registered object-level compile graph template from LegalizedDesignSpec and AssetPlan. The node may call an LLM for planning, but it cannot invent arbitrary DAGs; output is a compile_template_selection.v0.1 artifact.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "asset_plan", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." },
+        { "name": "template_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to registered object-level compile graph templates." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to compile_template_selection.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.validate_planned_workflow",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a planned WorkflowGraph before execution: registered node types, mode permissions, DAG acyclicity, required inputs, runtime_public safety, and template policy constraints.",
+      "inputs": [
+        { "name": "workflow_graph", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_graph.v0.1 JSON." },
+        { "name": "template_selection", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to compile_template_selection.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_validation_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.repair_with_react_guarded",
+      "category": "agent",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Bounded ReAct repair agent. It inspects validation reports and trace summaries, then emits a repair_action_plan.v0.1 using only the allowed action set. It must declare max_iterations, max_provider_calls, and fallback behavior.",
+      "inputs": [
+        { "name": "workflow_graph", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_graph.v0.1 JSON or executed subgraph summary." },
+        { "name": "validation_report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to typed validation or readiness report." },
+        { "name": "execution_trace_summary", "kind": "artifact_ref", "required": false, "description": "Optional redacted execution trace summary, never raw provider output." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to repair_action_plan.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "asset.mock_compile_proposal",
       "category": "pure",
       "modes": ["deterministic", "studio", "live"],

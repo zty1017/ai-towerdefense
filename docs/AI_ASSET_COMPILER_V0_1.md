@@ -1,6 +1,6 @@
 # AI 资产编译器 v0.1
 
-Last updated: 2026-06-29
+Last updated: 2026-07-01
 
 ## 1. 目标
 
@@ -20,11 +20,20 @@ v0.1 的目标不是让 AI 任意改写游戏，而是建立一条稳定闭环�
 
 ```text
 玩家想法
+  -> PlayerIntent / AssetDesignSpec 隐藏中间表示
+  -> LegalizedDesignSpec 合法化规格
+  -> AssetPlan 资产计划
   -> Proposal 研发提案
   -> CompiledAssetCandidate 编译资产候选
   -> Schema / 模块 / 预算 / 世界书 / 模拟校验
   -> RuntimeAssetInstance 战斗实例
   -> 战后记录 / 稳定化 / 蓝图谱系
+```
+
+核心原则见 `docs/FREE_INPUT_CONTROLLED_COMPILATION_V0_1.md`：
+
+```text
+玩家输入可以自由，底层执行必须受控。
 ```
 
 ## 2. 范围
@@ -90,6 +99,15 @@ MVP 不只编译防御塔，也纳入支援道具、临时改制、情报资产�
 ## 4. Proposal 与编译资产
 
 必须区分两个层次。
+
+在它们之前，还有一组玩家不可见的中间层：
+
+- `PlayerIntent`：玩家话语的语义理解。
+- `AssetDesignSpec`：隐藏 DSL / Schema，描述视觉、玩法、平衡、世界观需求。
+- `LegalizedDesignSpec`：经过合法化、降维、补全和预算裁剪后的规格。
+- `AssetPlan`：把玩法、表现、媒体、runtime metadata 拆成可执行 DAG 产物计划。
+
+这些中间层不进入玩家界面，也不进入 runtime package。它们用于约束 AI，不让自由输入直接变成无约束执行。
 
 ### 4.1 Proposal
 

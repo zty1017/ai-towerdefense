@@ -22,7 +22,7 @@
         "node_type": { "type": "string", "minLength": 1 },
         "category": {
           "type": "string",
-          "enum": ["pure", "llm", "media", "human", "io", "report", "runtime"]
+          "enum": ["pure", "llm", "provider", "agent", "media", "human", "io", "report", "runtime"]
         },
         "modes": {
           "type": "array",

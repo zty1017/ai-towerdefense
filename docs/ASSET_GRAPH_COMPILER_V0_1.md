@@ -1,6 +1,6 @@
 # AssetGraph Compiler v0.1
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 ## 1. 定位
 
@@ -122,6 +122,37 @@ ProposalJson
 | `validate_asset_candidate` | `tools/content_pipeline/validate_asset_candidate.py` |
 | `simulate_asset_candidate` | `tools/content_pipeline/simulate_asset_candidate.py` |
 | `run_mock_pipeline` | `tools/content_pipeline/run_mock_pipeline.py` |
+
+### 4.1 自由输入到受控编译图
+
+2026-07-01 确认：玩家自然语言不能直接进入 Proposal、图像生成或战斗执行层。
+
+AssetGraph 需要把自由输入先转成隐藏中间表示，再由确定性合法化层裁剪到当前版本可执行的设计空间。
+
+协议图：
+
+```text
+PlayerUtterance
+  -> intent.parse_player_utterance_guarded
+  -> asset.build_design_spec_guarded
+  -> asset.legalize_design_spec
+  -> asset.build_asset_plan
+  -> proposal.build_from_legalized_spec
+  -> proposal.validate
+```
+
+其中：
+
+- `intent.parse_player_utterance_guarded` 和 `asset.build_design_spec_guarded` 可以调用 LLM，但只能输出隐藏结构化产物。
+- `asset.legalize_design_spec` 必须是确定性硬门禁，负责冲突检测、降维映射、字段补全、预算裁剪和 fallback。
+- `asset.build_asset_plan` 把一个资产拆成 gameplay、presentation、media、runtime metadata 等子产物。
+- `proposal.build_from_legalized_spec` 生成玩家可见研发方案，但不携带 provider、prompt、trace 或 runtime 完整规则。
+
+详细产品和工程边界见：
+
+```text
+docs/FREE_INPUT_CONTROLLED_COMPILATION_V0_1.md
+```
 
 ## 5. 节点分类
 
@@ -294,6 +325,76 @@ AI 提出新节点
 ```
 
 玩家运行时不能直接注册新节点。
+
+### 6.3 LLM + ReAct 控制 DAG，而不是替代 DAG
+
+确认原则：
+
+```text
+DAG 是编译运行时。
+LLM + ReAct 是规划器、调度器和修复器。
+```
+
+危险路径：
+
+```text
+玩家需求 -> LLM 一边想一边随意调用工具 -> 凑出素材
+```
+
+该路径不可复现、难调试、成本不可控，也不适合比赛 Demo 和玩家 runtime。
+
+推荐路径：
+
+```text
+玩家需求
+  -> Intent Parser
+  -> DesignSpec
+  -> Legalizer
+  -> 选择对象级 DAG 模板
+  -> DAG Executor
+  -> Validators
+  -> 有限 ReAct Repair Agent
+  -> Runtime Bundle
+```
+
+MVP 只允许 LLM 从已注册对象级模板中选择：
+
+```text
+TowerCompileGraph
+SupportItemCompileGraph
+TemporaryModCompileGraph
+IntelAssetCompileGraph
+SkillVFXCompileGraph
+IconCompileGraph
+MapModifierCompileGraph
+```
+
+对象级模板可以包含局部分支，但分支条件必须来自 `LegalizedDesignSpec` 或 `AssetPlan`，不能来自 LLM 运行时即兴判断。
+
+ReAct Repair Agent 只在 validator 返回失败或警告时触发，且只能使用有限 action set：
+
+```text
+inspect_spec
+inspect_artifact
+inspect_validation_report
+patch_spec
+patch_prompt
+rerun_node
+increase_candidates
+replace_with_template
+split_asset_layer
+fallback_to_preset
+accept_with_warning
+abort_compile
+```
+
+图级约束：
+
+- 外层仍然是 DAG。
+- ReAct 只能封装在单个 AgentNode 或修复子图内。
+- 必须声明最大迭代次数、最大 provider 调用、最大执行时间和 fallback。
+- 修复动作必须产生结构化 patch / rerun plan，不能直接改 runtime package。
+- 修复后的图或参数必须再次通过 workflow 校验。
 
 ## 7. Graph 校验
 
