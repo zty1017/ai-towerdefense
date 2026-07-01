@@ -9,6 +9,29 @@
 - `examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json`
 - `examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json`
 - `examples/review_packs/mvp_story_asset_review_pack.v0.1.json`
+- `shared/schemas/mvp_story_asset_review_pack.v0.1.schema.json`
+- `tools/content_pipeline/validate_mvp_story_asset_review_pack.py`
+
+## 审查包校验器
+
+`mvp_story_asset_review_pack.v0.1.json` 不是前端运行包，也不是最终世界状态；它是给人类审查的阶段化剧情与玩法对象索引。为了避免它退化成普通 JSON，本仓库提供专门校验器：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+```
+
+校验器会检查：
+
+- 顶层结构必须符合 `mvp_story_asset_review_pack.v0.1` schema。
+- `generation_boundary.front_end_integration` 必须是 `not_included`，`base_worldbook_mutation` 必须是 `false`。
+- 禁止携带 provider、model、raw prompt、trace、secret 等技术字段或原始调用内容；`schema` 只在玩家可见文本中作为技术词被拦截，结构字段不会被误伤。
+- 每个阶段的 `bundle_file` 必须存在，并且会继续调用 `NarrativeEventBundle` 校验逻辑复验。
+- 每个阶段的资产 `source_file` 和已确定的战斗 fixture 必须存在；显式 `needed` 占位表示待生产，不当作缺文件。
+- canonical NPC 和材料必须能在当前世界书登记文件中找到；candidate-only NPC 和材料可以尚未登记，但必须在审查包边界中标注候选/审查状态与原因。
+- 每个阶段至少覆盖世界线或玩家线之一，整包必须同时覆盖 `world_line` 和 `player_line`。
+- `excluded_from_mvp_story_pack` 必须明确写出被排除对象和原因。
+
+这道校验门的作用是确认审查包确实服务 MVP 内容交付：它汇总剧情阶段、NPC、材料、资产与玩法钩子，但不直接改写基础世界书，也不把未审查内容推进前端。
 
 ## 受控流水线
 
