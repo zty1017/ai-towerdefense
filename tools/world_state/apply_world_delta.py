@@ -124,6 +124,19 @@ def _apply_adjust_resource(state: dict[str, Any], op: dict[str, Any]) -> list[st
     return []
 
 
+def _apply_introduce_map_node(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    node = deepcopy(op["node"])
+    node_id = node.get("node_id")
+    nodes = state.setdefault("map_nodes", [])
+    for existing in nodes:
+        if existing.get("node_id") == node_id:
+            for key in ("status", "threat_level", "visibility", "available_actions"):
+                existing[key] = deepcopy(node[key])
+            return []
+    nodes.append(node)
+    return []
+
+
 def _apply_set_flag(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
     flag = op["flag"]
     value = op["value"]
@@ -160,6 +173,25 @@ def _apply_update_npc_relationship(state: dict[str, Any], op: dict[str, Any]) ->
     return [f"update_npc_relationship: npc_id={npc_id!r} not found in npcs"]
 
 
+def _apply_introduce_npc(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    npc = deepcopy(op["npc"])
+    npc_id = npc.get("npc_id")
+    npcs = state.setdefault("npcs", [])
+    for existing in npcs:
+        if existing.get("npc_id") == npc_id:
+            for key in (
+                "location_node_id",
+                "narrative_roles",
+                "gameplay_roles",
+                "relationship",
+                "availability",
+            ):
+                existing[key] = deepcopy(npc[key])
+            return []
+    npcs.append(npc)
+    return []
+
+
 def _apply_add_temporary_sample(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
     sample = op["sample"]
     samples = state.setdefault("research", {}).setdefault("temporary_samples", [])
@@ -192,9 +224,11 @@ _OP_APPLIERS = {
     "append_event": _apply_append_event,
     "set_map_node_state": _apply_set_map_node_state,
     "adjust_resource": _apply_adjust_resource,
+    "introduce_map_node": _apply_introduce_map_node,
     "set_flag": _apply_set_flag,
     "unlock_fact": _apply_unlock_fact,
     "update_npc_relationship": _apply_update_npc_relationship,
+    "introduce_npc": _apply_introduce_npc,
     "add_temporary_sample": _apply_add_temporary_sample,
     "set_progress_phase": _apply_set_progress_phase,
     "adjust_global_state": _apply_adjust_global_state,

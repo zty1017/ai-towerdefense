@@ -1,0 +1,91 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_stage_04_wick_store_pressure_battle",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "battle_result",
+  "created_turn": 5,
+  "summary": "灯芯仓压力战结束，诱饵、护幕和灯灰爆鸣塔稳住了资源节点，余烬中发现可登记的辉晶。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "post_wick_store_defense"
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "lamp_wick_store",
+      "patch": {
+        "status": "secured",
+        "threat_level": 0,
+        "visibility": "visible",
+        "available_actions": ["collect_reward", "field_research", "prepare_next_route"]
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "supply_line_hub_to_gray",
+      "patch": {
+        "status": "secured",
+        "threat_level": 0,
+        "visibility": "visible",
+        "available_actions": ["repair_route", "talk_to_wire_mender"]
+      }
+    },
+    {
+      "op": "update_npc_relationship",
+      "npc_id": "npc_wire_mender_003",
+      "relationship_delta": { "trust": 0.1 }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "lantern_ash",
+      "amount_delta": -2
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "glow_crystal",
+      "amount_delta": 1
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "wick_store_defense_combo_validated",
+        "source": "wick_store_pressure_battle",
+        "visibility": "player_known",
+        "summary": "诱饵拖延、护幕稳线、灯灰爆鸣塔处理聚集敌人的组合在灯芯仓防守中通过实战检验。"
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "glow_crystal_discovered",
+        "source": "wick_store_pressure_battle",
+        "visibility": "player_known",
+        "summary": "守住灯芯仓后，灰烬下出现少量辉晶，可作为后续正式研发的稀有材料。"
+      }
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "asset_ash_burst_lantern_trial",
+        "display_name": "灯灰爆鸣塔试作",
+        "source_delta_id": "delta_stage_04_wick_store_pressure_battle",
+        "summary": "灯芯仓防守中临时装配的爆鸣装置，适合继续整理成正式蓝图。"
+      }
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "wick_store_pressure_battle_resolved",
+        "turn": 5,
+        "kind": "battle",
+        "summary": "灯芯仓守住，补给线恢复，辉晶线索浮出灰烬。"
+      }
+    },
+    {
+      "op": "set_flag",
+      "flag": "stage_04_wick_store_defense_completed",
+      "value": true
+    }
+  ]
+}

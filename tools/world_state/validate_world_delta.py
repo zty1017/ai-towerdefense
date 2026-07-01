@@ -5,7 +5,7 @@ Checks:
 - JSON parses.
 - schema_version == "world_state_delta.v0.1".
 - Top-level required fields present; unknown top-level fields rejected.
-- operation op whitelist: only the 9 allowed ops may appear.
+- operation op whitelist: only the 11 allowed ops may appear.
 - operation forbidden-op blacklist: mutate_base_worldbook / set_worldbook /
   replace_worldbook / raw_json_patch / arbitrary_patch / eval / script /
   provider_call are explicitly rejected with a clear error.
@@ -46,15 +46,17 @@ from _common import (  # noqa: E402  (import after sys.path bootstrap)
 
 SCHEMA_PATH = ROOT / "shared/schemas/world_state_delta.v0.1.schema.json"
 
-# Whitelist of allowed operation op values (only these 9).
+# Whitelist of allowed operation op values (only these 11).
 OPERATION_WHITELIST: frozenset[str] = frozenset(
     {
         "append_event",
         "set_map_node_state",
         "adjust_resource",
+        "introduce_map_node",
         "set_flag",
         "unlock_fact",
         "update_npc_relationship",
+        "introduce_npc",
         "add_temporary_sample",
         "set_progress_phase",
         "adjust_global_state",
@@ -106,6 +108,9 @@ FACT_VISIBILITY_ALLOWED: frozenset[str] = frozenset(
 GLOBAL_STATE_FIELDS_ALLOWED: frozenset[str] = frozenset(
     {"pressure", "hope", "visibility"}
 )
+NPC_AVAILABILITY_ALLOWED: frozenset[str] = frozenset(
+    {"present", "absent", "busy", "injured", "missing"}
+)
 
 # Per-operation allowed keys (beyond "op"). Used for the pure-Python fallback's
 # additionalProperties:false enforcement on each operation branch.
@@ -113,9 +118,11 @@ OP_ALLOWED_KEYS: dict[str, frozenset[str]] = {
     "append_event": frozenset({"op", "event"}),
     "set_map_node_state": frozenset({"op", "node_id", "patch"}),
     "adjust_resource": frozenset({"op", "resource_id", "amount_delta"}),
+    "introduce_map_node": frozenset({"op", "node"}),
     "set_flag": frozenset({"op", "flag", "value"}),
     "unlock_fact": frozenset({"op", "fact"}),
     "update_npc_relationship": frozenset({"op", "npc_id", "relationship_delta"}),
+    "introduce_npc": frozenset({"op", "npc"}),
     "add_temporary_sample": frozenset({"op", "sample"}),
     "set_progress_phase": frozenset({"op", "phase"}),
     "adjust_global_state": frozenset({"op", "field", "amount_delta"}),
@@ -129,6 +136,20 @@ PATCH_ALLOWED: frozenset[str] = frozenset(
     {"status", "threat_level", "visibility", "available_actions"}
 )
 RELATIONSHIP_DELTA_ALLOWED: frozenset[str] = frozenset({"trust"})
+RUN_MAP_NODE_ALLOWED: frozenset[str] = frozenset(
+    {"node_id", "status", "threat_level", "visibility", "available_actions"}
+)
+RUN_NPC_ALLOWED: frozenset[str] = frozenset(
+    {
+        "npc_id",
+        "location_node_id",
+        "narrative_roles",
+        "gameplay_roles",
+        "relationship",
+        "availability",
+    }
+)
+RUN_NPC_RELATIONSHIP_ALLOWED: frozenset[str] = frozenset({"trust"})
 
 
 def _reject_unknown_keys(
@@ -286,6 +307,33 @@ def _validate_adjust_resource(op: dict[str, Any], path: str, errors: list[str]) 
         errors.append(f"{path}.amount_delta is required")
 
 
+def _validate_run_map_node_obj(node: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(node, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(node, RUN_MAP_NODE_ALLOWED, path, errors)
+    for key in ("node_id", "status", "threat_level", "visibility", "available_actions"):
+        if key not in node:
+            errors.append(f"{path}.{key} is required")
+    if "node_id" in node:
+        _require_str(node["node_id"], f"{path}.node_id", errors)
+    if "status" in node:
+        _require_enum(node["status"], NODE_STATUS_ALLOWED, f"{path}.status", errors)
+    if "threat_level" in node:
+        _require_int(node["threat_level"], f"{path}.threat_level", errors, minimum=0)
+    if "visibility" in node:
+        _require_enum(node["visibility"], NODE_VISIBILITY_ALLOWED, f"{path}.visibility", errors)
+    if "available_actions" in node:
+        aa = node["available_actions"]
+        if not isinstance(aa, list) or not all(isinstance(a, str) and a for a in aa):
+            errors.append(f"{path}.available_actions must be an array of non-empty strings")
+
+
+def _validate_introduce_map_node(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["introduce_map_node"], path, errors)
+    _validate_run_map_node_obj(op.get("node"), f"{path}.node", errors)
+
+
 def _validate_set_flag(op: dict[str, Any], path: str, errors: list[str]) -> None:
     _reject_unknown_keys(op, OP_ALLOWED_KEYS["set_flag"], path, errors)
     if "flag" in op:
@@ -341,6 +389,56 @@ def _validate_update_npc_relationship(op: dict[str, Any], path: str, errors: lis
         _require_number(rd["trust"], f"{rpath}.trust", errors)
 
 
+def _validate_run_npc_obj(npc: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(npc, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(npc, RUN_NPC_ALLOWED, path, errors)
+    for key in (
+        "npc_id",
+        "location_node_id",
+        "narrative_roles",
+        "gameplay_roles",
+        "relationship",
+        "availability",
+    ):
+        if key not in npc:
+            errors.append(f"{path}.{key} is required")
+    if "npc_id" in npc:
+        _require_str(npc["npc_id"], f"{path}.npc_id", errors)
+    if "location_node_id" in npc:
+        loc = npc["location_node_id"]
+        if loc is not None and not isinstance(loc, str):
+            errors.append(f"{path}.location_node_id must be a string or null")
+        elif isinstance(loc, str) and not loc:
+            errors.append(f"{path}.location_node_id must be non-empty when string")
+    for key in ("narrative_roles", "gameplay_roles"):
+        if key in npc:
+            roles = npc[key]
+            if not isinstance(roles, list) or not all(isinstance(role, str) and role for role in roles):
+                errors.append(f"{path}.{key} must be an array of non-empty strings")
+    relationship = npc.get("relationship")
+    rpath = f"{path}.relationship"
+    if not isinstance(relationship, dict):
+        errors.append(f"{rpath} must be an object")
+    else:
+        _reject_unknown_keys(relationship, RUN_NPC_RELATIONSHIP_ALLOWED, rpath, errors)
+        if "trust" not in relationship:
+            errors.append(f"{rpath}.trust is required")
+        else:
+            _require_number(relationship["trust"], f"{rpath}.trust", errors)
+            if isinstance(relationship["trust"], (int, float)) and not isinstance(relationship["trust"], bool):
+                if relationship["trust"] < 0 or relationship["trust"] > 1:
+                    errors.append(f"{rpath}.trust must be between 0 and 1")
+    if "availability" in npc:
+        _require_enum(npc["availability"], NPC_AVAILABILITY_ALLOWED, f"{path}.availability", errors)
+
+
+def _validate_introduce_npc(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["introduce_npc"], path, errors)
+    _validate_run_npc_obj(op.get("npc"), f"{path}.npc", errors)
+
+
 def _validate_add_temporary_sample(op: dict[str, Any], path: str, errors: list[str]) -> None:
     _reject_unknown_keys(op, OP_ALLOWED_KEYS["add_temporary_sample"], path, errors)
     sample = op.get("sample")
@@ -386,9 +484,11 @@ _OP_VALIDATORS = {
     "append_event": _validate_append_event,
     "set_map_node_state": _validate_set_map_node_state,
     "adjust_resource": _validate_adjust_resource,
+    "introduce_map_node": _validate_introduce_map_node,
     "set_flag": _validate_set_flag,
     "unlock_fact": _validate_unlock_fact,
     "update_npc_relationship": _validate_update_npc_relationship,
+    "introduce_npc": _validate_introduce_npc,
     "add_temporary_sample": _validate_add_temporary_sample,
     "set_progress_phase": _validate_set_progress_phase,
     "adjust_global_state": _validate_adjust_global_state,

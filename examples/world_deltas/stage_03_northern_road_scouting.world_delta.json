@@ -1,0 +1,97 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_stage_03_northern_road_scouting",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "narrative_event",
+  "created_turn": 4,
+  "summary": "玩家把一部分材料投入北路侦测，黑暗边缘被短暂照亮，北路斥候成为可确认的功能 NPC 候选。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "northern_road_scouting"
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "northern_road_crossing",
+      "patch": {
+        "status": "known",
+        "threat_level": 1,
+        "visibility": "scouted",
+        "available_actions": ["scout", "field_research", "prepare_route"]
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "old_signal_tower",
+      "patch": {
+        "status": "known",
+        "threat_level": 2,
+        "visibility": "scouted",
+        "available_actions": ["scout", "mark_threat"]
+      }
+    },
+    {
+      "op": "introduce_npc",
+      "npc": {
+        "npc_id": "npc_road_scout",
+        "location_node_id": "northern_road_crossing",
+        "narrative_roles": ["dark_edge_witness", "route_warning"],
+        "gameplay_roles": ["path_prediction", "weakness_hint", "scouting_reliability"],
+        "relationship": { "trust": 0.2 },
+        "availability": "present"
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "lantern_ash",
+      "amount_delta": -1
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "conductor_filament",
+      "amount_delta": -1
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "east_dark_echo_survey_ready",
+        "source": "northern_road_scouting",
+        "visibility": "player_known",
+        "summary": "东暗回声测记可以短暂揭示路径压力和敌群弱点，但不能直接清除黑暗。"
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "old_signal_tower_pressure_hint",
+        "source": "northern_road_scouting",
+        "visibility": "hinted",
+        "summary": "旧信号塔附近有回光扰动，后续可能成为压力源或可选战斗节点。"
+      }
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "intel_dark_echo_survey_001",
+        "display_name": "东暗回声测记",
+        "source_delta_id": "delta_stage_03_northern_road_scouting",
+        "summary": "用灯灰和导线记录的短期侦测札记，可辅助下一场防守布置。"
+      }
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "northern_road_scouting_completed",
+        "turn": 4,
+        "kind": "world",
+        "summary": "北路黑暗边缘被短暂照亮，旧信号塔的风险被标记。"
+      }
+    },
+    {
+      "op": "set_flag",
+      "flag": "stage_03_northern_scouting_completed",
+      "value": true
+    }
+  ]
+}

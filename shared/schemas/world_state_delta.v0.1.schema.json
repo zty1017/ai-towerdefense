@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ai-compiled-towerdefense.local/schemas/world_state_delta.v0.1.schema.json",
   "title": "WorldStateDelta v0.1",
-  "description": "Controlled delta applied to a RunWorldState. Operations are restricted to a whitelist of 9 op types. Any operation that would mutate the BaseWorldbook (mutate_base_worldbook, set_worldbook, replace_worldbook, raw_json_patch, arbitrary_patch, eval, script, provider_call) is rejected by the validator.",
+  "description": "Controlled delta applied to a RunWorldState. Operations are restricted to a whitelist of 11 op types. Any operation that would mutate the BaseWorldbook (mutate_base_worldbook, set_worldbook, replace_worldbook, raw_json_patch, arbitrary_patch, eval, script, provider_call) is rejected by the validator.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -165,6 +165,60 @@
           {
             "type": "object",
             "additionalProperties": false,
+            "required": ["op", "node"],
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "introduce_map_node"
+              },
+              "node": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "node_id",
+                  "status",
+                  "threat_level",
+                  "visibility",
+                  "available_actions"
+                ],
+                "properties": {
+                  "node_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "known",
+                      "contested",
+                      "secured",
+                      "lost",
+                      "locked"
+                    ]
+                  },
+                  "threat_level": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": ["hidden", "known", "scouted", "visible"]
+                  },
+                  "available_actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
             "required": ["op", "flag", "value"],
             "properties": {
               "op": {
@@ -239,6 +293,68 @@
                 "properties": {
                   "trust": {
                     "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "npc"],
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "introduce_npc"
+              },
+              "npc": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "npc_id",
+                  "location_node_id",
+                  "narrative_roles",
+                  "gameplay_roles",
+                  "relationship",
+                  "availability"
+                ],
+                "properties": {
+                  "npc_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "location_node_id": {
+                    "type": ["string", "null"]
+                  },
+                  "narrative_roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "gameplay_roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "relationship": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["trust"],
+                    "properties": {
+                      "trust": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    }
+                  },
+                  "availability": {
+                    "type": "string",
+                    "enum": ["present", "absent", "busy", "injured", "missing"]
                   }
                 }
               }

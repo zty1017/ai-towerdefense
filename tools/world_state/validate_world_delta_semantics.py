@@ -259,6 +259,8 @@ def validate_world_delta_semantics(
 
     delta_id = delta.get("delta_id")
     source = delta.get("source")
+    available_map_node_ids = set(registry.run_map_node_ids)
+    available_npc_ids = set(registry.run_npc_ids)
     for i, op in enumerate(delta.get("operations", []) or []):
         if not isinstance(op, dict):
             continue
@@ -267,10 +269,10 @@ def validate_world_delta_semantics(
 
         if op_name == "set_map_node_state":
             node_id = op.get("node_id")
-            if node_id not in registry.run_map_node_ids:
+            if node_id not in available_map_node_ids:
                 errors.append(
-                    f"{path}.node_id={node_id!r} is not in current run_state.map_nodes "
-                    f"(known: {sorted(registry.run_map_node_ids)})"
+                    f"{path}.node_id={node_id!r} is not in current or newly introduced "
+                    f"run_state.map_nodes (known: {sorted(available_map_node_ids)})"
                 )
 
         elif op_name == "adjust_resource":
@@ -292,6 +294,13 @@ def validate_world_delta_semantics(
                     "current run state and cannot be consumed with a negative delta"
                 )
 
+        elif op_name == "introduce_map_node":
+            node = op.get("node")
+            if isinstance(node, dict):
+                node_id = node.get("node_id")
+                if isinstance(node_id, str) and node_id:
+                    available_map_node_ids.add(node_id)
+
         elif op_name == "update_npc_relationship":
             npc_id = op.get("npc_id")
             if npc_id in registry.legacy_npc_ids:
@@ -299,11 +308,11 @@ def validate_world_delta_semantics(
                     f"{path}.npc_id={npc_id!r} is a legacy fixture NPC ref; "
                     "replace it with a canonical or explicitly reviewed candidate NPC id"
                 )
-            elif npc_id not in registry.run_npc_ids:
+            elif npc_id not in available_npc_ids:
                 if npc_id in registry.canonical_npc_ids or npc_id in registry.candidate_npc_ids:
                     errors.append(
                         f"{path}.npc_id={npc_id!r} is registered or whitelisted but "
-                        "is not present in current run_state.npcs; introduce the NPC "
+                        "is not present in current or newly introduced run_state.npcs; introduce the NPC "
                         "into the run state before applying a relationship update"
                     )
                 else:
@@ -317,6 +326,34 @@ def validate_world_delta_semantics(
                     f"{path}.npc_id={npc_id!r} is present in run state but blocked "
                     "by the current review-pack boundary"
                 )
+
+        elif op_name == "introduce_npc":
+            npc = op.get("npc")
+            if isinstance(npc, dict):
+                npc_id = npc.get("npc_id")
+                location_node_id = npc.get("location_node_id")
+                if npc_id in registry.legacy_npc_ids:
+                    errors.append(
+                        f"{path}.npc.npc_id={npc_id!r} is a legacy fixture NPC ref; "
+                        "do not introduce it into the formal run state"
+                    )
+                elif npc_id not in registry.allowed_npc_ids:
+                    errors.append(
+                        f"{path}.npc.npc_id={npc_id!r} is not canonical, already "
+                        "present, or explicitly whitelisted as a candidate NPC "
+                        f"(allowed references: {sorted(registry.allowed_npc_ids)})"
+                    )
+                if (
+                    isinstance(location_node_id, str)
+                    and location_node_id
+                    and location_node_id not in available_map_node_ids
+                ):
+                    errors.append(
+                        f"{path}.npc.location_node_id={location_node_id!r} is not "
+                        "in current or newly introduced map nodes"
+                    )
+                if isinstance(npc_id, str) and npc_id:
+                    available_npc_ids.add(npc_id)
 
         elif op_name == "add_temporary_sample":
             sample = op.get("sample")

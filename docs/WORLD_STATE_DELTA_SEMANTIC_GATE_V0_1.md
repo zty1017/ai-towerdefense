@@ -44,8 +44,10 @@ world_state.validate_delta_semantics
 
 - `delta.run_id` 与 `delta.worldbook_id` 必须匹配当前 run state。
 - `set_map_node_state.node_id` 必须存在于当前 `run_state.map_nodes`。
+- `introduce_map_node.node` 可以把审查包允许的运行态节点加入单局状态；它只影响 `RunWorldState`，不改基础世界书。同一 delta 中后续 `set_map_node_state` 可以引用刚引入的节点。
 - `adjust_resource.resource_id` 必须是当前 run state 资源，或可从世界书 / 审查包登记中识别的资源 ID；若资源不在当前 run state 中，不允许负数消耗。
 - `update_npc_relationship.npc_id` 必须已经存在于当前 `run_state.npcs`，并且不能被审查包标记为 `legacy_fixture_ref`。世界书 canonical NPC 或显式候选 NPC 可以作为合法引用边界，但若尚未进入当前 run state，不能直接更新关系。
+- `introduce_npc.npc` 可以把 canonical 或显式候选 NPC 加入单局状态；位置节点必须已经存在，或在同一个 delta 中先由 `introduce_map_node` 引入。
 - `add_temporary_sample.sample.sample_id` 必须非空，且 `source_delta_id` 必须等于当前 `delta_id`。
 - `set_progress_phase.phase` 必须非空。
 - 当 `source == "battle_result"` 时，不允许把以 `_started` 结尾的 flag 设置为 `true`；战后应写入 `_completed` 或其他完成态。
@@ -58,6 +60,7 @@ v0.1 采用“能稳定读取则登记，否则以 run state 为准”的保守�
 - 地图节点以当前 `RunWorldState.map_nodes` 为准。
 - runtime 资源以当前 `RunWorldState.resources` 为准，同时补充世界书 `resource_mapping`、`materials.json` 和审查包材料边界；但正式消耗仍要求资源已经在当前 run state 中。
 - NPC 登记会读取当前 run state、世界书 canonical NPC 和审查包 candidate NPC；但 `update_npc_relationship` 这类会被 applier 立即执行的操作仍要求 NPC 已经存在于当前 run state。审查包 `compatibility_refs` 中标记为 `legacy_fixture_ref` 的旧 fixture ID 会从允许集合中移除。
+- `introduce_npc` 是候选 NPC 进入运行态的受控入口；这并不把候选写入基础世界书，只代表当前单局已经遇见或临时接入该功能 NPC。
 
 这个策略解释了为什么 `engineer_001` 即便仍出现在旧 demo run state 中，也会被 semantic gate 拦截：它已在 MVP 审查包中被标记为旧兼容引用，不应由真实 LLM 自动写入正式世界状态。
 

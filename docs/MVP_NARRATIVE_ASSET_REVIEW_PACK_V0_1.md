@@ -10,6 +10,10 @@
 - `examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json`
 - `examples/review_packs/mvp_story_asset_review_pack.v0.1.json`
 - `examples/review_packs/mvp_story_asset_promotion_report.v0.1.json`
+- `examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json`
+- `examples/world_deltas/stage_03_northern_road_scouting.world_delta.json`
+- `examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json`
+- `examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json`
 - `shared/schemas/mvp_story_asset_review_pack.v0.1.schema.json`
 - `tools/content_pipeline/validate_mvp_story_asset_review_pack.py`
 
@@ -304,10 +308,12 @@ NPC：
 
 这批内容可以作为 MVP 教学关加一段后续扩展的审查基础。建议先人工确认四阶段方向，再进入下一轮：
 
-- 为阶段 2 到 4 生成实际 `WorldStateDelta` fixture。
+- 复验阶段 2 到 4 的 `WorldStateDelta` fixture 是否符合你想要的世界推进节奏。
 - 为阶段 4 生成 `second_battle_config`。
 - 选择是否把 `npc_wire_mender_003` 或 `npc_road_scout` 提升为 canonical NPC。
 - 对 `asset_signal_wick_decoy`、`asset_wick_barrier_pylon`、`intel_dark_echo_survey_001`、`asset_ash_burst_lantern` 做资产晋升报告。
+
+阶段 2 到 4 的 `WorldStateDelta` fixture 已生成并通过连续 apply 验证，详见 `docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md`。其中 `introduce_map_node` 和 `introduce_npc` 只把对象加入当前单局运行态，不改写基础世界书。
 
 ## 阶段资产 Promotion 报告
 
