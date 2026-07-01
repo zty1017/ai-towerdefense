@@ -32,6 +32,7 @@ FORBIDDEN_FRONTEND_KEYS = {
 }
 EFFECT_CATALOG_PATH = ROOT / "shared/module_registry/effect_catalog.v0.1.json"
 FRONTEND_MEDIA_MANIFEST_PATH = ROOT / "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json"
+FRONTEND_ANIMATION_SEED_MANIFEST_PATH = ROOT / "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json"
 
 
 def load_json(path: Path) -> Any:
@@ -245,6 +246,7 @@ def build_media_refs(
     candidate: dict[str, Any],
     promotion: dict[str, Any],
     frontend_media_index: dict[str, dict[str, dict[str, Any]]],
+    animation_seed_index: dict[str, dict[str, dict[str, Any]]],
 ) -> dict[str, Any]:
     asset_type = str(as_obj(candidate.get("gameplay")).get("asset_type", "unknown"))
     tags = as_list(as_obj(candidate.get("presentation")).get("visual_tags"))
@@ -261,6 +263,9 @@ def build_media_refs(
         refs["mode"] = "generated"
         refs["generated_roles"] = generated_roles
         refs["note"] = "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。"
+    animation_seed_roles = animation_seed_index.get(str(candidate.get("id")), {})
+    if animation_seed_roles:
+        refs["animation_seed_roles"] = animation_seed_roles
     return refs
 
 
@@ -269,6 +274,7 @@ def build_compiled_asset_entry(
     registry: dict[str, Any],
     effect_catalog: dict[str, Any],
     frontend_media_index: dict[str, dict[str, dict[str, Any]]],
+    animation_seed_index: dict[str, dict[str, dict[str, Any]]],
 ) -> dict[str, Any]:
     validation_errors = validate_asset_candidate.validate(candidate, registry)
     validation = {
@@ -305,7 +311,7 @@ def build_compiled_asset_entry(
         },
         "gameplay": gameplay,
         "visual_recipes": visual_recipes(candidate, effect_catalog),
-        "media_refs": build_media_refs(candidate, promotion, frontend_media_index),
+        "media_refs": build_media_refs(candidate, promotion, frontend_media_index, animation_seed_index),
         "promotion": {
             "promotion_state": promotion.get("promotion_state"),
             "playable": promotion.get("playable"),
@@ -393,7 +399,13 @@ def build_pack(created_at: str) -> dict[str, Any]:
         if FRONTEND_MEDIA_MANIFEST_PATH.exists()
         else None
     )
+    animation_seed_manifest = (
+        load_json(FRONTEND_ANIMATION_SEED_MANIFEST_PATH)
+        if FRONTEND_ANIMATION_SEED_MANIFEST_PATH.exists()
+        else None
+    )
     frontend_media_index = media_index(frontend_media_manifest)
+    animation_seed_index = media_index(animation_seed_manifest)
     worldbook = load_json(ROOT / "content/worldbooks/long_night_lanterns/worldbook.json")
     npcs = load_json(ROOT / "content/worldbooks/long_night_lanterns/npcs.json")
     materials = load_json(ROOT / "content/worldbooks/long_night_lanterns/materials.json")
@@ -404,7 +416,13 @@ def build_pack(created_at: str) -> dict[str, Any]:
 
     asset_paths = sorted((ROOT / "examples/compiled_assets").glob("*.compiled_asset.json"))
     assets = [
-        build_compiled_asset_entry(load_json(path), registry, effect_catalog, frontend_media_index)
+        build_compiled_asset_entry(
+            load_json(path),
+            registry,
+            effect_catalog,
+            frontend_media_index,
+            animation_seed_index,
+        )
         for path in asset_paths
     ]
     playable_count = sum(1 for asset in assets if asset["promotion"].get("playable"))

@@ -178,6 +178,76 @@ def remove_matte_background(
     return PngImage(image.width, image.height, out)
 
 
+def remove_edge_matte_background(
+    image: PngImage,
+    *,
+    threshold: int = 36,
+    background_rgb: tuple[int, int, int] | None = None,
+) -> PngImage:
+    """Remove matte background only when it is connected to canvas edges.
+
+    Unlike global matte removal, this preserves light-colored details inside
+    the subject, such as pale stone, glass highlights, or paper-like props.
+    """
+    bg = background_rgb or estimate_background_rgb(image)
+    width, height = image.width, image.height
+    total = width * height
+    visited = bytearray(total)
+    stack: list[int] = []
+
+    def near_bg(pos: int) -> bool:
+        p = pos * 4
+        if image.pixels[p + 3] == 0:
+            return True
+        r, g, b = image.pixels[p], image.pixels[p + 1], image.pixels[p + 2]
+        dist = max(abs(r - bg[0]), abs(g - bg[1]), abs(b - bg[2]))
+        return dist <= threshold
+
+    for x in range(width):
+        stack.append(x)
+        stack.append((height - 1) * width + x)
+    for y in range(height):
+        stack.append(y * width)
+        stack.append(y * width + width - 1)
+
+    background = bytearray(total)
+    while stack:
+        pos = stack.pop()
+        if visited[pos]:
+            continue
+        visited[pos] = 1
+        if not near_bg(pos):
+            continue
+        background[pos] = 1
+        x = pos % width
+        y = pos // width
+        if x > 0:
+            stack.append(pos - 1)
+        if x + 1 < width:
+            stack.append(pos + 1)
+        if y > 0:
+            stack.append(pos - width)
+        if y + 1 < height:
+            stack.append(pos + width)
+
+    out = bytearray(image.pixels)
+    for pos, is_background in enumerate(background):
+        if is_background:
+            out[pos * 4 + 3] = 0
+    return PngImage(width, height, out)
+
+
+def clear_transparent_rgb(image: PngImage, *, alpha_threshold: int = 0) -> PngImage:
+    """Set RGB to black for transparent pixels while preserving alpha."""
+    out = bytearray(image.pixels)
+    for p in range(0, len(out), 4):
+        if out[p + 3] <= alpha_threshold:
+            out[p] = 0
+            out[p + 1] = 0
+            out[p + 2] = 0
+    return PngImage(image.width, image.height, out)
+
+
 def alpha_bbox(image: PngImage, *, alpha_threshold: int = 8) -> tuple[int, int, int, int] | None:
     min_x, min_y = image.width, image.height
     max_x, max_y = -1, -1
@@ -192,6 +262,199 @@ def alpha_bbox(image: PngImage, *, alpha_threshold: int = 8) -> tuple[int, int, 
     if max_x < min_x or max_y < min_y:
         return None
     return min_x, min_y, max_x + 1, max_y + 1
+
+
+def keep_largest_alpha_component(image: PngImage, *, alpha_threshold: int = 8) -> PngImage:
+    """Keep only the largest connected visible alpha component.
+
+    This removes detached generation artifacts such as floating debris,
+    watermark islands, loose smoke wisps, and stray UI marks after matte
+    removal. It is intentionally conservative and uses 4-neighbour
+    connectivity.
+    """
+    width, height = image.width, image.height
+    total = width * height
+    visited = bytearray(total)
+    largest: list[int] = []
+
+    def visible(pos: int) -> bool:
+        return image.pixels[pos * 4 + 3] > alpha_threshold
+
+    for start in range(total):
+        if visited[start] or not visible(start):
+            continue
+        visited[start] = 1
+        stack = [start]
+        component: list[int] = []
+        while stack:
+            pos = stack.pop()
+            component.append(pos)
+            x = pos % width
+            y = pos // width
+            if x > 0:
+                nxt = pos - 1
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if x + 1 < width:
+                nxt = pos + 1
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y > 0:
+                nxt = pos - width
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y + 1 < height:
+                nxt = pos + width
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+        if len(component) > len(largest):
+            largest = component
+
+    if not largest:
+        return image
+
+    keep = bytearray(total)
+    for pos in largest:
+        keep[pos] = 1
+
+    out = bytearray(image.pixels)
+    for pos in range(total):
+        if not keep[pos]:
+            out[pos * 4 + 3] = 0
+    return PngImage(width, height, out)
+
+
+def remove_small_alpha_components(
+    image: PngImage,
+    *,
+    alpha_threshold: int = 8,
+    min_pixels: int = 96,
+) -> PngImage:
+    """Remove detached visible components smaller than `min_pixels`."""
+    width, height = image.width, image.height
+    total = width * height
+    visited = bytearray(total)
+    keep = bytearray(total)
+
+    def visible(pos: int) -> bool:
+        return image.pixels[pos * 4 + 3] > alpha_threshold
+
+    for start in range(total):
+        if visited[start] or not visible(start):
+            continue
+        visited[start] = 1
+        stack = [start]
+        component: list[int] = []
+        while stack:
+            pos = stack.pop()
+            component.append(pos)
+            x = pos % width
+            y = pos // width
+            if x > 0:
+                nxt = pos - 1
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if x + 1 < width:
+                nxt = pos + 1
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y > 0:
+                nxt = pos - width
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y + 1 < height:
+                nxt = pos + width
+                if not visited[nxt] and visible(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+        if len(component) >= min_pixels:
+            for pos in component:
+                keep[pos] = 1
+
+    out = bytearray(image.pixels)
+    for pos in range(total):
+        if visible(pos) and not keep[pos]:
+            out[pos * 4 + 3] = 0
+    return PngImage(width, height, out)
+
+
+def remove_near_white_background_islands(
+    image: PngImage,
+    *,
+    alpha_threshold: int = 8,
+    min_luma: int = 238,
+    max_chroma: int = 22,
+    min_pixels: int = 48,
+) -> PngImage:
+    """Remove enclosed near-white matte islands after edge background removal.
+
+    Generated assets often contain white matte pockets inside tower lattice,
+    between an object and a baked glow, or inside open mechanical frames. Edge
+    flood-fill cannot reach those pockets. This pass removes only low-chroma,
+    high-luma components large enough to be background rather than tiny specular
+    highlights.
+    """
+    width, height = image.width, image.height
+    total = width * height
+    visited = bytearray(total)
+    remove = bytearray(total)
+
+    def candidate(pos: int) -> bool:
+        p = pos * 4
+        if image.pixels[p + 3] <= alpha_threshold:
+            return False
+        r, g, b = image.pixels[p], image.pixels[p + 1], image.pixels[p + 2]
+        luma = (r * 299 + g * 587 + b * 114) // 1000
+        chroma = max(r, g, b) - min(r, g, b)
+        return luma >= min_luma and chroma <= max_chroma
+
+    for start in range(total):
+        if visited[start] or not candidate(start):
+            continue
+        visited[start] = 1
+        stack = [start]
+        component: list[int] = []
+        while stack:
+            pos = stack.pop()
+            component.append(pos)
+            x = pos % width
+            y = pos // width
+            if x > 0:
+                nxt = pos - 1
+                if not visited[nxt] and candidate(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if x + 1 < width:
+                nxt = pos + 1
+                if not visited[nxt] and candidate(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y > 0:
+                nxt = pos - width
+                if not visited[nxt] and candidate(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+            if y + 1 < height:
+                nxt = pos + width
+                if not visited[nxt] and candidate(nxt):
+                    visited[nxt] = 1
+                    stack.append(nxt)
+        if len(component) >= min_pixels:
+            for pos in component:
+                remove[pos] = 1
+
+    out = bytearray(image.pixels)
+    for pos, should_remove in enumerate(remove):
+        if should_remove:
+            out[pos * 4 + 3] = 0
+    return PngImage(width, height, out)
 
 
 def crop_and_pad(image: PngImage, *, padding: int = 24, alpha_threshold: int = 8) -> PngImage:

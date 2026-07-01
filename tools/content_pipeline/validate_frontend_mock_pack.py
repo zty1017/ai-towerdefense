@@ -46,6 +46,33 @@ def scan_forbidden(value: Any, path: str, errors: list[str]) -> None:
             scan_forbidden(child, f"{path}[{index}]", errors)
 
 
+def validate_media_role_refs(
+    refs: Any,
+    *,
+    path: str,
+    errors: list[str],
+    require_icon: bool,
+) -> None:
+    if refs is None:
+        return
+    if not isinstance(refs, dict) or not refs:
+        errors.append(f"{path} must be non-empty object")
+        return
+    if require_icon and "icon" not in refs:
+        errors.append(f"{path} missing icon")
+    for role, ref in refs.items():
+        if not isinstance(ref, dict):
+            errors.append(f"{path}.{role} must be object")
+            continue
+        url = ref.get("url")
+        if not isinstance(url, str) or not url.startswith("/assets/"):
+            errors.append(f"{path}.{role}.url must start with /assets/")
+        for dim_key in ("width", "height"):
+            dim = ref.get(dim_key)
+            if not isinstance(dim, int) or dim <= 0:
+                errors.append(f"{path}.{role}.{dim_key} must be positive integer")
+
+
 def validate(pack: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if pack.get("schema_version") != "frontend_mock_pack.v0.1":
@@ -117,23 +144,18 @@ def validate(pack: dict[str, Any]) -> list[str]:
             errors.append(f"assets[{index}] missing fallback icon_token")
             continue
         generated_roles = media_refs.get("generated_roles")
-        if generated_roles is not None:
-            if not isinstance(generated_roles, dict) or not generated_roles:
-                errors.append(f"assets[{index}].media_refs.generated_roles must be non-empty object")
-            elif "icon" not in generated_roles:
-                errors.append(f"assets[{index}].media_refs.generated_roles missing icon")
-            if isinstance(generated_roles, dict):
-                for role, ref in generated_roles.items():
-                    if not isinstance(ref, dict):
-                        errors.append(f"assets[{index}].media_refs.generated_roles.{role} must be object")
-                        continue
-                    url = ref.get("url")
-                    if not isinstance(url, str) or not url.startswith("/assets/"):
-                        errors.append(f"assets[{index}].media_refs.generated_roles.{role}.url must start with /assets/")
-                    for dim_key in ("width", "height"):
-                        dim = ref.get(dim_key)
-                        if not isinstance(dim, int) or dim <= 0:
-                            errors.append(f"assets[{index}].media_refs.generated_roles.{role}.{dim_key} must be positive integer")
+        validate_media_role_refs(
+            generated_roles,
+            path=f"assets[{index}].media_refs.generated_roles",
+            errors=errors,
+            require_icon=True,
+        )
+        validate_media_role_refs(
+            media_refs.get("animation_seed_roles"),
+            path=f"assets[{index}].media_refs.animation_seed_roles",
+            errors=errors,
+            require_icon=False,
+        )
 
     summary = pack.get("compiler_summary")
     if isinstance(summary, dict):

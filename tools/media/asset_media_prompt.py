@@ -22,7 +22,15 @@ MEDIA_ROLES = {
 CUTOUT_GENERATION_RULES = (
     "single isolated subject only, solid pure white matte background, no scenery, "
     "no cast shadow, no ground shadow, no particles, no aura baked into the image, "
-    "no text, no letters, no watermark, leave clean empty padding around the subject"
+    "no enemies, no monsters, no human characters, no text, no letters, no numbers, "
+    "no Chinese characters, no watermark, leave clean empty padding around the subject"
+)
+
+CLEAN_ASSET_NEGATIVE_RULES = (
+    "no battlefield, no environment, no UI frame, no card border, no title plaque, "
+    "no captions, no symbols, no readable glyphs, no speech bubble, no extra objects, "
+    "no beam, no explosion, no smoke, no sparks, no floating debris, "
+    "no readable runes, no engraved letters, no compass letters, no map markings"
 )
 
 
@@ -37,17 +45,94 @@ def default_media_roles(candidate: dict[str, Any]) -> list[str]:
     """Return role defaults that match the asset type."""
     kind = asset_type(candidate)
     if kind == "tower_blueprint":
-        return ["icon", "tower_sprite", "battle_preview"]
+        return ["icon", "tower_sprite"]
     if kind in {"support_item", "temporary_mod"}:
-        return ["icon", "ui_card", "effect_preview"]
+        return ["icon", "ui_card"]
     if kind == "intel_asset":
-        return ["icon", "ui_card", "effect_preview"]
+        return ["icon", "ui_card"]
     return ["icon", "ui_card"]
 
 
 def stable_media_id(candidate: dict[str, Any], role: str) -> str:
     raw = f"{candidate.get('id', 'unknown')}_{role}"
     return f"{raw}_{hashlib.sha256(raw.encode()).hexdigest()[:8]}"
+
+
+def safe_ascii_tags(candidate: dict[str, Any]) -> list[str]:
+    """Return short ASCII-only style tags that are safe for image prompts."""
+    presentation = candidate.get("presentation", {})
+    tags = presentation.get("visual_tags", []) if isinstance(presentation, dict) else []
+    safe: list[str] = []
+    for tag in tags:
+        value = str(tag).strip()
+        if value and value.isascii():
+            safe.append(value.replace("_", " "))
+    return safe[:6]
+
+
+def candidate_motifs(candidate: dict[str, Any]) -> list[str]:
+    """Infer visual motifs from stable IDs without using player-facing prose."""
+    raw = str(candidate.get("id", "")).lower()
+    motifs: list[str] = []
+    if "ash" in raw:
+        motifs.append("ash chamber")
+        motifs.append("vented brass resonator")
+    if "burst" in raw:
+        motifs.append("reinforced pressure core")
+    if "slow" in raw or "light" in raw:
+        motifs.append("plain blue white glass lens")
+        motifs.append("closed adjustable shutters")
+    if "barrier" in raw or "pylon" in raw:
+        motifs.append("wick lattice pylon")
+        motifs.append("insulated field rods")
+    if "mirror" in raw or "lure" in raw:
+        motifs.append("mirror shard housing")
+        motifs.append("small decoy lantern")
+    if "signal" in raw or "decoy" in raw:
+        motifs.append("signal wick beacon")
+        motifs.append("folded tripod base")
+    if "survey" in raw or "intel" in raw:
+        motifs.append("sealed brass survey meter")
+        motifs.append("blank smooth dial plate")
+    if "chain" in raw or "arc" in raw or "overload" in raw:
+        motifs.append("coiled conductor module")
+        motifs.append("insulated copper clamps")
+    return motifs[:5]
+
+
+def clean_subject_description(candidate: dict[str, Any]) -> str:
+    """Describe the asset body only; frontend effects are rendered separately."""
+    kind = asset_type(candidate)
+    motifs = candidate_motifs(candidate)
+    motif_text = ", ".join(motifs) if motifs else "brass, crystal, lantern-world machinery"
+    if kind == "tower_blueprint":
+        return (
+            "subject: one dormant lantern-inspired tower defense device only, "
+            "inactive mechanical body, pseudo-isometric body, sturdy base, clear bottom anchor, "
+            f"visible motifs: {motif_text}"
+        )
+    if kind == "support_item":
+        return (
+            "subject: one small deployable trap or utility device only, "
+            "portable game item, readable silhouette, "
+            f"visible motifs: {motif_text}"
+        )
+    if kind == "temporary_mod":
+        return (
+            "subject: one compact tower upgrade module only, mechanical component, "
+            "readable silhouette, "
+            f"visible motifs: {motif_text}"
+        )
+    if kind == "intel_asset":
+        return (
+            "subject: one portable survey instrument only, sealed brass meter with blank glass lens, "
+            "smooth blank plates, no compass face, no map sheet, no writing or map labels, "
+            f"visible motifs: {motif_text}"
+        )
+    return (
+        "subject: one isolated tower defense game item only, readable silhouette, "
+        f"visible motifs: {motif_text}"
+    )
 
 
 def build_prompt_summary(candidate: dict[str, Any], role: str) -> str:
@@ -77,25 +162,18 @@ def build_icon_prompt(candidate: dict[str, Any]) -> str:
 
     UI icon: square, clear silhouette, no text.
     """
-    presentation = candidate.get("presentation", {})
-    name = presentation.get("name", "tower")
-    desc = presentation.get("short_description", "")
-    icon_prompt = presentation.get("icon_prompt", "")
-    visual_tags = presentation.get("visual_tags", [])
-
     parts: list[str] = [
-        "2D game icon, square, clean silhouette, centered object, game-ready UI asset",
+        "2D game asset source image for an icon, one centered object, clean silhouette",
         CUTOUT_GENERATION_RULES,
+        CLEAN_ASSET_NEGATIVE_RULES,
+        clean_subject_description(candidate),
+        "dormant object before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "plain white background, no baked gameplay effects, no glow rings, no beams, no explosions",
+        "clean production sprite reference, readable at small size, brass and weathered metal materials",
     ]
-    if icon_prompt:
-        parts.append(icon_prompt)
-    else:
-        parts.append(f"tower defense game asset, {name}")
-    if desc:
-        parts.append(desc)
-    if visual_tags:
-        parts.append(", ".join(str(t) for t in visual_tags))
-    parts.append("flat-to-painterly game icon, readable at small size")
+    tags = safe_ascii_tags(candidate)
+    if tags:
+        parts.append("style tags: " + ", ".join(tags))
     return ", ".join(parts)
 
 
@@ -105,63 +183,37 @@ def build_tower_sprite_prompt(candidate: dict[str, Any]) -> str:
     2D/pseudo-3D single-frame tower sprite suitable for tower defense battlefield.
     No text.
     """
-    presentation = candidate.get("presentation", {})
-    gameplay = candidate.get("gameplay", {})
-    name = presentation.get("name", "tower")
-    desc = presentation.get("short_description", "")
-    anim_prompt = presentation.get("animation_card_prompt", "")
-    visual_tags = presentation.get("visual_tags", [])
-    effect_blocks = gameplay.get("effect_blocks", [])
-
     parts: list[str] = [
-        "2D tower defense tower sprite, isolated object, single frame, pseudo-isometric view",
+        "2D tower defense deployable sprite, isolated tower body only, single frame, pseudo-isometric view",
         CUTOUT_GENERATION_RULES,
-        "centered base, game-ready cutout, effects must be separate overlay recipes not painted on the tower body",
+        CLEAN_ASSET_NEGATIVE_RULES,
+        clean_subject_description(candidate),
+        "centered base, game-ready cutout, anchor at bottom center",
+        "dormant tower before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "effects are separate frontend overlays, do not paint beams, shockwaves, rings, smoke, sparks, enemies, or paths",
+        "plain white background, no floor tile, no terrain, no shadows",
     ]
-    if anim_prompt:
-        parts.append(anim_prompt)
-    else:
-        parts.append(f"tower defense turret, {name}")
-    if desc:
-        parts.append(desc)
-    if visual_tags:
-        parts.append(", ".join(str(t) for t in visual_tags))
-    effect_types = [e.get("type", "") for e in effect_blocks if isinstance(e, dict)]
-    if effect_types:
-        parts.append(f"effects: {', '.join(effect_types)}")
-    parts.append("clean tower body sprite, anchor at bottom center")
+    tags = safe_ascii_tags(candidate)
+    if tags:
+        parts.append("style tags: " + ", ".join(tags))
     return ", ".join(parts)
 
 
 def build_ui_card_prompt(candidate: dict[str, Any]) -> str:
     """Build a prompt for a player-facing inventory/research card image."""
-    presentation = candidate.get("presentation", {})
-    gameplay = candidate.get("gameplay", {})
-    visual_tags = presentation.get("visual_tags", [])
-    kind = gameplay.get("asset_type", "asset") if isinstance(gameplay, dict) else "asset"
-    effect_blocks = gameplay.get("effect_blocks", []) if isinstance(gameplay, dict) else []
-    effect_types = [str(e.get("type")) for e in effect_blocks if isinstance(e, dict) and e.get("type")]
-
     parts: list[str] = [
-        "2D game inventory illustration only, not a card UI, borderless artwork, no frame, no title plaque",
-        "absolutely no text, no letters, no Chinese characters, no numbers, no watermark",
-        "no readable glyphs, no captions, no UI labels, no generated writing, no text boxes, no scroll writing",
-        "single clean illustration for a tower defense strategy game, frontend will draw all UI frames and labels separately",
-        f"asset type: {kind}",
+        "2D game inventory item source image, one isolated object only, not a card UI",
+        CUTOUT_GENERATION_RULES,
+        CLEAN_ASSET_NEGATIVE_RULES,
+        clean_subject_description(candidate),
+        "frontend will draw all UI frames and labels separately",
+        "dormant object before gameplay effects are applied, subtle attached ornament is allowed if it is not readable writing",
+        "plain white background, no baked gameplay effects, no glow rings, no beams, no explosions",
+        "clean production sprite reference, clear subject, polished item illustration, brass and weathered metal materials",
     ]
-    if effect_types:
-        parts.append(f"gameplay effects as visual metaphor only: {', '.join(effect_types)}")
-    if visual_tags:
-        safe_tags = [str(tag) for tag in visual_tags if str(tag).isascii()]
-        if safe_tags:
-            parts.append(", ".join(safe_tags))
-    if kind == "intel_asset":
-        parts.append("subject: glowing survey map object, lantern marker, abstract route lines, sealed compass, no written symbols")
-    elif kind == "support_item":
-        parts.append("subject: small deployable lantern-world device on clean background")
-    elif kind == "temporary_mod":
-        parts.append("subject: upgrade module device, energy coil, compact mechanical part")
-    parts.append("dark fantasy lantern-world style, clear subject, polished item illustration, clean background")
+    tags = safe_ascii_tags(candidate)
+    if tags:
+        parts.append("style tags: " + ", ".join(tags))
     return ", ".join(parts)
 
 
@@ -245,9 +297,9 @@ def build_prompt_for_role(
         )
     if suffix and role == "ui_card":
         return (
-            "2D game card illustration only, no text, no letters, no numbers, no watermark, "
-            "one small mirror-shard lure device, blank decorative frame, dark lantern-world style, "
-            "clear subject, no writing"
+            "2D game inventory item source image, one isolated small mirror-shard lure device only, "
+            "solid pure white matte background, no text, no letters, no numbers, no watermark, "
+            "no UI frame, no card border, no title plaque, no writing, no enemies, no scene"
         )
 
     if role == "icon":

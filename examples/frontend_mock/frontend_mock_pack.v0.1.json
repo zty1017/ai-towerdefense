@@ -978,6 +978,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "asset_ash_burst_lantern_icon_5045e492",
+            "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_icon_5045e492.png",
+            "width": 826,
+            "height": 826
+          },
+          "tower_sprite": {
+            "media_id": "asset_ash_burst_lantern_tower_sprite_9263019f",
+            "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+            "width": 917,
+            "height": 917
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_ash_burst_lantern_icon_5045e492",
             "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_icon_5045e492.png",
             "width": 1024,
             "height": 1024
@@ -985,12 +999,6 @@
           "tower_sprite": {
             "media_id": "asset_ash_burst_lantern_tower_sprite_9263019f",
             "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_tower_sprite_9263019f.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "battle_preview": {
-            "media_id": "asset_ash_burst_lantern_battle_preview_1fff4c18",
-            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_battle_preview_1fff4c18.png",
             "width": 1024,
             "height": 1024
           }
@@ -1138,6 +1146,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "intel_dark_echo_survey_001_icon_cec61ac8",
+            "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_icon_cec61ac8.png",
+            "width": 791,
+            "height": 791
+          },
+          "ui_card": {
+            "media_id": "intel_dark_echo_survey_001_ui_card_7219d045",
+            "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_ui_card_7219d045.png",
+            "width": 882,
+            "height": 882
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "intel_dark_echo_survey_001_icon_cec61ac8",
             "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_icon_cec61ac8.png",
             "width": 1024,
             "height": 1024
@@ -1145,12 +1167,6 @@
           "ui_card": {
             "media_id": "intel_dark_echo_survey_001_ui_card_7219d045",
             "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_ui_card_7219d045.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "effect_preview": {
-            "media_id": "intel_dark_echo_survey_001_effect_preview_479c7fa9",
-            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_effect_preview_479c7fa9.png",
             "width": 1024,
             "height": 1024
           }
@@ -1299,6 +1315,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "asset_light_slow_tower_001_icon_1a0e42e9",
+            "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_icon_1a0e42e9.png",
+            "width": 822,
+            "height": 822
+          },
+          "tower_sprite": {
+            "media_id": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
+            "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+            "width": 860,
+            "height": 860
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_light_slow_tower_001_icon_1a0e42e9",
             "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_icon_1a0e42e9.png",
             "width": 1024,
             "height": 1024
@@ -1306,12 +1336,6 @@
           "tower_sprite": {
             "media_id": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
             "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "battle_preview": {
-            "media_id": "asset_light_slow_tower_001_battle_preview_e56b2d48",
-            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_battle_preview_e56b2d48.png",
             "width": 1024,
             "height": 1024
           }
@@ -1467,6 +1491,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+            "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+            "width": 788,
+            "height": 788
+          },
+          "ui_card": {
+            "media_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+            "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+            "width": 807,
+            "height": 807
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
             "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_icon_a0e4455b.png",
             "width": 1024,
             "height": 1024
@@ -1474,12 +1512,6 @@
           "ui_card": {
             "media_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
             "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "effect_preview": {
-            "media_id": "asset_mirror_lure_trap_001_effect_preview_f762412d",
-            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_effect_preview_f762412d.png",
             "width": 1024,
             "height": 1024
           }
@@ -1638,6 +1670,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "mod_overload_chain_arc_001_icon_6c776311",
+            "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_icon_6c776311.png",
+            "width": 784,
+            "height": 784
+          },
+          "ui_card": {
+            "media_id": "mod_overload_chain_arc_001_ui_card_6d142b71",
+            "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+            "width": 918,
+            "height": 918
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "mod_overload_chain_arc_001_icon_6c776311",
             "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_icon_6c776311.png",
             "width": 1024,
             "height": 1024
@@ -1645,12 +1691,6 @@
           "ui_card": {
             "media_id": "mod_overload_chain_arc_001_ui_card_6d142b71",
             "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_ui_card_6d142b71.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "effect_preview": {
-            "media_id": "mod_overload_chain_arc_001_effect_preview_8d957767",
-            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_effect_preview_8d957767.png",
             "width": 1024,
             "height": 1024
           }
@@ -1818,6 +1858,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "intel_shadow_tide_survey_icon_3ba77691",
+            "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_icon_3ba77691.png",
+            "width": 808,
+            "height": 808
+          },
+          "ui_card": {
+            "media_id": "intel_shadow_tide_survey_ui_card_192910c1",
+            "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_ui_card_192910c1.png",
+            "width": 856,
+            "height": 856
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "intel_shadow_tide_survey_icon_3ba77691",
             "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_icon_3ba77691.png",
             "width": 1024,
             "height": 1024
@@ -1825,12 +1879,6 @@
           "ui_card": {
             "media_id": "intel_shadow_tide_survey_ui_card_192910c1",
             "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_ui_card_192910c1.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "effect_preview": {
-            "media_id": "intel_shadow_tide_survey_effect_preview_4124c579",
-            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_effect_preview_4124c579.png",
             "width": 1024,
             "height": 1024
           }
@@ -2012,6 +2060,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "asset_signal_wick_decoy_icon_9fac3cb5",
+            "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_icon_9fac3cb5.png",
+            "width": 763,
+            "height": 763
+          },
+          "ui_card": {
+            "media_id": "asset_signal_wick_decoy_ui_card_c0b43d8f",
+            "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+            "width": 891,
+            "height": 891
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_signal_wick_decoy_icon_9fac3cb5",
             "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_icon_9fac3cb5.png",
             "width": 1024,
             "height": 1024
@@ -2019,12 +2081,6 @@
           "ui_card": {
             "media_id": "asset_signal_wick_decoy_ui_card_c0b43d8f",
             "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "effect_preview": {
-            "media_id": "asset_signal_wick_decoy_effect_preview_26fbc1bd",
-            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_effect_preview_26fbc1bd.png",
             "width": 1024,
             "height": 1024
           }
@@ -2183,6 +2239,20 @@
         "generated_roles": {
           "icon": {
             "media_id": "asset_wick_barrier_pylon_icon_09e6177c",
+            "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_icon_09e6177c.png",
+            "width": 859,
+            "height": 859
+          },
+          "tower_sprite": {
+            "media_id": "asset_wick_barrier_pylon_tower_sprite_7472556d",
+            "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+            "width": 941,
+            "height": 941
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_wick_barrier_pylon_icon_09e6177c",
             "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_icon_09e6177c.png",
             "width": 1024,
             "height": 1024
@@ -2190,12 +2260,6 @@
           "tower_sprite": {
             "media_id": "asset_wick_barrier_pylon_tower_sprite_7472556d",
             "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
-            "width": 1024,
-            "height": 1024
-          },
-          "battle_preview": {
-            "media_id": "asset_wick_barrier_pylon_battle_preview_c474023b",
-            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_battle_preview_c474023b.png",
             "width": 1024,
             "height": 1024
           }
