@@ -1,0 +1,82 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "battle_result",
+  "created_turn": 2,
+  "summary": "灰灯驿站的第一波夜雾被击退，折光绊索在实战中拖慢了来犯者，灯火得以稳住。",
+  "operations": [
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "gray_lantern_first_defense_success",
+        "turn": 2,
+        "kind": "battle",
+        "summary": "灯匠凭借折光绊索稳住阵脚，灰灯驿站的第一波夜雾被击退，灯火仍亮。"
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "gray_lantern_station",
+      "patch": {
+        "status": "secured",
+        "threat_level": 0,
+        "visibility": "visible",
+        "available_actions": [
+          "field_research",
+          "rest"
+        ]
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "lamp_oil",
+      "amount_delta": -1
+    },
+    {
+      "op": "set_flag",
+      "flag": "tutorial_first_battle_started",
+      "value": true
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "sample_trap_tested_in_battle",
+        "source": "first_battle",
+        "visibility": "player_known",
+        "summary": "折光绊索在灰灯驿站的实战中成功拖慢了七道夜雾来影。"
+      }
+    },
+    {
+      "op": "update_npc_relationship",
+      "npc_id": "engineer_001",
+      "relationship_delta": {
+        "trust": 0.05
+      }
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "sample_trap_7f3a",
+        "display_name": "折光绊索",
+        "source_delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result",
+        "summary": "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
+      }
+    },
+    {
+      "op": "set_progress_phase",
+      "phase": "post_first_defense"
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "hope",
+      "amount_delta": 0.05
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "pressure",
+      "amount_delta": -0.05
+    }
+  ]
+}
