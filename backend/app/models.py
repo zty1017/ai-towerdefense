@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -93,3 +93,33 @@ class ResearchJobInfo(ResearchJobResponse):
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime] = None
+
+
+# ---------------------------------------------------------------------------
+# Frontend mock API models
+# ---------------------------------------------------------------------------
+
+
+class WorldInstanceCreateRequest(BaseModel):
+    """Optional world-instance selections from the frontend start flow."""
+
+    selected_options: dict[str, Any] = Field(default_factory=dict)
+
+
+class FrontendMockPayloadResponse(BaseModel):
+    """Generic fixture-backed response for the frontend mock API surface."""
+
+    session_id: str
+    mode: str = "frontend_mock_fixture"
+    payload: dict[str, Any]
+
+
+class BattleResultSubmitRequest(BaseModel):
+    """Player/battle simulation result posted by the frontend mock battle."""
+
+    result: str = Field(default="victory")
+    protected_core_hp: Optional[int] = None
+    optional_target_state: Optional[str] = None
+    deployed_asset_ids: list[str] = Field(default_factory=list)
+    leaked_enemy_count: int = 0
+    notes: Optional[str] = None
