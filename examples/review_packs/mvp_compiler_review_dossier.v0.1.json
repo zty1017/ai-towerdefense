@@ -2761,6 +2761,34 @@
     "player_exposed_count": 51,
     "review_required_count": 11
   },
+  "compilable_object_plan_summary": {
+    "plan_file": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+    "target_stage_id": "act_1_stage_05_old_signal_tower_pressure",
+    "request_count": 6,
+    "layer_counts": {
+      "economy": 1,
+      "entity": 1,
+      "narrative": 3,
+      "ui_explanation": 1
+    },
+    "permission_level_counts": {
+      "L1_presentation": 1,
+      "L2_entity": 1,
+      "L3_behavior": 2,
+      "L4_system_rule": 2
+    },
+    "compile_actor_counts": {
+      "player": 1,
+      "system": 5
+    },
+    "risk_counts": {
+      "low": 2,
+      "medium": 4
+    },
+    "requires_llm_count": 6,
+    "requires_media_count": 1,
+    "requires_human_review_count": 4
+  },
   "runtime_state_summary": {
     "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "progress": {
@@ -2798,7 +2826,13 @@
       "path": "docs/COMPILABLE_OBJECT_MODEL_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "27e9582d9d6e694180dac26580635c02ec403d0c4e5d294bf0fefb4cd3a5f2cb"
+      "sha256": "25d18d98cdcf82afc6754210b67220a71cd28316201b4c28398ce7cdb4f0b6bd"
+    },
+    {
+      "path": "docs/COMPILABLE_OBJECT_PLAN_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "0220b16d2515eb03a0d660fdebf45f920356f58a3eb55a42158111a99260ffd2"
     },
     {
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
@@ -2816,7 +2850,7 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "d90ffc6281ff2bf68cdaa6c367c71efff1be9114ad114bcf6003f4be5992c90b"
+      "sha256": "6eab814ef62a5ecc00515ccf661c788a55dce80a35574d1208b9819f31182d98"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2907,6 +2941,12 @@
       "kind": "compilable_object_catalog",
       "exists": true,
       "sha256": "ba0bfdee5f691d46a3cfed19dd6a4bf3712323b352c77beeaa779139434b415c"
+    },
+    {
+      "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+      "kind": "compilable_object_plan",
+      "exists": true,
+      "sha256": "ec3d0e801dcbe620a68ebe7137c06af7d5b45a47398e85e9036fbe0390e0c0ac"
     },
     {
       "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
@@ -3113,10 +3153,16 @@
       "sha256": "a17ac9846a4163247a3d5ed24cbdef605c930468d76e3395d651283e1f8ec4e4"
     },
     {
+      "path": "shared/schemas/compilable_object_plan.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "0a633c10d8ccaa39935faa53efac4f736189a52fc5c6bf61ed06cabf535b6503"
+    },
+    {
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "8f43d05fa80205a5aedfdcc9d6d77000268ee0ab9fc39133a445ca1773fcb821"
+      "sha256": "fb1a45d5fa688d2baee3890fc238c7c98f317395d3d877ce0ee2ee134fdc5733"
     },
     {
       "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
@@ -3131,6 +3177,12 @@
       "sha256": "2cf0e059507b311c45eff6f1169a523336bb74f0b9a7a306516c425fd9f9dafa"
     },
     {
+      "path": "tools/content_pipeline/build_compilable_object_plan.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "da6b58e5da57785fe598c4e9c1d0f7f1827ab303c0868e754855f2398f9d2313"
+    },
+    {
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",
       "kind": "builder",
       "exists": true,
@@ -3141,6 +3193,12 @@
       "kind": "validator",
       "exists": true,
       "sha256": "323fb65245fe5551836e7af50d362803707abd9c8dd46d9bc5812d7823e6dd1d"
+    },
+    {
+      "path": "tools/content_pipeline/validate_compilable_object_plan.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "deeb86d5eca7111f8819f8f15aad4a69d95a98a7c79883658e4d93a653f7323b"
     },
     {
       "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
@@ -3189,6 +3247,14 @@
     {
       "purpose": "校验可编译对象目录",
       "command": "python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
+    },
+    {
+      "purpose": "构建并校验下一阶段可编译对象计划",
+      "command": "python3 tools/content_pipeline/build_compilable_object_plan.py --validate"
+    },
+    {
+      "purpose": "校验下一阶段可编译对象计划",
+      "command": "python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

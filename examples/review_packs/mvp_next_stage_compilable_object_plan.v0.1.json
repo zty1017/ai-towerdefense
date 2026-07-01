@@ -1,0 +1,430 @@
+{
+  "schema_version": "compilable_object_plan.v0.1",
+  "plan_id": "mvp_next_stage_compilable_object_plan_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "plan_builder_reads_env": false,
+    "plan_builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "runtime_export_included": "not_included",
+    "llm_fill_allowed_after_review": true
+  },
+  "source_refs": {
+    "compilable_object_catalog": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
+    "stage_candidate_pack": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+    "final_run_state": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+    "review_pack": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+    "promotion_report": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+  },
+  "planning_context": {
+    "target_stage_id": "act_1_stage_05_old_signal_tower_pressure",
+    "target_stage_title": "旧信号塔回光压力",
+    "stage_intent": "把旧信号塔 pending 压力从线索推进为可审查阶段候选，并引导一次受控资产编译。",
+    "world_line_seed": "旧信号塔附近的回光扰动增强，可能暴露新的路径压力或捷径。",
+    "player_line_seed": "玩家可通过侦察、稳定任务和辉晶材料尝试研发折射/回声类防御方案。",
+    "active_constraints": [
+      "不修改基础世界书",
+      "不直接给出最终胜利或终局神器",
+      "候选 NPC 和候选材料必须先保留为 candidate_only",
+      "默认战斗资产最多 fallback_ready，真实媒体仍需后续 readiness",
+      "玩家侧文本不得暴露底层调用、结构模板或调试记录等世界外细节"
+    ],
+    "evidence_object_refs": [
+      "map_node:old_signal_tower",
+      "random_event:random_event_old_signal_tower_pressure",
+      "fact:old_signal_tower_pressure_hint",
+      "material:glow_crystal",
+      "npc:npc_road_scout"
+    ]
+  },
+  "object_requests": [
+    {
+      "request_id": "req_stage_05_old_signal_tower_candidate",
+      "requested_object_id": "stage:act_1_stage_05_old_signal_tower_pressure",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "intent_summary": "把旧信号塔的 pending 压力事件升级为第五阶段候选，同时继续维护世界线与玩家线双线推进。",
+      "source_signals": [
+        "fact:old_signal_tower_pressure_hint",
+        "map_node:old_signal_tower",
+        "random_event:random_event_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "fact:old_signal_tower_pressure_hint",
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout",
+        "random_event:random_event_old_signal_tower_pressure"
+      ],
+      "target_outputs": [
+        "NarrativeEventBundle",
+        "StageCandidatePack entry",
+        "WorldStateDelta"
+      ],
+      "required_validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "acceptance_gates": [
+        "stage must create or resolve at least one concrete gameplay object",
+        "stage must not only append story text",
+        "stage must reference no legacy fixture NPC"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "map_pressure",
+          "player_line_progress",
+          "world_line_progress"
+        ],
+        "target_export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "medium"
+      },
+      "fallback_policy": {
+        "strategy": "keep old signal tower as scouted pending node",
+        "player_visible_result": "旧信号塔仍保持侦察标记，暂不进入下一战。",
+        "blocked_result": "do_not_emit_stage_05_delta"
+      },
+      "next_compile_steps": [
+        "append to StageCandidatePack only after review",
+        "generate NarrativeEventBundle candidate",
+        "generate WorldStateDelta candidate",
+        "run semantic gate"
+      ],
+      "requires_llm": true,
+      "requires_media": false,
+      "requires_human_review": true
+    },
+    {
+      "request_id": "req_task_stabilize_old_signal_tower",
+      "requested_object_id": "task:task_stabilize_old_signal_tower",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "intent_summary": "生成一个可完成的旧信号塔稳定任务，作为玩家线承接，不允许直接改写主线终局。",
+      "source_signals": [
+        "npc:npc_road_scout",
+        "random_event:random_event_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout",
+        "random_event:random_event_old_signal_tower_pressure"
+      ],
+      "target_outputs": [
+        "RunWorldState.tasks[]",
+        "WorldStateDelta.upsert_task"
+      ],
+      "required_validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_world_delta.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "acceptance_gates": [
+        "task node_id must exist",
+        "task objective refs must be detectable by game systems",
+        "task reward refs must not grant final victory"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "map_pressure_resolution",
+          "objective_chain"
+        ],
+        "target_export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "fallback_policy": {
+        "strategy": "convert to scouting hint if objective chain is invalid",
+        "player_visible_result": "斥候只标记旧信号塔风险，任务暂不开放。",
+        "blocked_result": "skip upsert_task"
+      },
+      "next_compile_steps": [
+        "include in WorldStateDelta as upsert_task",
+        "link random event or research job",
+        "verify final RunWorldState contains task"
+      ],
+      "requires_llm": true,
+      "requires_media": false,
+      "requires_human_review": false
+    },
+    {
+      "request_id": "req_material_resonant_glass_candidate",
+      "requested_object_id": "material:resonant_glass_shard",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "intent_summary": "根据辉晶和旧信号塔回光扰动规划一个候选材料，用作后续折射/回声类资产编译约束。",
+      "source_signals": [
+        "fact:old_signal_tower_pressure_hint",
+        "material:glow_crystal"
+      ],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "material:glow_crystal"
+      ],
+      "target_outputs": [
+        "WorldStateDelta.adjust_resource or candidate material registration",
+        "future material affordance"
+      ],
+      "required_validators": [
+        "CompilableObjectCatalog review",
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "acceptance_gates": [
+        "material affordance must map to existing effect families",
+        "material must be introduced as candidate until canonicalized"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "target_export_status": "candidate_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "fallback_policy": {
+        "strategy": "use existing glow_crystal only",
+        "player_visible_result": "本阶段只使用辉晶线索，不新增材料。",
+        "blocked_result": "do_not_adjust_resource_for_candidate_material"
+      },
+      "next_compile_steps": [
+        "ask LLM to propose material affordances",
+        "human review before canonical material registration",
+        "map affordances to effect catalog"
+      ],
+      "requires_llm": true,
+      "requires_media": false,
+      "requires_human_review": true
+    },
+    {
+      "request_id": "req_npc_signal_keeper_candidate",
+      "requested_object_id": "npc:npc_signal_keeper_candidate",
+      "object_type": "npc",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "intent_summary": "规划一个功能 NPC 候选，用于旧信号塔阶段的路线解释、风险提示和研发评审。",
+      "source_signals": [
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout"
+      ],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout"
+      ],
+      "target_outputs": [
+        "NarrativeEventBundle participant",
+        "WorldStateDelta.introduce_npc"
+      ],
+      "required_validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_world_delta.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "acceptance_gates": [
+        "npc cannot overwrite legacy fixture NPC",
+        "npc gameplay role must serve route, research, or risk explanation",
+        "npc id must be candidate-prefixed or review-approved"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "npc_state",
+          "research_review",
+          "strategy_explanation"
+        ],
+        "target_export_status": "candidate_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "fallback_policy": {
+        "strategy": "reuse npc_road_scout as adviser",
+        "player_visible_result": "北路斥候继续承担旧信号塔提示，不新增 NPC。",
+        "blocked_result": "skip introduce_npc"
+      },
+      "next_compile_steps": [
+        "generate NPC role card",
+        "introduce via WorldStateDelta only if semantic gate accepts candidate NPC",
+        "record in StageCandidatePack next actions"
+      ],
+      "requires_llm": true,
+      "requires_media": false,
+      "requires_human_review": true
+    },
+    {
+      "request_id": "req_asset_echo_prism_relay",
+      "requested_object_id": "asset:asset_echo_prism_relay",
+      "object_type": "tower_blueprint",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "intent_summary": "规划一个利用辉晶/回光扰动的折射中继塔候选，用于旧信号塔压力战的路径控制或弱点揭示。",
+      "source_signals": [
+        "map_node:old_signal_tower",
+        "material:glow_crystal",
+        "random_event:random_event_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "material:glow_crystal",
+        "random_event:random_event_old_signal_tower_pressure",
+        "task:task_stabilize_old_signal_tower"
+      ],
+      "target_outputs": [
+        "CompiledAssetCandidate",
+        "Proposal",
+        "expected media roles: tower_sprite/icon/battle_preview",
+        "promotion report entry"
+      ],
+      "required_validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py",
+        "validate_proposal.py"
+      ],
+      "acceptance_gates": [
+        "asset must fit existing effect catalog",
+        "asset must pass simulation or remain candidate_only",
+        "media can use fallback skin until real media readiness passes"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "path_control",
+          "weakness_hint"
+        ],
+        "target_export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "fallback_policy": {
+        "strategy": "compile support item instead of tower if stats are unstable",
+        "player_visible_result": "工坊只交付一次性回光标记器，不交付完整塔。",
+        "blocked_result": "keep as candidate_only asset"
+      },
+      "next_compile_steps": [
+        "compile asset candidate with LLM",
+        "generate player-visible Proposal",
+        "run media prompt and fallback media plan",
+        "validate/simulate/score candidate"
+      ],
+      "requires_llm": true,
+      "requires_media": true,
+      "requires_human_review": true
+    },
+    {
+      "request_id": "req_report_old_signal_compile_review",
+      "requested_object_id": "report:old_signal_compile_review",
+      "object_type": "compile_report",
+      "object_layer": "ui_explanation",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "intent_summary": "生成一份玩家可见的世界内研发说明，解释为什么旧信号塔阶段只能交付候选或 fallback 资产。",
+      "source_signals": [
+        "asset:asset_echo_prism_relay",
+        "material:resonant_glass_shard",
+        "npc:npc_signal_keeper_candidate"
+      ],
+      "dependency_refs": [
+        "asset:asset_echo_prism_relay",
+        "material:resonant_glass_shard",
+        "npc:npc_signal_keeper_candidate"
+      ],
+      "target_outputs": [
+        "player-safe compile report",
+        "review dossier note"
+      ],
+      "required_validators": [
+        "CompilableObjectPlan review",
+        "player_text_technical_term_filter"
+      ],
+      "acceptance_gates": [
+        "text must explain limitations as world-internal research uncertainty",
+        "text must not expose world-external implementation terms"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "player_explanation",
+          "review_note"
+        ],
+        "target_export_status": "review_only",
+        "rollback_policy": "not_needed",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "fallback_policy": {
+        "strategy": "use deterministic generic report text",
+        "player_visible_result": "工坊记录：样品仍在校准，暂以保守方案交付。",
+        "blocked_result": "omit report from runtime"
+      },
+      "next_compile_steps": [
+        "attach to StageCandidatePack notes after review",
+        "generate player-safe report text",
+        "scan for technical terms"
+      ],
+      "requires_llm": true,
+      "requires_media": false,
+      "requires_human_review": false
+    }
+  ],
+  "summary": {
+    "request_count": 6,
+    "layer_counts": {
+      "economy": 1,
+      "entity": 1,
+      "narrative": 3,
+      "ui_explanation": 1
+    },
+    "permission_level_counts": {
+      "L1_presentation": 1,
+      "L2_entity": 1,
+      "L3_behavior": 2,
+      "L4_system_rule": 2
+    },
+    "compile_actor_counts": {
+      "player": 1,
+      "system": 5
+    },
+    "risk_counts": {
+      "low": 2,
+      "medium": 4
+    },
+    "requires_llm_count": 6,
+    "requires_media_count": 1,
+    "requires_human_review_count": 4
+  },
+  "validation_commands": [
+    {
+      "purpose": "构建并校验下一阶段可编译对象计划",
+      "command": "python3 tools/content_pipeline/build_compilable_object_plan.py --validate"
+    },
+    {
+      "purpose": "单独校验下一阶段可编译对象计划",
+      "command": "python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
+    }
+  ]
+}

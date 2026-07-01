@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/compilable_object_plan.v0.1.schema.json",
+  "title": "CompilableObjectPlan v0.1",
+  "description": "A review-only planning artifact that declares which compilable objects a future stage or compiler run should generate, with permission levels, dependencies, validators, runtime contracts, fallback policy, and next compile steps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "generation_boundary",
+    "source_refs",
+    "planning_context",
+    "object_requests",
+    "summary",
+    "validation_commands"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "compilable_object_plan.v0.1" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "plan_builder_reads_env",
+        "plan_builder_calls_provider",
+        "base_worldbook_mutation",
+        "runtime_export_included",
+        "llm_fill_allowed_after_review"
+      ],
+      "properties": {
+        "front_end_integration": { "type": "string", "const": "not_included" },
+        "plan_builder_reads_env": { "type": "boolean", "const": false },
+        "plan_builder_calls_provider": { "type": "boolean", "const": false },
+        "base_worldbook_mutation": { "type": "boolean", "const": false },
+        "runtime_export_included": { "type": "string", "enum": ["not_included", "referenced_only"] },
+        "llm_fill_allowed_after_review": { "type": "boolean" }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compilable_object_catalog", "stage_candidate_pack", "final_run_state"],
+      "properties": {
+        "compilable_object_catalog": { "type": "string", "minLength": 1 },
+        "stage_candidate_pack": { "type": "string", "minLength": 1 },
+        "final_run_state": { "type": "string", "minLength": 1 },
+        "review_pack": { "type": "string", "minLength": 1 },
+        "promotion_report": { "type": "string", "minLength": 1 }
+      }
+    },
+    "planning_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_stage_id",
+        "target_stage_title",
+        "stage_intent",
+        "world_line_seed",
+        "player_line_seed",
+        "active_constraints",
+        "evidence_object_refs"
+      ],
+      "properties": {
+        "target_stage_id": { "type": "string", "minLength": 1 },
+        "target_stage_title": { "type": "string", "minLength": 1 },
+        "stage_intent": { "type": "string", "minLength": 1 },
+        "world_line_seed": { "type": "string", "minLength": 1 },
+        "player_line_seed": { "type": "string", "minLength": 1 },
+        "active_constraints": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "evidence_object_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "object_requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/object_request" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_count",
+        "layer_counts",
+        "permission_level_counts",
+        "compile_actor_counts",
+        "risk_counts",
+        "requires_llm_count",
+        "requires_media_count",
+        "requires_human_review_count"
+      ],
+      "properties": {
+        "request_count": { "type": "integer", "minimum": 0 },
+        "layer_counts": { "$ref": "#/$defs/count_map" },
+        "permission_level_counts": { "$ref": "#/$defs/count_map" },
+        "compile_actor_counts": { "$ref": "#/$defs/count_map" },
+        "risk_counts": { "$ref": "#/$defs/count_map" },
+        "requires_llm_count": { "type": "integer", "minimum": 0 },
+        "requires_media_count": { "type": "integer", "minimum": 0 },
+        "requires_human_review_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validation_command" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "object_layer": {
+      "type": "string",
+      "enum": [
+        "visual",
+        "entity",
+        "behavior",
+        "rule",
+        "level",
+        "narrative",
+        "progression",
+        "economy",
+        "adaptive",
+        "ui_explanation",
+        "toolchain"
+      ]
+    },
+    "permission_level": {
+      "type": "string",
+      "enum": ["L1_presentation", "L2_entity", "L3_behavior", "L4_system_rule", "L5_engine"]
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "object_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "requested_object_id",
+        "object_type",
+        "object_layer",
+        "compile_permission_level",
+        "compile_actor",
+        "intent_summary",
+        "source_signals",
+        "dependency_refs",
+        "target_outputs",
+        "required_validators",
+        "acceptance_gates",
+        "runtime_contract",
+        "fallback_policy",
+        "next_compile_steps",
+        "requires_llm",
+        "requires_media",
+        "requires_human_review"
+      ],
+      "properties": {
+        "request_id": { "type": "string", "minLength": 1 },
+        "requested_object_id": { "type": "string", "minLength": 1 },
+        "object_type": { "type": "string", "minLength": 1 },
+        "object_layer": { "$ref": "#/$defs/object_layer" },
+        "compile_permission_level": { "$ref": "#/$defs/permission_level" },
+        "compile_actor": {
+          "type": "string",
+          "enum": ["player", "system", "developer", "review_only"]
+        },
+        "intent_summary": { "type": "string", "minLength": 1 },
+        "source_signals": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "dependency_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "target_outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "required_validators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "acceptance_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "runtime_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "load_surface",
+            "state_effects",
+            "target_export_status",
+            "rollback_policy",
+            "player_visible",
+            "risk_level"
+          ],
+          "properties": {
+            "load_surface": {
+              "type": "string",
+              "enum": [
+                "battle_runtime",
+                "run_world_state",
+                "stage_candidate_pack",
+                "review_pack",
+                "asset_graph",
+                "none"
+              ]
+            },
+            "state_effects": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "target_export_status": {
+              "type": "string",
+              "enum": [
+                "runtime_ready",
+                "fallback_ready",
+                "candidate_only",
+                "review_only",
+                "not_exported"
+              ]
+            },
+            "rollback_policy": {
+              "type": "string",
+              "enum": ["delta_replay", "remove_from_runtime_package", "manual_review", "not_needed"]
+            },
+            "player_visible": { "type": "boolean" },
+            "risk_level": { "type": "string", "enum": ["low", "medium", "high"] }
+          }
+        },
+        "fallback_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "player_visible_result", "blocked_result"],
+          "properties": {
+            "strategy": { "type": "string", "minLength": 1 },
+            "player_visible_result": { "type": "string", "minLength": 1 },
+            "blocked_result": { "type": "string", "minLength": 1 }
+          }
+        },
+        "next_compile_steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requires_llm": { "type": "boolean" },
+        "requires_media": { "type": "boolean" },
+        "requires_human_review": { "type": "boolean" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

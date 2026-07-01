@@ -110,9 +110,13 @@ Tower
 当前实现：
 
 - `shared/schemas/compilable_object_catalog.v0.1.schema.json`
+- `shared/schemas/compilable_object_plan.v0.1.schema.json`
 - `tools/content_pipeline/build_compilable_object_catalog.py`
+- `tools/content_pipeline/build_compilable_object_plan.py`
 - `tools/content_pipeline/validate_compilable_object_catalog.py`
+- `tools/content_pipeline/validate_compilable_object_plan.py`
 - `examples/review_packs/mvp_compilable_object_catalog.v0.1.json`
+- `examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json`
 
 默认构建并校验：
 
@@ -141,3 +145,5 @@ python3 tools/content_pipeline/build_compilable_object_catalog.py --validate
 - 哪些资产可以 runtime_ready / fallback_ready，哪些仍是 candidate_only。
 
 后续真实 LLM 生成新阶段或新资产时，应尽量提交同类目录证据，方便主代理和人工审查。
+
+`CompilableObjectPlan v0.1` 是目录之后、真实生成之前的计划层。它会声明下一阶段需要生成哪些对象、依赖哪些现有对象、权限等级是什么、需要哪些验证门，以及失败时如何 fallback。这样 LLM 不应直接产出松散剧情，而应该先满足计划层的对象边界。
