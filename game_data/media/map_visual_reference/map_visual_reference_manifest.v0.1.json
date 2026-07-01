@@ -1,0 +1,40 @@
+{
+  "schema_version": "map_visual_reference_pack.v0.1",
+  "pack_id": "mvp_gray_lantern_map_visual_reference_v0_1",
+  "source_map": "game_data/demo/initial_map.json",
+  "source_battle_config": "game_data/demo/first_battle_config.json",
+  "usage": {
+    "authority": "reference_only",
+    "logic_source": "battle_config_and_initial_map_remain_authoritative",
+    "next_step": "send control sketch plus style references to image provider, then re-align and publish visual layers"
+  },
+  "items": [
+    {
+      "role": "strategic_control_sketch",
+      "url": "/assets/map_visual_reference/mvp_strategic_control_sketch.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_strategic_control_sketch.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "00c3eccda31d9f60804a9c42a2b63274c2575bf906123c9e921e5d49365f7882",
+      "source_kind": "deterministic_logical_map_reference"
+    },
+    {
+      "role": "battle_control_sketch",
+      "url": "/assets/map_visual_reference/mvp_battle_control_sketch.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_control_sketch.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8718ef8e97408f7967d7226a72b21e4840dd24622805b9ded0b029d91e8e2e45",
+      "source_kind": "deterministic_logical_map_reference"
+    },
+    {
+      "role": "battle_reference_board",
+      "url": "/assets/map_visual_reference/mvp_battle_reference_board.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_reference_board.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "927408e20ce8b9b3ca1bfd3dbd65ec624e7a9fe807d2c4e3ed005a01f6d85438",
+      "source_kind": "deterministic_logical_map_reference"
+    }
+  ]
+}

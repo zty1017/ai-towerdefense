@@ -622,18 +622,24 @@ button:disabled {
 
 .battle-shell {
   height: 100%;
-  display: grid;
-  grid-template-columns: 260px minmax(420px, 1fr) 280px;
-  grid-template-rows: 62px minmax(0, 1fr) 112px;
-  gap: 10px;
-  padding: 10px;
+  position: relative;
+  overflow: hidden;
 }
 
 .battle-top {
-  grid-column: 1 / -1;
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  left: 14px;
+  right: 14px;
   display: grid;
-  grid-template-columns: 260px 1fr 280px;
+  grid-template-columns: 270px minmax(0, 1fr) 280px;
   gap: 10px;
+  pointer-events: none;
+}
+
+.battle-top > * {
+  pointer-events: auto;
 }
 
 .mini-map {
@@ -661,8 +667,9 @@ button:disabled {
 .battle-tools {
   border: 1px solid rgba(242, 205, 130, 0.18);
   border-radius: var(--radius);
-  background: rgba(15, 17, 14, 0.78);
+  background: rgba(15, 17, 14, 0.72);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(10px) saturate(1.05);
 }
 
 .top-stat {
@@ -691,33 +698,35 @@ button:disabled {
 }
 
 .battle-side {
+  position: absolute;
+  z-index: 4;
+  top: 96px;
+  bottom: 132px;
+  width: 260px;
   padding: 12px;
   min-height: 0;
   overflow: auto;
 }
 
 .battle-left {
-  grid-column: 1;
-  grid-row: 2;
+  left: 14px;
 }
 
 .battle-right {
-  grid-column: 3;
-  grid-row: 2;
+  right: 14px;
+  width: 280px;
 }
 
 .battle-stage {
-  grid-column: 2;
-  grid-row: 2;
-  min-width: 0;
-  min-height: 0;
-  border: 1px solid rgba(242, 205, 130, 0.2);
-  border-radius: var(--radius);
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: 0;
   background:
     radial-gradient(circle at 54% 42%, rgba(240, 189, 88, 0.12), transparent 24rem),
     linear-gradient(180deg, rgba(26, 29, 22, 0.82), rgba(8, 11, 10, 0.94));
   overflow: hidden;
-  position: relative;
+  touch-action: none;
 }
 
 #battleCanvas {
@@ -742,10 +751,14 @@ button:disabled {
 }
 
 .battle-tools {
-  grid-column: 1 / -1;
-  grid-row: 3;
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  grid-template-columns: repeat(5, minmax(132px, 220px));
+  justify-content: center;
   gap: 10px;
   padding: 10px;
 }
@@ -758,11 +771,21 @@ button:disabled {
   padding: 8px;
   min-width: 0;
   background: rgba(18, 21, 16, 0.82);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .toolbar-card.is-selected {
   border-color: rgba(100, 210, 200, 0.82);
   box-shadow: 0 0 0 1px rgba(100, 210, 200, 0.18);
+}
+
+.toolbar-card.is-dragging {
+  cursor: grabbing;
+  transform: translateY(-2px);
+  border-color: rgba(255, 225, 161, 0.82);
+  box-shadow: 0 0 0 1px rgba(255, 225, 161, 0.22), 0 14px 30px rgba(0, 0, 0, 0.32);
 }
 
 .toolbar-card.is-locked {
@@ -986,28 +1009,23 @@ details.evidence-drawer summary {
   }
 
   .battle-shell {
-    grid-template-columns: 210px minmax(340px, 1fr);
-    grid-template-rows: 62px minmax(0, 1fr) 190px;
+    min-height: 100%;
   }
 
   .battle-top {
-    grid-template-columns: 210px 1fr;
+    grid-template-columns: 230px minmax(0, 1fr) auto;
   }
 
   .battle-controls {
-    grid-column: 2;
+    justify-content: flex-end;
   }
 
   .battle-right {
     display: none;
   }
 
-  .battle-stage {
-    grid-column: 2;
-  }
-
   .battle-tools {
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    grid-template-columns: repeat(3, minmax(130px, 210px));
   }
 }
 
@@ -1040,37 +1058,26 @@ details.evidence-drawer summary {
   }
 
   .battle-screen {
-    min-height: 900px;
-    overflow: auto;
+    min-height: 760px;
   }
 
   .battle-shell {
-    height: 900px;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 180px minmax(0, 1fr) 210px;
-  }
-
-  .battle-top,
-  .battle-left,
-  .battle-stage,
-  .battle-tools {
-    grid-column: 1;
+    min-height: 760px;
   }
 
   .battle-top {
     grid-template-columns: 1fr;
+    right: 12px;
   }
 
   .battle-left {
-    grid-row: 2;
-  }
-
-  .battle-stage {
-    grid-row: 3;
+    display: none;
   }
 
   .battle-tools {
-    grid-row: 4;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

@@ -11,6 +11,8 @@
     mediaManifest: "/game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
     runtimeMediaManifest:
       "/game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+    mapVisualManifest:
+      "/game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     opening: "/content/worldbooks/long_night_lanterns/opening.json",
     worldConfig: "/content/worldbooks/long_night_lanterns/world_instance_config.json",
     map: "/game_data/demo/initial_map.json",
@@ -249,14 +251,20 @@
 
   async function loadApiData() {
     await ensureSession();
-    const [packResponse, openingResponse] = await Promise.all([
+    const [packResponse, openingResponse, mapVisualManifest] = await Promise.all([
       apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}/frontend-mock-pack`, 7000),
       apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}/opening`, 3600),
+      fetchJson(
+        `${state.apiBase}/assets/map_visual_reference/map_visual_reference_manifest.v0.1.json`,
+        {},
+        3600,
+      ).catch(() => null),
     ]);
     state.data.pack = packResponse.pack;
     state.data.mediaManifest = packResponse.media_manifest;
     state.data.runtimeKit = packResponse.runtime_art_kit;
     state.data.runtimeMediaManifest = packResponse.runtime_art_media_manifest;
+    state.data.mapVisualManifest = mapVisualManifest;
     state.data.opening = openingResponse.opening;
     state.data.worldConfig = DEFAULT_WORLD_CONFIG;
     await Promise.all([loadMap(), loadBriefing(), loadBattleConfig()]);
@@ -268,6 +276,7 @@
       runtimeKit,
       mediaManifest,
       runtimeMediaManifest,
+      mapVisualManifest,
       opening,
       worldConfig,
       map,
@@ -278,6 +287,7 @@
       fetchJson(STATIC_PATHS.runtimeKit, {}, 3600),
       fetchJson(STATIC_PATHS.mediaManifest, {}, 3600),
       fetchJson(STATIC_PATHS.runtimeMediaManifest, {}, 3600),
+      fetchJson(STATIC_PATHS.mapVisualManifest, {}, 3600).catch(() => null),
       fetchJson(STATIC_PATHS.opening, {}, 3600),
       fetchJson(STATIC_PATHS.worldConfig, {}, 3600).catch(() => DEFAULT_WORLD_CONFIG),
       fetchJson(STATIC_PATHS.map, {}, 3600),
@@ -289,6 +299,7 @@
       runtimeKit,
       mediaManifest,
       runtimeMediaManifest,
+      mapVisualManifest,
       opening,
       worldConfig,
       map,
@@ -436,6 +447,10 @@
       .replace(
         /^\/assets\/frontend_mock\/generated\//,
         "/game_data/media/frontend_mock/generated/",
+      )
+      .replace(
+        /^\/assets\/map_visual_reference\//,
+        "/game_data/media/map_visual_reference/",
       );
   }
 
@@ -450,6 +465,11 @@
 
   function mediaUrl(assetId, role, runtime = false) {
     const item = mediaItem(assetId, role, runtime);
+    return item ? assetUrl(item.url) : "";
+  }
+
+  function mapVisualUrl(role) {
+    const item = manifestItems(state.data.mapVisualManifest).find((entry) => entry.role === role);
     return item ? assetUrl(item.url) : "";
   }
 
@@ -685,6 +705,28 @@
         `,
       )
       .join("");
+    const terrain = `
+      <defs>
+        <linearGradient id="mapGround" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#20291f" />
+          <stop offset=".52" stop-color="#141917" />
+          <stop offset="1" stop-color="#18121b" />
+        </linearGradient>
+        <radialGradient id="cityGlow" cx="34%" cy="52%" r="30%">
+          <stop offset="0" stop-color="rgba(255,218,132,.42)" />
+          <stop offset=".42" stop-color="rgba(240,189,88,.12)" />
+          <stop offset="1" stop-color="rgba(240,189,88,0)" />
+        </radialGradient>
+        <pattern id="terrainLines" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+          <path d="M 0 18 L 46 18" stroke="rgba(255,237,184,.055)" stroke-width="2" />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="1280" height="720" fill="url(#mapGround)" />
+      <path d="M 20 556 C 218 480 360 534 548 458 S 902 306 1260 370 L 1260 720 L 20 720 Z" fill="rgba(122,108,72,.24)" />
+      <path d="M 0 186 C 210 132 352 168 522 126 S 828 60 1280 98 L 1280 0 L 0 0 Z" fill="rgba(52,69,55,.28)" />
+      <rect x="0" y="0" width="1280" height="720" fill="url(#terrainLines)" opacity=".82" />
+      <ellipse cx="430" cy="390" rx="310" ry="230" fill="url(#cityGlow)" />
+    `;
     const nodeMarkup = nodes
       .map((node) => {
         const color = mapNodeColor(node.kind, nodeState(node));
@@ -723,7 +765,7 @@
           </aside>
           <div class="strategic-map" aria-label="${safeText(map.display_name || "态势图")}">
             <svg viewBox="0 0 1280 720" role="img">
-              <rect x="0" y="0" width="1280" height="720" fill="rgba(18,22,17,.72)" />
+              ${terrain}
               ${dark}
               ${lines}
               ${threats}
@@ -1013,6 +1055,8 @@
       lastDomAt: -999,
     });
     canvas.addEventListener("click", onBattleCanvasClick);
+    canvas.addEventListener("pointermove", onBattleCanvasPointerMove);
+    canvas.addEventListener("pointerleave", onBattleCanvasPointerLeave);
     window.addEventListener("resize", resizeBattleCanvas);
     resizeBattleCanvas();
     preloadBattleImages();
@@ -1050,6 +1094,9 @@
       leaks: 0,
       kills: 0,
       selectedTool: "basic",
+      draggingTool: null,
+      dragPointer: null,
+      hoverCell: null,
       basicUses: (config.basic_defense || {}).uses_per_battle || 3,
       sampleUses: 0,
       supportUses: 1,
@@ -1093,6 +1140,7 @@
       mediaUrl("objective_signal_beacon", "objective_sprite", true),
       mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true),
       sampleIconUrl(),
+      mapVisualUrl("battle_reference_board"),
       npcPortraitUrl("npc_gray_lantern_keeper"),
       npcPortraitUrl("npc_workshop_mentor"),
     ].forEach((url) => getImage(url));
@@ -1113,7 +1161,7 @@
   function computeBattleMetrics(width, height) {
     const grid = battleConfig().grid || { width_cells: 16, height_cells: 9 };
     const sum = grid.width_cells + grid.height_cells;
-    const tileW = clamp(Math.min(((width - 80) * 2) / sum, ((height - 110) * 4) / sum), 38, 70);
+    const tileW = clamp(Math.min(((width - 80) * 2) / sum, ((height - 110) * 4) / sum), 38, 112);
     const tileH = tileW * 0.52;
     const raw = [
       rawProject(0, 0, tileW, tileH),
@@ -1158,6 +1206,33 @@
     return { x: Math.round(gx), y: Math.round(gy), fx: gx, fy: gy };
   }
 
+  function cellFromCanvasEvent(event) {
+    const battle = state.battle;
+    if (!battle || !battle.canvas || !battle.metrics) return null;
+    const rect = battle.canvas.getBoundingClientRect();
+    if (
+      event.clientX < rect.left ||
+      event.clientY < rect.top ||
+      event.clientX > rect.right ||
+      event.clientY > rect.bottom
+    ) {
+      return null;
+    }
+    const cell = screenToCell(event.clientX - rect.left, event.clientY - rect.top);
+    return isCellInGrid(cell) ? { x: cell.x, y: cell.y } : null;
+  }
+
+  function isCellInGrid(cell) {
+    const battle = state.battle;
+    if (!battle || !cell) return false;
+    return (
+      cell.x >= 0 &&
+      cell.y >= 0 &&
+      cell.x < battle.config.grid.width_cells &&
+      cell.y < battle.config.grid.height_cells
+    );
+  }
+
   function pathWaypoints() {
     return (((battleConfig().paths || [])[0] || {}).waypoints || []).map((p) => ({ x: p.x, y: p.y }));
   }
@@ -1194,19 +1269,77 @@
   function onBattleCanvasClick(event) {
     const battle = state.battle;
     if (!battle || battle.dialogueOpen || battle.finishing) return;
-    const rect = battle.canvas.getBoundingClientRect();
-    const cell = screenToCell(event.clientX - rect.left, event.clientY - rect.top);
-    if (
-      cell.x < 0 ||
-      cell.y < 0 ||
-      cell.x >= battle.config.grid.width_cells ||
-      cell.y >= battle.config.grid.height_cells
-    ) {
+    const cell = cellFromCanvasEvent(event);
+    if (cell) deployToolAt(battle.selectedTool, cell);
+  }
+
+  function onBattleCanvasPointerMove(event) {
+    const battle = state.battle;
+    if (!battle || battle.dialogueOpen || battle.finishing) return;
+    battle.hoverCell = cellFromCanvasEvent(event);
+  }
+
+  function onBattleCanvasPointerLeave() {
+    if (state.battle && !state.battle.draggingTool) {
+      state.battle.hoverCell = null;
+    }
+  }
+
+  function beginToolDrag(tool, event) {
+    const battle = state.battle;
+    if (!battle || battle.dialogueOpen || battle.finishing) return;
+    battle.selectedTool = tool || "basic";
+    battle.draggingTool = battle.selectedTool;
+    battle.dragPointer = { x: event.clientX, y: event.clientY };
+    battle.hoverCell = cellFromCanvasEvent(event);
+    if (!toolReady(battle.draggingTool)) setBattleToast(toolUnavailableText(battle.draggingTool));
+    updateBattleDom();
+    event.preventDefault();
+  }
+
+  function updateToolDrag(event) {
+    const battle = state.battle;
+    if (!battle || !battle.draggingTool) return;
+    battle.dragPointer = { x: event.clientX, y: event.clientY };
+    battle.hoverCell = cellFromCanvasEvent(event);
+  }
+
+  function finishToolDrag(event) {
+    const battle = state.battle;
+    if (!battle || !battle.draggingTool) return;
+    const tool = battle.draggingTool;
+    const cell = cellFromCanvasEvent(event);
+    battle.draggingTool = null;
+    battle.dragPointer = null;
+    battle.hoverCell = null;
+    if (!cell) {
+      setBattleToast("拖到战场格位后释放");
+      updateBattleDom();
       return;
     }
-    if (battle.selectedTool === "basic") placeBasicDefense(cell);
-    if (battle.selectedTool === "sample") placeSampleTrap(cell);
-    if (battle.selectedTool === "support") useSupportPulse(cell);
+    deployToolAt(tool, cell);
+    updateBattleDom();
+  }
+
+  function deployToolAt(tool, cell) {
+    if (tool === "basic") placeBasicDefense(cell);
+    if (tool === "sample") placeSampleTrap(cell);
+    if (tool === "support") useSupportPulse(cell);
+  }
+
+  function toolUnavailableText(tool) {
+    if (tool === "basic") return "材料或冷却不足";
+    if (tool === "sample") return "样品尚未送达";
+    if (tool === "support") return "支援尚未就绪";
+    return "暂不可用";
+  }
+
+  function canPreviewToolAt(tool, cell) {
+    if (!isCellInGrid(cell) || !toolReady(tool)) return false;
+    if (tool === "basic") return distanceToPath(cell) <= 1.5 && !isOccupied(cell);
+    if (tool === "sample") return distanceToPath(cell) <= 0.75 && !isOccupied(cell);
+    if (tool === "support") return true;
+    return false;
   }
 
   function isOccupied(cell) {
@@ -1650,7 +1783,7 @@
     return tools
       .map(
         (tool) => `
-          <button class="toolbar-card ${battle.selectedTool === tool.id ? "is-selected" : ""} ${tool.locked || !toolReady(tool.id) ? "is-locked" : ""}" data-action="select-tool" data-tool="${tool.id}">
+          <button class="toolbar-card ${battle.selectedTool === tool.id ? "is-selected" : ""} ${battle.draggingTool === tool.id ? "is-dragging" : ""} ${tool.locked || !toolReady(tool.id) ? "is-locked" : ""}" data-action="select-tool" data-tool="${tool.id}" draggable="false">
             <span class="tool-icon">${imageTag(tool.img, tool.name)}</span>
             <span class="tool-body">
               <span class="tool-name">${safeText(tool.name)}</span>
@@ -1679,11 +1812,27 @@
   }
 
   function drawBackdrop(ctx, m) {
+    const board = getImage(mapVisualUrl("battle_reference_board"));
     const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
     grd.addColorStop(0, "#202018");
     grd.addColorStop(0.55, "#101515");
     grd.addColorStop(1, "#17101a");
     ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, m.width, m.height);
+    if (board && board.complete && board.naturalWidth) {
+      const scale = Math.max(m.width / board.naturalWidth, m.height / board.naturalHeight);
+      const w = board.naturalWidth * scale;
+      const h = board.naturalHeight * scale;
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      ctx.drawImage(board, (m.width - w) / 2, (m.height - h) / 2, w, h);
+      ctx.restore();
+    }
+    const shade = ctx.createRadialGradient(m.width * 0.52, m.height * 0.48, 120, m.width * 0.52, m.height * 0.48, Math.max(m.width, m.height) * 0.7);
+    shade.addColorStop(0, "rgba(255,230,170,0.03)");
+    shade.addColorStop(0.58, "rgba(8,12,10,0.08)");
+    shade.addColorStop(1, "rgba(0,0,0,0.44)");
+    ctx.fillStyle = shade;
     ctx.fillRect(0, 0, m.width, m.height);
     ctx.fillStyle = "rgba(143,124,255,.08)";
     ctx.beginPath();
@@ -1702,8 +1851,8 @@
           p.y,
           state.battle.metrics.tileW,
           state.battle.metrics.tileH,
-          (x + y) % 2 ? "rgba(49,55,43,.42)" : "rgba(38,45,38,.44)",
-          "rgba(225,210,166,.08)",
+          (x + y) % 2 ? "rgba(49,55,43,.18)" : "rgba(38,45,38,.2)",
+          "rgba(225,210,166,.055)",
         );
       }
     }
@@ -1713,7 +1862,7 @@
     const m = state.battle.metrics;
     for (const cell of pathCells()) {
       const p = projectCell(cell.x, cell.y);
-      drawDiamond(ctx, p.x, p.y, m.tileW * 1.02, m.tileH * 1.02, "rgba(95,88,70,.78)", "rgba(188,165,106,.46)");
+      drawDiamond(ctx, p.x, p.y, m.tileW * 1.02, m.tileH * 1.02, "rgba(95,88,70,.52)", "rgba(188,165,106,.34)");
     }
     const points = pathWaypoints().map((p) => projectCell(p.x, p.y));
     ctx.strokeStyle = "rgba(255,225,161,.26)";
@@ -1737,6 +1886,36 @@
       ctx.beginPath();
       ctx.ellipse(p.x, p.y, m.tileW * 0.26, m.tileH * 0.42, 0, 0, Math.PI * 2);
       ctx.stroke();
+    }
+    const previewCell = battle.hoverCell;
+    if (previewCell) {
+      const p = projectCell(previewCell.x, previewCell.y);
+      const tool = battle.draggingTool || battle.selectedTool;
+      const valid = canPreviewToolAt(tool, previewCell);
+      drawDiamond(
+        ctx,
+        p.x,
+        p.y,
+        m.tileW * 1.1,
+        m.tileH * 1.1,
+        valid ? "rgba(100,210,200,.22)" : "rgba(255,95,83,.2)",
+        valid ? "rgba(100,210,200,.82)" : "rgba(255,95,83,.78)",
+      );
+      ctx.save();
+      ctx.globalAlpha = valid ? 0.92 : 0.42;
+      if (tool === "basic") {
+        drawSprite(ctx, mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true), p.x, p.y, 62);
+      } else if (tool === "sample") {
+        drawGroundGlow(ctx, p.x, p.y, "#9edcff", 0.3, 42);
+        ctx.strokeStyle = "#9edcff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, 24, 10, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (tool === "support") {
+        drawGroundGlow(ctx, p.x, p.y, "#8fcf83", 0.28, 86);
+      }
+      ctx.restore();
     }
   }
 
@@ -2155,6 +2334,15 @@
     event.preventDefault();
     handleAction(target.dataset.action, target);
   });
+
+  ROOT.addEventListener("pointerdown", (event) => {
+    const target = event.target.closest(".toolbar-card[data-tool]");
+    if (!target || state.view !== "battle" || event.button !== 0) return;
+    beginToolDrag(target.dataset.tool, event);
+  });
+
+  window.addEventListener("pointermove", updateToolDrag);
+  window.addEventListener("pointerup", finishToolDrag);
 
   ROOT.addEventListener("input", (event) => {
     const target = event.target;

@@ -24,6 +24,9 @@ _STATIC_MEDIA_ROOTS = {
     "frontend_mock": _REPO_ROOT / "game_data/media/frontend_mock",
     "frontend_runtime_mock": _REPO_ROOT / "game_data/media/frontend_runtime_mock",
 }
+_STATIC_DIRECT_MEDIA_ROOTS = {
+    "map_visual_reference": _REPO_ROOT / "game_data/media/map_visual_reference",
+}
 _FRONTEND_DIR = _REPO_ROOT / "frontend"
 
 
@@ -67,6 +70,13 @@ def _mount_frontend_mock_media(app: FastAPI) -> None:
                     StaticFiles(directory=str(directory)),
                     name=f"{namespace}_{role_dir}",
                 )
+    for namespace, directory in _STATIC_DIRECT_MEDIA_ROOTS.items():
+        if directory.exists():
+            app.mount(
+                f"/assets/{namespace}",
+                StaticFiles(directory=str(directory)),
+                name=namespace,
+            )
 
 
 def _mount_frontend(app: FastAPI) -> None:
