@@ -4,7 +4,8 @@
   "gameplay": {
     "asset_type": "temporary_mod",
     "base_stats": {
-      "duration": 20,
+      "activation_cost": 45,
+      "duration_seconds": 20,
       "cooldown": 60
     },
     "effect_blocks": [
@@ -24,7 +25,10 @@
       ]
     },
     "type_specific": {
-      "attach_to": "tower"
+      "attach_to": "tower",
+      "target_asset_type": "tower_blueprint",
+      "stacking": "replace_same_source",
+      "rollback_behavior": "expire_and_restore_base_tower"
     }
   },
   "presentation": {

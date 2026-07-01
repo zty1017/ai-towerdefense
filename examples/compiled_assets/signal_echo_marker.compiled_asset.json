@@ -4,7 +4,8 @@
   "gameplay": {
     "asset_type": "support_item",
     "base_stats": {
-      "uses": 1,
+      "deploy_cost": 35,
+      "use_count": 1,
       "cooldown": 0
     },
     "effect_blocks": [
@@ -23,7 +24,9 @@
       ]
     },
     "type_specific": {
-      "item_slot": "tactical"
+      "item_slot": "tactical",
+      "delivery_method": "pre_battle_consumable",
+      "target_rule": "current_node_or_next_wave"
     }
   },
   "presentation": {

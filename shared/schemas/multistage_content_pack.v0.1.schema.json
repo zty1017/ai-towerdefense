@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/multistage_content_pack.v0.1.schema.json",
+  "title": "MultistageContentPack v0.1",
+  "description": "A review-only package that summarizes a serial multi-stage AI content compilation chain. It is not a frontend runtime package.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "generation_boundary",
+    "pipeline_logic",
+    "stage_summaries",
+    "summary",
+    "validation_results",
+    "review_notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "multistage_content_pack.v0.1" },
+    "pack_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "builder_reads_env",
+        "builder_calls_provider",
+        "base_worldbook_mutation",
+        "stage_candidate_pack_promotion"
+      ],
+      "properties": {
+        "front_end_integration": { "type": "string", "const": "not_included" },
+        "builder_reads_env": { "type": "boolean", "const": false },
+        "builder_calls_provider": { "type": "boolean", "const": false },
+        "base_worldbook_mutation": { "type": "boolean", "const": false },
+        "stage_candidate_pack_promotion": {
+          "type": "string",
+          "enum": ["not_included", "separate_review_pack_only"]
+        }
+      }
+    },
+    "pipeline_logic": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "stage_summaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/stage_summary" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_count",
+        "asset_type_counts",
+        "effect_block_counts",
+        "initial_state_file",
+        "final_state_file",
+        "stage_candidate_pack_file"
+      ],
+      "properties": {
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "asset_type_counts": { "$ref": "#/$defs/count_map" },
+        "effect_block_counts": { "$ref": "#/$defs/count_map" },
+        "initial_state_file": { "type": "string", "minLength": 1 },
+        "final_state_file": { "type": "string", "minLength": 1 },
+        "stage_candidate_pack_file": { "type": "string", "minLength": 1 }
+      }
+    },
+    "validation_results": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "review_notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "string_int_map": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "stage_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "stage_label",
+        "bundle_file",
+        "world_delta_file",
+        "next_state_file",
+        "proposal_file",
+        "compiled_asset_file",
+        "lane_counts",
+        "delta_operation_counts",
+        "asset_candidate_id",
+        "asset_type",
+        "effect_blocks",
+        "asset_policy_evidence",
+        "state_counts"
+      ],
+      "properties": {
+        "stage_id": { "type": "string", "minLength": 1 },
+        "stage_label": { "type": "string", "minLength": 1 },
+        "bundle_file": { "type": "string", "minLength": 1 },
+        "world_delta_file": { "type": "string", "minLength": 1 },
+        "next_state_file": { "type": "string", "minLength": 1 },
+        "proposal_file": { "type": "string", "minLength": 1 },
+        "compiled_asset_file": { "type": "string", "minLength": 1 },
+        "lane_counts": { "$ref": "#/$defs/string_int_map" },
+        "delta_operation_counts": { "$ref": "#/$defs/string_int_map" },
+        "asset_candidate_id": { "type": "string", "minLength": 1 },
+        "asset_type": {
+          "type": "string",
+          "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+        },
+        "effect_blocks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "asset_policy_evidence": { "$ref": "#/$defs/asset_policy_evidence" },
+        "state_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tasks", "random_events", "temporary_samples", "blueprints", "map_nodes"],
+          "properties": {
+            "tasks": { "type": "integer", "minimum": 0 },
+            "random_events": { "type": "integer", "minimum": 0 },
+            "temporary_samples": { "type": "integer", "minimum": 0 },
+            "blueprints": { "type": "integer", "minimum": 0 },
+            "map_nodes": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "number_map": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "string_list": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "asset_policy_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "asset_type", "validation", "simulation", "score", "promotion"],
+      "properties": {
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "asset_type": {
+          "type": "string",
+          "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "error_count", "errors"],
+          "properties": {
+            "status": { "type": "string", "enum": ["passed", "failed"] },
+            "error_count": { "type": "integer", "minimum": 0 },
+            "errors": { "$ref": "#/$defs/string_list" }
+          }
+        },
+        "simulation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "duration_seconds",
+            "estimated_dps",
+            "utility_score",
+            "enemies_leaked",
+            "power_peak",
+            "cost_efficiency",
+            "balance_flags"
+          ],
+          "properties": {
+            "status": { "type": "string", "const": "passed" },
+            "duration_seconds": { "type": "number", "minimum": 0 },
+            "estimated_dps": { "type": "number", "minimum": 0 },
+            "utility_score": { "type": "number", "minimum": 0 },
+            "enemies_leaked": { "type": "integer", "minimum": 0 },
+            "power_peak": { "type": "number", "minimum": 0 },
+            "cost_efficiency": { "type": "number" },
+            "balance_flags": { "$ref": "#/$defs/string_list" }
+          }
+        },
+        "score": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "total_score", "recommendation", "dimension_scores", "expected_media_roles"],
+          "properties": {
+            "status": { "type": "string", "const": "passed" },
+            "total_score": { "type": "number", "minimum": 0, "maximum": 100 },
+            "recommendation": { "type": "string", "minLength": 1 },
+            "dimension_scores": { "$ref": "#/$defs/number_map" },
+            "expected_media_roles": { "$ref": "#/$defs/string_list" }
+          }
+        },
+        "promotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_check_status",
+            "promotion_state",
+            "playable",
+            "uses_fallback_media",
+            "gameplay_core_state",
+            "media_state",
+            "blockers",
+            "warnings",
+            "required_next_actions"
+          ],
+          "properties": {
+            "schema_check_status": { "type": "string", "minLength": 1 },
+            "promotion_state": { "type": "string", "minLength": 1 },
+            "playable": { "type": "boolean" },
+            "uses_fallback_media": { "type": "boolean" },
+            "gameplay_core_state": { "type": "string", "minLength": 1 },
+            "media_state": { "type": "string", "minLength": 1 },
+            "blockers": { "$ref": "#/$defs/string_list" },
+            "warnings": { "$ref": "#/$defs/string_list" },
+            "required_next_actions": { "$ref": "#/$defs/string_list" }
+          }
+        }
+      }
+    }
+  }
+}

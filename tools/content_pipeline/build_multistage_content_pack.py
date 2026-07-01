@@ -30,11 +30,16 @@ for path in (CONTENT_DIR, NARRATIVE_DIR, WORLD_STATE_DIR):
         sys.path.insert(0, str(path))
 
 import build_stage05_plan_realization as stage05  # noqa: E402
+import asset_promotion_policy  # noqa: E402
+import score_asset_candidate  # noqa: E402
+import simulate_asset_candidate  # noqa: E402
 from apply_world_delta import apply_delta  # noqa: E402
+from build_mvp_review_pack_promotion_report import validate_promotion_report_schema  # noqa: E402
 from mock_compile_proposal import compile_candidate  # noqa: E402
 from validate_asset_candidate import validate as validate_asset_candidate  # noqa: E402
 from validate_narrative_bundle import validate_narrative_bundle  # noqa: E402
 from validate_proposal import validate as validate_proposal  # noqa: E402
+from validate_multistage_content_pack import validate_multistage_content_pack  # noqa: E402
 from validate_stage_candidate_pack import validate_stage_candidate_pack  # noqa: E402
 from validate_run_world_state import (  # noqa: E402
     validate_run_world_state,
@@ -775,6 +780,100 @@ def validate_stage_artifacts(
     return results
 
 
+def asset_policy_evidence(candidate: dict[str, Any], effect_registry: dict[str, Any]) -> dict[str, Any]:
+    validation_errors = validate_asset_candidate(candidate, effect_registry)
+    validation = {
+        "status": "passed" if not validation_errors else "failed",
+        "errors": validation_errors,
+        "candidate_id": candidate.get("id"),
+    }
+    simulation = simulate_asset_candidate.simulate(
+        candidate,
+        simulate_asset_candidate.DEFAULT_DURATION_SECONDS,
+    )
+    score = score_asset_candidate.score_candidate(
+        candidate,
+        validation=validation,
+        simulation=simulation,
+        media_metadata=None,
+    )
+    promotion = asset_promotion_policy.evaluate_promotion(
+        candidate,
+        validation=validation,
+        simulation=simulation,
+        candidate_score=score,
+        runtime_readiness=None,
+    )
+    schema_check = validate_promotion_report_schema(promotion)
+    return {
+        "candidate_id": str(candidate.get("id")),
+        "asset_type": str(as_obj(candidate.get("gameplay")).get("asset_type") or "unknown"),
+        "validation": {
+            "status": validation["status"],
+            "error_count": len(validation_errors),
+            "errors": validation_errors,
+        },
+        "simulation": {
+            "status": "passed",
+            "duration_seconds": simulation.get("duration_seconds"),
+            "estimated_dps": simulation.get("estimated_dps"),
+            "utility_score": simulation.get("utility_score"),
+            "enemies_leaked": simulation.get("enemies_leaked"),
+            "power_peak": simulation.get("power_peak"),
+            "cost_efficiency": simulation.get("cost_efficiency"),
+            "balance_flags": simulation.get("balance_flags", []),
+        },
+        "score": {
+            "status": "passed",
+            "total_score": score.get("total_score"),
+            "recommendation": score.get("recommendation"),
+            "dimension_scores": score.get("dimension_scores", {}),
+            "expected_media_roles": score.get("expected_media_roles", []),
+        },
+        "promotion": {
+            "schema_check_status": schema_check.get("status"),
+            "promotion_state": promotion.get("promotion_state"),
+            "playable": promotion.get("playable"),
+            "uses_fallback_media": promotion.get("uses_fallback_media"),
+            "gameplay_core_state": promotion.get("gameplay_core_state"),
+            "media_state": promotion.get("media_state"),
+            "blockers": promotion.get("blockers", []),
+            "warnings": promotion.get("warnings", []),
+            "required_next_actions": promotion.get("required_next_actions", []),
+        },
+    }
+
+
+def asset_policy_evidence_errors(
+    evidence: dict[str, Any], candidate: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    gameplay = as_obj(candidate.get("gameplay"))
+    if evidence.get("candidate_id") != candidate.get("id"):
+        errors.append("asset_policy_evidence candidate_id does not match candidate")
+    if evidence.get("asset_type") != gameplay.get("asset_type"):
+        errors.append("asset_policy_evidence asset_type does not match candidate gameplay")
+    validation = as_obj(evidence.get("validation"))
+    simulation = as_obj(evidence.get("simulation"))
+    score = as_obj(evidence.get("score"))
+    promotion = as_obj(evidence.get("promotion"))
+    if validation.get("status") != "passed":
+        errors.append("asset_policy_evidence validation did not pass")
+    if simulation.get("status") != "passed":
+        errors.append("asset_policy_evidence simulation did not pass")
+    if score.get("status") != "passed":
+        errors.append("asset_policy_evidence score did not pass")
+    if promotion.get("schema_check_status") not in {"passed", "passed_legacy_jsonschema"}:
+        errors.append("asset_policy_evidence promotion schema check did not pass")
+    if promotion.get("promotion_state") == "failed":
+        errors.append("asset_policy_evidence promotion state failed")
+    if promotion.get("promotion_state") == "runtime_ready" and promotion.get("uses_fallback_media"):
+        errors.append("runtime_ready asset cannot use fallback media")
+    if not as_list(promotion.get("required_next_actions")):
+        errors.append("asset_policy_evidence promotion must include required_next_actions")
+    return errors
+
+
 def write_stage_outputs(
     *,
     name: str,
@@ -795,6 +894,7 @@ def write_stage_outputs(
     if apply_errors:
         raise ValueError(f"{name} delta apply failed: " + "; ".join(apply_errors))
     candidate = compile_candidate(proposal, provider="mock", model="mock_compiler_v0.1")
+    policy_evidence = asset_policy_evidence(candidate, effect_registry)
 
     validation_results = (
         validate_stage_artifacts(
@@ -811,6 +911,11 @@ def write_stage_outputs(
         if validate
         else {}
     )
+    if validate:
+        policy_errors = asset_policy_evidence_errors(policy_evidence, candidate)
+        validation_results[f"{name}.asset_policy_evidence"] = (
+            "passed" if not policy_errors else "FAILED: " + "; ".join(policy_errors)
+        )
     failed = {k: v for k, v in validation_results.items() if v != "passed"}
     if failed:
         for check_name, result in failed.items():
@@ -833,6 +938,7 @@ def write_stage_outputs(
         delta,
         next_state,
         candidate,
+        policy_evidence,
     )
     return next_state, validation_results, summary
 
@@ -848,6 +954,7 @@ def stage_summary(
     delta: dict[str, Any],
     next_state: dict[str, Any],
     candidate: dict[str, Any],
+    policy_evidence: dict[str, Any],
 ) -> dict[str, Any]:
     nodes = [node for node in as_list(bundle.get("nodes")) if isinstance(node, dict)]
     lane_counts = Counter(str(node.get("lane") or "unknown") for node in nodes)
@@ -875,6 +982,7 @@ def stage_summary(
             for effect in as_list(gameplay.get("effect_blocks"))
             if isinstance(effect, dict)
         ],
+        "asset_policy_evidence": policy_evidence,
         "state_counts": {
             "tasks": len(as_list(next_state.get("tasks"))),
             "random_events": len(as_list(next_state.get("random_events"))),
@@ -980,6 +1088,17 @@ def stage_candidate_from_summary(
         if isinstance(op, dict)
     )
     stage_label = str(stage["stage_label"])
+    policy_evidence = as_obj(stage.get("asset_policy_evidence"))
+    promotion = as_obj(policy_evidence.get("promotion"))
+    promotion_state = str(promotion.get("promotion_state") or "missing_policy_evidence")
+    policy_gate_status = "blocked" if promotion_state in {"failed", "missing_policy_evidence"} else "warning"
+    if promotion_state == "runtime_ready" and not promotion.get("uses_fallback_media"):
+        policy_gate_status = "passed"
+    policy_summary = (
+        "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
+        if policy_gate_status != "blocked"
+        else "资产候选缺少可用晋级证据或已被策略阻断。"
+    )
     gates = [
         {
             "gate": "narrative_bundle",
@@ -1013,8 +1132,8 @@ def stage_candidate_from_summary(
         },
         {
             "gate": "asset_promotion_policy",
-            "status": "warning",
-            "summary": "资产仍是审查候选，尚未晋升为默认战斗可用资源。",
+            "status": policy_gate_status,
+            "summary": policy_summary,
         },
         {
             "gate": "runtime_package_ref",
@@ -1044,13 +1163,11 @@ def stage_candidate_from_summary(
                 "asset_id": str(candidate.get("id")),
                 "asset_kind": str(as_obj(candidate.get("gameplay")).get("asset_type") or "compiled_asset"),
                 "source_file": str(stage["compiled_asset_file"]),
-                "promotion_state": "review_candidate",
-                "playable": False,
-                "uses_fallback_media": True,
-                "required_next_actions": [
-                    "human_review_gameplay_balance",
-                    "media_runtime_readiness",
-                    "runtime_package_if_promoted",
+                "promotion_state": promotion_state,
+                "playable": bool(promotion.get("playable", False)),
+                "uses_fallback_media": bool(promotion.get("uses_fallback_media", False)),
+                "required_next_actions": as_list(promotion.get("required_next_actions")) or [
+                    "repair_or_rebuild_asset_policy_evidence",
                 ],
             }
         ],
@@ -1161,6 +1278,7 @@ def build_pack_report(stage_summaries: list[dict[str, Any]], validation_results:
             "stage_count": len(stage_summaries),
             "asset_type_counts": dict(sorted(asset_types.items())),
             "effect_block_counts": dict(sorted(all_effects.items())),
+            "initial_state_file": rel(DEFAULT_STAGE04_STATE),
             "final_state_file": stage_summaries[-1]["next_state_file"] if stage_summaries else None,
             "stage_candidate_pack_file": rel(DEFAULT_STAGE_CANDIDATE_OUTPUT),
         },
@@ -1200,8 +1318,15 @@ def build_multistage_pack(
         effect_registry_path,
         validate,
     )
-    stage05_summary = summarize_stage05(stage05_report)
+    stage05_summary = summarize_stage05(stage05_report, effect_registry)
     validation_results = {f"stage05.{k}": v for k, v in stage05_validation.items()}
+    stage05_policy_errors = asset_policy_evidence_errors(
+        as_obj(stage05_summary.get("asset_policy_evidence")),
+        load_json(ROOT / str(stage05_summary["compiled_asset_file"])),
+    )
+    validation_results["stage05.asset_policy_evidence"] = (
+        "passed" if not stage05_policy_errors else "FAILED: " + "; ".join(stage05_policy_errors)
+    )
 
     state05 = load_json(stage05.DEFAULT_NEXT_STATE_OUT)
     state06, stage06_validation, stage06_summary = write_stage_outputs(
@@ -1255,16 +1380,23 @@ def build_multistage_pack(
 
     pack = build_pack_report(stage_summaries, validation_results)
     write_json(output, pack)
+    if validate:
+        multistage_errors = validate_multistage_content_pack(pack)
+        if multistage_errors:
+            for error in multistage_errors:
+                print(f"INVALID multistage content pack: {error}")
+            raise SystemExit(1)
     return pack
 
 
-def summarize_stage05(report: dict[str, Any]) -> dict[str, Any]:
+def summarize_stage05(report: dict[str, Any], effect_registry: dict[str, Any]) -> dict[str, Any]:
     outputs = as_obj(report.get("outputs"))
     bundle_path = ROOT / str(outputs.get("narrative_bundle"))
     delta_path = ROOT / str(outputs.get("world_delta"))
     state_path = ROOT / str(outputs.get("next_run_state"))
     proposal_path = ROOT / str(outputs.get("proposal"))
     candidate_path = ROOT / str(outputs.get("compiled_asset_candidate"))
+    candidate = load_json(candidate_path)
     return stage_summary(
         "stage05",
         bundle_path,
@@ -1275,7 +1407,8 @@ def summarize_stage05(report: dict[str, Any]) -> dict[str, Any]:
         load_json(bundle_path),
         load_json(delta_path),
         load_json(state_path),
-        load_json(candidate_path),
+        candidate,
+        asset_policy_evidence(candidate, effect_registry),
     )
 
 

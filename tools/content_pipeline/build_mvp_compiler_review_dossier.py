@@ -637,6 +637,10 @@ def validation_commands() -> list[dict[str, str]]:
             "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate",
         },
         {
+            "purpose": "校验多阶段内容生产包",
+            "command": "python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+        },
+        {
             "purpose": "校验多阶段阶段候选包",
             "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
         },
@@ -789,6 +793,47 @@ def multistage_content_pack_evidence(
     return evidence
 
 
+def multistage_content_pack_summary(content_pack_path: Path) -> dict[str, Any]:
+    summary = {
+        "pack_file": rel(content_pack_path),
+        "stage_count": 0,
+        "asset_type_counts": {},
+        "effect_block_counts": {},
+        "asset_policy_promotion_counts": {},
+        "asset_policy_recommendation_counts": {},
+        "initial_state_file": "missing",
+        "final_state_file": "missing",
+        "stage_candidate_pack_file": "missing",
+    }
+    if not content_pack_path.is_file():
+        return summary
+
+    pack = load_json(content_pack_path)
+    pack_summary = as_obj(pack.get("summary"))
+    promotion_counts: Counter[str] = Counter()
+    recommendation_counts: Counter[str] = Counter()
+    for stage in as_list(pack.get("stage_summaries")):
+        if not isinstance(stage, dict):
+            continue
+        evidence = as_obj(stage.get("asset_policy_evidence"))
+        promotion = as_obj(evidence.get("promotion"))
+        score = as_obj(evidence.get("score"))
+        promotion_counts[str(promotion.get("promotion_state") or "missing")] += 1
+        recommendation_counts[str(score.get("recommendation") or "missing")] += 1
+
+    return {
+        "pack_file": rel(content_pack_path),
+        "stage_count": int(pack_summary.get("stage_count") or 0),
+        "asset_type_counts": as_obj(pack_summary.get("asset_type_counts")),
+        "effect_block_counts": as_obj(pack_summary.get("effect_block_counts")),
+        "asset_policy_promotion_counts": dict(sorted(promotion_counts.items())),
+        "asset_policy_recommendation_counts": dict(sorted(recommendation_counts.items())),
+        "initial_state_file": str(pack_summary.get("initial_state_file") or "missing"),
+        "final_state_file": str(pack_summary.get("final_state_file") or "missing"),
+        "stage_candidate_pack_file": str(pack_summary.get("stage_candidate_pack_file") or "missing"),
+    }
+
+
 def known_risks(promotion_report: dict[str, Any]) -> list[dict[str, str]]:
     summary = as_obj(promotion_report.get("summary"))
     candidate_count = int(summary.get("candidate_or_blocked_reference_count") or 0)
@@ -854,14 +899,17 @@ def build_dossier(
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
         ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
         ("shared/schemas/compilable_object_plan.v0.1.schema.json", "schema"),
+        ("shared/schemas/multistage_content_pack.v0.1.schema.json", "schema"),
         ("shared/schemas/stage_candidate_pack.v0.1.schema.json", "schema"),
         ("tools/content_pipeline/build_compilable_object_catalog.py", "builder"),
         ("tools/content_pipeline/build_compilable_object_plan.py", "builder"),
         ("tools/content_pipeline/build_stage05_plan_realization.py", "builder"),
         ("tools/content_pipeline/build_multistage_content_pack.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
+        ("tools/content_pipeline/mock_compile_proposal.py", "builder"),
         ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_plan.py", "validator"),
+        ("tools/content_pipeline/validate_multistage_content_pack.py", "validator"),
         ("tools/content_pipeline/validate_stage_candidate_pack.py", "validator"),
         ("tools/narrative/validate_narrative_gameplay_contract.py", "validator"),
         ("tools/world_state/replay_mvp_delta_chain.py", "validator"),
@@ -921,6 +969,9 @@ def build_dossier(
         ),
         "compilable_object_plan_summary": compilable_object_plan_summary(
             compilable_object_plan_path
+        ),
+        "multistage_content_pack_summary": multistage_content_pack_summary(
+            DEFAULT_MULTISTAGE_CONTENT_PACK
         ),
         "runtime_state_summary": {
             "state_file": rel(final_state_path),

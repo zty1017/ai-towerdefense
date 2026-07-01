@@ -109,13 +109,12 @@
           "asset_id": "asset_echo_prism_relay",
           "asset_kind": "tower_blueprint",
           "source_file": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
-          "promotion_state": "review_candidate",
-          "playable": false,
+          "promotion_state": "fallback_ready",
+          "playable": true,
           "uses_fallback_media": true,
           "required_next_actions": [
-            "human_review_gameplay_balance",
-            "media_runtime_readiness",
-            "runtime_package_if_promoted"
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
           ]
         }
       ],
@@ -154,7 +153,7 @@
         {
           "gate": "asset_promotion_policy",
           "status": "warning",
-          "summary": "资产仍是审查候选，尚未晋升为默认战斗可用资源。"
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
         },
         {
           "gate": "runtime_package_ref",
@@ -262,13 +261,12 @@
           "asset_id": "asset_signal_echo_marker",
           "asset_kind": "support_item",
           "source_file": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
-          "promotion_state": "review_candidate",
-          "playable": false,
+          "promotion_state": "fallback_ready",
+          "playable": true,
           "uses_fallback_media": true,
           "required_next_actions": [
-            "human_review_gameplay_balance",
-            "media_runtime_readiness",
-            "runtime_package_if_promoted"
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
           ]
         }
       ],
@@ -307,7 +305,7 @@
         {
           "gate": "asset_promotion_policy",
           "status": "warning",
-          "summary": "资产仍是审查候选，尚未晋升为默认战斗可用资源。"
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
         },
         {
           "gate": "runtime_package_ref",
@@ -413,13 +411,12 @@
           "asset_id": "asset_overload_chain_breaker",
           "asset_kind": "temporary_mod",
           "source_file": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
-          "promotion_state": "review_candidate",
-          "playable": false,
+          "promotion_state": "fallback_ready",
+          "playable": true,
           "uses_fallback_media": true,
           "required_next_actions": [
-            "human_review_gameplay_balance",
-            "media_runtime_readiness",
-            "runtime_package_if_promoted"
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
           ]
         }
       ],
@@ -458,7 +455,7 @@
         {
           "gate": "asset_promotion_policy",
           "status": "warning",
-          "summary": "资产仍是审查候选，尚未晋升为默认战斗可用资源。"
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
         },
         {
           "gate": "runtime_package_ref",

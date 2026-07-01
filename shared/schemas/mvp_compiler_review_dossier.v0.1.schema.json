@@ -21,6 +21,7 @@
     "stage_candidate_pack_summary",
     "compilable_object_catalog_summary",
     "compilable_object_plan_summary",
+    "multistage_content_pack_summary",
     "runtime_state_summary",
     "readiness_summary",
     "source_evidence",
@@ -250,6 +251,32 @@
         "requires_llm_count": { "type": "integer", "minimum": 0 },
         "requires_media_count": { "type": "integer", "minimum": 0 },
         "requires_human_review_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "multistage_content_pack_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_file",
+        "stage_count",
+        "asset_type_counts",
+        "effect_block_counts",
+        "asset_policy_promotion_counts",
+        "asset_policy_recommendation_counts",
+        "initial_state_file",
+        "final_state_file",
+        "stage_candidate_pack_file"
+      ],
+      "properties": {
+        "pack_file": { "type": "string", "minLength": 1 },
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "asset_type_counts": { "$ref": "#/$defs/count_map" },
+        "effect_block_counts": { "$ref": "#/$defs/count_map" },
+        "asset_policy_promotion_counts": { "$ref": "#/$defs/count_map" },
+        "asset_policy_recommendation_counts": { "$ref": "#/$defs/count_map" },
+        "initial_state_file": { "type": "string", "minLength": 1 },
+        "final_state_file": { "type": "string", "minLength": 1 },
+        "stage_candidate_pack_file": { "type": "string", "minLength": 1 }
       }
     },
     "readiness_summary": {

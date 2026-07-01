@@ -2823,6 +2823,32 @@
     "requires_media_count": 1,
     "requires_human_review_count": 4
   },
+  "multistage_content_pack_summary": {
+    "pack_file": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+    "stage_count": 3,
+    "asset_type_counts": {
+      "support_item": 1,
+      "temporary_mod": 1,
+      "tower_blueprint": 1
+    },
+    "effect_block_counts": {
+      "aura_buff": 1,
+      "charge_burst": 1,
+      "countermeasure_hint": 1,
+      "risk_modifier": 1,
+      "scout_reveal": 1,
+      "slow": 1
+    },
+    "asset_policy_promotion_counts": {
+      "fallback_ready": 3
+    },
+    "asset_policy_recommendation_counts": {
+      "generate_media": 3
+    },
+    "initial_state_file": "missing",
+    "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
+    "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+  },
   "runtime_state_summary": {
     "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "progress": {
@@ -2884,7 +2910,7 @@
       "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "6a081eed9f0403bcaa2470b35fc94f6cf5fbcc661cfa55fff09e9b7baf385593"
+      "sha256": "0cca95c91a7133e5a12328da4df687df6d6350183aef03e5d8a77c009c42fcd0"
     },
     {
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
@@ -2944,7 +2970,7 @@
       "path": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
       "kind": "asset_source",
       "exists": true,
-      "sha256": "a7a4f8d19316ce822515f975a871a5d374c90d6fd91a8a71976634f0925a6416"
+      "sha256": "ee15a19a0430cf0c5bd44c7c0355f2b02152baf5fab829bacd200ab652e612bd"
     },
     {
       "path": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
@@ -2962,7 +2988,7 @@
       "path": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
       "kind": "asset_source",
       "exists": true,
-      "sha256": "34ceb8ec68b4764a83aead4e2f7a54a31d3e281f0abe4e62ef35bd64eac13559"
+      "sha256": "6455cbc71e1de46dd0bfe3cb7fc752a0094888776d38ce975ce291f904b9ade3"
     },
     {
       "path": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
@@ -3046,13 +3072,13 @@
       "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
       "kind": "multistage_content_pack",
       "exists": true,
-      "sha256": "bc95f49273c64c07f8dac4d1a7ae92d6f71e191857c25368d50c70f278dc5523"
+      "sha256": "1703e5d0ed01c5d95823ac70d3205c80636404f12fde44305dfaf94944cf7e02"
     },
     {
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
       "kind": "stage_candidate_pack",
       "exists": true,
-      "sha256": "eb5bb48c7c18beff2b285b7d29a7fdefb9d1bd4c711bfc3b9a6abdcc05f55088"
+      "sha256": "97c99845e1d6e41fe533ad72aee5076b36b6619525215b74615190ca88b30139"
     },
     {
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -3313,10 +3339,16 @@
       "sha256": "0a633c10d8ccaa39935faa53efac4f736189a52fc5c6bf61ed06cabf535b6503"
     },
     {
+      "path": "shared/schemas/multistage_content_pack.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "0f52d501801097cc3e3278bfa8aff766c7406513a2b721b51653860274daca7a"
+    },
+    {
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "fb1a45d5fa688d2baee3890fc238c7c98f317395d3d877ce0ee2ee134fdc5733"
+      "sha256": "c79e80363ca292a7c441d1e36d3e6b034ff338bb0738651696fdacb95add1091"
     },
     {
       "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
@@ -3340,7 +3372,7 @@
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "5feab8cff3548ca0533ab84ef30709479d49bfb1a937abfc82f3a961e34d48e9"
+      "sha256": "901297f554d9c3d742cf8442b223e3b2311624ba4e46300e4375731fa968f8ae"
     },
     {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",
@@ -3355,6 +3387,12 @@
       "sha256": "acec65876775e094df70eda97524a341ba5bbdae39f630782a18558dda0854c4"
     },
     {
+      "path": "tools/content_pipeline/mock_compile_proposal.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "255175da62b109c0343da84383807070fa045c571f1430762871e10ac590120e"
+    },
+    {
       "path": "tools/content_pipeline/validate_compilable_object_catalog.py",
       "kind": "validator",
       "exists": true,
@@ -3365,6 +3403,12 @@
       "kind": "validator",
       "exists": true,
       "sha256": "deeb86d5eca7111f8819f8f15aad4a69d95a98a7c79883658e4d93a653f7323b"
+    },
+    {
+      "path": "tools/content_pipeline/validate_multistage_content_pack.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "511b6faea1bae3eff1536b5d1371c3fc7cfc321788a72211bef42e4c3587756c"
     },
     {
       "path": "tools/content_pipeline/validate_stage_candidate_pack.py",
@@ -3441,6 +3485,10 @@
     {
       "purpose": "构建并校验多阶段内容生产包",
       "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate"
+    },
+    {
+      "purpose": "校验多阶段内容生产包",
+      "command": "python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json"
     },
     {
       "purpose": "校验多阶段阶段候选包",

@@ -54,6 +54,64 @@
         "slow",
         "aura_buff"
       ],
+      "asset_policy_evidence": {
+        "candidate_id": "asset_echo_prism_relay",
+        "asset_type": "tower_blueprint",
+        "validation": {
+          "status": "passed",
+          "error_count": 0,
+          "errors": []
+        },
+        "simulation": {
+          "status": "passed",
+          "duration_seconds": 30.0,
+          "estimated_dps": 0.0,
+          "utility_score": 0.288,
+          "enemies_leaked": 7,
+          "power_peak": 0.0,
+          "cost_efficiency": 0.507,
+          "balance_flags": [
+            "pure_control_requires_damage_partner",
+            "control_has_weak_cost"
+          ]
+        },
+        "score": {
+          "status": "passed",
+          "total_score": 75.5,
+          "recommendation": "generate_media",
+          "dimension_scores": {
+            "validation": 100.0,
+            "gameplay_fit": 100.0,
+            "simulation": 33.8,
+            "world_fit": 100.0,
+            "media_readiness": 35.0,
+            "risk_control": 85.0
+          },
+          "expected_media_roles": [
+            "battle_preview",
+            "icon",
+            "tower_sprite"
+          ]
+        },
+        "promotion": {
+          "schema_check_status": "passed_legacy_jsonschema",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_core_state": "passed",
+          "media_state": "missing",
+          "blockers": [],
+          "warnings": [
+            "review_simulation_flag:control_has_weak_cost",
+            "candidate_score_simulation_low",
+            "missing_runtime_readiness_report"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      },
       "state_counts": {
         "tasks": 5,
         "random_events": 3,
@@ -98,6 +156,62 @@
         "scout_reveal",
         "countermeasure_hint"
       ],
+      "asset_policy_evidence": {
+        "candidate_id": "asset_signal_echo_marker",
+        "asset_type": "support_item",
+        "validation": {
+          "status": "passed",
+          "error_count": 0,
+          "errors": []
+        },
+        "simulation": {
+          "status": "passed",
+          "duration_seconds": 30.0,
+          "estimated_dps": 0.0,
+          "utility_score": 0.45,
+          "enemies_leaked": 10,
+          "power_peak": 0.0,
+          "cost_efficiency": 1.543,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "status": "passed",
+          "total_score": 84.8,
+          "recommendation": "generate_media",
+          "dimension_scores": {
+            "validation": 100.0,
+            "gameplay_fit": 100.0,
+            "simulation": 80.2,
+            "world_fit": 100.0,
+            "media_readiness": 35.0,
+            "risk_control": 85.0
+          },
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        },
+        "promotion": {
+          "schema_check_status": "passed_legacy_jsonschema",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_core_state": "passed",
+          "media_state": "missing",
+          "blockers": [],
+          "warnings": [
+            "review_simulation_flag:high_cost_efficiency",
+            "missing_runtime_readiness_report"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      },
       "state_counts": {
         "tasks": 6,
         "random_events": 4,
@@ -141,6 +255,60 @@
         "charge_burst",
         "risk_modifier"
       ],
+      "asset_policy_evidence": {
+        "candidate_id": "asset_overload_chain_breaker",
+        "asset_type": "temporary_mod",
+        "validation": {
+          "status": "passed",
+          "error_count": 0,
+          "errors": []
+        },
+        "simulation": {
+          "status": "passed",
+          "duration_seconds": 30.0,
+          "estimated_dps": 8.1,
+          "utility_score": 0.034,
+          "enemies_leaked": 4,
+          "power_peak": 0.0,
+          "cost_efficiency": 0.271,
+          "balance_flags": []
+        },
+        "score": {
+          "status": "passed",
+          "total_score": 73.2,
+          "recommendation": "generate_media",
+          "dimension_scores": {
+            "validation": 100.0,
+            "gameplay_fit": 100.0,
+            "simulation": 18.0,
+            "world_fit": 100.0,
+            "media_readiness": 35.0,
+            "risk_control": 93.0
+          },
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        },
+        "promotion": {
+          "schema_check_status": "passed_legacy_jsonschema",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_core_state": "passed",
+          "media_state": "missing",
+          "blockers": [],
+          "warnings": [
+            "candidate_score_simulation_low",
+            "missing_runtime_readiness_report"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      },
       "state_counts": {
         "tasks": 7,
         "random_events": 5,
@@ -165,6 +333,7 @@
       "scout_reveal": 1,
       "slow": 1
     },
+    "initial_state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
     "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
     "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
   },
@@ -177,6 +346,7 @@
     "stage05.next_run_state": "passed",
     "stage05.world_delta_semantics": "passed",
     "stage05.world_delta_apply": "passed",
+    "stage05.asset_policy_evidence": "passed",
     "stage06.narrative_bundle": "passed",
     "stage06.world_delta": "passed",
     "stage06.next_run_state": "passed",
@@ -184,13 +354,15 @@
     "stage06.asset_candidate": "passed",
     "stage06.world_delta_semantics": "passed",
     "stage06.world_delta_apply": "passed",
+    "stage06.asset_policy_evidence": "passed",
     "stage07.narrative_bundle": "passed",
     "stage07.world_delta": "passed",
     "stage07.next_run_state": "passed",
     "stage07.proposal": "passed",
     "stage07.asset_candidate": "passed",
     "stage07.world_delta_semantics": "passed",
-    "stage07.world_delta_apply": "passed"
+    "stage07.world_delta_apply": "passed",
+    "stage07.asset_policy_evidence": "passed"
   },
   "review_notes": [
     "Stage 05 仍来自单阶段计划落地样例，用于防御塔候选。",

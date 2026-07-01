@@ -16,8 +16,10 @@ python3 tools/content_pipeline/build_multistage_content_pack.py --validate
 
 - `examples/review_packs/mvp_multistage_content_pack.v0.1.json`
 - `examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json`
+- `shared/schemas/multistage_content_pack.v0.1.schema.json`
+- `tools/content_pipeline/validate_multistage_content_pack.py`
 
-其中第一份是详细内容包，包含流水线逻辑、阶段摘要、资产类型统计和验证结果。第二份是符合现有 `StageCandidatePack v0.1` 的标准阶段候选包，便于沿用现有审查格式。
+其中第一份是详细内容包，包含流水线逻辑、阶段摘要、资产类型统计、资产政策证据和验证结果。第二份是符合现有 `StageCandidatePack v0.1` 的标准阶段候选包，便于沿用现有审查格式。
 
 同时会生成每阶段的具体产物：
 
@@ -98,7 +100,27 @@ Stage 04 RunWorldState
 - `validate_run_world_state.py`
 - `validate_proposal.py`
 - `validate_asset_candidate.py`
+- `simulate_asset_candidate.py`，生成确定性粗粒度玩法模拟摘要
+- `score_asset_candidate.py`，生成资产候选评分和媒体需求建议
+- `asset_promotion_policy.py`，判断候选是 `fallback_ready`、`preview_only`、`runtime_ready` 还是 `failed`
+- `validate_multistage_content_pack.py` 的完整回放门：从 `summary.initial_state_file` 串行应用每阶段 `WorldStateDelta`，最终状态必须等于 `summary.final_state_file`
+- `validate_multistage_content_pack.py`
 - `validate_stage_candidate_pack.py`，用于标准阶段候选包
+
+`MultistageContentPack.stage_summaries[].asset_policy_evidence` 会保存每阶段资产的证据摘要：
+
+- `validation`：效果白名单和基础运行契约是否通过。
+- `simulation`：估算输出、工具性、漏怪、能耗和风险旗标。
+- `score`：总分、分项分数、媒体角色需求和晋级建议。
+- `promotion`：晋级状态、是否可 fallback 运行、是否仍缺 runtime media，以及后续动作。
+
+当前多阶段样例的三个资产都应停在 `fallback_ready`：玩法核心可作为候选审查，但媒体和 runtime package 尚未正式晋升，因此不能自动进入默认战斗主路径。
+
+单独校验详细内容包：
+
+```bash
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
+```
 
 ## 边界
 
@@ -123,6 +145,7 @@ Stage 04 RunWorldState
 4. 候选材料是否通过临时样本进入运行态，而不是绕过资源治理。
 5. NPC 引用是否只使用当前运行态、canonical 或 review pack 明确允许的候选。
 6. 资产候选是否只使用效果白名单，不生成任意代码。
-7. 标准阶段候选包是否足以支撑人工审查和后续晋升决策。
+7. 资产候选是否带有验证、模拟、评分和晋级策略证据。
+8. 标准阶段候选包是否足以支撑人工审查和后续晋升决策。
 
 这份内容包的价值在于证明：同一套 AI 编译系统不仅能生成防御塔，还能连续生成剧情阶段、任务、随机事件、材料样本、支援道具和临时改造，并且每一步都可校验、可回滚、可审查。
