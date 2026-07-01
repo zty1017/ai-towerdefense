@@ -1,0 +1,3018 @@
+{
+  "schema_version": "mvp_compiler_review_dossier.v0.1",
+  "dossier_id": "mvp_compiler_review_dossier_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "dossier_builder_reads_env": false,
+    "dossier_builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "runtime_package_included": "referenced_only"
+  },
+  "pipeline_overview": [
+    {
+      "step_id": "01_narrative_bundle",
+      "name": "阶段剧情节点编译",
+      "purpose": "把世界书、运行态、战斗结果和玩家线索整理成 NarrativeEventBundle。",
+      "inputs": [
+        "RunWorldState",
+        "BattleResult",
+        "SessionContext",
+        "BaseWorldbook"
+      ],
+      "outputs": [
+        "NarrativeEventBundle"
+      ],
+      "gate": "validate_narrative_bundle.py; worldbook_base_mutation_allowed=false"
+    },
+    {
+      "step_id": "02_world_state_delta",
+      "name": "世界状态变化提交",
+      "purpose": "把可接受的剧情与玩法意图转成受控 WorldStateDelta。",
+      "inputs": [
+        "NarrativeEventBundle",
+        "current RunWorldState"
+      ],
+      "outputs": [
+        "WorldStateDelta",
+        "next RunWorldState"
+      ],
+      "gate": "validate_world_delta.py + validate_world_delta_semantics.py + apply_world_delta.py"
+    },
+    {
+      "step_id": "03_asset_compile",
+      "name": "游戏资产编译",
+      "purpose": "把提案或玩家构想编译为防御塔、道具、情报资产或临时改造候选。",
+      "inputs": [
+        "Proposal",
+        "worldbook boundary",
+        "effect catalog"
+      ],
+      "outputs": [
+        "CompiledAssetCandidate",
+        "promotion report"
+      ],
+      "gate": "validate_asset_candidate.py + simulate_asset_candidate.py + score_asset_candidate.py + asset_promotion_policy.py"
+    },
+    {
+      "step_id": "04_media_compile",
+      "name": "媒体与特效管线",
+      "purpose": "为可用资产生成图像、视频帧、抠图后处理和 runtime media manifest。",
+      "inputs": [
+        "CompiledAssetCandidate",
+        "visual identity",
+        "media prompt"
+      ],
+      "outputs": [
+        "processed media",
+        "runtime readiness report"
+      ],
+      "gate": "media consistency / readiness validators; MVP 可 fallback"
+    },
+    {
+      "step_id": "05_review_dossier",
+      "name": "审查交付包构建",
+      "purpose": "把阶段、玩法对象、资产和验证命令汇总成可审查证据。",
+      "inputs": [
+        "review packs",
+        "world deltas",
+        "final run state",
+        "workflows"
+      ],
+      "outputs": [
+        "MVP Compiler Review Dossier"
+      ],
+      "gate": "mvp_compiler_review_dossier.v0.1 schema"
+    },
+    {
+      "step_id": "mvp_controlled_narrative_world_progression.workflow",
+      "name": "mvp_controlled_narrative_world_progression.workflow",
+      "purpose": "battle result + RunWorldState -> controlled NarrativeEventBundle -> WorldStateDelta -> next RunWorldState. No live provider calls.",
+      "inputs": [
+        "examples/workflows/mvp_controlled_narrative_world_progression.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=deterministic; nodes=6"
+    },
+    {
+      "step_id": "mvp_world_delta_semantic_gate_demo.workflow",
+      "name": "mvp_world_delta_semantic_gate_demo.workflow",
+      "purpose": "Deterministic demo: repaired WorldStateDelta -> semantic gate -> apply_delta. No provider calls.",
+      "inputs": [
+        "examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=deterministic; nodes=4"
+    },
+    {
+      "step_id": "mvp_live_world_delta_guarded.workflow",
+      "name": "mvp_live_world_delta_guarded.workflow",
+      "purpose": "battle result -> LLM-guarded WorldStateDelta -> next RunWorldState: first live LLM closed loop. WARNING: this workflow calls a real LLM provider. Only execute when you explicitly intend to make live API calls.",
+      "inputs": [
+        "examples/workflows/mvp_live_world_delta_guarded.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=live; nodes=6"
+    },
+    {
+      "step_id": "mvp_defense_asset_compile.workflow",
+      "name": "mvp_defense_asset_compile.workflow",
+      "purpose": "defense asset compile: proposal -> validate -> mock compile -> validate candidate -> simulate -> pipeline summary",
+      "inputs": [
+        "examples/workflows/mvp_defense_asset_compile.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=deterministic; nodes=8"
+    },
+    {
+      "step_id": "mvp_live_asset_compile_guarded.workflow",
+      "name": "mvp_live_asset_compile_guarded.workflow",
+      "purpose": "LIVE guarded asset compile: load proposal -> validate -> LLM compile with validation guard -> validate candidate -> simulate -> pipeline summary. WARNING: this workflow calls a real LLM provider and must be explicitly executed by a human.",
+      "inputs": [
+        "examples/workflows/mvp_live_asset_compile_guarded.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=live; nodes=8"
+    },
+    {
+      "step_id": "mvp_live_asset_media_repair_guarded.workflow",
+      "name": "mvp_live_asset_media_repair_guarded.workflow",
+      "purpose": "LIVE guarded media repair loop: generate media -> deterministic/vision review -> build repair plan -> regenerate failed roles -> merge -> re-review -> media processing -> published manifest -> runtime readiness gate. WARNING: calls real image and vision providers.",
+      "inputs": [
+        "examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=live; nodes=19"
+    },
+    {
+      "step_id": "mvp_image_to_video_sprite_compile.workflow",
+      "name": "mvp_image_to_video_sprite_compile.workflow",
+      "purpose": "LIVE guarded route: animation seed image -> image-to-video -> keyframe extraction -> keyframe selection -> batch cutout/alignment -> sprite sheet/atlas -> runtime readiness. Calls video provider only when allow_live_provider_call=true.",
+      "inputs": [
+        "examples/workflows/mvp_image_to_video_sprite_compile.workflow.json"
+      ],
+      "outputs": [
+        "execution_trace"
+      ],
+      "gate": "validate_workflow.py; mode=live; nodes=9"
+    }
+  ],
+  "stage_reviews": [
+    {
+      "stage_order": 1,
+      "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+      "title": "灰灯驿站首防",
+      "bundle_file": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "gameplay_purposes": [
+        "advance_main_pressure",
+        "create_research_need",
+        "explain_battle_result",
+        "offer_workshop_hook",
+        "reward_player_choice",
+        "teach_mechanic",
+        "unlock_battle_node"
+      ],
+      "gameplay_hooks": [
+        "advance_main_pressure",
+        "create_research_need",
+        "explain_battle_result",
+        "offer_workshop_hook",
+        "reward_player_choice",
+        "teach_mechanic",
+        "unlock_battle_node"
+      ],
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_global_state": 2,
+        "adjust_resource": 1,
+        "append_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 1,
+        "set_progress_phase": 1,
+        "unlock_fact": 1
+      },
+      "assets": [
+        {
+          "asset_id": "sample_trap_7f3a",
+          "asset_kind": "runtime_sample_trap",
+          "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+          "promotion_state": "usable_runtime_fixture",
+          "playable": true,
+          "uses_fallback_media": false,
+          "gameplay_role": "Mid-battle temporary sample that slows fast enemies.",
+          "runtime_asset_summary": {
+            "stable_internal_id": "sample_trap_7f3a",
+            "asset_kind": "temporary_trap_sample",
+            "lifecycle_state": "ephemeral",
+            "display_name": "折光绊索",
+            "battle_surfaces": [
+              "battle_hotbar"
+            ],
+            "visual_recipe_kinds": [
+              "aura_field",
+              "ring_pulse",
+              "sprite_flash"
+            ]
+          }
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc_gray_lantern_keeper",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_workshop_mentor",
+          "kind": "npc",
+          "status": "canonical"
+        }
+      ],
+      "materials": [
+        {
+          "id": "lamp_shard",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "conductor_filament",
+          "kind": "material",
+          "status": "canonical"
+        }
+      ],
+      "map_nodes": [
+        {
+          "id": "gray_lantern_station",
+          "kind": "map_node",
+          "status": "stage_ref"
+        },
+        {
+          "id": "temporary_workshop",
+          "kind": "map_node",
+          "status": "stage_ref"
+        }
+      ],
+      "research_hooks": [
+        "fast_enemy_counter",
+        "field_research_once",
+        "sample_delivery_mid_battle"
+      ],
+      "gameplay_service": [
+        "Proves player idea can become a temporary battlefield sample.",
+        "Teaches map node selection.",
+        "Teaches one field trial before battle."
+      ]
+    },
+    {
+      "stage_order": 2,
+      "stage_id": "act_1_stage_02_dawn_review_supply_line",
+      "title": "黎明复盘与护线",
+      "bundle_file": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "gameplay_purposes": [
+        "create_quest_hook",
+        "explain_battle_result",
+        "increase_threat",
+        "introduce_functional_npc",
+        "introduce_material",
+        "modify_map_node_state",
+        "offer_workshop_hook",
+        "open_resource_route"
+      ],
+      "gameplay_hooks": [
+        "create_quest_hook",
+        "explain_battle_result",
+        "increase_threat",
+        "introduce_functional_npc",
+        "introduce_material",
+        "modify_map_node_state",
+        "offer_workshop_hook",
+        "open_resource_route"
+      ],
+      "delta_operation_counts": {
+        "adjust_resource": 3,
+        "append_event": 1,
+        "introduce_map_node": 2,
+        "introduce_npc": 1,
+        "schedule_random_event": 1,
+        "set_flag": 1,
+        "set_progress_phase": 1,
+        "unlock_fact": 2,
+        "upsert_research_job": 1,
+        "upsert_task": 2
+      },
+      "assets": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Reusable decoy item for path-adjacent slow and pressure relief.",
+          "gameplay_summary": {
+            "lifecycle": "session_blueprint",
+            "asset_type": "support_item",
+            "base_stats": {
+              "deploy_cost": 75,
+              "cooldown": 14.0,
+              "use_count": 3,
+              "cast_range": 130
+            },
+            "effect_blocks": [
+              "countermeasure_hint",
+              "risk_modifier",
+              "slow",
+              "trap_tile_effect"
+            ],
+            "constraints": {
+              "requires_power_grid": false,
+              "max_instances": 3,
+              "allowed_phases": [
+                "preparation",
+                "battle"
+              ],
+              "placement_rule": "path_adjacent",
+              "heavy_enemy_resistance": "reduced_attraction"
+            },
+            "type_specific": {
+              "item_slot": "throwable",
+              "delivery_method": "toss",
+              "target_rule": "path_tile"
+            },
+            "material_ids": [
+              "conductor_filament",
+              "lamp_shard"
+            ],
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Support tower that shields and repairs nearby defenses.",
+          "gameplay_summary": {
+            "lifecycle": "ephemeral",
+            "asset_type": "tower_blueprint",
+            "base_stats": {
+              "build_cost": 180,
+              "range": 100,
+              "cooldown": 2.5,
+              "targeting": "nearest_ally"
+            },
+            "effect_blocks": [
+              "aura_buff",
+              "power_cost",
+              "repair",
+              "shield"
+            ],
+            "constraints": {
+              "requires_power_grid": false,
+              "max_instances": 3,
+              "allowed_phases": [
+                "battle"
+              ]
+            },
+            "type_specific": {
+              "tower_slot": "support",
+              "upgrade_from": null
+            },
+            "material_ids": [
+              "conductor_filament",
+              "lamp_shard"
+            ],
+            "npc_ids": [
+              "npc_gray_lantern_keeper",
+              "npc_workshop_mentor"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc_gray_lantern_keeper",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_workshop_mentor",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_wire_mender_003",
+          "kind": "npc",
+          "status": "candidate"
+        }
+      ],
+      "materials": [
+        {
+          "id": "lantern_ash",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "lamp_shard",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "conductor_filament",
+          "kind": "material",
+          "status": "canonical"
+        }
+      ],
+      "map_nodes": [
+        {
+          "id": "supply_line_hub_to_gray",
+          "kind": "map_node",
+          "status": "stage_ref"
+        },
+        {
+          "id": "lamp_wick_store",
+          "kind": "map_node",
+          "status": "stage_ref"
+        }
+      ],
+      "research_hooks": [
+        "post_battle_review",
+        "supply_line_repair",
+        "support_unlock"
+      ],
+      "gameplay_service": [
+        "Creates a functional NPC candidate without committing it as canonical.",
+        "Introduces lantern_ash as a stabilizing material.",
+        "Turns first battle outcome into repair pressure."
+      ]
+    },
+    {
+      "stage_order": 3,
+      "stage_id": "act_1_stage_03_northern_road_scouting",
+      "title": "北路侦测与路径预测",
+      "bundle_file": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "gameplay_purposes": [
+        "advance_main_pressure",
+        "create_quest_hook",
+        "create_research_need",
+        "introduce_functional_npc",
+        "modify_map_node_state",
+        "open_resource_route",
+        "reward_player_choice",
+        "teach_mechanic"
+      ],
+      "gameplay_hooks": [
+        "advance_main_pressure",
+        "create_quest_hook",
+        "create_research_need",
+        "introduce_functional_npc",
+        "modify_map_node_state",
+        "open_resource_route",
+        "reward_player_choice",
+        "teach_mechanic"
+      ],
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_resource": 2,
+        "append_event": 1,
+        "introduce_npc": 1,
+        "schedule_random_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 2,
+        "set_progress_phase": 1,
+        "set_random_event_status": 1,
+        "set_task_status": 1,
+        "unlock_fact": 2,
+        "upsert_research_job": 2,
+        "upsert_task": 1
+      },
+      "assets": [
+        {
+          "asset_id": "intel_dark_echo_survey_001",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Short-term path reveal and weakness hint using canonical materials.",
+          "gameplay_summary": {
+            "lifecycle": "ephemeral",
+            "asset_type": "intel_asset",
+            "base_stats": {
+              "action_cost": 1,
+              "valid_turns": 2,
+              "confidence": 0.6
+            },
+            "effect_blocks": [
+              "path_prediction",
+              "scout_reveal",
+              "weakness_tag"
+            ],
+            "constraints": {
+              "requires_power_grid": false,
+              "max_instances": 1,
+              "allowed_phases": [
+                "battle"
+              ]
+            },
+            "type_specific": {
+              "reveal_mode": "fog_of_war",
+              "applies_to": "enemy_wave",
+              "consumer_hint": "use_before_next_wave"
+            },
+            "material_ids": [
+              "conductor_filament",
+              "lantern_ash"
+            ],
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        },
+        {
+          "asset_id": "intel_shadow_tide_survey",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+          "promotion_state": "candidate_only_needs_world_registration",
+          "playable": false,
+          "uses_fallback_media": false,
+          "gameplay_role": "Better scouting package, but it currently depends on unregistered materials and NPC refs.",
+          "gameplay_summary": {
+            "lifecycle": "ephemeral",
+            "asset_type": "intel_asset",
+            "base_stats": {
+              "action_cost": 2,
+              "valid_turns": 3,
+              "confidence": 0.75
+            },
+            "effect_blocks": [
+              "countermeasure_hint",
+              "path_prediction",
+              "risk_modifier",
+              "weakness_tag"
+            ],
+            "constraints": {
+              "requires_scout_present": true,
+              "allowed_phases": [
+                "preparation",
+                "battle"
+              ]
+            },
+            "type_specific": {
+              "reveal_mode": "next_wave_path_and_weakness",
+              "applies_to": "enemy_routes",
+              "consumer_hint": "需要斥候在场才能更新；情报仅适用于短期战斗"
+            },
+            "material_ids": [
+              "charcoal_map",
+              "signal_wick"
+            ],
+            "npc_ids": [
+              "archivist_001",
+              "scout_001"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc_gray_lantern_keeper",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_workshop_mentor",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_road_scout",
+          "kind": "npc",
+          "status": "candidate"
+        }
+      ],
+      "materials": [
+        {
+          "id": "lantern_ash",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "conductor_filament",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "charcoal_map",
+          "kind": "material",
+          "status": "candidate_only"
+        },
+        {
+          "id": "signal_wick",
+          "kind": "material",
+          "status": "candidate_only"
+        }
+      ],
+      "map_nodes": [
+        {
+          "id": "northern_road_crossing",
+          "kind": "map_node",
+          "status": "stage_ref"
+        },
+        {
+          "id": "old_signal_tower",
+          "kind": "map_node",
+          "status": "stage_ref"
+        }
+      ],
+      "research_hooks": [
+        "path_prediction",
+        "scouting_tutorial",
+        "weakness_discovery"
+      ],
+      "gameplay_service": [
+        "Introduces a functional scout NPC as a candidate gameplay unlock.",
+        "Keeps hidden regions hidden until a controlled scouting action resolves.",
+        "Shows that the world can create non-combat preparation choices."
+      ]
+    },
+    {
+      "stage_order": 4,
+      "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+      "title": "第二节点压力战 / 灯芯仓防守",
+      "bundle_file": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "gameplay_purposes": [
+        "create_quest_hook",
+        "create_research_need",
+        "increase_threat",
+        "introduce_material",
+        "modify_map_node_state",
+        "reward_player_choice",
+        "teach_mechanic",
+        "unlock_battle_node"
+      ],
+      "gameplay_hooks": [
+        "create_quest_hook",
+        "create_research_need",
+        "increase_threat",
+        "introduce_material",
+        "modify_map_node_state",
+        "reward_player_choice",
+        "teach_mechanic",
+        "unlock_battle_node"
+      ],
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_resource": 2,
+        "append_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 2,
+        "set_progress_phase": 1,
+        "set_random_event_status": 1,
+        "set_task_status": 2,
+        "unlock_blueprint": 1,
+        "unlock_fact": 2,
+        "update_npc_relationship": 1,
+        "upsert_research_job": 1,
+        "upsert_task": 1
+      },
+      "assets": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Pulls fast enemies away from the storehouse entrance.",
+          "gameplay_summary": {
+            "lifecycle": "session_blueprint",
+            "asset_type": "support_item",
+            "base_stats": {
+              "deploy_cost": 75,
+              "cooldown": 14.0,
+              "use_count": 3,
+              "cast_range": 130
+            },
+            "effect_blocks": [
+              "countermeasure_hint",
+              "risk_modifier",
+              "slow",
+              "trap_tile_effect"
+            ],
+            "constraints": {
+              "requires_power_grid": false,
+              "max_instances": 3,
+              "allowed_phases": [
+                "preparation",
+                "battle"
+              ],
+              "placement_rule": "path_adjacent",
+              "heavy_enemy_resistance": "reduced_attraction"
+            },
+            "type_specific": {
+              "item_slot": "throwable",
+              "delivery_method": "toss",
+              "target_rule": "path_tile"
+            },
+            "material_ids": [
+              "conductor_filament",
+              "lamp_shard"
+            ],
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Protects resource targets and nearby defenses.",
+          "gameplay_summary": {
+            "lifecycle": "ephemeral",
+            "asset_type": "tower_blueprint",
+            "base_stats": {
+              "build_cost": 180,
+              "range": 100,
+              "cooldown": 2.5,
+              "targeting": "nearest_ally"
+            },
+            "effect_blocks": [
+              "aura_buff",
+              "power_cost",
+              "repair",
+              "shield"
+            ],
+            "constraints": {
+              "requires_power_grid": false,
+              "max_instances": 3,
+              "allowed_phases": [
+                "battle"
+              ]
+            },
+            "type_specific": {
+              "tower_slot": "support",
+              "upgrade_from": null
+            },
+            "material_ids": [
+              "conductor_filament",
+              "lamp_shard"
+            ],
+            "npc_ids": [
+              "npc_gray_lantern_keeper",
+              "npc_workshop_mentor"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        },
+        {
+          "asset_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "gameplay_role": "Handles clustered enemies at the resource node entrance.",
+          "gameplay_summary": {
+            "lifecycle": "ephemeral",
+            "asset_type": "tower_blueprint",
+            "base_stats": {
+              "build_cost": 200,
+              "range": 120,
+              "cooldown": 3.5,
+              "targeting": "nearest"
+            },
+            "effect_blocks": [
+              "area_damage",
+              "shield"
+            ],
+            "constraints": {
+              "max_instances": 3,
+              "allowed_phases": [
+                "battle"
+              ]
+            },
+            "type_specific": {
+              "tower_slot": "standard",
+              "upgrade_from": null
+            },
+            "material_ids": [
+              "lamp_shard",
+              "lantern_ash"
+            ],
+            "npc_ids": [
+              "npc_workshop_mentor"
+            ],
+            "provenance_mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        },
+        {
+          "asset_id": "mod_overload_chain_arc_001",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+          "promotion_state": "candidate_only_high_risk",
+          "playable": false,
+          "uses_fallback_media": false,
+          "gameplay_role": "Optional later risk tradeoff; not part of default MVP battle because it requires unregistered materials and a power-grid context.",
+          "gameplay_summary": {
+            "lifecycle": "session_blueprint",
+            "asset_type": "temporary_mod",
+            "base_stats": {
+              "activation_cost": 120,
+              "duration_seconds": 4.0,
+              "cooldown": 15.0
+            },
+            "effect_blocks": [
+              "damage",
+              "pierce_or_chain",
+              "power_cost",
+              "risk_modifier"
+            ],
+            "constraints": {
+              "requires_power_grid": true,
+              "allowed_phases": [
+                "battle"
+              ],
+              "target_asset_type_filter": "tower_blueprint"
+            },
+            "type_specific": {
+              "target_asset_type": "tower_blueprint",
+              "stacking": "replace",
+              "rollback_behavior": "restore_with_cooldown_penalty"
+            },
+            "material_ids": [
+              "charged_copper_coil",
+              "cracked_insulator"
+            ],
+            "npc_ids": [
+              "engineer_001"
+            ],
+            "provenance_mode": "runtime_experimental",
+            "worldbook_id": "long_night_lanterns",
+            "validation_status": "pending"
+          }
+        }
+      ],
+      "npcs": [
+        {
+          "id": "npc_gray_lantern_keeper",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_workshop_mentor",
+          "kind": "npc",
+          "status": "canonical"
+        },
+        {
+          "id": "npc_wire_mender_003",
+          "kind": "npc",
+          "status": "candidate"
+        }
+      ],
+      "materials": [
+        {
+          "id": "lamp_shard",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "conductor_filament",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "lantern_ash",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "glow_crystal",
+          "kind": "material",
+          "status": "canonical"
+        },
+        {
+          "id": "charged_copper_coil",
+          "kind": "material",
+          "status": "candidate_only"
+        },
+        {
+          "id": "cracked_insulator",
+          "kind": "material",
+          "status": "candidate_only"
+        }
+      ],
+      "map_nodes": [
+        {
+          "id": "lamp_wick_store",
+          "kind": "map_node",
+          "status": "stage_ref"
+        },
+        {
+          "id": "supply_line_hub_to_gray",
+          "kind": "map_node",
+          "status": "stage_ref"
+        }
+      ],
+      "research_hooks": [
+        "combined_defense",
+        "resource_node_protection",
+        "risk_tradeoff"
+      ],
+      "gameplay_service": [
+        "Introduces glow_crystal as a rare reward after successful defense.",
+        "Moves from a single tutorial trap to a combined tower-defense setup.",
+        "Turns a resource storage node into a concrete battle objective."
+      ]
+    }
+  ],
+  "content_inventory": {
+    "assets": [
+      {
+        "asset_id": "asset_ash_burst_lantern",
+        "asset_kind": "tower_blueprint",
+        "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "gameplay_role": "Handles clustered enemies at the resource node entrance.",
+        "gameplay_summary": {
+          "lifecycle": "ephemeral",
+          "asset_type": "tower_blueprint",
+          "base_stats": {
+            "build_cost": 200,
+            "range": 120,
+            "cooldown": 3.5,
+            "targeting": "nearest"
+          },
+          "effect_blocks": [
+            "area_damage",
+            "shield"
+          ],
+          "constraints": {
+            "max_instances": 3,
+            "allowed_phases": [
+              "battle"
+            ]
+          },
+          "type_specific": {
+            "tower_slot": "standard",
+            "upgrade_from": null
+          },
+          "material_ids": [
+            "lamp_shard",
+            "lantern_ash"
+          ],
+          "npc_ids": [
+            "npc_workshop_mentor"
+          ],
+          "provenance_mode": "runtime_safe",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "asset_signal_wick_decoy",
+        "asset_kind": "support_item",
+        "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "gameplay_role": "Reusable decoy item for path-adjacent slow and pressure relief.",
+        "gameplay_summary": {
+          "lifecycle": "session_blueprint",
+          "asset_type": "support_item",
+          "base_stats": {
+            "deploy_cost": 75,
+            "cooldown": 14.0,
+            "use_count": 3,
+            "cast_range": 130
+          },
+          "effect_blocks": [
+            "countermeasure_hint",
+            "risk_modifier",
+            "slow",
+            "trap_tile_effect"
+          ],
+          "constraints": {
+            "requires_power_grid": false,
+            "max_instances": 3,
+            "allowed_phases": [
+              "preparation",
+              "battle"
+            ],
+            "placement_rule": "path_adjacent",
+            "heavy_enemy_resistance": "reduced_attraction"
+          },
+          "type_specific": {
+            "item_slot": "throwable",
+            "delivery_method": "toss",
+            "target_rule": "path_tile"
+          },
+          "material_ids": [
+            "conductor_filament",
+            "lamp_shard"
+          ],
+          "npc_ids": [
+            "npc_gray_lantern_keeper"
+          ],
+          "provenance_mode": "runtime_safe",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "asset_wick_barrier_pylon",
+        "asset_kind": "tower_blueprint",
+        "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "gameplay_role": "Support tower that shields and repairs nearby defenses.",
+        "gameplay_summary": {
+          "lifecycle": "ephemeral",
+          "asset_type": "tower_blueprint",
+          "base_stats": {
+            "build_cost": 180,
+            "range": 100,
+            "cooldown": 2.5,
+            "targeting": "nearest_ally"
+          },
+          "effect_blocks": [
+            "aura_buff",
+            "power_cost",
+            "repair",
+            "shield"
+          ],
+          "constraints": {
+            "requires_power_grid": false,
+            "max_instances": 3,
+            "allowed_phases": [
+              "battle"
+            ]
+          },
+          "type_specific": {
+            "tower_slot": "support",
+            "upgrade_from": null
+          },
+          "material_ids": [
+            "conductor_filament",
+            "lamp_shard"
+          ],
+          "npc_ids": [
+            "npc_gray_lantern_keeper",
+            "npc_workshop_mentor"
+          ],
+          "provenance_mode": "runtime_safe",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "intel_dark_echo_survey_001",
+        "asset_kind": "intel_asset",
+        "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "gameplay_role": "Short-term path reveal and weakness hint using canonical materials.",
+        "gameplay_summary": {
+          "lifecycle": "ephemeral",
+          "asset_type": "intel_asset",
+          "base_stats": {
+            "action_cost": 1,
+            "valid_turns": 2,
+            "confidence": 0.6
+          },
+          "effect_blocks": [
+            "path_prediction",
+            "scout_reveal",
+            "weakness_tag"
+          ],
+          "constraints": {
+            "requires_power_grid": false,
+            "max_instances": 1,
+            "allowed_phases": [
+              "battle"
+            ]
+          },
+          "type_specific": {
+            "reveal_mode": "fog_of_war",
+            "applies_to": "enemy_wave",
+            "consumer_hint": "use_before_next_wave"
+          },
+          "material_ids": [
+            "conductor_filament",
+            "lantern_ash"
+          ],
+          "npc_ids": [
+            "npc_gray_lantern_keeper"
+          ],
+          "provenance_mode": "runtime_safe",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "intel_shadow_tide_survey",
+        "asset_kind": "intel_asset",
+        "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+        "promotion_state": "candidate_only_needs_world_registration",
+        "playable": false,
+        "uses_fallback_media": false,
+        "gameplay_role": "Better scouting package, but it currently depends on unregistered materials and NPC refs.",
+        "gameplay_summary": {
+          "lifecycle": "ephemeral",
+          "asset_type": "intel_asset",
+          "base_stats": {
+            "action_cost": 2,
+            "valid_turns": 3,
+            "confidence": 0.75
+          },
+          "effect_blocks": [
+            "countermeasure_hint",
+            "path_prediction",
+            "risk_modifier",
+            "weakness_tag"
+          ],
+          "constraints": {
+            "requires_scout_present": true,
+            "allowed_phases": [
+              "preparation",
+              "battle"
+            ]
+          },
+          "type_specific": {
+            "reveal_mode": "next_wave_path_and_weakness",
+            "applies_to": "enemy_routes",
+            "consumer_hint": "需要斥候在场才能更新；情报仅适用于短期战斗"
+          },
+          "material_ids": [
+            "charcoal_map",
+            "signal_wick"
+          ],
+          "npc_ids": [
+            "archivist_001",
+            "scout_001"
+          ],
+          "provenance_mode": "runtime_safe",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "mod_overload_chain_arc_001",
+        "asset_kind": "temporary_mod",
+        "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+        "promotion_state": "candidate_only_high_risk",
+        "playable": false,
+        "uses_fallback_media": false,
+        "gameplay_role": "Optional later risk tradeoff; not part of default MVP battle because it requires unregistered materials and a power-grid context.",
+        "gameplay_summary": {
+          "lifecycle": "session_blueprint",
+          "asset_type": "temporary_mod",
+          "base_stats": {
+            "activation_cost": 120,
+            "duration_seconds": 4.0,
+            "cooldown": 15.0
+          },
+          "effect_blocks": [
+            "damage",
+            "pierce_or_chain",
+            "power_cost",
+            "risk_modifier"
+          ],
+          "constraints": {
+            "requires_power_grid": true,
+            "allowed_phases": [
+              "battle"
+            ],
+            "target_asset_type_filter": "tower_blueprint"
+          },
+          "type_specific": {
+            "target_asset_type": "tower_blueprint",
+            "stacking": "replace",
+            "rollback_behavior": "restore_with_cooldown_penalty"
+          },
+          "material_ids": [
+            "charged_copper_coil",
+            "cracked_insulator"
+          ],
+          "npc_ids": [
+            "engineer_001"
+          ],
+          "provenance_mode": "runtime_experimental",
+          "worldbook_id": "long_night_lanterns",
+          "validation_status": "pending"
+        }
+      },
+      {
+        "asset_id": "sample_trap_7f3a",
+        "asset_kind": "runtime_sample_trap",
+        "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+        "promotion_state": "usable_runtime_fixture",
+        "playable": true,
+        "uses_fallback_media": false,
+        "gameplay_role": "Mid-battle temporary sample that slows fast enemies.",
+        "runtime_asset_summary": {
+          "stable_internal_id": "sample_trap_7f3a",
+          "asset_kind": "temporary_trap_sample",
+          "lifecycle_state": "ephemeral",
+          "display_name": "折光绊索",
+          "battle_surfaces": [
+            "battle_hotbar"
+          ],
+          "visual_recipe_kinds": [
+            "aura_field",
+            "ring_pulse",
+            "sprite_flash"
+          ]
+        }
+      }
+    ],
+    "npcs": [
+      {
+        "id": "npc_gray_lantern_keeper",
+        "kind": "npc",
+        "status": "canonical",
+        "display_name": "灰灯驿站守灯人",
+        "source_file": "content/worldbooks/long_night_lanterns/npcs.json"
+      },
+      {
+        "id": "npc_workshop_mentor",
+        "kind": "npc",
+        "status": "canonical",
+        "display_name": "临时工坊老师傅",
+        "source_file": "content/worldbooks/long_night_lanterns/npcs.json"
+      },
+      {
+        "id": "npc_wire_mender_003",
+        "kind": "npc",
+        "status": "candidate",
+        "display_name": "补线人"
+      },
+      {
+        "id": "npc_road_scout",
+        "kind": "npc",
+        "status": "candidate",
+        "display_name": "北路斥候"
+      }
+    ],
+    "materials": [
+      {
+        "id": "lamp_shard",
+        "kind": "material",
+        "status": "canonical"
+      },
+      {
+        "id": "conductor_filament",
+        "kind": "material",
+        "status": "canonical"
+      },
+      {
+        "id": "lantern_ash",
+        "kind": "material",
+        "status": "canonical"
+      },
+      {
+        "id": "glow_crystal",
+        "kind": "material",
+        "status": "canonical"
+      },
+      {
+        "id": "charcoal_map",
+        "kind": "material",
+        "status": "candidate_only"
+      },
+      {
+        "id": "signal_wick",
+        "kind": "material",
+        "status": "candidate_only"
+      },
+      {
+        "id": "charged_copper_coil",
+        "kind": "material",
+        "status": "candidate_only"
+      },
+      {
+        "id": "cracked_insulator",
+        "kind": "material",
+        "status": "candidate_only"
+      }
+    ],
+    "map_nodes": [
+      {
+        "id": "gray_lantern_station",
+        "kind": "map_node",
+        "status": "final_run_state"
+      },
+      {
+        "id": "northern_road_crossing",
+        "kind": "map_node",
+        "status": "final_run_state"
+      },
+      {
+        "id": "old_signal_tower",
+        "kind": "map_node",
+        "status": "final_run_state"
+      },
+      {
+        "id": "supply_line_hub_to_gray",
+        "kind": "map_node",
+        "status": "final_run_state"
+      },
+      {
+        "id": "lamp_wick_store",
+        "kind": "map_node",
+        "status": "final_run_state"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "task_repair_supply_line_hub",
+        "kind": "resource",
+        "status": "completed",
+        "summary": "抢修受损补给线",
+        "node_id": "supply_line_hub_to_gray",
+        "npc_id": "npc_wire_mender_003"
+      },
+      {
+        "id": "task_prepare_wick_store_defense",
+        "kind": "defense",
+        "status": "completed",
+        "summary": "准备灯芯仓防守",
+        "node_id": "lamp_wick_store",
+        "npc_id": "npc_wire_mender_003"
+      },
+      {
+        "id": "task_scout_northern_road",
+        "kind": "scouting",
+        "status": "completed",
+        "summary": "确认北路黑暗边缘",
+        "node_id": "northern_road_crossing",
+        "npc_id": "npc_road_scout"
+      },
+      {
+        "id": "task_formalize_ash_burst_lantern",
+        "kind": "research",
+        "status": "completed",
+        "summary": "整理灯灰爆鸣塔蓝图",
+        "node_id": "lamp_wick_store",
+        "npc_id": "npc_wire_mender_003"
+      }
+    ],
+    "random_events": [
+      {
+        "id": "random_event_wick_store_pressure_hint",
+        "kind": "threat_warning",
+        "status": "resolved",
+        "summary": "灯芯仓外侧的影潮开始试探旧管线，若继续放任，下一场压力会转向资源库存。",
+        "node_id": "lamp_wick_store"
+      },
+      {
+        "id": "random_event_old_signal_tower_pressure",
+        "kind": "map_pressure",
+        "status": "pending",
+        "summary": "旧信号塔附近的回光扰动增强，若继续侦察，可能打开新的压力节点或捷径。",
+        "node_id": "old_signal_tower"
+      }
+    ],
+    "research_jobs": [
+      {
+        "id": "research_signal_wick_decoy_trial",
+        "kind": "research_job",
+        "status": "completed",
+        "summary": "信标灯芯诱饵试作",
+        "source_task_id": "task_repair_supply_line_hub",
+        "source_sample_id": "sample_trap_7f3a_repaired"
+      },
+      {
+        "id": "research_dark_echo_survey",
+        "kind": "research_job",
+        "status": "completed",
+        "summary": "东暗回声测记",
+        "source_task_id": "task_scout_northern_road"
+      },
+      {
+        "id": "research_ash_burst_lantern_blueprint",
+        "kind": "research_job",
+        "status": "completed",
+        "summary": "灯灰爆鸣塔蓝图",
+        "source_task_id": "task_formalize_ash_burst_lantern",
+        "source_sample_id": "asset_ash_burst_lantern_trial"
+      }
+    ],
+    "blueprints": [
+      {
+        "id": "asset_ash_burst_lantern",
+        "kind": "blueprint",
+        "status": "known"
+      }
+    ]
+  },
+  "runtime_package_summary": {
+    "package_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+    "package_id": "package_session_lampwright_7f3a_001",
+    "session_id": "session_lampwright_7f3a",
+    "worldbook_id": "long_night_lanterns",
+    "node_id": "gray_lantern_station",
+    "asset_count": 1,
+    "assets": [
+      {
+        "stable_internal_id": "sample_trap_7f3a",
+        "asset_kind": "temporary_trap_sample",
+        "lifecycle_state": "ephemeral",
+        "display_name": "折光绊索",
+        "battle_surfaces": [
+          "battle_hotbar"
+        ],
+        "visual_recipe_kinds": [
+          "aura_field",
+          "ring_pulse",
+          "sprite_flash"
+        ]
+      }
+    ],
+    "battle_context_summary": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 16,
+      "height_cells": 9,
+      "path_count": 1,
+      "optional_target_count": 1,
+      "sample_delivery_delay_ms": 30000
+    }
+  },
+  "workflow_reviews": [
+    {
+      "workflow_file": "examples/workflows/mvp_battle_to_world_state.workflow.json",
+      "workflow_id": "mvp_battle_to_world_state",
+      "mode": "deterministic",
+      "description": "battle result -> narrative -> WorldStateDelta -> next RunWorldState: first complete closed loop",
+      "node_count": 7,
+      "edge_count": 11,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_run_state",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_battle_result",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_session_context",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "npc_feedback",
+          "node_type": "narrative.mock_npc_feedback",
+          "runtime_public": true
+        },
+        {
+          "id": "world_growth",
+          "node_type": "narrative.mock_world_growth_event",
+          "runtime_public": true
+        },
+        {
+          "id": "build_delta",
+          "node_type": "world_state.build_delta_from_narrative_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "apply_delta",
+          "node_type": "world_state.apply_delta",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_controlled_narrative_world_progression.workflow.json",
+      "workflow_id": "mvp_controlled_narrative_world_progression",
+      "mode": "deterministic",
+      "description": "battle result + RunWorldState -> controlled NarrativeEventBundle -> WorldStateDelta -> next RunWorldState. No live provider calls.",
+      "node_count": 6,
+      "edge_count": 9,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_run_state",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_battle_result",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_session_context",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "build_narrative_bundle",
+          "node_type": "narrative.build_controlled_world_player_bundle",
+          "runtime_public": true
+        },
+        {
+          "id": "build_delta",
+          "node_type": "world_state.build_delta_from_narrative_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "apply_delta",
+          "node_type": "world_state.apply_delta",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_defense_asset_compile.workflow.json",
+      "workflow_id": "mvp_defense_asset_compile",
+      "mode": "deterministic",
+      "description": "defense asset compile: proposal -> validate -> mock compile -> validate candidate -> simulate -> pipeline summary",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "mock_compile",
+          "node_type": "asset.mock_compile_proposal",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_image_to_video_sprite_compile.workflow.json",
+      "workflow_id": "mvp_image_to_video_sprite_compile",
+      "mode": "live",
+      "description": "LIVE guarded route: animation seed image -> image-to-video -> keyframe extraction -> keyframe selection -> batch cutout/alignment -> sprite sheet/atlas -> runtime readiness. Calls video provider only when allow_live_provider_call=true.",
+      "node_count": 9,
+      "edge_count": 8,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_animation_seed",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "generate_video",
+          "node_type": "media.generate_video_from_image_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "extract_keyframes",
+          "node_type": "media.extract_video_keyframes",
+          "runtime_public": false
+        },
+        {
+          "id": "select_keyframes",
+          "node_type": "media.select_keyframes",
+          "runtime_public": false
+        },
+        {
+          "id": "postprocess_frames",
+          "node_type": "media.postprocess_frame_sequence",
+          "runtime_public": false
+        },
+        {
+          "id": "pack_sheet",
+          "node_type": "media.pack_sprite_sheet_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "build_atlas",
+          "node_type": "media.build_atlas_json_stub",
+          "runtime_public": true
+        },
+        {
+          "id": "runtime_readiness",
+          "node_type": "media.check_runtime_readiness",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_asset_compile_guarded.workflow.json",
+      "workflow_id": "mvp_live_asset_compile_guarded",
+      "mode": "live",
+      "description": "LIVE guarded asset compile: load proposal -> validate -> LLM compile with validation guard -> validate candidate -> simulate -> pipeline summary. WARNING: this workflow calls a real LLM provider and must be explicitly executed by a human.",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "llm_compile",
+          "node_type": "asset.compile_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_asset_compile_kimi_guarded.workflow.json",
+      "workflow_id": "mvp_live_asset_compile_kimi_guarded",
+      "mode": "live",
+      "description": "LIVE guarded asset compile using Ark Coding Plan Kimi: load proposal -> validate -> LLM compile -> validate candidate -> simulate -> score -> pipeline summary. WARNING: this workflow calls a real LLM provider and must be explicitly executed by a human.",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "llm_compile",
+          "node_type": "asset.compile_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_asset_media_auto_guarded.workflow.json",
+      "workflow_id": "mvp_live_asset_media_auto_guarded",
+      "mode": "live",
+      "description": "LIVE guarded asset media generation with asset-type auto roles: load compiled candidate -> generate images -> media review -> media processing -> published manifest -> runtime readiness gate. WARNING: calls real image and vision providers.",
+      "node_count": 13,
+      "edge_count": 20,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "generate_images",
+          "node_type": "media.generate_asset_images_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "visual_identity",
+          "node_type": "media.build_visual_identity_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "quality",
+          "node_type": "media.check_quality",
+          "runtime_public": false
+        },
+        {
+          "id": "consistency",
+          "node_type": "media.check_consistency",
+          "runtime_public": false
+        },
+        {
+          "id": "vision_review",
+          "node_type": "media.review_with_vision_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "remove_bg",
+          "node_type": "media.remove_background_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "crop_pad",
+          "node_type": "media.crop_and_pad_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "normalize",
+          "node_type": "media.normalize_canvas_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "assign_anchor",
+          "node_type": "media.assign_anchor_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "pack_sheet",
+          "node_type": "media.pack_sprite_sheet_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "build_atlas",
+          "node_type": "media.build_atlas_json_stub",
+          "runtime_public": true
+        },
+        {
+          "id": "runtime_readiness",
+          "node_type": "media.check_runtime_readiness",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_asset_media_guarded.workflow.json",
+      "workflow_id": "mvp_live_asset_media_guarded",
+      "mode": "live",
+      "description": "LIVE guarded asset media generation: load compiled candidate -> generate images with image provider -> remove_background_stub -> crop_and_pad_stub -> normalize_canvas_stub -> assign_anchor_stub -> pack_sprite_sheet_stub -> build_atlas_json_stub (runtime_public) -> check_runtime_readiness. WARNING: this workflow calls a real image provider and must be explicitly executed by a human. The generated raw media flows through the processing chain; only the final published manifest is runtime_public.",
+      "node_count": 9,
+      "edge_count": 8,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "generate_images",
+          "node_type": "media.generate_asset_images_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "remove_bg",
+          "node_type": "media.remove_background_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "crop_pad",
+          "node_type": "media.crop_and_pad_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "normalize",
+          "node_type": "media.normalize_canvas_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "assign_anchor",
+          "node_type": "media.assign_anchor_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "pack_sheet",
+          "node_type": "media.pack_sprite_sheet_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "build_atlas",
+          "node_type": "media.build_atlas_json_stub",
+          "runtime_public": true
+        },
+        {
+          "id": "runtime_readiness",
+          "node_type": "media.check_runtime_readiness",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json",
+      "workflow_id": "mvp_live_asset_media_repair_guarded",
+      "mode": "live",
+      "description": "LIVE guarded media repair loop: generate media -> deterministic/vision review -> build repair plan -> regenerate failed roles -> merge -> re-review -> media processing -> published manifest -> runtime readiness gate. WARNING: calls real image and vision providers.",
+      "node_count": 19,
+      "edge_count": 41,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "generate_images",
+          "node_type": "media.generate_asset_images_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "visual_identity",
+          "node_type": "media.build_visual_identity_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "quality",
+          "node_type": "media.check_quality",
+          "runtime_public": false
+        },
+        {
+          "id": "consistency",
+          "node_type": "media.check_consistency",
+          "runtime_public": false
+        },
+        {
+          "id": "vision_review",
+          "node_type": "media.review_with_vision_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "repair_plan",
+          "node_type": "media.build_prompt_repair_plan",
+          "runtime_public": false
+        },
+        {
+          "id": "regenerate_failed_roles",
+          "node_type": "media.generate_asset_images_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "merge_repair",
+          "node_type": "media.merge_repaired_sequence",
+          "runtime_public": false
+        },
+        {
+          "id": "quality_after_repair",
+          "node_type": "media.check_quality",
+          "runtime_public": false
+        },
+        {
+          "id": "consistency_after_repair",
+          "node_type": "media.check_consistency",
+          "runtime_public": false
+        },
+        {
+          "id": "vision_review_after_repair",
+          "node_type": "media.review_with_vision_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "remove_bg",
+          "node_type": "media.remove_background_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "crop_pad",
+          "node_type": "media.crop_and_pad_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "normalize",
+          "node_type": "media.normalize_canvas_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "assign_anchor",
+          "node_type": "media.assign_anchor_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "pack_sheet",
+          "node_type": "media.pack_sprite_sheet_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "build_atlas",
+          "node_type": "media.build_atlas_json_stub",
+          "runtime_public": true
+        },
+        {
+          "id": "runtime_readiness",
+          "node_type": "media.check_runtime_readiness",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_intel_asset_compile_guarded.workflow.json",
+      "workflow_id": "mvp_live_intel_asset_compile_guarded",
+      "mode": "live",
+      "description": "LIVE guarded intel asset compile: load intel_asset proposal -> validate -> LLM compile -> validate candidate -> simulate -> pipeline summary.",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "llm_compile",
+          "node_type": "asset.compile_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_support_item_compile_guarded.workflow.json",
+      "workflow_id": "mvp_live_support_item_compile_guarded",
+      "mode": "live",
+      "description": "LIVE guarded support item compile: load support_item proposal -> validate -> LLM compile -> validate candidate -> simulate -> pipeline summary.",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "llm_compile",
+          "node_type": "asset.compile_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_temporary_mod_compile_guarded.workflow.json",
+      "workflow_id": "mvp_live_temporary_mod_compile_guarded",
+      "mode": "live",
+      "description": "LIVE guarded temporary mod compile: load temporary_mod proposal -> validate -> LLM compile -> validate candidate -> simulate -> pipeline summary.",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "llm_compile",
+          "node_type": "asset.compile_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_live_world_delta_guarded.workflow.json",
+      "workflow_id": "mvp_live_world_delta_guarded",
+      "mode": "live",
+      "description": "battle result -> LLM-guarded WorldStateDelta -> next RunWorldState: first live LLM closed loop. WARNING: this workflow calls a real LLM provider. Only execute when you explicitly intend to make live API calls.",
+      "node_count": 6,
+      "edge_count": 7,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_run_state",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_battle_result",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_session_context",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "build_delta",
+          "node_type": "world_state.build_delta_with_llm_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "semantic_gate",
+          "node_type": "world_state.validate_delta_semantics",
+          "runtime_public": false
+        },
+        {
+          "id": "apply_delta",
+          "node_type": "world_state.apply_delta",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_media_consistency_check.workflow.json",
+      "workflow_id": "mvp_media_consistency_check",
+      "mode": "deterministic",
+      "description": "Build visual identity, check media quality, then check consistency for a compiled support item media sequence.",
+      "node_count": 5,
+      "edge_count": 7,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_media",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "visual_identity",
+          "node_type": "media.build_visual_identity_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "quality",
+          "node_type": "media.check_quality",
+          "runtime_public": false
+        },
+        {
+          "id": "consistency",
+          "node_type": "media.check_consistency",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_media_processing_publish.workflow.json",
+      "workflow_id": "mvp_media_processing_publish",
+      "mode": "deterministic",
+      "description": "media processing publish: raw_media -> remove_background -> crop_and_pad -> normalize_canvas -> assign_anchor -> pack_sprite_sheet -> build_atlas_json (published_media, runtime_public)",
+      "node_count": 7,
+      "edge_count": 6,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_raw",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "remove_bg",
+          "node_type": "media.remove_background_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "crop_pad",
+          "node_type": "media.crop_and_pad_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "normalize",
+          "node_type": "media.normalize_canvas_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "assign_anchor",
+          "node_type": "media.assign_anchor_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "pack_sheet",
+          "node_type": "media.pack_sprite_sheet_stub",
+          "runtime_public": false
+        },
+        {
+          "id": "build_atlas",
+          "node_type": "media.build_atlas_json_stub",
+          "runtime_public": true
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_media_prompt_repair.workflow.json",
+      "workflow_id": "mvp_media_prompt_repair",
+      "mode": "deterministic",
+      "description": "Build visual identity, deterministic media reports, then convert a sample vision review failure into a prompt repair plan.",
+      "node_count": 7,
+      "edge_count": 12,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_candidate",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_media",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_vision_review",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "visual_identity",
+          "node_type": "media.build_visual_identity_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "quality",
+          "node_type": "media.check_quality",
+          "runtime_public": false
+        },
+        {
+          "id": "consistency",
+          "node_type": "media.check_consistency",
+          "runtime_public": false
+        },
+        {
+          "id": "repair_plan",
+          "node_type": "media.build_prompt_repair_plan",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_media_stub_publish.workflow.json",
+      "workflow_id": "mvp_media_stub_publish",
+      "mode": "deterministic",
+      "description": "raw/imported media stub metadata -> published media manifest stub, demonstrating raw_media -> published_media layering",
+      "node_count": 2,
+      "edge_count": 1,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_raw_media_metadata",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "publish_media",
+          "node_type": "media.publish_stub_manifest",
+          "runtime_public": true
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_mock_asset_compile.workflow.json",
+      "workflow_id": "mvp_mock_asset_compile",
+      "mode": "deterministic",
+      "description": "player proposal -> validate -> mock compile -> validate candidate -> simulate -> pipeline summary",
+      "node_count": 8,
+      "edge_count": 16,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_proposal",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        },
+        {
+          "id": "mock_compile",
+          "node_type": "asset.mock_compile_proposal",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_candidate",
+          "node_type": "asset.validate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "simulate",
+          "node_type": "asset.simulate_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "score",
+          "node_type": "asset.score_candidate",
+          "runtime_public": false
+        },
+        {
+          "id": "promotion",
+          "node_type": "asset.evaluate_promotion_policy",
+          "runtime_public": false
+        },
+        {
+          "id": "summary",
+          "node_type": "report.pipeline_summary",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_narrative_world_growth.workflow.json",
+      "workflow_id": "mvp_narrative_world_growth",
+      "mode": "deterministic",
+      "description": "narrative world growth: battle_result + session_context -> NPC feedback + world growth events (player-visible, world-in-language only)",
+      "node_count": 4,
+      "edge_count": 4,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_battle_result",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_session_context",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "npc_feedback",
+          "node_type": "narrative.mock_npc_feedback",
+          "runtime_public": true
+        },
+        {
+          "id": "world_growth",
+          "node_type": "narrative.mock_world_growth_event",
+          "runtime_public": true
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_player_intent_to_asset_plan.workflow.json",
+      "workflow_id": "mvp_player_intent_to_asset_plan",
+      "mode": "live",
+      "description": "LIVE guarded hidden compiler front-end: free player utterance -> PlayerIntent -> AssetDesignSpec -> deterministic legalization -> AssetPlan -> player-visible Proposal. This workflow calls a real LLM only in the guarded parsing/spec-building nodes.",
+      "node_count": 9,
+      "edge_count": 15,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_player_utterance",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_world_state",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "parse_intent",
+          "node_type": "intent.parse_player_utterance_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "build_design_spec",
+          "node_type": "asset.build_design_spec_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "legalize_design_spec",
+          "node_type": "asset.legalize_design_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "build_asset_plan",
+          "node_type": "asset.build_asset_plan",
+          "runtime_public": false
+        },
+        {
+          "id": "select_compile_template",
+          "node_type": "graph.select_compile_template_guarded",
+          "runtime_public": false
+        },
+        {
+          "id": "build_proposal",
+          "node_type": "proposal.build_from_legalized_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_player_intent_to_asset_plan_deterministic.workflow.json",
+      "workflow_id": "mvp_player_intent_to_asset_plan_deterministic",
+      "mode": "deterministic",
+      "description": "DETERMINISTIC hidden compiler front-end: load fixture AssetDesignSpec -> deterministic legalization -> AssetPlan -> player-visible Proposal. No LLM calls. Bypasses intent.parse_player_utterance_guarded, asset.build_design_spec_guarded, and graph.select_compile_template_guarded.",
+      "node_count": 5,
+      "edge_count": 6,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_design_spec",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "legalize_design_spec",
+          "node_type": "asset.legalize_design_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "build_asset_plan",
+          "node_type": "asset.build_asset_plan",
+          "runtime_public": false
+        },
+        {
+          "id": "build_proposal",
+          "node_type": "proposal.build_from_legalized_spec",
+          "runtime_public": false
+        },
+        {
+          "id": "validate_proposal",
+          "node_type": "proposal.validate",
+          "runtime_public": false
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_temporary_trap_delivery.workflow.json",
+      "workflow_id": "mvp_temporary_trap_delivery",
+      "mode": "deterministic",
+      "description": "locked manifest + first battle config -> research delivery payload stub",
+      "node_count": 4,
+      "edge_count": 4,
+      "live_provider_risk": false,
+      "nodes": [
+        {
+          "id": "load_locked_manifest",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_battle_config",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "build_runtime_package",
+          "node_type": "runtime.build_package_stub",
+          "runtime_public": true
+        },
+        {
+          "id": "build_delivery_payload",
+          "node_type": "research.build_delivery_payload_stub",
+          "runtime_public": true
+        }
+      ]
+    },
+    {
+      "workflow_file": "examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json",
+      "workflow_id": "mvp_world_delta_semantic_gate_demo",
+      "mode": "deterministic",
+      "description": "Deterministic demo: repaired WorldStateDelta -> semantic gate -> apply_delta. No provider calls.",
+      "node_count": 4,
+      "edge_count": 4,
+      "live_provider_risk": true,
+      "nodes": [
+        {
+          "id": "load_run_state",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "load_repaired_delta",
+          "node_type": "source.load_json",
+          "runtime_public": false
+        },
+        {
+          "id": "semantic_gate",
+          "node_type": "world_state.validate_delta_semantics",
+          "runtime_public": false
+        },
+        {
+          "id": "apply_delta",
+          "node_type": "world_state.apply_delta",
+          "runtime_public": false
+        }
+      ]
+    }
+  ],
+  "runtime_state_summary": {
+    "state_file": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+    "progress": {
+      "chapter": 1,
+      "turn": 1,
+      "phase": "post_wick_store_defense"
+    },
+    "global_state": {
+      "pressure": 0.3,
+      "hope": 0.67,
+      "visibility": 0.28
+    },
+    "map_node_count": 5,
+    "npc_count": 4,
+    "event_count": 5,
+    "task_count": 4,
+    "random_event_count": 2,
+    "temporary_sample_count": 3,
+    "blueprint_count": 1
+  },
+  "readiness_summary": {
+    "stage_count": 4,
+    "playable_asset_references": 7,
+    "fallback_ready_asset_references": 6,
+    "runtime_fixture_asset_references": 1,
+    "candidate_or_blocked_asset_references": 2,
+    "task_count": 4,
+    "random_event_count": 2,
+    "research_job_count": 3,
+    "blueprint_count": 1,
+    "mvp_support_level": "reviewable_vertical_slice"
+  },
+  "source_evidence": [
+    {
+      "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "d4043f1c7ee6756066547dcdff9e4642824e18f0859ff1370ac4d50322b455e9"
+    },
+    {
+      "path": "docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "bd9e14e5ac822552f46e483a166374e03a6127dd44a572fbeb86c29452fe1a65"
+    },
+    {
+      "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "c93fd6f9c2d998bf05c6c6af109f5a936a21af09d4b9af32b68c16b3fa0b7c7f"
+    },
+    {
+      "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "3db7a17e9cdf7c0cc38f61db558eab86917691f469056fa92061acba8622f607"
+    },
+    {
+      "path": "docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "a4f06c61595e60b6f070de09c631f5acf27d3b6b846ab59063236e48bdc4ad0f"
+    },
+    {
+      "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "ab36e901d175509eef19b149914b02cdeeed7789e0a52bea417d23b736c57a9d"
+    },
+    {
+      "path": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "30077c45b083636e7151814cc310bafc903cc36e1029a07a2be01e1e8af56d2b"
+    },
+    {
+      "path": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "df0ec3b4f477fd51210932efa4d412429ab85359b8d0d79eaa0863a0f526b740"
+    },
+    {
+      "path": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "dabfbcbcf1ea43d0300ab68d334c59aa58eb08767d79733c57c5c05c664bda11"
+    },
+    {
+      "path": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "03b07a16e55d2334f7fa9288135815c571e6347b47cafac12f2a8ad18cc540d5"
+    },
+    {
+      "path": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "2c85a2eb1ca5de65db6371f85c560d18c58b2cff62d9e87fffdc4162fec3eb0a"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "d53d5cbc8f43e1b44be36184091a931396664054725ee87d734739ce31f0b204"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "dc0284efbe86f5f15a72d39e3d5dffc06f15b70e70bc8bf8497a982ce9a9015a"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "cc2837e6ffd6dcf7834e67df5ffd01e8141d99b7efb7938a89cd7171102420f7"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "c4db7ef3ea92358d9f5b5986cb83a2f37ecd345e4ea197aaf610e33415a0a315"
+    },
+    {
+      "path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
+      "kind": "promotion_report",
+      "exists": true,
+      "sha256": "dca2e38d764c0dd581ff79f492ec2d4cfda7d51038404d5f37513478b5ad23b0"
+    },
+    {
+      "path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+      "kind": "review_pack",
+      "exists": true,
+      "sha256": "c9ff8cbb64b2cd432828b187f5e3e7ccac82dea79fa1087dd8ea10487992557a"
+    },
+    {
+      "path": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+      "kind": "run_world_state",
+      "exists": true,
+      "sha256": "82269781b39135555749e7199880190e26f88011aa9c01c0e7a77bca7970e2e1"
+    },
+    {
+      "path": "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "kind": "runtime_package",
+      "exists": true,
+      "sha256": "d60fe202037fec1afd035aff90bc3e5d6d09352269f62d1fef8b6a53d6167b60"
+    },
+    {
+      "path": "examples/workflows/mvp_battle_to_world_state.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "1501f9300f4e7f444131930fbc1835728b25b74e09e894a735b05629de3269f3"
+    },
+    {
+      "path": "examples/workflows/mvp_controlled_narrative_world_progression.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "cd93f3fe5f99d33dd4d77023b646a02717d98944edcf68959a210d51092cdff0"
+    },
+    {
+      "path": "examples/workflows/mvp_defense_asset_compile.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "33c56d9574e506902a378d6816e172d6f6b5bee06174a92894101496a1b19bcf"
+    },
+    {
+      "path": "examples/workflows/mvp_image_to_video_sprite_compile.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "dcfdf2de09e8371b9694169d67e4ed7339d9a85f4eb4152d214e3849fea34cd1"
+    },
+    {
+      "path": "examples/workflows/mvp_live_asset_compile_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "05079671cdf47e356913512c52c28bc0bde15215548a107b6c590997cccb1613"
+    },
+    {
+      "path": "examples/workflows/mvp_live_asset_compile_kimi_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "483d1c435c32815bc46cbcd89a88029c3686ddf1ad1ddf5fa2e98168121a3472"
+    },
+    {
+      "path": "examples/workflows/mvp_live_asset_media_auto_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "7e7c67cd5a9f62d91db4e53c74af18f79ad5b8d4998c9c0f803c195dc6943602"
+    },
+    {
+      "path": "examples/workflows/mvp_live_asset_media_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "6733f059717d9c760b482d0326573c60ed5b2b4b4f71c9638ee2623098e0e09a"
+    },
+    {
+      "path": "examples/workflows/mvp_live_asset_media_repair_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "f7ccb712acd3d56e2a6ce711153a05c115c0165ff3f89d9fa1c2c4a350cf5c84"
+    },
+    {
+      "path": "examples/workflows/mvp_live_intel_asset_compile_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "d03650dee95382db4c78a0dd3d6f82f83c55addac381f8b373f6d9b5a6885349"
+    },
+    {
+      "path": "examples/workflows/mvp_live_support_item_compile_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "a20d7c9d494a83be566561f6e468f42e70a994714153032588f74e183387b52d"
+    },
+    {
+      "path": "examples/workflows/mvp_live_temporary_mod_compile_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "9b868cef5d2b39aea0608d5561aca5907d4be1b3645aa362839d161cfacdafec"
+    },
+    {
+      "path": "examples/workflows/mvp_live_world_delta_guarded.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "ff68e999301dd307884f94f76e151485db9aa96c54d7f907dce3905496331ec4"
+    },
+    {
+      "path": "examples/workflows/mvp_media_consistency_check.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "33bc286fcd83ca20daccdf9be9e2149beb4ea61ecad9fa9d0c3f01fd259207b0"
+    },
+    {
+      "path": "examples/workflows/mvp_media_processing_publish.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "06028cbeb2bc5bfd7091dabca2ce807b052d66f6617a8b165d711ef0757003e4"
+    },
+    {
+      "path": "examples/workflows/mvp_media_prompt_repair.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "a1c0e4aac27881f2c948153cbdf26a2209ae595ce1450ad321ce08f003e9e683"
+    },
+    {
+      "path": "examples/workflows/mvp_media_stub_publish.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "52803c8e5fb90d6f0f0d4479fce8393dbe378a5fc7f54203c3fe078cd3fb151b"
+    },
+    {
+      "path": "examples/workflows/mvp_mock_asset_compile.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "e314855fa4b79acccf37f999006cb117b4682c83a1ba132684059f9cd2b21162"
+    },
+    {
+      "path": "examples/workflows/mvp_narrative_world_growth.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "8c6d49bbda2189d171ecdfef3fe389e293aef8fc26dfb5dd3558176b97a792f8"
+    },
+    {
+      "path": "examples/workflows/mvp_player_intent_to_asset_plan.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "1fa82b396e7ea873a91a5ca4a753994068869d4d22fb039e44b4b4ec75f0a351"
+    },
+    {
+      "path": "examples/workflows/mvp_player_intent_to_asset_plan_deterministic.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "5c6294ec317847cb39f74e771d77e07be8adc5cf7d96785b83063240f07324bb"
+    },
+    {
+      "path": "examples/workflows/mvp_temporary_trap_delivery.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "f8d208776b2d50019cff12cbbe50ec48b04f2d8f68618ce11a36cb307a3f7f0c"
+    },
+    {
+      "path": "examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json",
+      "kind": "workflow",
+      "exists": true,
+      "sha256": "fa1aa661f6195250cb68ee98e4b93697ffccc7003ea4bcb8f97387ce4e2c123c"
+    },
+    {
+      "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "82cbdd4dea51f417ece7d1f07ba22e6ee2ec49c1514bfb8735140243ecd03c16"
+    },
+    {
+      "path": "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "cc49535782d0c0181d71a79a08e5a20458df224434cd44570e1c8fac2c8b9587"
+    },
+    {
+      "path": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "11d9a5ce4854ba85f1db82f73006306846dacac785f9601ca970a6b3b4bb19c2"
+    },
+    {
+      "path": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "235ef448f3cd830423b38c6ab770d1fa80dbb2bab4d3649a12361b909a0e9b4f"
+    },
+    {
+      "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
+      "kind": "schema",
+      "exists": true,
+      "sha256": "0a4057f1cd1f639aa1b898b53d92c3286aacfb8b638a6865b01e13ed49380ba1"
+    },
+    {
+      "path": "tools/world_state/replay_mvp_delta_chain.py",
+      "kind": "validator",
+      "exists": true,
+      "sha256": "c007697b07041dfcd7edab90161c075e6a004d3d1cf825e743bb9d851029ecbe"
+    }
+  ],
+  "validation_commands": [
+    {
+      "purpose": "构建并校验总审查交付包",
+      "command": "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate"
+    },
+    {
+      "purpose": "校验故事资产审查包",
+      "command": "python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
+    },
+    {
+      "purpose": "重建资产晋升报告到 /tmp",
+      "command": "python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --output /tmp/mvp_story_asset_promotion_report.check.json"
+    },
+    {
+      "purpose": "校验全部编译资产候选",
+      "command": "find examples/compiled_assets -name '*.json' -exec python3 tools/content_pipeline/validate_asset_candidate.py {} \\;"
+    },
+    {
+      "purpose": "校验 runtime package",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json"
+    },
+    {
+      "purpose": "校验阶段 2 WorldStateDelta",
+      "command": "python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json"
+    },
+    {
+      "purpose": "校验阶段 3 WorldStateDelta",
+      "command": "python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_03_northern_road_scouting.world_delta.json"
+    },
+    {
+      "purpose": "校验阶段 4 WorldStateDelta",
+      "command": "python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json"
+    },
+    {
+      "purpose": "校验最终运行态",
+      "command": "python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+    },
+    {
+      "purpose": "校验语义门 DAG 示例",
+      "command": "python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json --output-dir /tmp/mvp_world_delta_semantic_gate_demo"
+    },
+    {
+      "purpose": "校验全部 workflow 图",
+      "command": "for f in examples/workflows/*.json; do python3 tools/asset_graph/validate_workflow.py \"$f\" || exit 1; done"
+    },
+    {
+      "purpose": "重放完整 WorldStateDelta 链并对比最终快照",
+      "command": "python3 tools/world_state/replay_mvp_delta_chain.py --compare-final examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+    }
+  ],
+  "known_risks": [
+    {
+      "risk_id": "legacy_initial_npcs",
+      "severity": "medium",
+      "summary": "初始 demo run state 仍保留早期兼容 NPC ID；语义门已阻止新 delta 继续引用它们。",
+      "next_action": "后续单独迁移 demo_initial 到 canonical / candidate NPC 体系。"
+    },
+    {
+      "risk_id": "fallback_media",
+      "severity": "medium",
+      "summary": "多数可玩资产目前依赖 fallback media 或已生成但未全部晋升到正式 runtime media manifest。",
+      "next_action": "继续迭代图像/视频帧/抠图/一致性审查管线，优先处理 MVP 默认资产。"
+    },
+    {
+      "risk_id": "candidate_or_blocked_assets",
+      "severity": "medium",
+      "summary": "审查包仍有 2 个候选或受阻资产引用，不能默认进入 MVP 战斗。",
+      "next_action": "保留为支线或高风险研发候选，默认教学关只用 fallback_ready / runtime fixture 资产。"
+    }
+  ]
+}
