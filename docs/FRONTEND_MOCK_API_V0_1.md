@@ -19,6 +19,7 @@
 - 接口不调用图片、视频或音频 provider。
 - 接口不读取 `.env`。
 - 前端看到的是统一后端 API，不需要直接读仓库 JSON 文件。
+- 战斗运行时 mock 美术包是开发者预编译结果，不是玩家侧现场编译结果。
 - 当前动效资源处于 `animation seed` 阶段：种子图已经生成，视频帧 / spritesheet / atlas 后续再补。
 
 ## 静态媒体
@@ -28,10 +29,14 @@
 ```text
 /assets/frontend_mock/processed
 /assets/frontend_mock/generated
+/assets/frontend_runtime_mock/processed
+/assets/frontend_runtime_mock/generated
 ```
 
 `processed` 是前端默认使用的透明 PNG。  
 `generated` 是后续图生视频 / 动画卡管线的种子图来源。
+
+`frontend_runtime_mock` 覆盖战斗画面需要的敌人、保护目标、基础防御件、NPC 头像、地图 token 和程序化特效；它服务前端 mock 运行，不污染玩家侧叙事。
 
 ## 通用返回壳
 
@@ -89,6 +94,10 @@ GET /api/sessions/{session_id}/frontend-mock-pack
 - `media_manifest`: processed 媒体清单
 - `animation_seed_manifest`: 图生视频种子图清单
 - `animation_pipeline_status`
+- `runtime_art_kit`: 开发者预编译战斗运行时美术包
+- `runtime_art_media_manifest`: processed 运行时美术媒体清单
+- `runtime_art_animation_seed_manifest`: 图生视频种子图清单
+- `runtime_art_pipeline_status`
 
 ### 获取开场
 
@@ -111,6 +120,27 @@ seed_images_ready_video_frames_not_generated
 ```
 
 含义是：可以用种子图做前端临时 tween / shader / visual recipe 动效，但还没有真正的视频帧序列。
+
+### 获取战斗运行时美术包
+
+```http
+GET /api/sessions/{session_id}/runtime-art-kit
+```
+
+返回：
+
+- `runtime_art_kit`
+- `runtime_art_media_manifest`
+- `runtime_art_animation_seed_manifest`
+- `runtime_art_pipeline_status`
+
+当前状态：
+
+```text
+developer_compiled_processed_images_ready_video_frames_not_generated
+```
+
+含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；视频帧和 atlas 后续再补。
 
 ### 获取大地图
 
@@ -157,6 +187,8 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 - sample delivery asset
 - media manifest
 - animation seed manifest
+- runtime art kit
+- runtime art media manifest
 
 前端可用该接口构建战斗页面。
 
@@ -166,7 +198,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 GET /api/sessions/{session_id}/battles/{node_id}/runtime-package
 ```
 
-返回当前节点对应 reviewed runtime package，同时附带当前可用的样品展示资产和媒体清单。
+返回当前节点对应 reviewed runtime package，同时附带当前可用的样品展示资产、媒体清单和战斗运行时美术包。
 
 ### 提交战斗结果
 

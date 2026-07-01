@@ -19,7 +19,10 @@ from .db import init_db
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_FRONTEND_MOCK_MEDIA_DIR = _REPO_ROOT / "game_data/media/frontend_mock"
+_STATIC_MEDIA_ROOTS = {
+    "frontend_mock": _REPO_ROOT / "game_data/media/frontend_mock",
+    "frontend_runtime_mock": _REPO_ROOT / "game_data/media/frontend_runtime_mock",
+}
 
 
 @asynccontextmanager
@@ -45,14 +48,15 @@ def create_app() -> FastAPI:
 
 def _mount_frontend_mock_media(app: FastAPI) -> None:
     """Serve reviewed/generated mock media through the URLs in media manifests."""
-    for role_dir in ("processed", "generated"):
-        directory = _FRONTEND_MOCK_MEDIA_DIR / role_dir
-        if directory.exists():
-            app.mount(
-                f"/assets/frontend_mock/{role_dir}",
-                StaticFiles(directory=str(directory)),
-                name=f"frontend_mock_{role_dir}",
-            )
+    for namespace, media_dir in _STATIC_MEDIA_ROOTS.items():
+        for role_dir in ("processed", "generated"):
+            directory = media_dir / role_dir
+            if directory.exists():
+                app.mount(
+                    f"/assets/{namespace}/{role_dir}",
+                    StaticFiles(directory=str(directory)),
+                    name=f"{namespace}_{role_dir}",
+                )
 
 
 app = create_app()

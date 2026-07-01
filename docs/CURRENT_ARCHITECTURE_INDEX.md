@@ -38,7 +38,9 @@ Last updated: 2026-07-01
    - MVP 演示主路径。
 5. `docs/FRONTEND_MOCK_API_V0_1.md`
    - 当前前端应接入的 mock API。
-6. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+6. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
+   - 前端战斗运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
+7. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
    - 当前审查交付入口。
 
 ## 3. 当前有效设计文档
@@ -53,6 +55,8 @@ Last updated: 2026-07-01
   - 后端暴露给前端的稳定 mock API。
 - `docs/FRONTEND_MOCK_PACK_V0_1.md`
   - 前端 mock 内容包说明。
+- `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
+  - 开发者预编译的战斗运行时 mock 美术包说明。
 
 ### AI 编译器与 AssetGraph
 
@@ -92,6 +96,7 @@ Last updated: 2026-07-01
 ```text
 processed PNG 已可用于前端 mock。
 animation seed 已可用于后续图生视频。
+frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 视频帧 / spritesheet / atlas 还未作为默认前端资产生成。
 ```
@@ -132,6 +137,7 @@ animation seed 已可用于后续图生视频。
 - Agnes 生成的 22 张当前资产图片。
 - processed 透明 PNG 媒体包。
 - animation seed manifest。
+- 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。

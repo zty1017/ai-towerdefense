@@ -25,20 +25,34 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     pack = payload["pack"]
     media_manifest = payload["media_manifest"]
     animation_seed_manifest = payload["animation_seed_manifest"]
+    runtime_art_kit = payload["runtime_art_kit"]
+    runtime_art_media_manifest = payload["runtime_art_media_manifest"]
 
     assert pack["schema_version"] == "frontend_mock_pack.v0.1"
     assert len(pack["assets"]) == 11
     assert media_manifest["summary"]["generated_count"] == 22
     assert media_manifest["summary"]["processed_count"] == 22
     assert animation_seed_manifest["summary"]["media_count"] == 22
+    assert runtime_art_kit["mode"] == "developer_compiled_runtime_art"
+    assert len(runtime_art_kit["coverage"]["enemy_archetypes"]) == 3
+    assert len(runtime_art_kit["procedural_effects"]) == 5
+    assert runtime_art_media_manifest["summary"]["media_count"] == 18
     assert payload["animation_pipeline_status"] == (
         "seed_images_ready_video_frames_not_generated"
+    )
+    assert payload["runtime_art_pipeline_status"] == (
+        "developer_compiled_processed_images_ready_video_frames_not_generated"
     )
 
     first_icon = pack["assets"][0]["media_refs"]["generated_roles"]["icon"]["url"]
     media_resp = client.get(first_icon)
     assert media_resp.status_code == 200
     assert media_resp.headers["content-type"] == "image/png"
+
+    runtime_icon = runtime_art_media_manifest["items"][0]["url"]
+    runtime_media_resp = client.get(runtime_icon)
+    assert runtime_media_resp.status_code == 200
+    assert runtime_media_resp.headers["content-type"] == "image/png"
 
 
 def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.Connection):
@@ -68,6 +82,12 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     animation = _payload(client.get(f"/api/sessions/{sid}/animation-seeds"))
     assert animation["animation_seed_manifest"]["summary"]["media_count"] == 22
 
+    runtime_art = _payload(client.get(f"/api/sessions/{sid}/runtime-art-kit"))
+    assert runtime_art["runtime_art_kit"]["schema_version"] == (
+        "frontend_battle_mock_art_kit.v0.1"
+    )
+    assert runtime_art["runtime_art_media_manifest"]["summary"]["asset_count"] == 9
+
     map_payload = _payload(client.get(f"/api/sessions/{sid}/map"))
     assert map_payload["map"]["display_name"] == "余灯中枢态势图"
     assert map_payload["run_world_state"]["progress"]["phase"] == "first_defense"
@@ -90,12 +110,14 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert battle["animation_pipeline_status"] == (
         "seed_images_ready_video_frames_not_generated"
     )
+    assert battle["runtime_art_kit"]["coverage"]["battle_nodes"] == ["gray_lantern_station"]
 
     runtime = _payload(
         client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/runtime-package")
     )
     assert runtime["runtime_package"]["schema_version"] == "runtime_package.v0.1"
     assert runtime["sample_delivery_asset"]["media_refs"]["mode"] == "generated"
+    assert runtime["runtime_art_media_manifest"]["summary"]["media_count"] == 18
 
     settlement = _payload(
         client.post(

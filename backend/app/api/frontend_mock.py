@@ -99,6 +99,16 @@ def get_animation_seeds(session_id: str) -> FrontendMockPayloadResponse:
 
 
 @router.get(
+    "/api/sessions/{session_id}/runtime-art-kit",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_runtime_art_kit(session_id: str) -> FrontendMockPayloadResponse:
+    """Return developer-compiled runtime art for the frontend battle mock."""
+    _require_session(session_id)
+    return _payload(session_id, frontend_mock_service.get_runtime_art_kit(session_id))
+
+
+@router.get(
     "/api/sessions/{session_id}/map",
     response_model=FrontendMockPayloadResponse,
 )

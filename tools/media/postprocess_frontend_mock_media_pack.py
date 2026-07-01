@@ -25,6 +25,16 @@ DEFAULT_SEED_MANIFEST = ROOT / "game_data/media/frontend_mock/frontend_animation
 DEFAULT_OUTPUT_DIR = ROOT / "game_data/media/frontend_mock/processed"
 PUBLIC_PREFIX = "/assets/frontend_mock/processed"
 SEED_PUBLIC_PREFIX = "/assets/frontend_mock/generated"
+BOTTOM_CENTER_ROLES = {
+    "tower_sprite",
+    "unit_sprite",
+    "enemy_sprite",
+    "monster_sprite",
+    "objective_sprite",
+    "defense_sprite",
+    "npc_sprite",
+}
+CENTER_ROLES = {"icon", "ui_card", "portrait"}
 
 
 def load_json(path: Path) -> Any:
@@ -48,7 +58,7 @@ def sha256_file(path: Path) -> str:
 
 
 def role_anchor(role: str) -> dict[str, float | str]:
-    if role == "tower_sprite":
+    if role in BOTTOM_CENTER_ROLES:
         return {"preset": "bottom_center", "x": 0.5, "y": 1.0}
     return {"preset": "center", "x": 0.5, "y": 0.5}
 
@@ -65,7 +75,7 @@ def process_png(
 ) -> tuple[int, int]:
     image = png_pipeline.read_png(source_path)
     processed = png_pipeline.remove_edge_matte_background(image, threshold=matte_threshold)
-    if role == "tower_sprite":
+    if role in BOTTOM_CENTER_ROLES:
         processed = png_pipeline.remove_near_white_background_islands(
             processed,
             alpha_threshold=alpha_threshold,
@@ -83,8 +93,8 @@ def process_png(
         processed,
         square=True,
         min_size=min_size,
-        align="bottom_center" if role == "tower_sprite" else "center",
-        bottom_padding=padding if role == "tower_sprite" else 0,
+        align="bottom_center" if role in BOTTOM_CENTER_ROLES else "center",
+        bottom_padding=padding if role in BOTTOM_CENTER_ROLES else 0,
     )
     processed = png_pipeline.clear_transparent_rgb(processed, alpha_threshold=alpha_threshold)
     png_pipeline.write_png(output_path, processed)
@@ -124,9 +134,10 @@ def seed_manifest_from_raw(
             seed_item["url"] = f"{public_prefix.rstrip('/')}/{Path(local_path).name}"
         seed_item["seed_kind"] = "image_to_video_or_animation_card"
         items.append(seed_item)
+    source_media_pack_id = str(manifest.get("media_pack_id", "frontend_media_pack_v0_1"))
     return {
         "schema_version": "frontend_animation_seed_manifest.v0.1",
-        "media_pack_id": "frontend_mock_animation_seed_pack_v0_1",
+        "media_pack_id": f"{source_media_pack_id}_animation_seed",
         "created_from": created_from.relative_to(ROOT).as_posix()
         if created_from.is_relative_to(ROOT)
         else str(created_from),
@@ -145,6 +156,11 @@ def seed_manifest_from_raw(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    parser.add_argument(
+        "--output-manifest",
+        default=None,
+        help="Write processed manifest to this path. Defaults to replacing --manifest.",
+    )
     parser.add_argument("--raw-copy-manifest", default=str(DEFAULT_RAW_COPY_MANIFEST))
     parser.add_argument("--seed-manifest", default=str(DEFAULT_SEED_MANIFEST))
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
@@ -159,6 +175,9 @@ def main() -> int:
     manifest_path = Path(args.manifest)
     if not manifest_path.is_absolute():
         manifest_path = ROOT / manifest_path
+    output_manifest_path = Path(args.output_manifest) if args.output_manifest else manifest_path
+    if not output_manifest_path.is_absolute():
+        output_manifest_path = ROOT / output_manifest_path
     output_dir = Path(args.output_dir)
     if not output_dir.is_absolute():
         output_dir = ROOT / output_dir
@@ -253,9 +272,9 @@ def main() -> int:
     summary["media_count"] = len(processed_items)
     summary["processed_count"] = len(processed_items)
     manifest["summary"] = summary
-    write_json(manifest_path, manifest)
+    write_json(output_manifest_path, manifest)
 
-    print(f"Wrote {manifest_path}")
+    print(f"Wrote {output_manifest_path}")
     print(f"- processed media: {len(processed_items)}")
     print(f"- output dir: {output_dir}")
     print(f"- raw copy manifest: {raw_copy_manifest_path}")

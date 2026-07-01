@@ -32,6 +32,7 @@ docs/
   ASSET_GRAPH_COMPILER_V0_1.md
   MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md
   VIDEO_FRAME_ASSET_PIPELINE_V0_1.md
+  FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md
 
 backend/
   app/
@@ -62,6 +63,7 @@ examples/
 game_data/
   demo/
   media/frontend_mock/
+  media/frontend_runtime_mock/
 
 tools/
   asset_graph/
@@ -118,6 +120,7 @@ uvicorn app.main:app --app-dir backend --reload
 | GET | `/api/sessions/{session_id}/frontend-mock-pack` | Read player-safe frontend mock pack |
 | GET | `/api/sessions/{session_id}/opening` | Read prebuilt opening |
 | GET | `/api/sessions/{session_id}/animation-seeds` | Read image-to-video seed manifest |
+| GET | `/api/sessions/{session_id}/runtime-art-kit` | Read developer-compiled battle runtime art |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/config` | Read battle config and toolbar assets |
@@ -131,9 +134,11 @@ uvicorn app.main:app --app-dir backend --reload
 ```text
 /assets/frontend_mock/processed
 /assets/frontend_mock/generated
+/assets/frontend_runtime_mock/processed
+/assets/frontend_runtime_mock/generated
 ```
 
-当前 `processed` PNG 可用于前端 mock；`generated` PNG 是后续图生视频 / 动画帧管线的 seed。
+当前 `processed` PNG 可用于前端 mock；`generated` PNG 是后续图生视频 / 动画帧管线的 seed。`frontend_runtime_mock` 是开发者预编译的战斗运行时美术包，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
 
 ## Tests
 
@@ -150,4 +155,5 @@ python3 -m compileall backend
 python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate
 python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json
 python3 tools/media/validate_frontend_mock_media_pack.py game_data/media/frontend_mock/frontend_media_manifest.v0.1.json
+python3 tools/media/validate_frontend_runtime_art_pack.py
 ```
