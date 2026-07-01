@@ -96,6 +96,19 @@ def fill_circle(image: png_pipeline.PngImage, cx: float, cy: float, radius: floa
                 blend_pixel(image, x, y, color)
 
 
+def fill_ellipse(image: png_pipeline.PngImage, cx: float, cy: float, rx: float, ry: float, color: Color) -> None:
+    min_x = int(cx - rx - 1)
+    max_x = int(cx + rx + 1)
+    min_y = int(cy - ry - 1)
+    max_y = int(cy + ry + 1)
+    rx2 = max(1, rx * rx)
+    ry2 = max(1, ry * ry)
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            if ((x - cx) ** 2) / rx2 + ((y - cy) ** 2) / ry2 <= 1:
+                blend_pixel(image, x, y, color)
+
+
 def stroke_circle(image: png_pipeline.PngImage, cx: float, cy: float, radius: float, width: int, color: Color) -> None:
     outer = radius + width / 2
     inner = max(0, radius - width / 2)
@@ -238,52 +251,81 @@ def suggested_slots() -> list[tuple[int, int]]:
 
 
 def build_battle_reference(battle: dict[str, Any], path: Path) -> None:
-    image = new_image(1280, 720, rgba("171b16"))
+    image = new_image(1280, 720, rgba("182016"))
     grid = battle.get("grid", {})
     metrics = battle_metrics(image.width, image.height, grid)
     tile_w = metrics["tile_w"]
     tile_h = metrics["tile_h"]
     ox = metrics["offset_x"]
     oy = metrics["offset_y"]
-    gw = int(grid.get("width_cells", 16))
-    gh = int(grid.get("height_cells", 9))
-    for y in range(gh):
-        for x in range(gw):
-            cx, cy = project(x, y, tile_w, tile_h, ox, oy)
-            base = "343c2f" if (x + y) % 2 else "2a332b"
-            fill_polygon(image, diamond(cx, cy, tile_w * 0.98, tile_h * 0.98), rgba(base, 230))
-            if (x * 11 + y * 7) % 9 == 0:
-                fill_circle(image, cx + 12, cy - 3, 3, rgba("9d9877", 160))
+
+    # Player-facing reference art: full terrain scene, not a visible logic grid.
+    fill_polygon(
+        image,
+        [(0, 470), (180, 390), (360, 430), (590, 338), (790, 386), (1280, 250), (1280, 720), (0, 720)],
+        rgba("2f3e2a", 210),
+    )
+    fill_polygon(
+        image,
+        [(0, 0), (1280, 0), (1280, 220), (1020, 250), (760, 190), (420, 235), (210, 168), (0, 220)],
+        rgba("263323", 190),
+    )
+    fill_ellipse(image, 145, 610, 380, 120, rgba("455c31", 90))
+    fill_ellipse(image, 1010, 135, 330, 92, rgba("20271f", 160))
+    fill_ellipse(image, 1090, 560, 300, 150, rgba("161224", 145))
+
+    for i in range(170):
+        x = (i * 97 + 43) % image.width
+        y = (i * 53 + 71) % image.height
+        if 110 < y < 650:
+            color = "556847" if i % 3 else "6b6947"
+            fill_circle(image, x, y, 1 + (i % 3), rgba(color, 70))
+
     waypoints = ((battle.get("paths") or [{}])[0]).get("waypoints", [])
-    path_cells = iter_path_cells(waypoints)
-    for x, y in path_cells:
-        cx, cy = project(x, y, tile_w, tile_h, ox, oy)
-        fill_polygon(image, diamond(cx, cy, tile_w * 1.14, tile_h * 1.14), rgba("6b5f45", 255))
-        fill_polygon(image, diamond(cx, cy, tile_w * 0.72, tile_h * 0.72), rgba("8b7851", 120))
     path_points = [project(p["x"], p["y"], tile_w, tile_h, ox, oy) for p in waypoints]
     for a, b in zip(path_points, path_points[1:]):
-        draw_line(image, a, b, 10, rgba("f2cc78", 80))
+        draw_line(image, a, b, int(tile_w * 0.82), rgba("4c4030", 170))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, int(tile_w * 0.62), rgba("8d7351", 245))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, int(tile_w * 0.38), rgba("b9955d", 130))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, 7, rgba("f2cc78", 82))
+
+    for index, (cx, cy) in enumerate(path_points):
+        fill_circle(image, cx, cy, 28 + (index % 2) * 8, rgba("b9955d", 90))
+
     for cell in suggested_slots():
         cx, cy = project(cell[0], cell[1], tile_w, tile_h, ox, oy)
-        stroke_circle(image, cx, cy, 23, 4, rgba("e5c878", 220))
-        stroke_circle(image, cx, cy, 12, 2, rgba("64d2c8", 160))
-    for x, y in [(13, 1), (11, 7), (7, 7), (4, 0), (2, 3), (14, 6)]:
+        fill_ellipse(image, cx, cy + 2, 34, 15, rgba("161d18", 150))
+        stroke_circle(image, cx, cy, 20, 3, rgba("e5c878", 150))
+        stroke_circle(image, cx, cy, 10, 2, rgba("64d2c8", 110))
+
+    for x, y in [(13, 1), (11, 7), (7, 7), (4, 0), (2, 3), (14, 6), (8, 0), (1, 4), (12, 5)]:
         cx, cy = project(x, y, tile_w, tile_h, ox, oy)
         draw_prop(image, cx, cy, (x + y) % 3)
+
     core = battle.get("core_target", {}).get("position", {"x": 1, "y": 6})
     cx, cy = project(core["x"], core["y"], tile_w, tile_h, ox, oy)
-    fill_circle(image, cx, cy - 20, 26, rgba("ffd37a", 120))
-    fill_rect(image, int(cx - 24), int(cy - 46), 48, 44, rgba("b78136", 255))
-    fill_rect(image, int(cx - 12), int(cy - 58), 24, 20, rgba("ffd37a", 255))
+    fill_ellipse(image, cx, cy + 4, 64, 24, rgba("080908", 100))
+    fill_circle(image, cx, cy - 28, 38, rgba("ffd37a", 100))
+    fill_rect(image, int(cx - 28), int(cy - 52), 56, 50, rgba("b78136", 255))
+    fill_rect(image, int(cx - 14), int(cy - 68), 28, 22, rgba("ffd37a", 255))
+
     for target in battle.get("optional_targets", []):
         pos = target.get("position", {})
         tx, ty = project(pos.get("x", 0), pos.get("y", 0), tile_w, tile_h, ox, oy)
+        fill_ellipse(image, tx, ty + 4, 42, 16, rgba("080908", 90))
         fill_rect(image, int(tx - 9), int(ty - 72), 18, 60, rgba("9b743a", 255))
         fill_circle(image, tx, ty - 72, 16, rgba("ffd37a", 180))
+
     first = waypoints[0] if waypoints else {"x": 15, "y": 4}
     sx, sy = project(first["x"], first["y"], tile_w, tile_h, ox, oy)
-    fill_circle(image, sx + 58, sy, 90, rgba("1b1026", 170))
-    fill_circle(image, sx + 58, sy, 42, rgba("5d4aff", 90))
+    fill_circle(image, sx + 72, sy, 112, rgba("1b1026", 150))
+    fill_circle(image, sx + 72, sy, 54, rgba("5d4aff", 85))
+
+    fill_polygon(image, [(0, 0), (1280, 0), (1280, 36), (0, 96)], rgba("050705", 80))
+    fill_polygon(image, [(0, 720), (0, 646), (1280, 690), (1280, 720)], rgba("050705", 95))
     png_pipeline.write_png(path, image)
 
 

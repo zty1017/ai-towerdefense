@@ -1803,7 +1803,6 @@
     if (!ctx || !m) return;
     ctx.clearRect(0, 0, m.width, m.height);
     drawBackdrop(ctx, m);
-    drawGrid(ctx);
     drawPath(ctx);
     drawDeployHints(ctx);
     drawWorldObjects(ctx);
@@ -1824,7 +1823,7 @@
       const w = board.naturalWidth * scale;
       const h = board.naturalHeight * scale;
       ctx.save();
-      ctx.globalAlpha = 0.62;
+      ctx.globalAlpha = 0.96;
       ctx.drawImage(board, (m.width - w) / 2, (m.height - h) / 2, w, h);
       ctx.restore();
     }
@@ -1834,7 +1833,7 @@
     shade.addColorStop(1, "rgba(0,0,0,0.44)");
     ctx.fillStyle = shade;
     ctx.fillRect(0, 0, m.width, m.height);
-    ctx.fillStyle = "rgba(143,124,255,.08)";
+    ctx.fillStyle = "rgba(143,124,255,.05)";
     ctx.beginPath();
     ctx.ellipse(m.width * 0.82, m.height * 0.78, 260, 150, -0.2, 0, Math.PI * 2);
     ctx.fill();
@@ -1859,21 +1858,28 @@
   }
 
   function drawPath(ctx) {
-    const m = state.battle.metrics;
-    for (const cell of pathCells()) {
-      const p = projectCell(cell.x, cell.y);
-      drawDiamond(ctx, p.x, p.y, m.tileW * 1.02, m.tileH * 1.02, "rgba(95,88,70,.52)", "rgba(188,165,106,.34)");
-    }
     const points = pathWaypoints().map((p) => projectCell(p.x, p.y));
-    ctx.strokeStyle = "rgba(255,225,161,.26)";
-    ctx.lineWidth = 4;
+    if (points.length < 2) return;
+    ctx.save();
+    ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(30,25,18,.32)";
+    ctx.lineWidth = Math.max(36, state.battle.metrics.tileW * 0.46);
     ctx.beginPath();
     points.forEach((p, index) => {
       if (index === 0) ctx.moveTo(p.x, p.y);
       else ctx.lineTo(p.x, p.y);
     });
     ctx.stroke();
+    ctx.strokeStyle = "rgba(255,225,161,.2)";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    points.forEach((p, index) => {
+      if (index === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawDeployHints(ctx) {
@@ -1881,26 +1887,32 @@
     const m = battle.metrics;
     for (const cell of suggestedSockets()) {
       const p = projectCell(cell.x, cell.y);
-      ctx.strokeStyle = battle.selectedTool === "basic" ? "rgba(229,200,120,.68)" : "rgba(100,210,200,.28)";
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.24)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 2, m.tileW * 0.23, m.tileH * 0.28, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = battle.selectedTool === "basic" ? "rgba(229,200,120,.5)" : "rgba(100,210,200,.22)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, m.tileW * 0.26, m.tileH * 0.42, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, p.y, m.tileW * 0.22, m.tileH * 0.28, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
     }
     const previewCell = battle.hoverCell;
     if (previewCell) {
       const p = projectCell(previewCell.x, previewCell.y);
       const tool = battle.draggingTool || battle.selectedTool;
       const valid = canPreviewToolAt(tool, previewCell);
-      drawDiamond(
-        ctx,
-        p.x,
-        p.y,
-        m.tileW * 1.1,
-        m.tileH * 1.1,
-        valid ? "rgba(100,210,200,.22)" : "rgba(255,95,83,.2)",
-        valid ? "rgba(100,210,200,.82)" : "rgba(255,95,83,.78)",
-      );
+      ctx.save();
+      ctx.fillStyle = valid ? "rgba(100,210,200,.18)" : "rgba(255,95,83,.16)";
+      ctx.strokeStyle = valid ? "rgba(100,210,200,.78)" : "rgba(255,95,83,.72)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, m.tileW * 0.34, m.tileH * 0.46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
       ctx.save();
       ctx.globalAlpha = valid ? 0.92 : 0.42;
       if (tool === "basic") {
