@@ -25,8 +25,9 @@
       "params": {
         "allow_live_provider_call": true,
         "provider_profile": "ark_deepseek_v4_flash",
-        "max_tokens": 4096,
-        "request_timeout": 90
+        "max_tokens": 8192,
+        "request_timeout": 90,
+        "review_pack_path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json"
       }
     },
     {

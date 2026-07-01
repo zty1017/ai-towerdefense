@@ -2766,7 +2766,7 @@
       "path": "docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "90768adf86b6262dcc8ac2fbc9d0aae8fc0bac9a7179f6bb84f0f5216387b32f"
+      "sha256": "650b826f6ff95cf2126b599e3817008b2aa401339a3727e10a445d3e64986c12"
     },
     {
       "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
@@ -2934,7 +2934,7 @@
       "path": "examples/workflows/mvp_live_world_delta_guarded.workflow.json",
       "kind": "workflow",
       "exists": true,
-      "sha256": "ff68e999301dd307884f94f76e151485db9aa96c54d7f907dce3905496331ec4"
+      "sha256": "02eca789d8c8129a2da8d3a533447993cc4477f770d937859d3e6aeed9885951"
     },
     {
       "path": "examples/workflows/mvp_media_consistency_check.workflow.json",

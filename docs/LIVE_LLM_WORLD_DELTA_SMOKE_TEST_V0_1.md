@@ -63,6 +63,8 @@ python3 tools/world_state/apply_world_delta.py examples/run_world_states/demo_in
 
 已新增 `WorldStateDeltaSemanticGate v0.1` 原型，详见 `docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md`。该 gate 位于 `validate_world_delta.py` 之后、`apply_world_delta.py` 之前，用于把本次真实 LLM 烟测暴露出的结构外问题沉淀为本地校验规则。当前它既有 CLI，也已作为 `world_state.validate_delta_semantics` 节点接入 `mvp_live_world_delta_guarded.workflow.json`。
 
+后续已把 live WorldStateDelta 提示词升级到完整 17 种 op，并注入 review pack 边界，要求真实 LLM 不仅写世界事件，还要把阶段推进落到任务、随机事件、研发任务、样品、蓝图、资源、NPC 或地图节点等玩法对象/状态上。`tools/llm/generate_world_delta.py` 默认也会执行语义门，只有显式 `--skip-semantic-gate` 才跳过。
+
 核心校验包括：
 
 - 校验 `npc_id`、`resource_id`、`node_id`、`sample_id` 是否来自当前 run world state、世界书 registry 或显式候选白名单。

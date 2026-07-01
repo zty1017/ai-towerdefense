@@ -52,6 +52,22 @@ python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_
 - 被 delta 引入的玩法对象最终出现在 `demo_after_stage_04_wick_store.run_world_state.json`。
 - 四阶段链路不是纯剧情文本，而是持续产生地图、资源、NPC、任务、随机事件、研究任务、样品和蓝图。
 
+真实 LLM 生成入口也应遵守同一契约：
+
+```bash
+python3 tools/llm/generate_world_delta.py \
+  --run-world-state examples/run_world_states/demo_initial.run_world_state.json \
+  --battle-result examples/asset_graph/battle_result.sample.json \
+  --session-context examples/asset_graph/session_context.sample.json \
+  --review-pack examples/review_packs/mvp_story_asset_review_pack.v0.1.json \
+  --output /tmp/live_world_delta.json \
+  --apply-output /tmp/live_next_run_world_state.json \
+  --provider-profile ark_deepseek_v4_flash \
+  --live
+```
+
+该 CLI 没有 `--live` 时不会加载 `.env` 或调用 provider；live 模式下会先做结构校验，再默认执行 `validate_world_delta_semantics.py`。
+
 默认情况下，抽象 `target_ref` 只作为 warning 输出，不阻断 MVP 审查。需要更严格时可使用：
 
 ```bash

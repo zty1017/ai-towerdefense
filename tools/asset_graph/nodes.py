@@ -2368,8 +2368,14 @@ def node_world_state_build_delta_with_llm_guarded(
         )
 
     provider_profile = str(params.get("provider_profile", "ark_deepseek_v4_flash"))
-    max_tokens = int(params.get("max_tokens", 4096))
+    max_tokens = int(params.get("max_tokens", 8192))
     request_timeout = int(params.get("request_timeout", 90))
+    review_pack_path_raw = str(
+        params.get(
+            "review_pack_path",
+            "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+        )
+    )
 
     if provider_profile not in llm_adapter.PROFILES:
         raise NodeError(
@@ -2380,8 +2386,20 @@ def node_world_state_build_delta_with_llm_guarded(
     profile = llm_adapter.PROFILES[provider_profile]
     llm_adapter.load_dotenv(ROOT / ".env")
 
+    review_pack_path = Path(review_pack_path_raw)
+    if not review_pack_path.is_absolute():
+        review_pack_path = ROOT / review_pack_path
+    review_pack: dict[str, Any] | None = None
+    if review_pack_path.is_file():
+        try:
+            loaded_review_pack = json.loads(review_pack_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise NodeError(f"review_pack_path is not valid JSON: {exc}") from exc
+        if isinstance(loaded_review_pack, dict):
+            review_pack = loaded_review_pack
+
     user_prompt = world_delta_prompt.build_user_prompt(
-        run_world_state, battle_result, session_context
+        run_world_state, battle_result, session_context, review_pack
     )
 
     messages = [

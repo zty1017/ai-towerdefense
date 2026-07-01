@@ -703,21 +703,24 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
   - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
   - `chat_completion()` 使用 stdlib `urllib`，无额外依赖。
 - `tools/llm/generate_world_delta.py` — CLI 工具。
-  - 输入：`--run-world-state`、`--battle-result`、`--session-context`、`--output`。
-  - 参数：`--provider-profile`、`--max-tokens`、`--request-timeout`、`--live`。
-  - 没有 `--live` 时拒绝联网并返回非 0 退出码。
+  - 输入：`--run-world-state`、`--battle-result`、`--session-context`、`--output`、`--review-pack`。
+  - 参数：`--provider-profile`、`--max-tokens`、`--request-timeout`、`--live`、`--apply-output`、`--skip-semantic-gate`。
+  - 没有 `--live` 时拒绝联网并返回非 0 退出码；dry-run guard 之前不会加载 `.env`。
   - live 模式下调用 provider，提取 JSON，执行 `validate_with_jsonschema` + `validate_world_delta`。
+  - 默认继续执行 `validate_world_delta_semantics.py`，用 review pack 的 canonical / candidate / legacy 边界拦截坏引用。
+  - 如提供 `--apply-output`，语义门通过后会应用 delta 并写出下一份 `RunWorldState`。
   - 校验不通过则退出非 0，并将失败 artifact 写入 `/tmp/failed_delta_*.json`。
-- `tools/llm/world_delta_prompt.py` — WorldStateDelta 共享提示词与输入压缩器，CLI 和 AssetGraph live 节点共用同一套顶层字段、operation 模板和禁止形态约束。
+- `tools/llm/world_delta_prompt.py` — WorldStateDelta 共享提示词与输入压缩器，CLI 和 AssetGraph live 节点共用同一套顶层字段、17 种 operation 模板、review boundary 和禁止形态约束。提示词明确要求剧情推进必须落到任务、随机事件、研发任务、样品、蓝图、资源、NPC 或地图节点等玩法对象/状态上，不能只返回氛围文本。
 
 ### 12.2 新增 AssetGraph 节点
 
 - `tools/asset_graph/nodes.py` 新增 `node_world_state_build_delta_with_llm_guarded`。
   - node_type：`world_state.build_delta_with_llm_guarded`。
   - inputs：`run_world_state`、`battle_result`、`session_context`。
-  - params：`allow_live_provider_call`（必须为 true）、`provider_profile`（默认 `ark_deepseek_v4_flash`）、`max_tokens`（默认 4096）、`request_timeout`（默认 90）。
+  - params：`allow_live_provider_call`（必须为 true）、`provider_profile`（默认 `ark_deepseek_v4_flash`）、`max_tokens`（默认 8192）、`request_timeout`（默认 90）、`review_pack_path`。
   - `allow_live_provider_call` 不为 true 时抛出 NodeError，要求显式开启。
   - 调用 provider 后执行 JSON 提取 + 双重校验（jsonschema + 规则校验）。
+  - `review_pack_path` 只用于给模型提供 canonical / candidate / legacy 引用边界，输出 artifact 不含这些技术路径。
   - 输出 artifact kind 为 `world_state_delta`，不含 provider/model/raw_prompt 字段。
 - `shared/asset_graph/node_registry.v0.1.json` 注册该节点，`calls_provider: true`，`modes: ["live"]`。
 
@@ -727,7 +730,8 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
   - mode 为 `live`。
   - 加载 demo state / battle result / session context。
   - 调用 `world_state.build_delta_with_llm_guarded`（`allow_live_provider_call: true`）。
-  - 调用 `world_state.apply_delta` 应用 delta。
+  - 调用 `world_state.validate_delta_semantics` 通过引用和状态语义门。
+  - 调用 `world_state.apply_delta` 应用通过语义门的 delta。
   - 文档强调该 workflow 会真实联网，由人工显式执行。
 
 ### 12.4 安全与隐私
