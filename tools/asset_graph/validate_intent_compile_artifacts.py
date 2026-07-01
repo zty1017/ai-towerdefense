@@ -15,10 +15,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-import sys
 from pathlib import Path
-from typing import Any
+
+from validation_common import load_json, scan_forbidden_terms, validate_json_schema
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMAS_DIR = ROOT / "shared/schemas"
@@ -35,56 +34,6 @@ SCHEMA_VERSION_MAP: dict[str, str] = {
     "repair_action_plan.v0.1": "repair_action_plan.v0.1.schema.json",
 }
 
-FORBIDDEN_FIELDS = frozenset({
-    "provider",
-    "model",
-    "raw_prompt",
-    "full_trace",
-    "raw_json",
-    "api_key",
-    "secret",
-    "unreviewed_content",
-})
-
-_jsonschema = None  # lazy import
-
-
-def _get_jsonschema():
-    global _jsonschema
-    if _jsonschema is None:
-        try:
-            import jsonschema as _jsonschema
-        except ImportError:
-            _jsonschema = False
-    return _jsonschema
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def scan_forbidden_fields(value: Any, path: str, errors: list[str]) -> None:
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = f"{path}.{key}" if path else key
-            if key in FORBIDDEN_FIELDS:
-                errors.append(
-                    f"forbidden field '{child_path}' found in artifact"
-                )
-            scan_forbidden_fields(child, child_path, errors)
-    elif isinstance(value, list):
-        for idx, child in enumerate(value):
-            scan_forbidden_fields(child, f"{path}[{idx}]", errors)
-    elif isinstance(value, str):
-        lowered = value.lower()
-        for term in FORBIDDEN_FIELDS:
-            if term in lowered:
-                errors.append(
-                    f"forbidden term {term!r} found in string value at '{path}'"
-                )
-
-
 def basic_field_check(data: dict, path: str, errors: list[str]) -> None:
     if not isinstance(data, dict):
         errors.append(f"{path}: root must be a JSON object")
@@ -98,37 +47,12 @@ def basic_field_check(data: dict, path: str, errors: list[str]) -> None:
                 f"{path}: unknown schema_version={sv!r} "
                 f"(known: {sorted(SCHEMA_VERSION_MAP)})"
             )
-    scan_forbidden_fields(data, path, errors)
+    scan_forbidden_terms(data, path, errors, context="artifact")
 
 
 def validate_with_schema(data: dict, schema_path: Path, file_path: Path) -> list[str]:
-    errors: list[str] = []
-    js = _get_jsonschema()
-    if js is False:
-        basic_field_check(data, str(file_path), errors)
-        errors.insert(
-            0,
-            f"jsonschema library not available; "
-            f"falling back to basic field check for {file_path.name}",
-        )
-        return errors
-
-    try:
-        schema = load_json(schema_path)
-    except Exception as exc:
-        errors.append(f"cannot load schema {schema_path}: {exc}")
-        basic_field_check(data, str(file_path), errors)
-        return errors
-
-    try:
-        js.validate(data, schema)
-    except js.ValidationError as exc:
-        errors.append(f"schema validation failed: {exc.message}")
-        for cause in exc.context:
-            errors.append(f"  - {cause.message}")
-    except Exception as exc:
-        errors.append(f"unexpected validation error: {exc}")
-
+    errors = validate_json_schema(data, schema_path)
+    scan_forbidden_terms(data, str(file_path), errors, context="artifact")
     return errors
 
 

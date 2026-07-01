@@ -15,11 +15,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
+from validation_common import load_json, scan_forbidden_terms, validate_json_schema
+
 ROOT = Path(__file__).resolve().parents[2]
+SCHEMA_PATH = ROOT / "shared/schemas/repair_action_plan.v0.1.schema.json"
 
 ALLOWED_ACTIONS = frozenset({
     "inspect_spec",
@@ -37,17 +39,6 @@ ALLOWED_ACTIONS = frozenset({
 })
 
 REQUIRED_BUDGET_FIELDS = frozenset({"max_iterations", "max_provider_calls", "max_seconds"})
-
-FORBIDDEN_FIELDS = frozenset({
-    "provider",
-    "model",
-    "raw_prompt",
-    "full_trace",
-    "raw_json",
-    "api_key",
-    "secret",
-    "unreviewed_content",
-})
 
 ALLOWED_TOP_KEYS = frozenset({
     "schema_version",
@@ -75,35 +66,8 @@ ALLOWED_ACTION_KEYS = frozenset({
 })
 
 
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def scan_forbidden_fields(value: Any, path: str, errors: list[str]) -> None:
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = f"{path}.{key}" if path else key
-            if key in FORBIDDEN_FIELDS:
-                errors.append(
-                    f"forbidden field '{child_path}' must not appear in "
-                    f"repair_action_plan"
-                )
-            scan_forbidden_fields(child, child_path, errors)
-    elif isinstance(value, list):
-        for i, child in enumerate(value):
-            scan_forbidden_fields(child, f"{path}[{i}]", errors)
-    elif isinstance(value, str):
-        lowered = value.lower()
-        for term in FORBIDDEN_FIELDS:
-            if term in lowered:
-                errors.append(
-                    f"forbidden term {term!r} found in string value at '{path}'"
-                )
-
-
 def validate_plan(data: dict[str, Any]) -> list[str]:
-    errors: list[str] = []
+    errors = validate_json_schema(data, SCHEMA_PATH)
 
     # --- schema_version ---
     sv = data.get("schema_version")
@@ -221,7 +185,7 @@ def validate_plan(data: dict[str, Any]) -> list[str]:
                 )
 
     # --- Forbidden fields scan ---
-    scan_forbidden_fields(data, "", errors)
+    scan_forbidden_terms(data, "", errors, context="repair_action_plan")
 
     return errors
 
