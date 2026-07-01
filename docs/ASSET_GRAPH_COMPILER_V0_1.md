@@ -713,6 +713,32 @@ media_repair_react_node
 - `candidate_selection_react_node`：多 provider / 多候选统一比较，选择默认候选。
 - `tool_development_agent_node`：开发者模式下尝试生成新节点或新 workflow，但必须走测试、审查和注册流程。
 
+### 12.2.1 受控剧情 / 世界线推进 v0.1
+
+剧情编译不直接等同于写文本。v0.1 新增 `NarrativeEventBundle` 作为剧情与世界推进的中间产物：
+
+```text
+RunWorldState + BattleResult + SessionContext
+  -> narrative.build_controlled_world_player_bundle
+  -> NarrativeEventBundle
+  -> world_state.build_delta_from_narrative_stub
+  -> WorldStateDelta
+  -> world_state.apply_delta
+```
+
+关键约束：
+
+- 世界线、玩家线和交汇线索共用同一个 bundle，不做两套割裂剧情系统。
+- 每个剧情节点必须声明 `gameplay_purpose` 和 `gameplay_hooks`，否则不能提交。
+- AI 可以并行生成候选 NPC、事件、研发机会，但正式落地必须经过 `WorldStateDelta` 串行提交。
+- `NarrativeEventBundle` 只能提出 delta 意图，不能修改基础世界书。
+
+详细说明见：
+
+```text
+docs/CONTROLLED_NARRATIVE_WORLD_COMPILER_V0_1.md
+```
+
 ### 12.3 与纯 DAG 的关系
 
 外层仍然是：

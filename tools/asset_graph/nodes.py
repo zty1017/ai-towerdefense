@@ -49,6 +49,12 @@ import validate_run_world_state as v_rws  # noqa: E402
 import validate_world_delta as v_wd  # noqa: E402
 import apply_world_delta as a_wd  # noqa: E402
 
+NARRATIVE_DIR = ROOT / "tools" / "narrative"
+if str(NARRATIVE_DIR) not in sys.path:
+    sys.path.insert(0, str(NARRATIVE_DIR))
+
+import validate_narrative_bundle as v_nb  # noqa: E402
+
 LLM_DIR = ROOT / "tools" / "llm"
 if str(LLM_DIR) not in sys.path:
     sys.path.insert(0, str(LLM_DIR))
@@ -813,6 +819,270 @@ def node_narrative_mock_world_growth_event(
     return {"output_refs": {"default": ref}}
 
 
+def _derive_bundle_id(run_id: str, node_id: str, battle_result: dict[str, Any]) -> str:
+    raw = (
+        f"{run_id}/{node_id}/{battle_result.get('node_id', 'unknown')}/"
+        f"{battle_result.get('winner', 'unknown')}/{battle_result.get('waves_survived', 0)}"
+    )
+    return f"bundle_{hashlib.sha256(raw.encode()).hexdigest()[:12]}"
+
+
+def _validate_controlled_narrative_bundle(bundle: dict[str, Any], node_id: str) -> None:
+    errors = v_nb.validate_narrative_bundle(bundle)
+    if errors:
+        raise NodeError(
+            f"controlled narrative bundle produced by {node_id!r} is invalid: "
+            + "; ".join(errors[:8])
+        )
+
+
+def node_narrative_build_controlled_world_player_bundle(
+    inputs: dict[str, Any],
+    params: dict[str, Any],
+    run_dir: Path,
+    node_id: str,
+) -> dict[str, Any]:
+    """Build a staged NarrativeEventBundle from battle/world context.
+
+    This is a deterministic v0.1 builder used to prove the controlled shape:
+    world_line + player_line share the same bundle and every node carries
+    gameplay_purpose, gameplay_hooks, and proposed WorldStateDelta intent.
+    It does not call a real LLM.
+    """
+    run_world_state = _load_artifact(inputs, "run_world_state")
+    battle_result = _load_artifact(inputs, "battle_result")
+    session_context = _load_artifact(inputs, "session_context")
+    ctx = _narrative_context(battle_result, session_context)
+    phrases = _narrative_outcome_phrases(battle_result)
+
+    run_id = run_world_state.get("run_id", "run_unknown")
+    worldbook_id = run_world_state.get("worldbook_id", ctx["worldbook_id"])
+    current_turn = run_world_state.get("progress", {}).get("turn", 1)
+    current_phase = run_world_state.get("progress", {}).get("phase", "first_defense")
+    created_turn = current_turn + 1
+    node_id_battle = battle_result.get("node_id", ctx["node_id"])
+    sample_perf = battle_result.get("sample_performance", {})
+    sample_name = sample_perf.get("display_name", "折光绊索")
+    sample_ref = sample_perf.get("stable_internal_id", "sample_trap_7f3a")
+
+    bundle_id = _derive_bundle_id(run_id, node_id, battle_result)
+    proposed_delta_ref = f"delta_from_{bundle_id}"
+
+    if battle_result.get("winner", "player") == "player":
+        world_block = "夜雾退到路口之外，灰灯驿站的灯栏在风里重新排成一线。"
+        route_block = "北侧旧路露出断续的光点，像是有人在更远处回应。"
+    else:
+        world_block = "灰灯驿站的灯栏被夜雾压低，只剩核心旁还有一圈余光。"
+        route_block = "北侧旧路的光点变得混乱，像是在催促下一次救援。"
+
+    sample_text = (
+        f"{sample_name}能拖住影潮，但线圈烧得太快。"
+        "下一件试作品需要更稳的引光材料。"
+        if battle_result.get("sample_triggered", False)
+        else "这一战主要依靠旧灯栏撑住。下一件试作品需要补上迟滞手段。"
+    )
+
+    bundle: dict[str, Any] = {
+        "schema_version": "narrative_event_bundle.v0.1",
+        "bundle_id": bundle_id,
+        "run_id": run_id,
+        "worldbook_id": worldbook_id,
+        "source": "battle_result",
+        "created_turn": created_turn,
+        "stage": "act_1_gray_lantern_after_first_defense",
+        "lane": "shared",
+        "commit_policy": {
+            "candidate_generation": "parallel_allowed",
+            "commit_gate": "world_state_delta_required",
+            "commit_order": "serial_by_created_turn",
+        },
+        "worldbook_base_mutation_allowed": False,
+        "nodes": [
+            {
+                "node_id": "world_line_gray_lantern_recovered",
+                "stage": "act_1_gray_lantern_after_first_defense",
+                "phase": "post_first_defense",
+                "lane": "world_line",
+                "scope": "map",
+                "trigger": {
+                    "kind": "battle_result",
+                    "ref": node_id_battle,
+                    "summary": "灰灯驿站首战结束，灯栏仍在燃烧。",
+                },
+                "prerequisites": [f"phase_{current_phase}"],
+                "visibility": "player_visible",
+                "presentation": {
+                    "scene_type": "map_event",
+                    "title": "驿站灯栏回稳",
+                    "blocks": [{"text": world_block}, {"text": route_block}],
+                },
+                "gameplay_purpose": [
+                    "modify_map_node_state",
+                    "advance_main_pressure",
+                    "open_resource_route",
+                ],
+                "gameplay_hooks": [
+                    {
+                        "hook": "modify_map_node_state",
+                        "target_ref": node_id_battle,
+                        "summary": "把灰灯驿站推进到可整备状态。",
+                    },
+                    {
+                        "hook": "open_resource_route",
+                        "target_ref": "northern_road_crossing",
+                        "summary": "让玩家下一步可侦察北侧路口。",
+                    },
+                ],
+                "npc_refs": ["engineer_001", "scout_002"],
+                "npc_introductions": [],
+                "proposed_world_delta_ref": proposed_delta_ref,
+                "proposed_delta_summary": {
+                    "expected_operations": [
+                        "set_map_node_state",
+                        "adjust_global_state",
+                        "append_event",
+                    ],
+                    "summary": "提交地图节点状态、希望与压力变化，并记录世界线事件。",
+                },
+            },
+            {
+                "node_id": "player_line_battle_feedback_workshop_need",
+                "stage": "act_1_gray_lantern_after_first_defense",
+                "phase": "post_first_defense",
+                "lane": "player_line",
+                "scope": "workshop",
+                "trigger": {
+                    "kind": "battle_result",
+                    "ref": sample_ref,
+                    "summary": f"{sample_name}在首战中留下可分析的战场痕迹。",
+                },
+                "prerequisites": [f"battle_{node_id_battle}_resolved"],
+                "visibility": "player_visible",
+                "presentation": {
+                    "scene_type": "dialogue",
+                    "title": "战后评审",
+                    "blocks": [
+                        {
+                            "speaker_id": "engineer_001",
+                            "speaker_name": "灯匠",
+                            "text": sample_text,
+                        },
+                        {
+                            "text": "战场边缘留下几片焦黑的折射碎片，仍能折出细小的白光。",
+                        },
+                    ],
+                },
+                "gameplay_purpose": [
+                    "explain_battle_result",
+                    "create_research_need",
+                    "offer_workshop_hook",
+                    "introduce_material",
+                ],
+                "gameplay_hooks": [
+                    {
+                        "hook": "explain_battle_result",
+                        "target_ref": sample_ref,
+                        "summary": "解释试作品有效但需要改进。",
+                    },
+                    {
+                        "hook": "offer_workshop_hook",
+                        "target_ref": "field_research",
+                        "summary": "引导玩家回到现场研发，尝试改进下一件样品。",
+                    },
+                    {
+                        "hook": "introduce_material",
+                        "target_ref": "sample_refraction_chard",
+                        "summary": "把战场遗留物转成可被研发流程引用的临时样品。",
+                    },
+                ],
+                "npc_refs": ["engineer_001"],
+                "npc_introductions": [],
+                "proposed_world_delta_ref": proposed_delta_ref,
+                "proposed_delta_summary": {
+                    "expected_operations": [
+                        "add_temporary_sample",
+                        "unlock_fact",
+                        "update_npc_relationship",
+                        "append_event",
+                    ],
+                    "summary": "提交临时样品、研发线索、NPC 信任变化与玩家线事件。",
+                },
+            },
+            {
+                "node_id": "shared_line_functional_npc_candidate",
+                "stage": "act_1_gray_lantern_after_first_defense",
+                "phase": "post_first_defense",
+                "lane": "shared",
+                "scope": "npc",
+                "trigger": {
+                    "kind": "world_tick",
+                    "ref": "northern_road_crossing",
+                    "summary": "北侧路口的光点在首战后变得稳定。",
+                },
+                "prerequisites": [f"{node_id_battle}_secured_or_contested"],
+                "visibility": "hinted",
+                "presentation": {
+                    "scene_type": "map_event",
+                    "title": "北路回光",
+                    "blocks": [
+                        {
+                            "text": "侦察员在北侧路口看到一盏小灯，对方熟悉废旧线缆和临时支架。",
+                        }
+                    ],
+                },
+                "gameplay_purpose": [
+                    "introduce_functional_npc",
+                    "create_quest_hook",
+                    "offer_workshop_hook",
+                ],
+                "gameplay_hooks": [
+                    {
+                        "hook": "introduce_functional_npc",
+                        "target_ref": "npc_wire_mender_003",
+                        "summary": "引入可影响现场研发的功能 NPC 候选。",
+                    },
+                    {
+                        "hook": "create_quest_hook",
+                        "target_ref": "quest_follow_northern_light",
+                        "summary": "为后续路口侦察或救援任务留下入口。",
+                    },
+                ],
+                "npc_refs": ["scout_002"],
+                "npc_introductions": [
+                    {
+                        "npc_id": "npc_wire_mender_003",
+                        "npc_kind": "functional",
+                        "display_name": "补线人",
+                        "narrative_roles": ["road_contact", "survivor"],
+                        "gameplay_roles": ["research_review", "material_discount"],
+                        "introduction_status": "candidate_only",
+                    }
+                ],
+                "proposed_world_delta_ref": proposed_delta_ref,
+                "proposed_delta_summary": {
+                    "expected_operations": ["unlock_fact", "append_event", "set_flag"],
+                    "summary": "只提交候选 NPC 的线索和任务入口，不直接把新 NPC 写入当前状态。",
+                },
+            },
+        ],
+    }
+
+    _apply_narrative_test_inject(bundle, params)
+    _enforce_narrative_safe(bundle, node_id)
+    _validate_controlled_narrative_bundle(bundle, node_id)
+
+    out_path = run_dir / f"{node_id}__narrative_event_bundle.json"
+    _write_json(out_path, bundle)
+    ref = _make_ref(
+        artifact_id=f"{node_id}__narrative_event_bundle",
+        kind="narrative_event_bundle",
+        path=out_path,
+        run_dir=run_dir,
+        produced_by_node=node_id,
+    )
+    return {"output_refs": {"default": ref}}
+
+
 # ---------------------------------------------------------------------------
 # Media processing nodes
 # ---------------------------------------------------------------------------
@@ -1568,6 +1838,13 @@ def node_world_state_build_delta_from_narrative_stub(
     session_context = _load_artifact(inputs, "session_context")
     npc_feedback = _load_artifact(inputs, "npc_feedback") if inputs.get("npc_feedback") else None
     world_growth = _load_artifact(inputs, "world_growth") if inputs.get("world_growth") else None
+    narrative_bundle = (
+        _load_artifact(inputs, "narrative_bundle")
+        if inputs.get("narrative_bundle")
+        else None
+    )
+    if isinstance(narrative_bundle, dict):
+        _validate_controlled_narrative_bundle(narrative_bundle, node_id)
 
     run_id = run_world_state.get("run_id", "run_unknown")
     worldbook_id = run_world_state.get("worldbook_id", "unknown")
@@ -1589,6 +1866,8 @@ def node_world_state_build_delta_from_narrative_stub(
             summary = f"影潮被击退，但有 {enemies_leaked} 股漏过灯栏，驿站核心承受了压力。"
     else:
         summary = "影潮压过驿站，灯匠带着残余灯火撤离，长夜更浓了。"
+    if isinstance(narrative_bundle, dict):
+        summary = "战后记录已整理，世界局势与玩家行动后果将按顺序落地。"
 
     node_status = "secured" if winner == "player" else "contested"
     threat_level = 0 if winner == "player" else 2
@@ -1666,6 +1945,61 @@ def node_world_state_build_delta_from_narrative_stub(
         "resource_id": "iron_scrap",
         "amount_delta": 2,
     })
+
+    if isinstance(narrative_bundle, dict):
+        for bundle_node in narrative_bundle.get("nodes", []):
+            if not isinstance(bundle_node, dict):
+                continue
+            bundle_node_id = bundle_node.get("node_id", "narrative_node")
+            title = bundle_node.get("presentation", {}).get("title", "战后事件")
+            lane = bundle_node.get("lane", "shared")
+            lane_label = {
+                "world_line": "世界局势",
+                "player_line": "玩家行动",
+                "shared": "交汇线索",
+            }.get(lane, "交汇线索")
+            scope = bundle_node.get("scope", "world")
+            event_kind = "story"
+            if scope == "npc":
+                event_kind = "npc"
+            elif scope == "workshop":
+                event_kind = "research"
+            elif scope in {"world", "map"}:
+                event_kind = "world"
+            operations.append(
+                {
+                    "op": "append_event",
+                        "event": {
+                            "event_id": f"{bundle_node_id}_accepted",
+                            "turn": created_turn,
+                            "kind": event_kind,
+                            "summary": f"{title}已进入{lane_label}推进序列。",
+                        },
+                    }
+                )
+            for npc in bundle_node.get("npc_introductions", []):
+                if not isinstance(npc, dict):
+                    continue
+                npc_id = npc.get("npc_id", "npc_candidate")
+                display_name = npc.get("display_name", "新来者")
+                operations.append(
+                    {
+                        "op": "unlock_fact",
+                        "fact": {
+                            "fact_id": f"{npc_id}_hinted",
+                            "source": "narrative_event",
+                            "visibility": "hinted",
+                            "summary": f"{display_name}的线索已出现，后续可通过任务确认其去向。",
+                        },
+                    }
+                )
+                operations.append(
+                    {
+                        "op": "set_flag",
+                        "flag": f"{npc_id}_candidate_seen",
+                        "value": True,
+                    }
+                )
 
     delta: dict[str, Any] = {
         "schema_version": "world_state_delta.v0.1",
@@ -2679,6 +3013,7 @@ NODE_IMPLEMENTATIONS: dict[str, Any] = {
     "media.publish_stub_manifest": node_media_publish_stub_manifest,
     "narrative.mock_npc_feedback": node_narrative_mock_npc_feedback,
     "narrative.mock_world_growth_event": node_narrative_mock_world_growth_event,
+    "narrative.build_controlled_world_player_bundle": node_narrative_build_controlled_world_player_bundle,
     "media.generate_asset_images_guarded": node_media_generate_asset_images_guarded,
     "media.build_visual_identity_spec": node_media_build_visual_identity_spec,
     "media.check_quality": node_media_check_quality,

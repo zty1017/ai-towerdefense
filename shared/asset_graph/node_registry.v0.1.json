@@ -368,6 +368,23 @@
       ]
     },
     {
+      "node_type": "narrative.build_controlled_world_player_bundle",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic builder for NarrativeEventBundle v0.1. Reads RunWorldState + battle_result + session_context and emits staged world_line/player_line/shared narrative nodes with gameplay purpose/hooks and proposed WorldStateDelta intent. Does not call a real LLM.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative_event_bundle.v0.1 JSON." }
+      ]
+    },
+    {
       "node_type": "media.generate_asset_images_guarded",
       "category": "provider",
       "modes": ["live"],
@@ -666,7 +683,8 @@
         { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON." },
         { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON." },
         { "name": "npc_feedback", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative npc_feedback artifact." },
-        { "name": "world_growth", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative world_growth artifact." }
+        { "name": "world_growth", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative world_growth artifact." },
+        { "name": "narrative_bundle", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a NarrativeEventBundle v0.1. When present, the delta builder validates it and appends controlled narrative commit events/facts." }
       ],
       "outputs": [
         { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a world_state_delta.v0.1 JSON." }
