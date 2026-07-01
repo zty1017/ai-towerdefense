@@ -18,7 +18,11 @@
         "status": "known",
         "threat_level": 1,
         "visibility": "scouted",
-        "available_actions": ["scout", "field_research", "prepare_route"]
+        "available_actions": [
+          "scout",
+          "field_research",
+          "prepare_route"
+        ]
       }
     },
     {
@@ -28,7 +32,10 @@
         "status": "known",
         "threat_level": 2,
         "visibility": "scouted",
-        "available_actions": ["scout", "mark_threat"]
+        "available_actions": [
+          "scout",
+          "mark_threat"
+        ]
       }
     },
     {
@@ -36,9 +43,18 @@
       "npc": {
         "npc_id": "npc_road_scout",
         "location_node_id": "northern_road_crossing",
-        "narrative_roles": ["dark_edge_witness", "route_warning"],
-        "gameplay_roles": ["path_prediction", "weakness_hint", "scouting_reliability"],
-        "relationship": { "trust": 0.2 },
+        "narrative_roles": [
+          "dark_edge_witness",
+          "route_warning"
+        ],
+        "gameplay_roles": [
+          "path_prediction",
+          "weakness_hint",
+          "scouting_reliability"
+        ],
+        "relationship": {
+          "trust": 0.2
+        },
         "availability": "present"
       }
     },
@@ -51,6 +67,70 @@
       "op": "adjust_resource",
       "resource_id": "conductor_filament",
       "amount_delta": -1
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_scout_northern_road",
+        "kind": "scouting",
+        "status": "active",
+        "title": "确认北路黑暗边缘",
+        "summary": "北路斥候愿意带回一段短程测记，用来判断下一场敌潮是否会绕向旧信号塔。",
+        "node_id": "northern_road_crossing",
+        "npc_id": "npc_road_scout",
+        "objective_refs": [
+          "northern_road_crossing",
+          "old_signal_tower"
+        ],
+        "reward_refs": [
+          "intel_dark_echo_survey_001"
+        ]
+      }
+    },
+    {
+      "op": "set_task_status",
+      "task_id": "task_scout_northern_road",
+      "status": "completed"
+    },
+    {
+      "op": "set_random_event_status",
+      "random_event_id": "random_event_wick_store_pressure_hint",
+      "status": "available"
+    },
+    {
+      "op": "schedule_random_event",
+      "random_event": {
+        "random_event_id": "random_event_old_signal_tower_pressure",
+        "event_type": "map_pressure",
+        "status": "pending",
+        "summary": "旧信号塔附近的回光扰动增强，若继续侦察，可能打开新的压力节点或捷径。",
+        "node_id": "old_signal_tower",
+        "trigger_turn": 5,
+        "related_task_id": "task_scout_northern_road"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_signal_wick_decoy_trial",
+        "status": "completed",
+        "started_turn": 3,
+        "source_task_id": "task_repair_supply_line_hub",
+        "source_sample_id": "sample_trap_7f3a_repaired",
+        "expected_turns": 1,
+        "expected_output": "信标灯芯诱饵试作"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_dark_echo_survey",
+        "status": "completed",
+        "started_turn": 4,
+        "source_task_id": "task_scout_northern_road",
+        "expected_turns": 1,
+        "expected_output": "东暗回声测记"
+      }
     },
     {
       "op": "unlock_fact",

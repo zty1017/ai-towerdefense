@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ai-compiled-towerdefense.local/schemas/world_state_delta.v0.1.schema.json",
   "title": "WorldStateDelta v0.1",
-  "description": "Controlled delta applied to a RunWorldState. Operations are restricted to a whitelist of 11 op types. Any operation that would mutate the BaseWorldbook (mutate_base_worldbook, set_worldbook, replace_worldbook, raw_json_patch, arbitrary_patch, eval, script, provider_call) is rejected by the validator.",
+  "description": "Controlled delta applied to a RunWorldState. Operations are restricted to a whitelist of 17 op types. Any operation that would mutate the BaseWorldbook (mutate_base_worldbook, set_worldbook, replace_worldbook, raw_json_patch, arbitrary_patch, eval, script, provider_call) is rejected by the validator.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -390,6 +390,145 @@
                     "type": "string",
                     "minLength": 1
                   }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "task"],
+            "properties": {
+              "op": { "type": "string", "const": "upsert_task" },
+              "task": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["task_id", "kind", "status", "title", "summary"],
+                "properties": {
+                  "task_id": { "type": "string", "minLength": 1 },
+                  "kind": {
+                    "type": "string",
+                    "enum": ["main", "side", "research", "scouting", "defense", "resource"]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["available", "active", "completed", "failed", "expired"]
+                  },
+                  "title": { "type": "string", "minLength": 1 },
+                  "summary": { "type": "string", "minLength": 1 },
+                  "node_id": { "type": ["string", "null"] },
+                  "npc_id": { "type": ["string", "null"] },
+                  "objective_refs": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "reward_refs": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "task_id", "status"],
+            "properties": {
+              "op": { "type": "string", "const": "set_task_status" },
+              "task_id": { "type": "string", "minLength": 1 },
+              "status": {
+                "type": "string",
+                "enum": ["available", "active", "completed", "failed", "expired"]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "random_event"],
+            "properties": {
+              "op": { "type": "string", "const": "schedule_random_event" },
+              "random_event": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["random_event_id", "event_type", "status", "summary"],
+                "properties": {
+                  "random_event_id": { "type": "string", "minLength": 1 },
+                  "event_type": {
+                    "type": "string",
+                    "enum": [
+                      "map_pressure",
+                      "resource_shift",
+                      "npc_visit",
+                      "research_opportunity",
+                      "threat_warning"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "available", "resolved", "expired"]
+                  },
+                  "summary": { "type": "string", "minLength": 1 },
+                  "node_id": { "type": ["string", "null"] },
+                  "trigger_turn": { "type": "integer", "minimum": 1 },
+                  "related_task_id": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "random_event_id", "status"],
+            "properties": {
+              "op": { "type": "string", "const": "set_random_event_status" },
+              "random_event_id": { "type": "string", "minLength": 1 },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "available", "resolved", "expired"]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "job"],
+            "properties": {
+              "op": { "type": "string", "const": "upsert_research_job" },
+              "job": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["job_id", "status"],
+                "properties": {
+                  "job_id": { "type": "string", "minLength": 1 },
+                  "status": {
+                    "type": "string",
+                    "enum": ["queued", "running", "completed", "failed"]
+                  },
+                  "started_turn": { "type": "integer", "minimum": 1 },
+                  "source_task_id": { "type": "string", "minLength": 1 },
+                  "source_sample_id": { "type": "string", "minLength": 1 },
+                  "expected_turns": { "type": "integer", "minimum": 1 },
+                  "expected_output": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "blueprint"],
+            "properties": {
+              "op": { "type": "string", "const": "unlock_blueprint" },
+              "blueprint": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["blueprint_id"],
+                "properties": {
+                  "blueprint_id": { "type": "string", "minLength": 1 },
+                  "unlocked_turn": { "type": "integer", "minimum": 1 },
+                  "source": { "type": "string", "minLength": 1 }
                 }
               }
             }

@@ -49,6 +49,10 @@ class ReferenceRegistry:
     canonical_npc_ids: frozenset[str]
     candidate_npc_ids: frozenset[str]
     legacy_npc_ids: frozenset[str]
+    run_task_ids: frozenset[str]
+    run_random_event_ids: frozenset[str]
+    run_sample_ids: frozenset[str]
+    run_blueprint_ids: frozenset[str]
 
     @property
     def allowed_resource_ids(self) -> frozenset[str]:
@@ -190,6 +194,34 @@ def build_reference_registry(run_state: dict[str, Any], review_pack_path: Path) 
         canonical_npc_ids=frozenset(_extract_worldbook_npcs(worldbook_id) | review_canonical),
         candidate_npc_ids=frozenset(review_candidates),
         legacy_npc_ids=frozenset(legacy_npcs),
+        run_task_ids=frozenset(
+            _string_set(
+                task.get("task_id")
+                for task in run_state.get("tasks", []) or []
+                if isinstance(task, dict)
+            )
+        ),
+        run_random_event_ids=frozenset(
+            _string_set(
+                event.get("random_event_id")
+                for event in run_state.get("random_events", []) or []
+                if isinstance(event, dict)
+            )
+        ),
+        run_sample_ids=frozenset(
+            _string_set(
+                sample.get("sample_id")
+                for sample in (run_state.get("research", {}) or {}).get("temporary_samples", []) or []
+                if isinstance(sample, dict)
+            )
+        ),
+        run_blueprint_ids=frozenset(
+            _string_set(
+                blueprint.get("blueprint_id")
+                for blueprint in (run_state.get("research", {}) or {}).get("known_blueprints", []) or []
+                if isinstance(blueprint, dict)
+            )
+        ),
     )
 
 
@@ -237,6 +269,16 @@ def _scan_semantic_visible_text(delta: dict[str, Any], errors: list[str]) -> Non
             sample = op["sample"]
             _scan_text_value(sample.get("display_name"), f"{base}.sample.display_name", errors)
             _scan_text_value(sample.get("summary"), f"{base}.sample.summary", errors)
+        elif op_name == "upsert_task" and isinstance(op.get("task"), dict):
+            task = op["task"]
+            _scan_text_value(task.get("title"), f"{base}.task.title", errors)
+            _scan_text_value(task.get("summary"), f"{base}.task.summary", errors)
+        elif op_name == "schedule_random_event" and isinstance(op.get("random_event"), dict):
+            random_event = op["random_event"]
+            _scan_text_value(random_event.get("summary"), f"{base}.random_event.summary", errors)
+        elif op_name == "upsert_research_job" and isinstance(op.get("job"), dict):
+            job = op["job"]
+            _scan_text_value(job.get("expected_output"), f"{base}.job.expected_output", errors)
 
 
 def validate_world_delta_semantics(
@@ -261,6 +303,10 @@ def validate_world_delta_semantics(
     source = delta.get("source")
     available_map_node_ids = set(registry.run_map_node_ids)
     available_npc_ids = set(registry.run_npc_ids)
+    available_task_ids = set(registry.run_task_ids)
+    available_random_event_ids = set(registry.run_random_event_ids)
+    available_sample_ids = set(registry.run_sample_ids)
+    available_blueprint_ids = set(registry.run_blueprint_ids)
     for i, op in enumerate(delta.get("operations", []) or []):
         if not isinstance(op, dict):
             continue
@@ -367,6 +413,115 @@ def validate_world_delta_semantics(
                         f"{path}.sample.source_delta_id={source_delta_id!r} must "
                         f"match delta_id={delta_id!r}"
                     )
+                if isinstance(sample_id, str) and sample_id:
+                    available_sample_ids.add(sample_id)
+
+        elif op_name == "upsert_task":
+            task = op.get("task")
+            if isinstance(task, dict):
+                task_id = task.get("task_id")
+                node_id = task.get("node_id")
+                npc_id = task.get("npc_id")
+                if (
+                    isinstance(node_id, str)
+                    and node_id
+                    and node_id not in available_map_node_ids
+                ):
+                    errors.append(
+                        f"{path}.task.node_id={node_id!r} is not in current or "
+                        "newly introduced map nodes"
+                    )
+                if isinstance(npc_id, str) and npc_id:
+                    if npc_id in registry.legacy_npc_ids:
+                        errors.append(
+                            f"{path}.task.npc_id={npc_id!r} is a legacy fixture NPC ref; "
+                            "use a canonical or explicitly reviewed candidate NPC id"
+                        )
+                    elif npc_id not in available_npc_ids:
+                        errors.append(
+                            f"{path}.task.npc_id={npc_id!r} is not in current or "
+                            "newly introduced run_state.npcs"
+                        )
+                    elif npc_id not in registry.allowed_npc_ids:
+                        errors.append(
+                            f"{path}.task.npc_id={npc_id!r} is present in run state but "
+                            "blocked by the current review-pack boundary"
+                        )
+                if isinstance(task_id, str) and task_id:
+                    available_task_ids.add(task_id)
+
+        elif op_name == "set_task_status":
+            task_id = op.get("task_id")
+            if task_id not in available_task_ids:
+                errors.append(
+                    f"{path}.task_id={task_id!r} is not in current or newly upserted tasks"
+                )
+
+        elif op_name == "schedule_random_event":
+            random_event = op.get("random_event")
+            if isinstance(random_event, dict):
+                random_event_id = random_event.get("random_event_id")
+                node_id = random_event.get("node_id")
+                related_task_id = random_event.get("related_task_id")
+                if (
+                    isinstance(node_id, str)
+                    and node_id
+                    and node_id not in available_map_node_ids
+                ):
+                    errors.append(
+                        f"{path}.random_event.node_id={node_id!r} is not in current "
+                        "or newly introduced map nodes"
+                    )
+                if (
+                    isinstance(related_task_id, str)
+                    and related_task_id
+                    and related_task_id not in available_task_ids
+                ):
+                    errors.append(
+                        f"{path}.random_event.related_task_id={related_task_id!r} is "
+                        "not in current or newly upserted tasks"
+                    )
+                if isinstance(random_event_id, str) and random_event_id:
+                    available_random_event_ids.add(random_event_id)
+
+        elif op_name == "set_random_event_status":
+            random_event_id = op.get("random_event_id")
+            if random_event_id not in available_random_event_ids:
+                errors.append(
+                    f"{path}.random_event_id={random_event_id!r} is not in current "
+                    "or newly scheduled random events"
+                )
+
+        elif op_name == "upsert_research_job":
+            job = op.get("job")
+            if isinstance(job, dict):
+                source_task_id = job.get("source_task_id")
+                source_sample_id = job.get("source_sample_id")
+                if (
+                    isinstance(source_task_id, str)
+                    and source_task_id
+                    and source_task_id not in available_task_ids
+                ):
+                    errors.append(
+                        f"{path}.job.source_task_id={source_task_id!r} is not in "
+                        "current or newly upserted tasks"
+                    )
+                if (
+                    isinstance(source_sample_id, str)
+                    and source_sample_id
+                    and source_sample_id not in available_sample_ids
+                ):
+                    errors.append(
+                        f"{path}.job.source_sample_id={source_sample_id!r} is not in "
+                        "current or newly added temporary samples"
+                    )
+
+        elif op_name == "unlock_blueprint":
+            blueprint = op.get("blueprint")
+            if isinstance(blueprint, dict):
+                blueprint_id = blueprint.get("blueprint_id")
+                if isinstance(blueprint_id, str) and blueprint_id:
+                    available_blueprint_ids.add(blueprint_id)
 
         elif op_name == "set_progress_phase":
             phase = op.get("phase")
@@ -473,6 +628,8 @@ def main() -> int:
     print(f"- run_map_nodes: {len(registry.run_map_node_ids)}")
     print(f"- allowed_resources: {len(registry.allowed_resource_ids)}")
     print(f"- allowed_npcs: {len(registry.allowed_npc_ids)}")
+    print(f"- run_tasks: {len(registry.run_task_ids)}")
+    print(f"- run_random_events: {len(registry.run_random_event_ids)}")
     return 0
 
 

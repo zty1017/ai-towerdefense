@@ -204,6 +204,61 @@ def _apply_add_temporary_sample(state: dict[str, Any], op: dict[str, Any]) -> li
     return []
 
 
+def _upsert_by_id(items: list[dict[str, Any]], id_key: str, payload: dict[str, Any]) -> None:
+    item_id = payload.get(id_key)
+    for existing in items:
+        if existing.get(id_key) == item_id:
+            existing.clear()
+            existing.update(deepcopy(payload))
+            return
+    items.append(deepcopy(payload))
+
+
+def _apply_upsert_task(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    tasks = state.setdefault("tasks", [])
+    _upsert_by_id(tasks, "task_id", op["task"])
+    return []
+
+
+def _apply_set_task_status(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    task_id = op["task_id"]
+    for task in state.setdefault("tasks", []):
+        if task.get("task_id") == task_id:
+            task["status"] = op["status"]
+            return []
+    return [f"set_task_status: task_id={task_id!r} not found in tasks"]
+
+
+def _apply_schedule_random_event(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    random_events = state.setdefault("random_events", [])
+    _upsert_by_id(random_events, "random_event_id", op["random_event"])
+    return []
+
+
+def _apply_set_random_event_status(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    random_event_id = op["random_event_id"]
+    for event in state.setdefault("random_events", []):
+        if event.get("random_event_id") == random_event_id:
+            event["status"] = op["status"]
+            return []
+    return [
+        f"set_random_event_status: random_event_id={random_event_id!r} "
+        "not found in random_events"
+    ]
+
+
+def _apply_upsert_research_job(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    jobs = state.setdefault("research", {}).setdefault("active_jobs", [])
+    _upsert_by_id(jobs, "job_id", op["job"])
+    return []
+
+
+def _apply_unlock_blueprint(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
+    blueprints = state.setdefault("research", {}).setdefault("known_blueprints", [])
+    _upsert_by_id(blueprints, "blueprint_id", op["blueprint"])
+    return []
+
+
 def _apply_set_progress_phase(state: dict[str, Any], op: dict[str, Any]) -> list[str]:
     phase = op["phase"]
     state.setdefault("progress", {})["phase"] = phase
@@ -230,6 +285,12 @@ _OP_APPLIERS = {
     "update_npc_relationship": _apply_update_npc_relationship,
     "introduce_npc": _apply_introduce_npc,
     "add_temporary_sample": _apply_add_temporary_sample,
+    "upsert_task": _apply_upsert_task,
+    "set_task_status": _apply_set_task_status,
+    "schedule_random_event": _apply_schedule_random_event,
+    "set_random_event_status": _apply_set_random_event_status,
+    "upsert_research_job": _apply_upsert_research_job,
+    "unlock_blueprint": _apply_unlock_blueprint,
     "set_progress_phase": _apply_set_progress_phase,
     "adjust_global_state": _apply_adjust_global_state,
 }

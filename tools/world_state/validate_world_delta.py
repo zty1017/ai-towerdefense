@@ -5,7 +5,7 @@ Checks:
 - JSON parses.
 - schema_version == "world_state_delta.v0.1".
 - Top-level required fields present; unknown top-level fields rejected.
-- operation op whitelist: only the 11 allowed ops may appear.
+- operation op whitelist: only the 17 allowed ops may appear.
 - operation forbidden-op blacklist: mutate_base_worldbook / set_worldbook /
   replace_worldbook / raw_json_patch / arbitrary_patch / eval / script /
   provider_call are explicitly rejected with a clear error.
@@ -46,7 +46,7 @@ from _common import (  # noqa: E402  (import after sys.path bootstrap)
 
 SCHEMA_PATH = ROOT / "shared/schemas/world_state_delta.v0.1.schema.json"
 
-# Whitelist of allowed operation op values (only these 11).
+# Whitelist of allowed operation op values (only these 17).
 OPERATION_WHITELIST: frozenset[str] = frozenset(
     {
         "append_event",
@@ -58,6 +58,12 @@ OPERATION_WHITELIST: frozenset[str] = frozenset(
         "update_npc_relationship",
         "introduce_npc",
         "add_temporary_sample",
+        "upsert_task",
+        "set_task_status",
+        "schedule_random_event",
+        "set_random_event_status",
+        "upsert_research_job",
+        "unlock_blueprint",
         "set_progress_phase",
         "adjust_global_state",
     }
@@ -111,6 +117,27 @@ GLOBAL_STATE_FIELDS_ALLOWED: frozenset[str] = frozenset(
 NPC_AVAILABILITY_ALLOWED: frozenset[str] = frozenset(
     {"present", "absent", "busy", "injured", "missing"}
 )
+TASK_KIND_ALLOWED: frozenset[str] = frozenset(
+    {"main", "side", "research", "scouting", "defense", "resource"}
+)
+TASK_STATUS_ALLOWED: frozenset[str] = frozenset(
+    {"available", "active", "completed", "failed", "expired"}
+)
+RANDOM_EVENT_TYPE_ALLOWED: frozenset[str] = frozenset(
+    {
+        "map_pressure",
+        "resource_shift",
+        "npc_visit",
+        "research_opportunity",
+        "threat_warning",
+    }
+)
+RANDOM_EVENT_STATUS_ALLOWED: frozenset[str] = frozenset(
+    {"pending", "available", "resolved", "expired"}
+)
+RESEARCH_JOB_STATUS_ALLOWED: frozenset[str] = frozenset(
+    {"queued", "running", "completed", "failed"}
+)
 
 # Per-operation allowed keys (beyond "op"). Used for the pure-Python fallback's
 # additionalProperties:false enforcement on each operation branch.
@@ -124,6 +151,12 @@ OP_ALLOWED_KEYS: dict[str, frozenset[str]] = {
     "update_npc_relationship": frozenset({"op", "npc_id", "relationship_delta"}),
     "introduce_npc": frozenset({"op", "npc"}),
     "add_temporary_sample": frozenset({"op", "sample"}),
+    "upsert_task": frozenset({"op", "task"}),
+    "set_task_status": frozenset({"op", "task_id", "status"}),
+    "schedule_random_event": frozenset({"op", "random_event"}),
+    "set_random_event_status": frozenset({"op", "random_event_id", "status"}),
+    "upsert_research_job": frozenset({"op", "job"}),
+    "unlock_blueprint": frozenset({"op", "blueprint"}),
     "set_progress_phase": frozenset({"op", "phase"}),
     "adjust_global_state": frozenset({"op", "field", "amount_delta"}),
 }
@@ -150,6 +183,44 @@ RUN_NPC_ALLOWED: frozenset[str] = frozenset(
     }
 )
 RUN_NPC_RELATIONSHIP_ALLOWED: frozenset[str] = frozenset({"trust"})
+TASK_ALLOWED: frozenset[str] = frozenset(
+    {
+        "task_id",
+        "kind",
+        "status",
+        "title",
+        "summary",
+        "node_id",
+        "npc_id",
+        "objective_refs",
+        "reward_refs",
+    }
+)
+RANDOM_EVENT_ALLOWED: frozenset[str] = frozenset(
+    {
+        "random_event_id",
+        "event_type",
+        "status",
+        "summary",
+        "node_id",
+        "trigger_turn",
+        "related_task_id",
+    }
+)
+RESEARCH_JOB_ALLOWED: frozenset[str] = frozenset(
+    {
+        "job_id",
+        "status",
+        "started_turn",
+        "source_task_id",
+        "source_sample_id",
+        "expected_turns",
+        "expected_output",
+    }
+)
+BLUEPRINT_ALLOWED: frozenset[str] = frozenset(
+    {"blueprint_id", "unlocked_turn", "source"}
+)
 
 
 def _reject_unknown_keys(
@@ -244,6 +315,29 @@ def _scan_player_visible_text(delta: dict[str, Any], errors: list[str]) -> None:
                 s = sample.get("summary")
                 if isinstance(s, str):
                     _scan_text_for_banned_words(s, f"{op_path}.sample.summary", errors)
+        elif op_name == "upsert_task":
+            task = op.get("task")
+            if isinstance(task, dict):
+                for key in ("title", "summary"):
+                    value = task.get(key)
+                    if isinstance(value, str):
+                        _scan_text_for_banned_words(value, f"{op_path}.task.{key}", errors)
+        elif op_name == "schedule_random_event":
+            random_event = op.get("random_event")
+            if isinstance(random_event, dict):
+                s = random_event.get("summary")
+                if isinstance(s, str):
+                    _scan_text_for_banned_words(
+                        s, f"{op_path}.random_event.summary", errors
+                    )
+        elif op_name == "upsert_research_job":
+            job = op.get("job")
+            if isinstance(job, dict):
+                eo = job.get("expected_output")
+                if isinstance(eo, str):
+                    _scan_text_for_banned_words(
+                        eo, f"{op_path}.job.expected_output", errors
+                    )
 
 
 # --- per-operation validation ---
@@ -460,6 +554,139 @@ def _validate_add_temporary_sample(op: dict[str, Any], path: str, errors: list[s
         _require_str(sample["summary"], f"{spath}.summary", errors)
 
 
+def _require_string_array(value: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        errors.append(f"{path} must be an array of non-empty strings")
+
+
+def _validate_task_obj(task: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(task, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(task, TASK_ALLOWED, path, errors)
+    for key in ("task_id", "kind", "status", "title", "summary"):
+        if key not in task:
+            errors.append(f"{path}.{key} is required")
+    if "task_id" in task:
+        _require_str(task["task_id"], f"{path}.task_id", errors)
+    if "kind" in task:
+        _require_enum(task["kind"], TASK_KIND_ALLOWED, f"{path}.kind", errors)
+    if "status" in task:
+        _require_enum(task["status"], TASK_STATUS_ALLOWED, f"{path}.status", errors)
+    for key in ("title", "summary"):
+        if key in task:
+            _require_str(task[key], f"{path}.{key}", errors)
+    for key in ("node_id", "npc_id"):
+        if key in task and task[key] is not None:
+            _require_str(task[key], f"{path}.{key}", errors)
+    for key in ("objective_refs", "reward_refs"):
+        if key in task:
+            _require_string_array(task[key], f"{path}.{key}", errors)
+
+
+def _validate_upsert_task(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["upsert_task"], path, errors)
+    _validate_task_obj(op.get("task"), f"{path}.task", errors)
+
+
+def _validate_set_task_status(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["set_task_status"], path, errors)
+    if "task_id" in op:
+        _require_str(op["task_id"], f"{path}.task_id", errors)
+    else:
+        errors.append(f"{path}.task_id is required")
+    if "status" in op:
+        _require_enum(op["status"], TASK_STATUS_ALLOWED, f"{path}.status", errors)
+    else:
+        errors.append(f"{path}.status is required")
+
+
+def _validate_random_event_obj(random_event: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(random_event, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(random_event, RANDOM_EVENT_ALLOWED, path, errors)
+    for key in ("random_event_id", "event_type", "status", "summary"):
+        if key not in random_event:
+            errors.append(f"{path}.{key} is required")
+    if "random_event_id" in random_event:
+        _require_str(random_event["random_event_id"], f"{path}.random_event_id", errors)
+    if "event_type" in random_event:
+        _require_enum(random_event["event_type"], RANDOM_EVENT_TYPE_ALLOWED, f"{path}.event_type", errors)
+    if "status" in random_event:
+        _require_enum(random_event["status"], RANDOM_EVENT_STATUS_ALLOWED, f"{path}.status", errors)
+    if "summary" in random_event:
+        _require_str(random_event["summary"], f"{path}.summary", errors)
+    if "node_id" in random_event and random_event["node_id"] is not None:
+        _require_str(random_event["node_id"], f"{path}.node_id", errors)
+    if "trigger_turn" in random_event:
+        _require_int(random_event["trigger_turn"], f"{path}.trigger_turn", errors, minimum=1)
+    if "related_task_id" in random_event:
+        _require_str(random_event["related_task_id"], f"{path}.related_task_id", errors)
+
+
+def _validate_schedule_random_event(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["schedule_random_event"], path, errors)
+    _validate_random_event_obj(op.get("random_event"), f"{path}.random_event", errors)
+
+
+def _validate_set_random_event_status(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["set_random_event_status"], path, errors)
+    if "random_event_id" in op:
+        _require_str(op["random_event_id"], f"{path}.random_event_id", errors)
+    else:
+        errors.append(f"{path}.random_event_id is required")
+    if "status" in op:
+        _require_enum(op["status"], RANDOM_EVENT_STATUS_ALLOWED, f"{path}.status", errors)
+    else:
+        errors.append(f"{path}.status is required")
+
+
+def _validate_research_job_obj(job: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(job, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(job, RESEARCH_JOB_ALLOWED, path, errors)
+    for key in ("job_id", "status"):
+        if key not in job:
+            errors.append(f"{path}.{key} is required")
+    if "job_id" in job:
+        _require_str(job["job_id"], f"{path}.job_id", errors)
+    if "status" in job:
+        _require_enum(job["status"], RESEARCH_JOB_STATUS_ALLOWED, f"{path}.status", errors)
+    for key in ("started_turn", "expected_turns"):
+        if key in job:
+            _require_int(job[key], f"{path}.{key}", errors, minimum=1)
+    for key in ("source_task_id", "source_sample_id", "expected_output"):
+        if key in job:
+            _require_str(job[key], f"{path}.{key}", errors)
+
+
+def _validate_upsert_research_job(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["upsert_research_job"], path, errors)
+    _validate_research_job_obj(op.get("job"), f"{path}.job", errors)
+
+
+def _validate_blueprint_obj(blueprint: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(blueprint, dict):
+        errors.append(f"{path} must be an object")
+        return
+    _reject_unknown_keys(blueprint, BLUEPRINT_ALLOWED, path, errors)
+    if "blueprint_id" in blueprint:
+        _require_str(blueprint["blueprint_id"], f"{path}.blueprint_id", errors)
+    else:
+        errors.append(f"{path}.blueprint_id is required")
+    if "unlocked_turn" in blueprint:
+        _require_int(blueprint["unlocked_turn"], f"{path}.unlocked_turn", errors, minimum=1)
+    if "source" in blueprint:
+        _require_str(blueprint["source"], f"{path}.source", errors)
+
+
+def _validate_unlock_blueprint(op: dict[str, Any], path: str, errors: list[str]) -> None:
+    _reject_unknown_keys(op, OP_ALLOWED_KEYS["unlock_blueprint"], path, errors)
+    _validate_blueprint_obj(op.get("blueprint"), f"{path}.blueprint", errors)
+
+
 def _validate_set_progress_phase(op: dict[str, Any], path: str, errors: list[str]) -> None:
     _reject_unknown_keys(op, OP_ALLOWED_KEYS["set_progress_phase"], path, errors)
     if "phase" in op:
@@ -490,6 +717,12 @@ _OP_VALIDATORS = {
     "update_npc_relationship": _validate_update_npc_relationship,
     "introduce_npc": _validate_introduce_npc,
     "add_temporary_sample": _validate_add_temporary_sample,
+    "upsert_task": _validate_upsert_task,
+    "set_task_status": _validate_set_task_status,
+    "schedule_random_event": _validate_schedule_random_event,
+    "set_random_event_status": _validate_set_random_event_status,
+    "upsert_research_job": _validate_upsert_research_job,
+    "unlock_blueprint": _validate_unlock_blueprint,
     "set_progress_phase": _validate_set_progress_phase,
     "adjust_global_state": _validate_adjust_global_state,
 }

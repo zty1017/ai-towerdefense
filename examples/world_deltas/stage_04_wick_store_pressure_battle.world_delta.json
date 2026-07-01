@@ -18,7 +18,11 @@
         "status": "secured",
         "threat_level": 0,
         "visibility": "visible",
-        "available_actions": ["collect_reward", "field_research", "prepare_next_route"]
+        "available_actions": [
+          "collect_reward",
+          "field_research",
+          "prepare_next_route"
+        ]
       }
     },
     {
@@ -28,13 +32,52 @@
         "status": "secured",
         "threat_level": 0,
         "visibility": "visible",
-        "available_actions": ["repair_route", "talk_to_wire_mender"]
+        "available_actions": [
+          "repair_route",
+          "talk_to_wire_mender"
+        ]
       }
     },
     {
       "op": "update_npc_relationship",
       "npc_id": "npc_wire_mender_003",
-      "relationship_delta": { "trust": 0.1 }
+      "relationship_delta": {
+        "trust": 0.1
+      }
+    },
+    {
+      "op": "set_task_status",
+      "task_id": "task_prepare_wick_store_defense",
+      "status": "completed"
+    },
+    {
+      "op": "set_task_status",
+      "task_id": "task_repair_supply_line_hub",
+      "status": "completed"
+    },
+    {
+      "op": "set_random_event_status",
+      "random_event_id": "random_event_wick_store_pressure_hint",
+      "status": "resolved"
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_formalize_ash_burst_lantern",
+        "kind": "research",
+        "status": "completed",
+        "title": "整理灯灰爆鸣塔蓝图",
+        "summary": "灯芯仓实战证明爆鸣装置能处理聚集敌人，余下工作是把试作品整理为可复用蓝图。",
+        "node_id": "lamp_wick_store",
+        "npc_id": "npc_wire_mender_003",
+        "objective_refs": [
+          "asset_ash_burst_lantern_trial",
+          "glow_crystal"
+        ],
+        "reward_refs": [
+          "asset_ash_burst_lantern"
+        ]
+      }
     },
     {
       "op": "adjust_resource",
@@ -71,6 +114,26 @@
         "display_name": "灯灰爆鸣塔试作",
         "source_delta_id": "delta_stage_04_wick_store_pressure_battle",
         "summary": "灯芯仓防守中临时装配的爆鸣装置，适合继续整理成正式蓝图。"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_ash_burst_lantern_blueprint",
+        "status": "completed",
+        "started_turn": 5,
+        "source_task_id": "task_formalize_ash_burst_lantern",
+        "source_sample_id": "asset_ash_burst_lantern_trial",
+        "expected_turns": 1,
+        "expected_output": "灯灰爆鸣塔蓝图"
+      }
+    },
+    {
+      "op": "unlock_blueprint",
+      "blueprint": {
+        "blueprint_id": "asset_ash_burst_lantern",
+        "unlocked_turn": 5,
+        "source": "research_ash_burst_lantern_blueprint"
       }
     },
     {

@@ -279,6 +279,18 @@
                 "type": "integer",
                 "minimum": 1
               },
+              "source_task_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_sample_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expected_turns": {
+                "type": "integer",
+                "minimum": 1
+              },
               "expected_output": {
                 "type": "string",
                 "minLength": 1
@@ -333,6 +345,66 @@
               }
             }
           }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "kind", "status", "title", "summary"],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "kind": {
+            "type": "string",
+            "enum": ["main", "side", "research", "scouting", "defense", "resource"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["available", "active", "completed", "failed", "expired"]
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "node_id": { "type": ["string", "null"] },
+          "npc_id": { "type": ["string", "null"] },
+          "objective_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "reward_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "random_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["random_event_id", "event_type", "status", "summary"],
+        "properties": {
+          "random_event_id": { "type": "string", "minLength": 1 },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "map_pressure",
+              "resource_shift",
+              "npc_visit",
+              "research_opportunity",
+              "threat_warning"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "available", "resolved", "expired"]
+          },
+          "summary": { "type": "string", "minLength": 1 },
+          "node_id": { "type": ["string", "null"] },
+          "trigger_turn": { "type": "integer", "minimum": 1 },
+          "related_task_id": { "type": "string", "minLength": 1 }
         }
       }
     },

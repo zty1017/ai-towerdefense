@@ -49,9 +49,16 @@ world_state.validate_delta_semantics
 - `update_npc_relationship.npc_id` 必须已经存在于当前 `run_state.npcs`，并且不能被审查包标记为 `legacy_fixture_ref`。世界书 canonical NPC 或显式候选 NPC 可以作为合法引用边界，但若尚未进入当前 run state，不能直接更新关系。
 - `introduce_npc.npc` 可以把 canonical 或显式候选 NPC 加入单局状态；位置节点必须已经存在，或在同一个 delta 中先由 `introduce_map_node` 引入。
 - `add_temporary_sample.sample.sample_id` 必须非空，且 `source_delta_id` 必须等于当前 `delta_id`。
+- `upsert_task.task.node_id` 必须存在于当前地图节点，或在同一个 delta 中先被 `introduce_map_node` 引入。
+- `upsert_task.task.npc_id` 必须存在于当前 NPC，且不能是旧 fixture 引用。
+- `set_task_status.task_id` 必须存在于当前任务，或在同一个 delta 中先被 `upsert_task` 写入。
+- `schedule_random_event.random_event.node_id` 必须存在于当前地图节点；`related_task_id` 必须存在于当前任务，或在同一个 delta 中先被写入。
+- `set_random_event_status.random_event_id` 必须存在于当前随机事件，或在同一个 delta 中先被安排。
+- `upsert_research_job.job.source_task_id` 与 `source_sample_id` 如果出现，必须指向当前或本 delta 中已存在的任务 / 样品。
+- `unlock_blueprint.blueprint` 只登记当前单局可用蓝图，不修改基础世界书。
 - `set_progress_phase.phase` 必须非空。
 - 当 `source == "battle_result"` 时，不允许把以 `_started` 结尾的 flag 设置为 `true`；战后应写入 `_completed` 或其他完成态。
-- 只扫描玩家 / 世界可见文本值，不扫描结构字段名本身。扫描范围包括 delta summary、event summary、fact summary、sample display name 与 sample summary；文本不得泄漏 `provider`、`schema`、`prompt`、`raw_json`、`api_key`、`trace` 等技术词。
+- 只扫描玩家 / 世界可见文本值，不扫描结构字段名本身。扫描范围包括 delta summary、event summary、fact summary、sample display name / summary、task title / summary、random event summary、research job expected output；文本不得泄漏 `provider`、`schema`、`prompt`、`raw_json`、`api_key`、`trace` 等技术词。
 
 ## Registry 策略
 
@@ -61,6 +68,7 @@ v0.1 采用“能稳定读取则登记，否则以 run state 为准”的保守�
 - runtime 资源以当前 `RunWorldState.resources` 为准，同时补充世界书 `resource_mapping`、`materials.json` 和审查包材料边界；但正式消耗仍要求资源已经在当前 run state 中。
 - NPC 登记会读取当前 run state、世界书 canonical NPC 和审查包 candidate NPC；但 `update_npc_relationship` 这类会被 applier 立即执行的操作仍要求 NPC 已经存在于当前 run state。审查包 `compatibility_refs` 中标记为 `legacy_fixture_ref` 的旧 fixture ID 会从允许集合中移除。
 - `introduce_npc` 是候选 NPC 进入运行态的受控入口；这并不把候选写入基础世界书，只代表当前单局已经遇见或临时接入该功能 NPC。
+- 任务、随机事件、临时样品和蓝图以当前 `RunWorldState` 为准，同一 delta 可以先写入对象再引用对象。
 
 这个策略解释了为什么 `engineer_001` 即便仍出现在旧 demo run state 中，也会被 semantic gate 拦截：它已在 MVP 审查包中被标记为旧兼容引用，不应由真实 LLM 自动写入正式世界状态。
 
@@ -100,4 +108,4 @@ build_delta_with_llm_guarded -> validate_delta_semantics -> apply_delta
 
 ## 后续扩展
 
-v0.1 只做最小语义门。后续可加入更细的玩法目的校验，例如：每个 delta 是否明确服务地图解锁、研发推进、资源压力、NPC 关系、样品登记或阶段推进；以及更完整的世界书 registry schema，避免从审查包和世界书正文中临时提取边界。
+v0.1 只做最小语义门。后续可加入更细的玩法目的校验，例如：每个 delta 是否明确服务地图解锁、任务推进、随机事件调度、研发推进、资源压力、NPC 关系、样品登记或阶段推进；以及更完整的世界书 registry schema，避免从审查包和世界书正文中临时提取边界。

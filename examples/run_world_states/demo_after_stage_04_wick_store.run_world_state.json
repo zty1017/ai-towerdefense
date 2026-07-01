@@ -243,8 +243,41 @@
     }
   ],
   "research": {
-    "active_jobs": [],
-    "known_blueprints": [],
+    "active_jobs": [
+      {
+        "job_id": "research_signal_wick_decoy_trial",
+        "status": "completed",
+        "started_turn": 3,
+        "source_task_id": "task_repair_supply_line_hub",
+        "source_sample_id": "sample_trap_7f3a_repaired",
+        "expected_turns": 1,
+        "expected_output": "信标灯芯诱饵试作"
+      },
+      {
+        "job_id": "research_dark_echo_survey",
+        "status": "completed",
+        "started_turn": 4,
+        "source_task_id": "task_scout_northern_road",
+        "expected_turns": 1,
+        "expected_output": "东暗回声测记"
+      },
+      {
+        "job_id": "research_ash_burst_lantern_blueprint",
+        "status": "completed",
+        "started_turn": 5,
+        "source_task_id": "task_formalize_ash_burst_lantern",
+        "source_sample_id": "asset_ash_burst_lantern_trial",
+        "expected_turns": 1,
+        "expected_output": "灯灰爆鸣塔蓝图"
+      }
+    ],
+    "known_blueprints": [
+      {
+        "blueprint_id": "asset_ash_burst_lantern",
+        "unlocked_turn": 5,
+        "source": "research_ash_burst_lantern_blueprint"
+      }
+    ],
     "temporary_samples": [
       {
         "sample_id": "sample_trap_7f3a_repaired",
@@ -272,5 +305,93 @@
     "stage_02_supply_line_review_completed": true,
     "stage_03_northern_scouting_completed": true,
     "stage_04_wick_store_defense_completed": true
-  }
+  },
+  "tasks": [
+    {
+      "task_id": "task_repair_supply_line_hub",
+      "kind": "resource",
+      "status": "completed",
+      "title": "抢修受损补给线",
+      "summary": "补给线在清晨复盘中被确认受损，需要护线装置和临时材料调配来维持下一场防守。",
+      "node_id": "supply_line_hub_to_gray",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "supply_line_hub_to_gray",
+        "asset_wick_barrier_pylon"
+      ],
+      "reward_refs": [
+        "lantern_ash",
+        "asset_signal_wick_decoy"
+      ]
+    },
+    {
+      "task_id": "task_prepare_wick_store_defense",
+      "kind": "defense",
+      "status": "completed",
+      "title": "准备灯芯仓防守",
+      "summary": "灯芯仓是灰灯驿站的资源节点，下一轮影潮可能转向这里，需要提前布置诱饵与护幕。",
+      "node_id": "lamp_wick_store",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "lamp_wick_store",
+        "asset_signal_wick_decoy",
+        "asset_wick_barrier_pylon"
+      ],
+      "reward_refs": [
+        "glow_crystal"
+      ]
+    },
+    {
+      "task_id": "task_scout_northern_road",
+      "kind": "scouting",
+      "status": "completed",
+      "title": "确认北路黑暗边缘",
+      "summary": "北路斥候愿意带回一段短程测记，用来判断下一场敌潮是否会绕向旧信号塔。",
+      "node_id": "northern_road_crossing",
+      "npc_id": "npc_road_scout",
+      "objective_refs": [
+        "northern_road_crossing",
+        "old_signal_tower"
+      ],
+      "reward_refs": [
+        "intel_dark_echo_survey_001"
+      ]
+    },
+    {
+      "task_id": "task_formalize_ash_burst_lantern",
+      "kind": "research",
+      "status": "completed",
+      "title": "整理灯灰爆鸣塔蓝图",
+      "summary": "灯芯仓实战证明爆鸣装置能处理聚集敌人，余下工作是把试作品整理为可复用蓝图。",
+      "node_id": "lamp_wick_store",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "asset_ash_burst_lantern_trial",
+        "glow_crystal"
+      ],
+      "reward_refs": [
+        "asset_ash_burst_lantern"
+      ]
+    }
+  ],
+  "random_events": [
+    {
+      "random_event_id": "random_event_wick_store_pressure_hint",
+      "event_type": "threat_warning",
+      "status": "resolved",
+      "summary": "灯芯仓外侧的影潮开始试探旧管线，若继续放任，下一场压力会转向资源库存。",
+      "node_id": "lamp_wick_store",
+      "trigger_turn": 4,
+      "related_task_id": "task_prepare_wick_store_defense"
+    },
+    {
+      "random_event_id": "random_event_old_signal_tower_pressure",
+      "event_type": "map_pressure",
+      "status": "pending",
+      "summary": "旧信号塔附近的回光扰动增强，若继续侦察，可能打开新的压力节点或捷径。",
+      "node_id": "old_signal_tower",
+      "trigger_turn": 5,
+      "related_task_id": "task_scout_northern_road"
+    }
+  ]
 }

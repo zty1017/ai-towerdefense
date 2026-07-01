@@ -18,7 +18,11 @@
         "status": "contested",
         "threat_level": 1,
         "visibility": "known",
-        "available_actions": ["repair_route", "field_research", "assign_support"]
+        "available_actions": [
+          "repair_route",
+          "field_research",
+          "assign_support"
+        ]
       }
     },
     {
@@ -28,7 +32,10 @@
         "status": "known",
         "threat_level": 1,
         "visibility": "known",
-        "available_actions": ["inspect_storage", "prepare_defense"]
+        "available_actions": [
+          "inspect_storage",
+          "prepare_defense"
+        ]
       }
     },
     {
@@ -36,9 +43,18 @@
       "npc": {
         "npc_id": "npc_wire_mender_003",
         "location_node_id": "supply_line_hub_to_gray",
-        "narrative_roles": ["route_pressure_hint", "workshop_witness"],
-        "gameplay_roles": ["route_repair", "material_adjustment", "field_review"],
-        "relationship": { "trust": 0.25 },
+        "narrative_roles": [
+          "route_pressure_hint",
+          "workshop_witness"
+        ],
+        "gameplay_roles": [
+          "route_repair",
+          "material_adjustment",
+          "field_review"
+        ],
+        "relationship": {
+          "trust": 0.25
+        },
         "availability": "present"
       }
     },
@@ -73,6 +89,70 @@
         "source": "dawn_review_supply_line",
         "visibility": "hinted",
         "summary": "补线人出现在受损补给线上，可以评估护线装置和材料替换。"
+      }
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_repair_supply_line_hub",
+        "kind": "resource",
+        "status": "active",
+        "title": "抢修受损补给线",
+        "summary": "补给线在清晨复盘中被确认受损，需要护线装置和临时材料调配来维持下一场防守。",
+        "node_id": "supply_line_hub_to_gray",
+        "npc_id": "npc_wire_mender_003",
+        "objective_refs": [
+          "supply_line_hub_to_gray",
+          "asset_wick_barrier_pylon"
+        ],
+        "reward_refs": [
+          "lantern_ash",
+          "asset_signal_wick_decoy"
+        ]
+      }
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_prepare_wick_store_defense",
+        "kind": "defense",
+        "status": "available",
+        "title": "准备灯芯仓防守",
+        "summary": "灯芯仓是灰灯驿站的资源节点，下一轮影潮可能转向这里，需要提前布置诱饵与护幕。",
+        "node_id": "lamp_wick_store",
+        "npc_id": "npc_wire_mender_003",
+        "objective_refs": [
+          "lamp_wick_store",
+          "asset_signal_wick_decoy",
+          "asset_wick_barrier_pylon"
+        ],
+        "reward_refs": [
+          "glow_crystal"
+        ]
+      }
+    },
+    {
+      "op": "schedule_random_event",
+      "random_event": {
+        "random_event_id": "random_event_wick_store_pressure_hint",
+        "event_type": "threat_warning",
+        "status": "pending",
+        "summary": "灯芯仓外侧的影潮开始试探旧管线，若继续放任，下一场压力会转向资源库存。",
+        "node_id": "lamp_wick_store",
+        "trigger_turn": 4,
+        "related_task_id": "task_prepare_wick_store_defense"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_signal_wick_decoy_trial",
+        "status": "running",
+        "started_turn": 3,
+        "source_task_id": "task_repair_supply_line_hub",
+        "source_sample_id": "sample_trap_7f3a_repaired",
+        "expected_turns": 1,
+        "expected_output": "信标灯芯诱饵试作"
       }
     },
     {

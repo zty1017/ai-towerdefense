@@ -40,7 +40,9 @@ from _common import (  # noqa: E402  (import after sys.path bootstrap)
 SCHEMA_PATH = ROOT / "shared/schemas/run_world_state.v0.1.schema.json"
 
 # Allowed top-level keys mirror shared/schemas/run_world_state.v0.1.schema.json.
-TOP_LEVEL_ALLOWED: frozenset[str] = frozenset(
+# `tasks` and `random_events` are optional because older MVP snapshots predate
+# explicit gameplay-object compilation and must remain valid.
+TOP_LEVEL_REQUIRED: frozenset[str] = frozenset(
     {
         "schema_version",
         "run_id",
@@ -55,6 +57,9 @@ TOP_LEVEL_ALLOWED: frozenset[str] = frozenset(
         "research",
         "flags",
     }
+)
+TOP_LEVEL_ALLOWED: frozenset[str] = TOP_LEVEL_REQUIRED | frozenset(
+    {"tasks", "random_events"}
 )
 PROGRESS_ALLOWED: frozenset[str] = frozenset({"chapter", "turn", "phase"})
 GLOBAL_STATE_ALLOWED: frozenset[str] = frozenset({"pressure", "hope", "visibility"})
@@ -79,7 +84,15 @@ RESEARCH_ALLOWED: frozenset[str] = frozenset(
     {"active_jobs", "known_blueprints", "temporary_samples"}
 )
 ACTIVE_JOB_ALLOWED: frozenset[str] = frozenset(
-    {"job_id", "status", "started_turn", "expected_output"}
+    {
+        "job_id",
+        "status",
+        "started_turn",
+        "source_task_id",
+        "source_sample_id",
+        "expected_turns",
+        "expected_output",
+    }
 )
 BLUEPRINT_ALLOWED: frozenset[str] = frozenset(
     {"blueprint_id", "unlocked_turn", "source"}
@@ -105,6 +118,48 @@ NPC_AVAILABILITY_ALLOWED: frozenset[str] = frozenset(
 )
 JOB_STATUS_ALLOWED: frozenset[str] = frozenset(
     {"queued", "running", "completed", "failed"}
+)
+TASK_ALLOWED: frozenset[str] = frozenset(
+    {
+        "task_id",
+        "kind",
+        "status",
+        "title",
+        "summary",
+        "node_id",
+        "npc_id",
+        "objective_refs",
+        "reward_refs",
+    }
+)
+TASK_KIND_ALLOWED: frozenset[str] = frozenset(
+    {"main", "side", "research", "scouting", "defense", "resource"}
+)
+TASK_STATUS_ALLOWED: frozenset[str] = frozenset(
+    {"available", "active", "completed", "failed", "expired"}
+)
+RANDOM_EVENT_ALLOWED: frozenset[str] = frozenset(
+    {
+        "random_event_id",
+        "event_type",
+        "status",
+        "summary",
+        "node_id",
+        "trigger_turn",
+        "related_task_id",
+    }
+)
+RANDOM_EVENT_TYPE_ALLOWED: frozenset[str] = frozenset(
+    {
+        "map_pressure",
+        "resource_shift",
+        "npc_visit",
+        "research_opportunity",
+        "threat_warning",
+    }
+)
+RANDOM_EVENT_STATUS_ALLOWED: frozenset[str] = frozenset(
+    {"pending", "available", "resolved", "expired"}
 )
 
 
@@ -329,6 +384,70 @@ def _validate_events(events: Any, path: str, errors: list[str]) -> None:
             errors.append(f"{ipath}.summary is required")
 
 
+def _require_string_array(value: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        errors.append(f"{path} must be an array of non-empty strings")
+
+
+def _validate_tasks(tasks: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(tasks, list):
+        errors.append(f"{path} must be an array")
+        return
+    for i, item in enumerate(tasks):
+        ipath = f"{path}[{i}]"
+        if not isinstance(item, dict):
+            errors.append(f"{ipath} must be an object")
+            continue
+        _reject_unknown_keys(item, TASK_ALLOWED, ipath, errors)
+        for key in ("task_id", "kind", "status", "title", "summary"):
+            if key not in item:
+                errors.append(f"{ipath}.{key} is required")
+        if "task_id" in item:
+            _require_str(item["task_id"], f"{ipath}.task_id", errors)
+        if "kind" in item:
+            _require_enum(item["kind"], TASK_KIND_ALLOWED, f"{ipath}.kind", errors)
+        if "status" in item:
+            _require_enum(item["status"], TASK_STATUS_ALLOWED, f"{ipath}.status", errors)
+        for key in ("title", "summary"):
+            if key in item:
+                _require_str(item[key], f"{ipath}.{key}", errors)
+        for key in ("node_id", "npc_id"):
+            if key in item and item[key] is not None:
+                _require_str(item[key], f"{ipath}.{key}", errors)
+        for key in ("objective_refs", "reward_refs"):
+            if key in item:
+                _require_string_array(item[key], f"{ipath}.{key}", errors)
+
+
+def _validate_random_events(random_events: Any, path: str, errors: list[str]) -> None:
+    if not isinstance(random_events, list):
+        errors.append(f"{path} must be an array")
+        return
+    for i, item in enumerate(random_events):
+        ipath = f"{path}[{i}]"
+        if not isinstance(item, dict):
+            errors.append(f"{ipath} must be an object")
+            continue
+        _reject_unknown_keys(item, RANDOM_EVENT_ALLOWED, ipath, errors)
+        for key in ("random_event_id", "event_type", "status", "summary"):
+            if key not in item:
+                errors.append(f"{ipath}.{key} is required")
+        if "random_event_id" in item:
+            _require_str(item["random_event_id"], f"{ipath}.random_event_id", errors)
+        if "event_type" in item:
+            _require_enum(item["event_type"], RANDOM_EVENT_TYPE_ALLOWED, f"{ipath}.event_type", errors)
+        if "status" in item:
+            _require_enum(item["status"], RANDOM_EVENT_STATUS_ALLOWED, f"{ipath}.status", errors)
+        if "summary" in item:
+            _require_str(item["summary"], f"{ipath}.summary", errors)
+        if "node_id" in item and item["node_id"] is not None:
+            _require_str(item["node_id"], f"{ipath}.node_id", errors)
+        if "trigger_turn" in item:
+            _require_int(item["trigger_turn"], f"{ipath}.trigger_turn", errors, minimum=1)
+        if "related_task_id" in item:
+            _require_str(item["related_task_id"], f"{ipath}.related_task_id", errors)
+
+
 def _validate_research(research: Any, path: str, errors: list[str]) -> None:
     if not isinstance(research, dict):
         errors.append(f"{path} must be an object")
@@ -353,10 +472,12 @@ def _validate_research(research: Any, path: str, errors: list[str]) -> None:
                 _require_enum(job["status"], JOB_STATUS_ALLOWED, f"{ipath}.status", errors)
             else:
                 errors.append(f"{ipath}.status is required")
-            if "started_turn" in job:
-                _require_int(job["started_turn"], f"{ipath}.started_turn", errors, minimum=1)
-            if "expected_output" in job and job["expected_output"] is not None:
-                _require_str(job["expected_output"], f"{ipath}.expected_output", errors)
+            for key in ("started_turn", "expected_turns"):
+                if key in job:
+                    _require_int(job[key], f"{ipath}.{key}", errors, minimum=1)
+            for key in ("source_task_id", "source_sample_id", "expected_output"):
+                if key in job and job[key] is not None:
+                    _require_str(job[key], f"{ipath}.{key}", errors)
     elif jobs is not None:
         errors.append(f"{path}.active_jobs must be an array")
     bps = research.get("known_blueprints")
@@ -427,7 +548,7 @@ def validate_run_world_state(state: dict[str, Any]) -> list[str]:
     _reject_unknown_keys(state, TOP_LEVEL_ALLOWED, "", errors)
 
     # required top-level fields
-    for key in TOP_LEVEL_ALLOWED:
+    for key in TOP_LEVEL_REQUIRED:
         if key not in state:
             errors.append(f"{key} is required at top level")
 
@@ -457,6 +578,10 @@ def validate_run_world_state(state: dict[str, Any]) -> list[str]:
         _validate_events(state["event_log"], "event_log", errors)
     if "research" in state:
         _validate_research(state["research"], "research", errors)
+    if "tasks" in state:
+        _validate_tasks(state["tasks"], "tasks", errors)
+    if "random_events" in state:
+        _validate_random_events(state["random_events"], "random_events", errors)
     if "flags" in state:
         _validate_flags(state["flags"], "flags", errors)
 
@@ -537,6 +662,8 @@ def main() -> int:
     print(f"- map_nodes: {len(state.get('map_nodes', []))}")
     print(f"- npcs: {len(state.get('npcs', []))}")
     print(f"- events: {len(state.get('event_log', []))}")
+    print(f"- tasks: {len(state.get('tasks', []))}")
+    print(f"- random_events: {len(state.get('random_events', []))}")
     return 0
 
 
