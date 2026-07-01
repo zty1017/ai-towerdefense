@@ -76,6 +76,13 @@ def scan_forbidden_fields(value: Any, path: str, errors: list[str]) -> None:
     elif isinstance(value, list):
         for idx, child in enumerate(value):
             scan_forbidden_fields(child, f"{path}[{idx}]", errors)
+    elif isinstance(value, str):
+        lowered = value.lower()
+        for term in FORBIDDEN_FIELDS:
+            if term in lowered:
+                errors.append(
+                    f"forbidden term {term!r} found in string value at '{path}'"
+                )
 
 
 def basic_field_check(data: dict, path: str, errors: list[str]) -> None:

@@ -813,8 +813,8 @@ failed          gameplay_core 不可用，不能交付给玩家
 | `temporary_mod_compile_graph.v0.1.json` | `TemporaryModCompileGraph` | 临时改制 |
 | `intel_asset_compile_graph.v0.1.json` | `IntelAssetCompileGraph` | 情报资产 |
 
-模板使用 `{{placeholder}}` 标记可替换参数，例如 `{{proposal_path}}` 和 `{{provider_profile}}`。
-MVP 只允许选择注册模板并填充参数，不允许 LLM 内嵌任意未验证 workflow。
+模板使用 `{{placeholder}}` 标记可替换参数，例如 `{{proposal_path}}`、`{{max_tokens}}`、`{{request_timeout}}`。
+MVP 只允许选择注册模板并填充白名单参数，不允许 LLM 内嵌任意未验证 workflow；provider/model 选择由执行策略在运行时注入，不进入玩家意图编译 artifact。
 
 ### 14.2 模板选择协议
 
@@ -824,7 +824,7 @@ MVP 只允许选择注册模板并填充参数，不允许 LLM 内嵌任意未�
 
 - `template_name`：已注册模板名。
 - `budgets`：至少包含 `max_iterations`、`max_provider_calls`、`max_seconds`。
-- 可选 `parameter_overrides`：模板参数填充，不得包含被禁止字段。
+- 可选 `parameter_overrides`：模板参数填充，只允许 `proposal_path`、`max_tokens`、`request_timeout`、`simulation_duration_seconds`。
 
 Schema 位于 `shared/schemas/compile_template_selection.v0.1.schema.json`。
 校验脚本位于 `tools/asset_graph/validate_compile_template_selection.py`。

@@ -37,39 +37,39 @@
   },
   "presentation": {
     "name": "炼丹炉",
-    "short_description": "紫火炼丹炉，牵引敌人并持续灼烧，击杀后叠加强度。",
-    "detailed_description": "一座以不稳定核心驱动的炼丹炉型防御塔。它能将附近敌人牵引至炉前，喷出持续紫火灼烧范围内的所有目标。每击杀一个敌人，炉火强度提升一层，最多叠加10层。",
+    "short_description": "将玩家构想整理成可试作的防御设施。",
+    "detailed_description": "该方案会先生成稳定的战斗规则，随后准备塔体、图标与特效素材。",
     "visual_style_ref": "compiler_td_v1"
   },
   "media_roles": {
     "tower_body": {
       "role": "tower_body",
       "required": true,
-      "prompt_hint": "isometric furnace tower, dark metal and ceramic, purple fire glow in core window, no background, no enemies, no attack effects on body",
+      "prompt_hint": "isometric alchemy_furnace, purple_fire, clean background, single subject",
       "fallback_strategy": "placeholder_sprite"
     },
     "tower_icon": {
       "role": "tower_icon",
       "required": true,
-      "prompt_hint": "2D game icon, alchemy furnace silhouette, purple flame, clean UI style",
+      "prompt_hint": "2D game icon, alchemy_furnace, clean silhouette",
       "fallback_strategy": "placeholder_sprite"
     },
     "attack_vfx": {
       "role": "attack_vfx",
       "required": true,
-      "prompt_hint": "purple flame cone VFX, semi-transparent, no background",
+      "prompt_hint": "purple_fire attack effect, transparent background",
       "fallback_strategy": "visual_recipe"
     },
     "impact_vfx": {
       "role": "impact_vfx",
       "required": false,
-      "prompt_hint": "purple ember burst on enemy, small scale",
+      "prompt_hint": "purple_fire impact burst",
       "fallback_strategy": "visual_recipe"
     },
     "projectile": {
       "role": "projectile",
       "required": false,
-      "prompt_hint": "purple fire orb projectile",
+      "prompt_hint": "purple_fire projectile",
       "fallback_strategy": "visual_recipe"
     },
     "selection_ring": {

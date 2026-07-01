@@ -33,6 +33,12 @@ ALLOWED_TEMPLATE_NAMES = frozenset({
 })
 
 REQUIRED_BUDGET_FIELDS = frozenset({"max_iterations", "max_provider_calls", "max_seconds"})
+ALLOWED_PARAMETER_OVERRIDE_KEYS = frozenset({
+    "proposal_path",
+    "max_tokens",
+    "request_timeout",
+    "simulation_duration_seconds",
+})
 
 FORBIDDEN_FIELDS = frozenset({
     "provider",
@@ -76,6 +82,13 @@ def scan_forbidden_fields(value: Any, path: str, errors: list[str]) -> None:
     elif isinstance(value, list):
         for i, child in enumerate(value):
             scan_forbidden_fields(child, f"{path}[{i}]", errors)
+    elif isinstance(value, str):
+        lowered = value.lower()
+        for term in FORBIDDEN_FIELDS:
+            if term in lowered:
+                errors.append(
+                    f"forbidden term {term!r} found in string value at '{path}'"
+                )
 
 
 def validate_selection(
@@ -119,6 +132,18 @@ def validate_selection(
         errors.append(
             "compile_template_selection must not contain an embedded 'workflow' field"
         )
+
+    overrides = data.get("parameter_overrides")
+    if overrides is not None:
+        if not isinstance(overrides, dict):
+            errors.append("parameter_overrides must be an object when present")
+        else:
+            for key in overrides:
+                if key not in ALLOWED_PARAMETER_OVERRIDE_KEYS:
+                    errors.append(
+                        f"parameter_overrides.{key} is not allowed "
+                        f"(allowed: {sorted(ALLOWED_PARAMETER_OVERRIDE_KEYS)})"
+                    )
 
     # --- budgets ---
     budgets = data.get("budgets")

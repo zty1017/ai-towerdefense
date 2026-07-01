@@ -2346,7 +2346,7 @@ def node_asset_legalize_design_spec(
     if (
         "area_damage" in gameplay.get("intended_role", [])
         and "soft_control" in gameplay.get("intended_role", [])
-        and balance.get("cost_band") in {"cheap", "low"}
+        and balance.get("cost_band") == "cheap"
         and balance.get("growth_cap") == "unlimited"
     ):
         balance["cost_band"] = "medium"
@@ -2464,7 +2464,7 @@ def node_asset_build_asset_plan(
     balance = legalized.get("balance", {})
 
     cost_band = balance.get("cost_band", "medium")
-    build_cost = {"cheap": 90, "low": 90, "medium": 150, "expensive": 220}.get(
+    build_cost = {"cheap": 90, "medium": 150, "expensive": 220}.get(
         cost_band, 150
     )
     archetype = theme.get("archetype", "field_device")
@@ -2484,7 +2484,7 @@ def node_asset_build_asset_plan(
         "presentation": {
             "name": "炼丹炉" if archetype == "alchemy_furnace" else archetype,
             "short_description": "将玩家构想整理成可试作的防御设施。",
-            "detailed_description": "该方案会先生成稳定的战斗规则，再异步准备塔体、图标与特效素材。",
+            "detailed_description": "该方案会先生成稳定的战斗规则，随后准备塔体、图标与特效素材。",
             "visual_style_ref": visual.get("style_id", "compiler_td_v1"),
         },
         "media_roles": {
@@ -2589,7 +2589,7 @@ def node_proposal_build_from_legalized_spec(
         expected.append("damage")
 
     title = presentation.get("name") or archetype
-    cost = {"cheap": "low", "low": "low", "medium": "medium", "expensive": "high"}.get(
+    cost = {"cheap": "low", "medium": "medium", "expensive": "high"}.get(
         balance.get("cost_band", "medium"), "medium"
     )
     worldbook_id = "long_night_lanterns"

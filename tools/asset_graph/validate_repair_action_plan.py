@@ -93,6 +93,13 @@ def scan_forbidden_fields(value: Any, path: str, errors: list[str]) -> None:
     elif isinstance(value, list):
         for i, child in enumerate(value):
             scan_forbidden_fields(child, f"{path}[{i}]", errors)
+    elif isinstance(value, str):
+        lowered = value.lower()
+        for term in FORBIDDEN_FIELDS:
+            if term in lowered:
+                errors.append(
+                    f"forbidden term {term!r} found in string value at '{path}'"
+                )
 
 
 def validate_plan(data: dict[str, Any]) -> list[str]:
@@ -177,6 +184,7 @@ def validate_plan(data: dict[str, Any]) -> list[str]:
     if not isinstance(actions, list) or len(actions) == 0:
         errors.append("actions must be a non-empty array")
     elif actions:
+        orders: list[int] = []
         for i, action in enumerate(actions):
             apath = f"actions[{i}]"
             if not isinstance(action, dict):
@@ -195,6 +203,21 @@ def validate_plan(data: dict[str, Any]) -> list[str]:
                 errors.append(
                     f"{apath}.action_type={atype!r} is not in the allowed "
                     f"action set (allowed: {sorted(ALLOWED_ACTIONS)})"
+                )
+            order = action.get("order")
+            if order is not None:
+                if not isinstance(order, int) or order < 0:
+                    errors.append(f"{apath}.order must be a non-negative integer")
+                else:
+                    orders.append(order)
+        if orders:
+            if len(orders) != len(set(orders)):
+                errors.append("actions[].order values must be unique")
+            expected = list(range(len(orders)))
+            if sorted(orders) != expected:
+                errors.append(
+                    "actions[].order values must be continuous from 0 "
+                    f"(expected {expected}, got {sorted(orders)})"
                 )
 
     # --- Forbidden fields scan ---

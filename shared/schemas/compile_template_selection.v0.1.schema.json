@@ -28,8 +28,14 @@
     "rationale": { "type": "string" },
     "parameter_overrides": {
       "type": "object",
-      "description": "Optional overrides for template parameter slots (e.g. provider_profile, max_tokens). Must not contain forbidden fields.",
-      "additionalProperties": true
+      "description": "Optional non-provider template parameter slots. Provider/model selection belongs to execution policy, not template selection.",
+      "additionalProperties": false,
+      "properties": {
+        "proposal_path": { "type": "string" },
+        "max_tokens": { "type": "integer", "minimum": 1 },
+        "request_timeout": { "type": "number", "minimum": 1 },
+        "simulation_duration_seconds": { "type": "number", "minimum": 1 }
+      }
     },
     "budgets": {
       "type": "object",

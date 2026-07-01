@@ -2,45 +2,12 @@
   "schema_version": "legalization_report.v0.1",
   "legalization_mode": "runtime_safe",
   "passed": true,
-  "issues": [
-    {
-      "type": "budget_clamp",
-      "severity": "warning",
-      "message": "Growth mechanic 'gain_stack_on_kill' capped to limited growth; unlimited growth not available in runtime_safe mode.",
-      "field_path": "balance.growth_cap",
-      "original_value": "unlimited",
-      "resolved_value": "limited"
-    },
-    {
-      "type": "missing_field",
-      "severity": "info",
-      "message": "Effect blocks were empty; populated from registered modules based on attack_pattern and control_effect.",
-      "field_path": "gameplay.effect_blocks",
-      "original_value": null,
-      "resolved_value": ["damage_over_time", "aura_buff", "charge_burst"]
-    },
-    {
-      "type": "media_constraint",
-      "severity": "info",
-      "message": "Media constraints enforced: single_subject, clean_background, no_enemy_in_sprite, no_attack_effect_on_body_sprite.",
-      "field_path": "media_constraints"
-    }
-  ],
+  "issues": [],
   "applied_fixes": [
     {
-      "action": "budget_clamp",
-      "description": "Capped growth from unlimited to limited for runtime_safe mode.",
-      "field_path": "balance.growth_cap"
-    },
-    {
       "action": "field_completion",
-      "description": "Populated effect_blocks from registered module registry based on attack_pattern and control_effect.",
+      "description": "Populated effect blocks from legalized gameplay fields.",
       "field_path": "gameplay.effect_blocks"
-    },
-    {
-      "action": "media_constraint_enforcement",
-      "description": "Applied media constraints from visual.constraints to media_constraints.",
-      "field_path": "media_constraints"
     }
   ],
   "fallback_summary": {
