@@ -4,7 +4,7 @@
   "run_id": "run_demo_001",
   "worldbook_id": "long_night_lanterns",
   "source": "narrative_event",
-  "created_turn": 2,
+  "created_turn": 6,
   "summary": "旧信号塔的回光压力被转为可处理节点，并开启一次现场稳定试作。",
   "operations": [
     {
@@ -76,7 +76,7 @@
       "job": {
         "job_id": "research_echo_prism_relay_trial",
         "status": "queued",
-        "started_turn": 2,
+        "started_turn": 6,
         "source_task_id": "task_stabilize_old_signal_tower",
         "source_sample_id": "sample_resonant_glass_shard_trial",
         "expected_turns": 1,
@@ -100,7 +100,7 @@
         "status": "pending",
         "summary": "回光玻片完成试作后，可能出现一次短暂回流，可用于强化折射类装置，也可能提高旧塔压力。",
         "node_id": "old_signal_tower",
-        "trigger_turn": 2,
+        "trigger_turn": 6,
         "related_task_id": "task_stabilize_old_signal_tower"
       }
     },
@@ -108,7 +108,7 @@
       "op": "append_event",
       "event": {
         "event_id": "old_signal_tower_pressure_planned",
-        "turn": 2,
+        "turn": 6,
         "kind": "world",
         "summary": "旧信号塔的回光压力被纳入下一轮防守计划，现场试作任务开启。"
       }

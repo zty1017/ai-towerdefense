@@ -90,6 +90,18 @@ def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
+def next_turn(run_state: dict[str, Any]) -> int:
+    event_turns = [
+        event.get("turn")
+        for event in as_list(run_state.get("event_log"))
+        if isinstance(event, dict) and isinstance(event.get("turn"), int)
+    ]
+    progress_turn = as_obj(run_state.get("progress")).get("turn")
+    if isinstance(progress_turn, int):
+        event_turns.append(progress_turn)
+    return (max(event_turns) if event_turns else 0) + 1
+
+
 def stage_context(plan: dict[str, Any]) -> dict[str, Any]:
     context = as_obj(plan.get("planning_context"))
     if context.get("target_stage_id") != STAGE_ID:
@@ -108,7 +120,7 @@ def build_narrative_bundle(plan: dict[str, Any], run_state: dict[str, Any]) -> d
     context = stage_context(plan)
     run_id = str(plan.get("run_id") or run_state.get("run_id"))
     worldbook_id = str(plan.get("worldbook_id") or run_state.get("worldbook_id"))
-    turn = int(as_obj(run_state.get("progress")).get("turn") or 1) + 1
+    turn = next_turn(run_state)
 
     return {
         "schema_version": "narrative_event_bundle.v0.1",
@@ -282,7 +294,7 @@ def build_narrative_bundle(plan: dict[str, Any], run_state: dict[str, Any]) -> d
 def build_world_delta(plan: dict[str, Any], run_state: dict[str, Any]) -> dict[str, Any]:
     run_id = str(plan.get("run_id") or run_state.get("run_id"))
     worldbook_id = str(plan.get("worldbook_id") or run_state.get("worldbook_id"))
-    turn = int(as_obj(run_state.get("progress")).get("turn") or 1) + 1
+    turn = next_turn(run_state)
     return {
         "schema_version": "world_state_delta.v0.1",
         "delta_id": DELTA_ID,

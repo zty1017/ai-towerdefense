@@ -4,7 +4,7 @@
   "run_id": "run_demo_001",
   "worldbook_id": "long_night_lanterns",
   "source": "world_tick",
-  "created_turn": 2,
+  "created_turn": 6,
   "stage": "act_1_stage_05_old_signal_tower_pressure",
   "lane": "shared",
   "commit_policy": {

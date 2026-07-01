@@ -5,12 +5,12 @@
   "progress": {
     "chapter": 1,
     "turn": 1,
-    "phase": "old_signal_tower_pressure_planned"
+    "phase": "split_tide_containment_planned"
   },
   "global_state": {
-    "pressure": 0.38,
-    "hope": 0.65,
-    "visibility": 0.33
+    "pressure": 0.47,
+    "hope": 0.66,
+    "visibility": 0.45
   },
   "resources": [
     {
@@ -27,7 +27,7 @@
     },
     {
       "resource_id": "lantern_ash",
-      "amount": 0
+      "amount": 1
     },
     {
       "resource_id": "lamp_shard",
@@ -35,7 +35,7 @@
     },
     {
       "resource_id": "conductor_filament",
-      "amount": 1
+      "amount": 0
     },
     {
       "resource_id": "glow_crystal",
@@ -55,24 +55,24 @@
     },
     {
       "node_id": "northern_road_crossing",
-      "status": "known",
-      "threat_level": 1,
-      "visibility": "scouted",
+      "status": "contested",
+      "threat_level": 2,
+      "visibility": "visible",
       "available_actions": [
-        "scout",
+        "hold_route",
         "field_research",
-        "prepare_route"
+        "support_east_ridge"
       ]
     },
     {
       "node_id": "old_signal_tower",
-      "status": "contested",
-      "threat_level": 3,
+      "status": "secured",
+      "threat_level": 1,
       "visibility": "visible",
       "available_actions": [
-        "prepare_defense",
+        "collect_signal_echo",
         "field_research",
-        "stabilize_signal"
+        "prepare_next_route"
       ]
     },
     {
@@ -94,6 +94,17 @@
         "collect_reward",
         "field_research",
         "prepare_next_route"
+      ]
+    },
+    {
+      "node_id": "east_dark_ridge",
+      "status": "known",
+      "threat_level": 4,
+      "visibility": "known",
+      "available_actions": [
+        "prepare_defense",
+        "field_research",
+        "contain_split_tide"
       ]
     }
   ],
@@ -139,7 +150,7 @@
         "field_review"
       ],
       "relationship": {
-        "trust": 0.35
+        "trust": 0.41
       },
       "availability": "present"
     },
@@ -156,7 +167,7 @@
         "scouting_reliability"
       ],
       "relationship": {
-        "trust": 0.28
+        "trust": 0.33
       },
       "availability": "present"
     }
@@ -215,6 +226,18 @@
       "source": "old_signal_tower_pressure",
       "visibility": "player_known",
       "summary": "旧信号塔的回光扰动可以短暂显形来敌，也会让影潮更快锁定塔脚。"
+    },
+    {
+      "fact_id": "signal_echo_marker_possible",
+      "source": "signal_resonance_trial",
+      "visibility": "player_known",
+      "summary": "旧信号塔回流可以被记录成短札，用于提前判断下一段敌潮方向。"
+    },
+    {
+      "fact_id": "split_tide_needs_chain_control",
+      "source": "split_tide_containment",
+      "visibility": "player_known",
+      "summary": "分散影潮会绕开单点防线，短时连弧和预警道具能帮助压住多路压力。"
     }
   ],
   "event_log": [
@@ -253,6 +276,18 @@
       "turn": 6,
       "kind": "world",
       "summary": "旧信号塔的回光压力被纳入下一轮防守计划，现场试作任务开启。"
+    },
+    {
+      "event_id": "signal_resonance_trial_completed",
+      "turn": 7,
+      "kind": "research",
+      "summary": "回光棱镜中继塔试作完成，旧信号塔短暂稳定，回声测标任务开启。"
+    },
+    {
+      "event_id": "split_tide_containment_planned",
+      "turn": 8,
+      "kind": "world",
+      "summary": "东侧暗脊分潮线露出，断潮任务和高风险短时改造进入准备。"
     }
   ],
   "research": {
@@ -285,12 +320,30 @@
       },
       {
         "job_id": "research_echo_prism_relay_trial",
-        "status": "queued",
+        "status": "completed",
         "started_turn": 6,
         "source_task_id": "task_stabilize_old_signal_tower",
         "source_sample_id": "sample_resonant_glass_shard_trial",
         "expected_turns": 1,
         "expected_output": "回光棱镜中继塔试作"
+      },
+      {
+        "job_id": "research_signal_echo_marker_trial",
+        "status": "queued",
+        "started_turn": 7,
+        "source_task_id": "task_map_signal_backwash",
+        "source_sample_id": "sample_signal_echo_marker_trial",
+        "expected_turns": 1,
+        "expected_output": "回声测标短札试作"
+      },
+      {
+        "job_id": "research_overload_chain_breaker_trial",
+        "status": "queued",
+        "started_turn": 8,
+        "source_task_id": "task_contain_split_tide",
+        "source_sample_id": "sample_charged_copper_coil_trial",
+        "expected_turns": 1,
+        "expected_output": "过载连弧断潮改造"
       }
     ],
     "known_blueprints": [
@@ -298,6 +351,11 @@
         "blueprint_id": "asset_ash_burst_lantern",
         "unlocked_turn": 5,
         "source": "research_ash_burst_lantern_blueprint"
+      },
+      {
+        "blueprint_id": "asset_echo_prism_relay",
+        "unlocked_turn": 7,
+        "source": "research_echo_prism_relay_trial"
       }
     ],
     "temporary_samples": [
@@ -324,6 +382,18 @@
         "display_name": "回光玻片样本",
         "source_delta_id": "delta_stage_05_old_signal_tower_pressure",
         "summary": "辉晶被磨成薄片并贴合旧塔铜槽后，形成一份只能支撑现场试作的回光样本。"
+      },
+      {
+        "sample_id": "sample_signal_echo_marker_trial",
+        "display_name": "回声测标短札",
+        "source_delta_id": "delta_stage_06_signal_resonance_trial",
+        "summary": "旧信号塔回流被记录成短札，可在下一段黑路开始前标出敌群来向。"
+      },
+      {
+        "sample_id": "sample_charged_copper_coil_trial",
+        "display_name": "短压铜线圈样本",
+        "source_delta_id": "delta_stage_07_split_tide_containment",
+        "summary": "导线被短时压成不稳定线圈，可支撑一次连弧改造试作。"
       }
     ]
   },
@@ -333,7 +403,9 @@
     "stage_02_supply_line_review_completed": true,
     "stage_03_northern_scouting_completed": true,
     "stage_04_wick_store_defense_completed": true,
-    "stage_05_old_signal_tower_pressure_planned": true
+    "stage_05_old_signal_tower_pressure_planned": true,
+    "stage_06_signal_resonance_trial_completed": true,
+    "stage_07_split_tide_containment_planned": true
   },
   "tasks": [
     {
@@ -405,7 +477,7 @@
     {
       "task_id": "task_stabilize_old_signal_tower",
       "kind": "defense",
-      "status": "active",
+      "status": "completed",
       "title": "稳定旧信号塔回光",
       "summary": "旧信号塔的回光扰动正在引来新的影潮，需要在塔脚布置临时棱座，并保护样品完成一次现场稳定试作。",
       "node_id": "old_signal_tower",
@@ -417,6 +489,41 @@
       "reward_refs": [
         "sample_resonant_glass_shard_trial",
         "asset_echo_prism_relay"
+      ]
+    },
+    {
+      "task_id": "task_map_signal_backwash",
+      "kind": "scouting",
+      "status": "active",
+      "title": "记录旧塔回流方向",
+      "summary": "旧信号塔试作完成后出现一次可记录的回流，需要在回流散尽前做成测标短札。",
+      "node_id": "old_signal_tower",
+      "npc_id": "npc_road_scout",
+      "objective_refs": [
+        "random_event_signal_backwash",
+        "sample_signal_echo_marker_trial"
+      ],
+      "reward_refs": [
+        "asset_signal_echo_marker",
+        "random_event_split_tide_pressure"
+      ]
+    },
+    {
+      "task_id": "task_contain_split_tide",
+      "kind": "defense",
+      "status": "active",
+      "title": "遏制东侧分潮",
+      "summary": "回声测标照出东侧暗脊，分散影潮即将绕开旧信号塔，需要准备短时连弧改造并守住新节点。",
+      "node_id": "east_dark_ridge",
+      "npc_id": "npc_wire_mender_003",
+      "objective_refs": [
+        "east_dark_ridge",
+        "random_event_split_tide_pressure",
+        "asset_overload_chain_breaker"
+      ],
+      "reward_refs": [
+        "sample_charged_copper_coil_trial",
+        "random_event_east_ridge_pressure"
       ]
     }
   ],
@@ -442,11 +549,29 @@
     {
       "random_event_id": "random_event_signal_backwash",
       "event_type": "research_opportunity",
-      "status": "pending",
+      "status": "available",
       "summary": "回光玻片完成试作后，可能出现一次短暂回流，可用于强化折射类装置，也可能提高旧塔压力。",
       "node_id": "old_signal_tower",
       "trigger_turn": 6,
       "related_task_id": "task_stabilize_old_signal_tower"
+    },
+    {
+      "random_event_id": "random_event_split_tide_pressure",
+      "event_type": "threat_warning",
+      "status": "available",
+      "summary": "旧塔回流照出一条新的分潮线，北路外缘可能出现更强的分散冲击。",
+      "node_id": "old_signal_tower",
+      "trigger_turn": 7,
+      "related_task_id": "task_map_signal_backwash"
+    },
+    {
+      "random_event_id": "random_event_east_ridge_pressure",
+      "event_type": "map_pressure",
+      "status": "pending",
+      "summary": "东侧暗脊压力继续升高，下一场防守需要兼顾旧路和新节点。",
+      "node_id": "east_dark_ridge",
+      "trigger_turn": 8,
+      "related_task_id": "task_contain_split_tide"
     }
   ]
 }

@@ -1,0 +1,152 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_stage_07_split_tide_containment",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "narrative_event",
+  "created_turn": 8,
+  "summary": "回声测标照出东侧暗脊分潮线，玩家获得一项高风险短时改造任务。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "split_tide_containment_planned"
+    },
+    {
+      "op": "set_random_event_status",
+      "random_event_id": "random_event_split_tide_pressure",
+      "status": "available"
+    },
+    {
+      "op": "introduce_map_node",
+      "node": {
+        "node_id": "east_dark_ridge",
+        "status": "known",
+        "threat_level": 4,
+        "visibility": "known",
+        "available_actions": [
+          "prepare_defense",
+          "field_research",
+          "contain_split_tide"
+        ]
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "northern_road_crossing",
+      "patch": {
+        "status": "contested",
+        "threat_level": 2,
+        "visibility": "visible",
+        "available_actions": [
+          "hold_route",
+          "field_research",
+          "support_east_ridge"
+        ]
+      }
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_contain_split_tide",
+        "kind": "defense",
+        "status": "active",
+        "title": "遏制东侧分潮",
+        "summary": "回声测标照出东侧暗脊，分散影潮即将绕开旧信号塔，需要准备短时连弧改造并守住新节点。",
+        "node_id": "east_dark_ridge",
+        "npc_id": "npc_wire_mender_003",
+        "objective_refs": [
+          "east_dark_ridge",
+          "random_event_split_tide_pressure",
+          "asset_overload_chain_breaker"
+        ],
+        "reward_refs": [
+          "sample_charged_copper_coil_trial",
+          "random_event_east_ridge_pressure"
+        ]
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "conductor_filament",
+      "amount_delta": -1
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "sample_charged_copper_coil_trial",
+        "display_name": "短压铜线圈样本",
+        "source_delta_id": "delta_stage_07_split_tide_containment",
+        "summary": "导线被短时压成不稳定线圈，可支撑一次连弧改造试作。"
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_overload_chain_breaker_trial",
+        "status": "queued",
+        "started_turn": 8,
+        "source_task_id": "task_contain_split_tide",
+        "source_sample_id": "sample_charged_copper_coil_trial",
+        "expected_turns": 1,
+        "expected_output": "过载连弧断潮改造"
+      }
+    },
+    {
+      "op": "update_npc_relationship",
+      "npc_id": "npc_wire_mender_003",
+      "relationship_delta": {
+        "trust": 0.06
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "split_tide_needs_chain_control",
+        "source": "split_tide_containment",
+        "visibility": "player_known",
+        "summary": "分散影潮会绕开单点防线，短时连弧和预警道具能帮助压住多路压力。"
+      }
+    },
+    {
+      "op": "schedule_random_event",
+      "random_event": {
+        "random_event_id": "random_event_east_ridge_pressure",
+        "event_type": "map_pressure",
+        "status": "pending",
+        "summary": "东侧暗脊压力继续升高，下一场防守需要兼顾旧路和新节点。",
+        "node_id": "east_dark_ridge",
+        "trigger_turn": 8,
+        "related_task_id": "task_contain_split_tide"
+      }
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "split_tide_containment_planned",
+        "turn": 8,
+        "kind": "world",
+        "summary": "东侧暗脊分潮线露出，断潮任务和高风险短时改造进入准备。"
+      }
+    },
+    {
+      "op": "set_flag",
+      "flag": "stage_07_split_tide_containment_planned",
+      "value": true
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "pressure",
+      "amount_delta": 0.12
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "hope",
+      "amount_delta": -0.03
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "visibility",
+      "amount_delta": 0.04
+    }
+  ]
+}

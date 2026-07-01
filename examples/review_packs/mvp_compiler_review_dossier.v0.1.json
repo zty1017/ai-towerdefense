@@ -135,6 +135,22 @@
       "gate": "build_stage05_plan_realization.py --validate"
     },
     {
+      "step_id": "09_multistage_content_pack",
+      "name": "多阶段内容生产包",
+      "purpose": "串行生成 Stage 05/06/07 的世界线、玩家线、任务、随机事件、样本和多类型资产候选，并导出详细内容包与标准阶段候选包供人工审查。",
+      "inputs": [
+        "Stage 04 RunWorldState",
+        "review boundaries",
+        "effect registry"
+      ],
+      "outputs": [
+        "MultistageContentPack",
+        "StageCandidatePack",
+        "Stage 05-07 artifacts"
+      ],
+      "gate": "build_multistage_content_pack.py --validate + validate_stage_candidate_pack.py"
+    },
+    {
       "step_id": "mvp_controlled_narrative_world_progression.workflow",
       "name": "mvp_controlled_narrative_world_progression.workflow",
       "purpose": "battle result + RunWorldState -> controlled NarrativeEventBundle -> WorldStateDelta -> next RunWorldState. No live provider calls.",
@@ -2865,10 +2881,16 @@
       "sha256": "bd9e14e5ac822552f46e483a166374e03a6127dd44a572fbeb86c29452fe1a65"
     },
     {
+      "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
+      "kind": "architecture_doc",
+      "exists": true,
+      "sha256": "6a081eed9f0403bcaa2470b35fc94f6cf5fbcc661cfa55fff09e9b7baf385593"
+    },
+    {
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "da705faefc879a6a08afe9ac630e74e17f3f9b207495af39246da89db1a94c79"
+      "sha256": "b6e38c1fb3806933a5b222da84e3aa770e538b5ed413feccbe7e25c500d51c45"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -2919,6 +2941,12 @@
       "sha256": "9c6fa6b90913ce4fc30902bac8a3716ecc80873d9519af045176b65e783b0d24"
     },
     {
+      "path": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "a7a4f8d19316ce822515f975a871a5d374c90d6fd91a8a71976634f0925a6416"
+    },
+    {
       "path": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
       "kind": "asset_source",
       "exists": true,
@@ -2929,6 +2957,12 @@
       "kind": "asset_source",
       "exists": true,
       "sha256": "dabfbcbcf1ea43d0300ab68d334c59aa58eb08767d79733c57c5c05c664bda11"
+    },
+    {
+      "path": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+      "kind": "asset_source",
+      "exists": true,
+      "sha256": "34ceb8ec68b4764a83aead4e2f7a54a31d3e281f0abe4e62ef35bd64eac13559"
     },
     {
       "path": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
@@ -2970,7 +3004,19 @@
       "path": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
       "kind": "narrative_bundle",
       "exists": true,
-      "sha256": "722708527b59c7070c950602fc9ae0164831af04f695d901fd2b0a7665243b75"
+      "sha256": "cc74e2f81ec0bca009d2bcc75d65a3be1514fd7c5ecc2c661174967a0c606a37"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_06_signal_resonance_trial.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "1c7efe8963cee516a0c6e0e78c29e2de6a2fd0d532d64c95e937ef6161550cba"
+    },
+    {
+      "path": "examples/narrative_bundles/stage_07_split_tide_containment.narrative_event_bundle.json",
+      "kind": "narrative_bundle",
+      "exists": true,
+      "sha256": "ace81e8a2cb445fd2b6bded319a7b23501a818d035274d37ad782a73e3093026"
     },
     {
       "path": "examples/proposals/echo_prism_relay.proposal.json",
@@ -2979,10 +3025,34 @@
       "sha256": "9a34321fbb86e8470b5b054d2fa8890a8cf9f35387ddadfddb5b160d80446f6a"
     },
     {
+      "path": "examples/proposals/overload_chain_breaker.proposal.json",
+      "kind": "proposal",
+      "exists": true,
+      "sha256": "ebaacacf1b5b3a8ade9ea3b1b55e5e26176f9de5ffb06fd6b15f0bd47b539298"
+    },
+    {
+      "path": "examples/proposals/signal_echo_marker.proposal.json",
+      "kind": "proposal",
+      "exists": true,
+      "sha256": "86b0b12f024fb2d385ab2412ed61b28f8f037dfe31ad428b9e5708cd8668d1a7"
+    },
+    {
       "path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
       "kind": "compilable_object_catalog",
       "exists": true,
       "sha256": "ba0bfdee5f691d46a3cfed19dd6a4bf3712323b352c77beeaa779139434b415c"
+    },
+    {
+      "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+      "kind": "multistage_content_pack",
+      "exists": true,
+      "sha256": "bc95f49273c64c07f8dac4d1a7ae92d6f71e191857c25368d50c70f278dc5523"
+    },
+    {
+      "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "kind": "stage_candidate_pack",
+      "exists": true,
+      "sha256": "eb5bb48c7c18beff2b285b7d29a7fdefb9d1bd4c711bfc3b9a6abdcc05f55088"
     },
     {
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -3024,7 +3094,19 @@
       "path": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
       "kind": "run_world_state",
       "exists": true,
-      "sha256": "e2dd128d2ef277fd7767590787ce651aa77f41cca8ae1a54fd8ea87f4b4fb443"
+      "sha256": "208cd3bf889604066212a8866089e584d480c643198c75af69da7d29eae450cd"
+    },
+    {
+      "path": "examples/run_world_states/demo_after_stage_06_signal_resonance.run_world_state.json",
+      "kind": "run_world_state",
+      "exists": true,
+      "sha256": "103228ae250dee6ee85b18a46145b867c3e7cf43fa3b31b9a385eb77cf1b6503"
+    },
+    {
+      "path": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
+      "kind": "run_world_state",
+      "exists": true,
+      "sha256": "a8cff2d922b0f2e751cbad83f74a7999a93816057b65e2689a1fbd09fc926e68"
     },
     {
       "path": "examples/runtime_packages/mvp_demo.runtime_package.json",
@@ -3204,7 +3286,19 @@
       "path": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
       "kind": "world_delta",
       "exists": true,
-      "sha256": "8f9054134fc51ed9a4c1bd9bf759de0ab6445ef6525d035779295b834f00d92a"
+      "sha256": "4ddf9bc02398afcf54318a23f16722785d3a8bee9ac482d49bcaab98eca13e41"
+    },
+    {
+      "path": "examples/world_deltas/stage_06_signal_resonance_trial.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "411b6830c2def3829076f5e375cb03bd50e1a505b7b55aa5968221a799e6e28c"
+    },
+    {
+      "path": "examples/world_deltas/stage_07_split_tide_containment.world_delta.json",
+      "kind": "world_delta",
+      "exists": true,
+      "sha256": "affd8c559305090f530285f7320dec8c2cf4fa538be41271a7eb0364da6c4a27"
     },
     {
       "path": "shared/schemas/compilable_object_catalog.v0.1.schema.json",
@@ -3243,10 +3337,16 @@
       "sha256": "da6b58e5da57785fe598c4e9c1d0f7f1827ab303c0868e754855f2398f9d2313"
     },
     {
+      "path": "tools/content_pipeline/build_multistage_content_pack.py",
+      "kind": "builder",
+      "exists": true,
+      "sha256": "5feab8cff3548ca0533ab84ef30709479d49bfb1a937abfc82f3a961e34d48e9"
+    },
+    {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "77602eac69094fdfb019e55be8f2b7e9daf4d3ca16522184942ac6598ae1f1a5"
+      "sha256": "9b1163491a37958c506e21cbb39a2cb97f48f8a8a87d204e00257923cc1cb27e"
     },
     {
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",
@@ -3337,6 +3437,14 @@
     {
       "purpose": "校验 Stage 05 资产提案和候选资产",
       "command": "python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json && python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json"
+    },
+    {
+      "purpose": "构建并校验多阶段内容生产包",
+      "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate"
+    },
+    {
+      "purpose": "校验多阶段阶段候选包",
+      "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
     },
     {
       "purpose": "重建资产晋升报告到 /tmp",

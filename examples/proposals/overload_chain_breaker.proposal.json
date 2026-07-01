@@ -1,0 +1,34 @@
+{
+  "id": "proposal_overload_chain_breaker",
+  "mode": "runtime_experimental",
+  "title": "过载连弧断潮改造方案",
+  "summary": "把短压铜线圈接入现有塔座，让下一段攻击短时跳向多个敌人，用来压住分散影潮。",
+  "intended_asset_type": "temporary_mod",
+  "expected_effect": [
+    "damage",
+    "risk"
+  ],
+  "risk_level": "high",
+  "estimated_cost": "medium",
+  "required_inputs": {
+    "npc_ids": [
+      "npc_wire_mender_003"
+    ],
+    "materials": [
+      "conductor_filament",
+      "sample_charged_copper_coil_trial"
+    ],
+    "facility": "field_workshop",
+    "knowledge_tags": [
+      "split_tide_needs_chain_control",
+      "signal_echo_marker_possible"
+    ]
+  },
+  "known_tradeoffs": [
+    "持续时间短，只适合关键波次。",
+    "改造期间可能让被接入的塔短暂停摆。",
+    "不建议在资源不足时连续使用。"
+  ],
+  "player_prompt": "我想把现有防御塔临时改造成能连跳攻击的形态，用来顶住分散影潮。",
+  "worldbook_id": "long_night_lanterns"
+}

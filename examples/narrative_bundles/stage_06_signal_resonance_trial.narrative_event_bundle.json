@@ -1,0 +1,191 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_06_signal_resonance_trial",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "research_job",
+  "created_turn": 7,
+  "stage": "act_1_stage_06_signal_resonance_trial",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "node_stage06_world_signal_stabilized",
+      "stage": "act_1_stage_06_signal_resonance_trial",
+      "phase": "signal_resonance_trial",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "research_complete",
+        "ref": "research_echo_prism_relay_trial",
+        "summary": "旧信号塔的回光棱座完成第一次稳定。"
+      },
+      "prerequisites": [
+        "task_stabilize_old_signal_tower",
+        "sample_resonant_glass_shard_trial"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "旧塔短暂稳住",
+        "blocks": [
+          {
+            "text": "回光棱座咬住旧塔铜槽后，塔顶的白线短暂并拢，北路影潮的来向被照出一段。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "modify_map_node_state",
+        "reward_player_choice",
+        "trigger_random_event"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "old_signal_tower",
+          "summary": "旧信号塔从受压节点回到暂稳状态。"
+        },
+        {
+          "hook": "trigger_random_event",
+          "target_ref": "random_event_signal_backwash",
+          "summary": "回光回流事件进入可处理状态。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_06_signal_resonance_trial",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "set_random_event_status",
+          "unlock_blueprint"
+        ],
+        "summary": "完成旧塔试作，并把回流压力转入下一步处理。"
+      }
+    },
+    {
+      "node_id": "node_stage06_player_echo_marker_task",
+      "stage": "act_1_stage_06_signal_resonance_trial",
+      "phase": "signal_resonance_trial",
+      "lane": "player_line",
+      "scope": "quest",
+      "trigger": {
+        "kind": "research_complete",
+        "ref": "asset_echo_prism_relay",
+        "summary": "玩家线获得可复用试作蓝图和回声测标需求。"
+      },
+      "prerequisites": [
+        "old_signal_tower_resonance_measured",
+        "npc_road_scout"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "回声测标",
+        "blocks": [
+          {
+            "speaker_id": "npc_road_scout",
+            "speaker_name": "北路斥候",
+            "text": "塔稳住以后，余光会反弹一次。若把它记下来，下一段黑路就不用靠猜。"
+          },
+          {
+            "text": "新的测标任务被加入路牌，完成后可提前看见分潮方向。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_quest_hook",
+        "create_research_need",
+        "teach_mechanic"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "task_map_signal_backwash",
+          "summary": "创建回流测标任务。"
+        },
+        {
+          "hook": "create_research_need",
+          "target_ref": "research_signal_echo_marker_trial",
+          "summary": "把回声测标作为支援道具候选试作。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_06_signal_resonance_trial",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "upsert_task",
+          "upsert_research_job",
+          "add_temporary_sample"
+        ],
+        "summary": "生成支援道具任务和临时样本。"
+      }
+    },
+    {
+      "node_id": "node_stage06_shared_echo_asset",
+      "stage": "act_1_stage_06_signal_resonance_trial",
+      "phase": "signal_resonance_trial",
+      "lane": "shared",
+      "scope": "resource",
+      "trigger": {
+        "kind": "player_choice",
+        "ref": "random_event_signal_backwash",
+        "summary": "玩家选择把回流记录成可携带测标。"
+      },
+      "prerequisites": [
+        "sample_resonant_glass_shard_trial",
+        "asset_echo_prism_relay"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "workshop_notice",
+        "title": "余光被收进短札",
+        "blocks": [
+          {
+            "text": "旧塔回流被压成一枚短札，能在下一段黑路开始前标出敌群来向。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_material",
+        "create_research_need",
+        "reward_player_choice"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_material",
+          "target_ref": "sample_signal_echo_marker_trial",
+          "summary": "生成回声测标临时样本。"
+        },
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "asset_signal_echo_marker",
+          "summary": "提供支援道具候选资产。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_06_signal_resonance_trial",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "add_temporary_sample",
+          "schedule_random_event"
+        ],
+        "summary": "给予少量灯灰回收，并为下一段分潮压力做铺垫。"
+      }
+    }
+  ]
+}

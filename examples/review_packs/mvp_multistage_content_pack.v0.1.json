@@ -1,0 +1,201 @@
+{
+  "schema_version": "multistage_content_pack.v0.1",
+  "pack_id": "mvp_multistage_content_pack_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "builder_reads_env": false,
+    "builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "stage_candidate_pack_promotion": "not_included"
+  },
+  "pipeline_logic": [
+    "从当前运行态和计划对象生成单阶段叙事包。",
+    "叙事包只提出意图，真正提交必须落到受控 WorldStateDelta。",
+    "每个 Delta 先过结构校验和语义门，再应用到下一运行态。",
+    "每阶段资产先由 Proposal 进入 CompiledAssetCandidate，再过效果白名单校验。",
+    "多阶段链按上一阶段 next RunWorldState 串行推进，便于回放和回滚。"
+  ],
+  "stage_summaries": [
+    {
+      "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+      "stage_label": "stage05",
+      "bundle_file": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+      "next_state_file": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
+      "proposal_file": "examples/proposals/echo_prism_relay.proposal.json",
+      "compiled_asset_file": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_global_state": 3,
+        "adjust_resource": 1,
+        "append_event": 1,
+        "schedule_random_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 1,
+        "set_progress_phase": 1,
+        "set_random_event_status": 1,
+        "unlock_fact": 1,
+        "update_npc_relationship": 1,
+        "upsert_research_job": 1,
+        "upsert_task": 1
+      },
+      "asset_candidate_id": "asset_echo_prism_relay",
+      "asset_type": "tower_blueprint",
+      "effect_blocks": [
+        "slow",
+        "aura_buff"
+      ],
+      "state_counts": {
+        "tasks": 5,
+        "random_events": 3,
+        "temporary_samples": 4,
+        "blueprints": 1,
+        "map_nodes": 5
+      }
+    },
+    {
+      "stage_id": "act_1_stage_06_signal_resonance_trial",
+      "stage_label": "stage06",
+      "bundle_file": "examples/narrative_bundles/stage_06_signal_resonance_trial.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_06_signal_resonance_trial.world_delta.json",
+      "next_state_file": "examples/run_world_states/demo_after_stage_06_signal_resonance.run_world_state.json",
+      "proposal_file": "examples/proposals/signal_echo_marker.proposal.json",
+      "compiled_asset_file": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_global_state": 3,
+        "adjust_resource": 1,
+        "append_event": 1,
+        "schedule_random_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 1,
+        "set_progress_phase": 1,
+        "set_random_event_status": 1,
+        "set_task_status": 1,
+        "unlock_blueprint": 1,
+        "unlock_fact": 1,
+        "update_npc_relationship": 1,
+        "upsert_research_job": 2,
+        "upsert_task": 1
+      },
+      "asset_candidate_id": "asset_signal_echo_marker",
+      "asset_type": "support_item",
+      "effect_blocks": [
+        "scout_reveal",
+        "countermeasure_hint"
+      ],
+      "state_counts": {
+        "tasks": 6,
+        "random_events": 4,
+        "temporary_samples": 5,
+        "blueprints": 2,
+        "map_nodes": 5
+      }
+    },
+    {
+      "stage_id": "act_1_stage_07_split_tide_containment",
+      "stage_label": "stage07",
+      "bundle_file": "examples/narrative_bundles/stage_07_split_tide_containment.narrative_event_bundle.json",
+      "world_delta_file": "examples/world_deltas/stage_07_split_tide_containment.world_delta.json",
+      "next_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
+      "proposal_file": "examples/proposals/overload_chain_breaker.proposal.json",
+      "compiled_asset_file": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+      "lane_counts": {
+        "player_line": 1,
+        "shared": 1,
+        "world_line": 1
+      },
+      "delta_operation_counts": {
+        "add_temporary_sample": 1,
+        "adjust_global_state": 3,
+        "adjust_resource": 1,
+        "append_event": 1,
+        "introduce_map_node": 1,
+        "schedule_random_event": 1,
+        "set_flag": 1,
+        "set_map_node_state": 1,
+        "set_progress_phase": 1,
+        "set_random_event_status": 1,
+        "unlock_fact": 1,
+        "update_npc_relationship": 1,
+        "upsert_research_job": 1,
+        "upsert_task": 1
+      },
+      "asset_candidate_id": "asset_overload_chain_breaker",
+      "asset_type": "temporary_mod",
+      "effect_blocks": [
+        "charge_burst",
+        "risk_modifier"
+      ],
+      "state_counts": {
+        "tasks": 7,
+        "random_events": 5,
+        "temporary_samples": 6,
+        "blueprints": 2,
+        "map_nodes": 6
+      }
+    }
+  ],
+  "summary": {
+    "stage_count": 3,
+    "asset_type_counts": {
+      "support_item": 1,
+      "temporary_mod": 1,
+      "tower_blueprint": 1
+    },
+    "effect_block_counts": {
+      "aura_buff": 1,
+      "charge_burst": 1,
+      "countermeasure_hint": 1,
+      "risk_modifier": 1,
+      "scout_reveal": 1,
+      "slow": 1
+    },
+    "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
+    "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+  },
+  "validation_results": {
+    "stage05.stage_context": "passed",
+    "stage05.narrative_bundle": "passed",
+    "stage05.world_delta": "passed",
+    "stage05.proposal": "passed",
+    "stage05.asset_candidate": "passed",
+    "stage05.next_run_state": "passed",
+    "stage05.world_delta_semantics": "passed",
+    "stage05.world_delta_apply": "passed",
+    "stage06.narrative_bundle": "passed",
+    "stage06.world_delta": "passed",
+    "stage06.next_run_state": "passed",
+    "stage06.proposal": "passed",
+    "stage06.asset_candidate": "passed",
+    "stage06.world_delta_semantics": "passed",
+    "stage06.world_delta_apply": "passed",
+    "stage07.narrative_bundle": "passed",
+    "stage07.world_delta": "passed",
+    "stage07.next_run_state": "passed",
+    "stage07.proposal": "passed",
+    "stage07.asset_candidate": "passed",
+    "stage07.world_delta_semantics": "passed",
+    "stage07.world_delta_apply": "passed"
+  },
+  "review_notes": [
+    "Stage 05 仍来自单阶段计划落地样例，用于防御塔候选。",
+    "Stage 06 生成支援道具候选，并把试作结果转为侦测能力。",
+    "Stage 07 生成高风险临时改造候选，并打开下一段压力节点。",
+    "本包用于审查流水线和内容质量，不代表这些阶段已经正式进入 MVP 战斗主路径。"
+  ]
+}

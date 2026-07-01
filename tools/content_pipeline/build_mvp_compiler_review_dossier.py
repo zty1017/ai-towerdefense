@@ -36,6 +36,8 @@ DEFAULT_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_stage_candidate
 DEFAULT_COMPILABLE_OBJECT_CATALOG = ROOT / "examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
 DEFAULT_COMPILABLE_OBJECT_PLAN = ROOT / "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json"
 DEFAULT_STAGE05_PLAN_REALIZATION_REPORT = ROOT / "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json"
+DEFAULT_MULTISTAGE_CONTENT_PACK = ROOT / "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK = ROOT / "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
 DEFAULT_RUNTIME_PACKAGES = [
     ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
@@ -565,6 +567,14 @@ def pipeline_overview() -> list[dict[str, Any]]:
             "outputs": ["NarrativeEventBundle", "WorldStateDelta", "next RunWorldState", "Proposal", "CompiledAssetCandidate"],
             "gate": "build_stage05_plan_realization.py --validate",
         },
+        {
+            "step_id": "09_multistage_content_pack",
+            "name": "多阶段内容生产包",
+            "purpose": "串行生成 Stage 05/06/07 的世界线、玩家线、任务、随机事件、样本和多类型资产候选，并导出详细内容包与标准阶段候选包供人工审查。",
+            "inputs": ["Stage 04 RunWorldState", "review boundaries", "effect registry"],
+            "outputs": ["MultistageContentPack", "StageCandidatePack", "Stage 05-07 artifacts"],
+            "gate": "build_multistage_content_pack.py --validate + validate_stage_candidate_pack.py",
+        },
     ] + [workflow_step(path) for path in CORE_WORKFLOWS if repo_path(path).is_file()]
 
 
@@ -621,6 +631,14 @@ def validation_commands() -> list[dict[str, str]]:
         {
             "purpose": "校验 Stage 05 资产提案和候选资产",
             "command": "python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json && python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        },
+        {
+            "purpose": "构建并校验多阶段内容生产包",
+            "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate",
+        },
+        {
+            "purpose": "校验多阶段阶段候选包",
+            "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
         },
         {
             "purpose": "重建资产晋升报告到 /tmp",
@@ -741,6 +759,36 @@ def stage05_plan_realization_evidence(report_path: Path) -> list[tuple[str, str]
     return evidence
 
 
+def multistage_content_pack_evidence(
+    content_pack_path: Path,
+    stage_candidate_pack_path: Path,
+) -> list[tuple[str, str]]:
+    evidence = [
+        ("tools/content_pipeline/build_multistage_content_pack.py", "builder"),
+        ("docs/MULTISTAGE_CONTENT_PACK_V0_1.md", "architecture_doc"),
+        (rel(content_pack_path), "multistage_content_pack"),
+        (rel(stage_candidate_pack_path), "stage_candidate_pack"),
+    ]
+    if not content_pack_path.is_file():
+        return evidence
+
+    pack = load_json(content_pack_path)
+    for stage in as_list(pack.get("stage_summaries")):
+        if not isinstance(stage, dict):
+            continue
+        for key, kind in (
+            ("bundle_file", "narrative_bundle"),
+            ("world_delta_file", "world_delta"),
+            ("next_state_file", "run_world_state"),
+            ("proposal_file", "proposal"),
+            ("compiled_asset_file", "asset_source"),
+        ):
+            value = stage.get(key)
+            if isinstance(value, str) and value:
+                evidence.append((value, kind))
+    return evidence
+
+
 def known_risks(promotion_report: dict[str, Any]) -> list[dict[str, str]]:
     summary = as_obj(promotion_report.get("summary"))
     candidate_count = int(summary.get("candidate_or_blocked_reference_count") or 0)
@@ -801,6 +849,7 @@ def build_dossier(
         ("docs/COMPILABLE_OBJECT_MODEL_V0_1.md", "architecture_doc"),
         ("docs/COMPILABLE_OBJECT_PLAN_V0_1.md", "architecture_doc"),
         ("docs/STAGE05_PLAN_REALIZATION_V0_1.md", "architecture_doc"),
+        ("docs/MULTISTAGE_CONTENT_PACK_V0_1.md", "architecture_doc"),
         ("docs/STAGE_CANDIDATE_PACK_V0_1.md", "architecture_doc"),
         ("docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md", "architecture_doc"),
         ("shared/schemas/compilable_object_catalog.v0.1.schema.json", "schema"),
@@ -809,6 +858,7 @@ def build_dossier(
         ("tools/content_pipeline/build_compilable_object_catalog.py", "builder"),
         ("tools/content_pipeline/build_compilable_object_plan.py", "builder"),
         ("tools/content_pipeline/build_stage05_plan_realization.py", "builder"),
+        ("tools/content_pipeline/build_multistage_content_pack.py", "builder"),
         ("tools/content_pipeline/build_stage_candidate_pack.py", "builder"),
         ("tools/content_pipeline/validate_compilable_object_catalog.py", "validator"),
         ("tools/content_pipeline/validate_compilable_object_plan.py", "validator"),
@@ -821,6 +871,12 @@ def build_dossier(
     ]
     evidence_paths.extend(
         stage05_plan_realization_evidence(DEFAULT_STAGE05_PLAN_REALIZATION_REPORT)
+    )
+    evidence_paths.extend(
+        multistage_content_pack_evidence(
+            DEFAULT_MULTISTAGE_CONTENT_PACK,
+            DEFAULT_MULTISTAGE_STAGE_CANDIDATE_PACK,
+        )
     )
     for runtime_package_path in runtime_package_paths:
         evidence_paths.append((rel(runtime_package_path), "runtime_package"))
