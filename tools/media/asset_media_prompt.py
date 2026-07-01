@@ -137,25 +137,31 @@ def build_ui_card_prompt(candidate: dict[str, Any]) -> str:
     """Build a prompt for a player-facing inventory/research card image."""
     presentation = candidate.get("presentation", {})
     gameplay = candidate.get("gameplay", {})
-    name = presentation.get("name", "asset")
-    desc = presentation.get("short_description", "")
-    anim_prompt = presentation.get("animation_card_prompt", "")
     visual_tags = presentation.get("visual_tags", [])
     kind = gameplay.get("asset_type", "asset") if isinstance(gameplay, dict) else "asset"
+    effect_blocks = gameplay.get("effect_blocks", []) if isinstance(gameplay, dict) else []
+    effect_types = [str(e.get("type")) for e in effect_blocks if isinstance(e, dict) and e.get("type")]
 
     parts: list[str] = [
-        "2D game card illustration only, no text, no letters, no numbers, no watermark",
-        "no readable glyphs, no captions, no UI labels, no generated writing",
-        "portrait card composition for a tower defense strategy game, empty decorative frame allowed",
-        f"asset type: {kind}, {name}",
+        "2D game inventory illustration only, not a card UI, borderless artwork, no frame, no title plaque",
+        "absolutely no text, no letters, no Chinese characters, no numbers, no watermark",
+        "no readable glyphs, no captions, no UI labels, no generated writing, no text boxes, no scroll writing",
+        "single clean illustration for a tower defense strategy game, frontend will draw all UI frames and labels separately",
+        f"asset type: {kind}",
     ]
-    if anim_prompt:
-        parts.append(str(anim_prompt))
-    if desc:
-        parts.append(str(desc))
+    if effect_types:
+        parts.append(f"gameplay effects as visual metaphor only: {', '.join(effect_types)}")
     if visual_tags:
-        parts.append(", ".join(str(t) for t in visual_tags))
-    parts.append("dark fantasy lantern-world style, clear subject, polished card art with blank label areas")
+        safe_tags = [str(tag) for tag in visual_tags if str(tag).isascii()]
+        if safe_tags:
+            parts.append(", ".join(safe_tags))
+    if kind == "intel_asset":
+        parts.append("subject: glowing survey map object, lantern marker, abstract route lines, sealed compass, no written symbols")
+    elif kind == "support_item":
+        parts.append("subject: small deployable lantern-world device on clean background")
+    elif kind == "temporary_mod":
+        parts.append("subject: upgrade module device, energy coil, compact mechanical part")
+    parts.append("dark fantasy lantern-world style, clear subject, polished item illustration, clean background")
     return ", ".join(parts)
 
 

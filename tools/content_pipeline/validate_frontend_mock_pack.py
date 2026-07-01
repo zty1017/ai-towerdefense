@@ -115,6 +115,25 @@ def validate(pack: dict[str, Any]) -> list[str]:
         media_refs = asset.get("media_refs")
         if not isinstance(media_refs, dict) or not media_refs.get("icon_token"):
             errors.append(f"assets[{index}] missing fallback icon_token")
+            continue
+        generated_roles = media_refs.get("generated_roles")
+        if generated_roles is not None:
+            if not isinstance(generated_roles, dict) or not generated_roles:
+                errors.append(f"assets[{index}].media_refs.generated_roles must be non-empty object")
+            elif "icon" not in generated_roles:
+                errors.append(f"assets[{index}].media_refs.generated_roles missing icon")
+            if isinstance(generated_roles, dict):
+                for role, ref in generated_roles.items():
+                    if not isinstance(ref, dict):
+                        errors.append(f"assets[{index}].media_refs.generated_roles.{role} must be object")
+                        continue
+                    url = ref.get("url")
+                    if not isinstance(url, str) or not url.startswith("/assets/"):
+                        errors.append(f"assets[{index}].media_refs.generated_roles.{role}.url must start with /assets/")
+                    for dim_key in ("width", "height"):
+                        dim = ref.get(dim_key)
+                        if not isinstance(dim, int) or dim <= 0:
+                            errors.append(f"assets[{index}].media_refs.generated_roles.{role}.{dim_key} must be positive integer")
 
     summary = pack.get("compiler_summary")
     if isinstance(summary, dict):

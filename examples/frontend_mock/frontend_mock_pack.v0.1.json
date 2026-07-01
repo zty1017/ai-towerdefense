@@ -964,7 +964,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.tower_blueprint",
         "sprite_token": "fallback_sprite.tower_blueprint",
         "palette_hint": [
@@ -974,7 +974,27 @@
           "burst"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_ash_burst_lantern_icon_5045e492",
+            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_icon_5045e492.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_ash_burst_lantern_tower_sprite_9263019f",
+            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "battle_preview": {
+            "media_id": "asset_ash_burst_lantern_battle_preview_1fff4c18",
+            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_battle_preview_1fff4c18.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1106,7 +1126,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.intel_asset",
         "sprite_token": "fallback_sprite.intel_asset",
         "palette_hint": [
@@ -1114,7 +1134,27 @@
           "compiled_asset"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "intel_dark_echo_survey_001_icon_cec61ac8",
+            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_icon_cec61ac8.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "intel_dark_echo_survey_001_ui_card_7219d045",
+            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_ui_card_7219d045.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "effect_preview": {
+            "media_id": "intel_dark_echo_survey_001_effect_preview_479c7fa9",
+            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_effect_preview_479c7fa9.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1246,7 +1286,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.tower_blueprint",
         "sprite_token": "fallback_sprite.tower_blueprint",
         "palette_hint": [
@@ -1255,7 +1295,27 @@
           "control_tower"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_light_slow_tower_001_icon_1a0e42e9",
+            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_icon_1a0e42e9.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
+            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "battle_preview": {
+            "media_id": "asset_light_slow_tower_001_battle_preview_e56b2d48",
+            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_battle_preview_e56b2d48.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1395,7 +1455,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.support_item",
         "sprite_token": "fallback_sprite.support_item",
         "palette_hint": [
@@ -1403,7 +1463,27 @@
           "compiled_asset"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "effect_preview": {
+            "media_id": "asset_mirror_lure_trap_001_effect_preview_f762412d",
+            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_effect_preview_f762412d.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1544,7 +1624,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.temporary_mod",
         "sprite_token": "fallback_sprite.temporary_mod",
         "palette_hint": [
@@ -1554,7 +1634,27 @@
           "compiled_asset"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "mod_overload_chain_arc_001_icon_6c776311",
+            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_icon_6c776311.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "mod_overload_chain_arc_001_ui_card_6d142b71",
+            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "effect_preview": {
+            "media_id": "mod_overload_chain_arc_001_effect_preview_8d957767",
+            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_effect_preview_8d957767.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1705,7 +1805,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.intel_asset",
         "sprite_token": "fallback_sprite.intel_asset",
         "palette_hint": [
@@ -1714,7 +1814,27 @@
           "scouting"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "intel_shadow_tide_survey_icon_3ba77691",
+            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_icon_3ba77691.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "intel_shadow_tide_survey_ui_card_192910c1",
+            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_ui_card_192910c1.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "effect_preview": {
+            "media_id": "intel_shadow_tide_survey_effect_preview_4124c579",
+            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_effect_preview_4124c579.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -1878,7 +1998,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.support_item",
         "sprite_token": "fallback_sprite.support_item",
         "palette_hint": [
@@ -1888,7 +2008,27 @@
           "light"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_signal_wick_decoy_icon_9fac3cb5",
+            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_icon_9fac3cb5.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_signal_wick_decoy_ui_card_c0b43d8f",
+            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "effect_preview": {
+            "media_id": "asset_signal_wick_decoy_effect_preview_26fbc1bd",
+            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_effect_preview_26fbc1bd.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
@@ -2031,7 +2171,7 @@
         }
       ],
       "media_refs": {
-        "mode": "fallback",
+        "mode": "generated",
         "icon_token": "fallback_icon.tower_blueprint",
         "sprite_token": "fallback_sprite.tower_blueprint",
         "palette_hint": [
@@ -2039,7 +2179,27 @@
           "compiled_asset"
         ],
         "readiness": "fallback_ready",
-        "note": "前端可用内置形状、色板和 visual_recipes 渲染占位资产。"
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_wick_barrier_pylon_icon_09e6177c",
+            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_icon_09e6177c.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_wick_barrier_pylon_tower_sprite_7472556d",
+            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "battle_preview": {
+            "media_id": "asset_wick_barrier_pylon_battle_preview_c474023b",
+            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_battle_preview_c474023b.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
       },
       "promotion": {
         "promotion_state": "fallback_ready",
