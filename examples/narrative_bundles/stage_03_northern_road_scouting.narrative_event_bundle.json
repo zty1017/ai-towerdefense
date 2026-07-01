@@ -1,0 +1,229 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_03_northern_road_scouting",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "world_tick",
+  "created_turn": 3,
+  "stage": "act_1_stage_03_northern_road_scouting",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "stage_03_world_northern_echo",
+      "stage": "act_1_stage_03_northern_road_scouting",
+      "phase": "preparation",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "dark_unknown_north",
+        "summary": "北方深暗出现断续回光。"
+      },
+      "prerequisites": [
+        "wire_mender_hint_unlocked",
+        "supply_line_hub_to_gray_damaged"
+      ],
+      "visibility": "hinted",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "北路回声",
+        "blocks": [
+          {
+            "text": "北方深暗没有散开，只在边缘吐出几粒冷光。它们排成一条旧路的形状，又很快缩回雾里。"
+          },
+          {
+            "speaker_id": "npc_gray_lantern_keeper",
+            "speaker_name": "灰灯驿站守灯人",
+            "text": "那边若真有旧信标塔，影潮就不只会从东南来。先看清路，再谈防守。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_quest_hook",
+        "open_resource_route",
+        "advance_main_pressure"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "quest_scout_northern_road",
+          "summary": "开启北路侦测任务，暂不完全揭开黑暗区域。"
+        },
+        {
+          "hook": "open_resource_route",
+          "target_ref": "northern_road_crossing",
+          "summary": "允许玩家进入北路边缘进行短程侦测。"
+        },
+        {
+          "hook": "advance_main_pressure",
+          "target_ref": "old_signal_tower",
+          "summary": "把旧信标塔作为后续压力来源和可选战斗节点。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_03_northern_road_scouting",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_flag",
+          "unlock_fact",
+          "append_event"
+        ],
+        "summary": "提交北路侦测入口、旧信标塔传闻和黑暗仍保持遮蔽的事实。"
+      }
+    },
+    {
+      "node_id": "stage_03_player_intel_tools",
+      "stage": "act_1_stage_03_northern_road_scouting",
+      "phase": "preparation",
+      "lane": "player_line",
+      "scope": "quest",
+      "trigger": {
+        "kind": "player_choice",
+        "ref": "quest_scout_northern_road",
+        "summary": "玩家选择先侦测路径，而不是直接开战。"
+      },
+      "prerequisites": [
+        "lantern_ash_available",
+        "conductor_filament_available"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "测路札记",
+        "blocks": [
+          {
+            "speaker_id": "npc_workshop_mentor",
+            "speaker_name": "临时工坊老师傅",
+            "text": "灯灰能记住风向，导线能听见旧塔余响。别拿它们伤敌，拿来辨路。"
+          },
+          {
+            "text": "一张粗糙札记被压在灯下，路线边缘只显出两段弧线。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "teach_mechanic",
+        "create_research_need",
+        "reward_player_choice"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "teach_mechanic",
+          "target_ref": "intel_dark_echo_survey_001",
+          "summary": "展示情报资产用于揭示路径和弱点，不直接造成伤害。"
+        },
+        {
+          "hook": "create_research_need",
+          "target_ref": "path_prediction",
+          "summary": "把未知路线转化为情报类试作需求。"
+        },
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "northern_route_hint",
+          "summary": "让侦测选择影响下一战布置和提示。"
+        }
+      ],
+      "npc_refs": [
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_03_northern_road_scouting",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "unlock_fact",
+          "set_flag",
+          "append_event"
+        ],
+        "summary": "提交情报札记使用、路径提示事实、材料消耗和侦测选择事件。"
+      }
+    },
+    {
+      "node_id": "stage_03_shared_road_scout_candidate",
+      "stage": "act_1_stage_03_northern_road_scouting",
+      "phase": "preparation",
+      "lane": "shared",
+      "scope": "npc",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "northern_road_crossing",
+        "summary": "北路边缘发现留下刻痕的路标。"
+      },
+      "prerequisites": [
+        "quest_scout_northern_road_started"
+      ],
+      "visibility": "hinted",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "路标刻痕",
+        "blocks": [
+          {
+            "text": "路标背面有新刻的三道浅痕，像是在提醒后来人：第二道雾里有岔口。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_functional_npc",
+        "create_quest_hook",
+        "modify_map_node_state"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_functional_npc",
+          "target_ref": "npc_road_scout",
+          "summary": "引入可提升侦测可信度的斥候 NPC 候选。"
+        },
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "quest_find_road_scout",
+          "summary": "让玩家可追踪刻痕来源，解锁更稳定的侦测协助。"
+        },
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "northern_road_crossing",
+          "summary": "把北路从完全未知推进到边缘可侦测。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper",
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [
+        {
+          "npc_id": "npc_road_scout",
+          "npc_kind": "functional",
+          "display_name": "北路斥候",
+          "narrative_roles": [
+            "pathfinder",
+            "survivor_contact"
+          ],
+          "gameplay_roles": [
+            "scout_reveal",
+            "path_prediction",
+            "weakness_hint"
+          ],
+          "introduction_status": "hinted"
+        }
+      ],
+      "proposed_world_delta_ref": "delta_stage_03_northern_road_scouting",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "unlock_fact",
+          "set_map_node_state",
+          "set_flag",
+          "append_event"
+        ],
+        "summary": "提交斥候线索、北路边缘状态和后续追踪任务入口。"
+      }
+    }
+  ]
+}

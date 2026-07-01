@@ -1,0 +1,227 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_02_dawn_review_supply_line",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "battle_result",
+  "created_turn": 2,
+  "stage": "act_1_stage_02_dawn_review_supply_line",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "stage_02_world_supply_line_frayed",
+      "stage": "act_1_stage_02_dawn_review_supply_line",
+      "phase": "resolution",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "battle_result",
+        "ref": "gray_lantern_station",
+        "summary": "灰灯驿站守住，但补给线受损。"
+      },
+      "prerequisites": [
+        "gray_lantern_station_defended"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "黎明护线",
+        "blocks": [
+          {
+            "text": "黎明没有驱散长夜，只把断裂的导线照得更清楚。中枢至灰灯的补给线有三处焦痕。"
+          },
+          {
+            "speaker_id": "npc_gray_lantern_keeper",
+            "speaker_name": "灰灯驿站守灯人",
+            "text": "驿站还在，可补给线若再断一次，下一夜我们就只能靠库存硬撑。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "modify_map_node_state",
+        "open_resource_route",
+        "increase_threat"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "supply_line_hub_to_gray",
+          "summary": "把补给线推进到受损待修状态。"
+        },
+        {
+          "hook": "open_resource_route",
+          "target_ref": "lamp_wick_store",
+          "summary": "引导玩家关注灯芯仓和后续资源保护。"
+        },
+        {
+          "hook": "increase_threat",
+          "target_ref": "shadow_tide_edge_southeast",
+          "summary": "记录影潮未退，只是改变了压迫方向。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_02_dawn_review_supply_line",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "adjust_global_state",
+          "append_event"
+        ],
+        "summary": "提交补给线受损、灯芯仓重要性提升与世界压力变化。"
+      }
+    },
+    {
+      "node_id": "stage_02_player_snare_review",
+      "stage": "act_1_stage_02_dawn_review_supply_line",
+      "phase": "resolution",
+      "lane": "player_line",
+      "scope": "workshop",
+      "trigger": {
+        "kind": "battle_result",
+        "ref": "sample_trap_7f3a",
+        "summary": "折光绊索有效，但消耗过快。"
+      },
+      "prerequisites": [
+        "sample_trap_7f3a_used",
+        "gray_lantern_station_defended"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "战后复盘",
+        "blocks": [
+          {
+            "speaker_id": "npc_workshop_mentor",
+            "speaker_name": "临时工坊老师傅",
+            "text": "绊索的思路对，可它吃线太快。把灯灰掺进去，下一件东西至少别一碰就烧穿。"
+          },
+          {
+            "text": "战场边缘扫回一小撮温热灯灰，灰里夹着没有熄尽的金点。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "explain_battle_result",
+        "introduce_material",
+        "offer_workshop_hook"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "explain_battle_result",
+          "target_ref": "sample_trap_7f3a",
+          "summary": "说明首个样品解决了迟滞问题，但暴露耐久缺陷。"
+        },
+        {
+          "hook": "introduce_material",
+          "target_ref": "lantern_ash",
+          "summary": "把灯灰作为稳定材料纳入后续研发。"
+        },
+        {
+          "hook": "offer_workshop_hook",
+          "target_ref": "asset_wick_barrier_pylon",
+          "summary": "引出更稳定的护线与防护类试作方向。"
+        }
+      ],
+      "npc_refs": [
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_02_dawn_review_supply_line",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "unlock_fact",
+          "update_npc_relationship",
+          "append_event"
+        ],
+        "summary": "提交灯灰入账、样品缺陷事实、老师傅信任变化与复盘事件。"
+      }
+    },
+    {
+      "node_id": "stage_02_shared_wire_mender_hint",
+      "stage": "act_1_stage_02_dawn_review_supply_line",
+      "phase": "resolution",
+      "lane": "shared",
+      "scope": "npc",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "supply_line_hub_to_gray",
+        "summary": "补给线修补时，北侧旧线传来回光。"
+      },
+      "prerequisites": [
+        "supply_line_hub_to_gray_damaged"
+      ],
+      "visibility": "hinted",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "旧线回光",
+        "blocks": [
+          {
+            "text": "守灯人说，北路有人懂得补旧线。那盏小灯总在断线前后出现。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_functional_npc",
+        "create_quest_hook",
+        "offer_workshop_hook"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_functional_npc",
+          "target_ref": "npc_wire_mender_003",
+          "summary": "引入可降低护线试作成本的功能 NPC 候选。"
+        },
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "quest_find_wire_mender",
+          "summary": "给北路侦察留下可追踪的人物线索。"
+        },
+        {
+          "hook": "offer_workshop_hook",
+          "target_ref": "asset_signal_wick_decoy",
+          "summary": "让诱饵类道具与补线知识产生玩法关联。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper",
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [
+        {
+          "npc_id": "npc_wire_mender_003",
+          "npc_kind": "functional",
+          "display_name": "补线人",
+          "narrative_roles": [
+            "road_contact",
+            "survivor"
+          ],
+          "gameplay_roles": [
+            "research_review",
+            "material_discount",
+            "route_repair"
+          ],
+          "introduction_status": "candidate_only"
+        }
+      ],
+      "proposed_world_delta_ref": "delta_stage_02_dawn_review_supply_line",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "unlock_fact",
+          "set_flag",
+          "append_event"
+        ],
+        "summary": "只提交补线人线索和后续任务入口，不直接让候选 NPC 成为常驻。"
+      }
+    }
+  ]
+}
