@@ -9,6 +9,7 @@
 - `examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json`
 - `examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json`
 - `examples/review_packs/mvp_story_asset_review_pack.v0.1.json`
+- `examples/review_packs/mvp_story_asset_promotion_report.v0.1.json`
 - `shared/schemas/mvp_story_asset_review_pack.v0.1.schema.json`
 - `tools/content_pipeline/validate_mvp_story_asset_review_pack.py`
 
@@ -307,3 +308,15 @@ NPC：
 - 为阶段 4 生成 `second_battle_config`。
 - 选择是否把 `npc_wire_mender_003` 或 `npc_road_scout` 提升为 canonical NPC。
 - 对 `asset_signal_wick_decoy`、`asset_wick_barrier_pylon`、`intel_dark_echo_survey_001`、`asset_ash_burst_lantern` 做资产晋升报告。
+
+## 阶段资产 Promotion 报告
+
+资产晋升审查由 `tools/content_pipeline/build_mvp_review_pack_promotion_report.py` 生成：
+
+```bash
+python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py
+```
+
+报告输出到 `examples/review_packs/mvp_story_asset_promotion_report.v0.1.json`。它不会调用真实 provider，也不会构建前端包，只复用离线的 `validate_asset_candidate -> simulate_asset_candidate -> score_asset_candidate -> asset_promotion_policy` 口径，再叠加阶段审查包的候选/高风险/世界登记 gate。
+
+更详细的状态解释见 `docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md`。
