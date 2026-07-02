@@ -1258,6 +1258,23 @@ def build_multistage_stage_candidate_pack(
             "final_run_state": final_state,
             "runtime_packages": runtime_packages,
         },
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "Multistage StageCandidatePack 是 review-only 多阶段候选容器；它聚合 Stage 05/06/07 "
+                "的候选摘要、WorldStateDelta 引用、资产晋升状态和 runtime package 引用，但自身不是 "
+                "ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / "
+                "WorldStateDeltaTransaction / runtime package，或针对具体 story asset review / "
+                "promotion pack，而不是激活整个多阶段候选容器。"
+            ),
+        },
         "stage_candidates": stages,
         "readiness_summary": {
             "stage_count": len(stages),

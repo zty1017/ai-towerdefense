@@ -3037,7 +3037,7 @@
       "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "8737d4c1d633546f56665bac2a7f92438b5dd8f3a5b28f79aa01d928c02c8e48"
+      "sha256": "e3b5e04d1c3edcc1cc95a9b93f90d2db578255aa04b75c2c88f1f36989f3678c"
     },
     {
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
@@ -3235,7 +3235,7 @@
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
       "kind": "stage_candidate_pack",
       "exists": true,
-      "sha256": "6cd5dba31e787a110093d2f43959cf81e9fc4d61fac69b7803fd716b1ea2d85a"
+      "sha256": "f4cb8992d6ee55d176c5e208ca5326b3217c86a561446bc7e0bdae58dc10e744"
     },
     {
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
@@ -3565,7 +3565,7 @@
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "3579bea6e09bc8e3e7fce2fcb35bee293c671001bb70a4bb9fa558edd2a63a34"
+      "sha256": "47f685d8df9e90741db8eadd111a5dfe436e7be628ecee9e33f39f4456218e61"
     },
     {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",

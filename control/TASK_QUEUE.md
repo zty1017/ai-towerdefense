@@ -77,7 +77,7 @@ P2：本阶段明确不做
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。仍需要在有 Chromium / Playwright 的环境中补真实截图或人工录屏验收。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
-- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前无 validator 失败；`mvp_compiler_review_dossier` 与 `mvp_stage_candidate_pack` 已显式声明为 `review_only_not_applicable`，仍剩 6 个 P1 迁移任务。
+- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前无 validator 失败；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack` 与 `mvp_multistage_stage_candidate_pack` 已显式声明为 `review_only_not_applicable`，仍剩 5 个 P1 迁移任务。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
@@ -701,7 +701,7 @@ git diff --check
 - 该报告只做内部 evidence / 迁移审计，不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
 - 当前报告状态为 `needs_migration`，无核心对象 validator 失败。
 - 前端 mock pack、核心示例和 stage01-stage07 WorldStateDeltaTransaction 链已处于 `native_snapshot_ready`。
-- 初始 8 个早期叙事 / 阶段 / dossier review pack 被列为 P1 迁移任务，需要后续补 core artifact refs、原生 core artifacts 快照或明确 not-applicable 边界；其中 `mvp_compiler_review_dossier` 已在 P1-C-2 中明确为 review-only not-applicable。
+- 初始 8 个早期叙事 / 阶段 / dossier review pack 被列为 P1 迁移任务，需要后续补 core artifact refs、原生 core artifacts 快照或明确 not-applicable 边界；其中 `mvp_compiler_review_dossier` 已在 P1-C-2 中明确为 review-only not-applicable，`mvp_stage_candidate_pack` 已在 P1-C-3 中明确为 review-only 阶段候选容器，`mvp_multistage_stage_candidate_pack` 已在 P1-C-4 中明确为 review-only 多阶段候选容器。
 
 验收：
 
@@ -761,18 +761,41 @@ git diff --check
 
 - `StageCandidatePack` 是 review-only 阶段候选容器，不是 runtime package、CGOP、ContextPackage、FactEntry 或 WorldStateDeltaTransaction。
 - 后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / WorldStateDeltaTransaction / runtime package，而不是激活整个 review pack。
+
+### P1-C-4 Multistage StageCandidatePack 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_multistage_stage_candidate_core_alignment_boundary.v0.1.json`
+- `tools/content_pipeline/build_multistage_content_pack.py`
+- `examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_multistage_stage_candidate_pack.v0.1` 是 review-only 多阶段候选容器。
+- 它聚合 Stage 05/06/07 的候选摘要、WorldStateDelta 引用、资产晋升状态和 runtime package 引用，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 6 个降为 5 个。
+
+后续：
+
+- 剩余迁移目标包括 `mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_stage05_plan_realization_report`、`mvp_story_asset_promotion_report` 与 `mvp_story_asset_review_pack`。
 - 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
 
 验收：
 
 ```bash
-python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_stage_candidate_core_alignment_boundary.v0.1.json
-python3 tools/content_pipeline/build_stage_candidate_pack.py --validate
-python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_multistage_stage_candidate_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_multistage_content_pack.py --validate
+python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
 python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
 python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
-python3 -m py_compile tools/content_pipeline/build_stage_candidate_pack.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
-python3 tools/demo/export_evidence.py --output-dir /tmp/stage_candidate_core_alignment_evidence
+python3 -m py_compile tools/content_pipeline/build_multistage_content_pack.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/multistage_stage_candidate_core_alignment_evidence
 git diff --check
 ```
 
