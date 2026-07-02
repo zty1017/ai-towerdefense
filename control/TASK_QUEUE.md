@@ -56,7 +56,7 @@ P2：本阶段明确不做
 
 当前缺口：
 
-- 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了玩家侧 `painted_visual_layer` 与逻辑对齐 fallback `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
+- 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了带质量状态的视觉层；玩家侧只允许使用 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图，`agnes_02` 与 `battle_runtime_background.v0.2` 当前只作为失败/候选证据保留。后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 已有 schema、最小示例和统一 validator；Research Job / frontend mock API / battle settlement evidence 已开始携带 core artifact refs，后续缺口是把现有产物逐步原生迁移到这些字段。
@@ -77,7 +77,7 @@ P2：本阶段明确不做
 
 已落地：
 
-- 战斗主画面默认使用 `painted_visual_layer` 作为玩家可见发布底图；`battle_runtime_background` 只作为逻辑对齐 fallback。
+- 战斗主画面默认使用通过质量门的 `painted_visual_layer`；`battle_runtime_background` 必须同样通过质量门才可作为玩家 fallback，否则只能进入 debug/evidence。
 - `battle_control_sketch` 与 `battle_reference_board` 被降级为控制 / 参考层，不应进入默认玩家体验。
 - 前端根据 `MapRuntimePackage` 叠加路径、塔位、目标、出生点和拖拽部署预览。
 - `tools/frontend/validate_battle_visual_contract.py` 已用于无浏览器环境的静态视觉合约校验。
@@ -151,7 +151,7 @@ P2：本阶段明确不做
 
 已落地：
 
-- 前端默认玩家视图只优先使用 `painted_visual_layer` / `battle_runtime_background`。
+- 前端默认玩家视图只优先使用通过 `player_visible_quality=passed` 的 `painted_visual_layer` / `battle_runtime_background`。
 - `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助素材。
 - 发布底图缺失时使用程序化大画面背景承托结构化叠层，不再自动回退到控制图或参考图。
 - 拖拽部署保留，点击放置保留为 fallback。

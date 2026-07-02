@@ -155,6 +155,15 @@
         "authority": {
           "type": "string",
           "enum": ["reference_only", "published_visual_layer", "candidate_visual_layer"]
+        },
+        "review_status": { "type": "string", "minLength": 1 },
+        "player_visible_quality": {
+          "type": "string",
+          "enum": ["passed", "warning", "failed", "not_applicable"]
+        },
+        "logic_alignment_status": {
+          "type": "string",
+          "enum": ["passed", "needs_overlay_correction", "failed", "not_checked", "not_applicable"]
         }
       }
     },

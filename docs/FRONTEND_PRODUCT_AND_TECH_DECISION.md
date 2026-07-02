@@ -600,7 +600,7 @@ painted_visual_layer
   -> 程序化大画面背景
 ```
 
-当前 MVP 已登记 Agnes 生成并人工审查通过的 `painted_visual_layer` 作为默认玩家底图；`battle_runtime_background` 作为逻辑对齐 fallback，不作为首选美术地图宣传。
+当前 MVP 已登记通过质量门的 `painted_visual_layer` 作为默认玩家底图；Agnes 旧候选与 `battle_runtime_background.v0.2` 已降为失败/候选证据，不能作为默认玩家画面宣传。
 
 `battle_control_sketch` 和 `battle_reference_board` 只能用于 debug / evidence，不得作为玩家默认体验的底图，也不得在发布底图缺失时自动顶上。
 

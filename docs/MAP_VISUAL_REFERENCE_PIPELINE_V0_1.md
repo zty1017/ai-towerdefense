@@ -9,8 +9,8 @@
 - `strategic_control_sketch`：战略大地图控制草图，表达主城、节点、补给线、黑暗区域和威胁边界。
 - `battle_control_sketch`：战斗地图控制草图，表达路径、可部署槽位、核心、防守目标和出生方向。
 - `battle_reference_board`：编译参考图，用于给图像模型或审查流程说明路线和塔位关系。它不应直接作为玩家侧最终底图。
-- `painted_visual_layer`：玩家侧优先使用的发布级美术底图。MVP 当前使用 Agnes 真实图像生成候选，经人工审查确认无 UI、文字、敌人、已部署塔和角色后登记为发布层。
-- `battle_runtime_background`：逻辑对齐的确定性发布 fallback。它使用与前端一致的伪 3D 投影生成，保证路径、塔位、目标和出生点可对齐，但视觉质量不应被宣传为最终美术水准。
+- `painted_visual_layer`：玩家侧优先使用的发布级美术底图。它必须同时满足 `authority=published_visual_layer` 与 `player_visible_quality=passed`，否则前端不得默认消费。
+- `battle_runtime_background`：逻辑对齐的确定性候选 fallback。它使用与前端一致的伪 3D 投影生成，保证路径、塔位、目标和出生点可对齐；但如果视觉质量未通过，只能作为 debug / evidence，不得作为玩家默认 fallback。
 
 这些 PNG 不是最终规则数据。前端仍然以战斗配置和 `MapRuntimePackage` 中的网格、路径、目标、敌人、塔位规则作为运行时真相。
 
@@ -74,7 +74,7 @@ python3 tools/media/generate_map_painted_background.py \
   --output game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
 ```
 
-该脚本只下载候选图和 sidecar，不自动发布。候选必须经过审查后才能被 `build_map_visual_reference_pack.py` 登记为 `painted_visual_layer`。
+该脚本只下载候选图和 sidecar，不自动发布。候选必须经过审查后才能被 `build_map_visual_reference_pack.py` 登记为 `painted_visual_layer`。当前 `mvp_battle_painted_candidate_agnes_02.png` 已被标记为 `failed_player_visual_quality`，只保留为失败候选证据。
 
 默认输出到：
 
@@ -115,7 +115,7 @@ painted_visual_layer
 
 - 图片永远不是玩法真相。怪物路线、塔位、目标、出生点以 MapRuntimePackage 的结构化数据为准。
 - 控制图和参考图不进入玩家默认体验，也不作为发布底图缺失时的默认 fallback。
-- 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，并经过本地路径、hash、尺寸、schema 校验和人工或自动视觉审查。
+- 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，设置 `player_visible_quality=passed`，并经过本地路径、hash、尺寸、schema 校验和人工或自动视觉审查。
 - 若底图与结构化路线不完全对齐，MVP 可以用轻量叠层修正；正式版需要增加对齐审查或回写步骤。
 - `MapCompilePackage` 可以引用控制图和发布底图，但最终导出的玩家战斗数据仍应是 `MapRuntimePackage`。
 

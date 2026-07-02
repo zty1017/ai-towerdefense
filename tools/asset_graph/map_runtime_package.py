@@ -89,6 +89,9 @@ VISUAL_LAYER_ALLOWED = frozenset(
         "height",
         "sha256",
         "authority",
+        "review_status",
+        "player_visible_quality",
+        "logic_alignment_status",
     }
 )
 RUNTIME_HINTS_ALLOWED = frozenset(
@@ -115,7 +118,15 @@ VISUAL_ROLES = frozenset(
         "strategic_control_sketch",
     }
 )
-VISUAL_AUTHORITIES = frozenset({"reference_only", "published_visual_layer"})
+VISUAL_AUTHORITIES = frozenset(
+    {"reference_only", "published_visual_layer", "candidate_visual_layer"}
+)
+PLAYER_VISIBLE_QUALITIES = frozenset(
+    {"passed", "warning", "failed", "not_applicable"}
+)
+LOGIC_ALIGNMENT_STATUSES = frozenset(
+    {"passed", "needs_overlay_correction", "failed", "not_checked", "not_applicable"}
+)
 LOGIC_AUTHORITIES = frozenset({"battle_config", "certified_map_template"})
 SHOW_GRID_POLICIES = frozenset({"hidden_until_drag", "subtle_overlay", "debug_only"})
 PATH_PREVIEW_POLICIES = frozenset(
@@ -347,18 +358,20 @@ def _build_visual_layers(visual_manifest: dict[str, Any] | None) -> list[dict[st
         role = str(item.get("role", ""))
         if role not in VISUAL_ROLES:
             continue
-        layers.append(
-            {
-                "layer_id": f"layer_{role}",
-                "role": role,
-                "url": str(item.get("url", "")),
-                "local_path": str(item.get("local_path", "")),
-                "width": int(item.get("width", 1)),
-                "height": int(item.get("height", 1)),
-                "sha256": str(item.get("sha256", "")),
-                "authority": str(item.get("authority") or "reference_only"),
-            }
-        )
+        layer = {
+            "layer_id": f"layer_{role}",
+            "role": role,
+            "url": str(item.get("url", "")),
+            "local_path": str(item.get("local_path", "")),
+            "width": int(item.get("width", 1)),
+            "height": int(item.get("height", 1)),
+            "sha256": str(item.get("sha256", "")),
+            "authority": str(item.get("authority") or "reference_only"),
+        }
+        for key in ("review_status", "player_visible_quality", "logic_alignment_status"):
+            if item.get(key):
+                layer[key] = str(item[key])
+        layers.append(layer)
     return layers
 
 
@@ -676,7 +689,19 @@ def validate_visual_layers(raw: Any, errors: list[str]) -> None:
         sha = require_string(layer.get("sha256"), f"{path}.sha256", errors)
         if sha and not SHA256_RE.match(sha):
             errors.append(f"{path}.sha256 must be a 64-character sha256 hex")
-        require_enum(layer.get("authority"), VISUAL_AUTHORITIES, f"{path}.authority", errors)
+        authority = layer.get("authority")
+        require_enum(authority, VISUAL_AUTHORITIES, f"{path}.authority", errors)
+        quality = layer.get("player_visible_quality")
+        if quality is not None:
+            require_enum(quality, PLAYER_VISIBLE_QUALITIES, f"{path}.player_visible_quality", errors)
+        alignment = layer.get("logic_alignment_status")
+        if alignment is not None:
+            require_enum(alignment, LOGIC_ALIGNMENT_STATUSES, f"{path}.logic_alignment_status", errors)
+        if layer.get("role") in {"painted_visual_layer", "battle_runtime_background"}:
+            if authority == "published_visual_layer" and quality != "passed":
+                errors.append(f"{path} published player layer must have player_visible_quality=passed")
+            if authority != "published_visual_layer" and quality == "passed":
+                errors.append(f"{path} passed player quality requires published_visual_layer authority")
 
 
 def validate_runtime_hints(raw: Any, errors: list[str]) -> None:

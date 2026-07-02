@@ -33,6 +33,12 @@ CONTROL_ROLES = frozenset(
 PUBLISHED_ROLES = frozenset({"battle_runtime_background", "painted_visual_layer"})
 VISUAL_ROLES = CONTROL_ROLES | PUBLISHED_ROLES
 QUALITY_STATUSES = frozenset({"passed", "warning", "failed"})
+PLAYER_VISIBLE_QUALITIES = frozenset(
+    {"passed", "warning", "failed", "not_applicable"}
+)
+LOGIC_ALIGNMENT_STATUSES = frozenset(
+    {"passed", "needs_overlay_correction", "failed", "not_checked", "not_applicable"}
+)
 
 DATETIME_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
@@ -113,7 +119,7 @@ def _visual_artifact(raw: dict[str, Any]) -> dict[str, Any]:
     authority = str(raw.get("authority") or "reference_only")
     if role in PUBLISHED_ROLES and authority == "reference_only":
         authority = "published_visual_layer"
-    return {
+    artifact = {
         "artifact_id": f"artifact_{role}",
         "role": role,
         "url": str(raw.get("url", "")),
@@ -123,6 +129,10 @@ def _visual_artifact(raw: dict[str, Any]) -> dict[str, Any]:
         "sha256": str(raw.get("sha256", "")),
         "authority": authority,
     }
+    for key in ("review_status", "player_visible_quality", "logic_alignment_status"):
+        if raw.get(key):
+            artifact[key] = str(raw[key])
+    return artifact
 
 
 def _iter_manifest_artifacts(visual_manifest: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -145,6 +155,23 @@ def _first_artifact_by_role(artifacts: list[dict[str, Any]], roles: set[str] | f
     return None
 
 
+def _is_player_ready_artifact(artifact: dict[str, Any] | None) -> bool:
+    if not artifact:
+        return False
+    return (
+        artifact.get("role") in PUBLISHED_ROLES
+        and artifact.get("authority") == "published_visual_layer"
+        and artifact.get("player_visible_quality") == "passed"
+    )
+
+
+def _first_player_ready_artifact(artifacts: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for artifact in artifacts:
+        if _is_player_ready_artifact(artifact):
+            return artifact
+    return None
+
+
 def _published_source_kinds(visual_manifest: dict[str, Any] | None) -> set[str]:
     if not isinstance(visual_manifest, dict):
         return set()
@@ -152,7 +179,11 @@ def _published_source_kinds(visual_manifest: dict[str, Any] | None) -> set[str]:
     for item in visual_manifest.get("items", []):
         if not isinstance(item, dict):
             continue
-        if item.get("role") in PUBLISHED_ROLES:
+        if (
+            item.get("role") in PUBLISHED_ROLES
+            and item.get("authority") == "published_visual_layer"
+            and item.get("player_visible_quality") == "passed"
+        ):
             source_kinds.add(str(item.get("source_kind") or ""))
     return source_kinds
 
@@ -270,7 +301,8 @@ def build_map_compile_package(
 ) -> dict[str, Any]:
     artifacts = _iter_manifest_artifacts(visual_reference_manifest)
     control_artifacts = [item for item in artifacts if item.get("role") in CONTROL_ROLES]
-    painted_artifact = _first_artifact_by_role(artifacts, PUBLISHED_ROLES)
+    any_visual_artifact = _first_artifact_by_role(artifacts, PUBLISHED_ROLES)
+    painted_artifact = _first_player_ready_artifact(artifacts)
     published_source_kinds = _published_source_kinds(visual_reference_manifest)
     logic_aligned_visual = bool(published_source_kinds & {
         "deterministic_logic_aligned_runtime_background",
@@ -300,6 +332,13 @@ def build_map_compile_package(
             "gate_id": "published_visual_layer_present",
             "status": "passed" if painted_artifact else "warning",
             "summary": "A player-facing painted background exists." if painted_artifact else "No player-facing painted background is available; frontend must keep a safe fallback.",
+        },
+        {
+            "gate_id": "player_visual_quality_passed",
+            "status": "passed" if painted_artifact else "failed",
+            "summary": "The selected player-facing map layer passed visual quality review."
+            if painted_artifact
+            else "No selected player-facing map layer passed visual quality review.",
         },
         {
             "gate_id": "published_visual_logic_aligned",
@@ -356,9 +395,9 @@ def build_map_compile_package(
             ],
         },
         "painted_visual_layer": {
-            "authority": str((painted_artifact or {}).get("authority") or "missing"),
-            "status": "published" if painted_artifact else "missing",
-            "artifact": painted_artifact,
+            "authority": str(((painted_artifact or any_visual_artifact) or {}).get("authority") or "missing"),
+            "status": "published" if painted_artifact else "rejected" if any_visual_artifact else "missing",
+            "artifact": painted_artifact or any_visual_artifact,
             "visual_constraints": [
                 "player-facing map only",
                 "no tactical UI baked into the image",
@@ -380,10 +419,14 @@ def build_map_compile_package(
         "quality_gates": quality_gates,
         "export_refs": {
             "map_runtime_package_path": map_runtime_package_path,
-            "frontend_default_visual_role": "battle_runtime_background" if painted_artifact else "painted_visual_layer",
+            "frontend_default_visual_role": str((painted_artifact or {}).get("role") or "battle_runtime_background"),
         },
         "validation_report": {
-            "gate_status": "warning" if any(gate.get("status") == "warning" for gate in quality_gates) else "passed",
+            "gate_status": "failed"
+            if any(gate.get("status") == "failed" for gate in quality_gates)
+            else "warning"
+            if any(gate.get("status") == "warning" for gate in quality_gates)
+            else "passed",
             "runtime_truth_preserved": True,
             "player_visual_safe": bool(painted_artifact and logic_aligned_visual),
             "gates": quality_gates,
@@ -412,6 +455,17 @@ def _validate_visual_artifact(raw: Any, path: str, errors: list[str]) -> dict[st
         errors.append(f"{path}.authority must be reference_only for control/reference layers")
     if role in PUBLISHED_ROLES and authority == "reference_only":
         errors.append(f"{path}.authority must not be reference_only for player-facing visual layers")
+    quality = artifact.get("player_visible_quality")
+    if quality is not None and quality not in PLAYER_VISIBLE_QUALITIES:
+        errors.append(f"{path}.player_visible_quality={quality!r} is not allowed")
+    alignment = artifact.get("logic_alignment_status")
+    if alignment is not None and alignment not in LOGIC_ALIGNMENT_STATUSES:
+        errors.append(f"{path}.logic_alignment_status={alignment!r} is not allowed")
+    if role in PUBLISHED_ROLES:
+        if authority == "published_visual_layer" and quality != "passed":
+            errors.append(f"{path} published player layer must have player_visible_quality=passed")
+        if authority != "published_visual_layer" and quality == "passed":
+            errors.append(f"{path} passed player quality requires published_visual_layer authority")
     return artifact
 
 
@@ -543,6 +597,8 @@ def validate_pure_python(package: dict[str, Any]) -> list[str]:
         errors.append("quality_gates must include control_layers_not_player_default")
     if "runtime_truth_source" not in gate_ids:
         errors.append("quality_gates must include runtime_truth_source")
+    if "player_visual_quality_passed" not in gate_ids:
+        errors.append("quality_gates must include player_visual_quality_passed")
 
     export_refs = _require_object(package.get("export_refs"), "export_refs", errors)
     _require_string(export_refs.get("map_runtime_package_path"), "export_refs.map_runtime_package_path", errors)

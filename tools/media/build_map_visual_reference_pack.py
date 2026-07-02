@@ -606,9 +606,12 @@ def main() -> int:
         "battle_control_sketch": output_dir / "mvp_battle_control_sketch.png",
         "battle_reference_board": output_dir / "mvp_battle_reference_board.png",
     }
+    player_painted_layer = output_dir / "mvp_battle_runtime_background.v0.1.png"
+    if player_painted_layer.exists():
+        files["painted_visual_layer"] = player_painted_layer
     painted_candidate = output_dir / "mvp_battle_painted_candidate_agnes_02.png"
     if painted_candidate.exists():
-        files["painted_visual_layer"] = painted_candidate
+        files["painted_visual_candidate"] = painted_candidate
     files["battle_runtime_background"] = output_dir / "mvp_battle_runtime_background.v0.2.png"
     build_strategic_control(map_data, files["strategic_control_sketch"])
     build_battle_control(battle, files["battle_control_sketch"])
@@ -616,14 +619,31 @@ def main() -> int:
     build_battle_runtime_background(battle, files["battle_runtime_background"])
     items = []
     for role, file_path in files.items():
-        published = role in {"battle_runtime_background", "painted_visual_layer"}
         width, height = png_dimensions(file_path)
         if role == "painted_visual_layer":
             source_kind = "human_reviewed_painted_visual_runtime_overlay"
+            authority = "published_visual_layer"
+            review_status = "passed_player_visual_quality"
+            player_visible_quality = "passed"
+            logic_alignment_status = "needs_overlay_correction"
+        elif role == "painted_visual_candidate":
+            source_kind = "external_painted_candidate"
+            authority = "candidate_visual_layer"
+            review_status = "failed_player_visual_quality"
+            player_visible_quality = "failed"
+            logic_alignment_status = "not_checked"
         elif role == "battle_runtime_background":
             source_kind = "deterministic_logic_aligned_runtime_background"
+            authority = "candidate_visual_layer"
+            review_status = "failed_player_visual_quality"
+            player_visible_quality = "failed"
+            logic_alignment_status = "passed"
         else:
             source_kind = "deterministic_logical_map_reference"
+            authority = "reference_only"
+            review_status = "reference_only"
+            player_visible_quality = "not_applicable"
+            logic_alignment_status = "not_applicable"
         items.append(
             {
                 "role": role,
@@ -633,7 +653,10 @@ def main() -> int:
                 "height": height,
                 "sha256": sha256_file(file_path),
                 "source_kind": source_kind,
-                "authority": "published_visual_layer" if published else "reference_only",
+                "authority": authority,
+                "review_status": review_status,
+                "player_visible_quality": player_visible_quality,
+                "logic_alignment_status": logic_alignment_status,
             }
         )
     manifest = {

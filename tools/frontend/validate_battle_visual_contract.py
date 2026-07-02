@@ -59,13 +59,14 @@ def validate_app_contract(errors: list[str]) -> None:
     require(priority is not None, "missing playerBattleMapVisualUrl()", errors)
     if priority:
         body = priority.group("body")
-        painted = body.find('mapVisualUrl("painted_visual_layer")')
-        runtime = body.find('mapVisualUrl("battle_runtime_background")')
+        painted = body.find('"painted_visual_layer"')
+        runtime = body.find('"battle_runtime_background"')
         control = body.find("battle_control_sketch")
         reference = body.find("battle_reference_board")
         require(painted >= 0, "player map priority must include painted_visual_layer", errors)
         require(runtime >= 0, "player map priority must include battle_runtime_background fallback", errors)
         require(painted < runtime, "painted_visual_layer must be checked before battle_runtime_background", errors)
+        require("playerOnly: true" in body, "player map priority must filter by player-ready visual quality", errors)
         require(control < 0 and reference < 0, "player map priority must not include control/reference layers", errors)
 
     debug = re.search(r"function\s+debugBattleMapVisualUrls\(\)\s*\{(?P<body>.*?)\n\s*\}", app, re.S)
@@ -102,6 +103,29 @@ def validate_map_layers(errors: list[str]) -> None:
     items = manifest.get("items", [])
     by_role = {item.get("role"): item for item in items if isinstance(item, dict)}
 
+    def is_player_ready(item: dict | None) -> bool:
+        return bool(
+            item
+            and item.get("authority") == "published_visual_layer"
+            and item.get("player_visible_quality") == "passed"
+        )
+
+    def validate_player_candidate(item: dict | None, label: str) -> None:
+        if not item:
+            return
+        authority = item.get("authority")
+        quality = item.get("player_visible_quality")
+        if authority == "published_visual_layer":
+            require(quality == "passed", f"{label} published layer must have player_visible_quality=passed", errors)
+        if quality == "passed":
+            require(authority == "published_visual_layer", f"{label} passed visual quality must be published", errors)
+        local_path = ROOT / str(item.get("local_path", ""))
+        require(local_path.exists(), f"visual layer file missing: {local_path}", errors)
+        if local_path.exists():
+            width, height = png_dimensions(local_path)
+            require(width == item.get("width") and height == item.get("height"), f"{label} manifest dimensions do not match PNG header", errors)
+            require(width / height > 1.65 and width / height < 1.85, f"{label} must be a wide battle-map image", errors)
+
     for role in ("battle_control_sketch", "battle_reference_board"):
         item = by_role.get(role)
         require(item is not None, f"missing {role} in map visual manifest", errors)
@@ -112,16 +136,13 @@ def validate_map_layers(errors: list[str]) -> None:
     runtime = by_role.get("battle_runtime_background")
     require(painted is not None, "missing painted_visual_layer in map visual manifest", errors)
     require(runtime is not None, "missing battle_runtime_background fallback in map visual manifest", errors)
-    for item in (painted, runtime):
-        if not item:
-            continue
-        require(item.get("authority") == "published_visual_layer", f"{item.get('role')} must be published_visual_layer", errors)
-        local_path = ROOT / str(item.get("local_path", ""))
-        require(local_path.exists(), f"visual layer file missing: {local_path}", errors)
-        if local_path.exists():
-            width, height = png_dimensions(local_path)
-            require(width == item.get("width") and height == item.get("height"), f"{item.get('role')} manifest dimensions do not match PNG header", errors)
-            require(width / height > 1.65 and width / height < 1.85, f"{item.get('role')} must be a wide battle-map image", errors)
+    validate_player_candidate(painted, "painted_visual_layer")
+    validate_player_candidate(runtime, "battle_runtime_background")
+    require(
+        is_player_ready(painted) or is_player_ready(runtime),
+        "map visual manifest must expose at least one player-ready map layer",
+        errors,
+    )
 
     require(MAP_RUNTIME_PACKAGES, "no map runtime packages found", errors)
     for package_path in MAP_RUNTIME_PACKAGES:
@@ -130,6 +151,14 @@ def validate_map_layers(errors: list[str]) -> None:
         roles = {layer.get("role"): layer for layer in layers if isinstance(layer, dict)}
         require("painted_visual_layer" in roles, f"{package_path.name} missing painted_visual_layer", errors)
         require("battle_runtime_background" in roles, f"{package_path.name} missing battle_runtime_background", errors)
+        require(
+            is_player_ready(roles.get("painted_visual_layer"))
+            or is_player_ready(roles.get("battle_runtime_background")),
+            f"{package_path.name} must expose at least one player-ready map layer",
+            errors,
+        )
+        validate_player_candidate(roles.get("painted_visual_layer"), f"{package_path.name} painted_visual_layer")
+        validate_player_candidate(roles.get("battle_runtime_background"), f"{package_path.name} battle_runtime_background")
         for role in ("battle_control_sketch", "battle_reference_board"):
             layer = roles.get(role)
             require(layer is not None and layer.get("authority") == "reference_only", f"{package_path.name} {role} must stay reference_only", errors)

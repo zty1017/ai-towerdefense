@@ -8,9 +8,9 @@ Last updated: 2026-07-02
 
 当前结论：
 
-- 默认玩家视图的地图底图选择顺序已固定为 `painted_visual_layer -> battle_runtime_background -> 程序化大画面背景`。
+- 默认玩家视图的地图底图选择顺序已固定为 `painted_visual_layer -> battle_runtime_background -> 程序化大画面背景`，且只接受 `authority=published_visual_layer` 与 `player_visible_quality=passed` 同时成立的图层。
 - `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助 fallback，不进入默认玩家体验。
-- 首战 `MapRuntimePackage` 中 `painted_visual_layer` 和 `battle_runtime_background` 均标记为 `published_visual_layer`；前者是玩家默认美术底图，后者是逻辑对齐 fallback。
+- 首战 `MapRuntimePackage` 中 `painted_visual_layer` 是当前玩家默认美术底图；`battle_runtime_background.v0.2` 保留为逻辑对齐但视觉质量失败的候选层，不能作为玩家 fallback 发布。
 - 战斗 UI 已压缩为低遮挡 HUD：画布全屏铺底，顶部 HUD 更薄，左右侧栏更窄，底部工具条降低高度，避免把主战场变成后台面板。
 - 前端静态入口、前端脚本、首战 `painted_visual_layer` PNG、首战 `MapRuntimePackage` 均可通过本地 HTTP 服务读取。
 - 已补充无浏览器环境下的静态视觉合约校验脚本，用于防止控制图泄漏、玩家底图优先级倒置、战斗画布塌缩和侧栏过宽。
@@ -56,7 +56,7 @@ python3 -m http.server 8765
 ```text
 http://127.0.0.1:8765/frontend/index.html
 http://127.0.0.1:8765/frontend/app.js
-http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
+http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
 http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
@@ -65,7 +65,7 @@ http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime
 ```text
 200 http://127.0.0.1:8765/frontend/index.html
 200 http://127.0.0.1:8765/frontend/app.js
-200 http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
+200 http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
 200 http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
@@ -82,8 +82,8 @@ python3 -c 'import json; p=json.load(open("examples/map_runtime_packages/mvp_fir
   "strategic_control_sketch:reference_only",
   "battle_control_sketch:reference_only",
   "battle_reference_board:reference_only",
-  "painted_visual_layer:published_visual_layer",
-  "battle_runtime_background:published_visual_layer"
+  "painted_visual_layer:published_visual_layer:passed",
+  "battle_runtime_background:candidate_visual_layer:failed"
 ]
 ```
 
@@ -91,7 +91,7 @@ python3 -c 'import json; p=json.load(open("examples/map_runtime_packages/mvp_fir
 
 关键函数位于 `frontend/app.js`：
 
-- `playerBattleMapVisualUrl()`：默认只返回 `painted_visual_layer` 或 `battle_runtime_background`。
+- `playerBattleMapVisualUrl()`：默认只返回通过玩家视觉质量门的 `painted_visual_layer` 或 `battle_runtime_background`。
 - `debugBattleMapVisualUrls()`：只有 `?mapVisualDebug=1`、`?debugMapVisuals=1` 或 `?evidence=1` 时才返回 `battle_reference_board` / `battle_control_sketch`。
 - `drawBackdrop()`：优先绘制玩家发布底图；发布底图缺失时使用程序化背景，只有 debug/evidence 模式才允许调试图 fallback。
 - `tools/frontend/validate_battle_visual_contract.py`：检查玩家地图层优先级、debug 图隔离、PNG 尺寸、runtime package 视觉层、全屏 battle canvas 和 HUD 宽度约束。
@@ -116,5 +116,5 @@ npx playwright screenshot http://127.0.0.1:8765/frontend/index.html /tmp/ai_td_f
 当前风险不是“控制图会默认进入玩家视图”，这条已被代码防线挡住。当前风险是：
 
 - 由于缺少浏览器截图，本轮无法证明最终像素构图足够好看。
-- 后续如果替换 `painted_visual_layer` 或 `battle_runtime_background`，仍需要重新跑本审计。
+- 后续如果替换 `painted_visual_layer` 或 `battle_runtime_background`，仍需要重新跑本审计，并且新图必须显式通过 `player_visible_quality=passed`。
 - `painted_visual_layer` 当前已进入 `MapRuntimePackage v0.1`，但仍需要在有浏览器环境时补做截图或录屏验收。

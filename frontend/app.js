@@ -675,12 +675,23 @@
     return url ? [url] : [];
   }
 
-  function mapVisualUrl(role) {
+  function playerReadyMapLayer(entry) {
+    if (!entry) return false;
+    return (
+      entry.authority === "published_visual_layer" &&
+      entry.player_visible_quality === "passed"
+    );
+  }
+
+  function mapVisualUrl(role, options = {}) {
+    const playerOnly = Boolean(options.playerOnly);
     const packageLayer = (mapRuntimePackage().visual_layers || []).find(
-      (entry) => entry.role === role,
+      (entry) => entry.role === role && (!playerOnly || playerReadyMapLayer(entry)),
     );
     if (packageLayer && packageLayer.url) return assetUrl(packageLayer.url);
-    const item = manifestItems(state.data.mapVisualManifest).find((entry) => entry.role === role);
+    const item = manifestItems(state.data.mapVisualManifest).find(
+      (entry) => entry.role === role && (!playerOnly || playerReadyMapLayer(entry)),
+    );
     return item ? assetUrl(item.url) : "";
   }
 
@@ -692,7 +703,10 @@
   }
 
   function playerBattleMapVisualUrl() {
-    return mapVisualUrl("painted_visual_layer") || mapVisualUrl("battle_runtime_background");
+    return (
+      mapVisualUrl("painted_visual_layer", { playerOnly: true }) ||
+      mapVisualUrl("battle_runtime_background", { playerOnly: true })
+    );
   }
 
   function debugBattleMapVisualUrls() {
