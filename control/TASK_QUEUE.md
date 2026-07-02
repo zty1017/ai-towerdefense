@@ -741,6 +741,34 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/generation_executor_requ
 git diff --check
 ```
 
+### P1-B-16 ProviderArtifactStaging 依赖 executor request
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts` 现在必须先看到 latest run 已登记 `generation_executor_run_request`。
+- 若缺少 executor request，接口返回 409，不会登记 ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport。
+- `stage-provider-artifacts` 响应会返回 `worker_step.upstream_request_id` 和 `generation_executor_run_request` 摘要，供 evidence / Studio 串联。
+- `backend/tests/test_frontend_mock_api.py` 已覆盖提前 stage 的 409，以及 dry-run worker -> live executor guard -> prepare executor request -> stage provider artifacts 的完整顺序。
+- `examples/worker_task_packs/p1b_provider_staging_requires_executor_request.v0.1.json`
+
+当前结论：
+
+- Provider artifact ledger 不能再绕过 dry-run worker、live executor guard 和 GenerationExecutorRunRequest。
+- 该层仍不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 由于现有 provider fixture 仍是早期 stage05 样例，当前只要求 latest run 存在 executor request，不强制 fixture envelope 的 schedule item 与 executor request 完全相同；后续真实 provider adapter 接入时应把 source schedule item 精确绑定。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_staging_requires_executor_request.v0.1.json
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_staging_requires_executor_request_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

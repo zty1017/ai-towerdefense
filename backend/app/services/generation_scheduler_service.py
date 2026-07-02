@@ -1371,6 +1371,20 @@ def _compact_generation_artifact_ledger(items: list[dict[str, Any]]) -> dict[str
     }
 
 
+def _latest_generation_executor_request_ledger_entry(
+    session_id: str,
+    run_id: str,
+) -> dict[str, Any] | None:
+    items = _load_generation_artifact_ledger_items(session_id, run_id)
+    executor_requests = [
+        item
+        for item in items
+        if item.get("artifact_kind") == "generation_executor_run_request"
+        and item.get("status") == "prepared_pending_explicit_authorization"
+    ]
+    return executor_requests[-1] if executor_requests else None
+
+
 def _attach_live_executor_guard_to_cache(
     queue_payload: dict[str, Any],
     guard_payload: dict[str, Any],
@@ -1790,6 +1804,20 @@ def stage_provider_artifacts_fixture(
     safe_metadata = metadata if isinstance(metadata, dict) else {}
     worker_id = safe_metadata.get("worker_id") or "provider_artifact_fixture_stager"
     note = safe_metadata.get("note")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before staging provider artifacts"
+        )
+    run_id = str(latest_run.get("run_id"))
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "generation executor request is required before staging provider artifacts"
+        )
     envelope = _load_json(_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE)
     staging = _load_json(_PROVIDER_ARTIFACT_STAGING_EXAMPLE)
     promotion = _load_json(_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE)
@@ -1802,7 +1830,6 @@ def stage_provider_artifacts_fixture(
             f"envelope={envelope_errors}; staging={staging_errors}; "
             f"promotion={promotion_errors}"
         )
-    latest_run = _load_latest_generation_schedule_run(session_id)
     source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
     schedule_item_id = source.get("schedule_item_id")
     envelope_entry = _build_artifact_ledger_payload(
@@ -1849,7 +1876,6 @@ def stage_provider_artifacts_fixture(
     _upsert_generation_artifact_ledger(envelope_entry)
     _upsert_generation_artifact_ledger(staging_entry)
     _upsert_generation_artifact_ledger(promotion_entry)
-    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
     items = _load_generation_artifact_ledger_items(session_id, run_id)
     return {
         "session_id": session_id,
@@ -1860,7 +1886,9 @@ def stage_provider_artifacts_fixture(
             "provider_call_count": 0,
             "world_mutation_count": 0,
             "activation_allowed_count": 0,
+            "upstream_request_id": executor_request_entry.get("source_id"),
         },
+        "generation_executor_run_request": executor_request_entry.get("compact"),
         "provider_output_envelope": envelope_entry["compact"],
         "provider_artifact_staging": staging_entry["compact"],
         "provider_artifact_promotion_report": promotion_entry["compact"],
