@@ -55,6 +55,24 @@ def _assert_no_forbidden_terms(*texts: str) -> None:
             )
 
 
+def _assert_native_core_artifacts(metadata: dict) -> dict:
+    artifacts = metadata["core_artifacts"]
+    for key, value in artifacts["refs"].items():
+        assert metadata["core_artifact_refs"][key] == value
+    context = artifacts["context_package"]
+    fact = artifacts["fact_entry"]
+    cgop = artifacts["compiled_game_object_package"]
+    assert context["schema_version"] == "context_package.v0.1"
+    assert fact["schema_version"] == "fact_entry.v0.1"
+    assert cgop["schema_version"] == "compiled_game_object_package.v0.1"
+    assert context["context_package_id"] == cgop["context_package_id"]
+    assert fact["fact_id"] in cgop["world_context"]["required_fact_ids"]
+    assert context["authority"]["advisory_only"] is True
+    assert fact["submission_policy"]["commit_requires_world_state_delta"] is True
+    assert cgop["runtime_contract"]["runtime_loadable"] is False
+    return artifacts
+
+
 # ---------------------------------------------------------------------------
 # Session existence
 # ---------------------------------------------------------------------------
@@ -112,6 +130,9 @@ def test_create_proposal_happy_path(client):
     assert metadata["core_artifact_refs"]["world_delta_transaction"].endswith(
         "first_battle_result.world_delta_transaction.json"
     )
+    artifacts = _assert_native_core_artifacts(metadata)
+    assert artifacts["status"] == "native_snapshots_ready"
+    assert artifacts["compiled_game_object_package"]["lifecycle_state"] == "compiled"
     # Player-facing text must stay in world language.
     _assert_no_forbidden_terms(
         body["display_name"],
@@ -171,6 +192,13 @@ def test_confirm_proposal_runs_workflows_and_produces_artifacts(client):
     assert metadata["runtime_refs"]["runtime_package_path"] == job["runtime_package_path"]
     assert metadata["core_artifact_refs"]["runtime_package_path"] == job["runtime_package_path"]
     assert metadata["core_artifact_refs"]["delivery_payload_path"] == job["delivery_payload_path"]
+    artifacts = metadata["core_artifacts"]
+    assert artifacts["status"] == "native_snapshots_compiled"
+    cgop = _assert_native_core_artifacts(metadata)["compiled_game_object_package"]
+    assert cgop["lifecycle_state"] == "reviewed"
+    assert cgop["validation_report"]["gate_status"] == "passed"
+    assert cgop["runtime_contract"]["manifest_refs"][0]["path"] == job["runtime_package_path"]
+    assert artifacts["delivery_payload_ref"] == job["delivery_payload_path"]
 
     # Player-facing message stays in world language.
     _assert_no_forbidden_terms(job["player_state_message"])
