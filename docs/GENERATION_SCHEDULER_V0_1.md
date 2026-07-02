@@ -20,6 +20,7 @@
 - `tools/scheduler/run_generation_schedule_plan.py`
 - `tools/scheduler/validate_generation_schedule_run_report.py`
 - `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
+- `backend/app/services/generation_scheduler_service.py`
 - `generation_schedule_runs` SQLite session table
 - `generation_schedule_queue_items` SQLite session table
 - `GET /api/sessions/{session_id}/generation-schedule`
@@ -124,6 +125,8 @@ GET /api/sessions/{session_id}/generation-schedule/runs/latest
 ```
 
 这些记录写入 `generation_schedule_runs` 表，并在 session reset 时清除。它们证明调度器已经从离线 evidence 进入后端状态层，但仍不是正式后台执行器。
+
+当前后端实现由 `backend/app/services/generation_scheduler_service.py` 维护。`frontend_mock_service.py` 只负责玩家侧 fixture 内容和 evidence 聚合，不再承载 scheduler 队列、状态流转或 retry / fallback 逻辑。
 
 每条 dry-run 运行还会派生 item 级队列记录：
 

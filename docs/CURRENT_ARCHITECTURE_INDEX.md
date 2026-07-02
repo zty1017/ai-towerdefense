@@ -180,6 +180,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
 - 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
+- Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback 和 dry-run worker step 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；Research Job 与 frontend mock evidence 已开始引用这些核心对象。
 - WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例和 validator；示例包装可通过语义门的 repaired 首战 WorldStateDelta，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
