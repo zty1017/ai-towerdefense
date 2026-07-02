@@ -575,6 +575,22 @@ def build_report(review_pack_path: Path, created_at: str) -> dict[str, Any]:
             "base_worldbook_mutation": False,
             "runtime_package_build": False,
         },
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "StoryAssetPromotionReport 是 review-only 资产晋升决策报告；它记录 fallback_ready、"
+                "candidate_only、blocked 等晋升判断，但自身不是 ContextPackage、FactEntry、CGOP 或 "
+                "WorldStateDeltaTransaction。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续核心对象迁移应针对被批准的具体 CGOP、runtime package、media manifest 或 "
+                "WorldStateDeltaTransaction，而不是激活整个 promotion report。"
+            ),
+        },
         "promotion_pipeline": [
             "load_mvp_story_asset_review_pack",
             "for_each_stage_asset",

@@ -8,6 +8,13 @@
 
 哪些资产可以先用 fallback 进入 MVP 演示，哪些只是候选，哪些必须先完成世界登记、真实媒体生成或数值复验。
 
+顶层的 `core_artifact_alignment` 明确声明：
+
+- `mvp_story_asset_promotion_report.v0.1` 是 review-only 资产晋升决策报告。
+- 它本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应针对被批准的具体 `CGOP`、runtime package、media manifest 或 `WorldStateDeltaTransaction`。
+
 ## 离线流水线
 
 生成命令：
