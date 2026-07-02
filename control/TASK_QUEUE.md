@@ -598,6 +598,35 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_stagin
 git diff --check
 ```
 
+### P1-B-12 Provider artifact ledger 后端状态层
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_artifact_ledger` SQLite 表，所有记录按 `session_id` 隔离，session reset 会清理。
+- `GET /api/sessions/{session_id}/generation-schedule/artifact-ledger`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts`
+- `backend/app/services/generation_scheduler_service.py` 中的 fixture-backed envelope / staging 校验、摘要、upsert 和 evidence 聚合。
+- `examples/worker_task_packs/p1b_provider_artifact_ledger_backend.v0.1.json`
+
+当前结论：
+
+- 该层只把已校验的 ProviderOutputEnvelope / ProviderArtifactStagingManifest 摘要登记到 session 台账。
+- worker API 自身不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+- 台账会记录 source 中“已发生过的 provider 调用摘要”，但 `provider_call_count_by_this_request` 始终为 0，避免把台账写入伪装成真实执行器。
+- `/api/sessions/{session_id}/evidence` 会返回 `generation_scheduler.latest_artifact_ledger`，供 Studio / evidence 页面使用。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_ledger_backend.v0.1.json
+python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_ledger_backend_evidence
+git diff --check
+```
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造

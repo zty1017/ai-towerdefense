@@ -205,6 +205,19 @@ def get_generation_schedule_worker_cache(session_id: str) -> FrontendMockPayload
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/artifact-ledger",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_artifact_ledger(session_id: str) -> FrontendMockPayloadResponse:
+    """Return review-only provider artifact ledger records for this session."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_artifact_ledger(session_id),
+    )
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,
@@ -355,6 +368,30 @@ def run_generation_schedule_live_executor_guard(
             metadata,
         ),
     )
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts",
+    response_model=FrontendMockPayloadResponse,
+)
+def stage_generation_schedule_provider_artifacts(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record reviewed provider artifact fixtures without provider calls or activation."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.stage_provider_artifacts_fixture(
+            session_id,
+            metadata,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    return _payload(session_id, data)
 
 
 @router.get(

@@ -23,6 +23,7 @@ router = APIRouter()
 
 # Tables whose rows belong to a session and should be wiped on reset.
 _SESSION_SCOPED_TABLES = (
+    "generation_artifact_ledger",
     "generation_schedule_worker_cache",
     "generation_schedule_queue_items",
     "generation_schedule_runs",
