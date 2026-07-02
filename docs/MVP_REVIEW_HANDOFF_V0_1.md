@@ -4,6 +4,18 @@
 
 ## 一键审查
 
+先检查完整测试环境：
+
+```bash
+python3 tools/dev/check_test_env.py
+```
+
+若报告缺少 `pytest`、`fastapi`、`httpx` 等依赖，先执行：
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
 运行：
 
 ```bash
@@ -36,6 +48,8 @@ python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/rev
    - 审查前端并行开发可使用的玩家安全数据包。
 5. `examples/runtime_packages/*.runtime_package.json`
    - 审查战斗运行时证据包。
+6. `examples/map_runtime_packages/*.map_runtime_package.json`
+   - 审查地图运行时包，确认路径、塔位、目标、出生点和视觉层引用。
 
 ## 当前证明范围
 
@@ -47,7 +61,8 @@ python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/rev
 - 可编译对象目录覆盖 100 个以上对象，包含实体、叙事、关卡、经济、成长、规则和表现层。
 - 前端 mock 内容包包含 11 个可玩资产、3 个阶段摘要和 3 个 runtime package 摘要。
 - 三个 runtime package 均可通过运行时包校验。
-- 当前仍不接入正式前端。
+- 三个 map runtime package 均可通过地图运行时包校验。
+- 当前前端已可消费首战 MapRuntimePackage；后续节点已有地图包，但完整战斗链路仍需继续打磨。
 
 ## 当前不证明范围
 

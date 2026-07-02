@@ -142,18 +142,37 @@ uvicorn app.main:app --app-dir backend --reload
 
 ## Tests
 
+先检查当前环境是否已经具备完整测试依赖：
+
 ```bash
-pytest backend/tests
+python3 tools/dev/check_test_env.py
+```
+
+如果缺依赖，使用项目声明的依赖文件安装：
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+完整测试：
+
+```bash
+python3 -m pytest backend/tests
 ```
 
 测试使用 `tmp_path` 把 `APP_DB_PATH` 指向临时 SQLite 文件，不会触碰主数据库。
 
-在缺少依赖的极简环境中，至少运行：
+在缺少依赖的极简环境中，至少运行无第三方依赖的检查：
 
 ```bash
 python3 -m compileall backend
+python3 -m compileall tools
+node --check frontend/app.js
 python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate
 python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json
 python3 tools/media/validate_frontend_mock_media_pack.py game_data/media/frontend_mock/frontend_media_manifest.v0.1.json
 python3 tools/media/validate_frontend_runtime_art_pack.py
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json
 ```
