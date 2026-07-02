@@ -155,11 +155,28 @@ def _candidate_kind_from_intent(intent_text: str) -> str:
 
 def _compiler_metadata_for_proposal(
     *,
+    session_id: str,
     proposal_id: str,
     node_id: str,
     intent_text: str,
+    display_name: str,
+    proposal_summary: str,
 ) -> dict[str, Any]:
     candidate_kind = _candidate_kind_from_intent(intent_text)
+    battle_config_ref = battle_content_service.battle_config_ref(node_id)
+    map_runtime_package_ref = map_runtime_service.map_runtime_package_ref(node_id)
+    core_artifacts = ai_core_artifact_service.research_proposal_core_artifacts(
+        session_id=session_id,
+        proposal_id=proposal_id,
+        node_id=node_id,
+        intent_summary="玩家提出了一个现场试作构想。",
+        candidate_kind=candidate_kind,
+        display_name=display_name,
+        proposal_summary=proposal_summary,
+        battle_config_ref=battle_config_ref,
+        map_runtime_package_ref=map_runtime_package_ref,
+        created_at=now_iso(),
+    )
     return {
         "schema_version": "compiler_metadata.v0.1",
         "visibility": "internal_evidence",
@@ -176,13 +193,12 @@ def _compiler_metadata_for_proposal(
         "context_package": {
             "worldbook_id": "long_night_lanterns",
             "node_id": node_id,
-            "battle_config_ref": battle_content_service.battle_config_ref(node_id),
-            "map_runtime_package_ref": map_runtime_service.map_runtime_package_ref(
-                node_id
-            ),
+            "battle_config_ref": battle_config_ref,
+            "map_runtime_package_ref": map_runtime_package_ref,
             "intent_source": "player_free_text",
         },
-        "core_artifact_refs": ai_core_artifact_service.core_artifact_refs(),
+        "core_artifact_refs": core_artifacts["refs"],
+        "core_artifacts": core_artifacts,
         "validation": {
             "player_text_safety": "scrubbed",
             "local_gates": [
@@ -221,6 +237,14 @@ def _compiler_metadata_for_job(
         "delivery_payload_path": result.get("delivery_payload_path"),
         "trace_count": len(result.get("trace_paths") or []),
     }
+    metadata["core_artifacts"] = ai_core_artifact_service.research_job_core_artifacts(
+        proposal_core_artifacts=as_dict(metadata.get("core_artifacts")),
+        status=status,
+        runtime_package_path=result.get("runtime_package_path"),
+        delivery_payload_path=result.get("delivery_payload_path"),
+        trace_paths=[str(path) for path in (result.get("trace_paths") or [])],
+        completed_at=now_iso(),
+    )
     metadata["core_artifact_refs"] = {
         **as_dict(metadata.get("core_artifact_refs")),
         "runtime_package_path": result.get("runtime_package_path"),
@@ -349,9 +373,12 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
     fields = _synthesize_proposal_fields(intent_text, node_id)
     proposal_id = secrets.token_urlsafe(16)
     compiler_metadata = _compiler_metadata_for_proposal(
+        session_id=session_id,
         proposal_id=proposal_id,
         node_id=node_id,
         intent_text=intent_text,
+        display_name=fields["display_name"],
+        proposal_summary=fields["summary"],
     )
     ts = now_iso()
     payload = json.dumps(
@@ -423,9 +450,12 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
         if not proposal_metadata:
             proposal_metadata = _compiler_metadata_for_proposal(
+                session_id=session_id,
                 proposal_id=proposal_id,
                 node_id=str(proposal_payload.get("node_id") or "gray_lantern_station"),
                 intent_text=str(proposal_payload.get("intent_text") or ""),
+                display_name="临时光幕方案",
+                proposal_summary="以灯光构筑的临时防线，为节点争取喘息。",
             )
         # Insert the job row in "running" state before executing workflows so
         # that even a crash leaves an auditable record.
