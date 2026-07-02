@@ -3055,7 +3055,7 @@
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "3db7a17e9cdf7c0cc38f61db558eab86917691f469056fa92061acba8622f607"
+      "sha256": "573faae80296b17b7c657f9158c63aac7ba25e3b2eb524c7cf008a6317f7e5a5"
     },
     {
       "path": "docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md",
@@ -3259,7 +3259,7 @@
       "path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
       "kind": "promotion_report",
       "exists": true,
-      "sha256": "dca2e38d764c0dd581ff79f492ec2d4cfda7d51038404d5f37513478b5ad23b0"
+      "sha256": "14ba20c3763db5952a5bd1bbc33d85bacebb2494e04d68b327dce768710a7936"
     },
     {
       "path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
