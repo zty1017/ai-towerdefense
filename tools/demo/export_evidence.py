@@ -131,6 +131,8 @@ PATHS = {
     / "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json",
     "map_topology_control_sketch_pack": ROOT
     / "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+    "map_controlled_regeneration_request_pack": ROOT
+    / "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -502,6 +504,17 @@ STATIC_VALIDATION_COMMANDS = [
             "/tmp/ai_td_map_topology_control_sketches",
             "--output",
             "/tmp/ai_td_map_topology_control_sketch_pack.json",
+        ],
+    },
+    {
+        "name": "map_controlled_regeneration_request_pack",
+        "command": [
+            "python3",
+            "tools/media/build_map_controlled_regeneration_request_pack.py",
+            "--prompt-dir",
+            "/tmp/ai_td_map_controlled_regeneration_requests",
+            "--output",
+            "/tmp/ai_td_map_controlled_regeneration_request_pack.json",
         ],
     },
     {
@@ -1200,6 +1213,38 @@ def map_topology_control_sketch_pack_summary(pack: dict[str, Any]) -> dict[str, 
     }
 
 
+def map_controlled_regeneration_request_pack_summary(pack: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(pack.get("summary"))
+    requests = [request for request in as_list(pack.get("requests")) if isinstance(request, dict)]
+    return {
+        "schema_version": pack.get("schema_version"),
+        "pack_id": pack.get("pack_id"),
+        "status": pack.get("status"),
+        "request_count": summary.get("request_count"),
+        "ready_count": summary.get("ready_count"),
+        "blocked_count": summary.get("blocked_count"),
+        "reference_image_request_count": summary.get("reference_image_request_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "policy": as_list(pack.get("policy")),
+        "request_samples": [
+            {
+                "request_id": request.get("request_id"),
+                "node_id": request.get("node_id"),
+                "status": request.get("status"),
+                "primary_use": request.get("primary_use"),
+                "topology_policy": request.get("topology_policy"),
+                "control_sketch_png_path": as_obj(request.get("control_sketch")).get("png_path"),
+                "manual_prompt_markdown_path": request.get("manual_prompt_markdown_path"),
+                "provider_reference_contract": as_obj(
+                    request.get("provider_reference_contract")
+                ),
+                "target_candidate": as_obj(request.get("target_candidate")),
+            }
+            for request in requests[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -1495,6 +1540,7 @@ def collect_assets_and_media(
     topology_constrained_map_overlay_review: dict[str, Any],
     topology_constrained_map_overlay_visual_review: dict[str, Any],
     map_topology_control_sketch_pack: dict[str, Any],
+    map_controlled_regeneration_request_pack: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1600,6 +1646,9 @@ def collect_assets_and_media(
             ),
             "topology_control_sketch_pack": map_topology_control_sketch_pack_summary(
                 map_topology_control_sketch_pack
+            ),
+            "controlled_regeneration_request_pack": map_controlled_regeneration_request_pack_summary(
+                map_controlled_regeneration_request_pack
             ),
             "published_visual_layers": [
                 {
@@ -1788,6 +1837,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_topology_control_sketch_pack",
             PATHS["map_topology_control_sketch_pack"],
         ),
+        (
+            "map_controlled_regeneration_request_pack",
+            PATHS["map_controlled_regeneration_request_pack"],
+        ),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1894,6 +1947,9 @@ def build_evidence() -> dict[str, Any]:
     map_topology_control_sketch_pack = load_json(
         PATHS["map_topology_control_sketch_pack"]
     )
+    map_controlled_regeneration_request_pack = load_json(
+        PATHS["map_controlled_regeneration_request_pack"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -1973,6 +2029,7 @@ def build_evidence() -> dict[str, Any]:
             topology_constrained_map_overlay_review,
             topology_constrained_map_overlay_visual_review,
             map_topology_control_sketch_pack,
+            map_controlled_regeneration_request_pack,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -2067,6 +2124,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     topology_control_sketch = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "topology_control_sketch_pack"
+        )
+    )
+    controlled_regeneration_request = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "controlled_regeneration_request_pack"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -2219,6 +2281,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 拓扑约束地图 prompt pack：`{topology_prompt_pack.get('status')}`，主 prompt `{topology_prompt_pack.get('primary_prompt_count')}`，fallback `{topology_prompt_pack.get('fallback_prompt_count')}`",
         f"- 旧信号塔拓扑候选：candidate `{topology_candidate_review.get('status')}`，alignment `{topology_alignment_review.get('status')}`，overlay `{topology_overlay_review.get('status')}`，visual `{topology_overlay_visual_review.get('status')}`，可晋升 `{topology_overlay_visual_review.get('promotable_count')}`",
         f"- 地图 topology control sketch：`{topology_control_sketch.get('status')}`，sketch `{topology_control_sketch.get('sketch_count')}`，ready `{topology_control_sketch.get('ready_count')}`，目标尺寸 `{topology_control_sketch.get('target_size')}`",
+        f"- 地图受控重生请求包：`{controlled_regeneration_request.get('status')}`，request `{controlled_regeneration_request.get('request_count')}`，reference image request `{controlled_regeneration_request.get('reference_image_request_count')}`，blocked `{controlled_regeneration_request.get('blocked_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -2415,6 +2478,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     topology_control_sketch = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get(
             "topology_control_sketch_pack"
+        )
+    )
+    controlled_regeneration_request = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get(
+            "controlled_regeneration_request_pack"
         )
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
@@ -2638,6 +2706,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Topology Control Sketch</div>
           <div class="metric">{html_escape(topology_control_sketch.get("status"))}</div>
           <p class="muted">sketch：{html_escape(topology_control_sketch.get("sketch_count"))}；ready：{html_escape(topology_control_sketch.get("ready_count"))}；目标尺寸：{html_escape(topology_control_sketch.get("target_size"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">受控重生请求</div>
+          <div class="metric">{html_escape(controlled_regeneration_request.get("status"))}</div>
+          <p class="muted">request：{html_escape(controlled_regeneration_request.get("request_count"))}；reference image：{html_escape(controlled_regeneration_request.get("reference_image_request_count"))}；blocked：{html_escape(controlled_regeneration_request.get("blocked_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>

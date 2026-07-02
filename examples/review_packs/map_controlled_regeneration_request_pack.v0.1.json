@@ -1,0 +1,261 @@
+{
+  "pack_id": "mvp_map_controlled_regeneration_request_pack",
+  "policy": [
+    "This pack is an input contract for controlled map regeneration, not a published visual layer.",
+    "Reference images are deterministic topology sketches derived from MapRuntimePackage.",
+    "Generated map candidates must pass candidate, alignment, overlay, visual, and promotion gates before runtime use.",
+    "If a provider requires public URLs for reference images, expose only the control sketch PNGs, never secrets or raw traces."
+  ],
+  "prompt_dir": "examples/review_packs/map_controlled_regeneration_requests",
+  "requests": [
+    {
+      "control_sketch": {
+        "dimensions": {
+          "height": 720,
+          "width": 1280
+        },
+        "png_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.png",
+        "png_sha256": "af250812793f5a8e973d49691ed42a339460a0bcfe4b69df0b705715143f3592",
+        "svg_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.svg",
+        "svg_sha256": "d164af005525aa8660c49d4034c36773871ce4fdb119793d501340103c8f7beb",
+        "usage_policy": [
+          "developer_reference_only",
+          "not_player_visible",
+          "not_a_published_visual_layer",
+          "image_provider_reference_or_manual_paintover_input"
+        ]
+      },
+      "fallback_instruction_sha256": "152c366caa3a3ad670dc6c4c25f9524d5601ce0b788f359eb56276c9400af7ed",
+      "issues": [],
+      "manual_prompt_markdown_path": "examples/review_packs/map_controlled_regeneration_requests/gray_lantern_station.controlled_map_regeneration_request.md",
+      "manual_prompt_markdown_sha256": "b11965dac0781d67adf25118c9f315630a5197eaea7a90810a846eb132dc071c",
+      "negative_constraints": [
+        "no UI, frame, panel, card, menu, icon bar, watermark, logo, or text",
+        "no arrows, chevrons, direction marks, labels, numbers, or grid lines",
+        "no asphalt highways, lane markings, sci-fi HUD overlays, or technical diagram style",
+        "no deployed towers, turrets, watchtowers, castles, large central monument towers, or raised build structures",
+        "no enemies, NPCs, human figures, monsters, animals, projectiles, explosions, or combat effects",
+        "no_disconnected_core_landmark",
+        "no_edge_only_build_slot_cluster",
+        "no_mechanical_right_angle_road"
+      ],
+      "node_id": "gray_lantern_station",
+      "primary_use": "fallback_if_runtime_reprojection_fails",
+      "provider_instruction_sha256": "df91a5eca41f845b27b7b86bdfc6cdaeb338e275229bd76d68dd473fe9202827",
+      "provider_reference_contract": {
+        "fallback_expected_quality": "lower_than_reference_image_mode",
+        "fallback_mode": "text_only_topology_brief",
+        "preferred_mode": "image_reference_plus_text",
+        "public_url_required_by_some_providers": true,
+        "reference_image_must_not_be_copied_as_final_style": true,
+        "reference_image_role": "topology_control_sketch",
+        "safe_to_send": "topology_only_no_secret_no_player_private_text"
+      },
+      "request_id": "gray_lantern_station.controlled_map_regeneration_request",
+      "required_review_gates": [
+        "candidate_review",
+        "alignment_review",
+        "overlay_review",
+        "overlay_visual_review",
+        "explicit_promotion_report"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "spawn_point_count": 1
+      },
+      "source_control_sketch_pack": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+      "source_prompt_pack": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+      "source_prompt_status": "fallback_prompt_ready",
+      "status": "request_ready_reference_image_preferred",
+      "target_candidate": {
+        "candidate_role": "review_only_controlled_map_candidate",
+        "promotion_allowed_now": false,
+        "promotion_policy": "must pass explicit review and promotion report before runtime or player use",
+        "recommended_output_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1"
+      },
+      "topology_policy": "station_core_near_runtime_objective_or_reprojected_station_core"
+    },
+    {
+      "control_sketch": {
+        "dimensions": {
+          "height": 720,
+          "width": 1280
+        },
+        "png_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.png",
+        "png_sha256": "8bd68e321c2f8cfd0441045b9c490701120005ab5e5f27a3f6c6d1e0eec02332",
+        "svg_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.svg",
+        "svg_sha256": "eecdc180a908d638a310f4ec91d969d5655e118d502c7e9049356093a4330036",
+        "usage_policy": [
+          "developer_reference_only",
+          "not_player_visible",
+          "not_a_published_visual_layer",
+          "image_provider_reference_or_manual_paintover_input"
+        ]
+      },
+      "fallback_instruction_sha256": "d51835fb77edc3c870d26176644eea3dd835cd891bb5c38497b717646d903e57",
+      "issues": [],
+      "manual_prompt_markdown_path": "examples/review_packs/map_controlled_regeneration_requests/old_signal_tower.controlled_map_regeneration_request.md",
+      "manual_prompt_markdown_sha256": "5d68e0a4ea04eb332a8b2e9d0b5186a4592c6aebaf68e1e0525f6296a864c5c4",
+      "negative_constraints": [
+        "no UI, frame, panel, card, menu, icon bar, watermark, logo, or text",
+        "no arrows, chevrons, direction marks, labels, numbers, or grid lines",
+        "no asphalt highways, lane markings, sci-fi HUD overlays, or technical diagram style",
+        "no deployed towers, turrets, watchtowers, castles, large central monument towers, or raised build structures",
+        "no enemies, NPCs, human figures, monsters, animals, projectiles, explosions, or combat effects",
+        "no_arrows_or_direction_symbols",
+        "no_busy_story_debris_in_combat_space",
+        "no_centered_primary_tower_objective",
+        "no_large_central_signal_tower",
+        "no_paths_crossing_through_objective_platform",
+        "no_route_crossing_under_objective_landmark",
+        "no_tiny_character_like_props",
+        "no_top_right_only_build_slot_cluster",
+        "no_units_or_projectiles",
+        "no_vehicle_or_weapon_props",
+        "no_visible_people_or_silhouettes"
+      ],
+      "node_id": "old_signal_tower",
+      "primary_use": "topology_constrained_regeneration",
+      "provider_instruction_sha256": "7b3947e5d3ff1fb7cacc496e2fd7678d6100784857b5b636f6831f7f24565c2e",
+      "provider_reference_contract": {
+        "fallback_expected_quality": "lower_than_reference_image_mode",
+        "fallback_mode": "text_only_topology_brief",
+        "preferred_mode": "image_reference_plus_text",
+        "public_url_required_by_some_providers": true,
+        "reference_image_must_not_be_copied_as_final_style": true,
+        "reference_image_role": "topology_control_sketch",
+        "safe_to_send": "topology_only_no_secret_no_player_private_text"
+      },
+      "request_id": "old_signal_tower.controlled_map_regeneration_request",
+      "required_review_gates": [
+        "candidate_review",
+        "alignment_review",
+        "overlay_review",
+        "overlay_visual_review",
+        "explicit_promotion_report"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "source_control_sketch_pack": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+      "source_prompt_pack": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+      "source_prompt_status": "prompt_ready_repair_v2",
+      "status": "request_ready_reference_image_preferred",
+      "target_candidate": {
+        "candidate_role": "review_only_controlled_map_candidate",
+        "promotion_allowed_now": false,
+        "promotion_policy": "must pass explicit review and promotion report before runtime or player use",
+        "recommended_output_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1"
+      },
+      "topology_policy": "preserve_existing_runtime_topology"
+    },
+    {
+      "control_sketch": {
+        "dimensions": {
+          "height": 720,
+          "width": 1280
+        },
+        "png_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.png",
+        "png_sha256": "d1591cab2bcec7436f20df2042ac95398fb15e1efb406c48bfdfdc25fc618ded",
+        "svg_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.svg",
+        "svg_sha256": "b61d98471885603a41340d358ab0057b5eeff1b38b6fac737ac9e5b27179df90",
+        "usage_policy": [
+          "developer_reference_only",
+          "not_player_visible",
+          "not_a_published_visual_layer",
+          "image_provider_reference_or_manual_paintover_input"
+        ]
+      },
+      "fallback_instruction_sha256": "ff61e3928f53a490ca89ed046e2278543a3147d5c25572fdfcf072ce7113596e",
+      "issues": [],
+      "manual_prompt_markdown_path": "examples/review_packs/map_controlled_regeneration_requests/lamp_wick_store.controlled_map_regeneration_request.md",
+      "manual_prompt_markdown_sha256": "50e8eae7da53064f57685eade9fb87d40897a9a1bcf92ad1863f861479052768",
+      "negative_constraints": [
+        "no UI, frame, panel, card, menu, icon bar, watermark, logo, or text",
+        "no arrows, chevrons, direction marks, labels, numbers, or grid lines",
+        "no asphalt highways, lane markings, sci-fi HUD overlays, or technical diagram style",
+        "no deployed towers, turrets, watchtowers, castles, large central monument towers, or raised build structures",
+        "no enemies, NPCs, human figures, monsters, animals, projectiles, explosions, or combat effects",
+        "no_duplicate_right_side_pad_cluster",
+        "no_grid_like_zigzag_paths",
+        "no_unclear_left_side_objective"
+      ],
+      "node_id": "lamp_wick_store",
+      "primary_use": "fallback_if_runtime_path_reprojection_fails",
+      "provider_instruction_sha256": "d6cc9f0bfc13d9b46736f1e5f83c16198cdbd49b3b2744971bce021afe0d1de8",
+      "provider_reference_contract": {
+        "fallback_expected_quality": "lower_than_reference_image_mode",
+        "fallback_mode": "text_only_topology_brief",
+        "preferred_mode": "image_reference_plus_text",
+        "public_url_required_by_some_providers": true,
+        "reference_image_must_not_be_copied_as_final_style": true,
+        "reference_image_role": "topology_control_sketch",
+        "safe_to_send": "topology_only_no_secret_no_player_private_text"
+      },
+      "request_id": "lamp_wick_store.controlled_map_regeneration_request",
+      "required_review_gates": [
+        "candidate_review",
+        "alignment_review",
+        "overlay_review",
+        "overlay_visual_review",
+        "explicit_promotion_report"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "source_control_sketch_pack": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+      "source_prompt_pack": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+      "source_prompt_status": "fallback_prompt_ready",
+      "status": "request_ready_reference_image_preferred",
+      "target_candidate": {
+        "candidate_role": "review_only_controlled_map_candidate",
+        "promotion_allowed_now": false,
+        "promotion_policy": "must pass explicit review and promotion report before runtime or player use",
+        "recommended_output_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1"
+      },
+      "topology_policy": "preserve_two_right_to_left_routes"
+    }
+  ],
+  "schema_version": "map_controlled_regeneration_request_pack.v0.1",
+  "source_control_sketch_pack": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+  "source_prompt_pack": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+  "status": "request_pack_ready_review_only",
+  "summary": {
+    "blocked_count": 0,
+    "ready_count": 3,
+    "reference_image_request_count": 3,
+    "request_count": 3,
+    "status_counts": {
+      "request_ready_reference_image_preferred": 3
+    }
+  }
+}
