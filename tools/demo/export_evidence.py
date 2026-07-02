@@ -120,6 +120,13 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "frontend_campaign_router_contract",
+        "command": [
+            "python3",
+            "tools/frontend/validate_campaign_router_frontend_contract.py",
+        ],
+    },
+    {
         "name": "frontend_media_manifest",
         "command": [
             "python3",
