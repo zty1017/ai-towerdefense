@@ -840,13 +840,6 @@
     );
   }
 
-  function playerBattleMapVisualUrl() {
-    return (
-      mapVisualUrl("painted_visual_layer", { playerOnly: true }) ||
-      mapVisualUrl("battle_runtime_background", { playerOnly: true })
-    );
-  }
-
   function debugBattleMapVisualUrls() {
     if (!allowsDebugMapVisuals()) return [];
     return [
@@ -1562,7 +1555,6 @@
       ...mediaPreloadUrls("objective_signal_beacon", "objective_sprite", true),
       ...mediaPreloadUrls("defense_basic_lantern_barricade", "defense_sprite", true),
       sampleIconUrl(),
-      playerBattleMapVisualUrl(),
       ...debugBattleMapVisualUrls(),
       npcPortraitUrl("npc_gray_lantern_keeper"),
       npcPortraitUrl("npc_workshop_mentor"),
@@ -2306,85 +2298,345 @@
     drawDragGhost(ctx);
   }
 
-  function drawBackdrop(ctx, m) {
-    const board = getImage(playerBattleMapVisualUrl());
-    const debugBoard = board ? null : getImage(debugBattleMapVisualUrls()[0]);
-    const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
-    grd.addColorStop(0, "#202018");
-    grd.addColorStop(0.55, "#101515");
-    grd.addColorStop(1, "#17101a");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, m.width, m.height);
-    if (board && board.complete && board.naturalWidth) {
-      ctx.save();
-      ctx.globalAlpha = 1;
-      ctx.drawImage(board, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
-      ctx.restore();
-    } else if (debugBoard && debugBoard.complete && debugBoard.naturalWidth) {
-      ctx.save();
-      ctx.globalAlpha = 0.72;
-      ctx.filter = "saturate(0.55) contrast(0.82)";
-      ctx.drawImage(debugBoard, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
-      ctx.restore();
-    }
-    const shade = ctx.createRadialGradient(
-      m.width * 0.52,
-      m.height * 0.48,
-      80,
-      m.width * 0.52,
-      m.height * 0.48,
-      Math.max(m.width, m.height) * 0.72,
-    );
-    shade.addColorStop(0, "rgba(255,230,170,0.015)");
-    shade.addColorStop(0.6, "rgba(8,12,10,0.04)");
-    shade.addColorStop(1, "rgba(0,0,0,0.5)");
-    ctx.fillStyle = shade;
-    ctx.fillRect(0, 0, m.width, m.height);
+  function runtimeMapSeed() {
+    const pkg = mapRuntimePackage();
+    return hashString(`${pkg.package_id || ""}|${pkg.node_id || currentNodeId() || NODE_ID}`);
   }
 
-  function drawGrid(ctx) {
-    const grid = mapGrid();
-    for (let y = 0; y < grid.height_cells; y += 1) {
-      for (let x = 0; x < grid.width_cells; x += 1) {
-        const p = projectCell(x, y);
-        drawDiamond(
-          ctx,
-          p.x,
-          p.y,
-          state.battle.metrics.tileW,
-          state.battle.metrics.tileH,
-          (x + y) % 2 ? "rgba(49,55,43,.18)" : "rgba(38,45,38,.2)",
-          "rgba(225,210,166,.055)",
-        );
-      }
+  function hashString(value) {
+    let hash = 2166136261;
+    const text = String(value || "");
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
     }
+    return hash >>> 0;
+  }
+
+  function makeSeededRandom(seed) {
+    let value = seed >>> 0;
+    return () => {
+      value += 0x6d2b79f5;
+      let t = value;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function terrainFeatureSet() {
+    const battle = state.battle;
+    const grid = mapGrid();
+    const pkg = mapRuntimePackage();
+    const key = `${pkg.package_id || currentNodeId()}:${grid.width_cells}x${grid.height_cells}`;
+    if (battle && battle.terrainFeatureSet && battle.terrainFeatureSet.key === key) {
+      return battle.terrainFeatureSet;
+    }
+
+    const seed = runtimeMapSeed();
+    const rng = makeSeededRandom(seed ^ hashString("procedural-battlefield"));
+    const palette = [
+      "rgba(103,112,78,0.22)",
+      "rgba(118,97,58,0.18)",
+      "rgba(51,86,74,0.18)",
+      "rgba(92,78,56,0.20)",
+    ];
+    const patches = Array.from({ length: 13 }, () => ({
+      x: rng(),
+      y: rng(),
+      rx: 0.12 + rng() * 0.22,
+      ry: 0.06 + rng() * 0.14,
+      rotation: (rng() - 0.5) * 0.9,
+      color: palette[Math.floor(rng() * palette.length)],
+      wobble: Array.from({ length: 9 }, () => 0.78 + rng() * 0.48),
+    }));
+    const specks = Array.from({ length: 260 }, () => ({
+      x: rng(),
+      y: rng(),
+      size: 0.7 + rng() * 2.8,
+      alpha: 0.05 + rng() * 0.13,
+      warm: rng() > 0.46,
+    }));
+    const debris = [];
+    let attempts = 0;
+    while (debris.length < 88 && attempts < 260) {
+      attempts += 1;
+      const x = rng() * (grid.width_cells + 1.6) - 0.8;
+      const y = rng() * (grid.height_cells + 1.6) - 0.8;
+      const cell = { x: Math.round(x), y: Math.round(y) };
+      if (!isCellInGrid(cell)) continue;
+      if (distanceToPath(cell) < 1.15 || slotAt(cell) || objectiveAtCell(cell)) continue;
+      debris.push({
+        x,
+        y,
+        dx: (rng() - 0.5) * 0.62,
+        dy: (rng() - 0.5) * 0.62,
+        size: 0.55 + rng() * 1.4,
+        rotation: rng() * Math.PI,
+        kind: rng() < 0.52 ? "stone" : rng() < 0.82 ? "reed" : "scrap",
+        shade: rng(),
+      });
+    }
+    const wisps = Array.from({ length: 12 }, () => ({
+      edge: Math.floor(rng() * 4),
+      offset: rng(),
+      sway: rng(),
+      width: 38 + rng() * 88,
+      alpha: 0.035 + rng() * 0.045,
+    }));
+    const features = { key, seed, patches, specks, debris, wisps };
+    if (battle) battle.terrainFeatureSet = features;
+    return features;
+  }
+
+  function objectiveAtCell(cell) {
+    const objectives = mapObjectives();
+    const targets = [objectives.core_target, ...(objectives.optional_targets || [])].filter(Boolean);
+    return targets.some(
+      (target) => target.position && target.position.x === cell.x && target.position.y === cell.y,
+    );
+  }
+
+  function drawBackdrop(ctx, m) {
+    drawProceduralTerrain(ctx, m);
+    drawMapDebugOverlay(ctx, m);
+    drawEdgeFog(ctx, m);
+  }
+
+  function drawProceduralTerrain(ctx, m) {
+    const features = terrainFeatureSet();
+    const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
+    grd.addColorStop(0, "#23251a");
+    grd.addColorStop(0.36, "#18231e");
+    grd.addColorStop(0.68, "#111817");
+    grd.addColorStop(1, "#171118");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, m.width, m.height);
+
+    for (const patch of features.patches) {
+      drawOrganicTerrainPatch(ctx, m, patch);
+    }
+
+    ctx.save();
+    for (const speck of features.specks) {
+      ctx.fillStyle = speck.warm
+        ? `rgba(209,180,111,${speck.alpha})`
+        : `rgba(149,174,151,${speck.alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(
+        speck.x * m.width,
+        speck.y * m.height,
+        speck.size * m.scale,
+        speck.size * 0.42 * m.scale,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
+    ctx.restore();
+
+    drawTerrainDebris(ctx, features);
+  }
+
+  function drawOrganicTerrainPatch(ctx, m, patch) {
+    const cx = patch.x * m.width;
+    const cy = patch.y * m.height;
+    const rx = patch.rx * m.width;
+    const ry = patch.ry * m.height;
+    const points = patch.wobble.map((scale, index) => {
+      const angle = (index / patch.wobble.length) * Math.PI * 2 + patch.rotation;
+      return {
+        x: cx + Math.cos(angle) * rx * scale,
+        y: cy + Math.sin(angle) * ry * scale,
+      };
+    });
+    ctx.save();
+    ctx.fillStyle = patch.color;
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const next = points[(index + 1) % points.length];
+      const mx = (point.x + next.x) / 2;
+      const my = (point.y + next.y) / 2;
+      if (index === 0) ctx.moveTo(mx, my);
+      const afterNext = points[(index + 2) % points.length];
+      ctx.quadraticCurveTo(
+        next.x,
+        next.y,
+        (next.x + afterNext.x) / 2,
+        (next.y + afterNext.y) / 2,
+      );
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTerrainDebris(ctx, features) {
+    const m = state.battle.metrics;
+    ctx.save();
+    for (const item of features.debris) {
+      const p = projectCell(item.x + item.dx, item.y + item.dy);
+      if (p.x < -80 || p.y < -80 || p.x > m.width + 80 || p.y > m.height + 80) continue;
+      const size = item.size * Math.max(5, m.tileH * 0.22);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(item.rotation);
+      if (item.kind === "reed") {
+        ctx.strokeStyle = item.shade > 0.5 ? "rgba(139,159,103,0.26)" : "rgba(88,117,96,0.28)";
+        ctx.lineWidth = Math.max(1, size * 0.1);
+        for (let i = 0; i < 3; i += 1) {
+          const lean = (i - 1) * size * 0.16;
+          ctx.beginPath();
+          ctx.moveTo(lean, size * 0.2);
+          ctx.quadraticCurveTo(lean + size * 0.28, -size * 0.35, lean + size * 0.1, -size);
+          ctx.stroke();
+        }
+      } else if (item.kind === "scrap") {
+        ctx.fillStyle = "rgba(126,110,82,0.34)";
+        ctx.strokeStyle = "rgba(235,199,126,0.12)";
+        ctx.lineWidth = 1;
+        ctx.fillRect(-size * 0.45, -size * 0.12, size * 0.9, size * 0.24);
+        ctx.strokeRect(-size * 0.45, -size * 0.12, size * 0.9, size * 0.24);
+      } else {
+        ctx.fillStyle = item.shade > 0.5 ? "rgba(103,95,75,0.46)" : "rgba(68,72,59,0.48)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 0.42, size * 0.24, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawMapDebugOverlay(ctx, m) {
+    const debugUrl = debugBattleMapVisualUrls()[0];
+    const debugBoard = debugUrl ? getImage(debugUrl) : null;
+    if (!debugBoard || !debugBoard.complete || !debugBoard.naturalWidth) return;
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.filter = "grayscale(0.8) sepia(0.24) contrast(0.72)";
+    ctx.drawImage(debugBoard, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
+    ctx.restore();
+  }
+
+  function drawEdgeFog(ctx, m) {
+    const top = ctx.createLinearGradient(0, 0, 0, m.height * 0.34);
+    top.addColorStop(0, "rgba(3,5,5,0.46)");
+    top.addColorStop(1, "rgba(3,5,5,0)");
+    ctx.fillStyle = top;
+    ctx.fillRect(0, 0, m.width, m.height * 0.36);
+
+    const bottom = ctx.createLinearGradient(0, m.height, 0, m.height * 0.58);
+    bottom.addColorStop(0, "rgba(0,0,0,0.58)");
+    bottom.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = bottom;
+    ctx.fillRect(0, m.height * 0.56, m.width, m.height * 0.44);
+
+    const side = ctx.createLinearGradient(0, 0, m.width, 0);
+    side.addColorStop(0, "rgba(0,0,0,0.42)");
+    side.addColorStop(0.16, "rgba(0,0,0,0)");
+    side.addColorStop(0.84, "rgba(0,0,0,0)");
+    side.addColorStop(1, "rgba(0,0,0,0.46)");
+    ctx.fillStyle = side;
+    ctx.fillRect(0, 0, m.width, m.height);
+
+    const features = terrainFeatureSet();
+    const time = (state.battle.elapsedMs || 0) / 1200;
+    ctx.save();
+    ctx.lineCap = "round";
+    for (const wisp of features.wisps) {
+      const fromLeft = wisp.edge === 0;
+      const fromRight = wisp.edge === 1;
+      const fromTop = wisp.edge === 2;
+      const x = fromLeft
+        ? -20
+        : fromRight
+          ? m.width + 20
+          : wisp.offset * m.width;
+      const y = fromTop
+        ? -16
+        : wisp.offset * m.height;
+      const drift = Math.sin(time + wisp.sway * Math.PI * 2) * 18;
+      ctx.strokeStyle = `rgba(153,171,157,${wisp.alpha})`;
+      ctx.lineWidth = Math.max(16, wisp.width * 0.18);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(
+        x + (fromLeft ? wisp.width : fromRight ? -wisp.width : drift),
+        y + (fromTop ? wisp.width * 0.35 : drift),
+        x + (fromLeft ? wisp.width * 1.6 : fromRight ? -wisp.width * 1.6 : -drift),
+        y + wisp.width * 0.2,
+        x + (fromLeft ? wisp.width * 2.2 : fromRight ? -wisp.width * 2.2 : drift * 0.5),
+        y + (fromTop ? wisp.width * 0.74 : drift * 0.4),
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawPath(ctx) {
+    const m = state.battle.metrics;
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     for (const route of allPathRoutes()) {
       const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
       if (points.length < 2) continue;
-      ctx.strokeStyle = "rgba(255,225,161,.18)";
-      ctx.lineWidth = Math.max(18, state.battle.metrics.tileW * 0.22);
-      ctx.beginPath();
-      points.forEach((p, index) => {
-        if (index === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
+      const roadWidth = Math.max(34, m.tileW * 0.48);
+      ctx.strokeStyle = "rgba(18,13,10,0.54)";
+      ctx.lineWidth = roadWidth * 1.18;
+      traceRoutePath(ctx, points);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(255,238,176,.34)";
-      ctx.lineWidth = Math.max(2, state.battle.metrics.tileW * 0.035);
-      ctx.setLineDash([12, 18]);
-      ctx.beginPath();
-      points.forEach((p, index) => {
-        if (index === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
+      ctx.strokeStyle = "rgba(82,62,37,0.86)";
+      ctx.lineWidth = roadWidth;
+      traceRoutePath(ctx, points);
       ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(143,112,64,0.64)";
+      ctx.lineWidth = roadWidth * 0.68;
+      traceRoutePath(ctx, points);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(201,169,103,0.18)";
+      ctx.lineWidth = Math.max(5, roadWidth * 0.14);
+      traceRoutePath(ctx, points);
+      ctx.stroke();
+      drawRoadPebbles(ctx, route, points, roadWidth);
+    }
+    ctx.restore();
+  }
+
+  function traceRoutePath(ctx, points) {
+    ctx.beginPath();
+    points.forEach((p, index) => {
+      if (index === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+  }
+
+  function drawRoadPebbles(ctx, route, points, roadWidth) {
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`road:${route.route_id || ""}`));
+    ctx.save();
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / len;
+      const ny = dx / len;
+      const count = Math.max(3, Math.floor(len / 46));
+      for (let j = 0; j < count; j += 1) {
+        const t = (j + 0.18 + rng() * 0.68) / count;
+        const edge = rng() < 0.55 ? -1 : 1;
+        const offset = edge * roadWidth * (0.24 + rng() * 0.28);
+        const x = a.x + dx * t + nx * offset;
+        const y = a.y + dy * t + ny * offset;
+        const size = 2.4 + rng() * Math.max(5, roadWidth * 0.1);
+        ctx.fillStyle = rng() > 0.4 ? "rgba(196,164,102,0.24)" : "rgba(53,47,36,0.28)";
+        ctx.beginPath();
+        ctx.ellipse(x, y, size, size * 0.42, rng() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -2392,37 +2644,23 @@
   function drawDeployHints(ctx) {
     const battle = state.battle;
     const m = battle.metrics;
-    const activeOverlay = Boolean(battle.draggingTool || battle.hoverCell || battle.selectedTool);
-    for (const cell of suggestedSockets().map((slot) => slot.position || slot)) {
+    const activeOverlay = Boolean(battle.draggingTool || battle.hoverCell);
+    suggestedSockets().forEach((slot, index) => {
+      const cell = slot.position || slot;
       const p = projectCell(cell.x, cell.y);
-      ctx.save();
-      ctx.globalAlpha = activeOverlay ? 1 : 0.38;
-      ctx.fillStyle = "rgba(0,0,0,.34)";
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y + 3, m.tileW * 0.2, m.tileH * 0.26, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = battle.selectedTool === "basic" ? "rgba(255,225,161,.54)" : "rgba(100,210,200,.34)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, m.tileW * 0.2, m.tileH * 0.26, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(255,230,160,.1)";
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y - m.tileH * 0.08, m.tileW * 0.11, m.tileH * 0.12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
+      drawDeploymentBase(ctx, p, m, index, activeOverlay);
+    });
     const previewCell = battle.hoverCell;
     if (previewCell) {
       const p = projectCell(previewCell.x, previewCell.y);
       const tool = battle.draggingTool || battle.selectedTool;
       const valid = canPreviewToolAt(tool, previewCell);
       ctx.save();
-      ctx.fillStyle = valid ? "rgba(100,210,200,.18)" : "rgba(255,95,83,.16)";
-      ctx.strokeStyle = valid ? "rgba(100,210,200,.78)" : "rgba(255,95,83,.72)";
+      ctx.fillStyle = valid ? "rgba(255,211,122,.17)" : "rgba(255,95,83,.16)";
+      ctx.strokeStyle = valid ? "rgba(255,225,161,.74)" : "rgba(255,95,83,.72)";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, m.tileW * 0.34, m.tileH * 0.46, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, p.y, m.tileW * 0.31, m.tileH * 0.42, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -2450,6 +2688,47 @@
     }
   }
 
+  function drawDeploymentBase(ctx, p, m, index, active) {
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`slot:${index}`));
+    const rx = m.tileW * (0.22 + rng() * 0.035);
+    const ry = m.tileH * (0.28 + rng() * 0.04);
+    ctx.save();
+    ctx.globalAlpha = active ? 0.95 : 0.58;
+    ctx.fillStyle = "rgba(0,0,0,0.34)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + m.tileH * 0.1, rx * 1.18, ry * 0.76, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const base = ctx.createLinearGradient(p.x, p.y - ry, p.x, p.y + ry);
+    base.addColorStop(0, "rgba(126,111,78,0.72)");
+    base.addColorStop(0.54, "rgba(74,69,52,0.76)");
+    base.addColorStop(1, "rgba(35,34,28,0.88)");
+    ctx.fillStyle = base;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = active ? "rgba(255,225,161,0.68)" : "rgba(213,184,118,0.28)";
+    ctx.lineWidth = Math.max(1.4, m.tileW * 0.015);
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = active ? "rgba(255,224,145,0.42)" : "rgba(178,156,106,0.2)";
+    for (let i = 0; i < 3; i += 1) {
+      const a = rng() * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, rx * (0.48 + i * 0.12), a, a + Math.PI * (0.2 + rng() * 0.18));
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = active ? "rgba(255,211,122,0.26)" : "rgba(255,211,122,0.13)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y - ry * 0.18, rx * 0.28, ry * 0.24, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function suggestedSockets() {
     const slots = buildSlots();
     if (slots.length) return slots;
@@ -2467,9 +2746,11 @@
     const objectives = mapObjectives();
     const core = objectives.core_target || { position: { x: 0, y: 6 } };
     const coreP = projectCell(core.position.x, core.position.y);
+    drawTargetFoundation(ctx, coreP.x, coreP.y, "core");
     drawSprite(ctx, mediaSpriteRef("objective_station_core", "objective_sprite", true), coreP.x, coreP.y, 92);
     for (const target of objectives.optional_targets || []) {
       const p = projectCell(target.position.x, target.position.y);
+      drawTargetFoundation(ctx, p.x, p.y, "beacon");
       drawSprite(ctx, mediaSpriteRef("objective_signal_beacon", "objective_sprite", true), p.x, p.y, 72);
     }
     for (const defense of state.battle.defenses) {
@@ -2488,26 +2769,76 @@
     }
   }
 
+  function drawTargetFoundation(ctx, x, y, kind) {
+    const m = state.battle.metrics;
+    const gold = kind === "core" ? "#ffd37a" : "#9edcff";
+    drawGroundGlow(ctx, x, y, gold, kind === "core" ? 0.2 : 0.14, kind === "core" ? 72 : 52);
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.38)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + m.tileH * 0.1, m.tileW * 0.36, m.tileH * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const base = ctx.createLinearGradient(x, y - m.tileH * 0.24, x, y + m.tileH * 0.24);
+    base.addColorStop(0, "rgba(151,128,82,0.66)");
+    base.addColorStop(1, "rgba(42,39,31,0.88)");
+    ctx.fillStyle = base;
+    ctx.beginPath();
+    ctx.ellipse(x, y, m.tileW * 0.31, m.tileH * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = kind === "core" ? "rgba(255,225,161,0.46)" : "rgba(158,220,255,0.32)";
+    ctx.lineWidth = Math.max(1.4, m.tileW * 0.015);
+    ctx.beginPath();
+    ctx.ellipse(x, y, m.tileW * 0.31, m.tileH * 0.3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawSpawnMarkers(ctx) {
     const battle = state.battle;
     const spawns = (battle.mapPackage || {}).spawn_points || [];
     ctx.save();
-    for (const spawn of spawns) {
-      if (!spawn.position) continue;
+    spawns.forEach((spawn, index) => {
+      if (!spawn.position) return;
       const p = projectCell(spawn.position.x, spawn.position.y);
-      drawGroundGlow(ctx, p.x, p.y, "#8f7cff", 0.18, 62);
-      ctx.strokeStyle = "rgba(180,160,255,.58)";
-      ctx.lineWidth = 2;
+      drawSpawnRift(ctx, p.x, p.y, index);
+    });
+    ctx.restore();
+  }
+
+  function drawSpawnRift(ctx, x, y, index) {
+    const m = state.battle.metrics;
+    const phase = (state.battle.elapsedMs || 0) / 900 + index * 1.7;
+    drawGroundGlow(ctx, x, y, "#8f7cff", 0.16, Math.max(58, m.tileW * 0.58));
+    ctx.save();
+    ctx.fillStyle = "rgba(15,10,24,0.72)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + m.tileH * 0.04, m.tileW * 0.28, m.tileH * 0.2, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(187,166,255,0.36)";
+    ctx.lineWidth = Math.max(1.4, m.tileW * 0.013);
+    ctx.beginPath();
+    ctx.ellipse(x, y, m.tileW * 0.31, m.tileH * 0.24, -0.08, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.lineCap = "round";
+    for (let i = 0; i < 6; i += 1) {
+      const t = i / 5;
+      const drift = Math.sin(phase + i * 1.3) * m.tileW * 0.08;
+      const startX = x + (t - 0.5) * m.tileW * 0.38;
+      const startY = y - m.tileH * (0.08 + t * 0.08);
+      ctx.strokeStyle = `rgba(190,177,255,${0.18 - t * 0.018})`;
+      ctx.lineWidth = Math.max(2, m.tileW * (0.016 + t * 0.006));
       ctx.beginPath();
-      ctx.arc(p.x, p.y - 14, 18, -0.25 * Math.PI, 1.25 * Math.PI);
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(
+        startX + drift,
+        startY - m.tileH * 0.48,
+        startX - drift * 0.7,
+        startY - m.tileH * 0.78,
+        startX + drift * 0.42,
+        startY - m.tileH * 1.1,
+      );
       ctx.stroke();
-      ctx.fillStyle = "rgba(230,220,255,.72)";
-      ctx.beginPath();
-      ctx.moveTo(p.x - 4, p.y - 32);
-      ctx.lineTo(p.x + 14, p.y - 24);
-      ctx.lineTo(p.x - 4, p.y - 16);
-      ctx.closePath();
-      ctx.fill();
     }
     ctx.restore();
   }
@@ -2584,20 +2915,6 @@
       drawGroundGlow(ctx, x, y, "#8fcf83", 0.32, 72);
     }
     ctx.restore();
-  }
-
-  function drawDiamond(ctx, x, y, w, h, fill, stroke) {
-    ctx.beginPath();
-    ctx.moveTo(x, y - h / 2);
-    ctx.lineTo(x + w / 2, y);
-    ctx.lineTo(x, y + h / 2);
-    ctx.lineTo(x - w / 2, y);
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 1;
-    ctx.stroke();
   }
 
   function drawGroundGlow(ctx, x, y, color, alpha, radius) {

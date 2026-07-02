@@ -48,6 +48,20 @@ def css_blocks(css: str, selector: str) -> list[str]:
     ]
 
 
+def js_section(source: str, start_name: str, end_name: str | None = None) -> str:
+    start = source.find(f"function {start_name}")
+    if start < 0:
+        return ""
+    if end_name:
+        end = source.find(f"\n  function {end_name}", start + 1)
+        if end > start:
+            return source[start:end]
+    next_match = re.search(r"\n  function\s+\w+", source[start + 1 :])
+    if next_match:
+        return source[start : start + 1 + next_match.start()]
+    return source[start:]
+
+
 def require(condition: bool, message: str, errors: list[str]) -> None:
     if not condition:
         errors.append(message)
@@ -55,19 +69,31 @@ def require(condition: bool, message: str, errors: list[str]) -> None:
 
 def validate_app_contract(errors: list[str]) -> None:
     app = APP_JS.read_text(encoding="utf-8")
-    priority = re.search(r"function\s+playerBattleMapVisualUrl\(\)\s*\{(?P<body>.*?)\n\s*\}", app, re.S)
-    require(priority is not None, "missing playerBattleMapVisualUrl()", errors)
-    if priority:
-        body = priority.group("body")
-        painted = body.find('"painted_visual_layer"')
-        runtime = body.find('"battle_runtime_background"')
-        control = body.find("battle_control_sketch")
-        reference = body.find("battle_reference_board")
-        require(painted >= 0, "player map priority must include painted_visual_layer", errors)
-        require(runtime >= 0, "player map priority must include battle_runtime_background fallback", errors)
-        require(painted < runtime, "painted_visual_layer must be checked before battle_runtime_background", errors)
-        require("playerOnly: true" in body, "player map priority must filter by player-ready visual quality", errors)
-        require(control < 0 and reference < 0, "player map priority must not include control/reference layers", errors)
+    preload = js_section(app, "preloadBattleImages", "resizeBattleCanvas")
+    backdrop = js_section(app, "drawBackdrop", "drawProceduralTerrain")
+    path = js_section(app, "drawPath", "traceRoutePath")
+    deploy = js_section(app, "drawDeployHints", "drawDeploymentBase")
+    spawn = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
+
+    for name in (
+        "terrainFeatureSet",
+        "drawProceduralTerrain",
+        "drawRoadPebbles",
+        "drawDeploymentBase",
+        "drawTargetFoundation",
+        "drawSpawnRift",
+    ):
+        require(f"function {name}" in app, f"missing {name}() procedural battle layer", errors)
+
+    require("playerBattleMapVisualUrl()" not in preload, "default preload must not fetch whole-map player images", errors)
+    require("drawProceduralTerrain(ctx, m)" in backdrop, "drawBackdrop must start from procedural terrain", errors)
+    require("drawMapDebugOverlay(ctx, m)" in backdrop, "debug map overlay must be isolated behind its own helper", errors)
+    require("playerBattleMapVisualUrl" not in backdrop, "drawBackdrop must not draw whole-map player images by default", errors)
+    require("drawRoadPebbles" in path, "drawPath must render textured world road details", errors)
+    require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
+    require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
+    require("drawSpawnRift" in spawn, "spawn markers must render ambient entry effects, not arrows", errors)
+    require("function drawGrid" not in app and "function drawDiamond" not in app, "battle view must not keep checkerboard/grid drawing helpers", errors)
 
     debug = re.search(r"function\s+debugBattleMapVisualUrls\(\)\s*\{(?P<body>.*?)\n\s*\}", app, re.S)
     require(debug is not None, "missing debugBattleMapVisualUrls()", errors)
@@ -119,6 +145,8 @@ def validate_map_layers(errors: list[str]) -> None:
             require(quality == "passed", f"{label} published layer must have player_visible_quality=passed", errors)
         if quality == "passed":
             require(authority == "published_visual_layer", f"{label} passed visual quality must be published", errors)
+        if quality == "failed":
+            require(authority != "published_visual_layer", f"{label} failed visual quality must not be published", errors)
         local_path = ROOT / str(item.get("local_path", ""))
         require(local_path.exists(), f"visual layer file missing: {local_path}", errors)
         if local_path.exists():
@@ -138,27 +166,28 @@ def validate_map_layers(errors: list[str]) -> None:
     require(runtime is not None, "missing battle_runtime_background fallback in map visual manifest", errors)
     validate_player_candidate(painted, "painted_visual_layer")
     validate_player_candidate(runtime, "battle_runtime_background")
-    require(
-        is_player_ready(painted) or is_player_ready(runtime),
-        "map visual manifest must expose at least one player-ready map layer",
-        errors,
-    )
+    for item in items:
+        if isinstance(item, dict) and item.get("role") not in {"strategic_control_sketch", "battle_control_sketch", "battle_reference_board"}:
+            validate_player_candidate(item, str(item.get("role") or "visual_layer"))
 
     require(MAP_RUNTIME_PACKAGES, "no map runtime packages found", errors)
     for package_path in MAP_RUNTIME_PACKAGES:
         package = load_json(package_path)
+        grid = package.get("grid") or {}
+        require(grid.get("width_cells") and grid.get("height_cells"), f"{package_path.name} missing runtime grid", errors)
+        require(package.get("path_routes"), f"{package_path.name} missing path_routes", errors)
+        require(package.get("build_slots"), f"{package_path.name} missing build_slots", errors)
+        require((package.get("objectives") or {}).get("core_target"), f"{package_path.name} missing core objective", errors)
+        require(package.get("spawn_points"), f"{package_path.name} missing spawn_points", errors)
         layers = package.get("visual_layers", [])
         roles = {layer.get("role"): layer for layer in layers if isinstance(layer, dict)}
         require("painted_visual_layer" in roles, f"{package_path.name} missing painted_visual_layer", errors)
         require("battle_runtime_background" in roles, f"{package_path.name} missing battle_runtime_background", errors)
-        require(
-            is_player_ready(roles.get("painted_visual_layer"))
-            or is_player_ready(roles.get("battle_runtime_background")),
-            f"{package_path.name} must expose at least one player-ready map layer",
-            errors,
-        )
         validate_player_candidate(roles.get("painted_visual_layer"), f"{package_path.name} painted_visual_layer")
         validate_player_candidate(roles.get("battle_runtime_background"), f"{package_path.name} battle_runtime_background")
+        for layer in layers:
+            if isinstance(layer, dict):
+                validate_player_candidate(layer, f"{package_path.name} {layer.get('role') or 'visual_layer'}")
         for role in ("battle_control_sketch", "battle_reference_board"):
             layer = roles.get(role)
             require(layer is not None and layer.get("authority") == "reference_only", f"{package_path.name} {role} must stay reference_only", errors)
@@ -178,7 +207,7 @@ def main() -> int:
 
     print("OK battle visual contract")
     print(f"- map runtime packages: {len(MAP_RUNTIME_PACKAGES)}")
-    print("- player map priority: painted_visual_layer -> battle_runtime_background -> procedural fallback")
+    print("- default battle backdrop: MapRuntimePackage-driven procedural terrain")
     return 0
 
 

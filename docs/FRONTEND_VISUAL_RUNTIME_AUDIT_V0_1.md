@@ -1,120 +1,56 @@
 # 前端视觉运行态审计 v0.1
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
-本文记录 P0-L 前端视觉运行态验收结果。目标是确认默认玩家战斗视图不会把控制图、参考图、棋盘图或孤立几何块作为正式地图画面。
+本文记录 P0-M 前端战斗地图视觉底座改造结果。目标是让默认玩家战斗视图不依赖失败整图候选，而是由 `MapRuntimePackage` 的路径、塔位、目标和出生点驱动 canvas 程序化战场底座。
 
 ## 1. 审计结论
 
 当前结论：
 
-- 默认玩家视图的地图底图选择顺序已固定为 `painted_visual_layer -> battle_runtime_background -> 程序化大画面背景`，且只接受 `authority=published_visual_layer` 与 `player_visible_quality=passed` 同时成立的图层。
-- `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助 fallback，不进入默认玩家体验。
-- 首战 `MapRuntimePackage` 中 `painted_visual_layer` 是当前玩家默认美术底图；`battle_runtime_background.v0.2` 保留为逻辑对齐但视觉质量失败的候选层，不能作为玩家 fallback 发布。
-- 战斗 UI 已压缩为低遮挡 HUD：画布全屏铺底，顶部 HUD 更薄，左右侧栏更窄，底部工具条降低高度，避免把主战场变成后台面板。
-- 前端静态入口、前端脚本、首战 `painted_visual_layer` PNG、首战 `MapRuntimePackage` 均可通过本地 HTTP 服务读取。
-- 已补充无浏览器环境下的静态视觉合约校验脚本，用于防止控制图泄漏、玩家底图优先级倒置、战斗画布塌缩和侧栏过宽。
-- 本轮未生成真实浏览器截图，因为当前执行环境没有 Chromium / Chrome，也没有 Playwright。
-
-这意味着：代码和资源层面的默认路径已经防止低质量控制图污染玩家视图；但真正的像素级截图验收仍需要在安装浏览器的环境中补做。
+- 默认战斗画面不再预加载或绘制整张玩家地图图像；`drawBackdrop()` 固定从 `drawProceduralTerrain()` 开始绘制，再叠加受 debug 参数保护的辅助 overlay 与边缘雾暗。
+- `MapRuntimePackage` 仍是运行时事实源：`grid` 负责投影，`path_routes` 负责道路，`build_slots` 负责部署基座，`objectives` 负责目标地标，`spawn_points` 负责出生点氛围。
+- 程序化底座使用 `package_id` / `node_id` 派生稳定 seed，同一节点会得到稳定地形纹理、地表斑块、环境碎片和边缘雾。
+- 路径已改为土石路和碎石边缘，不再使用发光虚线或控制线；塔位已改为石质部署基座；出生点已改为雾潮裂口，不再画箭头。
+- 旧 `drawGrid()` / `drawDiamond()` 棋盘绘制入口已移除，静态合约会阻止它们重新出现。
+- `battle_control_sketch` 与 `battle_reference_board` 仍只允许在 debug / evidence 参数下作为低透明辅助 overlay，不进入默认玩家体验。
+- 侧栏和提示层进一步降低遮挡：左右侧栏宽度收紧到 190px / 198px，背景透明度降低，canvas 继续全屏铺满 battle stage。
 
 ## 2. 已验证命令
-
-### 2.1 前端语法与 diff 检查
 
 ```bash
 node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
-git diff --check
 ```
 
 结果：通过。
 
-### 2.2 浏览器能力探测
-
-```bash
-python3 -c "import shutil, importlib.util; print('chromium', bool(shutil.which('chromium') or shutil.which('chromium-browser') or shutil.which('google-chrome') or shutil.which('google-chrome-stable'))); print('playwright', bool(importlib.util.find_spec('playwright')))"
-```
-
-结果：
+静态视觉合约输出：
 
 ```text
-chromium False
-playwright False
+OK battle visual contract
+- map runtime packages: 3
+- default battle backdrop: MapRuntimePackage-driven procedural terrain
 ```
 
-### 2.3 静态资源 HTTP 读取
+## 3. 静态合约覆盖
 
-运行时需要清除代理变量，否则 localhost 请求会被代理转发。
+`tools/frontend/validate_battle_visual_contract.py` 当前检查：
 
-```bash
-python3 -m http.server 8765
-```
+- 默认 preload 不得请求整张玩家地图图像。
+- `drawBackdrop()` 必须调用程序化地形，并且不能调用 `playerBattleMapVisualUrl()`。
+- 路径绘制必须包含世界内纹理细节，且不得使用 dashed control line。
+- 部署点必须走 world-space deployment base。
+- 出生点必须走 ambient entry effect，不得回退箭头。
+- `drawGrid()` / `drawDiamond()` 不得保留。
+- 失败视觉层不能以 `published_visual_layer` 权限进入 manifest 或 runtime package。
+- 每个 `MapRuntimePackage` 必须具备 grid、path_routes、build_slots、core objective 和 spawn_points。
 
-然后读取：
+## 4. 仍需浏览器验收
 
-```text
-http://127.0.0.1:8765/frontend/index.html
-http://127.0.0.1:8765/frontend/app.js
-http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
-http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
-```
+本轮没有生成真实浏览器截图。仍需在有浏览器的环境中人工确认：
 
-结果：
-
-```text
-200 http://127.0.0.1:8765/frontend/index.html
-200 http://127.0.0.1:8765/frontend/app.js
-200 http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
-200 http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
-```
-
-### 2.4 首战视觉层权威性
-
-```bash
-python3 -c 'import json; p=json.load(open("examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json", encoding="utf-8")); print([l["role"]+":"+l.get("authority","") for l in p["visual_layers"]])'
-```
-
-结果：
-
-```text
-[
-  "strategic_control_sketch:reference_only",
-  "battle_control_sketch:reference_only",
-  "battle_reference_board:reference_only",
-  "painted_visual_layer:published_visual_layer:passed",
-  "battle_runtime_background:candidate_visual_layer:failed"
-]
-```
-
-## 3. 代码路径证据
-
-关键函数位于 `frontend/app.js`：
-
-- `playerBattleMapVisualUrl()`：默认只返回通过玩家视觉质量门的 `painted_visual_layer` 或 `battle_runtime_background`。
-- `debugBattleMapVisualUrls()`：只有 `?mapVisualDebug=1`、`?debugMapVisuals=1` 或 `?evidence=1` 时才返回 `battle_reference_board` / `battle_control_sketch`。
-- `drawBackdrop()`：优先绘制玩家发布底图；发布底图缺失时使用程序化背景，只有 debug/evidence 模式才允许调试图 fallback。
-- `tools/frontend/validate_battle_visual_contract.py`：检查玩家地图层优先级、debug 图隔离、PNG 尺寸、runtime package 视觉层、全屏 battle canvas 和 HUD 宽度约束。
-
-## 4. 未完成项
-
-仍需在具备浏览器的环境中补做：
-
-```bash
-npx playwright screenshot http://127.0.0.1:8765/frontend/index.html /tmp/ai_td_frontend_battle.png
-```
-
-或使用本机 Chrome / Chromium 手动录屏确认：
-
-- 战斗地图占据页面中部视觉重心。
-- 默认玩家视图不出现 `battle_control_sketch` / `battle_reference_board`。
-- 路径、塔位、目标、出生点来自结构化叠层。
-- 拖拽部署视觉没有破坏地图主体。
-
-## 5. 当前风险
-
-当前风险不是“控制图会默认进入玩家视图”，这条已被代码防线挡住。当前风险是：
-
-- 由于缺少浏览器截图，本轮无法证明最终像素构图足够好看。
-- 后续如果替换 `painted_visual_layer` 或 `battle_runtime_background`，仍需要重新跑本审计，并且新图必须显式通过 `player_visible_quality=passed`。
-- `painted_visual_layer` 当前已进入 `MapRuntimePackage v0.1`，但仍需要在有浏览器环境时补做截图或录屏验收。
+- 默认战斗首屏是否有足够全屏战场感。
+- 程序化地形、土路、塔位石基、目标地标和出生点雾潮在不同窗口比例下是否构图自然。
+- 拖拽部署与点击放置在新视觉底座上仍然清晰可用。
+- debug / evidence 参数之外不会显示控制图、参考图、失败 text-fallback 地图、棋盘或箭头。

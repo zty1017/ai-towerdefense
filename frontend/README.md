@@ -22,7 +22,7 @@ API 模式下，前端会读取 `/api/sessions/{session_id}/campaign-router` 决
 
 战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
 
-玩家默认战斗视图只允许使用发布级视觉层：当前优先使用 `painted_visual_layer`，其次是逻辑对齐 fallback `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
+玩家默认战斗视图使用 MapRuntimePackage 驱动的程序化大画面底座：canvas 会按包内路径、塔位、目标和出生点绘制地形、土路、部署基座、目标地标与入口雾潮。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；失败的整图候选只保留为审查证据，不进入默认战斗画面。
 
 媒体加载优先读取 atlas manifest：
 
@@ -40,7 +40,7 @@ python3 tools/frontend/validate_battle_visual_contract.py
 python3 tools/frontend/validate_campaign_router_frontend_contract.py
 ```
 
-这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、玩家底图优先级倒置、地图 PNG 尺寸不一致、战斗画布被压成小面板，以及 API 模式退回固定首战节点。
+这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、失败整图被发布、程序化底座入口缺失、战斗画布被压成小面板，以及 API 模式退回固定首战节点。
 
 控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
 
