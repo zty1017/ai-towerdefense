@@ -121,10 +121,12 @@ uvicorn app.main:app --app-dir backend --reload
 | GET | `/api/sessions/{session_id}/opening` | Read prebuilt opening |
 | GET | `/api/sessions/{session_id}/animation-seeds` | Read image-to-video seed manifest |
 | GET | `/api/sessions/{session_id}/runtime-art-kit` | Read developer-compiled battle runtime art |
+| GET | `/api/sessions/{session_id}/generation-schedule` | Read fixture-backed scheduler buffer |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/config` | Read battle config and toolbar assets |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/runtime-package` | Read reviewed runtime package |
+| GET | `/api/sessions/{session_id}/battles/{node_id}/map-runtime-package` | Read runtime-safe map package |
 | POST | `/api/sessions/{session_id}/battles/{node_id}/results` | Submit mock battle result and apply world delta |
 | GET | `/api/sessions/{session_id}/settlement/latest` | Read latest settlement |
 | GET | `/api/sessions/{session_id}/evidence` | Read simple demo evidence payload |

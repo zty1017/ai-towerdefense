@@ -65,7 +65,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence，用于声明并离线 dry-run sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、live campaign router、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，用于声明并离线 dry-run sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -344,6 +344,23 @@ P2：本阶段明确不做
 - 同步项只读取已审 fixture / locked package / published manifest，不依赖实时 provider。
 - 预取和后台项只声明候选生成计划，启用前必须重新通过对应 validator、semantic gate 或 media gate。
 - 这不是后台执行器；后续仍需实现真正的队列、缓存、重试、状态持久化和 live campaign router。
+
+### P1-B-1 Generation Scheduler session API 缓冲层
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `GET /api/sessions/{session_id}/generation-schedule`
+- `backend/app/services/frontend_mock_service.py` 已加载 `GenerationSchedulePlan v0.1` 与 `GenerationScheduleRunReport v0.1`。
+- `generation_schedule.buffer` 提供 session 可见的紧凑摘要，包括 latency class、dry-run action、fallback、复验要求、provider 调用数和世界修改数。
+- `/api/sessions/{session_id}/evidence` 已带 `generation_scheduler` 摘要，便于 Studio / 录屏证明调度器存在。
+- `docs/FRONTEND_MOCK_API_V0_1.md` 已记录接口边界。
+
+当前结论：
+
+- 该接口仍是 fixture-backed / review-only，不启动后台 worker，不调用真实 provider，不修改世界状态。
+- 它把“预生成缓冲”接到了后端 API 面，方便前端或演示读取；真实队列、缓存、重试、状态持久化和 provider 调度仍属后续 P1-B。
 
 ## 4. 当前 P0 任务
 

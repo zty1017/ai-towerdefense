@@ -9,6 +9,7 @@ content comes from existing JSON packages and generated media manifests.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,12 @@ _FACT_ENTRY_EXAMPLE = (
 )
 _CGOP_EXAMPLE = (
     _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+)
+_GENERATION_SCHEDULE_PLAN = (
+    _REPO_ROOT / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+)
+_GENERATION_SCHEDULE_RUN_REPORT = (
+    _REPO_ROOT / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
 )
 
 _BATTLE_CONFIG_BY_NODE = {
@@ -162,6 +169,95 @@ def _load_ai_compile_core_artifacts() -> dict[str, Any]:
         "fact_entry": _load_json(_FACT_ENTRY_EXAMPLE),
         "compiled_game_object_package": _load_json(_CGOP_EXAMPLE),
         "world_delta_transaction": _load_json(_FIRST_BATTLE_TRANSACTION),
+    }
+
+
+def _generation_schedule_refs() -> dict[str, str]:
+    return {
+        "plan": _rel(_GENERATION_SCHEDULE_PLAN),
+        "run_report": _rel(_GENERATION_SCHEDULE_RUN_REPORT),
+    }
+
+
+def _load_generation_schedule_plan() -> dict[str, Any]:
+    return _load_json(_GENERATION_SCHEDULE_PLAN)
+
+
+def _load_generation_schedule_run_report() -> dict[str, Any]:
+    return _load_json(_GENERATION_SCHEDULE_RUN_REPORT)
+
+
+def _build_generation_schedule_buffer(
+    plan: dict[str, Any], run_report: dict[str, Any]
+) -> dict[str, Any]:
+    plan_items = [item for item in plan.get("items", []) if isinstance(item, dict)]
+    report_items = [
+        item for item in run_report.get("items", []) if isinstance(item, dict)
+    ]
+    report_by_item_id = {
+        str(item.get("schedule_item_id")): item
+        for item in report_items
+        if item.get("schedule_item_id")
+    }
+    latency_counts = Counter(
+        str(item.get("latency_class", "unknown")) for item in plan_items
+    )
+    result_counts = Counter(
+        str(item.get("result_status", "unknown")) for item in report_items
+    )
+    provider_review_required_count = sum(
+        1 for item in report_items if item.get("provider_review_required") is True
+    )
+    world_commit_candidate_count = sum(
+        1
+        for item in plan_items
+        if isinstance(item.get("commit_policy"), dict)
+        and item["commit_policy"].get("world_commit") not in (None, "none")
+    )
+    buffer_items = []
+    for item in plan_items:
+        item_id = str(item.get("schedule_item_id", ""))
+        report_item = report_by_item_id.get(item_id, {})
+        buffer_items.append(
+            {
+                "schedule_item_id": item_id,
+                "object_kind": item.get("object_kind"),
+                "object_ref": item.get("object_ref"),
+                "latency_class": item.get("latency_class"),
+                "plan_status": item.get("status"),
+                "dry_run_action": report_item.get("action"),
+                "dry_run_status": report_item.get("result_status"),
+                "player_visible": item.get("player_visible") is True,
+                "fallback_ref": item.get("fallback_ref"),
+                "revalidate_before_activation": (
+                    isinstance(item.get("commit_policy"), dict)
+                    and item["commit_policy"].get("revalidate_before_activation") is True
+                ),
+            }
+        )
+    summary = run_report.get("summary", {})
+    if not isinstance(summary, dict):
+        summary = {}
+    return {
+        "status": "fixture_backed_scheduler_buffer_ready",
+        "control_plane_mode": "review_only_dry_run",
+        "plan_id": plan.get("plan_id"),
+        "report_id": run_report.get("report_id"),
+        "item_count": len(plan_items),
+        "latency_class_counts": dict(sorted(latency_counts.items())),
+        "result_status_counts": dict(sorted(result_counts.items())),
+        "ready_reused_count": int(summary.get("ready_reused_count", 0)),
+        "fallback_selected_count": int(summary.get("fallback_selected_count", 0)),
+        "scheduled_count": int(summary.get("scheduled_count", 0)),
+        "provider_call_count": int(summary.get("provider_call_count", 0)),
+        "world_mutation_count": int(summary.get("world_mutation_count", 0)),
+        "provider_review_required_count": provider_review_required_count,
+        "world_commit_candidate_count": world_commit_candidate_count,
+        "activation_requires_revalidation": (
+            isinstance(plan.get("authority"), dict)
+            and plan["authority"].get("activation_requires_revalidation") is True
+        ),
+        "items": buffer_items,
     }
 
 
@@ -360,6 +456,21 @@ def get_runtime_art_kit(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         **_runtime_art_payload(),
+    }
+
+
+def get_generation_schedule(session_id: str) -> dict[str, Any]:
+    plan = _load_generation_schedule_plan()
+    run_report = _load_generation_schedule_run_report()
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule": {
+            "refs": _generation_schedule_refs(),
+            "buffer": _build_generation_schedule_buffer(plan, run_report),
+            "plan": plan,
+            "run_report": run_report,
+        },
     }
 
 
@@ -578,6 +689,13 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         "ai_compile_core_artifacts": {
             "status": "field_boundary_examples_ready",
             "refs": _core_artifact_refs(),
+        },
+        "generation_scheduler": {
+            "refs": _generation_schedule_refs(),
+            "buffer": _build_generation_schedule_buffer(
+                _load_generation_schedule_plan(),
+                _load_generation_schedule_run_report(),
+            ),
         },
         "proposal": dict(proposal) if proposal else None,
         "research_job": dict(job) if job else None,
