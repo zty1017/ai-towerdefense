@@ -98,6 +98,7 @@ GET /api/sessions/{session_id}/frontend-mock-pack
 返回：
 
 - `pack`: `examples/frontend_mock/frontend_mock_pack.v0.1.json`
+- `ai_compile_core_artifacts`: `ContextPackage / FactEntry / CGOP` 字段级示例与引用
 - `media_manifest`: processed 媒体清单
 - `animation_seed_manifest`: 图生视频种子图清单
 - `media_atlas_manifest`: 前端编译资产 atlas 清单，当前为 `spritesheet` 多帧 frame sequence + 实体 spritesheet
@@ -107,6 +108,8 @@ GET /api/sessions/{session_id}/frontend-mock-pack
 - `runtime_art_animation_seed_manifest`: 图生视频种子图清单
 - `runtime_art_atlas_manifest`: 战斗运行时美术 atlas 清单，当前为 `spritesheet` 多帧 frame sequence + 实体 spritesheet
 - `runtime_art_pipeline_status`
+
+`ai_compile_core_artifacts` 是 Studio / evidence 辅助数据，不是玩家默认界面文案。它用于证明前端 mock 包已经开始对齐统一 AI 编译对象模型；实际玩家流程仍读取 `pack`、runtime package、地图包和媒体清单。
 
 ### 获取开场
 
@@ -225,6 +228,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 
 - `compiled_object`：可编译对象模型、候选类型、生命周期提示和运行时表面。
 - `context_package`：世界书、节点、battle config、MapRuntimePackage 和玩家输入来源。
+- `core_artifact_refs`：对应 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 示例或本次运行产物引用。
 - `validation`：本地门禁、运行状态和 gate status。
 - `runtime_refs`：runtime package、delivery payload 和 trace 数量。
 
@@ -233,6 +237,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 - 玩家侧 UI 可以忽略该字段。
 - 不包含 API key、secret、原始提示词、外部 provider 原始响应或完整 trace。
 - 技术错误仍进入内部记录，玩家侧只显示世界内状态。
+- 旧 `compiler_metadata.v0.1` 保留兼容；新字段只增加引用，不要求前端玩家 UI 展示。
 
 ### 获取地图运行包
 
@@ -316,6 +321,7 @@ GET /api/sessions/{session_id}/evidence
 - 最新 proposal
 - 最新 research job
 - 最新 battle result
+- AI 编译核心对象引用
 - audit summary
 - dossier summary
 

@@ -136,7 +136,7 @@ Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并�
 Sprite live regeneration candidate pack 已可针对 runtime 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；当前候选覆盖信标、基础灯栏与驿站核心，候选仍不自动替换正式 runtime 素材。
 Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；信标、基础灯栏与驿站核心已替换 runtime processed PNG 并重建 atlas，runtime sprite cutout quality 已达到 `passed 7 / 7`，repair plan 已清空。
 GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0，真实后台执行器仍未实现。
-ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；当前只冻结字段级边界，不代表 Research Job、WorldStateDelta 和前端 mock 已全部迁移到这些字段。
+ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job metadata、frontend mock API 和 battle settlement/evidence 已开始携带 core artifact refs，但完整迁移仍未完成。
 ```
 
 ### 审查与交付
@@ -180,7 +180,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
 - 地图视觉层：`painted_visual_layer` 已作为玩家默认发布底图，`battle_runtime_background` 作为逻辑对齐 fallback，控制图和参考图只用于 debug / evidence。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator 与 evidence 摘要，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
-- AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator，用于把总架构概念落到字段级事实源。
+- AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；Research Job 与 frontend mock evidence 已开始引用这些核心对象。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。
@@ -192,7 +192,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- Research Job / WorldStateDelta / frontend mock 包与 ContextPackage、FactEntry、CGOP 字段的全面迁移。
+- Research Job / WorldStateDelta / frontend mock 包与 ContextPackage、FactEntry、CGOP 字段的全面迁移；当前只是 refs/evidence 层对齐，尚未把所有运行时产物改为原生核心对象。
 - 正式 live campaign router 与 Generation Scheduler 后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。

@@ -103,6 +103,12 @@ def test_create_proposal_happy_path(client):
     assert metadata["context_package"]["map_runtime_package_ref"].endswith(
         "mvp_first_battle.map_runtime_package.json"
     )
+    assert metadata["core_artifact_refs"]["context_package"].endswith(
+        "mvp_first_battle.context_package.json"
+    )
+    assert metadata["core_artifact_refs"]["compiled_game_object_package"].endswith(
+        "mvp_light_snare.compiled_game_object_package.json"
+    )
     # Player-facing text must stay in world language.
     _assert_no_forbidden_terms(
         body["display_name"],
@@ -160,6 +166,8 @@ def test_confirm_proposal_runs_workflows_and_produces_artifacts(client):
     assert metadata["validation"]["gate_status"] == "passed"
     assert metadata["runtime_refs"]["trace_count"] == 2
     assert metadata["runtime_refs"]["runtime_package_path"] == job["runtime_package_path"]
+    assert metadata["core_artifact_refs"]["runtime_package_path"] == job["runtime_package_path"]
+    assert metadata["core_artifact_refs"]["delivery_payload_path"] == job["delivery_payload_path"]
 
     # Player-facing message stays in world language.
     _assert_no_forbidden_terms(job["player_state_message"])

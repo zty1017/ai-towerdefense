@@ -27,6 +27,7 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     animation_seed_manifest = payload["animation_seed_manifest"]
     runtime_art_kit = payload["runtime_art_kit"]
     runtime_art_media_manifest = payload["runtime_art_media_manifest"]
+    core_artifacts = payload["ai_compile_core_artifacts"]
 
     assert pack["schema_version"] == "frontend_mock_pack.v0.1"
     assert len(pack["assets"]) == 11
@@ -37,6 +38,14 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     assert len(runtime_art_kit["coverage"]["enemy_archetypes"]) == 3
     assert len(runtime_art_kit["procedural_effects"]) == 5
     assert runtime_art_media_manifest["summary"]["media_count"] == 18
+    assert core_artifacts["context_package"]["schema_version"] == "context_package.v0.1"
+    assert core_artifacts["fact_entry"]["schema_version"] == "fact_entry.v0.1"
+    assert core_artifacts["compiled_game_object_package"]["schema_version"] == (
+        "compiled_game_object_package.v0.1"
+    )
+    assert core_artifacts["refs"]["context_package"].endswith(
+        "mvp_first_battle.context_package.json"
+    )
     assert payload["animation_pipeline_status"] == (
         "seed_images_ready_video_frames_not_generated"
     )
@@ -148,6 +157,9 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     )
     assert settlement["settlement"]["result"] == "victory"
     assert settlement["settlement"]["world_delta"]["delta_id"] == "delta_first_battle_result_001"
+    assert settlement["settlement"]["core_artifact_refs"]["fact_entry"].endswith(
+        "mvp_gray_lantern.fact_entry.json"
+    )
     assert settlement["settlement"]["run_world_state"]["progress"]["phase"] == (
         "post_first_defense"
     )
@@ -158,6 +170,9 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     evidence = _payload(client.get(f"/api/sessions/{sid}/evidence"))
     assert evidence["audit_summary"]["overall_status"] == "passed"
     assert evidence["battle_result"]["settlement"]["node_id"] == "gray_lantern_station"
+    assert evidence["ai_compile_core_artifacts"]["refs"]["compiled_game_object_package"].endswith(
+        "mvp_light_snare.compiled_game_object_package.json"
+    )
 
 
 def test_all_battle_nodes_expose_map_runtime_packages(client):
