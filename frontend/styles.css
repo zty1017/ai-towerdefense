@@ -633,7 +633,7 @@ button:disabled {
   left: 14px;
   right: 14px;
   display: grid;
-  grid-template-columns: 270px minmax(0, 1fr) 280px;
+  grid-template-columns: 250px minmax(0, 1fr) 230px;
   gap: 10px;
   pointer-events: none;
 }
@@ -643,8 +643,8 @@ button:disabled {
 }
 
 .mini-map {
-  width: 94px;
-  height: 94px;
+  width: 86px;
+  height: 86px;
   border-radius: 50%;
   border: 2px solid rgba(255, 225, 161, 0.68);
   background:
@@ -665,10 +665,10 @@ button:disabled {
 .top-stat,
 .battle-side,
 .battle-tools {
-  border: 1px solid rgba(242, 205, 130, 0.18);
+  border: 1px solid rgba(242, 205, 130, 0.2);
   border-radius: var(--radius);
-  background: rgba(15, 17, 14, 0.72);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.26);
+  background: rgba(10, 12, 10, 0.62);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(10px) saturate(1.05);
 }
 
@@ -700,21 +700,22 @@ button:disabled {
 .battle-side {
   position: absolute;
   z-index: 4;
-  top: 96px;
-  bottom: 132px;
-  width: 260px;
+  top: 112px;
+  bottom: 146px;
+  width: 232px;
   padding: 12px;
   min-height: 0;
   overflow: auto;
+  opacity: 0.9;
 }
 
 .battle-left {
-  left: 14px;
+  left: 18px;
 }
 
 .battle-right {
-  right: 14px;
-  width: 280px;
+  right: 18px;
+  width: 248px;
 }
 
 .battle-stage {
@@ -737,8 +738,9 @@ button:disabled {
 
 .battle-toast {
   position: absolute;
-  left: 18px;
-  top: 16px;
+  left: 50%;
+  top: 102px;
+  transform: translateX(-50%);
   min-width: 220px;
   max-width: 360px;
   padding: 10px 12px;
@@ -753,24 +755,26 @@ button:disabled {
 .battle-tools {
   position: absolute;
   z-index: 5;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
+  left: 50%;
+  right: auto;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 32px));
   display: grid;
-  grid-template-columns: repeat(5, minmax(132px, 220px));
+  grid-template-columns: repeat(3, minmax(148px, 1fr));
   justify-content: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 12px;
+  padding: 12px;
 }
 
 .toolbar-card {
   display: grid;
-  grid-template-columns: 54px 1fr;
+  grid-template-columns: 58px 1fr;
   align-items: center;
   gap: 10px;
-  padding: 8px;
+  padding: 9px;
   min-width: 0;
-  background: rgba(18, 21, 16, 0.82);
+  background: linear-gradient(180deg, rgba(30, 31, 22, 0.88), rgba(9, 12, 10, 0.86));
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -793,8 +797,8 @@ button:disabled {
 }
 
 .tool-icon {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
 }
 
 .tool-body {

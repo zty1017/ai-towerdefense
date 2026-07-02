@@ -107,7 +107,12 @@ ASSET_KINDS = frozenset(
 )
 VISUAL_HINTS = frozenset({"ground_plate", "ruin_plinth", "roadside_marker"})
 VISUAL_ROLES = frozenset(
-    {"battle_control_sketch", "battle_reference_board", "strategic_control_sketch"}
+    {
+        "battle_control_sketch",
+        "battle_reference_board",
+        "battle_runtime_background",
+        "strategic_control_sketch",
+    }
 )
 VISUAL_AUTHORITIES = frozenset({"reference_only", "published_visual_layer"})
 LOGIC_AUTHORITIES = frozenset({"battle_config", "certified_map_template"})
@@ -350,7 +355,7 @@ def _build_visual_layers(visual_manifest: dict[str, Any] | None) -> list[dict[st
                 "width": int(item.get("width", 1)),
                 "height": int(item.get("height", 1)),
                 "sha256": str(item.get("sha256", "")),
-                "authority": "reference_only",
+                "authority": str(item.get("authority") or "reference_only"),
             }
         )
     return layers

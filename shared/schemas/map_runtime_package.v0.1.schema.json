@@ -193,7 +193,12 @@
         "layer_id": { "type": "string", "minLength": 1 },
         "role": {
           "type": "string",
-          "enum": ["battle_control_sketch", "battle_reference_board", "strategic_control_sketch"]
+          "enum": [
+            "battle_control_sketch",
+            "battle_reference_board",
+            "battle_runtime_background",
+            "strategic_control_sketch"
+          ]
         },
         "url": { "type": "string", "pattern": "^/assets/map_visual_reference/.+" },
         "local_path": { "type": "string", "minLength": 1 },

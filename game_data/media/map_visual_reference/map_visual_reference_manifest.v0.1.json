@@ -35,6 +35,16 @@
       "height": 720,
       "sha256": "1714362958f0252193fe265e246f92a09eb1a4cc9b9b039642548eb283b47f04",
       "source_kind": "deterministic_logical_map_reference"
+    },
+    {
+      "role": "battle_runtime_background",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "width": 1672,
+      "height": 941,
+      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "source_kind": "generated_painted_runtime_background",
+      "authority": "published_visual_layer"
     }
   ]
 }

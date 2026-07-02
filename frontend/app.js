@@ -1193,6 +1193,7 @@
       mediaUrl("objective_signal_beacon", "objective_sprite", true),
       mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true),
       sampleIconUrl(),
+      mapVisualUrl("battle_runtime_background"),
       mapVisualUrl("battle_reference_board"),
       npcPortraitUrl("npc_gray_lantern_keeper"),
       npcPortraitUrl("npc_workshop_mentor"),
@@ -1213,14 +1214,25 @@
 
   function computeBattleMetrics(width, height) {
     const grid = mapGrid();
+    const baseWidth = 1280;
+    const baseHeight = 720;
+    const scale = Math.max(width / baseWidth, height / baseHeight);
+    const imageWidth = baseWidth * scale;
+    const imageHeight = baseHeight * scale;
+    const imageOffsetX = (width - imageWidth) / 2;
+    const imageOffsetY = (height - imageHeight) / 2;
     const sum = grid.width_cells + grid.height_cells;
-    const tileW = clamp(Math.min(((width - 80) * 2) / sum, ((height - 110) * 4) / sum), 38, 112);
-    const tileH = tileW * 0.52;
+    const baseTileW = clamp(
+      Math.min(((baseWidth - 80) * 2) / sum, ((baseHeight - 110) * 4) / sum),
+      38,
+      112,
+    );
+    const baseTileH = baseTileW * 0.52;
     const raw = [
-      rawProject(0, 0, tileW, tileH),
-      rawProject(grid.width_cells - 1, 0, tileW, tileH),
-      rawProject(0, grid.height_cells - 1, tileW, tileH),
-      rawProject(grid.width_cells - 1, grid.height_cells - 1, tileW, tileH),
+      rawProject(0, 0, baseTileW, baseTileH),
+      rawProject(grid.width_cells - 1, 0, baseTileW, baseTileH),
+      rawProject(0, grid.height_cells - 1, baseTileW, baseTileH),
+      rawProject(grid.width_cells - 1, grid.height_cells - 1, baseTileW, baseTileH),
     ];
     const minX = Math.min(...raw.map((p) => p.x));
     const maxX = Math.max(...raw.map((p) => p.x));
@@ -1230,10 +1242,19 @@
       width,
       height,
       grid,
-      tileW,
-      tileH,
-      offsetX: (width - (maxX - minX)) / 2 - minX,
-      offsetY: (height - (maxY - minY)) / 2 - minY + 6,
+      baseWidth,
+      baseHeight,
+      imageWidth,
+      imageHeight,
+      imageOffsetX,
+      imageOffsetY,
+      scale,
+      tileW: baseTileW * scale,
+      tileH: baseTileH * scale,
+      baseTileW,
+      baseTileH,
+      baseOffsetX: (baseWidth - (maxX - minX)) / 2 - minX,
+      baseOffsetY: (baseHeight - (maxY - minY)) / 2 - minY + 6,
     };
   }
 
@@ -1246,16 +1267,21 @@
 
   function projectCell(x, y) {
     const m = state.battle.metrics;
-    const raw = rawProject(x, y, m.tileW, m.tileH);
-    return { x: raw.x + m.offsetX, y: raw.y + m.offsetY };
+    const raw = rawProject(x, y, m.baseTileW, m.baseTileH);
+    return {
+      x: m.imageOffsetX + (raw.x + m.baseOffsetX) * m.scale,
+      y: m.imageOffsetY + (raw.y + m.baseOffsetY) * m.scale,
+    };
   }
 
   function screenToCell(sx, sy) {
     const m = state.battle.metrics;
-    const xRaw = sx - m.offsetX;
-    const yRaw = sy - m.offsetY;
-    const gx = yRaw / m.tileH + xRaw / m.tileW;
-    const gy = yRaw / m.tileH - xRaw / m.tileW;
+    const designX = (sx - m.imageOffsetX) / m.scale;
+    const designY = (sy - m.imageOffsetY) / m.scale;
+    const xRaw = designX - m.baseOffsetX;
+    const yRaw = designY - m.baseOffsetY;
+    const gx = yRaw / m.baseTileH + xRaw / m.baseTileW;
+    const gy = yRaw / m.baseTileH - xRaw / m.baseTileW;
     return { x: Math.round(gx), y: Math.round(gy), fx: gx, fy: gy };
   }
 
@@ -1905,12 +1931,16 @@
     drawPath(ctx);
     drawDeployHints(ctx);
     drawWorldObjects(ctx);
+    drawSpawnMarkers(ctx);
     drawEntities(ctx);
     drawEffects(ctx);
+    drawDragGhost(ctx);
   }
 
   function drawBackdrop(ctx, m) {
-    const board = getImage(mapVisualUrl("battle_reference_board"));
+    const board = getImage(
+      mapVisualUrl("battle_runtime_background") || mapVisualUrl("battle_reference_board"),
+    );
     const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
     grd.addColorStop(0, "#202018");
     grd.addColorStop(0.55, "#101515");
@@ -1918,24 +1948,24 @@
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, m.width, m.height);
     if (board && board.complete && board.naturalWidth) {
-      const scale = Math.max(m.width / board.naturalWidth, m.height / board.naturalHeight);
-      const w = board.naturalWidth * scale;
-      const h = board.naturalHeight * scale;
       ctx.save();
-      ctx.globalAlpha = 0.96;
-      ctx.drawImage(board, (m.width - w) / 2, (m.height - h) / 2, w, h);
+      ctx.globalAlpha = 1;
+      ctx.drawImage(board, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
       ctx.restore();
     }
-    const shade = ctx.createRadialGradient(m.width * 0.52, m.height * 0.48, 120, m.width * 0.52, m.height * 0.48, Math.max(m.width, m.height) * 0.7);
-    shade.addColorStop(0, "rgba(255,230,170,0.03)");
-    shade.addColorStop(0.58, "rgba(8,12,10,0.08)");
-    shade.addColorStop(1, "rgba(0,0,0,0.44)");
+    const shade = ctx.createRadialGradient(
+      m.width * 0.52,
+      m.height * 0.48,
+      80,
+      m.width * 0.52,
+      m.height * 0.48,
+      Math.max(m.width, m.height) * 0.72,
+    );
+    shade.addColorStop(0, "rgba(255,230,170,0.015)");
+    shade.addColorStop(0.6, "rgba(8,12,10,0.04)");
+    shade.addColorStop(1, "rgba(0,0,0,0.5)");
     ctx.fillStyle = shade;
     ctx.fillRect(0, 0, m.width, m.height);
-    ctx.fillStyle = "rgba(143,124,255,.05)";
-    ctx.beginPath();
-    ctx.ellipse(m.width * 0.82, m.height * 0.78, 260, 150, -0.2, 0, Math.PI * 2);
-    ctx.fill();
   }
 
   function drawGrid(ctx) {
@@ -1963,22 +1993,24 @@
     for (const route of allPathRoutes()) {
       const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
       if (points.length < 2) continue;
-      ctx.strokeStyle = "rgba(30,25,18,.32)";
-      ctx.lineWidth = Math.max(36, state.battle.metrics.tileW * 0.46);
+      ctx.strokeStyle = "rgba(255,225,161,.18)";
+      ctx.lineWidth = Math.max(18, state.battle.metrics.tileW * 0.22);
       ctx.beginPath();
       points.forEach((p, index) => {
         if (index === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       });
       ctx.stroke();
-      ctx.strokeStyle = "rgba(255,225,161,.2)";
-      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(255,238,176,.34)";
+      ctx.lineWidth = Math.max(2, state.battle.metrics.tileW * 0.035);
+      ctx.setLineDash([12, 18]);
       ctx.beginPath();
       points.forEach((p, index) => {
         if (index === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       });
       ctx.stroke();
+      ctx.setLineDash([]);
     }
     ctx.restore();
   }
@@ -1986,18 +2018,24 @@
   function drawDeployHints(ctx) {
     const battle = state.battle;
     const m = battle.metrics;
+    const activeOverlay = Boolean(battle.draggingTool || battle.hoverCell || battle.selectedTool);
     for (const cell of suggestedSockets().map((slot) => slot.position || slot)) {
       const p = projectCell(cell.x, cell.y);
       ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,.24)";
+      ctx.globalAlpha = activeOverlay ? 1 : 0.38;
+      ctx.fillStyle = "rgba(0,0,0,.34)";
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y + 2, m.tileW * 0.23, m.tileH * 0.28, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, p.y + 3, m.tileW * 0.2, m.tileH * 0.26, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = battle.selectedTool === "basic" ? "rgba(229,200,120,.5)" : "rgba(100,210,200,.22)";
+      ctx.strokeStyle = battle.selectedTool === "basic" ? "rgba(255,225,161,.54)" : "rgba(100,210,200,.34)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, m.tileW * 0.22, m.tileH * 0.28, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x, p.y, m.tileW * 0.2, m.tileH * 0.26, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.fillStyle = "rgba(255,230,160,.1)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - m.tileH * 0.08, m.tileW * 0.11, m.tileH * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
     const previewCell = battle.hoverCell;
@@ -2070,6 +2108,30 @@
     }
   }
 
+  function drawSpawnMarkers(ctx) {
+    const battle = state.battle;
+    const spawns = (battle.mapPackage || {}).spawn_points || [];
+    ctx.save();
+    for (const spawn of spawns) {
+      if (!spawn.position) continue;
+      const p = projectCell(spawn.position.x, spawn.position.y);
+      drawGroundGlow(ctx, p.x, p.y, "#8f7cff", 0.18, 62);
+      ctx.strokeStyle = "rgba(180,160,255,.58)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - 14, 18, -0.25 * Math.PI, 1.25 * Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(230,220,255,.72)";
+      ctx.beginPath();
+      ctx.moveTo(p.x - 4, p.y - 32);
+      ctx.lineTo(p.x + 14, p.y - 24);
+      ctx.lineTo(p.x - 4, p.y - 16);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function drawEntities(ctx) {
     const battle = state.battle;
     const sorted = [...battle.enemies].sort((a, b) => projectCell(a.x, a.y).y - projectCell(b.x, b.y).y);
@@ -2118,6 +2180,30 @@
         ctx.fillText(effect.text, p.x, p.y - 34 - ratio * 24);
       }
     }
+  }
+
+  function drawDragGhost(ctx) {
+    const battle = state.battle;
+    if (!battle.draggingTool || !battle.dragPointer || !battle.canvas) return;
+    const rect = battle.canvas.getBoundingClientRect();
+    const x = battle.dragPointer.x - rect.left;
+    const y = battle.dragPointer.y - rect.top;
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+    ctx.save();
+    ctx.globalAlpha = battle.hoverCell ? 0.36 : 0.72;
+    if (battle.draggingTool === "basic") {
+      drawSprite(ctx, mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true), x, y + 28, 68);
+    } else if (battle.draggingTool === "sample") {
+      drawGroundGlow(ctx, x, y, "#9edcff", 0.42, 42);
+      ctx.strokeStyle = "#9edcff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 24, 10, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      drawGroundGlow(ctx, x, y, "#8fcf83", 0.32, 72);
+    }
+    ctx.restore();
   }
 
   function drawDiamond(ctx, x, y, w, h, fill, stroke) {
