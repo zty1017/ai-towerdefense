@@ -101,6 +101,8 @@ PATHS = {
     / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
     "generation_executor_run_request": ROOT
     / "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
+    "provider_execution_authorization": ROOT
+    / "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -618,6 +620,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_generation_executor_run_request.py",
             "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
+        ],
+    },
+    {
+        "name": "provider_execution_authorization",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_execution_authorization.py",
+            "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
         ],
     },
     {
@@ -1693,6 +1703,53 @@ def collect_generation_executor_run_request(request: dict[str, Any]) -> dict[str
     }
 
 
+def collect_provider_execution_authorization(record: dict[str, Any]) -> dict[str, Any]:
+    source = as_obj(record.get("source"))
+    authorization = as_obj(record.get("authorization"))
+    constraints = as_obj(record.get("execution_constraints"))
+    authority = as_obj(record.get("authority"))
+    safety = as_obj(record.get("authorization_builder_safety"))
+    return {
+        "authorization_ref": record.get("authorization_ref"),
+        "schema_version": record.get("schema_version"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "executor_request_id": source.get("executor_request_id"),
+            "guard_id": source.get("guard_id"),
+            "provider_mode": source.get("provider_mode"),
+            "provider_profile": source.get("provider_profile"),
+        },
+        "authorization": {
+            "status": authorization.get("status"),
+            "granted": authorization.get("granted"),
+            "scope": authorization.get("scope"),
+            "requires_provider_output_envelope": authorization.get(
+                "requires_provider_output_envelope"
+            ),
+        },
+        "execution_constraints": {
+            "attempt_count": constraints.get("attempt_count"),
+            "max_attempts": constraints.get("max_attempts"),
+            "remaining_attempts": constraints.get("remaining_attempts"),
+            "required_next_gates": as_list(constraints.get("required_next_gates")),
+        },
+        "evidence_boundary": {
+            "review_only": authority.get("review_only"),
+            "provider_execution_authorized": authority.get("provider_execution_authorized"),
+            "runtime_activation_allowed": authority.get("runtime_activation_allowed"),
+            "world_mutation_allowed": authority.get("world_mutation_allowed"),
+            "player_visible": authority.get("player_visible"),
+            "reads_env": safety.get("reads_env"),
+            "calls_provider": safety.get("calls_provider"),
+            "writes_world_state": safety.get("writes_world_state"),
+            "activates_runtime": safety.get("activates_runtime"),
+        },
+    }
+
+
 def collect_provider_artifact_staging(
     manifest: dict[str, Any],
     source_envelope: dict[str, Any],
@@ -2200,6 +2257,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["generation_executor_run_request"],
         ),
         (
+            "provider_execution_authorization",
+            PATHS["provider_execution_authorization"],
+        ),
+        (
             "provider_artifact_staging_manifest",
             PATHS["provider_artifact_staging_manifest"],
         ),
@@ -2356,6 +2417,9 @@ def build_evidence() -> dict[str, Any]:
     generation_executor_run_request = load_json(
         PATHS["generation_executor_run_request"]
     )
+    provider_execution_authorization = load_json(
+        PATHS["provider_execution_authorization"]
+    )
     world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
     world_delta_transactions = [
         load_json(path) for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
@@ -2455,6 +2519,9 @@ def build_evidence() -> dict[str, Any]:
         ),
         "generation_executor_run_request": collect_generation_executor_run_request(
             generation_executor_run_request
+        ),
+        "provider_execution_authorization": collect_provider_execution_authorization(
+            provider_execution_authorization
         ),
         "provider_artifact_staging": collect_provider_artifact_staging(
             provider_artifact_staging_manifest,

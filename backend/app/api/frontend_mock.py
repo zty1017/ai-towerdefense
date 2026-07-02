@@ -392,6 +392,27 @@ def prepare_generation_executor_run_request(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/grant-provider-authorization",
+    response_model=FrontendMockPayloadResponse,
+)
+def grant_provider_execution_authorization(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record explicit provider execution authorization without provider calls."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.grant_provider_execution_authorization(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts",
     response_model=FrontendMockPayloadResponse,
 )

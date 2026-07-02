@@ -801,6 +801,44 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_source_alignmen
 git diff --check
 ```
 
+### P1-B-18 ProviderExecutionAuthorization 显式授权记录
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_execution_authorization.v0.1.schema.json`
+- `examples/provider_authorizations/p1b_provider_execution_authorization.example.json`
+- `tools/dev/validate_provider_execution_authorization.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/grant-provider-authorization`
+- `GenerationScheduleQueueTransitionRequest` 增加可选 `authorization_ref`。
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，且存在同 `ProviderOutputEnvelope.provider_call.authorization_ref` 的 `provider_execution_authorization`。
+- `stage-provider-artifacts` 响应会返回 `worker_step.authorization_ref`、`provider_execution_authorization` 摘要和带 `authorization_ref` 的 provider call 摘要。
+- `generation_artifact_ledger` 现在可登记 `provider_execution_authorization` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 ProviderExecutionAuthorization 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_provider_authorization_record.v0.1.json`
+
+当前结论：
+
+- ProviderExecutionAuthorization 位于 GenerationExecutorRunRequest 之后、真实 provider adapter 之前。
+- 该层只记录 `provider_adapter_execution_only` 的显式授权，不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- ProviderOutputEnvelope / staging / promotion report 不能再只依赖 executor request；必须能追到同 schedule item 和同 authorization ref 的授权记录。
+- 该层仍然不是 runtime activation gate，也不是 WorldStateDeltaTransaction 提交授权。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_authorization_record.v0.1.json
+python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1b_provider_execution_authorization.example.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 -m json.tool shared/schemas/provider_execution_authorization.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_provider_execution_authorization.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_authorization_record_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

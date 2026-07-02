@@ -24,7 +24,7 @@
     "performed": true,
     "authorization_required": true,
     "authorization_granted": true,
-    "authorization_ref": "user_approved_demo_provider_smoke_2026_07_03",
+    "authorization_ref": "auth_sched_next_map_visual_prefetch_fixture_001",
     "attempt_count": 1,
     "max_attempts": 1
   },

@@ -56,6 +56,9 @@ from validate_provider_output_envelope import validate_provider_output_envelope 
 from validate_generation_executor_run_request import (  # noqa: E402
     validate_generation_executor_run_request,
 )
+from validate_provider_execution_authorization import (  # noqa: E402
+    validate_provider_execution_authorization,
+)
 
 
 class GenerationSchedulerFixtureNotFoundError(LookupError):
@@ -750,6 +753,10 @@ def _generation_executor_request_id(payload: dict[str, Any], attempt_count: int)
     return f"gexec_{run_id}_{_safe_id_fragment(schedule_item_id)}_{attempt_count:02d}"
 
 
+def _provider_authorization_ref(schedule_item_id: str) -> str:
+    return f"auth_{_safe_id_fragment(schedule_item_id)}_fixture_001"
+
+
 def _build_live_executor_guard_payload(
     payload: dict[str, Any],
     metadata: dict[str, Any] | None,
@@ -881,6 +888,7 @@ def _compact_provider_output_envelope(envelope: dict[str, Any]) -> dict[str, Any
             "performed": provider_call.get("performed"),
             "authorization_required": provider_call.get("authorization_required"),
             "authorization_granted": provider_call.get("authorization_granted"),
+            "authorization_ref": provider_call.get("authorization_ref"),
             "attempt_count": provider_call.get("attempt_count"),
             "max_attempts": provider_call.get("max_attempts"),
         },
@@ -1118,6 +1126,148 @@ def _compact_generation_executor_run_request(request: dict[str, Any]) -> dict[st
         },
         "authority": request.get("authority", {}),
         "request_builder_safety": request.get("request_builder_safety", {}),
+    }
+
+
+def _build_provider_execution_authorization_payload(
+    executor_request_entry: dict[str, Any],
+    metadata: dict[str, Any] | None,
+    ts: str,
+) -> dict[str, Any]:
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    request_compact = executor_request_entry.get("compact")
+    if not isinstance(request_compact, dict):
+        request_compact = {}
+    request_source = request_compact.get("source")
+    if not isinstance(request_source, dict):
+        request_source = {}
+    intent = request_compact.get("provider_execution_intent")
+    if not isinstance(intent, dict):
+        intent = {}
+    budget = request_compact.get("execution_budget")
+    if not isinstance(budget, dict):
+        budget = {}
+    schedule_item_id = str(
+        executor_request_entry.get("schedule_item_id")
+        or request_source.get("schedule_item_id")
+        or ""
+    )
+    authorization_ref = str(
+        safe_metadata.get("authorization_ref")
+        or _provider_authorization_ref(schedule_item_id)
+    )
+    provider_mode = str(intent.get("provider_mode") or "unknown")
+    provider_profile = str(intent.get("provider_profile") or "unknown")
+    return {
+        "schema_version": "provider_execution_authorization.v0.1",
+        "authorization_ref": authorization_ref,
+        "created_at": ts,
+        "source": {
+            "session_id": executor_request_entry.get("session_id"),
+            "run_id": executor_request_entry.get("run_id"),
+            "schedule_item_id": schedule_item_id,
+            "object_kind": request_source.get("object_kind"),
+            "object_ref": request_source.get("object_ref"),
+            "executor_request_id": executor_request_entry.get("source_id"),
+            "guard_id": request_source.get("guard_id"),
+            "provider_mode": provider_mode,
+            "provider_profile": provider_profile,
+            "worker_id": safe_metadata.get("worker_id")
+            or "provider_authorization_grant",
+            "note": safe_metadata.get("note"),
+        },
+        "authority": {
+            "visibility": "internal_evidence",
+            "review_only": True,
+            "provider_execution_authorized": True,
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "authorization": {
+            "status": "granted_for_provider_adapter",
+            "granted": True,
+            "scope": "provider_adapter_execution_only",
+            "requires_provider_output_envelope": True,
+            "expires_at": None,
+            "reason": safe_metadata.get("note")
+            or "explicit_authorization_recorded_for_guarded_provider_adapter",
+        },
+        "execution_constraints": {
+            "attempt_count": int(budget.get("attempt_count", 0)),
+            "max_attempts": int(budget.get("max_attempts", 0)),
+            "remaining_attempts": int(budget.get("remaining_attempts", 0)),
+            "allowed_provider_mode": provider_mode,
+            "allowed_provider_profile": provider_profile,
+            "required_next_gates": [
+                "provider_output_envelope",
+                "local_artifact_staging_manifest",
+                "media_gate",
+                "semantic_gate",
+                "human_review",
+                "promotion_report",
+            ],
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "download_then_local_ref_only",
+            "executor_result_storage": "provider_output_envelope_redacted_only",
+        },
+        "authorization_builder_safety": {
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+        },
+    }
+
+
+def _compact_provider_execution_authorization(record: dict[str, Any]) -> dict[str, Any]:
+    source = record.get("source")
+    if not isinstance(source, dict):
+        source = {}
+    authorization = record.get("authorization")
+    if not isinstance(authorization, dict):
+        authorization = {}
+    constraints = record.get("execution_constraints")
+    if not isinstance(constraints, dict):
+        constraints = {}
+    return {
+        "schema_version": record.get("schema_version"),
+        "authorization_ref": record.get("authorization_ref"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "executor_request_id": source.get("executor_request_id"),
+            "guard_id": source.get("guard_id"),
+            "provider_mode": source.get("provider_mode"),
+            "provider_profile": source.get("provider_profile"),
+            "worker_id": source.get("worker_id"),
+        },
+        "authorization": {
+            "status": authorization.get("status"),
+            "granted": authorization.get("granted"),
+            "scope": authorization.get("scope"),
+            "requires_provider_output_envelope": authorization.get(
+                "requires_provider_output_envelope"
+            ),
+        },
+        "execution_constraints": {
+            "attempt_count": constraints.get("attempt_count"),
+            "max_attempts": constraints.get("max_attempts"),
+            "remaining_attempts": constraints.get("remaining_attempts"),
+            "allowed_provider_mode": constraints.get("allowed_provider_mode"),
+            "allowed_provider_profile": constraints.get("allowed_provider_profile"),
+            "required_next_gates": constraints.get("required_next_gates", []),
+        },
+        "authority": record.get("authority", {}),
+        "authorization_builder_safety": record.get("authorization_builder_safety", {}),
     }
 
 
@@ -1413,6 +1563,24 @@ def _latest_generation_executor_request_ledger_entry(
         )
     ]
     return executor_requests[-1] if executor_requests else None
+
+
+def _latest_provider_authorization_ledger_entry(
+    session_id: str,
+    run_id: str,
+    schedule_item_id: str,
+    authorization_ref: str,
+) -> dict[str, Any] | None:
+    items = _load_generation_artifact_ledger_items(session_id, run_id)
+    authorizations = [
+        item
+        for item in items
+        if item.get("artifact_kind") == "provider_execution_authorization"
+        and item.get("status") == "granted_for_provider_adapter"
+        and str(item.get("schedule_item_id")) == str(schedule_item_id)
+        and str(item.get("source_id")) == str(authorization_ref)
+    ]
+    return authorizations[-1] if authorizations else None
 
 
 def _attach_live_executor_guard_to_cache(
@@ -1826,6 +1994,71 @@ def prepare_generation_executor_run_request(
     }
 
 
+def grant_provider_execution_authorization(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before provider authorization"
+        )
+    run_id = str(latest_run.get("run_id"))
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+        _requested_schedule_item_id(metadata),
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching generation executor request is required before provider authorization"
+        )
+    ts = now_iso()
+    authorization_payload = _build_provider_execution_authorization_payload(
+        executor_request_entry,
+        metadata,
+        ts,
+    )
+    authorization_errors = validate_provider_execution_authorization(
+        authorization_payload
+    )
+    if authorization_errors:
+        raise ValueError(
+            "provider execution authorization failed validation: "
+            + "; ".join(authorization_errors)
+        )
+    source = authorization_payload["source"]
+    ledger_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_execution_authorization",
+        source_id=str(authorization_payload["authorization_ref"]),
+        status="granted_for_provider_adapter",
+        compact=_compact_provider_execution_authorization(authorization_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(source["schedule_item_id"]),
+        worker_id=str(source["worker_id"]),
+        note=str(source.get("note")) if source.get("note") is not None else None,
+    )
+    _upsert_generation_artifact_ledger(ledger_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "authorized",
+            "worker_mode": "provider_authorization_grant",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "authorization_ref": authorization_payload["authorization_ref"],
+            "upstream_request_id": source["executor_request_id"],
+        },
+        "provider_execution_authorization": authorization_payload,
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
+    }
+
+
 def get_generation_artifact_ledger(session_id: str) -> dict[str, Any]:
     latest_run = _load_latest_generation_schedule_run(session_id)
     run_id = str(latest_run.get("run_id")) if latest_run is not None else None
@@ -1874,6 +2107,20 @@ def stage_provider_artifacts_fixture(
     if executor_request_entry is None:
         raise InvalidQueueTransitionError(
             "matching generation executor request is required before staging provider artifacts"
+        )
+    provider_call = envelope.get("provider_call", {})
+    if not isinstance(provider_call, dict):
+        provider_call = {}
+    authorization_ref = str(provider_call.get("authorization_ref") or "")
+    authorization_entry = _latest_provider_authorization_ledger_entry(
+        session_id,
+        run_id,
+        str(schedule_item_id or ""),
+        authorization_ref,
+    )
+    if authorization_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching provider execution authorization is required before staging provider artifacts"
         )
     envelope_entry = _build_artifact_ledger_payload(
         session_id=session_id,
@@ -1930,8 +2177,10 @@ def stage_provider_artifacts_fixture(
             "world_mutation_count": 0,
             "activation_allowed_count": 0,
             "upstream_request_id": executor_request_entry.get("source_id"),
+            "authorization_ref": authorization_ref,
         },
         "generation_executor_run_request": executor_request_entry.get("compact"),
+        "provider_execution_authorization": authorization_entry.get("compact"),
         "provider_output_envelope": envelope_entry["compact"],
         "provider_artifact_staging": staging_entry["compact"],
         "provider_artifact_promotion_report": promotion_entry["compact"],
