@@ -769,6 +769,38 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_staging_require
 git diff --check
 ```
 
+### P1-B-17 Provider fixture source 与 scheduler/executor request 对齐
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `GenerationScheduleQueueTransitionRequest` 增加可选 `schedule_item_id`。
+- `dry-run-step`、`live-executor-guard` 和 `prepare-executor-request` 可定向处理指定队列项；若目标项状态不匹配则返回 409。
+- provider artifact source envelope 已从早期 `schedule_map_visual_reference_old_signal_tower` 对齐到当前计划项 `sched_next_map_visual_prefetch`，object kind/ref 对齐为 `map_visual_prefetch` / `map_compile_package:old_signal_tower_pressure`。
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，不再接受任意 executor request。
+- 测试覆盖了错误调度项 request 不能 stage、正确调度项 request 可以 stage，以及 provider envelope source schedule item 对齐。
+- `examples/worker_task_packs/p1b_provider_source_alignment.v0.1.json`
+
+当前结论：
+
+- Provider artifact staging 已从“session 内存在任意 executor request”收紧为“同 schedule item 的 executor request”。
+- 这仍是 fixture-backed / review-only，不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 后续真实 provider adapter 接入时，应继续把 ProviderOutputEnvelope.source.run_id / schedule_item_id / guard_id / executor request id 做强绑定，并把显式授权记录纳入同一链。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_source_alignment.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_source_alignment_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
