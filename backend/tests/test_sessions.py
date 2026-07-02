@@ -178,6 +178,8 @@ def test_all_session_tables_carry_session_id(raw_conn: sqlite3.Connection):
         "asset_compile_runs",
         "generation_schedule_runs",
         "generation_schedule_queue_items",
+        "generation_schedule_worker_cache",
+        "generation_artifact_ledger",
         "battle_results",
         "provider_logs",
         "studio_logs",

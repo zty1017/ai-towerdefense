@@ -125,6 +125,20 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS generation_artifact_ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ledger_id TEXT UNIQUE NOT NULL,
+                run_id TEXT,
+                session_id TEXT NOT NULL,
+                schedule_item_id TEXT,
+                artifact_kind TEXT NOT NULL,
+                status TEXT NOT NULL,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -201,6 +215,12 @@ def init_db(path: str | None = None) -> None:
                 ON generation_schedule_worker_cache(run_id);
             CREATE INDEX IF NOT EXISTS idx_generation_schedule_worker_cache_status
                 ON generation_schedule_worker_cache(status);
+            CREATE INDEX IF NOT EXISTS idx_generation_artifact_ledger_session
+                ON generation_artifact_ledger(session_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_artifact_ledger_run
+                ON generation_artifact_ledger(run_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_artifact_ledger_status
+                ON generation_artifact_ledger(status);
             CREATE INDEX IF NOT EXISTS idx_battle_results_session
                 ON battle_results(session_id);
             CREATE INDEX IF NOT EXISTS idx_provider_logs_session

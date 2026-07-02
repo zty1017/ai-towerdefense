@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import secrets
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,21 @@ _GENERATION_SCHEDULE_PLAN = (
 _GENERATION_SCHEDULE_RUN_REPORT = (
     _REPO_ROOT / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
 )
+_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE = (
+    _REPO_ROOT
+    / "examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json"
+)
+_PROVIDER_ARTIFACT_STAGING_EXAMPLE = (
+    _REPO_ROOT / "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json"
+)
+_TOOLS_DEV_DIR = _REPO_ROOT / "tools" / "dev"
+if str(_TOOLS_DEV_DIR) not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DEV_DIR))
+
+from validate_provider_artifact_staging_manifest import (  # noqa: E402
+    validate_provider_artifact_staging_manifest,
+)
+from validate_provider_output_envelope import validate_provider_output_envelope  # noqa: E402
 
 
 class GenerationSchedulerFixtureNotFoundError(LookupError):
@@ -779,6 +795,272 @@ def _load_provider_guard_logs(
     return logs
 
 
+def _compact_provider_output_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
+    source = envelope.get("source", {})
+    if not isinstance(source, dict):
+        source = {}
+    provider_call = envelope.get("provider_call", {})
+    if not isinstance(provider_call, dict):
+        provider_call = {}
+    result = envelope.get("redacted_result_summary", {})
+    if not isinstance(result, dict):
+        result = {}
+    artifact_manifest = envelope.get("artifact_manifest", {})
+    if not isinstance(artifact_manifest, dict):
+        artifact_manifest = {}
+    output_refs = artifact_manifest.get("output_refs", [])
+    if not isinstance(output_refs, list):
+        output_refs = []
+    activation = envelope.get("activation_gate", {})
+    if not isinstance(activation, dict):
+        activation = {}
+    return {
+        "schema_version": envelope.get("schema_version"),
+        "envelope_id": envelope.get("envelope_id"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "provider_profile": source.get("provider_profile"),
+            "provider_mode": source.get("provider_mode"),
+        },
+        "provider_call": {
+            "status": provider_call.get("status"),
+            "performed": provider_call.get("performed"),
+            "authorization_required": provider_call.get("authorization_required"),
+            "authorization_granted": provider_call.get("authorization_granted"),
+            "attempt_count": provider_call.get("attempt_count"),
+            "max_attempts": provider_call.get("max_attempts"),
+        },
+        "result": {
+            "result_kind": result.get("result_kind"),
+            "status": result.get("status"),
+            "finish_reason": result.get("finish_reason"),
+        },
+        "artifact_manifest": {
+            "status": artifact_manifest.get("status"),
+            "output_ref_count": len(output_refs),
+            "review_only": artifact_manifest.get("review_only"),
+        },
+        "activation_gate": {
+            "activation_allowed": activation.get("activation_allowed"),
+            "blocked_reason": activation.get("blocked_reason"),
+            "required_next_gates": activation.get("required_next_gates", []),
+        },
+    }
+
+
+def _compact_provider_artifact_staging(manifest: dict[str, Any]) -> dict[str, Any]:
+    artifacts = manifest.get("staged_artifacts", [])
+    if not isinstance(artifacts, list):
+        artifacts = []
+    validation = manifest.get("validation_results", {})
+    if not isinstance(validation, dict):
+        validation = {}
+    promotion = manifest.get("promotion_gate", {})
+    if not isinstance(promotion, dict):
+        promotion = {}
+    authority = manifest.get("authority", {})
+    if not isinstance(authority, dict):
+        authority = {}
+    return {
+        "schema_version": manifest.get("schema_version"),
+        "manifest_id": manifest.get("manifest_id"),
+        "source_envelope_id": manifest.get("source_envelope_id"),
+        "source_envelope_ref": manifest.get("source_envelope_ref"),
+        "staging_status": manifest.get("staging_status"),
+        "staged_artifact_count": len(artifacts),
+        "staged_artifacts": [
+            {
+                "artifact_id": artifact.get("artifact_id"),
+                "source_artifact_id": artifact.get("source_artifact_id"),
+                "kind": artifact.get("kind"),
+                "path": artifact.get("path"),
+                "media_layer": artifact.get("media_layer"),
+                "review_status": artifact.get("review_status"),
+                "runtime_visible": artifact.get("runtime_visible"),
+                "player_visible": artifact.get("player_visible"),
+            }
+            for artifact in artifacts
+            if isinstance(artifact, dict)
+        ],
+        "gate_statuses": {
+            gate_name: gate.get("status")
+            for gate_name, gate in validation.items()
+            if isinstance(gate, dict)
+        },
+        "promotion_gate": {
+            "promotion_allowed": promotion.get("promotion_allowed"),
+            "blocked_reason": promotion.get("blocked_reason"),
+            "required_next_gates": promotion.get("required_next_gates", []),
+        },
+        "authority": {
+            "review_only": authority.get("review_only"),
+            "runtime_activation_allowed": authority.get("runtime_activation_allowed"),
+            "world_mutation_allowed": authority.get("world_mutation_allowed"),
+            "player_visible": authority.get("player_visible"),
+        },
+    }
+
+
+def _build_artifact_ledger_payload(
+    *,
+    session_id: str,
+    artifact_kind: str,
+    source_id: str,
+    status: str,
+    compact: dict[str, Any],
+    ts: str,
+    latest_run: dict[str, Any] | None,
+    schedule_item_id: str | None,
+    worker_id: str,
+    note: str | None,
+) -> dict[str, Any]:
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    return {
+        "schema_version": "generation_artifact_ledger_entry.v0.1",
+        "ledger_id": f"gled_{session_id}_{artifact_kind}_{source_id}",
+        "session_id": session_id,
+        "run_id": run_id,
+        "schedule_item_id": schedule_item_id,
+        "artifact_kind": artifact_kind,
+        "source_id": source_id,
+        "status": status,
+        "worker_id": worker_id,
+        "note": note,
+        "created_at": ts,
+        "updated_at": ts,
+        "provider_call_performed_by_this_request": False,
+        "world_mutation_performed_by_this_request": False,
+        "activation_allowed_now": False,
+        "ledger_write_policy": {
+            "mode": "fixture_backed_review_only",
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_raw_prompt": False,
+            "stores_provider_response": False,
+            "writes_world_state": False,
+        },
+        "compact": compact,
+    }
+
+
+def _upsert_generation_artifact_ledger(payload: dict[str, Any]) -> None:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT created_at FROM generation_artifact_ledger WHERE ledger_id = ?",
+            (payload["ledger_id"],),
+        )
+        existing = cur.fetchone()
+        if existing is not None and existing.get("created_at"):
+            payload["created_at"] = str(existing["created_at"])
+        cur.execute(
+            "INSERT INTO generation_artifact_ledger "
+            "(ledger_id, run_id, session_id, schedule_item_id, artifact_kind, status, "
+            "payload, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(ledger_id) DO UPDATE SET "
+            "run_id = excluded.run_id, schedule_item_id = excluded.schedule_item_id, "
+            "artifact_kind = excluded.artifact_kind, status = excluded.status, "
+            "payload = excluded.payload, updated_at = excluded.updated_at",
+            (
+                payload["ledger_id"],
+                payload.get("run_id"),
+                payload["session_id"],
+                payload.get("schedule_item_id"),
+                payload["artifact_kind"],
+                payload["status"],
+                _dump_payload(payload),
+                payload["created_at"],
+                payload["updated_at"],
+            ),
+        )
+
+
+def _load_generation_artifact_ledger_items(
+    session_id: str, run_id: str | None = None
+) -> list[dict[str, Any]]:
+    query = (
+        "SELECT payload FROM generation_artifact_ledger "
+        "WHERE session_id = ? ORDER BY id ASC"
+    )
+    params: tuple[Any, ...] = (session_id,)
+    if run_id is not None:
+        query = (
+            "SELECT payload FROM generation_artifact_ledger "
+            "WHERE session_id = ? AND run_id = ? ORDER BY id ASC"
+        )
+        params = (session_id, run_id)
+    with db_cursor() as cur:
+        cur.execute(query, params)
+        rows = cur.fetchall()
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        payload_text = row.get("payload") if isinstance(row, dict) else None
+        if payload_text:
+            items.append(json.loads(payload_text))
+    return items
+
+
+def _artifact_ledger_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    kind_counts = Counter(str(item.get("artifact_kind", "unknown")) for item in items)
+    status_counts = Counter(str(item.get("status", "unknown")) for item in items)
+    recorded_provider_call_count = 0
+    promotion_allowed_count = 0
+    activation_allowed_count = 0
+    for item in items:
+        compact = item.get("compact", {})
+        if not isinstance(compact, dict):
+            continue
+        provider_call = compact.get("provider_call", {})
+        if isinstance(provider_call, dict) and provider_call.get("performed") is True:
+            recorded_provider_call_count += 1
+        promotion_gate = compact.get("promotion_gate", {})
+        if isinstance(promotion_gate, dict) and promotion_gate.get("promotion_allowed") is True:
+            promotion_allowed_count += 1
+        activation_gate = compact.get("activation_gate", {})
+        if isinstance(activation_gate, dict) and activation_gate.get("activation_allowed") is True:
+            activation_allowed_count += 1
+    return {
+        "item_count": len(items),
+        "artifact_kind_counts": dict(sorted(kind_counts.items())),
+        "status_counts": dict(sorted(status_counts.items())),
+        "recorded_provider_call_count": recorded_provider_call_count,
+        "provider_call_count_by_this_request": 0,
+        "world_mutation_count_by_this_request": 0,
+        "activation_allowed_count": activation_allowed_count,
+        "promotion_allowed_count": promotion_allowed_count,
+    }
+
+
+def _compact_generation_artifact_ledger(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "summary": _artifact_ledger_summary(items),
+        "items": [
+            {
+                "ledger_id": item.get("ledger_id"),
+                "run_id": item.get("run_id"),
+                "schedule_item_id": item.get("schedule_item_id"),
+                "artifact_kind": item.get("artifact_kind"),
+                "source_id": item.get("source_id"),
+                "status": item.get("status"),
+                "created_at": item.get("created_at"),
+                "updated_at": item.get("updated_at"),
+                "provider_call_performed_by_this_request": item.get(
+                    "provider_call_performed_by_this_request"
+                ),
+                "world_mutation_performed_by_this_request": item.get(
+                    "world_mutation_performed_by_this_request"
+                ),
+                "activation_allowed_now": item.get("activation_allowed_now"),
+                "compact": item.get("compact"),
+            }
+            for item in items
+        ],
+    }
+
+
 def _attach_live_executor_guard_to_cache(
     queue_payload: dict[str, Any],
     guard_payload: dict[str, Any],
@@ -1064,6 +1346,82 @@ def run_generation_schedule_live_executor_guard(
     }
 
 
+def get_generation_artifact_ledger(session_id: str) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": _compact_generation_schedule_run(latest_run),
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(items),
+    }
+
+
+def stage_provider_artifacts_fixture(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ts = now_iso()
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    worker_id = safe_metadata.get("worker_id") or "provider_artifact_fixture_stager"
+    note = safe_metadata.get("note")
+    envelope = _load_json(_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE)
+    staging = _load_json(_PROVIDER_ARTIFACT_STAGING_EXAMPLE)
+    envelope_errors = validate_provider_output_envelope(envelope)
+    staging_errors = validate_provider_artifact_staging_manifest(staging)
+    if envelope_errors or staging_errors:
+        raise ValueError(
+            "provider artifact fixtures failed validation: "
+            f"envelope={envelope_errors}; staging={staging_errors}"
+        )
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
+    schedule_item_id = source.get("schedule_item_id")
+    envelope_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_output_envelope",
+        source_id=str(envelope.get("envelope_id")),
+        status="recorded_review_only",
+        compact=_compact_provider_output_envelope(envelope),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(schedule_item_id) if schedule_item_id else None,
+        worker_id=str(worker_id),
+        note=str(note) if note is not None else None,
+    )
+    staging_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_artifact_staging_manifest",
+        source_id=str(staging.get("manifest_id")),
+        status="staged_review_only",
+        compact=_compact_provider_artifact_staging(staging),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(schedule_item_id) if schedule_item_id else None,
+        worker_id=str(worker_id),
+        note=str(note) if note is not None else None,
+    )
+    _upsert_generation_artifact_ledger(envelope_entry)
+    _upsert_generation_artifact_ledger(staging_entry)
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "staged",
+            "worker_mode": "fixture_backed_provider_artifact_stager",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+        },
+        "provider_output_envelope": envelope_entry["compact"],
+        "provider_artifact_staging": staging_entry["compact"],
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(items),
+    }
+
+
 def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
     plan = _load_generation_schedule_plan()
     run_report = _load_generation_schedule_run_report()
@@ -1077,6 +1435,11 @@ def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
         if latest_run is not None
         else []
     )
+    latest_artifact_ledger = (
+        _load_generation_artifact_ledger_items(session_id, str(latest_run.get("run_id")))
+        if latest_run is not None
+        else []
+    )
     return {
         "refs": _generation_schedule_refs(),
         "buffer": _build_generation_schedule_buffer(plan, run_report),
@@ -1085,5 +1448,8 @@ def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
         "latest_worker_cache": _compact_worker_cache(latest_worker_cache),
         "latest_provider_guard_logs": _compact_provider_guard_logs(
             latest_provider_guard_logs
+        ),
+        "latest_artifact_ledger": _compact_generation_artifact_ledger(
+            latest_artifact_ledger
         ),
     }

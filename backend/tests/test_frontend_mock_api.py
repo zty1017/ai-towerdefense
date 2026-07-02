@@ -271,6 +271,52 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert provider_log_rows == 1
 
+    artifact_stage = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+            json={"worker_id": "artifact-ledger-test", "note": "record safe refs"},
+        )
+    )
+    assert artifact_stage["worker_step"]["status"] == "staged"
+    assert artifact_stage["worker_step"]["provider_call_count"] == 0
+    assert artifact_stage["worker_step"]["world_mutation_count"] == 0
+    assert artifact_stage["worker_step"]["activation_allowed_count"] == 0
+    assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
+        "pout_performed_stage05_map_visual_001"
+    )
+    assert artifact_stage["provider_output_envelope"]["provider_call"]["performed"] is True
+    assert artifact_stage["provider_artifact_staging"]["manifest_id"] == (
+        "pstaging_stage05_map_visual_001"
+    )
+    assert artifact_stage["provider_artifact_staging"]["promotion_gate"][
+        "promotion_allowed"
+    ] is False
+    ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 2
+    assert ledger_summary["artifact_kind_counts"]["provider_output_envelope"] == 1
+    assert ledger_summary["artifact_kind_counts"]["provider_artifact_staging_manifest"] == 1
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+    ledger = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/artifact-ledger")
+    )
+    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 2
+    assert len(ledger["generation_artifact_ledger"]["items"]) == 2
+    assert {
+        item["artifact_kind"] for item in ledger["generation_artifact_ledger"]["items"]
+    } == {
+        "provider_output_envelope",
+        "provider_artifact_staging_manifest",
+    }
+    ledger_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert ledger_rows == 2
+
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
         client.post(
@@ -348,6 +394,11 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         (sid,),
     ).fetchone()[0]
     assert provider_log_rows_after_reset == 0
+    ledger_rows_after_reset = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert ledger_rows_after_reset == 0
 
 
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):
@@ -445,6 +496,12 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))
     schedule_run = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+            json={"worker_id": "evidence-ledger", "note": "stage before evidence"},
+        )
+    )
 
     battle = _payload(client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/config"))
     assert battle["battle_config"]["sample_asset"]["delivery_delay_ms"] == 30000
@@ -554,6 +611,12 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     )
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["item_count"] == 8
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 4
+    assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
+        "item_count"
+    ] == 2
+    assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
+        "promotion_allowed_count"
+    ] == 0
 
 
 def test_generation_scheduler_retry_budget_and_fallback_flow(client):
