@@ -17,46 +17,92 @@ DEFAULT_CANDIDATE_DIR = ROOT / "game_data/media/map_visual_reference/node_candid
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/node_map_painted_candidate_review.v0.1.json"
 
 
-REVIEW_NOTES: dict[str, dict[str, Any]] = {
-    "gray_lantern_station": {
-        "status": "needs_regeneration",
-        "blocking_findings": [
-            "visible_arrow_symbols_on_path",
-            "prebuilt_vertical_tower_structures",
-            "route_direction_marks_baked_into_background",
-        ],
-        "strengths": [
-            "readable_full-frame_tower_defense_composition",
-            "world_style_is_close_to_lantern_frontier",
-            "empty_foundations_are_visually_clear",
-        ],
-        "recommended_next_action": "regenerate_with_stronger_no_arrows_and_no_prebuilt_towers_constraints",
+REVIEW_PROFILES: dict[str, dict[str, dict[str, Any]]] = {
+    "painted_map_v1": {
+        "gray_lantern_station": {
+            "status": "needs_regeneration",
+            "blocking_findings": [
+                "visible_arrow_symbols_on_path",
+                "prebuilt_vertical_tower_structures",
+                "route_direction_marks_baked_into_background",
+            ],
+            "strengths": [
+                "readable_full-frame_tower_defense_composition",
+                "world_style_is_close_to_lantern_frontier",
+                "empty_foundations_are_visually_clear",
+            ],
+            "recommended_next_action": "regenerate_with_stronger_no_arrows_and_no_prebuilt_towers_constraints",
+        },
+        "lamp_wick_store": {
+            "status": "needs_regeneration",
+            "blocking_findings": [
+                "visible_arrow_symbols_on_path",
+                "modern_asphalt_roads_and_lane_markings",
+                "too_many_baked_buildings_inside_play_area",
+            ],
+            "strengths": [
+                "supply_depot_identity_is_clear",
+                "roads_and_pad_areas_are_readable",
+            ],
+            "recommended_next_action": "regenerate_from_a_clean_control_sketch_with_no_road_markings",
+        },
+        "old_signal_tower": {
+            "status": "near_promotable_after_cleanup",
+            "blocking_findings": [
+                "small_visible_arrow_symbol_on_path",
+                "some_pad_markers_are_too_diagram_like",
+            ],
+            "strengths": [
+                "node_objective_is_clear_and_world_appropriate",
+                "terrain_and_paths_fit_a_tower_defense_battlefield",
+                "empty_foundations_are_readable",
+            ],
+            "recommended_next_action": "attempt_inpaint_or_regenerate_one_cleanup_pass_before_runtime_promotion",
+        },
     },
-    "lamp_wick_store": {
-        "status": "needs_regeneration",
-        "blocking_findings": [
-            "visible_arrow_symbols_on_path",
-            "modern_asphalt_roads_and_lane_markings",
-            "too_many_baked_buildings_inside_play_area",
-        ],
-        "strengths": [
-            "supply_depot_identity_is_clear",
-            "roads_and_pad_areas_are_readable",
-        ],
-        "recommended_next_action": "regenerate_from_a_clean_control_sketch_with_no_road_markings",
-    },
-    "old_signal_tower": {
-        "status": "near_promotable_after_cleanup",
-        "blocking_findings": [
-            "small_visible_arrow_symbol_on_path",
-            "some_pad_markers_are_too_diagram_like",
-        ],
-        "strengths": [
-            "node_objective_is_clear_and_world_appropriate",
-            "terrain_and_paths_fit_a_tower_defense_battlefield",
-            "empty_foundations_are_readable",
-        ],
-        "recommended_next_action": "attempt_inpaint_or_regenerate_one_cleanup_pass_before_runtime_promotion",
+    "clean_scene_v2": {
+        "gray_lantern_station": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "needs_coordinate_alignment_before_runtime_promotion",
+                "left_outpost_structure_must_be_classified_as_objective_or_scenery",
+            ],
+            "strengths": [
+                "no_visible_arrows_or_text",
+                "no_units_or_projectiles",
+                "paths_and_build_clearings_are_readable",
+                "world_style_is_close_to_lantern_frontier",
+            ],
+            "recommended_next_action": "run_crop_and_coordinate_alignment_review_before_optional_runtime_promotion",
+        },
+        "lamp_wick_store": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "needs_coordinate_alignment_before_runtime_promotion",
+                "paths_are_clean_but_less_natural_than_target_reference",
+            ],
+            "strengths": [
+                "no_visible_arrows_or_text",
+                "no_units_or_projectiles",
+                "empty_build_clearings_are_clean",
+                "supply_depot_identity_is_clear",
+            ],
+            "recommended_next_action": "align_runtime_paths_and_consider_one_more_natural_path_cleanup_pass",
+        },
+        "old_signal_tower": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "needs_coordinate_alignment_before_runtime_promotion",
+                "central_objective_is_large_and_must_not_obscure_combat_readability",
+            ],
+            "strengths": [
+                "no_visible_arrows_or_text",
+                "no_units_or_projectiles",
+                "strong_node_identity",
+                "paths_and_build_clearings_are_readable",
+            ],
+            "recommended_next_action": "run coordinate alignment and combat-readability review before optional runtime promotion",
+        },
     },
 }
 
@@ -89,11 +135,12 @@ def png_dimensions(path: Path) -> tuple[int, int] | None:
     return struct.unpack(">II", header[16:24])
 
 
-def build_candidate(sidecar_path: Path) -> dict[str, Any]:
+def build_candidate(sidecar_path: Path, review_profile: str) -> dict[str, Any]:
     sidecar = load_json(sidecar_path)
     node_id = str(sidecar.get("node_id") or "")
     candidate_path = ROOT / str(sidecar.get("candidate_path") or "")
-    notes = REVIEW_NOTES.get(
+    profile_notes = REVIEW_PROFILES.get(review_profile, {})
+    notes = profile_notes.get(
         node_id,
         {
             "status": "needs_manual_review",
@@ -127,7 +174,18 @@ def build_candidate(sidecar_path: Path) -> dict[str, Any]:
 
 def build_report(candidate_dir: Path) -> dict[str, Any]:
     sidecars = sorted(candidate_dir.glob("*.painted_candidate.png.candidate.json"))
-    candidates = [build_candidate(path) for path in sidecars]
+    candidates = [build_candidate(path, "painted_map_v1") for path in sidecars]
+    return build_report_with_profile(candidate_dir, "painted_map_v1", candidates)
+
+
+def build_report_with_profile(
+    candidate_dir: Path,
+    review_profile: str,
+    candidates: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    if candidates is None:
+        sidecars = sorted(candidate_dir.glob("*.painted_candidate.png.candidate.json"))
+        candidates = [build_candidate(path, review_profile) for path in sidecars]
     status_counts = Counter(str(candidate.get("review_status")) for candidate in candidates)
     blocking_count = sum(1 for candidate in candidates if candidate.get("blocking_findings"))
     promotable_count = sum(
@@ -135,11 +193,20 @@ def build_report(candidate_dir: Path) -> dict[str, Any]:
         for candidate in candidates
         if candidate.get("review_status") in {"promoted", "runtime_ready"}
     )
+    all_alignment_ready = bool(candidates) and all(
+        candidate.get("review_status") == "alignment_review_ready"
+        for candidate in candidates
+    )
     return {
         "schema_version": REPORT_VERSION,
-        "report_id": "mvp_node_map_painted_candidate_review",
+        "report_id": f"mvp_node_map_painted_candidate_review_{review_profile}",
         "candidate_dir": rel(candidate_dir),
-        "status": "review_only_not_runtime_ready" if promotable_count == 0 else "partially_promotable",
+        "review_profile": review_profile,
+        "status": (
+            "review_only_alignment_required"
+            if all_alignment_ready and promotable_count == 0
+            else ("review_only_not_runtime_ready" if promotable_count == 0 else "partially_promotable")
+        ),
         "summary": {
             "candidate_count": len(candidates),
             "runtime_promotion_count": promotable_count,
@@ -160,6 +227,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build node map candidate review report.")
     parser.add_argument("--candidate-dir", default=str(DEFAULT_CANDIDATE_DIR))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--review-profile", default="painted_map_v1", choices=sorted(REVIEW_PROFILES))
     args = parser.parse_args()
 
     candidate_dir = Path(args.candidate_dir)
@@ -168,7 +236,7 @@ def main() -> int:
     output = Path(args.output)
     if not output.is_absolute():
         output = ROOT / output
-    report = build_report(candidate_dir)
+    report = build_report_with_profile(candidate_dir, args.review_profile)
     write_json(output, report)
     print(f"Wrote {output}")
     print(f"- status: {report['status']}")

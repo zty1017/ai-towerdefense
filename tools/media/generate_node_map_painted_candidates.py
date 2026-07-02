@@ -48,6 +48,22 @@ NODE_VISUAL_DIRECTIONS = {
 }
 
 
+NODE_CLEAN_SCENE_DIRECTIONS = {
+    "gray_lantern_station": (
+        "abandoned lantern relay outpost on the left edge of a pine forest frontier, "
+        "broken low stone walls, warm lamps, mossy rocks, grass, packed earth trails"
+    ),
+    "lamp_wick_store": (
+        "lamp-wick supply depot landscape, weathered sheds at the far edges only, "
+        "old pipes as scenery, amber dust, packed earth service paths, low reinforced ground pads"
+    ),
+    "old_signal_tower": (
+        "cold mountain ridge landscape with an old signal tower as the central protected objective, "
+        "snow patches, broken antenna debris, blue violet glow, ridge paths, low maintenance pads"
+    ),
+}
+
+
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -87,7 +103,7 @@ def target_summary(battle: dict[str, Any]) -> str:
     return ", ".join(names) if names else "one protected core"
 
 
-def build_prompt(battle: dict[str, Any]) -> str:
+def build_prompt_v1(battle: dict[str, Any]) -> str:
     node_id = str(battle.get("node_id") or "unknown_node")
     display_name = str(battle.get("display_name") or node_id)
     grid = battle.get("grid", {})
@@ -112,6 +128,42 @@ def build_prompt(battle: dict[str, Any]) -> str:
     )
 
 
+def build_prompt_clean_scene_v2(battle: dict[str, Any]) -> str:
+    node_id = str(battle.get("node_id") or "unknown_node")
+    display_name = str(battle.get("display_name") or node_id)
+    direction = NODE_CLEAN_SCENE_DIRECTIONS.get(
+        node_id,
+        "empty fantasy frontier terrain, unmarked dirt paths, flat ground-level build clearings",
+    )
+    return (
+        "Wide 16:9 hand-painted fantasy strategy game terrain background, high three-quarter camera, "
+        "empty playable map art, no UI. "
+        f"Level identity: {display_name}. Scene: {direction}. "
+        "This is a quiet empty pre-battle environment painting, before any units, projectiles, or defenses are placed. "
+        "Paint two or three broad unmarked dirt trails that naturally cross through the terrain, with soft edges and no symbols. "
+        "Place several subtle flat ground-level build clearings beside the trails, made only of packed dirt or flat stones flush with the ground. "
+        "Keep all clearings low and empty; no raised structures on them. "
+        "The whole frame must be filled by terrain, local scenery, paths, objectives, and empty clearings. "
+        "Forbidden: any human figure, warrior, enemy, monster, projectile, flame shot, combat, tower, turret, watchtower, castle tower, wall tower, road arrow, chevron, number, letter, sign, lane marking, asphalt road, grid, logo, watermark, interface panel. "
+        "Do not show action. Do not show battle. Do not show placed defenses. Do not show direction indicators. "
+        "Readable polished 2D game map background, natural and illustrative, ready for separate runtime overlays."
+    )
+
+
+PROMPT_BUILDERS = {
+    "painted_map_v1": build_prompt_v1,
+    "clean_scene_v2": build_prompt_clean_scene_v2,
+}
+
+
+def build_prompt(battle: dict[str, Any], profile_name: str) -> str:
+    try:
+        builder = PROMPT_BUILDERS[profile_name]
+    except KeyError as exc:
+        raise ValueError(f"unknown prompt profile {profile_name!r}") from exc
+    return builder(battle)
+
+
 def write_sidecar(
     output_path: Path,
     battle_path: Path,
@@ -119,6 +171,7 @@ def write_sidecar(
     profile: image_provider.ImageProfile,
     size: str,
     prompt: str,
+    prompt_profile: str,
     *,
     live: bool,
     provider_called: bool,
@@ -134,6 +187,7 @@ def write_sidecar(
         "provider_profile": profile.name if live or image_exists else None,
         "model": profile.model if live or image_exists else None,
         "size": size,
+        "prompt_profile": prompt_profile,
         "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
         "image_exists": image_exists,
         "image_size_bytes": output_path.stat().st_size if image_exists else 0,
@@ -159,6 +213,7 @@ def generate_candidate(
     profile: image_provider.ImageProfile,
     size: str,
     timeout: int,
+    prompt_profile: str,
     *,
     live: bool,
     refresh_sidecar_only: bool,
@@ -168,7 +223,7 @@ def generate_candidate(
         raise RuntimeError(f"{battle_path} root must be an object")
     node_id = str(battle.get("node_id") or battle_path.stem)
     output_path = output_dir / f"{node_id}.painted_candidate.png"
-    prompt = build_prompt(battle)
+    prompt = build_prompt(battle, prompt_profile)
     provider_called = False
     if live and not refresh_sidecar_only:
         response = image_provider.generate_image(profile, prompt, size=size, timeout=timeout)
@@ -182,6 +237,7 @@ def generate_candidate(
         profile,
         size,
         prompt,
+        prompt_profile,
         live=live,
         provider_called=provider_called,
     )
@@ -199,6 +255,7 @@ def main() -> int:
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--dotenv", default=str(ROOT / ".env"))
     parser.add_argument("--image-profile", default="agnes_image_flash", choices=sorted(image_provider.PROFILES))
+    parser.add_argument("--prompt-profile", default="painted_map_v1", choices=sorted(PROMPT_BUILDERS))
     parser.add_argument("--size", default="1280x720")
     parser.add_argument("--request-timeout", type=int, default=180)
     parser.add_argument("--live", action="store_true")
@@ -240,6 +297,7 @@ def main() -> int:
                 profile,
                 args.size,
                 args.request_timeout,
+                args.prompt_profile,
                 live=args.live,
                 refresh_sidecar_only=args.refresh_sidecars_only,
             )
