@@ -23,6 +23,7 @@ FORBIDDEN_KEYS = {
     "unreviewed_content",
 }
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+FRAME_SOURCE_KINDS = {"single_frame_static", "deterministic_frame_sequence", "video_keyframe_sequence"}
 
 
 def load_json(path: Path) -> Any:
@@ -81,6 +82,12 @@ def validate_atlas(atlas: dict[str, Any]) -> list[str]:
             roles[role] = roles.get(role, 0) + 1
         else:
             errors.append(f"items[{index}].media_role must be non-empty")
+        frame_source_kind = item.get("frame_source_kind")
+        if frame_source_kind is not None and frame_source_kind not in FRAME_SOURCE_KINDS:
+            errors.append(f"items[{index}].frame_source_kind is invalid")
+        loop_ref = item.get("loop_continuity_ref")
+        if loop_ref is not None and (not isinstance(loop_ref, str) or not loop_ref):
+            errors.append(f"items[{index}].loop_continuity_ref must be string or null")
         playback = item.get("playback")
         if not isinstance(playback, dict):
             errors.append(f"items[{index}].playback must be object")

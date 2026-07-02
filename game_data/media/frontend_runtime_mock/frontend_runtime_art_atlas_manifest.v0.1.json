@@ -15,6 +15,8 @@
       "asset_name": "影潮奔行者",
       "asset_type": "enemy_archetype",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -55,6 +57,8 @@
       "asset_name": "影潮奔行者",
       "asset_type": "enemy_archetype",
       "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#enemy_shadow_tide_runner.unit_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -146,6 +150,8 @@
       "asset_name": "影潮残影",
       "asset_type": "enemy_archetype",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -186,6 +192,8 @@
       "asset_name": "影潮残影",
       "asset_type": "enemy_archetype",
       "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#enemy_shadow_tide_shade.unit_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -277,6 +285,8 @@
       "asset_name": "影潮聚团",
       "asset_type": "enemy_archetype",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -317,6 +327,8 @@
       "asset_name": "影潮聚团",
       "asset_type": "enemy_archetype",
       "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#enemy_shadow_tide_cluster.unit_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -408,6 +420,8 @@
       "asset_name": "驿站核心",
       "asset_type": "protection_target",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -448,6 +462,8 @@
       "asset_name": "驿站核心",
       "asset_type": "protection_target",
       "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#objective_station_core.objective_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -539,6 +555,8 @@
       "asset_name": "信标天线",
       "asset_type": "protection_target",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -579,6 +597,8 @@
       "asset_name": "信标天线",
       "asset_type": "protection_target",
       "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#objective_signal_beacon.objective_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -670,6 +690,8 @@
       "asset_name": "灯芯物资箱",
       "asset_type": "resource_target",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -710,6 +732,8 @@
       "asset_name": "灯芯物资箱",
       "asset_type": "resource_target",
       "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#objective_lamp_wick_cache.objective_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -801,6 +825,8 @@
       "asset_name": "基础灯栏",
       "asset_type": "basic_defense",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -841,6 +867,8 @@
       "asset_name": "基础灯栏",
       "asset_type": "basic_defense",
       "media_role": "defense_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json#defense_basic_lantern_barricade.defense_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -932,6 +960,8 @@
       "asset_name": "灰灯驿站守灯人",
       "asset_type": "npc_portrait",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -972,6 +1002,8 @@
       "asset_name": "灰灯驿站守灯人",
       "asset_type": "npc_portrait",
       "media_role": "portrait",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -1012,6 +1044,8 @@
       "asset_name": "临时工坊老师傅",
       "asset_type": "npc_portrait",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -1052,6 +1086,8 @@
       "asset_name": "临时工坊老师傅",
       "asset_type": "npc_portrait",
       "media_role": "portrait",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,

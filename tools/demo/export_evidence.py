@@ -65,10 +65,14 @@ PATHS = {
     / "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
     "frontend_media_atlas_manifest": ROOT
     / "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+    "frontend_loop_continuity_report": ROOT
+    / "examples/review_packs/frontend_loop_continuity_report.v0.1.json",
     "runtime_art_media_manifest": ROOT
     / "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
     "runtime_art_atlas_manifest": ROOT
     / "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+    "runtime_loop_continuity_report": ROOT
+    / "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
     "frontend_sprite_cutout_quality_report": ROOT
     / "examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json",
     "runtime_sprite_cutout_quality_report": ROOT
@@ -212,6 +216,14 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "frontend_loop_continuity_report",
+        "command": [
+            "python3",
+            "tools/media/validate_loop_continuity_report.py",
+            "examples/review_packs/frontend_loop_continuity_report.v0.1.json",
+        ],
+    },
+    {
         "name": "frontend_runtime_art_atlas",
         "command": [
             "python3",
@@ -225,6 +237,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_multiframe_atlas_contract.py",
             "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+        ],
+    },
+    {
+        "name": "frontend_runtime_loop_continuity_report",
+        "command": [
+            "python3",
+            "tools/media/validate_loop_continuity_report.py",
+            "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
         ],
     },
     {
@@ -946,6 +966,42 @@ def sprite_cutout_quality_summary(report: dict[str, Any]) -> dict[str, Any]:
                 },
             }
             for item in review_items[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def loop_continuity_summary(report: dict[str, Any]) -> dict[str, Any]:
+    items = [item for item in as_list(report.get("items")) if isinstance(item, dict)]
+    warning_items = [
+        item
+        for item in items
+        if item.get("status") in {"passed_with_warnings", "failed"}
+    ]
+    return {
+        "report_version": report.get("report_version"),
+        "report_id": report.get("report_id"),
+        "source_atlas_id": report.get("source_atlas_id"),
+        "status": report.get("status"),
+        "summary": as_obj(report.get("summary")),
+        "warning_samples": [
+            {
+                "animation_id": item.get("animation_id"),
+                "asset_id": item.get("asset_id"),
+                "media_role": item.get("media_role"),
+                "frame_source_kind": item.get("frame_source_kind"),
+                "status": item.get("status"),
+                "warnings": as_list(item.get("warnings")),
+                "issues": as_list(item.get("issues")),
+                "metrics": {
+                    "bbox_delta_ratio": as_obj(item.get("metrics")).get("bbox_delta_ratio"),
+                    "anchor_delta": as_obj(item.get("metrics")).get("anchor_delta"),
+                    "alpha_coverage_delta": as_obj(item.get("metrics")).get(
+                        "alpha_coverage_delta"
+                    ),
+                    "mean_rgba_delta": as_obj(item.get("metrics")).get("mean_rgba_delta"),
+                },
+            }
+            for item in warning_items[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -1758,6 +1814,7 @@ def collect_assets_and_media(
     frontend_pack: dict[str, Any],
     frontend_media_manifest: dict[str, Any],
     frontend_media_atlas_manifest: dict[str, Any],
+    frontend_loop_continuity_report: dict[str, Any],
     frontend_sprite_quality_report: dict[str, Any],
     frontend_sprite_repair_plan: dict[str, Any],
     frontend_sprite_repair_candidates: dict[str, Any],
@@ -1765,6 +1822,7 @@ def collect_assets_and_media(
     runtime_art_kit: dict[str, Any],
     runtime_art_media_manifest: dict[str, Any],
     runtime_art_atlas_manifest: dict[str, Any],
+    runtime_loop_continuity_report: dict[str, Any],
     runtime_sprite_quality_report: dict[str, Any],
     runtime_sprite_repair_plan: dict[str, Any],
     runtime_sprite_repair_candidates: dict[str, Any],
@@ -1826,6 +1884,9 @@ def collect_assets_and_media(
         },
         "published_asset_media": media_manifest_summary(frontend_media_manifest),
         "published_asset_atlas": atlas_manifest_summary(frontend_media_atlas_manifest),
+        "published_asset_loop_continuity": loop_continuity_summary(
+            frontend_loop_continuity_report
+        ),
         "published_sprite_cutout_quality": sprite_cutout_quality_summary(frontend_sprite_quality_report),
         "published_sprite_repair_plan": sprite_repair_plan_summary(frontend_sprite_repair_plan),
         "published_sprite_repair_candidates": sprite_repair_candidate_summary(
@@ -1846,6 +1907,7 @@ def collect_assets_and_media(
             ],
             "media_manifest": media_manifest_summary(runtime_art_media_manifest),
             "atlas_manifest": atlas_manifest_summary(runtime_art_atlas_manifest),
+            "loop_continuity": loop_continuity_summary(runtime_loop_continuity_report),
             "sprite_cutout_quality": sprite_cutout_quality_summary(runtime_sprite_quality_report),
             "sprite_repair_plan": sprite_repair_plan_summary(runtime_sprite_repair_plan),
             "sprite_repair_candidates": sprite_repair_candidate_summary(
@@ -2037,8 +2099,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("runtime_package", PATHS["runtime_package"]),
         ("frontend_media_manifest", PATHS["frontend_media_manifest"]),
         ("frontend_media_atlas_manifest", PATHS["frontend_media_atlas_manifest"]),
+        ("frontend_loop_continuity_report", PATHS["frontend_loop_continuity_report"]),
         ("runtime_art_media_manifest", PATHS["runtime_art_media_manifest"]),
         ("runtime_art_atlas_manifest", PATHS["runtime_art_atlas_manifest"]),
+        ("runtime_loop_continuity_report", PATHS["runtime_loop_continuity_report"]),
         ("frontend_sprite_cutout_quality_report", PATHS["frontend_sprite_cutout_quality_report"]),
         ("runtime_sprite_cutout_quality_report", PATHS["runtime_sprite_cutout_quality_report"]),
         ("frontend_sprite_cutout_repair_plan", PATHS["frontend_sprite_cutout_repair_plan"]),
@@ -2191,6 +2255,7 @@ def build_evidence() -> dict[str, Any]:
     ]
     frontend_media_manifest = load_json(PATHS["frontend_media_manifest"])
     frontend_media_atlas_manifest = load_json(PATHS["frontend_media_atlas_manifest"])
+    frontend_loop_continuity_report = load_json(PATHS["frontend_loop_continuity_report"])
     frontend_sprite_quality_report = load_json(PATHS["frontend_sprite_cutout_quality_report"])
     frontend_sprite_repair_plan = load_json(PATHS["frontend_sprite_cutout_repair_plan"])
     frontend_sprite_repair_candidates = load_json(PATHS["frontend_sprite_repair_candidates"])
@@ -2199,6 +2264,7 @@ def build_evidence() -> dict[str, Any]:
     )
     runtime_art_media_manifest = load_json(PATHS["runtime_art_media_manifest"])
     runtime_art_atlas_manifest = load_json(PATHS["runtime_art_atlas_manifest"])
+    runtime_loop_continuity_report = load_json(PATHS["runtime_loop_continuity_report"])
     runtime_sprite_quality_report = load_json(PATHS["runtime_sprite_cutout_quality_report"])
     runtime_sprite_repair_plan = load_json(PATHS["runtime_sprite_cutout_repair_plan"])
     runtime_sprite_repair_candidates = load_json(PATHS["runtime_sprite_repair_candidates"])
@@ -2334,6 +2400,7 @@ def build_evidence() -> dict[str, Any]:
             frontend_pack,
             frontend_media_manifest,
             frontend_media_atlas_manifest,
+            frontend_loop_continuity_report,
             frontend_sprite_quality_report,
             frontend_sprite_repair_plan,
             frontend_sprite_repair_candidates,
@@ -2341,6 +2408,7 @@ def build_evidence() -> dict[str, Any]:
             runtime_art_kit,
             runtime_art_media_manifest,
             runtime_art_atlas_manifest,
+            runtime_loop_continuity_report,
             runtime_sprite_quality_report,
             runtime_sprite_repair_plan,
             runtime_sprite_repair_candidates,

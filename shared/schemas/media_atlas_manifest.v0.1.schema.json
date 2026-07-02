@@ -50,6 +50,11 @@
         "asset_name": { "type": ["string", "null"] },
         "asset_type": { "type": ["string", "null"] },
         "media_role": { "type": "string", "minLength": 1 },
+        "frame_source_kind": {
+          "type": "string",
+          "enum": ["single_frame_static", "deterministic_frame_sequence", "video_keyframe_sequence"]
+        },
+        "loop_continuity_ref": { "type": ["string", "null"] },
         "playback": { "$ref": "#/$defs/playback" },
         "spritesheet": { "oneOf": [{ "$ref": "#/$defs/spritesheet" }, { "type": "null" }] },
         "frames": {

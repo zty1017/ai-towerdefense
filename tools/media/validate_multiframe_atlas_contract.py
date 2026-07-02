@@ -33,6 +33,7 @@ def validate_contract(atlas: dict[str, Any]) -> list[str]:
         role = str(item.get("media_role") or "")
         playback = item.get("playback") if isinstance(item.get("playback"), dict) else {}
         frames = item.get("frames") if isinstance(item.get("frames"), list) else []
+        frame_source_kind = item.get("frame_source_kind")
         if not isinstance(item.get("spritesheet"), dict):
             errors.append(f"items[{index}].spritesheet must be a physical spritesheet object")
         for frame in frames:
@@ -44,6 +45,8 @@ def validate_contract(atlas: dict[str, Any]) -> list[str]:
             frame_urls.add(url)
         if role in STATIC_ROLES and len(frames) != 1:
             errors.append(f"static role must keep one frame: items[{index}] {role}")
+        if role in STATIC_ROLES and frame_source_kind not in {None, "single_frame_static"}:
+            errors.append(f"static role must use frame_source_kind=single_frame_static: items[{index}] {role}")
         if role in ANIMATED_ROLES or role.endswith("_sprite"):
             if len(frames) < 2:
                 errors.append(f"animated role must have at least two frames: items[{index}] {role}")
@@ -51,6 +54,10 @@ def validate_contract(atlas: dict[str, Any]) -> list[str]:
                 errors.append(f"animated role must loop: items[{index}] {role}")
             if int(playback.get("fps") or 0) < 4:
                 errors.append(f"animated role fps must be >= 4: items[{index}] {role}")
+            if frame_source_kind not in {"deterministic_frame_sequence", "video_keyframe_sequence"}:
+                errors.append(f"animated role must declare frame_source_kind: items[{index}] {role}")
+            if item.get("loop_continuity_ref") is None:
+                errors.append(f"animated role must reference LoopContinuityReport: items[{index}] {role}")
             animated_count += 1
 
     if animated_count <= 0:

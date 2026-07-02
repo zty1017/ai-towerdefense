@@ -15,6 +15,8 @@
       "asset_name": "灯灰爆鸣塔",
       "asset_type": "tower_blueprint",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -55,6 +57,8 @@
       "asset_name": "灯灰爆鸣塔",
       "asset_type": "tower_blueprint",
       "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_loop_continuity_report.v0.1.json#asset_ash_burst_lantern.tower_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -146,6 +150,8 @@
       "asset_name": "东暗回声测记",
       "asset_type": "intel_asset",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -186,6 +192,8 @@
       "asset_name": "东暗回声测记",
       "asset_type": "intel_asset",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -226,6 +234,8 @@
       "asset_name": "回光棱镜中继塔资产",
       "asset_type": "tower_blueprint",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -266,6 +276,8 @@
       "asset_name": "回光棱镜中继塔资产",
       "asset_type": "tower_blueprint",
       "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_loop_continuity_report.v0.1.json#asset_echo_prism_relay.tower_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -357,6 +369,8 @@
       "asset_name": "聚光迟滞塔",
       "asset_type": "tower_blueprint",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -397,6 +411,8 @@
       "asset_name": "聚光迟滞塔",
       "asset_type": "tower_blueprint",
       "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_loop_continuity_report.v0.1.json#asset_light_slow_tower_001.tower_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,
@@ -488,6 +504,8 @@
       "asset_name": "折光诱饵陷阱",
       "asset_type": "support_item",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -528,6 +546,8 @@
       "asset_name": "折光诱饵陷阱",
       "asset_type": "support_item",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -568,6 +588,8 @@
       "asset_name": "过载连弧断潮改造资产",
       "asset_type": "temporary_mod",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -608,6 +630,8 @@
       "asset_name": "过载连弧断潮改造资产",
       "asset_type": "temporary_mod",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -648,6 +672,8 @@
       "asset_name": "过载连弧改造",
       "asset_type": "temporary_mod",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -688,6 +714,8 @@
       "asset_name": "过载连弧改造",
       "asset_type": "temporary_mod",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -728,6 +756,8 @@
       "asset_name": "影潮测绘札记",
       "asset_type": "intel_asset",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -768,6 +798,8 @@
       "asset_name": "影潮测绘札记",
       "asset_type": "intel_asset",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -808,6 +840,8 @@
       "asset_name": "回声测标短札资产",
       "asset_type": "support_item",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -848,6 +882,8 @@
       "asset_name": "回声测标短札资产",
       "asset_type": "support_item",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -888,6 +924,8 @@
       "asset_name": "信标灯芯诱饵",
       "asset_type": "support_item",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -928,6 +966,8 @@
       "asset_name": "信标灯芯诱饵",
       "asset_type": "support_item",
       "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -968,6 +1008,8 @@
       "asset_name": "灯芯护幕桩",
       "asset_type": "tower_blueprint",
       "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "loop_continuity_ref": null,
       "playback": {
         "state": "static",
         "fps": 1,
@@ -1008,6 +1050,8 @@
       "asset_name": "灯芯护幕桩",
       "asset_type": "tower_blueprint",
       "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "loop_continuity_ref": "examples/review_packs/frontend_loop_continuity_report.v0.1.json#asset_wick_barrier_pylon.tower_sprite.idle",
       "playback": {
         "state": "idle",
         "fps": 6,

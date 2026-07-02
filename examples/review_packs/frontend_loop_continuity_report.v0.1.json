@@ -1,0 +1,603 @@
+{
+  "report_version": "loop_continuity_report.v0.1",
+  "report_id": "frontend_loop_continuity_report_v0_1",
+  "created_at": "2026-07-03T00:00:00+08:00",
+  "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+  "source_atlas_id": "frontend_media_atlas_v0_1",
+  "status": "passed_with_warnings",
+  "summary": {
+    "animation_count": 22,
+    "checked_count": 4,
+    "passed_count": 0,
+    "passed_with_warnings_count": 4,
+    "failed_count": 0,
+    "skipped_static_count": 18,
+    "frame_source_counts": {
+      "deterministic_frame_sequence": 4,
+      "single_frame_static": 18
+    }
+  },
+  "thresholds": {
+    "alpha_threshold": 8,
+    "max_bbox_delta_ratio": 0.08,
+    "max_anchor_delta": 0.03,
+    "max_alpha_coverage_delta": 0.08,
+    "max_mean_rgba_delta": 0.2
+  },
+  "items": [
+    {
+      "animation_id": "asset_ash_burst_lantern.icon.static",
+      "asset_id": "asset_ash_burst_lantern",
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_ash_burst_lantern.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_ash_burst_lantern.tower_sprite.idle",
+      "asset_id": "asset_ash_burst_lantern",
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_ash_burst_lantern.tower_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+        "last_frame": "game_data/media/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 949,
+          "first_height": 949,
+          "last_width": 949,
+          "last_height": 949
+        },
+        "first_alpha_bbox": {
+          "x": 192,
+          "y": 36,
+          "w": 564,
+          "h": 877
+        },
+        "last_alpha_bbox": {
+          "x": 192,
+          "y": 35,
+          "w": 564,
+          "h": 877
+        },
+        "bbox_delta_ratio": 0.001054,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.28224,
+        "last_alpha_coverage": 0.28224,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.012685
+      }
+    },
+    {
+      "animation_id": "intel_dark_echo_survey_001.icon.static",
+      "asset_id": "intel_dark_echo_survey_001",
+      "asset_name": "东暗回声测记",
+      "asset_type": "intel_asset",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#intel_dark_echo_survey_001.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "intel_dark_echo_survey_001.ui_card.static",
+      "asset_id": "intel_dark_echo_survey_001",
+      "asset_name": "东暗回声测记",
+      "asset_type": "intel_asset",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#intel_dark_echo_survey_001.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_echo_prism_relay.icon.static",
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_echo_prism_relay.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_echo_prism_relay.tower_sprite.idle",
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_echo_prism_relay.tower_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+        "last_frame": "game_data/media/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 979,
+          "first_height": 979,
+          "last_width": 979,
+          "last_height": 979
+        },
+        "first_alpha_bbox": {
+          "x": 210,
+          "y": 36,
+          "w": 558,
+          "h": 907
+        },
+        "last_alpha_bbox": {
+          "x": 210,
+          "y": 35,
+          "w": 558,
+          "h": 907
+        },
+        "bbox_delta_ratio": 0.001021,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.252578,
+        "last_alpha_coverage": 0.252578,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.015434
+      }
+    },
+    {
+      "animation_id": "asset_light_slow_tower_001.icon.static",
+      "asset_id": "asset_light_slow_tower_001",
+      "asset_name": "聚光迟滞塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_light_slow_tower_001.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_light_slow_tower_001.tower_sprite.idle",
+      "asset_id": "asset_light_slow_tower_001",
+      "asset_name": "聚光迟滞塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_light_slow_tower_001.tower_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+        "last_frame": "game_data/media/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 935,
+          "first_height": 935,
+          "last_width": 935,
+          "last_height": 935
+        },
+        "first_alpha_bbox": {
+          "x": 230,
+          "y": 36,
+          "w": 475,
+          "h": 863
+        },
+        "last_alpha_bbox": {
+          "x": 230,
+          "y": 35,
+          "w": 475,
+          "h": 863
+        },
+        "bbox_delta_ratio": 0.00107,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.280454,
+        "last_alpha_coverage": 0.280454,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.010276
+      }
+    },
+    {
+      "animation_id": "asset_mirror_lure_trap_001.icon.static",
+      "asset_id": "asset_mirror_lure_trap_001",
+      "asset_name": "折光诱饵陷阱",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_mirror_lure_trap_001.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_mirror_lure_trap_001.ui_card.static",
+      "asset_id": "asset_mirror_lure_trap_001",
+      "asset_name": "折光诱饵陷阱",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_mirror_lure_trap_001.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_overload_chain_breaker.icon.static",
+      "asset_id": "asset_overload_chain_breaker",
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_overload_chain_breaker.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_overload_chain_breaker.ui_card.static",
+      "asset_id": "asset_overload_chain_breaker",
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_overload_chain_breaker.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "mod_overload_chain_arc_001.icon.static",
+      "asset_id": "mod_overload_chain_arc_001",
+      "asset_name": "过载连弧改造",
+      "asset_type": "temporary_mod",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#mod_overload_chain_arc_001.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "mod_overload_chain_arc_001.ui_card.static",
+      "asset_id": "mod_overload_chain_arc_001",
+      "asset_name": "过载连弧改造",
+      "asset_type": "temporary_mod",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#mod_overload_chain_arc_001.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "intel_shadow_tide_survey.icon.static",
+      "asset_id": "intel_shadow_tide_survey",
+      "asset_name": "影潮测绘札记",
+      "asset_type": "intel_asset",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#intel_shadow_tide_survey.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "intel_shadow_tide_survey.ui_card.static",
+      "asset_id": "intel_shadow_tide_survey",
+      "asset_name": "影潮测绘札记",
+      "asset_type": "intel_asset",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#intel_shadow_tide_survey.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_signal_echo_marker.icon.static",
+      "asset_id": "asset_signal_echo_marker",
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_signal_echo_marker.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_signal_echo_marker.ui_card.static",
+      "asset_id": "asset_signal_echo_marker",
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_signal_echo_marker.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_signal_wick_decoy.icon.static",
+      "asset_id": "asset_signal_wick_decoy",
+      "asset_name": "信标灯芯诱饵",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_signal_wick_decoy.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_signal_wick_decoy.ui_card.static",
+      "asset_id": "asset_signal_wick_decoy",
+      "asset_name": "信标灯芯诱饵",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_signal_wick_decoy.ui_card.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_wick_barrier_pylon.icon.static",
+      "asset_id": "asset_wick_barrier_pylon",
+      "asset_name": "灯芯护幕桩",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_wick_barrier_pylon.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "asset_wick_barrier_pylon.tower_sprite.idle",
+      "asset_id": "asset_wick_barrier_pylon",
+      "asset_name": "灯芯护幕桩",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json#asset_wick_barrier_pylon.tower_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+        "last_frame": "game_data/media/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 946,
+          "first_height": 946,
+          "last_width": 946,
+          "last_height": 946
+        },
+        "first_alpha_bbox": {
+          "x": 227,
+          "y": 36,
+          "w": 491,
+          "h": 874
+        },
+        "last_alpha_bbox": {
+          "x": 227,
+          "y": 35,
+          "w": 491,
+          "h": 874
+        },
+        "bbox_delta_ratio": 0.001057,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.251715,
+        "last_alpha_coverage": 0.251715,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.012611
+      }
+    }
+  ]
+}
