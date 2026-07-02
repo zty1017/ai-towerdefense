@@ -62,6 +62,7 @@ P2：本阶段明确不做
 
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了带质量状态的视觉层；玩家侧只允许使用 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图，`agnes_02` 与 `battle_runtime_background.v0.2` 当前只作为失败/候选证据保留。后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - `MapVisualQualityReport v0.1` 已接入 evidence，用于标记三节点复用同一玩家底图、发布底图需要 overlay correction、视觉审查证据偏弱等问题；当前状态为 `passed_with_warnings`，不阻断 MVP，但作为下一轮地图重生 / 差异化发布底图任务的输入。
+- `NodeMapPaintedCandidateReview v0.1` 已接入 evidence，用于记录节点专属真实 Agnes 地图候选的审查结果；当前三张候选均未晋升 runtime，两张需要重生，一张接近可清理后晋级。该报告证明地图生成管线已能产出候选，也证明发布门禁不会把差图误放给前端。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
@@ -532,6 +533,7 @@ P2：本阶段明确不做
 - 路线、塔位、目标以结构化数据为准。
 - 需要支持世界书风格、地形、威胁状态和黑暗区域。
 - 必须消费 `MapVisualQualityReport v0.1` 的 warnings，优先解决节点专属玩家底图、overlay correction 和视觉审查证据不足。
+- 必须消费 `NodeMapPaintedCandidateReview v0.1` 的候选结论，优先修复可见箭头、道路标识、预置塔楼、过多非玩法建筑等问题；候选图只能在显式晋升后进入 published visual layer。
 - 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
