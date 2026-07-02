@@ -83,13 +83,51 @@
         "large_interior_transparent_holes"
       ],
       "review_policy": "review_only_not_runtime"
+    },
+    {
+      "candidate_id": "sprite_repair_001_objective_station_core_objective_sprite.regenerated",
+      "source_task_id": "sprite_repair_001_objective_station_core_objective_sprite",
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "priority": "P2",
+      "status": "generated_review_candidate",
+      "provider_profile": "agnes_image_flash",
+      "model": "agnes-image-2.1-flash",
+      "prompt_summary": {
+        "role": "objective_sprite",
+        "asset_id": "objective_station_core",
+        "asset_kind": "protection_target",
+        "constraint_count": 30,
+        "repair_action": "manual_review_then_reprocess_if_needed",
+        "source_warnings": [
+          "interior_transparent_holes_need_review"
+        ]
+      },
+      "raw_local_path": "game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/raw/objective_station_core__objective_sprite__regenerated.png",
+      "local_path": "game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/objective_station_core__objective_sprite__regenerated.processed.png",
+      "width": 858,
+      "height": 858,
+      "sha256": "e535eca95c253006989705086175d7dc1af07a013303d30bcad7326a335c55c4",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "generation_source": "provider_generated",
+      "source_repair_action": "manual_review_then_reprocess_if_needed",
+      "source_warnings": [
+        "interior_transparent_holes_need_review"
+      ],
+      "review_policy": "review_only_not_runtime"
     }
   ],
   "summary": {
-    "candidate_count": 2,
-    "generated_count": 2,
+    "candidate_count": 3,
+    "generated_count": 3,
     "planned_count": 0,
-    "asset_count": 2,
+    "asset_count": 3,
     "profile": "agnes_image_flash",
     "model": "agnes-image-2.1-flash",
     "size": "1024x1024"

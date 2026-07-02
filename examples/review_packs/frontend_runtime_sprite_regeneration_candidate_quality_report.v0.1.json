@@ -4,8 +4,8 @@
   "media_pack_id": null,
   "manifest_path": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
   "status": "passed",
-  "sprite_item_count": 2,
-  "passed_count": 2,
+  "sprite_item_count": 3,
+  "passed_count": 3,
   "needs_review_count": 0,
   "failed_count": 0,
   "warning_counts": {},
@@ -68,6 +68,42 @@
           "h": 565
         },
         "subject_bbox_coverage": 0.6044,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 0,
+        "interior_transparent_hole_ratio": 0.0,
+        "max_interior_transparent_hole_ratio": 0.0,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/objective_station_core__objective_sprite__regenerated.processed.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 858,
+        "height": 858,
+        "alpha_visible_ratio": 0.3283,
+        "alpha_transparent_ratio": 0.6717,
+        "subject_bbox": {
+          "x": 221,
+          "y": 40,
+          "w": 416,
+          "h": 778
+        },
+        "subject_bbox_coverage": 0.4396,
         "visible_component_count": 1,
         "largest_visible_component_ratio": 1.0,
         "detached_visible_component_count": 0,

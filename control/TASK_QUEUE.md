@@ -235,8 +235,8 @@ P2：本阶段明确不做
 当前结论：
 
 - frontend mock sprite：`needs_review`，2 / 4 个需复核。
-- runtime battle sprite：`needs_review`，3 / 7 个需复核。
-- 无硬失败；这些报告用于后续重生素材、重抠图和真实视频关键帧替换排序。
+- runtime battle sprite：`passed`，7 / 7 个通过。
+- 无硬失败；frontend mock 报告仍用于后续重生素材、重抠图和真实视频关键帧替换排序，runtime 当前已达到 MVP 几何质量门。
 
 ### P1-A-3 Sprite cutout repair plan
 
@@ -252,7 +252,7 @@ P2：本阶段明确不做
 当前结论：
 
 - frontend mock repair plan：2 个任务，优先级分布 `P1: 1, P2: 1`。
-- runtime repair plan：3 个任务，优先级分布 `P1: 2, P2: 1`。
+- runtime repair plan：0 个任务，已随 runtime sprite 晋升与复核清空。
 - 这些任务是下一轮素材重生 / 重抠图 / 视频关键帧替换的输入，不直接改动玩家侧资产。
 
 ### P1-A-4 Sprite repair candidates
@@ -271,8 +271,8 @@ P2：本阶段明确不做
 当前结论：
 
 - frontend repair candidates：2 个候选，几何质量门 `passed`，未晋升 runtime。
-- runtime repair candidates：3 个候选，几何质量门 `passed`，未替换正式战斗素材。
-- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此候选只能作为审查证据；后续应优先走真实重生成 / 更强分割 / 人工确认。
+- runtime repair candidates：0 个候选；旧的 `fill_interior_holes` 驿站核心候选已删除，runtime 改走真实重生成与显式晋升。
+- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此这类确定性候选只能作为审查证据；后续应优先走真实重生成 / 更强分割 / 人工确认。
 
 ### P1-A-5 Runtime sprite live regeneration candidates
 
@@ -289,8 +289,9 @@ P2：本阶段明确不做
 
 当前结论：
 
-- 使用 Agnes 真实生成 runtime P1 信标与基础灯栏候选，各 1 个，几何质量门 `passed`。
+- 使用 Agnes 真实生成 runtime 信标、基础灯栏与驿站核心候选，各 1 个，几何质量门 `passed`。
 - 基础灯栏经过多轮提示词收紧，从围栏 enclosure 收敛为单段便携路障；这说明重生成 DAG 需要支持单素材迭代、复用 raw 后处理和人工/视觉复核。
+- 驿站核心经过 provider 对比和提示词收紧后选择 Agnes 候选；一次 GLM free 尝试返回非 PNG / 带水印图像，后续 provider adapter 需要补格式转换与水印门禁。
 - 候选包仍是 `review_candidate_media`，不会自动替换正式 runtime 素材；晋升需要下一步人工/视觉审查和显式 promotion。
 
 ### P1-A-6 Runtime sprite regeneration promotion
@@ -310,9 +311,9 @@ P2：本阶段明确不做
 
 当前结论：
 
-- 信标与基础灯栏候选已显式晋升到 published runtime media，并重建 runtime atlas。
-- runtime sprite cutout quality 从 `needs_review 3 / 7` 降到 `needs_review 1 / 7`。
-- 剩余 `objective_station_core` 为 P2 复核项，不阻断当前 MVP；后续可走同一套重生成和 promotion 流程。
+- 信标、基础灯栏与驿站核心候选已显式晋升到 published runtime media，并重建 runtime atlas。
+- runtime sprite cutout quality 从 `needs_review 3 / 7` 推进到 `passed 7 / 7`。
+- runtime sprite repair plan 已清空；后续新增问题仍走同一套重生成和 promotion 流程。
 - 晋升工具默认 dry-run，必须显式 `--apply` 才能替换 runtime PNG 和 manifest。
 
 ## 4. 当前 P0 任务

@@ -119,6 +119,25 @@ def prompt_for_task(asset: dict[str, Any], task: dict[str, Any]) -> tuple[str, d
                 "fragile objective prop with compact tripod or base",
                 "avoid huge hollow white regions inside the subject",
                 "glass highlights are allowed but should be painted as part of the object",
+                "object may glow internally but the background must stay plain white",
+                "no cream halo, no white aura behind the object, no floating light dots",
+                "no detached highlights outside the silhouette",
+            ]
+        )
+    if str(asset.get("stable_internal_id")) == "objective_station_core":
+        extra.extend(
+            [
+                "sturdy brass and glass lantern station core device",
+                "single compact defensive objective prop with heavy base",
+                "not a handheld lantern, not a character item, not scenery",
+                "solid readable outer silhouette with clean glass chamber",
+                "no background glow cloud behind the station core",
+                "no torn white patches around the handles or base",
+                "plain product sprite cutout, object only, no decorative backdrop",
+                "the background must be completely empty flat pure white",
+                "no cream circle, no beige blob, no halo shape, no side splash",
+                "no watermark, no generated label, no signature mark",
+                "keep all light contained inside the glass chamber",
             ]
         )
     prompt = ", ".join([base, *constraints, *extra])
@@ -143,6 +162,10 @@ def postprocess_raw_sprite(
     padding: int,
     min_size: int,
     keep_largest_component: bool,
+    remove_near_white_islands: bool,
+    island_min_luma: int,
+    island_max_chroma: int,
+    island_min_pixels: int,
 ) -> tuple[int, int]:
     image = png_pipeline.read_png(raw_path)
     processed = png_pipeline.remove_edge_matte_background(
@@ -158,6 +181,14 @@ def postprocess_raw_sprite(
         processed = png_pipeline.keep_largest_alpha_component(
             processed,
             alpha_threshold=alpha_threshold,
+        )
+    if remove_near_white_islands:
+        processed = png_pipeline.remove_near_white_background_islands(
+            processed,
+            alpha_threshold=alpha_threshold,
+            min_luma=island_min_luma,
+            max_chroma=island_max_chroma,
+            min_pixels=island_min_pixels,
         )
     processed = png_pipeline.crop_and_pad(
         processed,
@@ -250,6 +281,10 @@ def generate_candidate(
     padding: int,
     min_size: int,
     keep_largest_component: bool,
+    remove_near_white_islands: bool,
+    island_min_luma: int,
+    island_max_chroma: int,
+    island_min_pixels: int,
     live: bool,
 ) -> dict[str, Any]:
     role = str(task.get("media_role") or "")
@@ -302,6 +337,10 @@ def generate_candidate(
         padding=padding,
         min_size=min_size,
         keep_largest_component=keep_largest_component,
+        remove_near_white_islands=remove_near_white_islands,
+        island_min_luma=island_min_luma,
+        island_max_chroma=island_max_chroma,
+        island_min_pixels=island_min_pixels,
     )
     return {
         "candidate_id": f"{task.get('task_id')}.regenerated",
@@ -350,6 +389,10 @@ def main() -> int:
     parser.add_argument("--inter-request-delay", type=float, default=1.0)
     parser.add_argument("--reuse-raw-if-exists", action="store_true")
     parser.add_argument("--keep-detached-components", action="store_true")
+    parser.add_argument("--remove-near-white-islands", action="store_true")
+    parser.add_argument("--island-min-luma", type=int, default=228)
+    parser.add_argument("--island-max-chroma", type=int, default=48)
+    parser.add_argument("--island-min-pixels", type=int, default=48)
     parser.add_argument("--matte-threshold", type=int, default=24)
     parser.add_argument("--alpha-threshold", type=int, default=8)
     parser.add_argument("--padding", type=int, default=40)
@@ -415,6 +458,10 @@ def main() -> int:
             padding=max(0, args.padding),
             min_size=max(1, args.min_size),
             keep_largest_component=not args.keep_detached_components,
+            remove_near_white_islands=args.remove_near_white_islands,
+            island_min_luma=max(0, min(255, args.island_min_luma)),
+            island_max_chroma=max(0, min(255, args.island_max_chroma)),
+            island_min_pixels=max(1, args.island_min_pixels),
             live=args.live,
         )
         items.append(item)

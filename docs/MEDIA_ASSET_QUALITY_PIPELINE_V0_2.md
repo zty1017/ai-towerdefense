@@ -257,7 +257,7 @@ examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1
 - 更新 runtime media manifest 的 `width`、`height`、`sha256`、`source_kind` 和受限 `promotion` 元数据。
 - 生成 promotion report，并要求后续重建 atlas 和重新跑 cutout quality。
 
-本轮已把 runtime P1 的信标与基础灯栏候选显式晋升，随后重建 atlas，并把 runtime cutout 复核从 3 项降到 1 项；剩余项为 P2 驿站核心，需要人工/视觉复核后再决定是否重生。
+本轮已把 runtime 的信标、基础灯栏与驿站核心候选显式晋升，随后重建 atlas，并把 runtime sprite cutout quality 推进到 `passed 7 / 7`；对应 repair plan 已清空。驿站核心的最终候选来自 Agnes 重生成与后处理，达到 MVP runtime 几何质量门；一次 GLM free 尝试返回非 PNG / 带水印图像，后续 provider adapter 需要补格式转换与水印门禁。
 
 ## 5. 后续增强顺序
 
