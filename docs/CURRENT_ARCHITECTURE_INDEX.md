@@ -34,13 +34,15 @@ Last updated: 2026-07-01
    - 当前文档导航和有效性说明。
 3. `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
    - 产品定位、架构分层、协作治理基线。
-4. `docs/DEMO_VERTICAL_SLICE.md`
+4. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
+   - AI 编译系统四层总架构：Context Engine、Object Compiler、World Transaction System、Generation Scheduler。
+5. `docs/DEMO_VERTICAL_SLICE.md`
    - MVP 演示主路径。
-5. `docs/FRONTEND_MOCK_API_V0_1.md`
+6. `docs/FRONTEND_MOCK_API_V0_1.md`
    - 当前前端应接入的 mock API。
-6. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
+7. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
    - 前端战斗运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
-7. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+8. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
    - 当前审查交付入口。
 
 ## 3. 当前有效设计文档
@@ -60,6 +62,8 @@ Last updated: 2026-07-01
 
 ### AI 编译器与 AssetGraph
 
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md`
+  - 当前 AI 编译总架构事实源。定义 Context Engine、Object Compiler、World Transaction System、Generation Scheduler，以及 CGOP、ContextPackage、FactEntry、WorldStateDeltaTransaction 的 v0.1 边界。
 - `docs/AI_ASSET_COMPILER_V0_1.md`
   - AI 资产编译器基础定位。
 - `docs/ASSET_GRAPH_COMPILER_V0_1.md`
