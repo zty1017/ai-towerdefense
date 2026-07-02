@@ -59,6 +59,9 @@ _CORE_ARTIFACT_REFS = {
     "compiled_game_object_package": (
         "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
     ),
+    "world_delta_transaction": (
+        "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+    ),
 }
 
 # World-in-language node display names (subset of worldbook node_mapping).

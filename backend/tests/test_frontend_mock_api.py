@@ -43,8 +43,14 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     assert core_artifacts["compiled_game_object_package"]["schema_version"] == (
         "compiled_game_object_package.v0.1"
     )
+    assert core_artifacts["world_delta_transaction"]["schema_version"] == (
+        "world_state_delta_transaction.v0.1"
+    )
     assert core_artifacts["refs"]["context_package"].endswith(
         "mvp_first_battle.context_package.json"
+    )
+    assert core_artifacts["refs"]["world_delta_transaction"].endswith(
+        "first_battle_result.world_delta_transaction.json"
     )
     assert payload["animation_pipeline_status"] == (
         "seed_images_ready_video_frames_not_generated"
@@ -156,9 +162,17 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
         )
     )
     assert settlement["settlement"]["result"] == "victory"
-    assert settlement["settlement"]["world_delta"]["delta_id"] == "delta_first_battle_result_001"
+    assert settlement["settlement"]["world_delta"]["delta_id"] == (
+        "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired"
+    )
+    assert settlement["settlement"]["world_delta_transaction"]["transaction_id"] == (
+        "tx_first_battle_result_repaired_001"
+    )
     assert settlement["settlement"]["core_artifact_refs"]["fact_entry"].endswith(
         "mvp_gray_lantern.fact_entry.json"
+    )
+    assert settlement["settlement"]["core_artifact_refs"]["world_delta_transaction"].endswith(
+        "first_battle_result.world_delta_transaction.json"
     )
     assert settlement["settlement"]["run_world_state"]["progress"]["phase"] == (
         "post_first_defense"
@@ -172,6 +186,9 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["battle_result"]["settlement"]["node_id"] == "gray_lantern_station"
     assert evidence["ai_compile_core_artifacts"]["refs"]["compiled_game_object_package"].endswith(
         "mvp_light_snare.compiled_game_object_package.json"
+    )
+    assert evidence["ai_compile_core_artifacts"]["refs"]["world_delta_transaction"].endswith(
+        "first_battle_result.world_delta_transaction.json"
     )
 
 
