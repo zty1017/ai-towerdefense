@@ -183,7 +183,7 @@ GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计�
 
 当前尚未完成：
 
-- 真实图生视频帧序列，以及由这些真实帧打包出的实体 atlas PNG 的默认接入。
+- 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
 - 正式 live campaign router 与 Generation Scheduler 后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。

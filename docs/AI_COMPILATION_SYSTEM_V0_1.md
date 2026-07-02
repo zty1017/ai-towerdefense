@@ -498,6 +498,13 @@ draft
 
 `certified` 只用于需要被重复调度或作为 fallback 的高风险模板，例如地图、关卡、遭遇组合和重资产内容。普通玩家临时样品不必进入 `certified`，通过 `validated` / `reviewed` / `locked` 即可进入受限 runtime。
 
+当前 v0.1 对应关系：
+
+- `CGOP` 是可安装对象包的概念事实源；具体字段仍需后续 schema 固化。
+- `locked_manifest.v0.1`、`runtime_package.v0.1`、`frontend_mock_pack.v0.1` 和各类 review pack 是当前已落地的包形态。
+- `MediaAtlasManifest v0.1` 承接已发布媒体，当前已经包含确定性 frame sequence 与实体 `atlas_sheets`；真实图生视频关键帧后续只替换 frames 来源，不改变运行时只读 published media 的原则。
+- `MapCompilePackage v0.2` 记录地图编译证据，`MapRuntimePackage v0.1` 是前端战斗地图运行时事实源；地图是否可复用进入模板池，应由 `certified` 语义表达。
+
 ## 7. 包与实例分离
 
 CGOP 是蓝图，不是运行时实例。
@@ -759,9 +766,13 @@ generated
   -> processed
   -> reviewed
   -> locked / published
+  -> MediaAtlasManifest / atlas_sheets
+  -> runtime package
 ```
 
 媒体表现不能决定碰撞、伤害、路线、资源和任务条件。
+
+当前 MVP 允许用确定性多帧 frame sequence 先占位循环动画，并打包为实体 spritesheet；这只是媒体表现层的已发布资源形态。后续接入图片 -> 视频 -> 关键帧链路时，必须重新经过后处理、审查、atlas 打包和 runtime 引用校验。
 
 ## 13. MVP 实现边界
 
@@ -774,8 +785,9 @@ ContextPackage v0.1
 FactEntry v0.1
 CGOP v0.1
 WorldStateDelta v0.1 + transaction metadata / mapping
-GenerationScheduler 最小字段
+GenerationSchedulePlan / GenerationScheduleRunReport 最小字段
 MapRuntimePackage v0.1
+MediaAtlasManifest v0.1 + entity spritesheet atlas
 ```
 
 最小闭环：
@@ -829,9 +841,9 @@ v0.1 不做：
 建议顺序：
 
 1. 写 `ContextPackage v0.1`、`FactEntry v0.1`、`CGOP v0.1` 的 schema 草案，并为现有 `WorldStateDelta v0.1` 补事务 metadata / 映射说明；不要替换现有 delta schema。
-2. 实现机器可读 validation report 最小格式。
-3. 把现有 Research Job / WorldStateDelta / frontend mock 包对齐到这些字段。
-4. 实现 `MapRuntimePackage v0.1`，前端从显式 `build_slots` 和 `path_curves` 读取运行时地图。
-5. 再讨论 AI 生成 painted map 的受控图像管线。
+2. 把现有 Research Job / WorldStateDelta / frontend mock 包对齐到这些字段，并统一机器可读 validation report。
+3. 实现 live campaign router 与 Generation Scheduler 后台执行器，让预生成、缓存和 fallback 真正进入游玩流程。
+4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas。
+5. 推进 AI 生成 painted map 的受控图像管线，但仍以 `MapRuntimePackage` 的路径、塔位、碰撞和目标为运行时事实源。
 
 这份文档冻结的是架构边界，不要求所有对象一次性实现。后续所有具体管线都应说明自己属于哪一层、产出哪个对象、能否改变世界事实、如何被调度和校验。
