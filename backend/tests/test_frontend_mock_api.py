@@ -168,9 +168,39 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert {
         item["latency_class"] for item in latest_queue["generation_schedule_queue"]["items"]
     } >= {"background_prefetch", "background", "lazy"}
+
+    worker_step = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={"worker_id": "dry-worker-test", "note": "dry worker smoke test"},
+        )
+    )
+    assert worker_step["worker_step"]["status"] == "processed"
+    assert worker_step["worker_step"]["provider_call_count"] == 0
+    assert worker_step["worker_step"]["world_mutation_count"] == 0
+    assert worker_step["generation_schedule_queue_item"]["status"] == "waiting_review"
+    assert worker_step["generation_schedule_queue_item"]["worker_id"] == "dry-worker-test"
+    assert worker_step["generation_schedule_queue"]["summary"]["waiting_review_count"] == 1
+    assert worker_step["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+
+    reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
+    reviewed_complete = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{reviewed_item_id}/complete",
+            json={"worker_id": "review-gate", "note": "manual review accepted"},
+        )
+    )
+    assert reviewed_complete["generation_schedule_queue_item"]["status"] == "completed"
+    assert (
+        reviewed_complete["generation_schedule_queue"]["summary"]["waiting_review_count"] == 0
+    )
+    assert reviewed_complete["generation_schedule_queue"]["summary"]["status_counts"][
+        "completed"
+    ] == 4
+
     queued_item_id = next(
         item["schedule_item_id"]
-        for item in latest_queue["generation_schedule_queue"]["items"]
+        for item in reviewed_complete["generation_schedule_queue"]["items"]
         if item["status"] == "queued"
     )
     claimed = _payload(
@@ -182,7 +212,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert claimed["generation_schedule_queue_item"]["status"] == "claimed"
     assert claimed["generation_schedule_queue_item"]["claimed_by"] == "test-worker"
     assert claimed["generation_schedule_queue"]["summary"]["status_counts"]["claimed"] == 1
-    assert claimed["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+    assert claimed["generation_schedule_queue"]["summary"]["claimable_count"] == 2
 
     completed = _payload(
         client.post(
@@ -191,8 +221,8 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         )
     )
     assert completed["generation_schedule_queue_item"]["status"] == "completed"
-    assert completed["generation_schedule_queue"]["summary"]["status_counts"]["completed"] == 4
-    assert completed["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+    assert completed["generation_schedule_queue"]["summary"]["status_counts"]["completed"] == 5
+    assert completed["generation_schedule_queue"]["summary"]["claimable_count"] == 2
 
     completed_sync_item_id = next(
         item["schedule_item_id"]

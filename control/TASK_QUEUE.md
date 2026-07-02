@@ -65,7 +65,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图和 claim / complete / fail 状态流转；真实后台执行器、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail 状态流转和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -416,6 +416,24 @@ P2：本阶段明确不做
 
 - 当前只支持本地 dry-run 队列状态流转，不调用 provider，不生成新内容，不写世界状态。
 - 这为后续真实后台 worker 提供最小领取和回写接口。
+
+### P1-B-5 Generation Scheduler dry-run worker step
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step`
+- 每次处理最近一次 run 中的一个 `queued` 项。
+- 需要 provider 或人工复核的项进入 `waiting_review`。
+- 不需要额外复核的项可进入 `completed`。
+- 无可处理项时返回 `idle`。
+- `waiting_review` 项允许后续通过 `complete` 或 `fail` 人工 / 系统复核收束。
+
+当前结论：
+
+- dry-run worker step 不调用 provider，不生成新内容，不写世界状态，不激活预取候选。
+- 它只把后续后台 worker 的领取、处理、等待复核状态面跑通。
 
 ## 4. 当前 P0 任务
 

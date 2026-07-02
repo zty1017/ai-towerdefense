@@ -245,6 +245,26 @@ def fail_generation_schedule_queue_item(
     )
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/dry-run-step",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_schedule_dry_worker_step(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Process one queued scheduler item without provider calls or world writes."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    return _payload(
+        session_id,
+        frontend_mock_service.run_generation_schedule_dry_worker_step(
+            session_id,
+            metadata,
+        ),
+    )
+
+
 @router.get(
     "/api/sessions/{session_id}/map",
     response_model=FrontendMockPayloadResponse,

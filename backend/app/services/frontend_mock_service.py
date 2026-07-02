@@ -437,6 +437,10 @@ def _generation_queue_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
         "fallback_ready_count": sum(
             1 for item in items if item.get("status") == "fallback_ready"
         ),
+        "waiting_review_count": sum(
+            1 for item in items if item.get("status") == "waiting_review"
+        ),
+        "failed_count": sum(1 for item in items if item.get("status") == "failed"),
         "provider_review_required_count": sum(
             1 for item in items if item.get("provider_review_required") is True
         ),
@@ -503,13 +507,13 @@ def _next_generation_queue_status(current_status: str, transition: str) -> str:
             )
         return "claimed"
     if transition == "complete":
-        if current_status not in ("queued", "claimed"):
+        if current_status not in ("queued", "claimed", "waiting_review"):
             raise InvalidQueueTransitionError(
                 f"cannot complete scheduler item in status {current_status}"
             )
         return "completed"
     if transition == "fail":
-        if current_status not in ("queued", "claimed"):
+        if current_status not in ("queued", "claimed", "waiting_review"):
             raise InvalidQueueTransitionError(
                 f"cannot fail scheduler item in status {current_status}"
             )
@@ -549,6 +553,75 @@ def _transition_generation_queue_item(
         payload["completed_at"] = ts
     elif transition == "fail":
         payload["failed_at"] = ts
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE generation_schedule_queue_items "
+            "SET status = ?, payload = ?, updated_at = ? WHERE id = ?",
+            (next_status, _dump_payload(payload), ts, row["id"]),
+        )
+    return payload
+
+
+def _load_next_queued_generation_item_row(session_id: str) -> dict[str, Any] | None:
+    latest = _load_latest_generation_schedule_run(session_id)
+    if latest is None:
+        return None
+    run_id = str(latest.get("run_id", ""))
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT id, run_id, schedule_item_id, status, payload FROM "
+            "generation_schedule_queue_items "
+            "WHERE session_id = ? AND run_id = ? AND status = ? "
+            "ORDER BY id ASC LIMIT 1",
+            (session_id, run_id, "queued"),
+        )
+        row = cur.fetchone()
+    if row is None or not row.get("payload"):
+        return None
+    return {
+        "id": row["id"],
+        "run_id": row["run_id"],
+        "schedule_item_id": row["schedule_item_id"],
+        "status": row["status"],
+        "payload": json.loads(row["payload"]),
+    }
+
+
+def _run_generation_dry_worker_step(
+    session_id: str, metadata: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
+    row = _load_next_queued_generation_item_row(session_id)
+    if row is None:
+        return None
+    payload = row["payload"]
+    current_status = str(row["status"])
+    ts = now_iso()
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    worker_id = safe_metadata.get("worker_id") or "frontend_mock_dry_worker"
+    requires_review = payload.get("provider_review_required") is True
+    next_status = "waiting_review" if requires_review else "completed"
+    transition_entry = {
+        "transition": "dry_run_worker_step",
+        "from_status": current_status,
+        "to_status": next_status,
+        "worker_id": worker_id,
+        "note": safe_metadata.get("note"),
+        "created_at": ts,
+    }
+    transitions = payload.setdefault("transitions", [])
+    if isinstance(transitions, list):
+        transitions.append(transition_entry)
+    payload["status"] = next_status
+    payload["updated_at"] = ts
+    payload["worker_step_at"] = ts
+    payload["worker_id"] = worker_id
+    payload["provider_call_performed"] = False
+    payload["world_mutation_performed"] = False
+    if next_status == "waiting_review":
+        payload["waiting_review_since"] = ts
+        payload["review_reason"] = "provider_or_manual_review_required_before_activation"
+    else:
+        payload["completed_at"] = ts
     with db_cursor() as cur:
         cur.execute(
             "UPDATE generation_schedule_queue_items "
@@ -834,6 +907,26 @@ def transition_generation_schedule_queue_item(
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
+        "generation_schedule_queue_item": item,
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+    }
+
+
+def run_generation_schedule_dry_worker_step(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    item = _run_generation_dry_worker_step(session_id, metadata)
+    queue_items = _load_generation_queue_items(session_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "idle" if item is None else "processed",
+            "worker_mode": "fixture_backed_dry_worker",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+        },
         "generation_schedule_queue_item": item,
         "generation_schedule_queue": _compact_generation_queue(queue_items),
     }

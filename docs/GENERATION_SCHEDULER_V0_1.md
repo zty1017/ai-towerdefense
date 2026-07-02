@@ -29,6 +29,7 @@
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim`
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete`
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step`
 
 默认构建并校验：
 
@@ -153,8 +154,10 @@ GET /api/sessions/{session_id}/generation-schedule/queue
 queued -> claimed
 queued -> completed
 claimed -> completed
+waiting_review -> completed
 queued -> failed
 claimed -> failed
+waiting_review -> failed
 ```
 
 对应接口：
@@ -166,6 +169,26 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 ```
 
 这些接口只改本地队列状态和 item payload 中的 transition log，不触发 provider、不提交世界状态、不激活候选。非法状态流转返回 `409`，例如对已经 `completed` 的同步复用项再次 `claim`。
+
+## Dry-run Worker Step
+
+当前 API 还支持一个最小 worker step：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step
+```
+
+它每次只处理最近一次 run 中的一个 `queued` 项。处理规则：
+
+- 不调用 provider。
+- 不写世界状态。
+- 不创建新 runtime package。
+- 不激活预取候选。
+- 如果 item 需要 provider 或人工复核，则进入 `waiting_review`。
+- 如果 item 不需要额外复核，则进入 `completed`。
+- 没有可处理项时返回 `idle`。
+
+这一步的目的不是完成真实生成，而是把后续 worker 的领取 / 处理 / 等待复核状态面跑通。
 
 边界保持不变：
 

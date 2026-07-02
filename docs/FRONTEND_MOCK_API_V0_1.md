@@ -289,8 +289,8 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 状态规则：
 
 - `claim`: 只允许 `queued -> claimed`。
-- `complete`: 允许 `queued|claimed -> completed`。
-- `fail`: 允许 `queued|claimed -> failed`。
+- `complete`: 允许 `queued|claimed|waiting_review -> completed`。
+- `fail`: 允许 `queued|claimed|waiting_review -> failed`。
 - `completed`、`fallback_ready`、`failed`、`blocked` 不能再被 claim。
 
 返回：
@@ -301,6 +301,35 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 非法状态流转返回 `409`。未知队列项返回 `404`。
 
 这些接口只更新本地 dry-run 队列状态，仍不会调用外部模型、不会写世界状态、不会激活预生成候选。它们的作用是给后续真实后台 worker 预留最小领取和回写接口。
+
+### 调度 dry-run worker step
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step
+```
+
+请求体可选：
+
+```json
+{
+  "worker_id": "local-dry-worker",
+  "note": "single dry-run step"
+}
+```
+
+每次只处理最近一次调度 run 中的一个 `queued` 项：
+
+- 如果该项需要 provider / review，则标记为 `waiting_review`。
+- 如果该项不需要额外审查，则标记为 `completed`。
+- 如果没有 `queued` 项，则返回 `worker_step.status = idle`。
+
+返回：
+
+- `worker_step`
+- `generation_schedule_queue_item`
+- 更新后的 `generation_schedule_queue`
+
+当前所有 MVP 预取 / 后台 / 懒加载项都要求启用前复验，因此 dry worker step 会把这些项停在 `waiting_review`。它不会调用外部模型、不会写世界状态、不会激活预生成候选。
 
 ### 获取大地图
 
