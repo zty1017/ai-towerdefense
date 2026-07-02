@@ -96,6 +96,13 @@ def test_create_proposal_happy_path(client):
     assert body["summary"]
     assert body["risk_note"]
     assert body["player_state_message"]
+    metadata = body["compiler_metadata"]
+    assert metadata["schema_version"] == "compiler_metadata.v0.1"
+    assert metadata["compiled_object"]["object_model"] == "CGOP"
+    assert metadata["context_package"]["node_id"] == "gray_lantern_station"
+    assert metadata["context_package"]["map_runtime_package_ref"].endswith(
+        "mvp_first_battle.map_runtime_package.json"
+    )
     # Player-facing text must stay in world language.
     _assert_no_forbidden_terms(
         body["display_name"],
@@ -146,6 +153,13 @@ def test_confirm_proposal_runs_workflows_and_produces_artifacts(client):
     assert job["delivery_payload_path"]
     assert Path(job["runtime_package_path"]).exists()
     assert Path(job["delivery_payload_path"]).exists()
+    metadata = job["compiler_metadata"]
+    assert metadata["schema_version"] == "compiler_metadata.v0.1"
+    assert metadata["stage"] == "compiled_sample"
+    assert metadata["job_status"] == "completed"
+    assert metadata["validation"]["gate_status"] == "passed"
+    assert metadata["runtime_refs"]["trace_count"] == 2
+    assert metadata["runtime_refs"]["runtime_package_path"] == job["runtime_package_path"]
 
     # Player-facing message stays in world language.
     _assert_no_forbidden_terms(job["player_state_message"])
@@ -191,6 +205,7 @@ def test_get_job_happy_path(client):
     assert info["created_at"]
     assert info["updated_at"]
     assert info["completed_at"] is not None
+    assert info["compiler_metadata"]["stage"] == "compiled_sample"
 
 
 def test_get_missing_job_returns_404(client):

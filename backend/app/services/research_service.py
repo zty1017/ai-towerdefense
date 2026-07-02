@@ -35,6 +35,24 @@ _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.
 # All run artifacts land here, never inside the repo.
 _RUNS_ROOT = Path("/tmp/ai_compiled_td_backend_runs")
 
+_BATTLE_CONFIG_BY_NODE = {
+    "gray_lantern_station": "game_data/demo/first_battle_config.json",
+    "lamp_wick_store": "game_data/demo/wick_store_pressure_battle_config.json",
+    "old_signal_tower": "game_data/demo/old_signal_tower_pressure_battle_config.json",
+}
+
+_MAP_RUNTIME_PACKAGE_BY_NODE = {
+    "gray_lantern_station": (
+        "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+    ),
+    "lamp_wick_store": (
+        "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json"
+    ),
+    "old_signal_tower": (
+        "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+    ),
+}
+
 # World-in-language node display names (subset of worldbook node_mapping).
 _NODE_DISPLAY = {
     "gray_lantern_station": "灰灯驿站",
@@ -141,6 +159,104 @@ def _synthesize_proposal_fields(intent_text: str, node_id: str) -> dict[str, str
     }
 
 
+def _candidate_kind_from_intent(intent_text: str) -> str:
+    intent = intent_text or ""
+    if any(kw in intent for kw in ("陷阱", "绊", "trap", "索")):
+        return "temporary_trap_sample"
+    if any(kw in intent for kw in ("塔", "炮", "攻击", "伤害", "damage", "攻")):
+        return "tower_blueprint"
+    if any(kw in intent for kw in ("支援", "技能", "脉冲", "support")):
+        return "support_item"
+    return "temporary_trap_sample"
+
+
+def _compiler_metadata_for_proposal(
+    *,
+    proposal_id: str,
+    node_id: str,
+    intent_text: str,
+) -> dict[str, Any]:
+    candidate_kind = _candidate_kind_from_intent(intent_text)
+    return {
+        "schema_version": "compiler_metadata.v0.1",
+        "visibility": "internal_evidence",
+        "stage": "proposal",
+        "compiled_object": {
+            "object_model": "CGOP",
+            "candidate_kind": candidate_kind,
+            "lifecycle_hint": "ephemeral_sample"
+            if candidate_kind == "temporary_trap_sample"
+            else "session_blueprint",
+            "proposal_id": proposal_id,
+            "runtime_surfaces": ["battle_toolbar", "battle_delivery"],
+        },
+        "context_package": {
+            "worldbook_id": "long_night_lanterns",
+            "node_id": node_id,
+            "battle_config_ref": _BATTLE_CONFIG_BY_NODE.get(node_id),
+            "map_runtime_package_ref": _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id),
+            "intent_source": "player_free_text",
+        },
+        "validation": {
+            "player_text_safety": "scrubbed",
+            "local_gates": [
+                "intent_classification",
+                "proposal_synthesis",
+                "forbidden_player_terms_guard",
+            ],
+        },
+        "runtime_refs": {},
+    }
+
+
+def _compiler_metadata_for_job(
+    *,
+    proposal_metadata: dict[str, Any],
+    status: str,
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    metadata = json.loads(json.dumps(proposal_metadata, ensure_ascii=False))
+    metadata["stage"] = "compiled_sample"
+    metadata["job_status"] = status
+    metadata["validation"] = {
+        **as_dict(metadata.get("validation")),
+        "local_gates": [
+            "intent_classification",
+            "proposal_synthesis",
+            "assetgraph_mock_compile_workflow",
+            "assetgraph_delivery_workflow",
+            "runtime_package_artifact",
+            "delivery_payload_artifact",
+        ],
+        "gate_status": "passed" if status == "completed" else "failed",
+    }
+    metadata["runtime_refs"] = {
+        "runtime_package_path": result.get("runtime_package_path"),
+        "delivery_payload_path": result.get("delivery_payload_path"),
+        "trace_count": len(result.get("trace_paths") or []),
+    }
+    if status != "completed":
+        metadata["failure"] = {
+            "class": "compiler_pipeline_failure",
+            "player_safe_message": "现场试作未能稳定封装，请稍后重试。",
+        }
+    return metadata
+
+
+def as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _proposal_payload(row: Any) -> dict[str, Any]:
+    if not row or not row["payload"]:
+        return {}
+    try:
+        parsed = json.loads(row["payload"])
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def _find_artifact_path(
     trace: dict[str, Any], run_dir: Path, node_id: str
 ) -> Path | None:
@@ -241,9 +357,19 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
     """Create a research proposal row and return its public representation."""
     fields = _synthesize_proposal_fields(intent_text, node_id)
     proposal_id = secrets.token_urlsafe(16)
+    compiler_metadata = _compiler_metadata_for_proposal(
+        proposal_id=proposal_id,
+        node_id=node_id,
+        intent_text=intent_text,
+    )
     ts = now_iso()
     payload = json.dumps(
-        {"intent_text": intent_text, "node_id": node_id}, ensure_ascii=False
+        {
+            "intent_text": intent_text,
+            "node_id": node_id,
+            "compiler_metadata": compiler_metadata,
+        },
+        ensure_ascii=False,
     )
     with db_cursor() as cur:
         cur.execute(
@@ -268,13 +394,17 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
         )
         cur.execute(
             "SELECT proposal_id, session_id, node_id, display_name, summary, "
-            "risk_note, player_state_message FROM research_proposals "
+            "risk_note, player_state_message, payload FROM research_proposals "
             "WHERE proposal_id = ?",
             (proposal_id,),
         )
         row = cur.fetchone()
     assert row is not None
-    return dict(row)
+    data = dict(row)
+    payload_obj = _proposal_payload(row)
+    data["compiler_metadata"] = as_dict(payload_obj.get("compiler_metadata"))
+    data.pop("payload", None)
+    return data
 
 
 def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
@@ -291,13 +421,21 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
             return {"error": "session_not_found"}
         # Verify proposal exists, belongs to this session, and is not confirmed.
         cur.execute(
-            "SELECT proposal_id, status FROM research_proposals "
+            "SELECT proposal_id, status, payload FROM research_proposals "
             "WHERE proposal_id = ? AND session_id = ?",
             (proposal_id, session_id),
         )
         prow = cur.fetchone()
         if prow is None:
             return {"error": "proposal_not_found"}
+        proposal_payload = _proposal_payload(prow)
+        proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
+        if not proposal_metadata:
+            proposal_metadata = _compiler_metadata_for_proposal(
+                proposal_id=proposal_id,
+                node_id=str(proposal_payload.get("node_id") or "gray_lantern_station"),
+                intent_text=str(proposal_payload.get("intent_text") or ""),
+            )
         # Insert the job row in "running" state before executing workflows so
         # that even a crash leaves an auditable record.
         cur.execute(
@@ -332,16 +470,31 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         player_msg = _sanitize_player_text(
             f"试作封装完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"
         )
+        compiler_metadata = _compiler_metadata_for_job(
+            proposal_metadata=proposal_metadata,
+            status=status,
+            result=result,
+        )
         payload = json.dumps(
-            {"trace_paths": result["trace_paths"]}, ensure_ascii=False
+            {
+                "trace_paths": result["trace_paths"],
+                "compiler_metadata": compiler_metadata,
+            },
+            ensure_ascii=False,
         )
     else:
         status = "failed"
         player_msg = _sanitize_player_text("现场试作未能稳定封装，请稍后重试。")
+        compiler_metadata = _compiler_metadata_for_job(
+            proposal_metadata=proposal_metadata,
+            status=status,
+            result=result,
+        )
         payload = json.dumps(
             {
                 "error": result.get("error") or "unknown failure",
                 "trace_paths": result["trace_paths"],
+                "compiler_metadata": compiler_metadata,
             },
             ensure_ascii=False,
         )
@@ -385,7 +538,7 @@ def get_job(session_id: str, job_id: str) -> dict[str, Any] | None:
     with db_cursor() as cur:
         cur.execute(
             "SELECT job_id, session_id, proposal_id, status, player_state_message, "
-            "runtime_package_path, delivery_payload_path, trace_paths, "
+            "runtime_package_path, delivery_payload_path, trace_paths, payload, "
             "created_at, updated_at, completed_at FROM research_jobs "
             "WHERE job_id = ? AND session_id = ?",
             (job_id, session_id),
@@ -402,6 +555,14 @@ def get_job(session_id: str, job_id: str) -> dict[str, Any] | None:
                 trace_paths = [str(p) for p in parsed]
         except json.JSONDecodeError:
             trace_paths = []
+    payload = {}
+    if row.get("payload"):
+        try:
+            parsed_payload = json.loads(row["payload"])
+            if isinstance(parsed_payload, dict):
+                payload = parsed_payload
+        except json.JSONDecodeError:
+            payload = {}
     return {
         "job_id": row["job_id"],
         "session_id": row["session_id"],
@@ -411,6 +572,7 @@ def get_job(session_id: str, job_id: str) -> dict[str, Any] | None:
         "runtime_package_path": row["runtime_package_path"],
         "delivery_payload_path": row["delivery_payload_path"],
         "trace_paths": trace_paths,
+        "compiler_metadata": as_dict(payload.get("compiler_metadata")),
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "completed_at": row["completed_at"],

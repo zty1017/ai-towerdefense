@@ -74,6 +74,7 @@ class ResearchProposalResponse(BaseModel):
     summary: str
     risk_note: str
     player_state_message: str
+    compiler_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ResearchJobResponse(BaseModel):
@@ -87,6 +88,7 @@ class ResearchJobResponse(BaseModel):
     runtime_package_path: Optional[str] = None
     delivery_payload_path: Optional[str] = None
     trace_paths: list[str] = Field(default_factory=list)
+    compiler_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ResearchJobInfo(ResearchJobResponse):

@@ -206,6 +206,23 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 
 前端应优先用它绘制拖拽部署、路径预览、目标标记和视觉底图引用；`battle_config.paths` 只是旧兼容字段。
 
+### 研发接口内部元数据
+
+研发提案与研发任务响应会额外带有 `compiler_metadata`。它服务 Studio / 演示证据 / 调试，不是玩家默认界面文案。
+
+`compiler_metadata` 当前包含：
+
+- `compiled_object`：可编译对象模型、候选类型、生命周期提示和运行时表面。
+- `context_package`：世界书、节点、battle config、MapRuntimePackage 和玩家输入来源。
+- `validation`：本地门禁、运行状态和 gate status。
+- `runtime_refs`：runtime package、delivery payload 和 trace 数量。
+
+边界：
+
+- 玩家侧 UI 可以忽略该字段。
+- 不包含 API key、secret、原始提示词、外部 provider 原始响应或完整 trace。
+- 技术错误仍进入内部记录，玩家侧只显示世界内状态。
+
 ### 获取地图运行包
 
 ```http
