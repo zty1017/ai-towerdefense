@@ -98,6 +98,8 @@ Last updated: 2026-07-02
   - 预生成调度计划包、延迟等级、fallback 与启用前复验边界。
 - `docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md`
   - 真实 provider 调用后允许保存的脱敏安全信封：摘要、artifact refs、校验状态和 activation gate。
+- `docs/PROVIDER_ARTIFACT_STAGING_V0_1.md`
+  - ProviderOutputEnvelope 之后的本地候选 artifact 暂存层：只登记 review-only local refs、校验状态和 promotion gate，不声明 runtime-ready。
 - `docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md`
   - 玩法对象编译边界。
 - `shared/schemas/context_package.v0.1.schema.json`
@@ -108,6 +110,8 @@ Last updated: 2026-07-02
   - CGOP 字段级事实源：可安装对象包，不携带完整世界书、长期记忆或可变实例状态。
 - `shared/schemas/provider_output_envelope.v0.1.schema.json`
   - ProviderOutputEnvelope 字段级事实源：只保存脱敏 provider 调用摘要、本地 artifact refs、校验状态和 activation gate，不保存 prompt 正文、provider 响应正文、secret 或 runtime-ready 声明。
+- `shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`
+  - ProviderArtifactStagingManifest 字段级事实源：把 ProviderOutputEnvelope 中的本地 refs 转入 review-only staging，仍不写世界状态、不激活 runtime、不绕过 media / semantic / human review / promotion gate。
 
 ### 剧情、任务与世界状态
 
@@ -158,7 +162,7 @@ ControlledMapCandidateGenerationRun v0.1 已提供 `tools/media/generate_control
 ControlledMapCandidateReview v0.1 已把上述 handoff sidecar 接入 `tools/media/build_node_map_candidate_review_pack.py`，当前审查状态为 `review_only_not_runtime_ready`，三个候选均 `awaiting_provider_or_paintover_output`。这证明受控候选已经进入统一候选审查门，但在真实 provider 或人工 paintover 产出图片前不会进入 alignment / runtime promotion。
 ControlledMapTextFallbackGenerationRun v0.1 已用真实 Agnes 调用产出三张受控 text-fallback 地图候选，并记录 provider 调用数、图片路径和 sidecar；审查结果为 `review_only_not_runtime_ready`，三张均 `needs_regeneration`。失败原因包括箭头 / 控制形状 / 棋盘边框被烙进背景、未授权人物或塔位被模型自行添加、视觉路线与 MapRuntimePackage 拓扑不一致。该结果冻结为负样本证据：地图不应继续依赖纯文本整图生成，下一轮应走 reference-image provider、人工 paintover，或由 MapRuntimePackage 驱动的分层程序化底图。
 FrontendProceduralBattleBackdrop v0.1 已完成 P0-M：默认玩家战斗画面不再绘制失败整图候选，而是由 `MapRuntimePackage` 的 grid、path_routes、build_slots、objectives 和 spawn_points 驱动 canvas 程序化绘制自然地形、土石路、部署基座、目标地基和入口雾潮。静态合约会阻止控制图 / 参考图 / 棋盘 helper / 失败整图发布进入默认玩家视图；仍需浏览器截图或录屏做最终像素验收。
-GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_queue_items` 已能提供 item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；`generation_schedule_worker_cache` 已提供 review-only worker step 执行痕迹；`generation_live_executor_guard.v0.1` provider guard log 已能记录真实 provider 执行前的显式授权阻断、artifact manifest 门、校验门和 activation gate；`ProviderOutputEnvelope v0.1` 已定义真实 provider 调用后允许保存的脱敏摘要和 artifact refs，但仍明确不保存 raw prompt / provider response、不写世界状态、不激活候选，真实后台执行器仍未实现。
+GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_queue_items` 已能提供 item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；`generation_schedule_worker_cache` 已提供 review-only worker step 执行痕迹；`generation_live_executor_guard.v0.1` provider guard log 已能记录真实 provider 执行前的显式授权阻断、artifact manifest 门、校验门和 activation gate；`ProviderOutputEnvelope v0.1` 已定义真实 provider 调用后允许保存的脱敏摘要和 artifact refs；`ProviderArtifactStagingManifest v0.1` 已定义这些本地 refs 进入 review-only 暂存区的清单和 promotion gate；两者都不保存 raw prompt / provider response、不写世界状态、不激活候选，真实后台执行器仍未实现。
 ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。
 ```
 
@@ -217,6 +221,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback、dry-run worker step、review-only worker cache 和 live executor guard 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
 - ProviderOutputEnvelope v0.1：`shared/schemas/provider_output_envelope.v0.1.schema.json`、`tools/dev/validate_provider_output_envelope.py`、`docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md` 和 `examples/provider_output_envelopes/` 已作为真实 provider 输出安全信封入口。后续真实 executor 只能保存 redacted summary、本地 artifact refs、validation 状态和 activation gate，不能保存 prompt 正文、provider 响应正文或 runtime-ready 声明。
+- ProviderArtifactStagingManifest v0.1：`shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`、`tools/dev/validate_provider_artifact_staging_manifest.py`、`docs/PROVIDER_ARTIFACT_STAGING_V0_1.md` 和 `examples/provider_artifact_staging/` 已作为 ProviderOutputEnvelope 后的本地候选 artifact 暂存入口。它只登记 review-only local refs、gate 状态和 promotion 阻断，不能替代 runtime package、WorldStateDeltaTransaction、media gate 或人工 review。
 - WorkerTaskPack v0.1：`shared/schemas/worker_task_pack.v0.1.schema.json`、`tools/dev/validate_worker_task_pack.py`、`docs/WORKER_TASK_PACK_V0_1.md` 和 `examples/worker_task_packs/` 已作为 worker 委派任务包入口。后续 CodeBuddy / OpenCode / Codex headless / 人类 worker 的任务应先声明必读事实源、允许路径、禁止路径、安全规则、provider policy、验收命令和汇报字段。
 - Campaign Router v0.1：`backend/app/services/campaign_router_service.py` 是当前最薄运行时游标入口；它根据 `RunWorldState.progress.phase` 返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可触发一次 fixture-backed dry-run 预取步。no-build 前端已在 API 模式消费该 route，静态模式保留灰灯驿站首战兜底。
 - 多节点战斗结算桥：`backend/app/services/frontend_mock_service.py` 当前支持 `gray_lantern_station`、`lamp_wick_store`、`old_signal_tower` 三个路由节点的战斗结果提交。前两个节点使用 `battle_result` transaction；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，并在 API 返回中显式标注来源，避免把研究任务基线误当战斗结果。

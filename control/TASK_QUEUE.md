@@ -542,6 +542,38 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_output_envelope
 git diff --check
 ```
 
+### P1-B-10 ProviderArtifactStagingManifest 审查暂存清单
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json`
+- `examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json`
+- `tools/dev/validate_provider_artifact_staging_manifest.py`
+- `docs/PROVIDER_ARTIFACT_STAGING_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_artifact_staging.v0.1.json`
+
+当前结论：
+
+- 该层不调用 provider，只登记 ProviderOutputEnvelope 之后的本地候选 artifact refs。
+- staging manifest 必须保持 review-only、internal evidence、非玩家可见、非 runtime 激活、非世界状态修改。
+- staged artifact 必须是本地路径，不能是 provider 临时 URL、data URI 或 runtime package。
+- 后续真实 executor 必须先生成并校验 ProviderOutputEnvelope，再写 ProviderArtifactStagingManifest，然后进入 media / semantic / human review 和 promotion report。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging.v0.1.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_staging python3 -m py_compile tools/dev/validate_provider_artifact_staging_manifest.py
+python3 -m json.tool shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json >/tmp/provider_artifact_staging.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence
+git diff --check
+```
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造

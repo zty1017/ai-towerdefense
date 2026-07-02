@@ -1,0 +1,106 @@
+{
+  "schema_version": "provider_artifact_staging_manifest.v0.1",
+  "manifest_id": "pstaging_stage05_map_visual_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source_envelope_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json",
+  "source_envelope_id": "pout_performed_stage05_map_visual_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required",
+    "local_refs_only": true,
+    "runtime_claim_policy": "forbidden_before_promotion"
+  },
+  "staging_status": "review_only_artifacts_staged",
+  "staged_artifacts": [
+    {
+      "artifact_id": "stage05_map_visual_candidate_summary_staged",
+      "source_artifact_id": "stage05_map_visual_candidate_summary",
+      "kind": "json_candidate",
+      "path": "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
+      "content_type": "application/json",
+      "media_layer": "staging_report",
+      "role": "map_visual_candidate_summary",
+      "review_status": "staged_for_review",
+      "runtime_visible": false,
+      "player_visible": false,
+      "notes": [
+        "This is a review-only local ref copied from the source envelope artifact list.",
+        "Promotion requires media or semantic review and an explicit promotion report."
+      ]
+    }
+  ],
+  "validation_results": {
+    "source_envelope_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json",
+      "notes": [
+        "The referenced ProviderOutputEnvelope validates and contains the source artifact id."
+      ]
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The staged artifact path exists and is local."
+      ]
+    },
+    "schema_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The staging manifest shape is valid."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Concrete image or video files still need media quality review before promotion."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Map topology or gameplay semantics must be checked before promotion."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Human review or visual model review remains required."
+      ]
+    }
+  },
+  "promotion_gate": {
+    "promotion_allowed": false,
+    "blocked_reason": "promotion_report_required",
+    "required_next_gates": [
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report",
+      "runtime_package_or_world_transaction"
+    ],
+    "notes": [
+      "ProviderArtifactStaging is evidence, not a runtime package.",
+      "No world state may change from this manifest."
+    ]
+  }
+}
