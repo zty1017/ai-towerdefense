@@ -1,6 +1,6 @@
 # AssetGraph Compiler v0.1
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 ## 1. 定位
 
@@ -206,6 +206,15 @@ docs/FREE_INPUT_CONTROLLED_COMPILATION_V0_1.md
 - `poll_media_job`
 - `cache_media`
 - `create_media_manifest`
+- `validate_image`
+- `detect_bounds`
+- `remove_background`
+- `crop_and_pad`
+- `normalize_canvas`
+- `assign_anchor`
+- `align_frames`
+- `pack_sprite_sheet`
+- `build_atlas_json`
 
 必须记录：
 
@@ -243,6 +252,12 @@ RawGeneratedImage
 第一版实现可以先保留 stub 链路，但节点命名和 trace 边界应按真实后处理链路设计。
 `icon`、`tower_sprite`、`battle_preview`、`animation_card` 应作为不同媒体角色处理，
 不能用一个 prompt 同时承担“可抠图塔体”和“战斗展示图”。
+
+运行时发布边界：
+
+- `raw_media`、provider 临时 URL、未审图片和未下载到 artifact store 的远端资源都不能进入 `runtime_public`。
+- `runtime_public` 只能引用 `published_media`，或者引用已声明的 fallback media strategy。
+- 媒体 package 必须提供可验证的 `published_media` refs 或 fallback refs；只提供原始生成图路径不算运行时就绪。
 
 2026-06-30 已新增视觉模型审查节点：`media.review_with_vision_guarded`。
 它只允许在 `live` mode 下执行，且必须显式设置 `allow_live_provider_call: true`。
@@ -409,6 +424,8 @@ WorkflowGraph 执行前必须检查：
 - 当前 mode 允许使用这些节点
 - LLM / 媒体节点有 provider 策略
 - 有副作用节点必须显式声明
+- `runtime_public` 输出不得引用 `raw_media`、provider 临时 URL、未审图片或 raw trace。
+- 媒体 package 必须提供 `published_media` refs，或提供明确 fallback refs / fallback media strategy。
 
 ## 8. Debug 与测试价值
 
