@@ -407,7 +407,7 @@ def stage_generation_schedule_provider_artifacts(
             session_id,
             metadata,
         )
-    except ValueError as exc:
+    except (InvalidQueueTransitionError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),

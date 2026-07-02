@@ -336,6 +336,12 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert artifact_stage["worker_step"]["provider_call_count"] == 0
     assert artifact_stage["worker_step"]["world_mutation_count"] == 0
     assert artifact_stage["worker_step"]["activation_allowed_count"] == 0
+    assert artifact_stage["worker_step"]["upstream_request_id"] == (
+        executor_request["request_id"]
+    )
+    assert artifact_stage["generation_executor_run_request"]["request_id"] == (
+        executor_request["request_id"]
+    )
     assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
         "pout_performed_stage05_map_visual_001"
     )
@@ -564,6 +570,29 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))
     schedule_run = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    premature_stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "too-early", "note": "executor request missing"},
+    )
+    assert premature_stage.status_code == 409
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={"worker_id": "evidence-dry-worker", "note": "prepare evidence queue"},
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={"worker_id": "evidence-live-guard", "note": "guard evidence stage"},
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={"worker_id": "evidence-executor-request", "note": "prepare staging"},
+        )
+    )
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -678,10 +707,13 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
         "fixture_backed_dry_run"
     )
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["item_count"] == 8
-    assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 4
+    assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 3
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "item_count"
-    ] == 3
+    ] == 4
+    assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
+        "artifact_kind_counts"
+    ]["generation_executor_run_request"] == 1
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "promotion_allowed_count"
     ] == 0

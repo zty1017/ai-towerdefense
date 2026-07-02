@@ -390,6 +390,8 @@ live executor guard
 
 `ProviderArtifactStagingManifest` 只登记从 envelope 输出 refs 转入本地审查暂存区的候选文件。它不是 runtime package，不写世界状态，也不能让 review-only artifact 被前端或战斗运行时直接消费。
 
+后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记 `generation_executor_run_request`。如果缺少该请求包，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard 和执行请求边界。
+
 `ProviderArtifactPromotionReport` 是 staging 之后的显式晋升/阻断报告。它可以允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，也可以阻断候选继续前进；但报告本身仍不修改 runtime、published media 或世界状态。
 
 ## Campaign Router 接入
