@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
+from . import map_runtime_service
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -39,18 +40,6 @@ _BATTLE_CONFIG_BY_NODE = {
     "gray_lantern_station": "game_data/demo/first_battle_config.json",
     "lamp_wick_store": "game_data/demo/wick_store_pressure_battle_config.json",
     "old_signal_tower": "game_data/demo/old_signal_tower_pressure_battle_config.json",
-}
-
-_MAP_RUNTIME_PACKAGE_BY_NODE = {
-    "gray_lantern_station": (
-        "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
-    ),
-    "lamp_wick_store": (
-        "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json"
-    ),
-    "old_signal_tower": (
-        "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
-    ),
 }
 
 _CORE_ARTIFACT_REFS = {
@@ -205,7 +194,9 @@ def _compiler_metadata_for_proposal(
             "worldbook_id": "long_night_lanterns",
             "node_id": node_id,
             "battle_config_ref": _BATTLE_CONFIG_BY_NODE.get(node_id),
-            "map_runtime_package_ref": _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id),
+            "map_runtime_package_ref": map_runtime_service.map_runtime_package_ref(
+                node_id
+            ),
             "intent_source": "player_free_text",
         },
         "core_artifact_refs": dict(_CORE_ARTIFACT_REFS),

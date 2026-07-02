@@ -353,7 +353,7 @@ P2：本阶段明确不做
 已落地：
 
 - `GET /api/sessions/{session_id}/generation-schedule`
-- `backend/app/services/frontend_mock_service.py` 已加载 `GenerationSchedulePlan v0.1` 与 `GenerationScheduleRunReport v0.1`。
+- `backend/app/services/generation_scheduler_service.py` 已加载 `GenerationSchedulePlan v0.1` 与 `GenerationScheduleRunReport v0.1`，并维护 session dry-run 与队列状态。
 - `generation_schedule.buffer` 提供 session 可见的紧凑摘要，包括 latency class、dry-run action、fallback、复验要求、provider 调用数和世界修改数。
 - `/api/sessions/{session_id}/evidence` 已带 `generation_scheduler` 摘要，便于 Studio / 录屏证明调度器存在。
 - `docs/FRONTEND_MOCK_API_V0_1.md` 已记录接口边界。

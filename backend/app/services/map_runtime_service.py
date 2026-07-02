@@ -46,6 +46,13 @@ def map_runtime_package_paths() -> dict[str, Path]:
     return dict(_MAP_RUNTIME_PACKAGE_BY_NODE)
 
 
+def map_runtime_package_ref(node_id: str) -> str | None:
+    path = _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id)
+    if path is None:
+        return None
+    return path.relative_to(_REPO_ROOT).as_posix()
+
+
 def load_map_runtime_package(node_id: str) -> dict[str, Any]:
     path = _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id)
     if path is None or not path.exists():
