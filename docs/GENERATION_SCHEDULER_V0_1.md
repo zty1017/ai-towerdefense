@@ -21,9 +21,11 @@
 - `tools/scheduler/validate_generation_schedule_run_report.py`
 - `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
 - `generation_schedule_runs` SQLite session table
+- `generation_schedule_queue_items` SQLite session table
 - `GET /api/sessions/{session_id}/generation-schedule`
 - `POST /api/sessions/{session_id}/generation-schedule/runs`
 - `GET /api/sessions/{session_id}/generation-schedule/runs/latest`
+- `GET /api/sessions/{session_id}/generation-schedule/queue`
 
 默认构建并校验：
 
@@ -116,6 +118,29 @@ GET /api/sessions/{session_id}/generation-schedule/runs/latest
 ```
 
 这些记录写入 `generation_schedule_runs` 表，并在 session reset 时清除。它们证明调度器已经从离线 evidence 进入后端状态层，但仍不是正式后台执行器。
+
+每条 dry-run 运行还会派生 item 级队列记录：
+
+```text
+generation_schedule_queue_items
+```
+
+当前状态映射：
+
+| dry-run 结果 | 队列状态 | 含义 |
+|---|---|---|
+| `passed` | `completed` | 已审同步内容已经复用。 |
+| `fallback` | `fallback_ready` | 静态兜底路径已可用。 |
+| `scheduled` | `queued` | 预取 / 后台 / 懒加载项进入候选队列。 |
+| 其他 | `blocked` | dry-run 未能分类，需要人工或系统修复。 |
+
+队列项可通过以下接口读取：
+
+```text
+GET /api/sessions/{session_id}/generation-schedule/queue
+```
+
+它为后续真正 worker 领取任务预留形态，但当前不会自动执行 `queued` 项。
 
 边界保持不变：
 

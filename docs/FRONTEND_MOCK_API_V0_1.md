@@ -210,6 +210,8 @@ POST /api/sessions/{session_id}/generation-schedule/runs
 - `generation_schedule_run.generation_schedule.buffer`
 - `generation_schedule_run.execution_policy`
 - `generation_schedule_run.source_report_summary`
+- `generation_schedule_queue.summary`
+- `generation_schedule_queue.items`
 
 当前状态：
 
@@ -232,13 +234,40 @@ fixture_backed_dry_run
 GET /api/sessions/{session_id}/generation-schedule/runs/latest
 ```
 
-返回最近一次持久化 `generation_schedule_run`。如果当前 session 尚未创建调度运行记录，则返回：
+返回最近一次持久化 `generation_schedule_run` 以及从该 run 派生的队列项。若当前 session 尚未创建调度运行记录，则返回：
 
 ```json
 {
-  "generation_schedule_run": null
+  "generation_schedule_run": null,
+  "generation_schedule_queue": {
+    "summary": {
+      "item_count": 0
+    },
+    "items": []
+  }
 }
 ```
+
+### 获取最近调度队列项
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/queue
+```
+
+返回最近一次调度 dry-run 派生出的 item 级队列视图：
+
+- `generation_schedule_run`: 最近一次运行的紧凑摘要。
+- `generation_schedule_queue.summary`: 队列状态计数。
+- `generation_schedule_queue.items`: 每个调度项的队列记录。
+
+队列状态当前只包含：
+
+- `completed`: 已审同步内容已经复用。
+- `fallback_ready`: 静态兜底已可用。
+- `queued`: 预取、后台或懒加载项已进入候选队列。
+- `blocked`: dry-run 未能分类的异常项。
+
+该接口为后续真实 worker 领取任务预留形态；MVP mock 模式不会真正执行 `queued` 项，也不会调用外部模型。
 
 ### 获取大地图
 
@@ -409,6 +438,7 @@ GET /api/sessions/{session_id}/evidence
 - AI 编译核心对象引用
 - Generation Scheduler 调度缓冲摘要
 - Generation Scheduler 最近一次持久化 dry-run 运行摘要
+- Generation Scheduler 最近一次 item 级队列摘要
 - audit summary
 - dossier summary
 

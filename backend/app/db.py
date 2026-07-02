@@ -95,6 +95,22 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS generation_schedule_queue_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                schedule_item_id TEXT NOT NULL,
+                latency_class TEXT NOT NULL,
+                status TEXT NOT NULL,
+                action TEXT,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (run_id) REFERENCES generation_schedule_runs(run_id) ON DELETE CASCADE,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE,
+                UNIQUE (run_id, schedule_item_id)
+            );
+
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -159,6 +175,12 @@ def init_db(path: str | None = None) -> None:
                 ON asset_compile_runs(session_id);
             CREATE INDEX IF NOT EXISTS idx_generation_schedule_runs_session
                 ON generation_schedule_runs(session_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_schedule_queue_items_session
+                ON generation_schedule_queue_items(session_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_schedule_queue_items_run
+                ON generation_schedule_queue_items(run_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_schedule_queue_items_status
+                ON generation_schedule_queue_items(status);
             CREATE INDEX IF NOT EXISTS idx_battle_results_session
                 ON battle_results(session_id);
             CREATE INDEX IF NOT EXISTS idx_provider_logs_session

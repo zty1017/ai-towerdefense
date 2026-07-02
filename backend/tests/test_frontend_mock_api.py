@@ -133,20 +133,41 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
 
     schedule_run = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
     run = schedule_run["generation_schedule_run"]
+    queue = schedule_run["generation_schedule_queue"]
     assert run["status"] == "completed"
     assert run["scheduler_mode"] == "fixture_backed_dry_run"
     assert run["generation_schedule"]["buffer"]["provider_call_count"] == 0
     assert run["generation_schedule"]["buffer"]["world_mutation_count"] == 0
     assert run["source_report_summary"]["scheduled_count"] == 4
+    assert queue["summary"]["item_count"] == 8
+    assert queue["summary"]["status_counts"] == {
+        "completed": 3,
+        "fallback_ready": 1,
+        "queued": 4,
+    }
+    assert queue["summary"]["claimable_count"] == 4
+    assert queue["summary"]["provider_review_required_count"] == 4
     schedule_run_rows = raw_conn.execute(
         "SELECT COUNT(*) FROM generation_schedule_runs WHERE session_id = ?", (sid,)
     ).fetchone()[0]
     assert schedule_run_rows == 1
+    queue_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_schedule_queue_items WHERE session_id = ?", (sid,)
+    ).fetchone()[0]
+    assert queue_rows == 8
 
     latest_schedule_run = _payload(
         client.get(f"/api/sessions/{sid}/generation-schedule/runs/latest")
     )
     assert latest_schedule_run["generation_schedule_run"]["run_id"] == run["run_id"]
+    assert latest_schedule_run["generation_schedule_queue"]["summary"]["item_count"] == 8
+
+    latest_queue = _payload(client.get(f"/api/sessions/{sid}/generation-schedule/queue"))
+    assert latest_queue["generation_schedule_run"]["run_id"] == run["run_id"]
+    assert latest_queue["generation_schedule_queue"]["summary"]["status_counts"]["queued"] == 4
+    assert {
+        item["latency_class"] for item in latest_queue["generation_schedule_queue"]["items"]
+    } >= {"background_prefetch", "background", "lazy"}
 
     schedule_after_run = _payload(client.get(f"/api/sessions/{sid}/generation-schedule"))
     assert schedule_after_run["latest_generation_schedule_run"]["run_id"] == run["run_id"]
@@ -250,6 +271,8 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["generation_scheduler"]["latest_run"]["scheduler_mode"] == (
         "fixture_backed_dry_run"
     )
+    assert evidence["generation_scheduler"]["latest_queue"]["summary"]["item_count"] == 8
+    assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 4
 
 
 def test_all_battle_nodes_expose_map_runtime_packages(client):
