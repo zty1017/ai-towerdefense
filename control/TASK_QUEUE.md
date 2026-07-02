@@ -63,6 +63,7 @@ P2：本阶段明确不做
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了带质量状态的视觉层；玩家侧只允许使用 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图，`agnes_02` 与 `battle_runtime_background.v0.2` 当前只作为失败/候选证据保留。后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - `MapVisualQualityReport v0.1` 已接入 evidence，用于标记三节点复用同一玩家底图、发布底图需要 overlay correction、视觉审查证据偏弱等问题；当前状态为 `passed_with_warnings`，不阻断 MVP，但作为下一轮地图重生 / 差异化发布底图任务的输入。
 - `NodeMapPaintedCandidateReview v0.2` 已接入 evidence，用于记录节点专属真实 Agnes 地图候选的审查结果；`clean_scene_v2` 当前三张候选均已清除主要箭头、单位和战斗特效问题，但仍需坐标对齐、战斗可读性复核和显式晋升。该报告证明地图生成管线已能迭代产出更干净的候选，也证明发布门禁不会把未对齐图误放给前端。
+- `MapCandidateAlignmentReview v0.1` 已接入 evidence，用于把三张 `clean_scene_v2` 候选与 MapRuntimePackage 的路径、塔位、目标和出生点做结构前置审查；当前状态为 `ready_for_overlay_review_with_transform_required`，说明三张图都能进入 overlay review，但必须先做尺寸标准化，不能直接发布。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
@@ -534,6 +535,7 @@ P2：本阶段明确不做
 - 需要支持世界书风格、地形、威胁状态和黑暗区域。
 - 必须消费 `MapVisualQualityReport v0.1` 的 warnings，优先解决节点专属玩家底图、overlay correction 和视觉审查证据不足。
 - 必须消费 `NodeMapPaintedCandidateReview v0.2` 的候选结论，下一步重点不是继续盲目生图，而是做坐标对齐、裁切/尺寸标准化、战斗可读性复核和显式晋升流程；候选图只能在显式晋升后进入 published visual layer。
+- 必须消费 `MapCandidateAlignmentReview v0.1` 的对齐前置结论；下一步任务应生成 normalized candidate、overlay review 截图或结构化 overlay report，然后再决定是否晋升 published visual layer。
 - 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
