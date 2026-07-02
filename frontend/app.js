@@ -2402,6 +2402,43 @@
         shade: rng(),
       });
     }
+    const darkPools = [];
+    attempts = 0;
+    while (darkPools.length < 9 && attempts < 180) {
+      attempts += 1;
+      const x = rng() * grid.width_cells;
+      const y = rng() * grid.height_cells;
+      const cell = { x: Math.round(x), y: Math.round(y) };
+      if (!isCellInGrid(cell)) continue;
+      if (distanceToPath(cell) < 1.05 || objectiveAtCell(cell)) continue;
+      darkPools.push({
+        x,
+        y,
+        rx: 0.34 + rng() * 0.52,
+        ry: 0.18 + rng() * 0.28,
+        rotation: (rng() - 0.5) * 0.7,
+        alpha: 0.12 + rng() * 0.12,
+      });
+    }
+    const landmarks = [];
+    const landmarkKinds = ["collapsed_wall", "signal_scrap", "supply_cache", "lamp_relic"];
+    attempts = 0;
+    while (landmarks.length < 14 && attempts < 260) {
+      attempts += 1;
+      const x = Math.floor(rng() * grid.width_cells);
+      const y = Math.floor(rng() * grid.height_cells);
+      const cell = { x, y };
+      if (!isCellInGrid(cell)) continue;
+      if (distanceToPath(cell) < 1.2 || slotAt(cell) || objectiveAtCell(cell)) continue;
+      landmarks.push({
+        x: x + (rng() - 0.5) * 0.42,
+        y: y + (rng() - 0.5) * 0.42,
+        kind: landmarkKinds[Math.floor(rng() * landmarkKinds.length)],
+        scale: 0.78 + rng() * 0.48,
+        rotation: (rng() - 0.5) * 0.45,
+        warm: rng() > 0.58,
+      });
+    }
     const wisps = Array.from({ length: 12 }, () => ({
       edge: Math.floor(rng() * 4),
       offset: rng(),
@@ -2409,7 +2446,7 @@
       width: 38 + rng() * 88,
       alpha: 0.035 + rng() * 0.045,
     }));
-    const features = { key, seed, patches, specks, debris, wisps };
+    const features = { key, seed, patches, specks, debris, darkPools, landmarks, wisps };
     if (battle) battle.terrainFeatureSet = features;
     return features;
   }
@@ -2442,6 +2479,8 @@
       drawOrganicTerrainPatch(ctx, m, patch);
     }
 
+    drawDarkTidePools(ctx, features);
+
     ctx.save();
     for (const speck of features.specks) {
       ctx.fillStyle = speck.warm
@@ -2462,6 +2501,30 @@
     ctx.restore();
 
     drawTerrainDebris(ctx, features);
+  }
+
+  function drawDarkTidePools(ctx, features) {
+    const m = state.battle.metrics;
+    ctx.save();
+    for (const pool of features.darkPools || []) {
+      const p = projectCell(pool.x, pool.y);
+      const rx = m.tileW * pool.rx;
+      const ry = m.tileH * pool.ry;
+      const grd = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, rx);
+      grd.addColorStop(0, `rgba(18,15,28,${pool.alpha + 0.08})`);
+      grd.addColorStop(0.58, `rgba(25,31,29,${pool.alpha})`);
+      grd.addColorStop(1, "rgba(9,12,12,0)");
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx, ry, pool.rotation, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `rgba(118,132,118,${pool.alpha * 0.5})`;
+      ctx.lineWidth = Math.max(1, m.tileW * 0.01);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx * 0.72, ry * 0.58, pool.rotation, 0.2, Math.PI * 1.25);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawOrganicTerrainPatch(ctx, m, patch) {
@@ -2609,6 +2672,7 @@
       const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
       if (points.length < 2) continue;
       const roadWidth = Math.max(34, m.tileW * 0.48);
+      drawRouteShoulders(ctx, route, points, roadWidth);
       ctx.strokeStyle = "rgba(18,13,10,0.54)";
       ctx.lineWidth = roadWidth * 1.18;
       traceRoutePath(ctx, points);
@@ -2626,16 +2690,74 @@
       traceRoutePath(ctx, points);
       ctx.stroke();
       drawRoadPebbles(ctx, route, points, roadWidth);
+      drawRoadRuts(ctx, route, points, roadWidth);
     }
     ctx.restore();
   }
 
   function traceRoutePath(ctx, points) {
     ctx.beginPath();
-    points.forEach((p, index) => {
-      if (index === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
+    if (points.length < 2) return;
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length - 1; i += 1) {
+      const prev = points[i - 1];
+      const cur = points[i];
+      const next = points[i + 1];
+      const d1 = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+      const d2 = Math.hypot(next.x - cur.x, next.y - cur.y);
+      const radius = Math.min(48, d1 * 0.32, d2 * 0.32);
+      const entry = {
+        x: cur.x - ((cur.x - prev.x) / Math.max(1, d1)) * radius,
+        y: cur.y - ((cur.y - prev.y) / Math.max(1, d1)) * radius,
+      };
+      const exit = {
+        x: cur.x + ((next.x - cur.x) / Math.max(1, d2)) * radius,
+        y: cur.y + ((next.y - cur.y) / Math.max(1, d2)) * radius,
+      };
+      ctx.lineTo(entry.x, entry.y);
+      ctx.quadraticCurveTo(cur.x, cur.y, exit.x, exit.y);
+    }
+    const last = points[points.length - 1];
+    ctx.lineTo(last.x, last.y);
+  }
+
+  function drawRouteShoulders(ctx, route, points, roadWidth) {
+    const m = state.battle.metrics;
+    ctx.save();
+    ctx.strokeStyle = "rgba(6,7,6,0.42)";
+    ctx.lineWidth = roadWidth * 1.7;
+    traceRoutePath(ctx, points);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(61,69,46,0.62)";
+    ctx.lineWidth = roadWidth * 1.44;
+    traceRoutePath(ctx, points);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(33,41,32,0.46)";
+    ctx.lineWidth = roadWidth * 1.28;
+    traceRoutePath(ctx, points);
+    ctx.stroke();
+
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`shoulder:${route.route_id || ""}`));
+    ctx.fillStyle = "rgba(169,142,85,0.12)";
+    for (let i = 0; i < points.length; i += 1) {
+      const p = points[i];
+      for (let j = 0; j < 3; j += 1) {
+        const angle = rng() * Math.PI * 2;
+        const dist = roadWidth * (0.65 + rng() * 0.28);
+        ctx.beginPath();
+        ctx.ellipse(
+          p.x + Math.cos(angle) * dist,
+          p.y + Math.sin(angle) * dist * 0.6,
+          m.tileW * (0.035 + rng() * 0.04),
+          m.tileH * (0.025 + rng() * 0.04),
+          angle,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
+    }
+    ctx.restore();
   }
 
   function drawRoadPebbles(ctx, route, points, roadWidth) {
@@ -2661,6 +2783,56 @@
         ctx.beginPath();
         ctx.ellipse(x, y, size, size * 0.42, rng() * Math.PI, 0, Math.PI * 2);
         ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawRoadRuts(ctx, route, points, roadWidth) {
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`ruts:${route.route_id || ""}`));
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(62,45,27,0.24)";
+    ctx.lineWidth = Math.max(2, roadWidth * 0.055);
+    for (const offset of [-0.18, 0.16]) {
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        const prev = points[Math.max(0, index - 1)];
+        const next = points[Math.min(points.length - 1, index + 1)];
+        const dx = next.x - prev.x;
+        const dy = next.y - prev.y;
+        const len = Math.max(1, Math.hypot(dx, dy));
+        const nx = -dy / len;
+        const ny = dx / len;
+        const wobble = (rng() - 0.5) * roadWidth * 0.08;
+        const x = point.x + nx * roadWidth * offset + nx * wobble;
+        const y = point.y + ny * roadWidth * offset + ny * wobble;
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "rgba(207,170,96,0.12)";
+    ctx.lineWidth = Math.max(1, roadWidth * 0.04);
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const count = Math.max(1, Math.floor(len / 130));
+      const nx = -dy / len;
+      const ny = dx / len;
+      for (let j = 0; j < count; j += 1) {
+        if (rng() < 0.42) continue;
+        const t = (j + 0.35 + rng() * 0.3) / count;
+        const cx = a.x + dx * t;
+        const cy = a.y + dy * t;
+        ctx.beginPath();
+        ctx.moveTo(cx - nx * roadWidth * 0.28, cy - ny * roadWidth * 0.28);
+        ctx.lineTo(cx + nx * roadWidth * 0.28, cy + ny * roadWidth * 0.28);
+        ctx.stroke();
       }
     }
     ctx.restore();
@@ -2768,6 +2940,7 @@
   }
 
   function drawWorldObjects(ctx) {
+    drawBattlefieldLandmarks(ctx);
     const objectives = mapObjectives();
     const core = objectives.core_target || { position: { x: 0, y: 6 } };
     const coreP = projectCell(core.position.x, core.position.y);
@@ -2792,6 +2965,99 @@
       ctx.ellipse(p.x, p.y, 24, 10, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+  }
+
+  function drawBattlefieldLandmarks(ctx) {
+    const features = terrainFeatureSet();
+    const m = state.battle.metrics;
+    ctx.save();
+    for (const landmark of features.landmarks || []) {
+      const p = projectCell(landmark.x, landmark.y);
+      if (p.x < -80 || p.y < -80 || p.x > m.width + 80 || p.y > m.height + 80) continue;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(landmark.rotation);
+      const scale = landmark.scale * Math.max(0.76, m.scale);
+      if (landmark.kind === "supply_cache") {
+        drawSupplyCache(ctx, scale, landmark.warm);
+      } else if (landmark.kind === "lamp_relic") {
+        drawLampRelic(ctx, scale, landmark.warm);
+      } else if (landmark.kind === "signal_scrap") {
+        drawSignalScrap(ctx, scale);
+      } else {
+        drawCollapsedWall(ctx, scale);
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawCollapsedWall(ctx, scale) {
+    ctx.fillStyle = "rgba(0,0,0,0.24)";
+    ctx.beginPath();
+    ctx.ellipse(0, 8 * scale, 34 * scale, 11 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(84,78,58,0.62)";
+    ctx.strokeStyle = "rgba(205,176,111,0.12)";
+    ctx.lineWidth = Math.max(1, 1.3 * scale);
+    for (let i = 0; i < 4; i += 1) {
+      const x = (i - 1.5) * 14 * scale;
+      const h = (10 + (i % 2) * 7) * scale;
+      ctx.fillRect(x, -h, 12 * scale, h + 8 * scale);
+      ctx.strokeRect(x, -h, 12 * scale, h + 8 * scale);
+    }
+  }
+
+  function drawSupplyCache(ctx, scale, warm) {
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(0, 8 * scale, 28 * scale, 10 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = warm ? "rgba(115,88,48,0.72)" : "rgba(82,93,77,0.68)";
+    ctx.strokeStyle = "rgba(230,194,112,0.18)";
+    ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.fillRect(-18 * scale, -10 * scale, 36 * scale, 18 * scale);
+    ctx.strokeRect(-18 * scale, -10 * scale, 36 * scale, 18 * scale);
+    ctx.fillStyle = "rgba(223,185,103,0.22)";
+    ctx.fillRect(-3 * scale, -10 * scale, 6 * scale, 18 * scale);
+  }
+
+  function drawLampRelic(ctx, scale, warm) {
+    ctx.fillStyle = "rgba(0,0,0,0.23)";
+    ctx.beginPath();
+    ctx.ellipse(0, 9 * scale, 24 * scale, 9 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(138,126,90,0.48)";
+    ctx.lineWidth = Math.max(1.2, 1.6 * scale);
+    ctx.beginPath();
+    ctx.moveTo(0, 8 * scale);
+    ctx.lineTo(0, -24 * scale);
+    ctx.stroke();
+    const glow = warm ? "rgba(255,210,114,0.38)" : "rgba(142,216,216,0.28)";
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.ellipse(0, -30 * scale, 9 * scale, 13 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawSignalScrap(ctx, scale) {
+    ctx.fillStyle = "rgba(0,0,0,0.24)";
+    ctx.beginPath();
+    ctx.ellipse(0, 9 * scale, 30 * scale, 10 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(111,122,102,0.34)";
+    ctx.lineWidth = Math.max(1, 1.25 * scale);
+    for (let i = 0; i < 3; i += 1) {
+      const x = (i - 1) * 10 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x, 4 * scale);
+      ctx.lineTo(x + 8 * scale, -18 * scale - i * 4 * scale);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(204,176,108,0.14)";
+    ctx.beginPath();
+    ctx.arc(0, -22 * scale, 18 * scale, -0.8, 0.4);
+    ctx.stroke();
   }
 
   function drawTargetFoundation(ctx, x, y, kind) {
