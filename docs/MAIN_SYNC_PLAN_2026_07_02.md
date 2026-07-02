@@ -7,12 +7,17 @@
 当前分支状态：
 
 - `main`：`b893f76 docs: record worktree collaboration setup`
-- `develop`：`e6ce5d4 docs: close map compile queue items`
+- `develop`：`69242c0 merge: asset graph media guardrails`
 - `main` 工作区存在未提交用户草稿：`docs/ASSET_GRAPH_COMPILER_V0_1.md`
 
 重要结论：
 
 > 现在不应直接把 `develop` 快进或覆盖到 `main`，因为 `main` 上存在用户未提交草稿，并且 `develop` 也修改了同名文档。
+
+补充状态：
+
+- `main` 用户草稿中关于媒体后处理节点、`runtime_public` 不得引用 raw media / provider 临时 URL、媒体 package 必须提供 published 或 fallback refs 的有效约束，已经吸收到 `develop` 的 `docs/ASSET_GRAPH_COMPILER_V0_1.md`。
+- 这不等于可以丢弃 `main` 工作区草稿；同步前仍需保存 diff 或由用户确认，因为它仍是未提交用户改动。
 
 ## 2. develop 相对 main 的同步范围
 
@@ -46,12 +51,13 @@ main: docs/ASSET_GRAPH_COMPILER_V0_1.md
 推荐处理方式：
 
 1. 先在 `main` 读取用户草稿并保存 diff 摘要。
-2. 在单独临时文件或分支中三方合并：
+2. 确认 `develop` 的 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 已包含草稿中的有效约束。
+3. 在单独临时文件或分支中处理剩余差异：
    - `main` 原始版本
    - `main` 用户草稿
    - `develop` 最新版本
-3. 由主代理 / 用户确认合并后的 `docs/ASSET_GRAPH_COMPILER_V0_1.md`。
-4. 再执行 main 同步。
+4. 由主代理 / 用户确认是否仍需保留 `main` 草稿的其他差异。
+5. 再执行 main 同步。
 
 ## 4. 推荐同步策略
 
@@ -59,10 +65,10 @@ main: docs/ASSET_GRAPH_COMPILER_V0_1.md
 
 ```text
 Step 1: 在 main 上确认未提交草稿内容
-Step 2: 生成 docs/ASSET_GRAPH_COMPILER_V0_1.md 的人工合并版本
+Step 2: 保存 main 草稿 diff，确认 develop 已吸收有效 guardrail
 Step 3: 确认 develop 当前验证全部通过
 Step 4: 将 main 更新到 develop
-Step 5: 应用人工合并后的 ASSET_GRAPH 文档
+Step 5: 如用户要求保留草稿的额外差异，再人工应用到更新后的 main
 Step 6: 运行 smoke validation
 Step 7: 再考虑推送远程
 ```
@@ -121,7 +127,7 @@ npx playwright screenshot http://127.0.0.1:8765/frontend/index.html /tmp/ai_td_f
 
 同步前需要人工或主代理确认：
 
-1. `main` 上的 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 草稿是否要完整保留、部分合入，还是另存为历史草稿。
+1. `main` 上的 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 草稿除已吸收到 `develop` 的媒体 guardrail 外，是否还有其他内容要完整保留、部分合入，还是另存为历史草稿。
 2. 是否把 `develop` 当前全部内容晋级为 `main`，还是只同步文档和 MVP 运行所需子集。
 3. 是否现在推送远程 `git@github.com:zty1017/ai-towerdefense.git`。此前用户要求“先不要提交远程”，因此默认不 push。
 
@@ -130,6 +136,6 @@ npx playwright screenshot http://127.0.0.1:8765/frontend/index.html /tmp/ai_td_f
 当前建议是：
 
 - 暂不直接同步 `main`。
-- 先由主代理读取并合并 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 的用户草稿。
-- 确认后再把 `develop` 晋级为 `main`。
+- `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿中的有效媒体 guardrail 已合入 `develop`。
+- 下一步应保存 `main` 草稿 diff，然后确认是否把 `develop` 晋级为 `main`。
 - 晋级后立即运行 evidence export，确保地图编译包、前端视觉防线和最新任务队列都在 `main` 可见。

@@ -467,7 +467,7 @@ P2：本阶段明确不做
 
 补充：Campaign Router 消费的三节点 MVP 主线已经能通过战斗结算接口连续推进。`lamp_wick_store` 使用 stage04 battle_result transaction；`old_signal_tower` 当前只有 research_job 来源的 after-state，因此以 `fixture_bridge` 暴露，并在返回值中保留 `fixture_baseline` 说明。
 
-下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，尤其是 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的合并策略。
+下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。`main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的有效媒体 guardrail 已合入 `develop`，但同步 `main` 前仍需保存草稿 diff 并确认是否晋级整个 `develop`。
 
 ## 5. P1 任务
 
@@ -562,7 +562,7 @@ P2：本阶段明确不做
 
 建议当前批次按以下顺序推进：
 
-1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。
+1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
 2. WorldStateDelta / review pack 继续从 refs/evidence 对齐推进到原生产物字段；Research Job、battle settlement evidence 与 frontend mock pack 已完成第一层原生快照迁移。
 3. `P1-A` 真实视频关键帧增强。
 4. `P1-B` Generation Scheduler 执行器 / live campaign router。
