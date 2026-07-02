@@ -180,6 +180,21 @@ examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json
 
 它直接读取现有 `items[]` 风格的 media manifest，检查 sprite 透明底是否存在明显内部透明洞、主体碎裂、漂浮组件、边缘接触和 anchor/canvas 风险。该报告的 `needs_review` 不阻断 MVP；它用于排序后续重抠图、重生成、视频关键帧替换和人工复核任务。
 
+质量报告之后会生成修复计划：
+
+```text
+media.build_sprite_cutout_repair_plan
+```
+
+对应产物：
+
+```text
+examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json
+examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json
+```
+
+修复计划把 `needs_review` 项转成优先级、建议动作、重生成提示词约束和验收命令。它不直接修改素材，只作为后续后台重生 / 重抠图任务的输入。
+
 ## 5. 后续增强顺序
 
 ### 5.1 立即可做

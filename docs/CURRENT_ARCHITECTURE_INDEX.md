@@ -113,6 +113,7 @@ MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 MediaAtlasManifest v0.1 已作为 spritesheet 兼容多帧入口接入前端、后端 mock API 和 demo evidence；真实图生视频关键帧与实体 atlas PNG 仍未生成。
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
+Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重生成或人工复核的素材任务，作为下一轮素材重生的输入。
 ```
 
 ### 审查与交付
