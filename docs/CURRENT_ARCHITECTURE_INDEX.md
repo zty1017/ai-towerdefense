@@ -136,7 +136,7 @@ Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并�
 Sprite live regeneration candidate pack 已可针对 runtime 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；当前候选覆盖信标、基础灯栏与驿站核心，候选仍不自动替换正式 runtime 素材。
 Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；信标、基础灯栏与驿站核心已替换 runtime processed PNG 并重建 atlas，runtime sprite cutout quality 已达到 `passed 7 / 7`，repair plan 已清空。
 GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_queue_items` 已能提供 item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step，真实后台执行器仍未实现。
-ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs 兼容字段；frontend mock API 和 battle settlement/evidence 仍以 refs/evidence 层对齐为主。
+ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata 与 battle settlement evidence 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段；frontend mock pack 仍以 refs/evidence 层对齐为主。
 ```
 
 ### 审查与交付
@@ -182,7 +182,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback 和 dry-run worker step 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
-- AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 原生快照构造入口；frontend mock evidence 仍以 refs 层引用这些核心对象。
+- AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 与 battle settlement evidence 原生快照构造入口。
 - WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例和 validator；示例包装可通过语义门的 repaired 首战 WorldStateDelta，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
@@ -195,7 +195,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- WorldStateDelta / frontend mock 包 / battle settlement evidence 与 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 字段的全面迁移；Research Job 已完成第一层原生快照迁移，但其他运行时产物仍未全部改为原生核心对象。
+- WorldStateDelta / frontend mock 包 / review pack 与 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 字段的全面迁移；Research Job 和 battle settlement evidence 已完成第一层原生快照迁移，但其他运行时产物仍未全部改为原生核心对象。
 - 正式 Generation Scheduler 后台执行器、真实队列、缓存、重试和 provider 调度。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。
