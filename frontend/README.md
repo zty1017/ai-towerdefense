@@ -31,6 +31,14 @@ game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.j
 
 当前 atlas 是 `virtual_single_frame` 模式，每个动画入口指向一张已发布 PNG；找不到 atlas 帧时会回退到旧的 media manifest。后续视频关键帧和 spritesheet 可以沿用同一接口扩展。
 
+视觉合约可在无浏览器环境中先跑：
+
+```bash
+python3 tools/frontend/validate_battle_visual_contract.py
+```
+
+它不会替代真实截图，但会阻止控制图进入玩家默认体验、玩家底图优先级倒置、地图 PNG 尺寸不一致和战斗画布被压成小面板。
+
 控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
 
 ```text
