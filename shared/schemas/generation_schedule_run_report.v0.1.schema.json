@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/generation_schedule_run_report.v0.1.schema.json",
+  "title": "GenerationScheduleRunReport v0.1",
+  "description": "A review-only dry-run report showing how a GenerationSchedulePlan would be consumed without reading secrets, calling providers, mutating world state, or activating new runtime content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "visibility",
+    "run_mode",
+    "generated_at",
+    "source_refs",
+    "execution_policy",
+    "summary",
+    "items",
+    "validation_commands"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "generation_schedule_run_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "run_mode": { "type": "string", "enum": ["dry_run", "offline_replay"] },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generation_schedule_plan"],
+      "properties": {
+        "generation_schedule_plan": { "type": "string", "minLength": 1 }
+      }
+    },
+    "execution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reads_env",
+        "calls_provider",
+        "mutates_world_state",
+        "writes_runtime_package",
+        "activates_prefetch_results"
+      ],
+      "properties": {
+        "reads_env": { "type": "boolean", "const": false },
+        "calls_provider": { "type": "boolean", "const": false },
+        "mutates_world_state": { "type": "boolean", "const": false },
+        "writes_runtime_package": { "type": "boolean", "const": false },
+        "activates_prefetch_results": { "type": "boolean", "const": false }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "item_count",
+        "action_counts",
+        "status_counts",
+        "ready_reused_count",
+        "fallback_selected_count",
+        "scheduled_count",
+        "blocked_count",
+        "provider_call_count",
+        "world_mutation_count"
+      ],
+      "properties": {
+        "plan_id": { "type": "string", "minLength": 1 },
+        "item_count": { "type": "integer", "minimum": 0 },
+        "action_counts": { "$ref": "#/$defs/count_map" },
+        "status_counts": { "$ref": "#/$defs/count_map" },
+        "ready_reused_count": { "type": "integer", "minimum": 0 },
+        "fallback_selected_count": { "type": "integer", "minimum": 0 },
+        "scheduled_count": { "type": "integer", "minimum": 0 },
+        "blocked_count": { "type": "integer", "minimum": 0 },
+        "provider_call_count": { "type": "integer", "const": 0 },
+        "world_mutation_count": { "type": "integer", "const": 0 }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/run_item" }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validation_command" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "run_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule_item_id",
+        "compile_request_id",
+        "object_ref",
+        "latency_class",
+        "source_status",
+        "action",
+        "result_status",
+        "dependencies_satisfied",
+        "provider_call_planned",
+        "provider_review_required",
+        "world_mutation_performed",
+        "fallback_ref",
+        "notes"
+      ],
+      "properties": {
+        "schedule_item_id": { "type": "string", "minLength": 1 },
+        "compile_request_id": { "type": "string", "minLength": 1 },
+        "object_ref": { "type": "string", "minLength": 1 },
+        "latency_class": {
+          "type": "string",
+          "enum": ["sync_blocking", "background_prefetch", "background", "lazy", "fallback_static"]
+        },
+        "source_status": { "type": "string", "minLength": 1 },
+        "action": {
+          "type": "string",
+          "enum": [
+            "reuse_ready",
+            "select_fallback",
+            "schedule_prefetch",
+            "schedule_background",
+            "schedule_lazy",
+            "blocked"
+          ]
+        },
+        "result_status": {
+          "type": "string",
+          "enum": ["passed", "fallback", "scheduled", "blocked"]
+        },
+        "dependencies_satisfied": { "type": "boolean" },
+        "provider_call_planned": { "type": "boolean", "const": false },
+        "provider_review_required": { "type": "boolean" },
+        "world_mutation_performed": { "type": "boolean", "const": false },
+        "fallback_ref": { "type": "string", "minLength": 1 },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

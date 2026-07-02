@@ -64,7 +64,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 已接入 evidence，用于声明 sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、live campaign router、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence，用于声明并离线 dry-run sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、live campaign router、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -326,12 +326,17 @@ P2：本阶段明确不做
 - `tools/scheduler/build_generation_schedule_plan.py`
 - `tools/scheduler/validate_generation_schedule_plan.py`
 - `examples/review_packs/mvp_generation_schedule_plan.v0.1.json`
+- `shared/schemas/generation_schedule_run_report.v0.1.schema.json`
+- `tools/scheduler/run_generation_schedule_plan.py`
+- `tools/scheduler/validate_generation_schedule_run_report.py`
+- `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
 - `docs/GENERATION_SCHEDULER_V0_1.md`
 - `tools/demo/export_evidence.py` 已纳入 schedule plan 摘要和验证命令。
 
 当前结论：
 
 - 计划包包含 8 个调度项，覆盖 `sync_blocking`、`background_prefetch`、`background`、`lazy`、`fallback_static`。
+- dry-run 报告把 8 个调度项分为 `reuse_ready: 3`、`select_fallback: 1`、`schedule_prefetch: 2`、`schedule_background: 1`、`schedule_lazy: 1`，provider 调用数和世界修改数均为 0。
 - 同步项只读取已审 fixture / locked package / published manifest，不依赖实时 provider。
 - 预取和后台项只声明候选生成计划，启用前必须重新通过对应 validator、semantic gate 或 media gate。
 - 这不是后台执行器；后续仍需实现真正的队列、缓存、重试、状态持久化和 live campaign router。
