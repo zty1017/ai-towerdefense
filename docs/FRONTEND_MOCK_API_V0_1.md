@@ -155,6 +155,41 @@ developer_compiled_multiframe_atlas_ready_video_keyframes_not_generated
 
 含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG，并且 sprite 类资产已经进入多帧 atlas；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；真实图生视频关键帧和实体 atlas PNG 后续再补。
 
+### 获取调度缓冲证据
+
+```http
+GET /api/sessions/{session_id}/generation-schedule
+```
+
+返回：
+
+- `generation_schedule.refs`: 当前调度计划包与 dry-run 执行报告路径。
+- `generation_schedule.buffer`: 面向 session 的紧凑调度缓冲摘要。
+- `generation_schedule.plan`: `GenerationSchedulePlan v0.1` fixture。
+- `generation_schedule.run_report`: `GenerationScheduleRunReport v0.1` fixture。
+
+当前该接口只暴露 fixture-backed / review-only 调度事实，不会启动后台 worker，不会调用外部模型，不会修改世界状态。它用于证明以下事情已经进入后端 API 面：
+
+- `sync_blocking` 内容在会话关键路径可立即复用。
+- `background_prefetch`、`background`、`lazy` 内容只进入候选调度，不阻塞玩家体验。
+- `fallback_static` 内容已经准备好，生成失败时可保持 MVP 主链路可玩。
+- 预生成结果启用前必须重新经过对应 validator、semantic gate 或 media gate。
+
+`generation_schedule.buffer` 当前包含：
+
+- `status`
+- `control_plane_mode`
+- `latency_class_counts`
+- `ready_reused_count`
+- `fallback_selected_count`
+- `scheduled_count`
+- `provider_call_count`
+- `world_mutation_count`
+- `activation_requires_revalidation`
+- `items`
+
+其中 `provider_call_count` 和 `world_mutation_count` 在 MVP mock 模式下都必须为 `0`。这说明接口只是 session 可见的调度缓冲和演示证据，不是 live provider 执行器。
+
 ### 获取大地图
 
 ```http
@@ -322,6 +357,7 @@ GET /api/sessions/{session_id}/evidence
 - 最新 research job
 - 最新 battle result
 - AI 编译核心对象引用
+- Generation Scheduler 调度缓冲摘要
 - audit summary
 - dossier summary
 

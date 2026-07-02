@@ -103,6 +103,33 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     )
     assert runtime_art["runtime_art_media_manifest"]["summary"]["asset_count"] == 9
 
+    schedule = _payload(client.get(f"/api/sessions/{sid}/generation-schedule"))
+    generation_schedule = schedule["generation_schedule"]
+    buffer = generation_schedule["buffer"]
+    assert generation_schedule["plan"]["schema_version"] == "generation_schedule_plan.v0.1"
+    assert generation_schedule["run_report"]["schema_version"] == (
+        "generation_schedule_run_report.v0.1"
+    )
+    assert generation_schedule["refs"]["plan"].endswith(
+        "mvp_generation_schedule_plan.v0.1.json"
+    )
+    assert buffer["status"] == "fixture_backed_scheduler_buffer_ready"
+    assert buffer["control_plane_mode"] == "review_only_dry_run"
+    assert buffer["provider_call_count"] == 0
+    assert buffer["world_mutation_count"] == 0
+    assert buffer["latency_class_counts"]["sync_blocking"] == 3
+    assert buffer["latency_class_counts"]["background_prefetch"] == 2
+    assert buffer["fallback_selected_count"] == 1
+    assert buffer["scheduled_count"] == 4
+    assert buffer["activation_requires_revalidation"] is True
+    assert {item["latency_class"] for item in buffer["items"]} >= {
+        "sync_blocking",
+        "background_prefetch",
+        "background",
+        "lazy",
+        "fallback_static",
+    }
+
     map_payload = _payload(client.get(f"/api/sessions/{sid}/map"))
     assert map_payload["map"]["display_name"] == "余灯中枢态势图"
     assert map_payload["run_world_state"]["progress"]["phase"] == "first_defense"
@@ -190,6 +217,11 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["ai_compile_core_artifacts"]["refs"]["world_delta_transaction"].endswith(
         "first_battle_result.world_delta_transaction.json"
     )
+    assert evidence["generation_scheduler"]["refs"]["run_report"].endswith(
+        "mvp_generation_schedule_run_report.v0.1.json"
+    )
+    assert evidence["generation_scheduler"]["buffer"]["provider_call_count"] == 0
+    assert evidence["generation_scheduler"]["buffer"]["world_mutation_count"] == 0
 
 
 def test_all_battle_nodes_expose_map_runtime_packages(client):
