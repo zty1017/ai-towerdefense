@@ -146,6 +146,12 @@ PATHS = {
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
     "multistage_content_pack": ROOT
     / "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+    "provider_artifact_staging_manifest": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+    "provider_artifact_staging_source_envelope": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json",
+    "provider_artifact_staging_candidate_summary": ROOT
+    / "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
 }
 
 STATIC_VALIDATION_COMMANDS = [
@@ -576,6 +582,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/scheduler/validate_generation_schedule_run_report.py",
             "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "provider_artifact_staging_manifest",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_artifact_staging_manifest.py",
+            "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
         ],
     },
     {
@@ -1534,6 +1548,67 @@ def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any
     }
 
 
+def collect_provider_artifact_staging(
+    manifest: dict[str, Any],
+    source_envelope: dict[str, Any],
+) -> dict[str, Any]:
+    staged_artifacts = as_list(manifest.get("staged_artifacts"))
+    validation = as_obj(manifest.get("validation_results"))
+    promotion = as_obj(manifest.get("promotion_gate"))
+    source_call = as_obj(source_envelope.get("provider_call"))
+    source_result = as_obj(source_envelope.get("redacted_result_summary"))
+    source_artifact_manifest = as_obj(source_envelope.get("artifact_manifest"))
+    source_output_refs = as_list(source_artifact_manifest.get("output_refs"))
+    gate_statuses = {
+        name: as_obj(gate).get("status")
+        for name, gate in validation.items()
+        if isinstance(gate, dict)
+    }
+    authority = as_obj(manifest.get("authority"))
+    return {
+        "manifest_id": manifest.get("manifest_id"),
+        "schema_version": manifest.get("schema_version"),
+        "source_envelope_id": manifest.get("source_envelope_id"),
+        "source_envelope_ref": manifest.get("source_envelope_ref"),
+        "staging_status": manifest.get("staging_status"),
+        "staged_artifact_count": len(staged_artifacts),
+        "staged_artifacts": [
+            {
+                "artifact_id": artifact.get("artifact_id"),
+                "source_artifact_id": artifact.get("source_artifact_id"),
+                "kind": artifact.get("kind"),
+                "path": artifact.get("path"),
+                "media_layer": artifact.get("media_layer"),
+                "review_status": artifact.get("review_status"),
+                "runtime_visible": artifact.get("runtime_visible"),
+                "player_visible": artifact.get("player_visible"),
+            }
+            for artifact in staged_artifacts
+            if isinstance(artifact, dict)
+        ],
+        "source": {
+            "provider_call_status": source_call.get("status"),
+            "provider_call_performed": source_call.get("performed"),
+            "authorization_granted": source_call.get("authorization_granted"),
+            "result_kind": source_result.get("result_kind"),
+            "result_status": source_result.get("status"),
+            "source_output_ref_count": len(source_output_refs),
+        },
+        "gate_statuses": gate_statuses,
+        "promotion_gate": {
+            "promotion_allowed": promotion.get("promotion_allowed"),
+            "blocked_reason": promotion.get("blocked_reason"),
+            "required_next_gates": as_list(promotion.get("required_next_gates")),
+        },
+        "evidence_boundary": {
+            "review_only": authority.get("review_only"),
+            "runtime_activation_allowed": authority.get("runtime_activation_allowed"),
+            "world_mutation_allowed": authority.get("world_mutation_allowed"),
+            "player_visible": authority.get("player_visible"),
+        },
+    }
+
+
 def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, Any]:
     delta_ref = as_obj(transaction.get("world_state_delta_ref"))
     report = as_obj(transaction.get("validation_report"))
@@ -1894,6 +1969,18 @@ def collect_source_files() -> list[dict[str, Any]]:
         ),
         ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
         ("generation_schedule_run_report", PATHS["generation_schedule_run_report"]),
+        (
+            "provider_artifact_staging_manifest",
+            PATHS["provider_artifact_staging_manifest"],
+        ),
+        (
+            "provider_artifact_staging_source_envelope",
+            PATHS["provider_artifact_staging_source_envelope"],
+        ),
+        (
+            "provider_artifact_staging_candidate_summary",
+            PATHS["provider_artifact_staging_candidate_summary"],
+        ),
         ("context_package_example", PATHS["context_package_example"]),
         ("fact_entry_example", PATHS["fact_entry_example"]),
         ("cgop_example", PATHS["cgop_example"]),
@@ -2072,6 +2159,12 @@ def build_evidence() -> dict[str, Any]:
     controlled_map_text_fallback_candidate_review = load_json(
         PATHS["controlled_map_text_fallback_candidate_review"]
     )
+    provider_artifact_staging_manifest = load_json(
+        PATHS["provider_artifact_staging_manifest"]
+    )
+    provider_artifact_staging_source_envelope = load_json(
+        PATHS["provider_artifact_staging_source_envelope"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -2110,6 +2203,10 @@ def build_evidence() -> dict[str, Any]:
         "generation_scheduler": collect_generation_scheduler(
             generation_schedule_plan,
             generation_schedule_run_report,
+        ),
+        "provider_artifact_staging": collect_provider_artifact_staging(
+            provider_artifact_staging_manifest,
+            provider_artifact_staging_source_envelope,
         ),
         "world_delta_transaction": collect_world_delta_transaction(world_delta_transaction),
         "world_delta_transaction_chain": collect_world_delta_transaction_chain(
@@ -2281,6 +2378,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    provider_staging = as_obj(evidence.get("provider_artifact_staging"))
+    provider_staging_source = as_obj(provider_staging.get("source"))
+    provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
     world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
@@ -2360,6 +2460,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for item in as_list(scheduler.get("items"))
     ]
+    staged_artifact_rows = [
+        [
+            artifact.get("artifact_id"),
+            artifact.get("kind"),
+            artifact.get("media_layer"),
+            artifact.get("review_status"),
+            artifact.get("path"),
+        ]
+        for artifact in as_list(provider_staging.get("staged_artifacts"))
+    ]
     world_transaction_rows = [
         [
             item.get("transaction_id"),
@@ -2398,7 +2508,17 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
         "",
-        "## 2.1 世界状态事务",
+        "## 2.1 Provider 产物暂存",
+        "",
+        f"- 暂存清单：`{provider_staging.get('manifest_id')}`，状态：`{provider_staging.get('staging_status')}`",
+        f"- source envelope：`{provider_staging.get('source_envelope_id')}`，provider 调用状态：`{provider_staging_source.get('provider_call_status')}`，已执行：`{provider_staging_source.get('provider_call_performed')}`",
+        f"- 暂存 artifact：`{provider_staging.get('staged_artifact_count')}` 个；source output refs：`{provider_staging_source.get('source_output_ref_count')}`",
+        f"- gate 状态：`{provider_staging.get('gate_statuses')}`",
+        f"- promotion：允许 `{provider_staging_promotion.get('promotion_allowed')}`，阻断：`{provider_staging_promotion.get('blocked_reason')}`，下一步：`{', '.join(str(gate) for gate in as_list(provider_staging_promotion.get('required_next_gates')))}`",
+        "",
+        md_table(["Artifact", "类型", "媒体层", "审查状态", "本地路径"], staged_artifact_rows),
+        "",
+        "## 2.2 世界状态事务",
         "",
         f"- 事务：`{world_transaction.get('transaction_id')}`，状态：`{world_transaction.get('status')}`",
         f"- Delta：`{world_transaction.get('delta_id')}`，来源：`{world_transaction.get('source')}`，节点：`{', '.join(str(node) for node in as_list(world_transaction.get('node_ids')))}`",
@@ -2583,6 +2703,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    provider_staging = as_obj(evidence.get("provider_artifact_staging"))
+    provider_staging_source = as_obj(provider_staging.get("source"))
+    provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
     world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
@@ -2808,6 +2931,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <p class="muted">Generation Scheduler 计划包，包含同步、预取、后台、懒加载和静态 fallback。</p>
         </article>
         <article class="card">
+          <div class="eyebrow">Provider 暂存</div>
+          <div class="metric">{html_escape(provider_staging.get("staged_artifact_count"))}</div>
+          <p class="muted">状态：{html_escape(provider_staging.get("staging_status"))}；promotion：{html_escape(provider_staging_promotion.get("blocked_reason"))}。</p>
+        </article>
+        <article class="card">
           <div class="eyebrow">世界事务</div>
           <div class="metric">{html_escape(world_transaction_chain.get("transaction_count"))}</div>
           <p class="muted">{html_escape(world_transaction_report.get("gate_status"))}；事务链映射 {html_escape(world_transaction_chain.get("total_operation_mapping_count"))} 个 delta operation。</p>
@@ -2965,6 +3093,12 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <p>计划包：<code>{html_escape(scheduler.get("plan_id"))}</code>；延迟分布：<code>{html_escape(scheduler_summary.get("latency_class_counts"))}</code></p>
       <p>dry-run：<code>{html_escape(scheduler_run.get("report_id"))}</code>；动作分布：<code>{html_escape(scheduler_run_summary.get("action_counts"))}</code></p>
       <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>
+    </section>
+    <section>
+      <h2>ProviderArtifactStaging</h2>
+      <p>暂存清单：<code>{html_escape(provider_staging.get("manifest_id"))}</code>；source envelope：<code>{html_escape(provider_staging.get("source_envelope_id"))}</code></p>
+      <p>调用状态：<code>{html_escape(provider_staging_source.get("provider_call_status"))}</code>；暂存 artifact：<code>{html_escape(provider_staging.get("staged_artifact_count"))}</code>；promotion allowed：<code>{html_escape(provider_staging_promotion.get("promotion_allowed"))}</code></p>
+      <p class="muted">该层只展示本地 review-only refs 和 gate 状态，不能被前端或战斗运行时直接消费。</p>
     </section>
     <section>
       <h2>MapRuntimePackage 覆盖</h2>
