@@ -190,6 +190,56 @@ GET /api/sessions/{session_id}/generation-schedule
 
 其中 `provider_call_count` 和 `world_mutation_count` 在 MVP mock 模式下都必须为 `0`。这说明接口只是 session 可见的调度缓冲和演示证据，不是 live provider 执行器。
 
+响应还会带：
+
+- `latest_generation_schedule_run`: 当前 session 最近一次持久化 dry-run 运行记录；如果尚未执行，则为 `null`。
+
+### 创建调度 dry-run 运行记录
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/runs
+```
+
+创建并持久化一条 fixture-backed dry-run 运行记录，写入 `generation_schedule_runs` 表。
+
+返回：
+
+- `generation_schedule_run.run_id`
+- `generation_schedule_run.status`
+- `generation_schedule_run.scheduler_mode`
+- `generation_schedule_run.generation_schedule.buffer`
+- `generation_schedule_run.execution_policy`
+- `generation_schedule_run.source_report_summary`
+
+当前状态：
+
+```text
+fixture_backed_dry_run
+```
+
+边界：
+
+- 不启动后台 worker。
+- 不调用外部模型。
+- 不读取 `.env`。
+- 不修改世界状态。
+- 不激活预生成候选。
+- 只把当前调度计划和 dry-run 报告固化为 session 级运行证据。
+
+### 获取最近调度 dry-run 运行记录
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/runs/latest
+```
+
+返回最近一次持久化 `generation_schedule_run`。如果当前 session 尚未创建调度运行记录，则返回：
+
+```json
+{
+  "generation_schedule_run": null
+}
+```
+
 ### 获取大地图
 
 ```http
@@ -358,6 +408,7 @@ GET /api/sessions/{session_id}/evidence
 - 最新 battle result
 - AI 编译核心对象引用
 - Generation Scheduler 调度缓冲摘要
+- Generation Scheduler 最近一次持久化 dry-run 运行摘要
 - audit summary
 - dossier summary
 

@@ -20,6 +20,10 @@
 - `tools/scheduler/run_generation_schedule_plan.py`
 - `tools/scheduler/validate_generation_schedule_run_report.py`
 - `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
+- `generation_schedule_runs` SQLite session table
+- `GET /api/sessions/{session_id}/generation-schedule`
+- `POST /api/sessions/{session_id}/generation-schedule/runs`
+- `GET /api/sessions/{session_id}/generation-schedule/runs/latest`
 
 默认构建并校验：
 
@@ -93,3 +97,31 @@ python3 tools/scheduler/validate_generation_schedule_run_report.py examples/revi
 - `schedule_lazy`：进入低优先级修复队列。
 
 报告中的 `provider_call_count` 和 `world_mutation_count` 必须保持为 0。真实执行器只能在后续任务中基于同一计划包实现，且需要继续保留 review、fallback 和启用前复验边界。
+
+## 后端 session 缓冲层
+
+当前后端已经把 review-only 计划包接入 session API：
+
+```text
+GET /api/sessions/{session_id}/generation-schedule
+```
+
+该接口返回当前调度计划、dry-run 报告、紧凑 buffer 摘要，以及当前 session 最近一次持久化调度运行记录。
+
+当前后端也支持创建一条 session-scoped dry-run 运行记录：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/runs
+GET /api/sessions/{session_id}/generation-schedule/runs/latest
+```
+
+这些记录写入 `generation_schedule_runs` 表，并在 session reset 时清除。它们证明调度器已经从离线 evidence 进入后端状态层，但仍不是正式后台执行器。
+
+边界保持不变：
+
+- 不读取 `.env`。
+- 不调用 provider。
+- 不创建新内容。
+- 不写世界状态。
+- 不激活预取候选。
+- 只复用当前已审计划包和 dry-run 报告，生成 session 级调度运行证据。

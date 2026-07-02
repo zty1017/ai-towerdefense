@@ -65,7 +65,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，用于声明并离线 dry-run sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化；真实后台执行器、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -361,6 +361,24 @@ P2：本阶段明确不做
 
 - 该接口仍是 fixture-backed / review-only，不启动后台 worker，不调用真实 provider，不修改世界状态。
 - 它把“预生成缓冲”接到了后端 API 面，方便前端或演示读取；真实队列、缓存、重试、状态持久化和 provider 调度仍属后续 P1-B。
+
+### P1-B-2 Generation Scheduler session dry-run 持久化
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_runs` SQLite 表。
+- `POST /api/sessions/{session_id}/generation-schedule/runs`
+- `GET /api/sessions/{session_id}/generation-schedule/runs/latest`
+- session reset 会清除对应调度运行记录。
+- `/api/sessions/{session_id}/generation-schedule` 会返回最近一次持久化 dry-run。
+- `/api/sessions/{session_id}/evidence` 会返回最近一次调度运行摘要。
+
+当前结论：
+
+- 该层仍不启动后台 worker，不调用 provider，不修改世界状态，不激活预取候选。
+- 它把 Generation Scheduler 从离线 evidence 推进到后端状态层，为下一步真实队列、缓存、重试和 provider 调度留出落点。
 
 ## 4. 当前 P0 任务
 
