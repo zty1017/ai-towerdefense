@@ -56,8 +56,8 @@ P2：本阶段明确不做
 
 当前缺口：
 
-- 地图已经有 `MapRuntimePackage` 和玩家侧 `battle_runtime_background`，但“地图作为可编译对象”的上游合同仍偏弱：逻辑层、控制图、玩家可见渲染层、坐标回配、质量门还没有统一包。
-- 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布。
+- 地图已经有 `MapRuntimePackage`、首战 `MapCompilePackage v0.2` 和玩家侧 `battle_runtime_background`，但后续战斗节点还缺对应的地图编译包覆盖。
+- 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，但还需要浏览器截图或人工视觉验收。
 - 视频帧、spritesheet、atlas 尚未默认接入前端运行时。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
@@ -124,100 +124,41 @@ P2：本阶段明确不做
 - API 优先，静态 fixture 作为本地 fallback。
 - `MapRuntimePackage` 是战斗地图运行时事实源。
 
-## 4. 当前 P0 任务
-
 ### P0-G MapCompilePackage v0.2
 
-任务类型：实现 / 编译合同 / 地图管线
+状态：已完成。
 
-建议分支：
+已落地：
 
-```text
-task/map-compile-package-v02
-```
-
-目标：
-
-```text
-把“地图也是可编译对象”从讨论落成可校验合同：逻辑地图 -> 控制层 -> 玩家可见渲染层 -> 坐标回配 -> 质量门 -> MapRuntimePackage。
-```
-
-允许修改：
-
-- `shared/schemas/`
-- `tools/asset_graph/`
-- `tools/media/`
-- `examples/map_runtime_packages/`
-- `examples/map_compile_packages/`
-- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
-
-关键要求：
-
-- 新增 `MapCompilePackage v0.2` 或等价包，表达地图编译过程而不是只表达运行时结果。
-- 必须区分：
-  - `logical_map_layer`：路径、塔位、目标、出生点、资源点、黑暗区域等玩法真相。
-  - `control_layer`：给图像模型 / 人类审查的 composition sketch、path mask、slot mask 等。
-  - `painted_visual_layer`：玩家可见发布底图候选。
-  - `alignment_layer`：像素坐标与逻辑坐标回配、误差阈值、叠层修正策略。
-  - `quality_gates`：禁止 UI、文字、敌人、塔、棋盘感、突兀边框；检查路径可读性、塔位可读性、世界观一致性。
-- 图片不能反向决定玩法逻辑；最终战斗仍以 `MapRuntimePackage` 为运行时事实源。
-- 禁止将 provider、raw_prompt、secret、unreviewed_content 写入发布包。
-
-验收命令：
-
-```bash
-python3 -m py_compile tools/asset_graph/map_runtime_package.py tools/asset_graph/validate_map_runtime_package.py
-python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
-python3 -m json.tool examples/map_compile_packages/mvp_first_battle.map_compile_package.json
-```
-
-验收要点：
-
-- worker 需要说明 `MapCompilePackage` 和 `MapRuntimePackage` 的边界。
-- 必须能解释为什么旧的低质量控制 / 参考图不会污染玩家侧。
+- `shared/schemas/map_compile_package.v0.2.schema.json`
+- `tools/asset_graph/map_compile_package.py`
+- `tools/asset_graph/build_map_compile_package.py`
+- `tools/asset_graph/validate_map_compile_package.py`
+- `examples/map_compile_packages/mvp_first_battle.map_compile_package.json`
+- 地图编译包明确区分逻辑层、控制层、玩家可见渲染层、坐标回配、质量门和最终 `MapRuntimePackage` 导出引用。
 
 ### P0-H 前端地图表现质量防线
 
-任务类型：实现 / 前端体验 / 防回退
+状态：已完成。
 
-建议分支：
+已落地：
 
-```text
-task/frontend-map-quality-guard
-```
+- 前端默认玩家视图只优先使用 `painted_visual_layer` / `battle_runtime_background`。
+- `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助素材。
+- 发布底图缺失时使用程序化大画面背景承托结构化叠层，不再自动回退到控制图或参考图。
+- 拖拽部署保留，点击放置保留为 fallback。
 
-目标：
+### P0-J MapCompilePackage 证据导出接入
 
-```text
-确保默认玩家视图永远优先使用发布底图和结构化叠层，不再把控制图 / 参考图 / 棋盘图当成正式地图画面。
-```
+状态：已完成。
 
-允许修改：
+已落地：
 
-- `frontend/`
-- `frontend/README.md`
-- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
-- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
+- `tools/demo/export_evidence.py` 会收集 `examples/map_compile_packages/*.map_compile_package.json`。
+- 演示证据包会展示地图编译包数量、发布图状态、对齐状态、质量门和玩法真相保留状态。
+- 导出校验命令纳入 `tools/asset_graph/validate_map_compile_package.py`。
 
-关键要求：
-
-- 默认画面以 `battle_runtime_background` 或后续 `painted_visual_layer` 为主。
-- `battle_control_sketch`、`battle_reference_board` 只能在 debug / evidence 模式显示。
-- 战斗地图主体必须占据页面中部视觉重心，不应像一个小面板或孤立几何块。
-- 塔位、路径、目标、出生点仍来自 `MapRuntimePackage`。
-- 保留拖拽部署；点击放置只能作为 fallback。
-- 不引入构建步骤。
-
-验收命令：
-
-```bash
-node --check frontend/app.js
-```
-
-验收要点：
-
-- 首屏录屏不能出现明显“调试图当游戏图”的问题。
-- worker 需要汇报无法进行浏览器截图时的替代验证。
+## 4. 当前 P0 任务
 
 ### P0-I main 文档受控同步准备
 
@@ -252,6 +193,73 @@ task/main-sync-plan
 - 不直接合并到 `main`。
 - 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 时的处理策略。
 - 清单应服务下一次人工 / 主代理同步窗口。
+
+验收命令：
+
+```bash
+git diff --check
+```
+
+### P0-K MapCompilePackage 覆盖更多战斗节点
+
+任务类型：实现 / 内容管线
+
+建议分支：
+
+```text
+task/map-compile-package-more-nodes
+```
+
+目标：
+
+```text
+为 `lamp_wick_store` 与 `old_signal_tower` 生成 MapCompilePackage，使三张 MVP 战斗地图都有编译证据包。
+```
+
+允许修改：
+
+- `examples/map_compile_packages/`
+- `tools/asset_graph/`
+- `tools/demo/`
+- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
+
+关键要求：
+
+- 不复制首战 JSON 后只改 ID；应从对应 `MapRuntimePackage` 派生逻辑层。
+- 对应节点没有发布底图时可以标记 `painted_visual_layer.status = missing` 或 `warning`，但必须保留 runtime truth。
+- evidence exporter 应继续覆盖全部 map compile packages。
+
+验收命令：
+
+```bash
+python3 tools/asset_graph/validate_map_compile_package.py examples/map_compile_packages/mvp_first_battle.map_compile_package.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/ai_td_demo_evidence
+```
+
+### P0-L 前端视觉运行态截图验收
+
+任务类型：验证 / 前端体验
+
+```text
+task/frontend-visual-screenshot-audit
+```
+
+目标：
+
+```text
+启动本地前端或后端服务，获取战斗页截图，确认默认玩家视图没有控制图 / 参考图 / 棋盘图污染。
+```
+
+允许修改：
+
+- `docs/`
+- `artifacts/` 或 `/tmp` 输出截图
+
+关键要求：
+
+- 能启动服务则用浏览器截图。
+- 如果当前环境缺 Chromium / Playwright，必须记录替代验证和缺口。
+- 不为了截图引入大型前端构建链。
 
 验收命令：
 
@@ -349,12 +357,12 @@ git diff --check
 
 建议当前批次按以下顺序推进：
 
-1. `P0-G` MapCompilePackage v0.2。
-2. `P0-H` 前端地图表现质量防线。
+1. `P0-K` MapCompilePackage 覆盖更多战斗节点。
+2. `P0-L` 前端视觉运行态截图验收。
 3. `P0-I` main 文档受控同步准备。
 
 若需要并行，优先组合：
 
-- `P0-G` 与 `P0-I` 可并行。
-- `P0-H` 依赖当前 `MapRuntimePackage`，但不必等待 `P0-G` 完成。
+- `P0-K` 与 `P0-I` 可并行。
+- `P0-L` 依赖当前前端视觉防线，但不依赖 `P0-K`。
 - `P1-A` 视频帧 / atlas 默认接入应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。
