@@ -34,9 +34,66 @@ _FIRST_CRISIS_NODE = _REPO_ROOT / "game_data/demo/first_crisis_node.json"
 _FIRST_BATTLE_DELTA = (
     _REPO_ROOT / "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json"
 )
+_STAGE04_DELTA = (
+    _REPO_ROOT / "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json"
+)
+_STAGE04_TRANSACTION = (
+    _REPO_ROOT
+    / "examples/world_delta_transactions/stage_04_wick_store_pressure_battle.world_delta_transaction.json"
+)
+_STAGE04_AFTER_STATE = (
+    _REPO_ROOT / "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+)
+_STAGE06_TRANSACTION = (
+    _REPO_ROOT
+    / "examples/world_delta_transactions/stage_06_signal_resonance_trial.world_delta_transaction.json"
+)
+_STAGE06_AFTER_STATE = (
+    _REPO_ROOT / "examples/run_world_states/demo_after_stage_06_signal_resonance.run_world_state.json"
+)
 _FRONTEND_MOCK_PACK = _REPO_ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json"
 _AUDIT_REPORT = _REPO_ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json"
 _REVIEW_DOSSIER = _REPO_ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
+
+_NODE_BRIEFING_OVERRIDES = {
+    "gray_lantern_station": {
+        "source_path": _FIRST_CRISIS_NODE,
+        "suggested_input": "我想做一个能拖慢影潮的临时装置。",
+    },
+    "lamp_wick_store": {
+        "suggested_input": "我想把灯灰和导线做成能逼退密集影潮的临时灯具。",
+    },
+    "old_signal_tower": {
+        "suggested_input": "我想让信号塔的回光形成短暂屏障，争取修复时间。",
+    },
+}
+
+_NODE_SETTLEMENT_SPECS = {
+    "gray_lantern_station": {
+        "mode": "transaction",
+        "world_delta_path": _FIRST_BATTLE_DELTA,
+        "transaction_path": None,
+        "after_state_path": None,
+        "sample_performance": "样品对高速敌潮有效，但稳定性偏低，适合进入后续正式研发。",
+        "npc_feedback": "在场技师记录了样品迟滞效果，并建议保留战斗数据。",
+    },
+    "lamp_wick_store": {
+        "mode": "transaction",
+        "world_delta_path": _STAGE04_DELTA,
+        "transaction_path": _STAGE04_TRANSACTION,
+        "after_state_path": _STAGE04_AFTER_STATE,
+        "sample_performance": "灯灰爆鸣结构能清出短促空隙，但材料消耗和误触风险仍需登记。",
+        "npc_feedback": "修线匠确认补给线恢复，建议把辉晶样品转入正式蓝图整理。",
+    },
+    "old_signal_tower": {
+        "mode": "fixture_bridge",
+        "world_delta_path": None,
+        "transaction_path": _STAGE06_TRANSACTION,
+        "after_state_path": _STAGE06_AFTER_STATE,
+        "sample_performance": "回光试验短暂稳定了信号塔，后续仍需把分潮方向转入下一节点准备。",
+        "npc_feedback": "侦察员记录到回流方向，提醒中枢不要把这次稳定误判为长期安全。",
+    },
+}
 
 class FixtureNotFoundError(LookupError):
     """Raised when a mock fixture cannot satisfy the requested node."""
@@ -269,17 +326,61 @@ def get_map(session_id: str) -> dict[str, Any]:
 
 
 def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
-    if node_id != "gray_lantern_station":
+    if node_id not in _NODE_BRIEFING_OVERRIDES:
         raise FixtureNotFoundError(node_id)
+    override = _NODE_BRIEFING_OVERRIDES[node_id]
     pack = _load_frontend_pack()
+    if override.get("source_path"):
+        briefing = _load_json(override["source_path"])
+    else:
+        try:
+            battle_config = battle_content_service.load_battle_config(node_id)
+        except battle_content_service.BattleContentNotFoundError as exc:
+            raise FixtureNotFoundError(node_id) from exc
+        state = _load_campaign_state(session_id)
+        node = next(
+            (
+                item
+                for item in state.get("map_nodes", [])
+                if isinstance(item, dict) and item.get("node_id") == node_id
+            ),
+            {},
+        )
+        briefing = {
+            "node_id": node_id,
+            "display_name": battle_config.get("display_name", node_id),
+            "summary": battle_config.get("summary")
+            or node.get("summary")
+            or battle_config.get("victory_condition", "守住当前节点。"),
+            "threat": {
+                "enemy_traits": ", ".join(
+                    wave.get("display_name", "影潮")
+                    for wave in battle_config.get("waves", [])
+                    if isinstance(wave, dict)
+                )
+                or "影潮压力正在升高。",
+                "approach_direction": "由节点外缘向核心设施压近。",
+            },
+            "protection_targets": [
+                target
+                for target in [
+                    battle_config.get("core_target"),
+                    *(battle_config.get("optional_targets", []) or []),
+                ]
+                if isinstance(target, dict)
+            ],
+            "available_materials": pack.get("materials", []),
+            "facility_state": {"summary": "现场工坊可进行应急试作。"},
+            "constraints": {"sample_delivery": "样品可在战斗中途送达。"},
+        }
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
-        "briefing": _load_json(_FIRST_CRISIS_NODE),
+        "briefing": briefing,
         "materials": pack.get("materials", []),
         "npcs": pack.get("npcs", []),
-        "suggested_input": "我想做一个能拖慢影潮的临时装置。",
+        "suggested_input": override["suggested_input"],
     }
 
 
@@ -326,36 +427,68 @@ def record_battle_result(
     node_id: str,
     result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    if node_id != "gray_lantern_station":
+    spec = _NODE_SETTLEMENT_SPECS.get(node_id)
+    if spec is None:
         raise FixtureNotFoundError(node_id)
     battle_config = battle_content_service.load_battle_config(node_id)
-    delta = _load_json(_FIRST_BATTLE_DELTA)
-    transaction = ai_core_artifact_service.load_world_delta_transaction()
+    delta = _load_json(spec["world_delta_path"]) if spec.get("world_delta_path") else None
+    if node_id == "gray_lantern_station":
+        transaction = ai_core_artifact_service.load_world_delta_transaction()
+    elif spec.get("transaction_path"):
+        transaction = _load_json(spec["transaction_path"])
+    else:
+        transaction = None
     previous_state = _load_campaign_state(session_id)
-    next_state = _apply_delta_to_state(previous_state, delta)
+    if spec.get("after_state_path"):
+        next_state = _load_json(spec["after_state_path"])
+    elif delta:
+        next_state = _apply_delta_to_state(previous_state, delta)
+    else:
+        next_state = previous_state
     submitted = result if isinstance(result, dict) else {}
     ts = now_iso()
-    core_artifacts = ai_core_artifact_service.battle_settlement_core_artifacts(
-        node_id=node_id,
-        world_delta_ref=_rel(_FIRST_BATTLE_DELTA),
-        world_delta=delta,
-        transaction=transaction,
-        created_at=ts,
-    )
+    core_artifacts = None
+    if delta and transaction:
+        core_artifacts = ai_core_artifact_service.battle_settlement_core_artifacts(
+            node_id=node_id,
+            world_delta_ref=_rel(spec["world_delta_path"]),
+            world_delta=delta,
+            transaction=transaction,
+            transaction_ref=_rel(spec["transaction_path"]) if spec.get("transaction_path") else None,
+            created_at=ts,
+        )
+    refs: dict[str, Any] = {}
+    if core_artifacts:
+        refs.update(core_artifacts["refs"])
+    if spec.get("world_delta_path"):
+        refs["world_delta"] = _rel(spec["world_delta_path"])
+    if spec.get("transaction_path"):
+        refs["world_delta_transaction"] = _rel(spec["transaction_path"])
+    if spec.get("after_state_path"):
+        refs["run_world_state_after"] = _rel(spec["after_state_path"])
+    settlement_mode = spec["mode"]
+    baseline = None
+    if settlement_mode == "fixture_bridge":
+        baseline = {
+            "mode": "fixture_bridge",
+            "baseline_ref": refs.get("run_world_state_after"),
+            "baseline_type": (transaction or {}).get("source"),
+            "transaction_id": (transaction or {}).get("transaction_id"),
+            "notes": "MVP 旧信号塔使用已审研究/世界状态快照作为结算桥接，不伪装为 battle_result transaction。",
+        }
     settlement = {
         "node_id": node_id,
+        "settlement_mode": settlement_mode,
         "result": submitted.get("result", "victory"),
         "battle_summary": battle_config.get("post_battle", {}).get(
             "on_victory", "节点守住，样品表现已记录。"
         ),
-        "sample_performance": "样品对高速敌潮有效，但稳定性偏低，适合进入后续正式研发。",
-        "npc_feedback": "在场技师记录了样品迟滞效果，并建议保留战斗数据。",
+        "sample_performance": spec["sample_performance"],
+        "npc_feedback": spec["npc_feedback"],
         "world_delta": delta,
         "world_delta_transaction": transaction,
-        "core_artifact_refs": {
-            **core_artifacts["refs"],
-            "world_delta": _rel(_FIRST_BATTLE_DELTA),
-        },
+        "fixture_baseline": baseline,
+        "core_artifact_refs": refs,
         "core_artifacts": core_artifacts,
         "run_world_state": next_state,
     }

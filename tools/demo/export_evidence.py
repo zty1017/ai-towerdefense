@@ -127,6 +127,13 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "multinode_battle_settlement",
+        "command": [
+            "python3",
+            "tools/dev/validate_multinode_battle_settlement.py",
+        ],
+    },
+    {
         "name": "frontend_media_manifest",
         "command": [
             "python3",

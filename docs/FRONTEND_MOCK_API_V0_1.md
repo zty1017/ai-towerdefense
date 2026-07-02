@@ -214,6 +214,12 @@ GET /api/sessions/{session_id}/campaign-router
 
 该接口只仲裁“当前节点 -> 下一节点”和可用资产入口，不生成内容、不提交世界状态。节点内容仍以 battle config、runtime package、MapRuntimePackage 和 `WorldStateDeltaTransaction` 为事实源。
 
+当前 MVP 路线支持：
+
+- `gray_lantern_station`
+- `lamp_wick_store`
+- `old_signal_tower`
+
 ### 请求下一节点预取
 
 ```http
@@ -227,6 +233,28 @@ POST /api/sessions/{session_id}/campaign-router/prefetch-next
 - 返回 `prefetch_request`、`worker_step`、`generation_schedule_queue` 和更新后的 `campaign_router`。
 
 它仍然不会调用外部模型，不会读取 `.env`，不会创建新内容，也不会写入世界状态。MVP 中它用于证明玩家进入当前节点时，系统已经可以把下一节点的预生成 / fallback 检查挂到同一条运行时链路上。
+
+### 提交战斗结果
+
+```http
+POST /api/sessions/{session_id}/battles/{node_id}/results
+```
+
+当前支持的 `node_id` 与结算来源：
+
+- `gray_lantern_station`：使用首战 `battle_result` transaction，推进到 `post_first_defense`。
+- `lamp_wick_store`：使用 stage04 `battle_result` transaction，推进到 `post_wick_store_defense`。
+- `old_signal_tower`：使用 stage06 `research_job` after-state 作为 `fixture_bridge` 基线，推进到 `signal_resonance_trial`；该节点不会伪装成 `battle_result`。
+
+返回的 `settlement` 会带：
+
+- `settlement_mode`: `transaction` 或 `fixture_bridge`。
+- `world_delta`: 原生战斗结算有值；`fixture_bridge` 为 `null`。
+- `world_delta_transaction`: 对应的事务外壳或基线 transaction。
+- `fixture_baseline`: 仅 `fixture_bridge` 使用，说明来源不是战斗结果。
+- `run_world_state`: 写回后的当前运行态。
+
+该接口仍然只消费已审 fixture，不调用 provider，不读取 `.env`。前端应根据 `settlement_mode` 判断证据来源，不能把 `fixture_bridge` 当作玩家战斗实时编译产物。
 
 ### 创建调度 dry-run 运行记录
 
