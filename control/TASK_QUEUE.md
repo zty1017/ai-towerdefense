@@ -839,6 +839,43 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_authorization_r
 git diff --check
 ```
 
+### P1-B-19 ProviderAdapterExecutionReceipt 执行边界回执
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json`
+- `examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json`
+- `tools/dev/validate_provider_adapter_execution_receipt.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-fixture`
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，同 `ProviderOutputEnvelope.provider_call.authorization_ref` 的 `provider_execution_authorization`，以及同 schedule item / authorization ref 的 `provider_adapter_execution_receipt`。
+- `stage-provider-artifacts` 响应会返回 `provider_adapter_execution_receipt` 摘要。
+- `generation_artifact_ledger` 现在可登记 `provider_adapter_execution_receipt` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 ProviderAdapterExecutionReceipt 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_provider_adapter_execution_boundary.v0.1.json`
+
+当前结论：
+
+- ProviderAdapterExecutionReceipt 位于 ProviderExecutionAuthorization 之后、ProviderOutputEnvelope 之前。
+- 当前后端只实现 `fixture_backed_no_provider_call` 模式：不读取 `.env`、不调用 provider、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 后续真实 provider adapter 可使用同一 schema 的 `live_redacted_provider_call` 模式，但仍只能向 ProviderOutputEnvelope 输出脱敏摘要、digest 和本地 artifact refs。
+- ProviderOutputEnvelope / staging / promotion report 不能再只依赖授权记录；必须能追到同 schedule item 和同 authorization ref 的 adapter receipt。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_execution_boundary.v0.1.json
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 -m json.tool shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_provider_adapter_execution_receipt.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_execution_boundary_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

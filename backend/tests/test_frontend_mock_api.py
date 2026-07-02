@@ -410,6 +410,65 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert authorization_ledger_rows == 2
 
+    pre_adapter_stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "artifact-ledger-test", "note": "missing adapter receipt"},
+    )
+    assert pre_adapter_stage.status_code == 409
+    assert "matching provider adapter execution receipt" in pre_adapter_stage.json()[
+        "detail"
+    ]
+
+    adapter_receipt_response = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-fixture",
+            json={
+                "worker_id": "provider-adapter-test",
+                "note": "record provider adapter fixture boundary",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    assert adapter_receipt_response["worker_step"]["status"] == "adapter_recorded"
+    assert adapter_receipt_response["worker_step"]["provider_call_count"] == 0
+    assert adapter_receipt_response["worker_step"]["world_mutation_count"] == 0
+    assert adapter_receipt_response["worker_step"]["activation_allowed_count"] == 0
+    assert adapter_receipt_response["worker_step"]["authorization_ref"] == authorization_ref
+    assert adapter_receipt_response["worker_step"]["upstream_request_id"] == (
+        executor_request["request_id"]
+    )
+    adapter_receipt = adapter_receipt_response["provider_adapter_execution_receipt"]
+    assert adapter_receipt["schema_version"] == (
+        "provider_adapter_execution_receipt.v0.1"
+    )
+    assert adapter_receipt["source"]["schedule_item_id"] == (
+        "sched_next_map_visual_prefetch"
+    )
+    assert adapter_receipt["source"]["authorization_ref"] == authorization_ref
+    assert adapter_receipt["source"]["executor_request_id"] == (
+        executor_request["request_id"]
+    )
+    assert adapter_receipt["authority"]["provider_adapter_boundary_entered"] is True
+    assert adapter_receipt["authority"]["runtime_activation_allowed"] is False
+    assert adapter_receipt["authority"]["world_mutation_allowed"] is False
+    assert adapter_receipt["execution"]["mode"] == "fixture_backed_no_provider_call"
+    assert adapter_receipt["execution"][
+        "provider_call_performed_by_receipt_builder"
+    ] is False
+    assert adapter_receipt["execution"]["requires_provider_output_envelope"] is True
+    assert adapter_receipt["adapter_safety"]["reads_env"] is False
+    assert adapter_receipt["adapter_safety"]["calls_provider"] is False
+    adapter_ledger = adapter_receipt_response["generation_artifact_ledger"]
+    assert adapter_ledger["summary"]["item_count"] == 3
+    assert adapter_ledger["summary"]["artifact_kind_counts"][
+        "provider_adapter_execution_receipt"
+    ] == 1
+    adapter_ledger_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert adapter_ledger_rows == 3
+
     artifact_stage = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -433,6 +492,12 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert artifact_stage["provider_execution_authorization"]["authorization"][
         "granted"
     ] is True
+    assert artifact_stage["provider_adapter_execution_receipt"][
+        "execution_receipt_id"
+    ] == adapter_receipt["execution_receipt_id"]
+    assert artifact_stage["provider_adapter_execution_receipt"]["execution"][
+        "authorization_ref"
+    ] == authorization_ref
     assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
         "pout_performed_stage05_map_visual_001"
     )
@@ -459,9 +524,10 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "promotion_allowed"
     ] is False
     ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
-    assert ledger_summary["item_count"] == 5
+    assert ledger_summary["item_count"] == 6
     assert ledger_summary["artifact_kind_counts"]["generation_executor_run_request"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_execution_authorization"] == 1
+    assert ledger_summary["artifact_kind_counts"]["provider_adapter_execution_receipt"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_output_envelope"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_staging_manifest"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_promotion_report"] == 1
@@ -473,13 +539,14 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ledger = _payload(
         client.get(f"/api/sessions/{sid}/generation-schedule/artifact-ledger")
     )
-    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 5
-    assert len(ledger["generation_artifact_ledger"]["items"]) == 5
+    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 6
+    assert len(ledger["generation_artifact_ledger"]["items"]) == 6
     assert {
         item["artifact_kind"] for item in ledger["generation_artifact_ledger"]["items"]
     } == {
         "generation_executor_run_request",
         "provider_execution_authorization",
+        "provider_adapter_execution_receipt",
         "provider_output_envelope",
         "provider_artifact_staging_manifest",
         "provider_artifact_promotion_report",
@@ -488,7 +555,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
         (sid,),
     ).fetchone()[0]
-    assert ledger_rows == 5
+    assert ledger_rows == 6
 
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
@@ -754,6 +821,24 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
             },
         )
     )
+    pre_adapter_stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "evidence-ledger", "note": "adapter receipt missing"},
+    )
+    assert pre_adapter_stage.status_code == 409
+    assert "matching provider adapter execution receipt" in pre_adapter_stage.json()[
+        "detail"
+    ]
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-fixture",
+            json={
+                "worker_id": "evidence-provider-adapter",
+                "note": "record provider adapter fixture for evidence",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -871,13 +956,16 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 3
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "item_count"
-    ] == 5
+    ] == 6
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "artifact_kind_counts"
     ]["generation_executor_run_request"] == 1
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "artifact_kind_counts"
     ]["provider_execution_authorization"] == 1
+    assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
+        "artifact_kind_counts"
+    ]["provider_adapter_execution_receipt"] == 1
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "promotion_allowed_count"
     ] == 0

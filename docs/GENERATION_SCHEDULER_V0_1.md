@@ -342,7 +342,7 @@ authorization.granted = false
 live executor guard
   -> GenerationExecutorRunRequest
   -> ProviderExecutionAuthorization
-  -> provider adapter
+  -> ProviderAdapterExecutionReceipt
   -> ProviderOutputEnvelope
   -> ProviderArtifactStagingManifest
   -> validator / media gate / semantic gate
@@ -372,6 +372,21 @@ provider_adapter_execution_only
 ```
 
 这意味着它只允许进入 provider adapter 边界；不等于 runtime 激活授权，不等于世界状态写入授权，也不等于晋升通过。
+
+## ProviderAdapterExecutionReceipt
+
+`ProviderAdapterExecutionReceipt v0.1` 是 `ProviderExecutionAuthorization` 之后、`ProviderOutputEnvelope` 之前的 provider adapter 边界回执：
+
+```text
+shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json
+tools/dev/validate_provider_adapter_execution_receipt.py
+examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json
+POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-fixture
+```
+
+它的职责是证明某个已授权的调度项已经进入 provider adapter 边界，并声明后续必须写入 `ProviderOutputEnvelope`。MVP 当前实现是 `fixture_backed_no_provider_call`：不读取 `.env`，不调用 provider，不保存 prompt / provider 正文，不写世界状态，不激活 runtime。
+
+该回执必须与同一 `schedule_item_id` 和同一 `authorization_ref` 的 `ProviderExecutionAuthorization` 对齐。后续 live adapter 可以使用同一 schema 的 `live_redacted_provider_call` 模式，但仍只能保存脱敏摘要、digest 和本地 artifact refs；真实 provider 原始响应仍不得进入 evidence、ledger 或 runtime。
 
 ## ProviderOutputEnvelope
 
@@ -405,7 +420,7 @@ docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md
 live executor guard
   -> GenerationExecutorRunRequest
   -> ProviderExecutionAuthorization
-  -> provider adapter
+  -> ProviderAdapterExecutionReceipt
   -> ProviderOutputEnvelope
   -> ProviderArtifactStagingManifest
   -> validator / media gate / semantic gate
@@ -415,7 +430,7 @@ live executor guard
 
 `ProviderArtifactStagingManifest` 只登记从 envelope 输出 refs 转入本地审查暂存区的候选文件。它不是 runtime package，不写世界状态，也不能让 review-only artifact 被前端或战斗运行时直接消费。
 
-后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记与 `ProviderOutputEnvelope.source.schedule_item_id` 相同的 `generation_executor_run_request`，并且已登记与 `ProviderOutputEnvelope.provider_call.authorization_ref` 相同的 `ProviderExecutionAuthorization`。如果缺少匹配请求包或匹配授权记录，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard、执行请求边界和显式授权边界，或挂到错误的调度项下。
+后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记与 `ProviderOutputEnvelope.source.schedule_item_id` 相同的 `generation_executor_run_request`，已登记与 `ProviderOutputEnvelope.provider_call.authorization_ref` 相同的 `ProviderExecutionAuthorization`，并且已有同 `schedule_item_id` / `authorization_ref` 的 `ProviderAdapterExecutionReceipt`。如果缺少匹配请求包、匹配授权记录或匹配 adapter 回执，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard、执行请求边界、显式授权边界和 adapter 边界，或挂到错误的调度项下。
 
 `ProviderArtifactPromotionReport` 是 staging 之后的显式晋升/阻断报告。它可以允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，也可以阻断候选继续前进；但报告本身仍不修改 runtime、published media 或世界状态。
 
