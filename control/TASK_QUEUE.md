@@ -684,7 +684,7 @@ git diff --check
 
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
-状态：已完成最小骨架。
+状态：已完成并清零当前迁移队列。
 
 已落地：
 
@@ -699,9 +699,9 @@ git diff --check
 当前结论：
 
 - 该报告只做内部 evidence / 迁移审计，不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
-- 当前报告状态为 `needs_migration`，无核心对象 validator 失败。
+- 当前报告状态为 `passed`，无核心对象 validator 失败，`missing_core_alignment_count=0`，`migration_tasks=[]`。
 - 前端 mock pack、核心示例和 stage01-stage07 WorldStateDeltaTransaction 链已处于 `native_snapshot_ready`。
-- 初始 8 个早期叙事 / 阶段 / dossier review pack 被列为 P1 迁移任务，需要后续补 core artifact refs、原生 core artifacts 快照或明确 not-applicable 边界；其中 `mvp_compiler_review_dossier` 已在 P1-C-2 中明确为 review-only not-applicable，`mvp_stage_candidate_pack` 已在 P1-C-3 中明确为 review-only 阶段候选容器，`mvp_multistage_stage_candidate_pack` 已在 P1-C-4 中明确为 review-only 多阶段候选容器，`mvp_multistage_content_pack` 已在 P1-C-5 中明确为 review-only 多阶段内容生产审查包，`mvp_next_stage_compilable_object_plan` 已在 P1-C-6 中明确为 review-only 下一阶段编译计划，`mvp_story_asset_review_pack` 已在 P1-C-7 中明确为 review-only 剧情资产审查索引，`mvp_story_asset_promotion_report` 已在 P1-C-8 中明确为 review-only 资产晋升决策报告，`mvp_stage05_plan_realization_report` 已在 P1-C-9 中明确为 review-only 计划落地审查报告。
+- 初始 8 个早期叙事 / 阶段 / dossier review pack 已完成 P1-C-2 到 P1-C-9 的显式边界收敛：`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 均已声明为 `review_only_not_applicable`。后续新增 review pack / provider artifact / runtime package 必须携带核心对象原生快照、core refs 或显式 not-applicable 边界，否则报告会重新回到 `needs_migration`。
 
 验收：
 
@@ -1089,7 +1089,7 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 - 所有对象先进入统一 CGOP / package manifest 模型。
 - 不允许直接自由写 runtime。
 - 每类对象定义最小可玩字段和审查门禁。
-- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack、多节点 battle settlement 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；下一步应把现有 review pack 和真实 provider 产物继续映射到同一套核心对象字段，而不是继续新增平行元数据口径。
+- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack、多节点 battle settlement 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；当前已纳入 `CoreArtifactAlignmentReport` 的 review pack 已完成边界收敛。下一步新增可编译对象或真实 provider 产物时，必须继续映射到同一套核心对象字段或显式 not-applicable 边界，而不是新增平行元数据口径。
 
 ### P1-D Map Visual Reference 生成管线升级
 
@@ -1164,7 +1164,7 @@ git diff --check
 建议当前批次按以下顺序推进：
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
-2. WorldStateDelta / review pack 继续从 refs/evidence 对齐推进到原生产物字段；Research Job、battle settlement evidence 与 frontend mock pack 已完成第一层原生快照迁移。
+2. 新增 WorldStateDelta / review pack / provider artifact 继续按 CoreArtifactAlignmentReport 口径进入原生产物字段、core refs 或显式 not-applicable 边界；当前已扫描范围的 migration task 已清零。
 3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
 4. 补 P0-M 浏览器截图或人工录屏验收。
 5. `P1-A` 真实视频关键帧增强。
