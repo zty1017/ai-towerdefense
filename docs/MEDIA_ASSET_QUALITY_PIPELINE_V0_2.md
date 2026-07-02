@@ -165,6 +165,21 @@ shared/schemas/media_runtime_readiness_report.v0.1.schema.json
 
 这个节点不调用 LLM，不评价审美，只回答“前端能不能直接加载并放到战场上”。
 
+当前前端 mock 与战斗 runtime art 还补充了一层 sprite cutout 几何审查：
+
+```text
+media.audit_sprite_cutout_quality
+```
+
+对应产物：
+
+```text
+examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json
+examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json
+```
+
+它直接读取现有 `items[]` 风格的 media manifest，检查 sprite 透明底是否存在明显内部透明洞、主体碎裂、漂浮组件、边缘接触和 anchor/canvas 风险。该报告的 `needs_review` 不阻断 MVP；它用于排序后续重抠图、重生成、视频关键帧替换和人工复核任务。
+
 ## 5. 后续增强顺序
 
 ### 5.1 立即可做

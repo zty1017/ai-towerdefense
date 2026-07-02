@@ -1,0 +1,288 @@
+{
+  "report_version": "sprite_cutout_quality_report.v0.1",
+  "schema_version": "frontend_runtime_art_media_manifest.v0.1",
+  "media_pack_id": "frontend_runtime_art_media_pack_v0_1",
+  "manifest_path": "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+  "status": "needs_review",
+  "sprite_item_count": 7,
+  "passed_count": 4,
+  "needs_review_count": 3,
+  "failed_count": 0,
+  "warning_counts": {
+    "interior_transparent_holes_need_review": 1,
+    "large_interior_transparent_holes": 2
+  },
+  "issue_counts": {},
+  "items": [
+    {
+      "asset_id": "enemy_shadow_tide_runner",
+      "asset_name": "影潮奔行者",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_runner_unit_sprite_cdd10059.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 836,
+        "height": 836,
+        "alpha_visible_ratio": 0.2323,
+        "alpha_transparent_ratio": 0.7677,
+        "subject_bbox": {
+          "x": 187,
+          "y": 36,
+          "w": 462,
+          "h": 764
+        },
+        "subject_bbox_coverage": 0.505,
+        "visible_component_count": 5,
+        "largest_visible_component_ratio": 0.9952,
+        "detached_visible_component_count": 4,
+        "detached_visible_ratio": 0.0048,
+        "interior_transparent_component_count": 1,
+        "interior_transparent_hole_ratio": 0.0011,
+        "max_interior_transparent_hole_ratio": 0.0011,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "enemy_shadow_tide_shade",
+      "asset_name": "影潮残影",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_shade_unit_sprite_e994eb94.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 889,
+        "height": 889,
+        "alpha_visible_ratio": 0.232,
+        "alpha_transparent_ratio": 0.768,
+        "subject_bbox": {
+          "x": 240,
+          "y": 36,
+          "w": 408,
+          "h": 817
+        },
+        "subject_bbox_coverage": 0.4218,
+        "visible_component_count": 2,
+        "largest_visible_component_ratio": 0.9992,
+        "detached_visible_component_count": 1,
+        "detached_visible_ratio": 0.0008,
+        "interior_transparent_component_count": 1,
+        "interior_transparent_hole_ratio": 0.0013,
+        "max_interior_transparent_hole_ratio": 0.0013,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "enemy_shadow_tide_cluster",
+      "asset_name": "影潮聚团",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_cluster_unit_sprite_93ea896a.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 809,
+        "height": 809,
+        "alpha_visible_ratio": 0.4001,
+        "alpha_transparent_ratio": 0.5999,
+        "subject_bbox": {
+          "x": 103,
+          "y": 36,
+          "w": 603,
+          "h": 737
+        },
+        "subject_bbox_coverage": 0.679,
+        "visible_component_count": 3,
+        "largest_visible_component_ratio": 0.999,
+        "detached_visible_component_count": 2,
+        "detached_visible_ratio": 0.001,
+        "interior_transparent_component_count": 0,
+        "interior_transparent_hole_ratio": 0.0,
+        "max_interior_transparent_hole_ratio": 0.0,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
+      "status": "needs_review",
+      "issues": [],
+      "warnings": [
+        "interior_transparent_holes_need_review"
+      ],
+      "metrics": {
+        "width": 841,
+        "height": 841,
+        "alpha_visible_ratio": 0.3274,
+        "alpha_transparent_ratio": 0.6726,
+        "subject_bbox": {
+          "x": 187,
+          "y": 36,
+          "w": 467,
+          "h": 769
+        },
+        "subject_bbox_coverage": 0.5078,
+        "visible_component_count": 4,
+        "largest_visible_component_ratio": 0.9917,
+        "detached_visible_component_count": 3,
+        "detached_visible_ratio": 0.0083,
+        "interior_transparent_component_count": 14,
+        "interior_transparent_hole_ratio": 0.0253,
+        "max_interior_transparent_hole_ratio": 0.0052,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
+      "status": "needs_review",
+      "issues": [],
+      "warnings": [
+        "large_interior_transparent_holes"
+      ],
+      "metrics": {
+        "width": 816,
+        "height": 816,
+        "alpha_visible_ratio": 0.124,
+        "alpha_transparent_ratio": 0.876,
+        "subject_bbox": {
+          "x": 230,
+          "y": 36,
+          "w": 355,
+          "h": 744
+        },
+        "subject_bbox_coverage": 0.3967,
+        "visible_component_count": 6,
+        "largest_visible_component_ratio": 0.951,
+        "detached_visible_component_count": 5,
+        "detached_visible_ratio": 0.049,
+        "interior_transparent_component_count": 9,
+        "interior_transparent_hole_ratio": 0.069,
+        "max_interior_transparent_hole_ratio": 0.03,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "objective_lamp_wick_cache",
+      "asset_name": "灯芯物资箱",
+      "asset_type": "resource_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/objective_lamp_wick_cache_objective_sprite_14249ddf.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 846,
+        "height": 846,
+        "alpha_visible_ratio": 0.4969,
+        "alpha_transparent_ratio": 0.5031,
+        "subject_bbox": {
+          "x": 90,
+          "y": 36,
+          "w": 666,
+          "h": 774
+        },
+        "subject_bbox_coverage": 0.7202,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 10,
+        "interior_transparent_hole_ratio": 0.004,
+        "max_interior_transparent_hole_ratio": 0.0017,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "asset_type": "basic_defense",
+      "media_role": "defense_sprite",
+      "file": "game_data/media/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
+      "status": "needs_review",
+      "issues": [],
+      "warnings": [
+        "large_interior_transparent_holes"
+      ],
+      "metrics": {
+        "width": 661,
+        "height": 661,
+        "alpha_visible_ratio": 0.3452,
+        "alpha_transparent_ratio": 0.6548,
+        "subject_bbox": {
+          "x": 36,
+          "y": 36,
+          "w": 589,
+          "h": 554
+        },
+        "subject_bbox_coverage": 0.7468,
+        "visible_component_count": 2,
+        "largest_visible_component_ratio": 0.9972,
+        "detached_visible_component_count": 1,
+        "detached_visible_ratio": 0.0028,
+        "interior_transparent_component_count": 39,
+        "interior_transparent_hole_ratio": 0.0573,
+        "max_interior_transparent_hole_ratio": 0.0188,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    }
+  ],
+  "thresholds": {
+    "alpha_threshold": 8,
+    "min_largest_component_ratio": 0.94,
+    "review_hole_ratio": 0.015,
+    "review_max_hole_ratio": 0.006,
+    "severe_hole_ratio": 0.05
+  },
+  "notes": [
+    "This report is deterministic and offline.",
+    "needs_review does not block the MVP; it orders assets for repair/regeneration.",
+    "Large transparent holes may be intentional for fences/windows, so this report flags them for review instead of failing by default."
+  ]
+}

@@ -112,6 +112,7 @@ frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、�
 MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路径、塔位、目标、出生点和本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 MediaAtlasManifest v0.1 已作为 spritesheet 兼容多帧入口接入前端、后端 mock API 和 demo evidence；真实图生视频关键帧与实体 atlas PNG 仍未生成。
+Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
 ```
 
 ### 审查与交付
