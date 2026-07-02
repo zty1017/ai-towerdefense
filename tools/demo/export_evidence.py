@@ -34,6 +34,7 @@ PATHS = {
     "architecture_index": ROOT / "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "ai_compilation_doc": ROOT / "docs/AI_COMPILATION_SYSTEM_V0_1.md",
     "asset_graph_doc": ROOT / "docs/ASSET_GRAPH_COMPILER_V0_1.md",
+    "generation_scheduler_doc": ROOT / "docs/GENERATION_SCHEDULER_V0_1.md",
     "frontend_mock_api_doc": ROOT / "docs/FRONTEND_MOCK_API_V0_1.md",
     "frontend_runtime_art_doc": ROOT / "docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md",
     "demo_vertical_slice_doc": ROOT / "docs/DEMO_VERTICAL_SLICE.md",
@@ -71,6 +72,8 @@ PATHS = {
     / "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json",
     "runtime_sprite_regeneration_promotion_report": ROOT
     / "examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json",
+    "generation_schedule_plan": ROOT
+    / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -271,6 +274,14 @@ STATIC_VALIDATION_COMMANDS = [
             "defense_basic_lantern_barricade",
             "--asset-id",
             "objective_station_core",
+        ],
+    },
+    {
+        "name": "generation_schedule_plan",
+        "command": [
+            "python3",
+            "tools/scheduler/validate_generation_schedule_plan.py",
+            "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
         ],
     },
     {
@@ -844,6 +855,37 @@ def collect_ai_compilation_link(
     }
 
 
+def collect_generation_scheduler(plan: dict[str, Any]) -> dict[str, Any]:
+    items = [item for item in as_list(plan.get("items")) if isinstance(item, dict)]
+    provider_modes: Counter[str] = Counter()
+    for item in items:
+        provider_modes[str(as_obj(item.get("provider_policy")).get("mode") or "unknown")] += 1
+    return {
+        "plan_id": plan.get("plan_id"),
+        "schema_version": plan.get("schema_version"),
+        "visibility": plan.get("visibility"),
+        "summary": as_obj(plan.get("summary")),
+        "provider_mode_counts": dict(sorted(provider_modes.items())),
+        "control_plane_only": as_obj(plan.get("authority")).get("control_plane_only"),
+        "calls_provider_during_build": as_obj(plan.get("authority")).get("schedule_builder_calls_provider"),
+        "reads_env_during_build": as_obj(plan.get("authority")).get("schedule_builder_reads_env"),
+        "items": [
+            {
+                "schedule_item_id": item.get("schedule_item_id"),
+                "object_ref": item.get("object_ref"),
+                "object_kind": item.get("object_kind"),
+                "latency_class": item.get("latency_class"),
+                "status": item.get("status"),
+                "priority": item.get("priority"),
+                "provider_mode": as_obj(item.get("provider_policy")).get("mode"),
+                "world_commit": as_obj(item.get("commit_policy")).get("world_commit"),
+                "fallback_ref": item.get("fallback_ref"),
+            }
+            for item in items
+        ],
+    }
+
+
 def collect_assets_and_media(
     frontend_pack: dict[str, Any],
     frontend_media_manifest: dict[str, Any],
@@ -1032,6 +1074,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("architecture_fact_index", PATHS["architecture_index"]),
         ("ai_compilation_design", PATHS["ai_compilation_doc"]),
         ("asset_graph_design", PATHS["asset_graph_doc"]),
+        ("generation_scheduler_design", PATHS["generation_scheduler_doc"]),
         ("frontend_mock_api_design", PATHS["frontend_mock_api_doc"]),
         ("frontend_runtime_art_design", PATHS["frontend_runtime_art_doc"]),
         ("demo_vertical_slice", PATHS["demo_vertical_slice_doc"]),
@@ -1065,6 +1108,7 @@ def collect_source_files() -> list[dict[str, Any]]:
             "runtime_sprite_regeneration_promotion_report",
             PATHS["runtime_sprite_regeneration_promotion_report"],
         ),
+        ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -1135,6 +1179,7 @@ def build_evidence() -> dict[str, Any]:
     runtime_sprite_regeneration_promotion_report = load_json(
         PATHS["runtime_sprite_regeneration_promotion_report"]
     )
+    generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -1171,6 +1216,7 @@ def build_evidence() -> dict[str, Any]:
         "ai_compilation_link": collect_ai_compilation_link(
             frontend_pack, dossier, multistage_pack
         ),
+        "generation_scheduler": collect_generation_scheduler(generation_schedule_plan),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
@@ -1219,6 +1265,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
+    scheduler = as_obj(evidence.get("generation_scheduler"))
+    scheduler_summary = as_obj(scheduler.get("summary"))
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
@@ -1284,6 +1332,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for package in as_list(map_compile_packages.get("packages"))
     ]
+    schedule_rows = [
+        [
+            item.get("schedule_item_id"),
+            item.get("latency_class"),
+            item.get("status"),
+            item.get("provider_mode"),
+            item.get("world_commit"),
+        ]
+        for item in as_list(scheduler.get("items"))
+    ]
     lines = [
         "# AI 编译塔防 MVP 演示证据包",
         "",
@@ -1301,7 +1359,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 证据 workflow 文件数：`{len(as_list(ai_link.get('reviewed_workflow_files')))}`",
         f"- 摘要链路步骤：`{', '.join(as_list(ai_link.get('pipeline_steps')))}`",
         "",
-        "## 2. Runtime 与地图包",
+        "## 2. Generation Scheduler",
+        "",
+        f"- 调度计划：`{scheduler.get('plan_id')}`，调度项 `{scheduler_summary.get('item_count')}` 个",
+        f"- 延迟分布：`{scheduler_summary.get('latency_class_counts')}`",
+        f"- fallback 覆盖：`{scheduler_summary.get('fallback_covered_count')}` / `{scheduler_summary.get('item_count')}`",
+        f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
+        "",
+        md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
+        "",
+        "## 3. Runtime 与地图包",
         "",
         f"- RuntimePackage：`{runtime_pkg.get('package_id')}`，战斗：{runtime_pkg.get('battle_display_name')}，资产数：`{runtime_pkg.get('asset_count')}`",
         f"- MapRuntimePackage 数：`{map_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_packages.get('node_ids')))}`",
@@ -1315,7 +1382,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         md_table(["节点", "层角色", "权威性", "尺寸", "本地路径"], layer_rows),
         "",
-        "## 3. 可用资产与媒体",
+        "## 4. 可用资产与媒体",
         "",
         f"- Frontend mock pack：`{assets.get('pack_id')}`",
         f"- 资产数：`{assets.get('asset_count')}`，可玩：`{assets.get('playable_count')}`",
@@ -1332,21 +1399,21 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- runtime sprite live regeneration：候选 `{runtime_sprite_regeneration.get('candidate_count')}` 个，真实生成 `{runtime_sprite_regeneration.get('generated_count')}` 个，候选质量 `{runtime_sprite_regeneration.get('quality_status')}`，已晋升 runtime：`{runtime_sprite_regeneration.get('promoted_to_runtime')}`",
         f"- runtime sprite promotion：显式晋升 `{runtime_sprite_promotion.get('promoted_count')}` 个，模式 `{runtime_sprite_promotion.get('mode')}`，atlas 需重建：`{as_obj(runtime_sprite_promotion.get('runtime_effect')).get('atlas_rebuild_required')}`",
         "",
-        "## 4. 校验摘要",
+        "## 5. 校验摘要",
         "",
         f"- 本次导出校验状态：`{export_validation.get('status')}`",
         f"- 历史 handoff audit：`{as_obj(validation.get('handoff_audit_report')).get('overall_status')}`",
         "",
         md_table(["校验项", "状态", "返回码", "命令"], validation_rows),
         "",
-        "## 5. 前端入口说明",
+        "## 6. 前端入口说明",
         "",
         f"- 静态入口：`{frontend_entry.get('local_frontend_entry')}`",
         f"- 后端路由：`{frontend_entry.get('backend_entry')}`",
         f"- 主流程：`{' -> '.join(as_list(frontend_entry.get('primary_flow')))}`",
         f"- 静态媒体挂载：`{', '.join(as_list(frontend_entry.get('static_media_mounts')))}`",
         "",
-        "## 6. 过滤策略",
+        "## 7. 过滤策略",
         "",
         "本证据包只保留结构摘要、计数、公开媒体路径和文件指纹；不输出凭据字段值、原始提示词、外部生成器原始响应、完整执行轨迹或未审长文本内容。",
         "",
@@ -1454,6 +1521,8 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
+    scheduler = as_obj(evidence.get("generation_scheduler"))
+    scheduler_summary = as_obj(scheduler.get("summary"))
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1603,6 +1672,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <p class="muted">已审 runtime package 摘要可供前端消费。</p>
         </article>
         <article class="card">
+          <div class="eyebrow">调度项</div>
+          <div class="metric">{html_escape(scheduler_summary.get("item_count"))}</div>
+          <p class="muted">Generation Scheduler 计划包，包含同步、预取、后台、懒加载和静态 fallback。</p>
+        </article>
+        <article class="card">
           <div class="eyebrow">MapRuntimePackage</div>
           <div class="metric">{html_escape(map_packages.get("package_count"))}</div>
           <p class="muted">地图包数量；包含路径、塔位、目标、出生点和视觉层。</p>
@@ -1669,6 +1743,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <p>{html_escape(ai_link.get("claim"))}</p>
       <p>链路步骤：<code>{html_escape(" -> ".join(as_list(ai_link.get("pipeline_steps"))))}</code></p>
       <p class="muted">本页面只展示摘要、路径和文件指纹；内部生成细节已过滤。</p>
+    </section>
+    <section>
+      <h2>Generation Scheduler</h2>
+      <p>计划包：<code>{html_escape(scheduler.get("plan_id"))}</code>；延迟分布：<code>{html_escape(scheduler_summary.get("latency_class_counts"))}</code></p>
+      <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>
     </section>
     <section>
       <h2>MapRuntimePackage 覆盖</h2>

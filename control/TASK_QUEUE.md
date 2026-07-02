@@ -64,7 +64,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- live campaign router、预生成调度、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 已接入 evidence，用于声明 sync_blocking、background_prefetch、background、lazy 和 fallback_static 内容；真实后台执行器、live campaign router、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -316,6 +316,26 @@ P2：本阶段明确不做
 - runtime sprite repair plan 已清空；后续新增问题仍走同一套重生成和 promotion 流程。
 - 晋升工具默认 dry-run，必须显式 `--apply` 才能替换 runtime PNG 和 manifest。
 
+### P1-B-0 Generation Scheduler review-only 计划包
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/generation_schedule_plan.v0.1.schema.json`
+- `tools/scheduler/build_generation_schedule_plan.py`
+- `tools/scheduler/validate_generation_schedule_plan.py`
+- `examples/review_packs/mvp_generation_schedule_plan.v0.1.json`
+- `docs/GENERATION_SCHEDULER_V0_1.md`
+- `tools/demo/export_evidence.py` 已纳入 schedule plan 摘要和验证命令。
+
+当前结论：
+
+- 计划包包含 8 个调度项，覆盖 `sync_blocking`、`background_prefetch`、`background`、`lazy`、`fallback_static`。
+- 同步项只读取已审 fixture / locked package / published manifest，不依赖实时 provider。
+- 预取和后台项只声明候选生成计划，启用前必须重新通过对应 validator、semantic gate 或 media gate。
+- 这不是后台执行器；后续仍需实现真正的队列、缓存、重试、状态持久化和 live campaign router。
+
 ## 4. 当前 P0 任务
 
 暂无。当前 P0 已全部关闭。
@@ -350,6 +370,7 @@ P2：本阶段明确不做
 
 要点：
 
+- `GenerationSchedulePlan v0.1` 的 review-only 计划包已完成，后续应基于它实现执行器而不是重新定义调度字段。
 - 区分 blocking、prefetch、background、lazy。
 - 引入预算、失败重试、降级 fixture。
 - 世界演化必须服务玩法和进度，不自由失控生长。
@@ -414,8 +435,8 @@ P2：本阶段明确不做
 建议当前批次按以下顺序推进：
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。
-2. `P1-A` 视频帧 / spritesheet / atlas 增强。
-3. `P1-B` 世界演化预生成与调度。
+2. `P1-A` 真实视频帧 / 实体 spritesheet atlas 增强。
+3. `P1-B` Generation Scheduler 执行器 / live campaign router。
 
 若需要并行，优先组合：
 
