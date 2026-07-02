@@ -160,6 +160,31 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["battle_result"]["settlement"]["node_id"] == "gray_lantern_station"
 
 
+def test_all_battle_nodes_expose_map_runtime_packages(client):
+    sid = _create_session(client)
+    expected = {
+        "gray_lantern_station": "map_pkg_gray_lantern_station_v0_1",
+        "lamp_wick_store": "map_pkg_lamp_wick_store_v0_1",
+        "old_signal_tower": "map_pkg_old_signal_tower_v0_1",
+    }
+    for node_id, package_id in expected.items():
+        battle = _payload(client.get(f"/api/sessions/{sid}/battles/{node_id}/config"))
+        assert battle["battle_config"]["node_id"] == node_id
+        assert battle["map_runtime_package"]["package_id"] == package_id
+        assert battle["map_runtime_package"]["node_id"] == node_id
+        assert battle["map_runtime_package"]["path_routes"]
+        assert battle["map_runtime_package"]["build_slots"]
+
+        runtime = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-runtime-package")
+        )
+        map_package = runtime["map_runtime_package"]
+        assert map_package["package_id"] == package_id
+        assert map_package["node_id"] == node_id
+        roles = {layer["role"] for layer in map_package["visual_layers"]}
+        assert "battle_runtime_background" in roles
+
+
 def test_frontend_mock_endpoints_require_existing_session(client):
     resp = client.get("/api/sessions/missing/frontend-mock-pack")
     assert resp.status_code == 404

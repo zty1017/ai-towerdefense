@@ -63,6 +63,14 @@ _MAP_RUNTIME_PACKAGE_BY_NODE = {
     "gray_lantern_station": (
         _REPO_ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
     ),
+    "lamp_wick_store": (
+        _REPO_ROOT
+        / "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json"
+    ),
+    "old_signal_tower": (
+        _REPO_ROOT
+        / "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+    ),
 }
 
 
