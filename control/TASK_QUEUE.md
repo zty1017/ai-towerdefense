@@ -178,47 +178,21 @@ P2：本阶段明确不做
 - 已验证前端语法、默认玩家底图代码路径、发布底图资源、首战 `MapRuntimePackage` 视觉层 authority、本地 HTTP 静态读取。
 - 当前环境缺 Chromium / Playwright，因此未生成真实截图；该缺口已记录为后续人工或具备浏览器环境的验证项。
 
-## 4. 当前 P0 任务
-
 ### P0-I main 文档受控同步准备
 
-任务类型：治理 / 同步计划
+状态：已完成。
 
-建议分支：
+已落地：
 
-```text
-task/main-sync-plan
-```
+- `docs/MAIN_SYNC_PLAN_2026_07_02.md`
+- 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md`，不得直接覆盖。
+- 给出 develop 晋级 main 前的验证清单、同步策略、禁止操作和人工确认项。
 
-目标：
+## 4. 当前 P0 任务
 
-```text
-生成一份从 develop 同步到 main 前的中文清单，明确哪些文档/实现应同步，哪些用户草稿不能覆盖。
-```
+暂无。当前 P0 已全部关闭。
 
-允许修改：
-
-- `docs/`
-- `control/`
-
-禁止修改：
-
-- `main` 工作区。
-- `.env`
-- 用户未提交草稿。
-
-关键要求：
-
-- 只在 `develop` 派生的 task worktree 中准备同步清单。
-- 不直接合并到 `main`。
-- 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 时的处理策略。
-- 清单应服务下一次人工 / 主代理同步窗口。
-
-验收命令：
-
-```bash
-git diff --check
-```
+下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，尤其是 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的合并策略。
 
 ## 5. P1 任务
 
@@ -310,12 +284,12 @@ git diff --check
 
 建议当前批次按以下顺序推进：
 
-1. `P0-I` main 文档受控同步准备。
+1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。
 2. `P1-A` 视频帧 / spritesheet / atlas 默认接入。
 3. `P1-B` 世界演化预生成与调度。
 
 若需要并行，优先组合：
 
 - `P1-A` 与 `P1-B` 可并行，但都应避免破坏当前 MVP 静态 fixture 路径。
-- `P0-I` 是治理任务，可与 P1 实现任务并行。
+- main 同步执行必须单独进行，不应与大规模 P1 实现任务混在同一 worktree。
 - `P1-A` 视频帧 / atlas 默认接入应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。
