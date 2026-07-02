@@ -1,0 +1,69 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-worker-task-pack-protocol",
+  "title": "WorkerTaskPack v0.1 任务包协议",
+  "task_type": "docs",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-task-pack-v0",
+  "worktree": "/tmp/ai-td-task-worker-task-pack-v0",
+  "objective": "新增可验证的 worker 任务包协议，统一 CodeBuddy、OpenCode、Codex headless 和人类 worker 的必读事实源、写入边界、验收命令、安全规则和汇报格式。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/AGENT_COLLABORATION_AND_GIT_GOVERNANCE.md"
+  ],
+  "allowed_paths": [
+    "docs/",
+    "control/",
+    "shared/schemas/worker_task_pack.v0.1.schema.json",
+    "examples/worker_task_packs/",
+    "tools/dev/validate_worker_task_pack.py"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/",
+    "content/",
+    "tools/media/",
+    "tools/asset_graph/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json",
+    "python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_task_pack_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务包自身只用于协议骨架落地，不调用真实 provider。",
+    "OpenCode headless 在受控 Codex 通道中被环境拒绝时，应使用 local_codex_safe_fallback 并保留拒绝原因。"
+  ]
+}
