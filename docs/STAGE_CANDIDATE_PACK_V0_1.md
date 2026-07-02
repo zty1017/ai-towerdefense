@@ -61,6 +61,13 @@ python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_
 - `validation_gates`：剧情 bundle、WorldStateDelta、剧情玩法契约、资产晋升、runtime package 引用等门禁。
 - `next_actions`：下一步需要人工或代理处理的动作。
 
+包顶层的 `core_artifact_alignment` 明确声明：
+
+- `StageCandidatePack` 是 review-only 阶段候选容器。
+- 它本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应针对每个 `stage_candidates[]` 引用的 `WorldStateDelta`、`WorldStateDeltaTransaction` 或 runtime package，而不是激活整个 review pack。
+
 ## 当前 MVP 结论
 
 当前 MVP 包含四个 reviewed fixture 阶段：

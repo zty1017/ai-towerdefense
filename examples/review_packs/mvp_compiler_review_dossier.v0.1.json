@@ -3079,7 +3079,7 @@
       "path": "docs/STAGE_CANDIDATE_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "4f2901815c96202e3caa8d50fdb6bcc993bcfd58c15e07e07d04f2eaa485921d"
+      "sha256": "c089016b9b7aa10d3bd62fb117c7ad74e147e481613a70c2814c9c50b4fc256d"
     },
     {
       "path": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
@@ -3253,7 +3253,7 @@
       "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
       "kind": "stage_candidate_pack",
       "exists": true,
-      "sha256": "45943ac866e6fe8c3e4e7867713d87a36d7ecd89ec39885f3f4e9b42555fe4a3"
+      "sha256": "4e870cf45c4aada4787229d3c6912a38d08af9677c3d3fa128f9e841ad4bc4fb"
     },
     {
       "path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
@@ -3541,7 +3541,7 @@
       "path": "shared/schemas/stage_candidate_pack.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "b5d8a73d0013b7579ba0ed28358d8315aacf7344192d6576ed5ec7d52cd0cf47"
+      "sha256": "f410b993b7c97e39e8a6f6e7128b80063b1a6173e81bd129b717d6be2b6f1f9a"
     },
     {
       "path": "tools/content_pipeline/build_compilable_object_catalog.py",
@@ -3577,7 +3577,7 @@
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "acec65876775e094df70eda97524a341ba5bbdae39f630782a18558dda0854c4"
+      "sha256": "218803be2389c1c78a701f5dff34264791bcf316df5e92ae680239f8096f62f1"
     },
     {
       "path": "tools/content_pipeline/mock_compile_proposal.py",

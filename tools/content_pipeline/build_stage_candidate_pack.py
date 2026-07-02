@@ -481,6 +481,22 @@ def build_pack(
             "final_run_state": rel(final_state_path),
             "runtime_packages": [rel(path) for path in runtime_package_paths],
         },
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "StageCandidatePack 是 review-only 阶段候选容器；它聚合 narrative bundle、"
+                "WorldStateDelta、玩法对象摘要和 runtime package 引用，但自身不是 "
+                "ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / "
+                "WorldStateDeltaTransaction / runtime package，而不是激活整个 review pack。"
+            ),
+        },
         "stage_candidates": stages,
         "readiness_summary": {
             "stage_count": len(stages),
