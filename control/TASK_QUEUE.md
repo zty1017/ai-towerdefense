@@ -876,6 +876,39 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_executi
 git diff --check
 ```
 
+### P1-B-20 Provider adapter runner 脱敏执行工具
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/provider_adapter/run_provider_adapter.py`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json`
+- `examples/worker_task_packs/p1b_provider_adapter_runner.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 runner dry-run 命令、静态输出校验和 `provider_adapter_runner` evidence 摘要。
+
+当前结论：
+
+- Provider adapter runner 是工具层执行入口，不是后端自动后台执行器。
+- 默认 `fixture` 模式是 deterministic dry-run：不读取 `.env`、不调用 provider、不创建候选 artifact，只输出可校验的 `ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。
+- 显式 `--mode llm_text --live` 才允许调用 `tools/llm/adapter.py` 中的 LLM profile；live 输出仍只能保存 digest、计数和 redacted summary refs，不保存 prompt 正文或 provider 响应正文。
+- 图片/视频 provider adapter、媒体下载、后处理和 media gate 不纳入本任务，应后续单独推进。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json
+python3 tools/provider_adapter/run_provider_adapter.py --executor-request examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json --authorization examples/provider_authorizations/p1b_provider_execution_authorization.example.json --receipt-output /tmp/p1b_provider_adapter_runner.receipt.json --envelope-output /tmp/p1b_provider_adapter_runner.envelope.json --created-at 2026-07-03T00:00:00Z
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
+python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_runner_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

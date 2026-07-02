@@ -1,0 +1,66 @@
+{
+  "schema_version": "provider_adapter_execution_receipt.v0.1",
+  "execution_receipt_id": "padapter_sched_next_map_visual_prefetch_runner_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source": {
+    "session_id": "demo_session_redacted",
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_next_map_visual_prefetch",
+    "object_kind": "map_visual_prefetch",
+    "object_ref": "map_compile_package:old_signal_tower_pressure",
+    "executor_request_id": "gexec_gsrun_example_scheduler_aligned_sched_next_map_visual_prefetch_01",
+    "authorization_ref": "auth_sched_next_map_visual_prefetch_fixture_001",
+    "guard_id": "pguard_example_next_map_visual_prefetch_001",
+    "provider_mode": "manual_authorized_demo",
+    "provider_profile": "image_map_visual_after_review",
+    "worker_id": "provider_adapter_runner",
+    "note": "deterministic dry-run provider adapter runner example"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "provider_adapter_boundary_entered": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "execution": {
+    "status": "fixture_output_ready_for_envelope",
+    "mode": "fixture_backed_no_provider_call",
+    "authorization_ref": "auth_sched_next_map_visual_prefetch_fixture_001",
+    "provider_call_performed_by_receipt_builder": false,
+    "requires_provider_output_envelope": true,
+    "request_digest": null,
+    "result_digest": null,
+    "finish_reason": "dry_run",
+    "redacted_summary": "Dry-run provider adapter boundary recorded. No provider call was performed."
+  },
+  "output_contract": {
+    "must_write_provider_output_envelope": true,
+    "allowed_result_storage": "provider_output_envelope_redacted_only",
+    "temporary_url_policy": "download_then_local_ref_only",
+    "required_next_gates": [
+      "provider_output_envelope",
+      "local_artifact_staging_manifest",
+      "schema_or_media_validation",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ]
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only",
+    "executor_result_storage": "provider_output_envelope_redacted_only"
+  },
+  "adapter_safety": {
+    "reads_env": false,
+    "calls_provider": false,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "writes_world_state": false,
+    "activates_runtime": false
+  }
+}
