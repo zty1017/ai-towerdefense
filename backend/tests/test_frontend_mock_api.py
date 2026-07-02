@@ -236,6 +236,41 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert worker_cache_rows == 1
 
+    live_guard = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={"worker_id": "live-guard-test", "note": "guard before provider"},
+        )
+    )
+    assert live_guard["worker_step"]["status"] == "blocked"
+    assert live_guard["worker_step"]["provider_call_count"] == 0
+    assert live_guard["worker_step"]["world_mutation_count"] == 0
+    assert live_guard["live_executor_guard"]["status"] == (
+        "blocked_pending_explicit_authorization"
+    )
+    assert live_guard["live_executor_guard"]["worker_id"] == "live-guard-test"
+    assert live_guard["live_executor_guard"]["authorization"]["required"] is True
+    assert live_guard["live_executor_guard"]["authorization"]["granted"] is False
+    assert live_guard["live_executor_guard"]["provider_call_performed"] is False
+    assert live_guard["live_executor_guard"]["world_mutation_performed"] is False
+    assert live_guard["live_executor_guard"]["activation_allowed_now"] is False
+    assert live_guard["live_executor_guard"]["raw_prompt_stored"] is False
+    assert live_guard["live_executor_guard"]["provider_response_stored"] is False
+    assert live_guard["provider_guard_logs"]["summary"]["item_count"] == 1
+    assert live_guard["provider_guard_logs"]["summary"]["provider_call_count"] == 0
+    guarded_cache_item = live_guard["generation_schedule_worker_cache"]["items"][0]
+    assert guarded_cache_item["executor_guard"]["status"] == (
+        "blocked_pending_explicit_authorization"
+    )
+    assert guarded_cache_item["activation_gate"]["blocked_reason"] == (
+        "explicit_provider_authorization_required"
+    )
+    provider_log_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM provider_logs WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert provider_log_rows == 1
+
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
         client.post(
@@ -308,6 +343,11 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         (sid,),
     ).fetchone()[0]
     assert worker_cache_rows_after_reset == 0
+    provider_log_rows_after_reset = raw_conn.execute(
+        "SELECT COUNT(*) FROM provider_logs WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert provider_log_rows_after_reset == 0
 
 
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):

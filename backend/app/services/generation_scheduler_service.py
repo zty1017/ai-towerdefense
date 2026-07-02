@@ -355,6 +355,32 @@ def _compact_worker_cache(items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _provider_guard_log_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    status_counts = Counter(str(item.get("status", "unknown")) for item in items)
+    profile_counts = Counter(str(item.get("provider_profile", "unknown")) for item in items)
+    return {
+        "item_count": len(items),
+        "status_counts": dict(sorted(status_counts.items())),
+        "provider_profile_counts": dict(sorted(profile_counts.items())),
+        "provider_call_count": sum(
+            1 for item in items if item.get("provider_call_performed") is True
+        ),
+        "world_mutation_count": sum(
+            1 for item in items if item.get("world_mutation_performed") is True
+        ),
+        "activation_allowed_count": sum(
+            1 for item in items if item.get("activation_allowed_now") is True
+        ),
+    }
+
+
+def _compact_provider_guard_logs(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "summary": _provider_guard_log_summary(items),
+        "items": items,
+    }
+
+
 def _compact_generation_schedule_run(run: dict[str, Any] | None) -> dict[str, Any] | None:
     if run is None:
         return None
@@ -617,6 +643,12 @@ def _transition_generation_queue_item(
 
 
 def _load_next_queued_generation_item_row(session_id: str) -> dict[str, Any] | None:
+    return _load_next_generation_item_row_by_status(session_id, "queued")
+
+
+def _load_next_generation_item_row_by_status(
+    session_id: str, status: str
+) -> dict[str, Any] | None:
     latest = _load_latest_generation_schedule_run(session_id)
     if latest is None:
         return None
@@ -627,7 +659,7 @@ def _load_next_queued_generation_item_row(session_id: str) -> dict[str, Any] | N
             "generation_schedule_queue_items "
             "WHERE session_id = ? AND run_id = ? AND status = ? "
             "ORDER BY id ASC LIMIT 1",
-            (session_id, run_id, "queued"),
+            (session_id, run_id, status),
         )
         row = cur.fetchone()
     if row is None or not row.get("payload"):
@@ -639,6 +671,202 @@ def _load_next_queued_generation_item_row(session_id: str) -> dict[str, Any] | N
         "status": row["status"],
         "payload": json.loads(row["payload"]),
     }
+
+
+def _provider_guard_id(payload: dict[str, Any], attempt_count: int) -> str:
+    run_id = str(payload.get("run_id") or "")
+    schedule_item_id = str(payload.get("schedule_item_id") or "")
+    safe_item_id = "".join(
+        ch if ch.isalnum() or ch in {"_", "-"} else "_"
+        for ch in schedule_item_id
+    )
+    return f"pguard_{run_id}_{safe_item_id}_{attempt_count:02d}"
+
+
+def _build_live_executor_guard_payload(
+    payload: dict[str, Any],
+    metadata: dict[str, Any] | None,
+    ts: str,
+) -> dict[str, Any]:
+    provider_policy = payload.get("provider_policy")
+    if not isinstance(provider_policy, dict):
+        provider_policy = {}
+    attempt_count = int(payload.get("attempt_count", 0))
+    provider_mode = str(provider_policy.get("mode") or "unknown")
+    provider_profile = str(provider_policy.get("profile") or "unknown")
+    return {
+        "guard_id": _provider_guard_id(payload, attempt_count),
+        "schema_version": "generation_live_executor_guard.v0.1",
+        "status": "blocked_pending_explicit_authorization",
+        "run_id": payload.get("run_id"),
+        "session_id": payload.get("session_id"),
+        "schedule_item_id": payload.get("schedule_item_id"),
+        "object_kind": payload.get("object_kind"),
+        "object_ref": payload.get("object_ref"),
+        "latency_class": payload.get("latency_class"),
+        "provider_mode": provider_mode,
+        "provider_profile": provider_profile,
+        "worker_id": (metadata or {}).get("worker_id") or "live_executor_guard",
+        "note": (metadata or {}).get("note"),
+        "attempt_count": attempt_count,
+        "max_attempts": int(payload.get("max_attempts", 0)),
+        "provider_call_performed": False,
+        "world_mutation_performed": False,
+        "activation_allowed_now": False,
+        "raw_prompt_stored": False,
+        "provider_response_stored": False,
+        "authorization": {
+            "required": True,
+            "granted": False,
+            "reason": "explicit_user_authorization_required_before_live_provider_call",
+        },
+        "required_next_gates": [
+            "explicit_user_authorization",
+            "provider_adapter_execution",
+            "artifact_manifest_write",
+            "schema_or_media_validation",
+            "manual_or_semantic_review",
+            "activation_or_promotion_gate",
+        ],
+        "artifact_manifest_placeholder": {
+            "status": "not_created",
+            "reason": "provider_call_blocked_by_guard",
+            "review_only": True,
+        },
+        "safe_content_policy": {
+            "reads_env": False,
+            "calls_provider": False,
+            "writes_world_state": False,
+            "stores_raw_prompt": False,
+            "stores_provider_response": False,
+        },
+        "created_at": ts,
+    }
+
+
+def _insert_provider_guard_log(guard_payload: dict[str, Any]) -> None:
+    with db_cursor() as cur:
+        cur.execute(
+            "INSERT INTO provider_logs (session_id, payload, created_at) VALUES (?, ?, ?)",
+            (
+                str(guard_payload.get("session_id", "")),
+                _dump_payload(guard_payload),
+                str(guard_payload.get("created_at", now_iso())),
+            ),
+        )
+
+
+def _load_provider_guard_logs(
+    session_id: str, run_id: str | None = None
+) -> list[dict[str, Any]]:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM provider_logs WHERE session_id = ? ORDER BY id ASC",
+            (session_id,),
+        )
+        rows = cur.fetchall()
+    logs: list[dict[str, Any]] = []
+    for row in rows:
+        payload_text = row.get("payload") if isinstance(row, dict) else None
+        if not payload_text:
+            continue
+        payload = json.loads(payload_text)
+        if payload.get("schema_version") != "generation_live_executor_guard.v0.1":
+            continue
+        if run_id is not None and str(payload.get("run_id")) != str(run_id):
+            continue
+        logs.append(payload)
+    return logs
+
+
+def _attach_live_executor_guard_to_cache(
+    queue_payload: dict[str, Any],
+    guard_payload: dict[str, Any],
+    ts: str,
+) -> dict[str, Any]:
+    cache_payload = _build_worker_cache_payload(queue_payload, ts)
+    cache_payload["executor_guard"] = {
+        "guard_id": guard_payload["guard_id"],
+        "status": guard_payload["status"],
+        "provider_mode": guard_payload["provider_mode"],
+        "provider_profile": guard_payload["provider_profile"],
+        "authorization_required": True,
+        "provider_call_performed": False,
+        "world_mutation_performed": False,
+        "activation_allowed_now": False,
+    }
+    cache_payload["activation_gate"] = {
+        "revalidate_before_activation": (
+            queue_payload.get("revalidate_before_activation") is True
+        ),
+        "blocked_reason": "explicit_provider_authorization_required",
+    }
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT created_at FROM generation_schedule_worker_cache WHERE cache_id = ?",
+            (cache_payload["cache_id"],),
+        )
+        existing = cur.fetchone()
+        if existing is not None and existing.get("created_at"):
+            cache_payload["created_at"] = str(existing["created_at"])
+        cur.execute(
+            "INSERT INTO generation_schedule_worker_cache "
+            "(cache_id, run_id, session_id, schedule_item_id, status, payload, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(cache_id) DO UPDATE SET "
+            "status = excluded.status, payload = excluded.payload, updated_at = excluded.updated_at",
+            (
+                cache_payload["cache_id"],
+                cache_payload["run_id"],
+                cache_payload["session_id"],
+                cache_payload["schedule_item_id"],
+                str(cache_payload["status"]),
+                _dump_payload(cache_payload),
+                cache_payload["created_at"],
+                ts,
+            ),
+        )
+    return cache_payload
+
+
+def _run_live_executor_guard(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    row = _load_next_generation_item_row_by_status(session_id, "waiting_review")
+    if row is None:
+        return None
+    payload = row["payload"]
+    ts = now_iso()
+    guard_payload = _build_live_executor_guard_payload(payload, metadata, ts)
+    transition_entry = {
+        "transition": "live_executor_guard",
+        "from_status": row["status"],
+        "to_status": row["status"],
+        "worker_id": guard_payload["worker_id"],
+        "note": guard_payload.get("note"),
+        "created_at": ts,
+        "provider_call_performed": False,
+        "world_mutation_performed": False,
+    }
+    transitions = payload.setdefault("transitions", [])
+    if isinstance(transitions, list):
+        transitions.append(transition_entry)
+    payload["live_executor_guard"] = {
+        "guard_id": guard_payload["guard_id"],
+        "status": guard_payload["status"],
+        "created_at": ts,
+    }
+    payload["updated_at"] = ts
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE generation_schedule_queue_items "
+            "SET payload = ?, updated_at = ? WHERE id = ?",
+            (_dump_payload(payload), ts, row["id"]),
+        )
+    _insert_provider_guard_log(guard_payload)
+    _attach_live_executor_guard_to_cache(payload, guard_payload, ts)
+    return guard_payload
 
 
 def _run_generation_dry_worker_step(
@@ -809,6 +1037,33 @@ def run_generation_schedule_dry_worker_step(
     }
 
 
+def run_generation_schedule_live_executor_guard(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    guard_payload = _run_live_executor_guard(session_id, metadata)
+    run = _load_latest_generation_schedule_run(session_id)
+    run_id = str(run.get("run_id", "")) if run is not None else None
+    queue_items = _load_generation_queue_items(session_id, run_id)
+    cache_items = _load_worker_cache_items(session_id, run_id) if run_id else []
+    guard_logs = _load_provider_guard_logs(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "idle" if guard_payload is None else "blocked",
+            "worker_mode": "live_executor_guard",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+        },
+        "live_executor_guard": guard_payload,
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
+        "provider_guard_logs": _compact_provider_guard_logs(guard_logs),
+    }
+
+
 def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
     plan = _load_generation_schedule_plan()
     run_report = _load_generation_schedule_run_report()
@@ -817,10 +1072,18 @@ def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
     latest_worker_cache = (
         _load_worker_cache_items(session_id) if latest_run is not None else []
     )
+    latest_provider_guard_logs = (
+        _load_provider_guard_logs(session_id, str(latest_run.get("run_id")))
+        if latest_run is not None
+        else []
+    )
     return {
         "refs": _generation_schedule_refs(),
         "buffer": _build_generation_schedule_buffer(plan, run_report),
         "latest_run": _compact_generation_schedule_run(latest_run),
         "latest_queue": _compact_generation_queue(latest_queue),
         "latest_worker_cache": _compact_worker_cache(latest_worker_cache),
+        "latest_provider_guard_logs": _compact_provider_guard_logs(
+            latest_provider_guard_logs
+        ),
     }

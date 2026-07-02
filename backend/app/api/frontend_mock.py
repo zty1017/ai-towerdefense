@@ -337,6 +337,26 @@ def run_generation_schedule_dry_worker_step(
     )
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/live-executor-guard",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_schedule_live_executor_guard(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record a blocked live-executor intent without provider calls or world writes."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    return _payload(
+        session_id,
+        generation_scheduler_service.run_generation_schedule_live_executor_guard(
+            session_id,
+            metadata,
+        ),
+    )
+
+
 @router.get(
     "/api/sessions/{session_id}/campaign-router",
     response_model=FrontendMockPayloadResponse,

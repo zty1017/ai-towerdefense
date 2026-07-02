@@ -442,6 +442,37 @@ GET /api/sessions/{session_id}/generation-schedule/worker-cache
 
 这张表不是正式生成缓存，不存 raw prompt，不存 provider response，不持有可直接发布的 runtime package。它的作用是给后续真实 worker / provider 调度器预留 session 级执行记录形态，同时让 Studio / evidence 能证明调度器已经具备“处理、等待复核、阻断激活”的最小闭环。
 
+### 调度 live executor guard
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard
+```
+
+请求体可选：
+
+```json
+{
+  "worker_id": "local-live-guard",
+  "note": "guard before provider"
+}
+```
+
+该接口只处理最近一次调度 run 中已经处于 `waiting_review` 的队列项。它不会执行 provider，而是返回并持久化一条 provider guard log：
+
+- `live_executor_guard.status`: `blocked_pending_explicit_authorization`
+- `authorization.required`: `true`
+- `authorization.granted`: `false`
+- `provider_call_performed`: `false`
+- `world_mutation_performed`: `false`
+- `activation_allowed_now`: `false`
+- `raw_prompt_stored`: `false`
+- `provider_response_stored`: `false`
+- `provider_guard_logs.summary`
+
+同时，`generation_schedule_worker_cache.items[].executor_guard` 会记录该 guard，`activation_gate.blocked_reason` 会变为 `explicit_provider_authorization_required`。
+
+这仍然不是正式后台执行器。它只证明真实 provider 调用前的授权门、产物 manifest 门、校验门和晋升门已经有后端状态落点。没有 `waiting_review` 项时，接口返回 `worker_step.status = idle`。
+
 ### 获取大地图
 
 ```http

@@ -252,6 +252,43 @@ safe_content_policy.stores_provider_response = false
 
 因此 worker cache 只能作为后端状态层和 Studio / evidence 证据使用，不能作为玩家侧内容事实源，不能绕过 CGOP、WorldStateDelta、semantic gate、media gate 或人工 review。后续真实后台执行器可以复用这张表的形态，但必须新增独立的 provider 调用记录、产物 manifest、校验结果和显式 activation / promotion gate。
 
+## Live Executor Guard Skeleton
+
+当前后端还提供真实后台执行器前的最小守门入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard
+```
+
+它只处理最近一次 run 中已经停在 `waiting_review` 的队列项，并写入一条 `generation_live_executor_guard.v0.1` provider guard log。该 log 证明系统已经识别到“这里未来可能需要真实 provider 执行”，但仍然显式阻断：
+
+```text
+provider_call_performed = false
+world_mutation_performed = false
+activation_allowed_now = false
+raw_prompt_stored = false
+provider_response_stored = false
+authorization.required = true
+authorization.granted = false
+```
+
+该入口会把 worker cache 的 `activation_gate.blocked_reason` 更新为：
+
+```text
+explicit_provider_authorization_required
+```
+
+并记录后续真实执行器必须补齐的 gates：
+
+- explicit user authorization
+- provider adapter execution
+- artifact manifest write
+- schema or media validation
+- manual or semantic review
+- activation or promotion gate
+
+这一步仍不读取 `.env`，不调用 provider，不写世界状态，不创建 runtime package，不激活 review-only 产物。它只是把“真实 provider 执行前必须有授权、产物 manifest、校验和晋升门”的形态接到 session 状态层和 evidence 中。
+
 ## Campaign Router 接入
 
 当前后端已经提供最薄的战役路由层：

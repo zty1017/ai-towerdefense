@@ -493,6 +493,25 @@ P2：本阶段明确不做
 - 该层只证明 dry-run worker 已经具备“处理队列项 -> 停在复核门 -> 禁止激活”的 session 级执行记录形态。
 - 它不是正式后台生成缓存；后续真实 worker 必须继续补 provider 调用记录、产物 manifest、校验结果和显式 activation / promotion gate。
 
+### P1-B-8 Generation Scheduler live executor guard
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard`
+- 只处理最近一次 run 中的 `waiting_review` 队列项。
+- 写入 `generation_live_executor_guard.v0.1` provider guard log 到 `provider_logs`。
+- 更新 worker cache 的 `executor_guard` 和 `activation_gate.blocked_reason = explicit_provider_authorization_required`。
+- `/api/sessions/{session_id}/evidence` 会返回最近 provider guard log 摘要。
+- session reset 会清除 provider guard log。
+
+当前结论：
+
+- 该层仍不读取 `.env`，不调用 provider，不保存 raw prompt 或 provider response，不生成新内容，不写世界状态，不激活 review-only 产物。
+- 它只把真实 provider 执行器前置的授权门、artifact manifest 门、校验门、人工/语义复核门和 activation / promotion gate 接入后端状态层。
+- 下一步真实执行器必须基于该 guard 继续补显式授权、provider adapter、产物 manifest、validator 结果和 promotion report，不能直接把 provider 输出写入 runtime。
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造
