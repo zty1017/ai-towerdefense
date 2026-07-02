@@ -18,6 +18,8 @@
     map: "/game_data/demo/initial_map.json",
     briefing: "/game_data/demo/first_crisis_node.json",
     battleConfig: "/game_data/demo/first_battle_config.json",
+    mapRuntimePackage:
+      "/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
   };
 
   const DEFAULT_WORLD_CONFIG = {
@@ -282,6 +284,7 @@
       map,
       briefing,
       battleConfig,
+      mapRuntimePackage,
     ] = await Promise.all([
       fetchJson(STATIC_PATHS.pack, {}, 3600),
       fetchJson(STATIC_PATHS.runtimeKit, {}, 3600),
@@ -293,6 +296,7 @@
       fetchJson(STATIC_PATHS.map, {}, 3600),
       fetchJson(STATIC_PATHS.briefing, {}, 3600),
       fetchJson(STATIC_PATHS.battleConfig, {}, 3600),
+      fetchJson(STATIC_PATHS.mapRuntimePackage, {}, 3600).catch(() => null),
     ]);
     state.data = {
       pack,
@@ -305,6 +309,7 @@
       map,
       briefing,
       battleConfig,
+      mapRuntimePackage,
     };
   }
 
@@ -341,11 +346,23 @@
         5000,
       );
       state.data.battleConfig = response.battle_config;
+      state.data.mapRuntimePackage = response.map_runtime_package || null;
       state.data.toolbarAssets = response.toolbar_assets;
       state.data.sampleDeliveryAsset = response.sample_delivery_asset;
       state.data.mediaManifest = response.media_manifest;
       state.data.runtimeKit = response.runtime_art_kit;
       state.data.runtimeMediaManifest = response.runtime_art_media_manifest;
+      if (!state.data.mapRuntimePackage) {
+        try {
+          const mapResponse = await apiGet(
+            `/api/sessions/${encodeURIComponent(state.sessionId)}/battles/${NODE_ID}/map-runtime-package`,
+            3600,
+          );
+          state.data.mapRuntimePackage = mapResponse.map_runtime_package;
+        } catch {
+          state.data.mapRuntimePackage = null;
+        }
+      }
     }
     return state.data.battleConfig;
   }
@@ -421,6 +438,36 @@
     return state.data.battleConfig || {};
   }
 
+  function mapRuntimePackage() {
+    return state.data.mapRuntimePackage || {};
+  }
+
+  function mapGrid() {
+    return mapRuntimePackage().grid || battleConfig().grid || { width_cells: 16, height_cells: 9 };
+  }
+
+  function mapObjectives() {
+    const fromPackage = mapRuntimePackage().objectives || {};
+    const config = battleConfig();
+    if (fromPackage.core_target) return fromPackage;
+    return {
+      core_target: normalizeTarget(config.core_target, "target_node_core"),
+      optional_targets: (config.optional_targets || []).map((target, index) =>
+        normalizeTarget(target, `optional_target_${index + 1}`),
+      ),
+    };
+  }
+
+  function normalizeTarget(target, fallbackId) {
+    const data = target || {};
+    return {
+      target_id: data.target_id || data.stable_internal_id || fallbackId,
+      display_name: data.display_name || "防守目标",
+      position: data.position || { x: 0, y: 0 },
+      durability: data.durability || 1,
+    };
+  }
+
   function manifestItems(manifest) {
     return Array.isArray(manifest && manifest.items) ? manifest.items : [];
   }
@@ -469,6 +516,10 @@
   }
 
   function mapVisualUrl(role) {
+    const packageLayer = (mapRuntimePackage().visual_layers || []).find(
+      (entry) => entry.role === role,
+    );
+    if (packageLayer && packageLayer.url) return assetUrl(packageLayer.url);
     const item = manifestItems(state.data.mapVisualManifest).find((entry) => entry.role === role);
     return item ? assetUrl(item.url) : "";
   }
@@ -1077,9 +1128,11 @@
 
   function createBattleState() {
     const config = battleConfig();
+    const objectives = mapObjectives();
     const sample = config.sample_asset || {};
     return {
       config,
+      mapPackage: mapRuntimePackage(),
       elapsedMs: 0,
       speed: 1,
       paused: false,
@@ -1089,8 +1142,8 @@
       effects: [],
       resources: 115,
       power: 8,
-      coreHp: (config.core_target || {}).durability || 10,
-      optionalHp: ((config.optional_targets || [])[0] || {}).durability || 4,
+      coreHp: (objectives.core_target || {}).durability || 10,
+      optionalHp: ((objectives.optional_targets || [])[0] || {}).durability || 4,
       leaks: 0,
       kills: 0,
       selectedTool: "basic",
@@ -1159,7 +1212,7 @@
   }
 
   function computeBattleMetrics(width, height) {
-    const grid = battleConfig().grid || { width_cells: 16, height_cells: 9 };
+    const grid = mapGrid();
     const sum = grid.width_cells + grid.height_cells;
     const tileW = clamp(Math.min(((width - 80) * 2) / sum, ((height - 110) * 4) / sum), 38, 112);
     const tileH = tileW * 0.52;
@@ -1224,34 +1277,49 @@
 
   function isCellInGrid(cell) {
     const battle = state.battle;
+    const grid = mapGrid();
     if (!battle || !cell) return false;
     return (
       cell.x >= 0 &&
       cell.y >= 0 &&
-      cell.x < battle.config.grid.width_cells &&
-      cell.y < battle.config.grid.height_cells
+      cell.x < grid.width_cells &&
+      cell.y < grid.height_cells
     );
   }
 
   function pathWaypoints() {
-    return (((battleConfig().paths || [])[0] || {}).waypoints || []).map((p) => ({ x: p.x, y: p.y }));
+    const routes = mapRuntimePackage().path_routes || [];
+    const configPaths = battleConfig().paths || [];
+    const firstRoute = routes[0] || configPaths[0] || {};
+    return (firstRoute.waypoints || []).map((p) => ({ x: p.x, y: p.y }));
+  }
+
+  function allPathRoutes() {
+    const routes = mapRuntimePackage().path_routes || [];
+    if (routes.length) return routes;
+    return (battleConfig().paths || []).map((route) => ({
+      route_id: route.stable_internal_id,
+      waypoints: route.waypoints || [],
+    }));
   }
 
   function pathCells() {
-    const points = pathWaypoints();
     const cells = [];
-    for (let i = 0; i < points.length - 1; i += 1) {
-      const a = points[i];
-      const b = points[i + 1];
-      const dx = Math.sign(b.x - a.x);
-      const dy = Math.sign(b.y - a.y);
-      let x = a.x;
-      let y = a.y;
-      cells.push(`${x},${y}`);
-      while (x !== b.x || y !== b.y) {
-        if (x !== b.x) x += dx;
-        if (y !== b.y) y += dy;
+    for (const route of allPathRoutes()) {
+      const points = (route.waypoints || []).map((p) => ({ x: p.x, y: p.y }));
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        const dx = Math.sign(b.x - a.x);
+        const dy = Math.sign(b.y - a.y);
+        let x = a.x;
+        let y = a.y;
         cells.push(`${x},${y}`);
+        while (x !== b.x || y !== b.y) {
+          if (x !== b.x) x += dx;
+          if (y !== b.y) y += dy;
+          cells.push(`${x},${y}`);
+        }
       }
     }
     return [...new Set(cells)].map((key) => {
@@ -1261,9 +1329,9 @@
   }
 
   function distanceToPath(cell) {
-    return Math.min(
-      ...pathCells().map((pathCell) => Math.hypot(pathCell.x - cell.x, pathCell.y - cell.y)),
-    );
+    const cells = pathCells();
+    if (!cells.length) return Infinity;
+    return Math.min(...cells.map((pathCell) => Math.hypot(pathCell.x - cell.x, pathCell.y - cell.y)));
   }
 
   function onBattleCanvasClick(event) {
@@ -1336,10 +1404,38 @@
 
   function canPreviewToolAt(tool, cell) {
     if (!isCellInGrid(cell) || !toolReady(tool)) return false;
-    if (tool === "basic") return distanceToPath(cell) <= 1.5 && !isOccupied(cell);
-    if (tool === "sample") return distanceToPath(cell) <= 0.75 && !isOccupied(cell);
+    if (tool === "basic" || tool === "sample") return canPlaceToolAt(tool, cell);
     if (tool === "support") return true;
     return false;
+  }
+
+  function buildSlots() {
+    return mapRuntimePackage().build_slots || [];
+  }
+
+  function slotAt(cell) {
+    return buildSlots().find(
+      (slot) => slot.position && slot.position.x === cell.x && slot.position.y === cell.y,
+    );
+  }
+
+  function assetKindForTool(tool) {
+    if (tool === "sample") return "temporary_trap_sample";
+    if (tool === "basic") return "tower_blueprint";
+    return "support_item";
+  }
+
+  function canPlaceToolAt(tool, cell) {
+    if (!isCellInGrid(cell) || isOccupied(cell)) return false;
+    const slots = buildSlots();
+    if (!slots.length) {
+      const maxDistance = tool === "sample" ? 0.75 : 1.5;
+      return distanceToPath(cell) <= maxDistance;
+    }
+    const slot = slotAt(cell);
+    if (!slot) return false;
+    const allowed = slot.allowed_asset_kinds || [];
+    return allowed.includes(assetKindForTool(tool));
   }
 
   function isOccupied(cell) {
@@ -1356,8 +1452,8 @@
       setBattleToast("材料或冷却不足");
       return;
     }
-    if (distanceToPath(cell) > 1.5 || isOccupied(cell)) {
-      setBattleToast("灯栏需要靠近路径");
+    if (!canPlaceToolAt("basic", cell)) {
+      setBattleToast("灯栏需要放在可部署基座");
       return;
     }
     battle.basicUses -= 1;
@@ -1383,8 +1479,8 @@
       setBattleToast("样品尚不可用");
       return;
     }
-    if (distanceToPath(cell) > 0.75 || isOccupied(cell)) {
-      setBattleToast("绊索需要部署在路径上");
+    if (!canPlaceToolAt("sample", cell)) {
+      setBattleToast("绊索需要放在可部署基座");
       return;
     }
     battle.sampleUses -= 1;
@@ -1691,9 +1787,12 @@
   function updateBattleDom() {
     const battle = state.battle;
     if (!battle.dom) return;
+    const objectives = mapObjectives();
+    const coreTarget = objectives.core_target || {};
+    const optionalTarget = (objectives.optional_targets || [])[0] || {};
     battle.dom.stats.innerHTML = `
       <div class="top-stat"><span>波次</span><strong>${safeText(waveLabel())}</strong></div>
-      <div class="top-stat"><span>核心</span><strong>${battle.coreHp}/${(battle.config.core_target || {}).durability || 10}</strong></div>
+      <div class="top-stat"><span>核心</span><strong>${battle.coreHp}/${coreTarget.durability || 10}</strong></div>
       <div class="top-stat"><span>电力</span><strong>${battle.power}</strong></div>
       <div class="top-stat"><span>材料</span><strong>${battle.resources}</strong></div>
       <div class="top-stat"><span>漏失</span><strong>${battle.leaks}</strong></div>
@@ -1702,7 +1801,7 @@
       <h2 class="panel-title">本场目标</h2>
       <div class="event-list">
         <div class="event-item"><strong>守住核心</strong><span>${safeText(battle.config.victory_condition || "")}</span></div>
-        <div class="event-item"><strong>保护信标</strong><span>当前耐久 ${battle.optionalHp}/${((battle.config.optional_targets || [])[0] || {}).durability || 4}</span></div>
+        <div class="event-item"><strong>保护信标</strong><span>当前耐久 ${battle.optionalHp}/${optionalTarget.durability || 4}</span></div>
         <div class="event-item"><strong>现场状态</strong><span>${safeText(battle.sampleDelivered ? "折光绊索已送达。" : sampleProgressMessage())}</span></div>
         <div class="event-item"><strong>环境影响</strong><span>低雾压在路径转角，迟滞场更容易成形。</span></div>
       </div>
@@ -1840,7 +1939,7 @@
   }
 
   function drawGrid(ctx) {
-    const grid = battleConfig().grid || { width_cells: 16, height_cells: 9 };
+    const grid = mapGrid();
     for (let y = 0; y < grid.height_cells; y += 1) {
       for (let x = 0; x < grid.width_cells; x += 1) {
         const p = projectCell(x, y);
@@ -1858,34 +1957,36 @@
   }
 
   function drawPath(ctx) {
-    const points = pathWaypoints().map((p) => projectCell(p.x, p.y));
-    if (points.length < 2) return;
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "rgba(30,25,18,.32)";
-    ctx.lineWidth = Math.max(36, state.battle.metrics.tileW * 0.46);
-    ctx.beginPath();
-    points.forEach((p, index) => {
-      if (index === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(255,225,161,.2)";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    points.forEach((p, index) => {
-      if (index === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
-    ctx.stroke();
+    for (const route of allPathRoutes()) {
+      const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
+      if (points.length < 2) continue;
+      ctx.strokeStyle = "rgba(30,25,18,.32)";
+      ctx.lineWidth = Math.max(36, state.battle.metrics.tileW * 0.46);
+      ctx.beginPath();
+      points.forEach((p, index) => {
+        if (index === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,225,161,.2)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      points.forEach((p, index) => {
+        if (index === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
   function drawDeployHints(ctx) {
     const battle = state.battle;
     const m = battle.metrics;
-    for (const cell of suggestedSockets()) {
+    for (const cell of suggestedSockets().map((slot) => slot.position || slot)) {
       const p = projectCell(cell.x, cell.y);
       ctx.save();
       ctx.fillStyle = "rgba(0,0,0,.24)";
@@ -1932,22 +2033,24 @@
   }
 
   function suggestedSockets() {
+    const slots = buildSlots();
+    if (slots.length) return slots;
     return [
-      { x: 12, y: 3 },
-      { x: 9, y: 3 },
-      { x: 8, y: 1 },
-      { x: 5, y: 1 },
-      { x: 6, y: 5 },
-      { x: 3, y: 5 },
+      { position: { x: 12, y: 3 } },
+      { position: { x: 9, y: 3 } },
+      { position: { x: 8, y: 1 } },
+      { position: { x: 5, y: 1 } },
+      { position: { x: 6, y: 5 } },
+      { position: { x: 3, y: 5 } },
     ];
   }
 
   function drawWorldObjects(ctx) {
-    const config = battleConfig();
-    const core = config.core_target || { position: { x: 0, y: 6 } };
+    const objectives = mapObjectives();
+    const core = objectives.core_target || { position: { x: 0, y: 6 } };
     const coreP = projectCell(core.position.x, core.position.y);
     drawSprite(ctx, mediaUrl("objective_station_core", "objective_sprite", true), coreP.x, coreP.y, 92);
-    for (const target of config.optional_targets || []) {
+    for (const target of objectives.optional_targets || []) {
       const p = projectCell(target.position.x, target.position.y);
       drawSprite(ctx, mediaUrl("objective_signal_beacon", "objective_sprite", true), p.x, p.y, 72);
     }
@@ -2098,7 +2201,7 @@
     state.battleOutcome = {
       result: result === "victory" ? "victory" : "defeat",
       protected_core_hp: Math.max(0, battle.coreHp),
-      optional_target_state: battle.optionalHp < (((battle.config.optional_targets || [])[0] || {}).durability || 4) ? "damaged" : "intact",
+      optional_target_state: battle.optionalHp < ((((mapObjectives().optional_targets || [])[0] || {}).durability) || 4) ? "damaged" : "intact",
       deployed_asset_ids: [...new Set(battle.deployedAssetIds)],
       leaked_enemy_count: battle.leaks,
       kills: battle.kills,

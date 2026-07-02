@@ -18,6 +18,8 @@ http://127.0.0.1:8000/frontend/index.html
 
 前端会优先创建匿名 session，并调用 `/api/sessions/{session_id}/...` 下的前端 mock API、研发提案 API 和战斗结果 API。媒体资源走后端挂载的 `/assets/frontend_mock/...` 与 `/assets/frontend_runtime_mock/...`。
 
+战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
+
 如果你希望用独立静态服务打开前端，也可以在 URL 上指定后端：
 
 ```text
@@ -44,6 +46,7 @@ http://127.0.0.1:5174/frontend/index.html
 - `examples/frontend_mock/frontend_battle_mock_art_kit.v0.1.json`
 - `game_data/media/frontend_mock/frontend_media_manifest.v0.1.json`
 - `game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json`
+- `examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json`
 - `game_data/demo/*.json`
 - `content/worldbooks/long_night_lanterns/*.json`
 
