@@ -1,0 +1,132 @@
+{
+  "schema_version": "run_world_state.v0.1",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "progress": {
+    "chapter": 1,
+    "turn": 1,
+    "phase": "post_first_defense"
+  },
+  "global_state": {
+    "pressure": 0.3,
+    "hope": 0.67,
+    "visibility": 0.28
+  },
+  "resources": [
+    {
+      "resource_id": "lamp_oil",
+      "amount": 11
+    },
+    {
+      "resource_id": "iron_scrap",
+      "amount": 5
+    },
+    {
+      "resource_id": "rationed_food",
+      "amount": 8
+    }
+  ],
+  "map_nodes": [
+    {
+      "node_id": "gray_lantern_station",
+      "status": "secured",
+      "threat_level": 0,
+      "visibility": "visible",
+      "available_actions": [
+        "field_research",
+        "rest"
+      ]
+    },
+    {
+      "node_id": "northern_road_crossing",
+      "status": "known",
+      "threat_level": 1,
+      "visibility": "scouted",
+      "available_actions": [
+        "scout",
+        "field_research"
+      ]
+    },
+    {
+      "node_id": "old_signal_tower",
+      "status": "unknown",
+      "threat_level": 0,
+      "visibility": "hidden",
+      "available_actions": []
+    }
+  ],
+  "npcs": [
+    {
+      "npc_id": "engineer_001",
+      "location_node_id": "gray_lantern_station",
+      "narrative_roles": [
+        "battle_feedback"
+      ],
+      "gameplay_roles": [
+        "field_engineer"
+      ],
+      "relationship": {
+        "trust": 0.45
+      },
+      "availability": "present"
+    },
+    {
+      "npc_id": "scout_002",
+      "location_node_id": "northern_road_crossing",
+      "narrative_roles": [
+        "world_observation"
+      ],
+      "gameplay_roles": [
+        "scout"
+      ],
+      "relationship": {
+        "trust": 0.3
+      },
+      "availability": "present"
+    }
+  ],
+  "unlocked_facts": [
+    {
+      "fact_id": "refraction_trap_observed",
+      "source": "first_battle",
+      "visibility": "player_known",
+      "summary": "灰灯驿站的折射陷阱在夜雾中第一次显形。"
+    },
+    {
+      "fact_id": "sample_trap_tested_in_battle",
+      "source": "first_battle",
+      "visibility": "player_known",
+      "summary": "折光绊索在灰灯驿站实战中成功拖慢了来犯影潮。"
+    }
+  ],
+  "event_log": [
+    {
+      "event_id": "intro_arrival",
+      "turn": 1,
+      "kind": "story",
+      "summary": "玩家抵达灰灯驿站，长夜尚未散去。"
+    },
+    {
+      "event_id": "gray_lantern_first_defense_success",
+      "turn": 2,
+      "kind": "battle",
+      "summary": "灰灯驿站首战告捷，折光绊索拖慢了夜雾来影，驿站灯火仍亮。"
+    }
+  ],
+  "research": {
+    "active_jobs": [],
+    "known_blueprints": [],
+    "temporary_samples": [
+      {
+        "sample_id": "sample_trap_7f3a_repaired",
+        "display_name": "折光绊索",
+        "source_delta_id": "delta_stage_01_gray_lantern_first_defense",
+        "summary": "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
+      }
+    ]
+  },
+  "flags": {
+    "tutorial_first_battle_started": false,
+    "tutorial_first_battle_completed": true
+  }
+}

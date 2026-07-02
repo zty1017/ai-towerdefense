@@ -27,6 +27,23 @@ MAX_VALIDATION_OUTPUT_CHARS = 1400
 MAX_SAMPLE_ITEMS = 12
 MAP_RUNTIME_PACKAGE_DIR = ROOT / "examples/map_runtime_packages"
 MAP_COMPILE_PACKAGE_DIR = ROOT / "examples/map_compile_packages"
+WORLD_DELTA_TRANSACTION_DIR = ROOT / "examples/world_delta_transactions"
+STAGE_WORLD_DELTA_TRANSACTION_PATHS = [
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_01_gray_lantern_first_defense.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_02_dawn_review_supply_line.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_03_northern_road_scouting.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_04_wick_store_pressure_battle.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_05_old_signal_tower_pressure.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_06_signal_resonance_trial.world_delta_transaction.json",
+    WORLD_DELTA_TRANSACTION_DIR
+    / "stage_07_split_tide_containment.world_delta_transaction.json",
+]
 
 
 PATHS = {
@@ -318,6 +335,17 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/world_state/validate_world_delta_transaction.py",
             "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+        ],
+    },
+    {
+        "name": "world_delta_transaction_chain",
+        "command": [
+            "python3",
+            "tools/world_state/validate_world_delta_transaction.py",
+            *[
+                str(path.relative_to(ROOT))
+                for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
+            ],
         ],
     },
     {
@@ -960,6 +988,26 @@ def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, An
     }
 
 
+def collect_world_delta_transaction_chain(
+    transactions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    summaries = [collect_world_delta_transaction(transaction) for transaction in transactions]
+    statuses = Counter(str(item.get("status")) for item in summaries)
+    sources = Counter(str(item.get("source")) for item in summaries)
+    scope_kinds = Counter(str(item.get("scope_kind")) for item in summaries)
+    return {
+        "transaction_count": len(summaries),
+        "status_counts": dict(sorted(statuses.items())),
+        "source_counts": dict(sorted(sources.items())),
+        "scope_kind_counts": dict(sorted(scope_kinds.items())),
+        "total_operation_mapping_count": sum(
+            int(item.get("operation_mapping_count") or 0) for item in summaries
+        ),
+        "transaction_ids": [item.get("transaction_id") for item in summaries],
+        "transactions": summaries,
+    }
+
+
 def collect_assets_and_media(
     frontend_pack: dict[str, Any],
     frontend_media_manifest: dict[str, Any],
@@ -1211,6 +1259,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
     ]
     source_paths.extend(
+        ("world_delta_transaction", path)
+        for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
+    )
+    source_paths.extend(
         ("locked_manifest", path)
         for path in sorted((ROOT / "examples/locked_manifests").glob("*.json"))
     )
@@ -1278,6 +1330,9 @@ def build_evidence() -> dict[str, Any]:
     generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
     generation_schedule_run_report = load_json(PATHS["generation_schedule_run_report"])
     world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
+    world_delta_transactions = [
+        load_json(path) for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
+    ]
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -1319,6 +1374,9 @@ def build_evidence() -> dict[str, Any]:
             generation_schedule_run_report,
         ),
         "world_delta_transaction": collect_world_delta_transaction(world_delta_transaction),
+        "world_delta_transaction_chain": collect_world_delta_transaction_chain(
+            world_delta_transactions
+        ),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
@@ -1373,6 +1431,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
+    world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
@@ -1449,6 +1508,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for item in as_list(scheduler.get("items"))
     ]
+    world_transaction_rows = [
+        [
+            item.get("transaction_id"),
+            item.get("source"),
+            item.get("scope_kind"),
+            item.get("operation_mapping_count"),
+            item.get("status"),
+        ]
+        for item in as_list(world_transaction_chain.get("transactions"))
+    ]
     lines = [
         "# AI 编译塔防 MVP 演示证据包",
         "",
@@ -1483,6 +1552,10 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Delta：`{world_transaction.get('delta_id')}`，来源：`{world_transaction.get('source')}`，节点：`{', '.join(str(node) for node in as_list(world_transaction.get('node_ids')))}`",
         f"- operation 映射数：`{world_transaction.get('operation_mapping_count')}`，冲突策略：`{world_transaction.get('conflict_policy')}`，回滚策略：`{world_transaction.get('rollback_policy')}`",
         f"- 验证：结构 `{world_transaction_report.get('world_delta_structure')}`，语义 `{world_transaction_report.get('world_delta_semantics')}`，映射 `{world_transaction_report.get('operation_mapping')}`，apply `{world_transaction_report.get('runtime_apply_checked')}`",
+        f"- 事务链：`{world_transaction_chain.get('transaction_count')}` 个阶段事务，合计映射 `{world_transaction_chain.get('total_operation_mapping_count')}` 个 WorldStateDelta operation",
+        f"- 来源分布：`{world_transaction_chain.get('source_counts')}`；状态分布：`{world_transaction_chain.get('status_counts')}`",
+        "",
+        md_table(["事务", "来源", "提交范围", "op 数", "状态"], world_transaction_rows),
         "",
         "## 3. Runtime 与地图包",
         "",
@@ -1644,6 +1717,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
+    world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1799,8 +1873,8 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         </article>
         <article class="card">
           <div class="eyebrow">世界事务</div>
-          <div class="metric">{html_escape(world_transaction_report.get("gate_status"))}</div>
-          <p class="muted">{html_escape(world_transaction.get("transaction_id"))}；映射 {html_escape(world_transaction.get("operation_mapping_count"))} 个 delta operation。</p>
+          <div class="metric">{html_escape(world_transaction_chain.get("transaction_count"))}</div>
+          <p class="muted">{html_escape(world_transaction_report.get("gate_status"))}；事务链映射 {html_escape(world_transaction_chain.get("total_operation_mapping_count"))} 个 delta operation。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapRuntimePackage</div>

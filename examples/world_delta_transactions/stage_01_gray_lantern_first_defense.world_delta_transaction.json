@@ -1,0 +1,160 @@
+{
+  "schema_version": "world_state_delta_transaction.v0.1",
+  "transaction_id": "tx_stage_01_gray_lantern_first_defense_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "actor": "system",
+  "source": "battle_result",
+  "created_turn": 2,
+  "created_at": "2026-07-02T00:00:00Z",
+  "base_world_version": "run_demo_001:before_stage_01",
+  "idempotency_key": "run_demo_001:delta_stage_01_gray_lantern_first_defense",
+  "scope": {
+    "kind": "battle_result_commit",
+    "node_ids": [
+      "gray_lantern_station"
+    ],
+    "object_refs": [
+      "event:gray_lantern_first_defense_success",
+      "map_node:gray_lantern_station",
+      "resource:lamp_oil",
+      "fact:sample_trap_tested_in_battle",
+      "sample:sample_trap_7f3a_repaired",
+      "phase:post_first_defense",
+      "flag:tutorial_first_battle_completed"
+    ],
+    "state_fields": [
+      "events.gray_lantern_first_defense_success",
+      "map_nodes.gray_lantern_station",
+      "resources.lamp_oil",
+      "facts.sample_trap_tested_in_battle",
+      "research.temporary_samples.sample_trap_7f3a_repaired",
+      "progress_phase",
+      "flags.tutorial_first_battle_completed",
+      "global_state.hope",
+      "global_state.pressure"
+    ]
+  },
+  "source_refs": {
+    "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+    "battle_result_path": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
+    "run_state_before_path": "examples/run_world_states/demo_initial.run_world_state.json",
+    "run_state_after_path": "examples/run_world_states/demo_after_stage_01_gray_lantern.run_world_state.json"
+  },
+  "world_state_delta_ref": {
+    "path": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
+    "schema_version": "world_state_delta.v0.1",
+    "delta_id": "delta_stage_01_gray_lantern_first_defense",
+    "sha256": "a334dc8f3ba1dc2fa21207bc3bc76f2bd3fc86255157fc7044c2d96349ebfb73"
+  },
+  "preconditions": [
+    {
+      "kind": "run_state_version",
+      "ref": "run_demo_001:before_stage_01",
+      "summary": "提交前使用 examples/run_world_states/demo_initial.run_world_state.json 快照。"
+    },
+    {
+      "kind": "artifact_available",
+      "ref": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
+      "summary": "来源产物已经生成并通过白名单 delta gate。"
+    },
+    {
+      "kind": "node_state",
+      "ref": "map_nodes.gray_lantern_station",
+      "summary": "相关地图节点存在于提交前运行态或本次受控引入范围。"
+    }
+  ],
+  "operation_effects_mapping": [
+    {
+      "operation_index": 0,
+      "op": "append_event",
+      "target_ref": "events.gray_lantern_first_defense_success",
+      "effect_kind": "event_append",
+      "summary": "将 append_event 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 1,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.gray_lantern_station",
+      "effect_kind": "map_node_patch",
+      "summary": "将 set_map_node_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 2,
+      "op": "adjust_resource",
+      "target_ref": "resources.lamp_oil",
+      "effect_kind": "resource_delta",
+      "summary": "将 adjust_resource 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 3,
+      "op": "unlock_fact",
+      "target_ref": "facts.sample_trap_tested_in_battle",
+      "effect_kind": "fact_unlock",
+      "summary": "将 unlock_fact 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 4,
+      "op": "add_temporary_sample",
+      "target_ref": "research.temporary_samples.sample_trap_7f3a_repaired",
+      "effect_kind": "sample_registration",
+      "summary": "将 add_temporary_sample 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 5,
+      "op": "set_progress_phase",
+      "target_ref": "progress_phase",
+      "effect_kind": "phase_change",
+      "summary": "将 set_progress_phase 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 6,
+      "op": "set_flag",
+      "target_ref": "flags.tutorial_first_battle_completed",
+      "effect_kind": "flag_set",
+      "summary": "将 set_flag 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 7,
+      "op": "adjust_global_state",
+      "target_ref": "global_state.hope",
+      "effect_kind": "global_state_delta",
+      "summary": "将 adjust_global_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 8,
+      "op": "adjust_global_state",
+      "target_ref": "global_state.pressure",
+      "effect_kind": "global_state_delta",
+      "summary": "将 adjust_global_state 提交到受控运行态字段。"
+    }
+  ],
+  "conflict_policy": {
+    "mode": "reject_on_conflict",
+    "conflict_keys": [
+      "events.gray_lantern_first_defense_success",
+      "map_nodes.gray_lantern_station",
+      "resources.lamp_oil",
+      "facts.sample_trap_tested_in_battle",
+      "research.temporary_samples.sample_trap_7f3a_repaired",
+      "progress_phase",
+      "flags.tutorial_first_battle_completed",
+      "global_state.hope",
+      "global_state.pressure"
+    ]
+  },
+  "rollback_policy": {
+    "mode": "required_snapshot",
+    "inverse_operations_required": false,
+    "notes": "v0.1 事务壳依赖提交前 RunWorldState 快照回滚，不生成通用逆向操作 DSL。"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "world_delta_structure": "passed",
+    "world_delta_semantics": "passed",
+    "operation_mapping": "passed",
+    "runtime_apply_checked": true,
+    "warnings": []
+  },
+  "status": "committed"
+}
