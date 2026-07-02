@@ -20,7 +20,7 @@
 - 接口不读取 `.env`。
 - 前端看到的是统一后端 API，不需要直接读仓库 JSON 文件。
 - 战斗运行时 mock 美术包是开发者预编译结果，不是玩家侧现场编译结果。
-- 当前动效资源已经接入 `MediaAtlasManifest v0.1` 的 `virtual_single_frame` 模式：种子图已经生成，processed PNG 已进入 atlas 入口；真实视频帧 / spritesheet 后续再补。
+- 当前动效资源已经接入 `MediaAtlasManifest v0.1` 的 `spritesheet` 兼容模式：种子图已经生成，processed PNG 已派生为确定性多帧 atlas frame sequence；真实图生视频关键帧后续再替换。
 - 塔防战斗地图优先消费 `MapRuntimePackage v0.1`。`battle_config` 仍保留为旧兼容和调试输入，但前端不应从地图图片反推路径、塔位、碰撞或目标。
 
 ## 静态媒体
@@ -30,12 +30,15 @@
 ```text
 /assets/frontend_mock/processed
 /assets/frontend_mock/generated
+/assets/frontend_mock/atlas_frames
 /assets/frontend_runtime_mock/processed
 /assets/frontend_runtime_mock/generated
+/assets/frontend_runtime_mock/atlas_frames
 ```
 
 `processed` 是前端默认使用的透明 PNG。  
 `generated` 是后续图生视频 / 动画卡管线的种子图来源。
+`atlas_frames` 是当前多帧 atlas 的独立 PNG frame sequence。
 
 `frontend_runtime_mock` 覆盖战斗画面需要的敌人、保护目标、基础防御件、NPC 头像、地图 token 和程序化特效；它服务前端 mock 运行，不污染玩家侧叙事。
 
@@ -94,12 +97,12 @@ GET /api/sessions/{session_id}/frontend-mock-pack
 - `pack`: `examples/frontend_mock/frontend_mock_pack.v0.1.json`
 - `media_manifest`: processed 媒体清单
 - `animation_seed_manifest`: 图生视频种子图清单
-- `media_atlas_manifest`: 前端编译资产 atlas 清单，当前为 `virtual_single_frame`
+- `media_atlas_manifest`: 前端编译资产 atlas 清单，当前为 `spritesheet` 兼容多帧 frame sequence
 - `animation_pipeline_status`
 - `runtime_art_kit`: 开发者预编译战斗运行时美术包
 - `runtime_art_media_manifest`: processed 运行时美术媒体清单
 - `runtime_art_animation_seed_manifest`: 图生视频种子图清单
-- `runtime_art_atlas_manifest`: 战斗运行时美术 atlas 清单，当前为 `virtual_single_frame`
+- `runtime_art_atlas_manifest`: 战斗运行时美术 atlas 清单，当前为 `spritesheet` 兼容多帧 frame sequence
 - `runtime_art_pipeline_status`
 
 ### 获取开场
@@ -141,10 +144,10 @@ GET /api/sessions/{session_id}/runtime-art-kit
 当前状态：
 
 ```text
-developer_compiled_virtual_atlas_ready_video_frames_not_generated
+developer_compiled_multiframe_atlas_ready_video_keyframes_not_generated
 ```
 
-含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG，并已经进入 virtual atlas；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；真实视频帧和 spritesheet 后续再补。
+含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG，并且 sprite 类资产已经进入多帧 atlas；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；真实图生视频关键帧和实体 atlas PNG 后续再补。
 
 ### 获取大地图
 

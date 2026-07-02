@@ -34,8 +34,13 @@
       /^\/assets\/frontend_runtime_mock\/generated\//,
       "/game_data/media/frontend_runtime_mock/generated/",
     ],
+    [
+      /^\/assets\/frontend_runtime_mock\/atlas_frames\//,
+      "/game_data/media/frontend_runtime_mock/atlas_frames/",
+    ],
     [/^\/assets\/frontend_mock\/processed\//, "/game_data/media/frontend_mock/processed/"],
     [/^\/assets\/frontend_mock\/generated\//, "/game_data/media/frontend_mock/generated/"],
+    [/^\/assets\/frontend_mock\/atlas_frames\//, "/game_data/media/frontend_mock/atlas_frames/"],
     [/^\/assets\/map_visual_reference\//, "/game_data/media/map_visual_reference/"],
   ];
 
@@ -584,17 +589,51 @@
     return Array.isArray(manifest && manifest.items) ? manifest.items : [];
   }
 
-  function atlasFrameUrl(assetId, role, runtime = false) {
-    const item = atlasItems(runtime).find(
+  function atlasItem(assetId, role, runtime = false) {
+    return atlasItems(runtime).find(
       (entry) =>
         entry &&
-        entry.asset_id === assetId &&
+        (entry.asset_id === assetId || entry.source_game_id === assetId) &&
         entry.media_role === role &&
         Array.isArray(entry.frames) &&
         entry.frames.length,
     );
-    const frame = item && item.frames[0];
+  }
+
+  function atlasClockMs() {
+    if (state.battle && Number.isFinite(state.battle.elapsedMs)) return state.battle.elapsedMs;
+    return typeof performance !== "undefined" ? performance.now() : Date.now();
+  }
+
+  function atlasFrameIndex(item) {
+    const frames = Array.isArray(item && item.frames) ? item.frames : [];
+    if (frames.length <= 1) return 0;
+    const playback = item.playback || {};
+    const fps = Number(playback.fps) > 0 ? Number(playback.fps) : 6;
+    const frameDuration = 1000 / fps;
+    const rawIndex = Math.floor(atlasClockMs() / frameDuration);
+    if (playback.loop === false) return Math.min(frames.length - 1, rawIndex);
+    return rawIndex % frames.length;
+  }
+
+  function atlasFrameUrl(assetId, role, runtime = false) {
+    const item = atlasItem(assetId, role, runtime);
+    const frames = Array.isArray(item && item.frames) ? item.frames : [];
+    const frame = frames[atlasFrameIndex(item)];
     return frame && frame.url ? assetUrl(frame.url) : "";
+  }
+
+  function atlasFrameUrls(assetId, role, runtime = false) {
+    const item = atlasItem(assetId, role, runtime);
+    const frames = Array.isArray(item && item.frames) ? item.frames : [];
+    return frames.map((frame) => (frame && frame.url ? assetUrl(frame.url) : "")).filter(Boolean);
+  }
+
+  function mediaPreloadUrls(assetId, role, runtime = false) {
+    const urls = atlasFrameUrls(assetId, role, runtime);
+    if (urls.length) return urls;
+    const url = mediaUrl(assetId, role, runtime);
+    return url ? [url] : [];
   }
 
   function mapVisualUrl(role) {
@@ -1289,12 +1328,12 @@
 
   function preloadBattleImages() {
     [
-      mediaUrl("enemy_shadow_tide_runner", "unit_sprite", true),
-      mediaUrl("enemy_shadow_tide_shade", "unit_sprite", true),
-      mediaUrl("enemy_shadow_tide_cluster", "unit_sprite", true),
-      mediaUrl("objective_station_core", "objective_sprite", true),
-      mediaUrl("objective_signal_beacon", "objective_sprite", true),
-      mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true),
+      ...mediaPreloadUrls("enemy_shadow_tide_runner", "unit_sprite", true),
+      ...mediaPreloadUrls("enemy_shadow_tide_shade", "unit_sprite", true),
+      ...mediaPreloadUrls("enemy_shadow_tide_cluster", "unit_sprite", true),
+      ...mediaPreloadUrls("objective_station_core", "objective_sprite", true),
+      ...mediaPreloadUrls("objective_signal_beacon", "objective_sprite", true),
+      ...mediaPreloadUrls("defense_basic_lantern_barricade", "defense_sprite", true),
       sampleIconUrl(),
       playerBattleMapVisualUrl(),
       ...debugBattleMapVisualUrls(),
