@@ -48,7 +48,7 @@ P2：本阶段明确不做
 - locked manifest / runtime package 基础合同与校验。
 - AssetGraph DAG / 有界 ReAct / 节点注册 / runtime package 构建与校验。
 - 真实 LLM 世界状态变化烟测与语义门。
-- 媒体后处理 mock assets、processed PNG、animation seed manifest。
+- 媒体后处理 mock assets、processed PNG、animation seed manifest、virtual atlas manifest。
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效。
 - MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
 - 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。
@@ -58,7 +58,7 @@ P2：本阶段明确不做
 
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2` 和玩家侧 `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，并完成无浏览器环境下的替代审计，但仍需要在有 Chromium / Playwright 的环境中补截图。
-- 视频帧、spritesheet、atlas 尚未默认接入前端运行时。
+- `MediaAtlasManifest v0.1` 已以 `virtual_single_frame` 模式默认接入前端运行时；真实视频帧与 spritesheet 仍未生成。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -188,6 +188,20 @@ P2：本阶段明确不做
 - 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md`，不得直接覆盖。
 - 给出 develop 晋级 main 前的验证清单、同步策略、禁止操作和人工确认项。
 
+### P1-A-0 MediaAtlasManifest virtual atlas 接入
+
+状态：已完成。
+
+已落地：
+
+- `shared/schemas/media_atlas_manifest.v0.1.schema.json`
+- `tools/media/build_media_atlas_manifest.py`
+- `tools/media/validate_media_atlas_manifest.py`
+- `game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json`
+- 前端优先通过 atlas 第一帧查找媒体，缺失时回退旧 media manifest。
+- 后端 mock API 和 demo evidence 已返回 / 展示 atlas manifest。
+
 ## 4. 当前 P0 任务
 
 暂无。当前 P0 已全部关闭。
@@ -196,20 +210,21 @@ P2：本阶段明确不做
 
 ## 5. P1 任务
 
-### P1-A 视频帧 / spritesheet / atlas 默认接入
+### P1-A 视频帧 / spritesheet / atlas 增强
 
 目标：
 
 ```text
-固化“图片 -> 图生视频 -> 关键帧 -> 后处理 -> atlas -> runtime manifest”路线。
+在已接入 virtual atlas 的基础上，继续固化“图片 -> 图生视频 -> 关键帧 -> 后处理 -> spritesheet atlas -> runtime manifest”路线。
 ```
 
 要点：
 
+- `virtual_single_frame` 已完成；本任务继续推进真实多帧。
 - 首尾帧一致或 end frame 控制优先。
 - 加入 LoopContinuityCheck。
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
-- 前端优先消费 atlas，静态 PNG 作为 fallback。
+- 前端已优先消费 atlas，静态 PNG 作为 fallback；后续需让 atlas 从单帧扩展为多帧 spritesheet。
 
 ### P1-B 世界演化预生成与调度
 
@@ -285,11 +300,11 @@ P2：本阶段明确不做
 建议当前批次按以下顺序推进：
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。
-2. `P1-A` 视频帧 / spritesheet / atlas 默认接入。
+2. `P1-A` 视频帧 / spritesheet / atlas 增强。
 3. `P1-B` 世界演化预生成与调度。
 
 若需要并行，优先组合：
 
 - `P1-A` 与 `P1-B` 可并行，但都应避免破坏当前 MVP 静态 fixture 路径。
 - main 同步执行必须单独进行，不应与大规模 P1 实现任务混在同一 worktree。
-- `P1-A` 视频帧 / atlas 默认接入应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。
+- `P1-A` 视频帧 / atlas 增强应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。
