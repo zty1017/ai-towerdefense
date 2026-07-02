@@ -183,7 +183,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback 和 dry-run worker step 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 与 battle settlement evidence 原生快照构造入口。
-- WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例和 validator；示例包装可通过语义门的 repaired 首战 WorldStateDelta，并接入 demo evidence。
+- WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例、stage01-stage07 事务链、批量 validator 和 deterministic builder；它包装可通过语义门的 `WorldStateDelta`，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。
@@ -195,7 +195,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 字段的全面迁移；Research Job、battle settlement evidence 和 frontend mock pack 已完成第一层原生快照迁移，但其他运行时产物仍未全部改为原生核心对象。
+- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP 字段的全面迁移；Research Job、battle settlement evidence、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移，但其他运行时产物仍未全部改为原生核心对象。
 - 正式 Generation Scheduler 后台执行器、真实队列、缓存、重试和 provider 调度。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。

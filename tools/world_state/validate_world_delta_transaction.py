@@ -303,37 +303,58 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate a WorldStateDeltaTransaction v0.1 JSON file."
     )
-    parser.add_argument("transaction", help="Path to a transaction JSON file.")
+    parser.add_argument(
+        "transaction",
+        nargs="+",
+        help="Path to one or more transaction JSON files.",
+    )
     args = parser.parse_args()
 
-    transaction_path = Path(args.transaction)
-    try:
-        transaction = load_json(transaction_path)
-    except FileNotFoundError:
-        print("INVALID WorldStateDeltaTransaction")
-        print(f"- transaction file not found: {transaction_path}")
-        return 1
-    except json.JSONDecodeError as exc:
-        print("INVALID WorldStateDeltaTransaction")
-        print(f"- transaction is not valid JSON: {exc}")
+    had_errors = False
+    validated: list[dict[str, Any]] = []
+    for raw_path in args.transaction:
+        transaction_path = Path(raw_path)
+        try:
+            transaction = load_json(transaction_path)
+        except FileNotFoundError:
+            print("INVALID WorldStateDeltaTransaction")
+            print(f"- {transaction_path}: transaction file not found")
+            had_errors = True
+            continue
+        except json.JSONDecodeError as exc:
+            print("INVALID WorldStateDeltaTransaction")
+            print(f"- {transaction_path}: transaction is not valid JSON: {exc}")
+            had_errors = True
+            continue
+
+        if not isinstance(transaction, dict):
+            print("INVALID WorldStateDeltaTransaction")
+            print(f"- {transaction_path}: transaction root must be an object")
+            had_errors = True
+            continue
+
+        errors = validate_transaction(transaction)
+        if errors:
+            print("INVALID WorldStateDeltaTransaction")
+            print(f"- {transaction_path}")
+            for error in errors:
+                print(f"  - {error}")
+            had_errors = True
+            continue
+
+        validated.append({"path": transaction_path, "transaction": transaction})
+
+    if had_errors:
         return 1
 
-    if not isinstance(transaction, dict):
-        print("INVALID WorldStateDeltaTransaction")
-        print("- transaction root must be an object")
-        return 1
-
-    errors = validate_transaction(transaction)
-    if errors:
-        print("INVALID WorldStateDeltaTransaction")
-        for error in errors:
-            print(f"- {error}")
-        return 1
-
-    print(f"OK: {transaction_path}")
-    print(f"- schema_version: {transaction.get('schema_version')}")
-    print(f"- transaction_id: {transaction.get('transaction_id')}")
-    print(f"- status: {transaction.get('status')}")
+    print(f"OK: validated {len(validated)} WorldStateDeltaTransaction file(s)")
+    for item in validated:
+        transaction_path = item["path"]
+        transaction = item["transaction"]
+        print(f"- {transaction_path}")
+        print(f"  schema_version: {transaction.get('schema_version')}")
+        print(f"  transaction_id: {transaction.get('transaction_id')}")
+        print(f"  status: {transaction.get('status')}")
     return 0
 
 

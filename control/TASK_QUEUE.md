@@ -63,7 +63,7 @@ P2：本阶段明确不做
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了带质量状态的视觉层；玩家侧只允许使用 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图，`agnes_02` 与 `battle_runtime_background.v0.2` 当前只作为失败/候选证据保留。后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
-- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。后续缺口是把更广义的 review pack 和真实 WorldStateDelta 产物继续迁移到原生对象字段。
+- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
@@ -461,7 +461,7 @@ P2：本阶段明确不做
 
 暂无。当前 P0 已全部关闭。
 
-补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、validator、示例和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
+补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、批量 validator、首战示例、stage01-stage07 事务链和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
 
 下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，尤其是 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的合并策略。
 
@@ -511,7 +511,7 @@ P2：本阶段明确不做
 - 所有对象先进入统一 CGOP / package manifest 模型。
 - 不允许直接自由写 runtime。
 - 每类对象定义最小可玩字段和审查门禁。
-- Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已开始携带 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 原生快照；下一步应把现有 review pack 和 WorldStateDelta 产物继续映射到 `WorldStateDeltaTransaction v0.1` 与同一套核心对象字段，而不是继续新增平行元数据口径。
+- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；下一步应把现有 review pack 和真实 provider 产物继续映射到同一套核心对象字段，而不是继续新增平行元数据口径。
 
 ### P1-D Map Visual Reference 生成管线升级
 

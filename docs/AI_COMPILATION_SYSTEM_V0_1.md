@@ -845,8 +845,8 @@ v0.1 不做：
 
 建议顺序：
 
-1. 为现有 `WorldStateDelta v0.1` 补事务 metadata / 映射说明；不要替换现有 delta schema。
-2. Research Job、battle settlement evidence 与 frontend mock pack 已先行携带 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 原生快照；下一步继续把 WorldStateDelta / review pack 对齐到这些核心字段与 `WorldStateDeltaTransaction v0.1`，并统一机器可读 validation report。
+1. `WorldStateDelta v0.1` 的事务 metadata / 映射说明已落到 `WorldStateDeltaTransaction v0.1`；当前已有首战样例和 stage01-stage07 事务链，不替换现有 delta schema。
+2. Research Job、battle settlement evidence 与 frontend mock pack 已先行携带 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 原生快照；下一步继续把 review pack 与真实 provider 产物对齐到这些核心字段，并统一机器可读 validation report。
 3. 实现 live campaign router 与 Generation Scheduler 后台执行器，让预生成、缓存和 fallback 真正进入游玩流程。
 4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas。
 5. 推进 AI 生成 painted map 的受控图像管线，但仍以 `MapRuntimePackage` 的路径、塔位、碰撞和目标为运行时事实源。
