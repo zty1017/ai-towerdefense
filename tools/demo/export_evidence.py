@@ -111,6 +111,8 @@ PATHS = {
     / "examples/review_packs/map_candidate_alignment_review.v0.1.json",
     "map_candidate_overlay_review": ROOT
     / "examples/review_packs/map_candidate_overlay_review.v0.1.json",
+    "map_candidate_overlay_visual_review": ROOT
+    / "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -365,6 +367,15 @@ STATIC_VALIDATION_COMMANDS = [
             "/tmp/ai_td_map_candidate_overlay_artifacts",
             "--report",
             "/tmp/ai_td_map_candidate_overlay_review.json",
+        ],
+    },
+    {
+        "name": "map_candidate_overlay_visual_review",
+        "command": [
+            "python3",
+            "tools/media/build_map_candidate_overlay_visual_review.py",
+            "--output",
+            "/tmp/ai_td_map_candidate_overlay_visual_review.json",
         ],
     },
     {
@@ -906,6 +917,31 @@ def map_candidate_overlay_summary(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def map_candidate_overlay_visual_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    reviews = [review for review in as_list(report.get("reviews")) if isinstance(review, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "candidate_count": summary.get("candidate_count"),
+        "promotable_count": summary.get("promotable_count"),
+        "blocked_from_promotion_count": summary.get("blocked_from_promotion_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "promotion_recommendation_counts": as_obj(summary.get("promotion_recommendation_counts")),
+        "review_samples": [
+            {
+                "node_id": review.get("node_id"),
+                "status": review.get("status"),
+                "promotion_recommendation": review.get("promotion_recommendation"),
+                "findings": as_list(review.get("findings")),
+                "overlay_review_png_path": review.get("overlay_review_png_path"),
+            }
+            for review in reviews[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -1191,6 +1227,7 @@ def collect_assets_and_media(
     node_map_candidate_review: dict[str, Any],
     map_candidate_alignment_review: dict[str, Any],
     map_candidate_overlay_review: dict[str, Any],
+    map_candidate_overlay_visual_review: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1267,6 +1304,9 @@ def collect_assets_and_media(
             "candidate_review": node_map_candidate_review_summary(node_map_candidate_review),
             "alignment_review": map_candidate_alignment_summary(map_candidate_alignment_review),
             "overlay_review": map_candidate_overlay_summary(map_candidate_overlay_review),
+            "overlay_visual_review": map_candidate_overlay_visual_summary(
+                map_candidate_overlay_visual_review
+            ),
             "published_visual_layers": [
                 {
                     "role": item.get("role"),
@@ -1426,6 +1466,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
+        ("map_candidate_overlay_visual_review", PATHS["map_candidate_overlay_visual_review"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1510,6 +1551,7 @@ def build_evidence() -> dict[str, Any]:
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
+    map_candidate_overlay_visual_review = load_json(PATHS["map_candidate_overlay_visual_review"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -1579,6 +1621,7 @@ def build_evidence() -> dict[str, Any]:
             node_map_candidate_review,
             map_candidate_alignment_review,
             map_candidate_overlay_review,
+            map_candidate_overlay_visual_review,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -1623,6 +1666,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_candidate_overlay = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "overlay_review"
+        )
+    )
+    map_candidate_overlay_visual = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "overlay_visual_review"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -1768,6 +1816,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 节点地图候选：`{node_map_candidate_review.get('status')}`，候选 `{node_map_candidate_review.get('candidate_count')}`，晋升 runtime `{node_map_candidate_review.get('runtime_promotion_count')}`，状态 `{node_map_candidate_review.get('review_status_counts')}`",
         f"- 地图候选对齐审查：`{map_candidate_alignment.get('status')}`，需尺寸标准化 `{map_candidate_alignment.get('transform_required_count')}`，阻断 `{map_candidate_alignment.get('blocked_count')}`",
         f"- 地图候选 overlay 审查：`{map_candidate_overlay.get('status')}`，overlay artifacts `{map_candidate_overlay.get('overlay_artifact_ready_count')}`，目标尺寸 `{map_candidate_overlay.get('target_size')}`",
+        f"- 地图候选视觉复核：`{map_candidate_overlay_visual.get('status')}`，可晋升 `{map_candidate_overlay_visual.get('promotable_count')}`，禁止晋升 `{map_candidate_overlay_visual.get('blocked_from_promotion_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -1934,6 +1983,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_candidate_overlay = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("overlay_review")
+    )
+    map_candidate_overlay_visual = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("overlay_visual_review")
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -2121,6 +2173,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图候选 Overlay</div>
           <div class="metric">{html_escape(map_candidate_overlay.get("status"))}</div>
           <p class="muted">overlay artifacts：{html_escape(map_candidate_overlay.get("overlay_artifact_ready_count"))}；目标尺寸：{html_escape(map_candidate_overlay.get("target_size"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">地图候选复核</div>
+          <div class="metric">{html_escape(map_candidate_overlay_visual.get("status"))}</div>
+          <p class="muted">可晋升：{html_escape(map_candidate_overlay_visual.get("promotable_count"))}；禁止晋升：{html_escape(map_candidate_overlay_visual.get("blocked_from_promotion_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>
