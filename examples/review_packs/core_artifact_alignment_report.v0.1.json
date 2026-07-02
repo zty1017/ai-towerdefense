@@ -40,13 +40,6 @@
       "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
       "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
       "priority": "P1",
-      "source_target_id": "review_pack.mvp_stage_candidate_pack.v0.1",
-      "task_id": "core_alignment::review_pack.mvp_stage_candidate_pack.v0.1"
-    },
-    {
-      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
-      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
-      "priority": "P1",
       "source_target_id": "review_pack.mvp_story_asset_promotion_report.v0.1",
       "task_id": "core_alignment::review_pack.mvp_story_asset_promotion_report.v0.1"
     },
@@ -69,15 +62,15 @@
   },
   "schema_version": "core_artifact_alignment_report.v0.1",
   "summary": {
-    "missing_core_alignment_count": 7,
+    "missing_core_alignment_count": 6,
     "native_snapshot_ready_count": 6,
     "overall_status": "needs_migration",
     "refs_only_count": 0,
-    "review_only_not_applicable_count": 40,
+    "review_only_not_applicable_count": 41,
     "status_counts": {
-      "missing_core_alignment": 7,
+      "missing_core_alignment": 6,
       "native_snapshot_ready": 6,
-      "review_only_not_applicable": 40
+      "review_only_not_applicable": 41
     },
     "target_count": 53,
     "validation_failed_count": 0
@@ -798,9 +791,9 @@
       "world_mutation_allowed": false
     },
     {
-      "alignment_state": "missing_core_alignment",
+      "alignment_state": "review_only_not_applicable",
       "expected_artifacts": [],
-      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "next_action": "后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / WorldStateDeltaTransaction / runtime package，而不是激活整个 review pack。",
       "present_artifacts": [],
       "refs": {},
       "review_only": true,
