@@ -22,6 +22,20 @@
       "/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
   };
 
+  const STATIC_ASSET_PREFIXES = [
+    [
+      /^\/assets\/frontend_runtime_mock\/processed\//,
+      "/game_data/media/frontend_runtime_mock/processed/",
+    ],
+    [
+      /^\/assets\/frontend_runtime_mock\/generated\//,
+      "/game_data/media/frontend_runtime_mock/generated/",
+    ],
+    [/^\/assets\/frontend_mock\/processed\//, "/game_data/media/frontend_mock/processed/"],
+    [/^\/assets\/frontend_mock\/generated\//, "/game_data/media/frontend_mock/generated/"],
+    [/^\/assets\/map_visual_reference\//, "/game_data/media/map_visual_reference/"],
+  ];
+
   const DEFAULT_WORLD_CONFIG = {
     worldbook_template_id: "long_night_lanterns",
     worldbook_display_name: "长夜灯火",
@@ -205,6 +219,30 @@
     );
   }
 
+  function isApiMode() {
+    return state.dataMode === "api";
+  }
+
+  function sessionApiPath(path = "") {
+    return `/api/sessions/${encodeURIComponent(state.sessionId)}${path}`;
+  }
+
+  async function fetchOptionalJson(url, fallback = null, timeoutMs = 3600) {
+    try {
+      return await fetchJson(url, {}, timeoutMs);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function fetchStaticJson(key, timeoutMs = 3600) {
+    return fetchJson(STATIC_PATHS[key], {}, timeoutMs);
+  }
+
+  function fetchOptionalStaticJson(key, fallback = null, timeoutMs = 3600) {
+    return fetchOptionalJson(STATIC_PATHS[key], fallback, timeoutMs);
+  }
+
   function apiCandidates() {
     const params = new URLSearchParams(window.location.search);
     const explicit = params.get("apiBase") || params.get("api");
@@ -233,7 +271,7 @@
   async function ensureSession() {
     if (state.sessionId) {
       try {
-        await apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}`, 1800);
+        await apiGet(sessionApiPath(), 1800);
         return;
       } catch {
         state.sessionId = "";
@@ -251,120 +289,150 @@
     saveProfile();
   }
 
-  async function loadApiData() {
-    await ensureSession();
-    const [packResponse, openingResponse, mapVisualManifest] = await Promise.all([
-      apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}/frontend-mock-pack`, 7000),
-      apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}/opening`, 3600),
-      fetchJson(
-        `${state.apiBase}/assets/map_visual_reference/map_visual_reference_manifest.v0.1.json`,
-        {},
-        3600,
-      ).catch(() => null),
-    ]);
-    state.data.pack = packResponse.pack;
-    state.data.mediaManifest = packResponse.media_manifest;
-    state.data.runtimeKit = packResponse.runtime_art_kit;
-    state.data.runtimeMediaManifest = packResponse.runtime_art_media_manifest;
-    state.data.mapVisualManifest = mapVisualManifest;
-    state.data.opening = openingResponse.opening;
-    state.data.worldConfig = DEFAULT_WORLD_CONFIG;
-    await Promise.all([loadMap(), loadBriefing(), loadBattleConfig()]);
+  const DATA_ADAPTERS = {
+    api: {
+      async loadInitialData() {
+        await ensureSession();
+        const [packResponse, openingResponse, mapVisualManifest] = await Promise.all([
+          apiGet(sessionApiPath("/frontend-mock-pack"), 7000),
+          apiGet(sessionApiPath("/opening"), 3600),
+          fetchOptionalJson(
+            `${state.apiBase}/assets/map_visual_reference/map_visual_reference_manifest.v0.1.json`,
+            null,
+            3600,
+          ),
+        ]);
+        Object.assign(state.data, {
+          pack: packResponse.pack,
+          mediaManifest: packResponse.media_manifest,
+          runtimeKit: packResponse.runtime_art_kit,
+          runtimeMediaManifest: packResponse.runtime_art_media_manifest,
+          mapVisualManifest,
+          opening: openingResponse.opening,
+          worldConfig: DEFAULT_WORLD_CONFIG,
+        });
+        await Promise.all([loadMap(), loadBriefing(), loadBattleConfig()]);
+      },
+      async loadMap() {
+        const response = await apiGet(sessionApiPath("/map"), 3600);
+        Object.assign(state.data, {
+          map: response.map,
+          runWorldState: response.run_world_state,
+        });
+        return state.data.map;
+      },
+      async loadBriefing() {
+        const response = await apiGet(sessionApiPath(`/nodes/${NODE_ID}/briefing`), 3600);
+        Object.assign(state.data, {
+          briefing: response.briefing,
+          materials: response.materials,
+          npcs: response.npcs,
+          suggestedInput: response.suggested_input,
+        });
+        return state.data.briefing;
+      },
+      async loadBattleConfig() {
+        const response = await apiGet(sessionApiPath(`/battles/${NODE_ID}/config`), 5000);
+        Object.assign(state.data, {
+          battleConfig: response.battle_config,
+          mapRuntimePackage: response.map_runtime_package || null,
+          toolbarAssets: response.toolbar_assets,
+          sampleDeliveryAsset: response.sample_delivery_asset,
+          mediaManifest: response.media_manifest,
+          runtimeKit: response.runtime_art_kit,
+          runtimeMediaManifest: response.runtime_art_media_manifest,
+        });
+        if (!state.data.mapRuntimePackage) {
+          try {
+            const mapResponse = await apiGet(
+              sessionApiPath(`/battles/${NODE_ID}/map-runtime-package`),
+              3600,
+            );
+            state.data.mapRuntimePackage = mapResponse.map_runtime_package;
+          } catch {
+            state.data.mapRuntimePackage = null;
+          }
+        }
+        return state.data.battleConfig;
+      },
+      resolveAssetUrl(url) {
+        return `${state.apiBase}${url}`;
+      },
+    },
+    static: {
+      async loadInitialData() {
+        const [
+          pack,
+          runtimeKit,
+          mediaManifest,
+          runtimeMediaManifest,
+          mapVisualManifest,
+          opening,
+          worldConfig,
+          map,
+          briefing,
+          battleConfig,
+          mapRuntimePackage,
+        ] = await Promise.all([
+          fetchStaticJson("pack"),
+          fetchStaticJson("runtimeKit"),
+          fetchStaticJson("mediaManifest"),
+          fetchStaticJson("runtimeMediaManifest"),
+          fetchOptionalStaticJson("mapVisualManifest"),
+          fetchStaticJson("opening"),
+          fetchOptionalStaticJson("worldConfig", DEFAULT_WORLD_CONFIG),
+          fetchStaticJson("map"),
+          fetchStaticJson("briefing"),
+          fetchStaticJson("battleConfig"),
+          fetchOptionalStaticJson("mapRuntimePackage"),
+        ]);
+        state.data = {
+          pack,
+          runtimeKit,
+          mediaManifest,
+          runtimeMediaManifest,
+          mapVisualManifest,
+          opening,
+          worldConfig,
+          map,
+          briefing,
+          battleConfig,
+          mapRuntimePackage,
+        };
+      },
+      async loadMap() {
+        return state.data.map;
+      },
+      async loadBriefing() {
+        return state.data.briefing;
+      },
+      async loadBattleConfig() {
+        return state.data.battleConfig;
+      },
+      resolveAssetUrl(url) {
+        return resolveStaticAssetUrl(url);
+      },
+    },
+  };
+
+  function dataAdapter() {
+    return DATA_ADAPTERS[state.dataMode] || DATA_ADAPTERS.static;
   }
 
-  async function loadStaticData() {
-    const [
-      pack,
-      runtimeKit,
-      mediaManifest,
-      runtimeMediaManifest,
-      mapVisualManifest,
-      opening,
-      worldConfig,
-      map,
-      briefing,
-      battleConfig,
-      mapRuntimePackage,
-    ] = await Promise.all([
-      fetchJson(STATIC_PATHS.pack, {}, 3600),
-      fetchJson(STATIC_PATHS.runtimeKit, {}, 3600),
-      fetchJson(STATIC_PATHS.mediaManifest, {}, 3600),
-      fetchJson(STATIC_PATHS.runtimeMediaManifest, {}, 3600),
-      fetchJson(STATIC_PATHS.mapVisualManifest, {}, 3600).catch(() => null),
-      fetchJson(STATIC_PATHS.opening, {}, 3600),
-      fetchJson(STATIC_PATHS.worldConfig, {}, 3600).catch(() => DEFAULT_WORLD_CONFIG),
-      fetchJson(STATIC_PATHS.map, {}, 3600),
-      fetchJson(STATIC_PATHS.briefing, {}, 3600),
-      fetchJson(STATIC_PATHS.battleConfig, {}, 3600),
-      fetchJson(STATIC_PATHS.mapRuntimePackage, {}, 3600).catch(() => null),
-    ]);
-    state.data = {
-      pack,
-      runtimeKit,
-      mediaManifest,
-      runtimeMediaManifest,
-      mapVisualManifest,
-      opening,
-      worldConfig,
-      map,
-      briefing,
-      battleConfig,
-      mapRuntimePackage,
-    };
+  async function loadData() {
+    return dataAdapter().loadInitialData();
   }
 
   async function loadMap() {
-    if (state.dataMode === "api") {
-      const response = await apiGet(
-        `/api/sessions/${encodeURIComponent(state.sessionId)}/map`,
-        3600,
-      );
-      state.data.map = response.map;
-      state.data.runWorldState = response.run_world_state;
-    }
-    return state.data.map;
+    return dataAdapter().loadMap();
   }
 
   async function loadBriefing() {
-    if (state.dataMode === "api") {
-      const response = await apiGet(
-        `/api/sessions/${encodeURIComponent(state.sessionId)}/nodes/${NODE_ID}/briefing`,
-        3600,
-      );
-      state.data.briefing = response.briefing;
-      state.data.materials = response.materials;
-      state.data.npcs = response.npcs;
-      state.data.suggestedInput = response.suggested_input;
-    }
-    return state.data.briefing;
+    return dataAdapter().loadBriefing();
   }
 
   async function loadBattleConfig() {
-    if (state.dataMode === "api") {
-      const response = await apiGet(
-        `/api/sessions/${encodeURIComponent(state.sessionId)}/battles/${NODE_ID}/config`,
-        5000,
-      );
-      state.data.battleConfig = response.battle_config;
-      state.data.mapRuntimePackage = response.map_runtime_package || null;
-      state.data.toolbarAssets = response.toolbar_assets;
-      state.data.sampleDeliveryAsset = response.sample_delivery_asset;
-      state.data.mediaManifest = response.media_manifest;
-      state.data.runtimeKit = response.runtime_art_kit;
-      state.data.runtimeMediaManifest = response.runtime_art_media_manifest;
-      if (!state.data.mapRuntimePackage) {
-        try {
-          const mapResponse = await apiGet(
-            `/api/sessions/${encodeURIComponent(state.sessionId)}/battles/${NODE_ID}/map-runtime-package`,
-            3600,
-          );
-          state.data.mapRuntimePackage = mapResponse.map_runtime_package;
-        } catch {
-          state.data.mapRuntimePackage = null;
-        }
-      }
-    }
-    return state.data.battleConfig;
+    return dataAdapter().loadBattleConfig();
   }
 
   async function boot() {
@@ -373,20 +441,16 @@
     state.apiBase = await detectApiBase();
     state.dataMode = state.apiBase ? "api" : "static";
     try {
-      if (state.dataMode === "api") {
-        await loadApiData();
-      } else {
-        await loadStaticData();
-      }
+      await loadData();
       saveProfile();
       state.view = "profile";
       render();
     } catch (error) {
-      if (state.dataMode === "api") {
+      if (isApiMode()) {
         try {
           state.dataMode = "static";
           state.apiBase = "";
-          await loadStaticData();
+          await loadData();
           saveProfile();
           state.view = "profile";
           render();
@@ -472,33 +536,17 @@
     return Array.isArray(manifest && manifest.items) ? manifest.items : [];
   }
 
+  function resolveStaticAssetUrl(url) {
+    return STATIC_ASSET_PREFIXES.reduce(
+      (resolved, [pattern, replacement]) => resolved.replace(pattern, replacement),
+      url,
+    );
+  }
+
   function assetUrl(url) {
     if (!url) return "";
     if (/^https?:\/\//.test(url)) return url;
-    if (state.dataMode === "api") {
-      return `${state.apiBase}${url}`;
-    }
-    return url
-      .replace(
-        /^\/assets\/frontend_runtime_mock\/processed\//,
-        "/game_data/media/frontend_runtime_mock/processed/",
-      )
-      .replace(
-        /^\/assets\/frontend_runtime_mock\/generated\//,
-        "/game_data/media/frontend_runtime_mock/generated/",
-      )
-      .replace(
-        /^\/assets\/frontend_mock\/processed\//,
-        "/game_data/media/frontend_mock/processed/",
-      )
-      .replace(
-        /^\/assets\/frontend_mock\/generated\//,
-        "/game_data/media/frontend_mock/generated/",
-      )
-      .replace(
-        /^\/assets\/map_visual_reference\//,
-        "/game_data/media/map_visual_reference/",
-      );
+    return dataAdapter().resolveAssetUrl(url);
   }
 
   function mediaItem(assetId, role, runtime = false) {
@@ -962,10 +1010,10 @@
   async function beginWorld() {
     renderLoading("点亮本局档案");
     saveProfile({ selectedOptions: state.selectedOptions });
-    if (state.dataMode === "api") {
+    if (isApiMode()) {
       try {
         const response = await apiPost(
-          `/api/sessions/${encodeURIComponent(state.sessionId)}/world-instance`,
+          sessionApiPath("/world-instance"),
           { selected_options: state.selectedOptions },
           5000,
         );
@@ -993,7 +1041,7 @@
     state.research = { status: "idle", proposal: null, job: null, jobPromise: null };
     state.battle = null;
     state.settlement = null;
-    if (state.dataMode === "api") {
+    if (isApiMode()) {
       await ensureSession();
     }
     state.view = "world-config";
@@ -1002,9 +1050,9 @@
 
   async function resetDemo() {
     renderLoading("重置档案");
-    if (state.dataMode === "api" && state.sessionId) {
+    if (isApiMode() && state.sessionId) {
       try {
-        await apiPost(`/api/sessions/${encodeURIComponent(state.sessionId)}/reset`, {}, 3000);
+        await apiPost(sessionApiPath("/reset"), {}, 3000);
       } catch {
         // Resetting local progress is enough for the fallback path.
       }
@@ -1027,16 +1075,18 @@
     state.research.status = "confirming";
     renderWorkshop();
     const intent = state.intentText.trim() || "我想做一个能拖慢影潮的临时装置。";
-    if (state.dataMode === "api") {
+    if (isApiMode()) {
       try {
         const proposal = await apiPost(
-          `/api/sessions/${encodeURIComponent(state.sessionId)}/research/proposals`,
+          sessionApiPath("/research/proposals"),
           { intent_text: intent, node_id: NODE_ID },
           4200,
         );
         state.research.proposal = proposal;
         state.research.jobPromise = apiPost(
-          `/api/sessions/${encodeURIComponent(state.sessionId)}/research/proposals/${encodeURIComponent(proposal.proposal_id)}/confirm`,
+          sessionApiPath(
+            `/research/proposals/${encodeURIComponent(proposal.proposal_id)}/confirm`,
+          ),
           {},
           20000,
         )
@@ -2294,10 +2344,10 @@
     };
     renderLoading("整理战报");
     let settlement = buildLocalSettlement(state.battleOutcome);
-    if (state.dataMode === "api") {
+    if (isApiMode()) {
       try {
         const response = await apiPost(
-          `/api/sessions/${encodeURIComponent(state.sessionId)}/battles/${NODE_ID}/results`,
+          sessionApiPath(`/battles/${NODE_ID}/results`),
           {
             result: state.battleOutcome.result,
             protected_core_hp: state.battleOutcome.protected_core_hp,
@@ -2339,7 +2389,7 @@
   async function fetchEvidence() {
     try {
       if (state.research.jobPromise) await state.research.jobPromise;
-      const response = await apiGet(`/api/sessions/${encodeURIComponent(state.sessionId)}/evidence`, 3600);
+      const response = await apiGet(sessionApiPath("/evidence"), 3600);
       return response;
     } catch {
       return null;
@@ -2417,7 +2467,7 @@
   }
 
   async function returnToMap() {
-    if (state.dataMode === "api") {
+    if (isApiMode()) {
       try {
         await loadMap();
       } catch {
