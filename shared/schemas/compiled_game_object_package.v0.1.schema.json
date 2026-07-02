@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/compiled_game_object_package.v0.1.schema.json",
+  "title": "CompiledGameObjectPackage v0.1",
+  "description": "A frozen installable game object package. It may reference runtime manifests and deltas, but it is not the world database, memory store, or mutable runtime instance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "object_type",
+    "content_version",
+    "artifact_hash",
+    "worldbook_id",
+    "run_world_version",
+    "lifecycle_state",
+    "authority",
+    "source_intent",
+    "context_package_id",
+    "source_refs",
+    "policy_refs",
+    "execution_trace_ref",
+    "world_context",
+    "semantic_spec",
+    "gameplay_spec",
+    "runtime_contract",
+    "media_presentation",
+    "dependencies",
+    "conflicts",
+    "required_capabilities",
+    "runtime_budget",
+    "validation_report",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "compiled_game_object_package.v0.1" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "object_type": {
+      "type": "string",
+      "enum": ["tower", "trap", "item", "npc", "quest", "encounter", "map", "media", "world_object", "effect", "skill"]
+    },
+    "content_version": { "type": "string", "minLength": 1 },
+    "artifact_hash": { "$ref": "#/$defs/sha256_ref" },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_world_version": { "type": "string", "minLength": 1 },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": ["draft", "compiled", "validated", "reviewed", "locked", "published", "active", "deprecated", "revoked", "quarantined", "rolled_back"]
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compile_actor",
+        "can_lock",
+        "can_publish",
+        "direct_world_mutation_allowed",
+        "runtime_activation_requires_review"
+      ],
+      "properties": {
+        "compile_actor": {
+          "type": "string",
+          "enum": ["player", "system", "developer", "publisher"]
+        },
+        "can_lock": { "type": "boolean" },
+        "can_publish": { "type": "boolean" },
+        "direct_world_mutation_allowed": { "type": "boolean", "const": false },
+        "runtime_activation_requires_review": { "type": "boolean", "const": true }
+      }
+    },
+    "source_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent_ref", "summary"],
+      "properties": {
+        "intent_ref": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "context_package_id": { "type": "string", "minLength": 1 },
+    "source_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_ref" }
+    },
+    "policy_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_ref" }
+    },
+    "execution_trace_ref": {
+      "anyOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "world_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "required_fact_ids", "forbidden_world_mutations"],
+      "properties": {
+        "scope": { "type": "string", "minLength": 1 },
+        "required_fact_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "forbidden_world_mutations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "semantic_spec": { "$ref": "#/$defs/spec_object" },
+    "gameplay_spec": { "$ref": "#/$defs/spec_object" },
+    "runtime_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_loadable",
+        "load_surface",
+        "manifest_refs",
+        "world_delta_refs",
+        "state_instance_policy"
+      ],
+      "properties": {
+        "runtime_loadable": { "type": "boolean" },
+        "load_surface": {
+          "type": "string",
+          "enum": ["battle_runtime", "run_world_state", "map_runtime", "frontend_mock", "review_only", "none"]
+        },
+        "manifest_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_ref" }
+        },
+        "world_delta_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_ref" }
+        },
+        "state_instance_policy": {
+          "type": "string",
+          "enum": ["blueprint_only", "instanced_at_runtime", "review_only"]
+        }
+      }
+    },
+    "media_presentation": { "$ref": "#/$defs/spec_object" },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "required_capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "runtime_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_instances", "texture_budget_kb", "particle_budget", "cpu_budget_hint", "browser_tier"],
+      "properties": {
+        "max_instances": { "type": "integer", "minimum": 0 },
+        "texture_budget_kb": { "type": "integer", "minimum": 0 },
+        "particle_budget": { "type": "integer", "minimum": 0 },
+        "cpu_budget_hint": { "type": "string", "enum": ["low", "medium", "high"] },
+        "browser_tier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_status", "runtime_loadable", "gates", "approved_scopes", "failed_rules", "warnings"],
+      "properties": {
+        "gate_status": { "type": "string", "enum": ["passed", "failed", "warning", "skipped"] },
+        "runtime_loadable": { "type": "boolean" },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["gate_id", "status", "summary"],
+            "properties": {
+              "gate_id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "enum": ["passed", "failed", "warning", "skipped"] },
+              "summary": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "approved_scopes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "failed_rules": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compiled_at", "compiler_version", "parent_package_ids"],
+      "properties": {
+        "compiled_at": { "type": "string", "minLength": 1 },
+        "compiler_version": { "type": "string", "minLength": 1 },
+        "parent_package_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_id", "ref_kind", "path"],
+      "properties": {
+        "ref_id": { "type": "string", "minLength": 1 },
+        "ref_kind": {
+          "type": "string",
+          "enum": ["schema", "tool", "fixture", "locked_manifest", "runtime_package", "media_manifest", "map_runtime_package", "world_delta", "review_pack", "document"]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "hash": { "$ref": "#/$defs/sha256_ref" }
+      }
+    },
+    "spec_object": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": "context_package.v0.1",
+  "context_package_id": "ctx_mvp_first_battle_asset_compile",
+  "run_id": "demo_run_001",
+  "worldbook_id": "long_night_lanterns",
+  "run_world_version": "turn_001_demo_snapshot",
+  "purpose": "asset_compile",
+  "scope": "node.gray_lantern_station",
+  "authority": {
+    "advisory_only": true,
+    "can_mutate_world": false,
+    "can_publish_runtime": false,
+    "requires_downstream_validation": true
+  },
+  "blocks": [
+    {
+      "block_id": "worldbook_boundary",
+      "block_kind": "worldbook",
+      "source_ref": "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+      "trust_level": "developer",
+      "visibility": "ai_visible",
+      "priority": 100,
+      "token_budget": 900,
+      "trim_policy": "summarize",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "summary": "长夜灯火是本局启动模板，所有生成内容必须服务塔防玩法与当前节点。"
+    },
+    {
+      "block_id": "current_battle_node",
+      "block_kind": "map_context",
+      "source_ref": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "trust_level": "system",
+      "visibility": "ai_visible",
+      "priority": 92,
+      "token_budget": 700,
+      "trim_policy": "keep_full",
+      "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "summary": "首战节点的路径、塔位、保护目标与出生点来自 MapRuntimePackage。"
+    },
+    {
+      "block_id": "player_workshop_intent",
+      "block_kind": "player_input",
+      "source_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+      "trust_level": "player_claim",
+      "visibility": "ai_visible",
+      "priority": 75,
+      "token_budget": 300,
+      "trim_policy": "keep_full",
+      "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "summary": "玩家正在现场试作一个能缓解首战压力的临时防御构想。"
+    }
+  ],
+  "policy_refs": [
+    {
+      "ref_id": "ai_compilation_boundary",
+      "ref_kind": "document",
+      "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+    },
+    {
+      "ref_id": "world_delta_schema",
+      "ref_kind": "schema",
+      "path": "shared/schemas/world_state_delta.v0.1.schema.json"
+    }
+  ],
+  "source_refs": [
+    {
+      "ref_id": "map_runtime_package",
+      "ref_kind": "map_package",
+      "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+    },
+    {
+      "ref_id": "run_state",
+      "ref_kind": "world_state",
+      "path": "examples/run_world_states/demo_initial.run_world_state.json"
+    }
+  ],
+  "token_budget": {
+    "max_tokens": 8192,
+    "reserved_response_tokens": 2048
+  },
+  "insertion_plan": [
+    {
+      "slot": "system_context",
+      "block_ids": ["worldbook_boundary"]
+    },
+    {
+      "slot": "runtime_context",
+      "block_ids": ["current_battle_node"]
+    },
+    {
+      "slot": "user_context",
+      "block_ids": ["player_workshop_intent"]
+    }
+  ],
+  "redaction_report": {
+    "redacted_block_count": 0,
+    "dropped_block_count": 0,
+    "notes": ["示例包只保留引用与摘要，不携带隐藏运行日志。"]
+  },
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+}

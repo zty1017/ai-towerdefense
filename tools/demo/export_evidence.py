@@ -76,6 +76,12 @@ PATHS = {
     / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
     "generation_schedule_run_report": ROOT
     / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+    "context_package_example": ROOT
+    / "examples/review_packs/mvp_first_battle.context_package.json",
+    "fact_entry_example": ROOT
+    / "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+    "cgop_example": ROOT
+    / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -292,6 +298,16 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/scheduler/validate_generation_schedule_run_report.py",
             "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "ai_compile_core_artifacts",
+        "command": [
+            "python3",
+            "tools/content_pipeline/validate_ai_compile_core_artifacts.py",
+            "examples/review_packs/mvp_first_battle.context_package.json",
+            "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+            "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
         ],
     },
     {
@@ -1129,6 +1145,9 @@ def collect_source_files() -> list[dict[str, Any]]:
         ),
         ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
         ("generation_schedule_run_report", PATHS["generation_schedule_run_report"]),
+        ("context_package_example", PATHS["context_package_example"]),
+        ("fact_entry_example", PATHS["fact_entry_example"]),
+        ("cgop_example", PATHS["cgop_example"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
