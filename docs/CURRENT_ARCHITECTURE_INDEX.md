@@ -123,8 +123,8 @@ MediaAtlasManifest v0.1 已作为 spritesheet 兼容多帧入口接入前端、�
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
 Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重生成或人工复核的素材任务，作为下一轮素材重生的输入。
 Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并再次经过 cutout quality audit；候选不会自动替换正式 runtime 素材。
-Sprite live regeneration candidate pack 已可针对 runtime P1 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；候选仍不自动替换正式 runtime 素材。
-Sprite regeneration promotion report 已记录 runtime P1 候选的显式晋升；信标与基础灯栏已替换 runtime processed PNG 并重建 atlas，runtime cutout 复核降为 1 个 P2 项。
+Sprite live regeneration candidate pack 已可针对 runtime 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；当前候选覆盖信标、基础灯栏与驿站核心，候选仍不自动替换正式 runtime 素材。
+Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；信标、基础灯栏与驿站核心已替换 runtime processed PNG 并重建 atlas，runtime sprite cutout quality 已达到 `passed 7 / 7`，repair plan 已清空。
 ```
 
 ### 审查与交付

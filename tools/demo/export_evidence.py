@@ -269,6 +269,8 @@ STATIC_VALIDATION_COMMANDS = [
             "objective_signal_beacon",
             "--asset-id",
             "defense_basic_lantern_barricade",
+            "--asset-id",
+            "objective_station_core",
         ],
     },
     {

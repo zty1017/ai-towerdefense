@@ -2,57 +2,12 @@
   "schema_version": "sprite_cutout_repair_plan.v0.1",
   "plan_id": "frontend_runtime_art_media_pack_v0_1_sprite_cutout_repair_plan_v0_1",
   "source_report": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
-  "source_report_status": "needs_review",
-  "status": "ready",
-  "task_count": 1,
-  "priority_counts": {
-    "P2": 1
-  },
-  "action_counts": {
-    "manual_review_then_reprocess_if_needed": 1
-  },
-  "tasks": [
-    {
-      "task_id": "sprite_repair_001_objective_station_core_objective_sprite",
-      "priority": "P2",
-      "recommended_action": "manual_review_then_reprocess_if_needed",
-      "asset_id": "objective_station_core",
-      "asset_name": "驿站核心",
-      "asset_type": "protection_target",
-      "media_role": "objective_sprite",
-      "source_status": "needs_review",
-      "source_file": "game_data/media/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
-      "warnings": [
-        "interior_transparent_holes_need_review"
-      ],
-      "issues": [],
-      "metrics": {
-        "visible_component_count": 4,
-        "largest_visible_component_ratio": 0.9917,
-        "interior_transparent_hole_ratio": 0.0253,
-        "max_interior_transparent_hole_ratio": 0.0052
-      },
-      "repair_steps": [
-        "review subject interior against intended gameplay silhouette",
-        "prefer reprocessing from original generated image before regenerating with a provider"
-      ],
-      "regeneration_prompt_constraints": [
-        "single isolated game sprite",
-        "plain pure white or transparent-friendly matte background",
-        "no UI, no labels, no text, no watermark",
-        "no enemies, no battlefield scenery, no surrounding characters",
-        "solid readable body silhouette",
-        "avoid white gaps inside the object unless they are intentional windows or fence gaps",
-        "keep glow and magical effects as separate effect layers rather than baked into the sprite"
-      ],
-      "acceptance_checks": [
-        "audit_sprite_cutout_quality status for this item is passed or manually accepted",
-        "validate_frontend_mock_media_pack or validate_frontend_runtime_art_pack passes",
-        "validate_media_atlas_manifest passes after atlas rebuild",
-        "frontend battle visual contract still passes if runtime art changed"
-      ]
-    }
-  ],
+  "source_report_status": "passed",
+  "status": "empty",
+  "task_count": 0,
+  "priority_counts": {},
+  "action_counts": {},
+  "tasks": [],
   "notes": [
     "This plan is deterministic and offline; it does not call providers.",
     "P1 tasks should be fixed before using these sprites as final visual evidence.",

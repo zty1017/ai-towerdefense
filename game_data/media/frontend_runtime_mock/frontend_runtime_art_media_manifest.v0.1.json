@@ -163,15 +163,24 @@
       "media_layer": "published_media",
       "url": "/assets/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
       "local_path": "game_data/media/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
-      "width": 841,
-      "height": 841,
-      "sha256": "791b33524c5b2c567d2ce29e44a359dc11a7fec10bca6d839304d69f527db236",
+      "width": 858,
+      "height": 858,
+      "sha256": "e535eca95c253006989705086175d7dc1af07a013303d30bcad7326a335c55c4",
       "fallback_used": false,
-      "source_kind": "processed_generated_image",
+      "source_kind": "promoted_sprite_regeneration_candidate",
       "anchor": {
         "preset": "bottom_center",
         "x": 0.5,
         "y": 1.0
+      },
+      "promotion": {
+        "state": "promoted_from_review_candidate",
+        "promoted_at": "2026-07-02T00:00:00+08:00",
+        "candidate_pack_id": "frontend_runtime_sprite_regeneration_candidates_v0_1",
+        "candidate_id": "sprite_repair_001_objective_station_core_objective_sprite.regenerated",
+        "source_task_id": "sprite_repair_001_objective_station_core_objective_sprite",
+        "candidate_manifest": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+        "quality_report": "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json"
       }
     },
     {
