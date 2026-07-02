@@ -82,6 +82,8 @@ PATHS = {
     / "examples/review_packs/mvp_gray_lantern.fact_entry.json",
     "cgop_example": ROOT
     / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+    "world_delta_transaction_example": ROOT
+    / "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -308,6 +310,14 @@ STATIC_VALIDATION_COMMANDS = [
             "examples/review_packs/mvp_first_battle.context_package.json",
             "examples/review_packs/mvp_gray_lantern.fact_entry.json",
             "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+        ],
+    },
+    {
+        "name": "world_delta_transaction",
+        "command": [
+            "python3",
+            "tools/world_state/validate_world_delta_transaction.py",
+            "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
         ],
     },
     {
@@ -919,6 +929,37 @@ def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any
     }
 
 
+def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, Any]:
+    delta_ref = as_obj(transaction.get("world_state_delta_ref"))
+    report = as_obj(transaction.get("validation_report"))
+    scope = as_obj(transaction.get("scope"))
+    rollback = as_obj(transaction.get("rollback_policy"))
+    conflict = as_obj(transaction.get("conflict_policy"))
+    return {
+        "schema_version": transaction.get("schema_version"),
+        "transaction_id": transaction.get("transaction_id"),
+        "status": transaction.get("status"),
+        "run_id": transaction.get("run_id"),
+        "worldbook_id": transaction.get("worldbook_id"),
+        "source": transaction.get("source"),
+        "actor": transaction.get("actor"),
+        "delta_id": delta_ref.get("delta_id"),
+        "delta_path": delta_ref.get("path"),
+        "scope_kind": scope.get("kind"),
+        "node_ids": as_list(scope.get("node_ids")),
+        "operation_mapping_count": len(as_list(transaction.get("operation_effects_mapping"))),
+        "conflict_policy": conflict.get("mode"),
+        "rollback_policy": rollback.get("mode"),
+        "validation_report": {
+            "gate_status": report.get("gate_status"),
+            "world_delta_structure": report.get("world_delta_structure"),
+            "world_delta_semantics": report.get("world_delta_semantics"),
+            "operation_mapping": report.get("operation_mapping"),
+            "runtime_apply_checked": report.get("runtime_apply_checked"),
+        },
+    }
+
+
 def collect_assets_and_media(
     frontend_pack: dict[str, Any],
     frontend_media_manifest: dict[str, Any],
@@ -1148,6 +1189,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("context_package_example", PATHS["context_package_example"]),
         ("fact_entry_example", PATHS["fact_entry_example"]),
         ("cgop_example", PATHS["cgop_example"]),
+        ("world_delta_transaction_example", PATHS["world_delta_transaction_example"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -1220,6 +1262,7 @@ def build_evidence() -> dict[str, Any]:
     )
     generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
     generation_schedule_run_report = load_json(PATHS["generation_schedule_run_report"])
+    world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -1260,6 +1303,7 @@ def build_evidence() -> dict[str, Any]:
             generation_schedule_plan,
             generation_schedule_run_report,
         ),
+        "world_delta_transaction": collect_world_delta_transaction(world_delta_transaction),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
@@ -1312,6 +1356,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    world_transaction = as_obj(evidence.get("world_delta_transaction"))
+    world_transaction_report = as_obj(world_transaction.get("validation_report"))
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
@@ -1414,6 +1460,13 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
+        "",
+        "## 2.1 世界状态事务",
+        "",
+        f"- 事务：`{world_transaction.get('transaction_id')}`，状态：`{world_transaction.get('status')}`",
+        f"- Delta：`{world_transaction.get('delta_id')}`，来源：`{world_transaction.get('source')}`，节点：`{', '.join(str(node) for node in as_list(world_transaction.get('node_ids')))}`",
+        f"- operation 映射数：`{world_transaction.get('operation_mapping_count')}`，冲突策略：`{world_transaction.get('conflict_policy')}`，回滚策略：`{world_transaction.get('rollback_policy')}`",
+        f"- 验证：结构 `{world_transaction_report.get('world_delta_structure')}`，语义 `{world_transaction_report.get('world_delta_semantics')}`，映射 `{world_transaction_report.get('operation_mapping')}`，apply `{world_transaction_report.get('runtime_apply_checked')}`",
         "",
         "## 3. Runtime 与地图包",
         "",
@@ -1572,6 +1625,8 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    world_transaction = as_obj(evidence.get("world_delta_transaction"))
+    world_transaction_report = as_obj(world_transaction.get("validation_report"))
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1724,6 +1779,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">调度项</div>
           <div class="metric">{html_escape(scheduler_summary.get("item_count"))}</div>
           <p class="muted">Generation Scheduler 计划包，包含同步、预取、后台、懒加载和静态 fallback。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">世界事务</div>
+          <div class="metric">{html_escape(world_transaction_report.get("gate_status"))}</div>
+          <p class="muted">{html_escape(world_transaction.get("transaction_id"))}；映射 {html_escape(world_transaction.get("operation_mapping_count"))} 个 delta operation。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapRuntimePackage</div>
