@@ -10,8 +10,8 @@ Last updated: 2026-07-02
 
 - 默认玩家视图的地图底图选择顺序已固定为 `painted_visual_layer -> battle_runtime_background -> 程序化大画面背景`。
 - `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助 fallback，不进入默认玩家体验。
-- 首战 `MapRuntimePackage` 中 `battle_runtime_background` 标记为 `published_visual_layer`。
-- 前端静态入口、前端脚本、首战发布底图 PNG、首战 `MapRuntimePackage` 均可通过本地 HTTP 服务读取。
+- 首战 `MapRuntimePackage` 中 `painted_visual_layer` 和 `battle_runtime_background` 均标记为 `published_visual_layer`；前者是玩家默认美术底图，后者是逻辑对齐 fallback。
+- 前端静态入口、前端脚本、首战 `painted_visual_layer` PNG、首战 `MapRuntimePackage` 均可通过本地 HTTP 服务读取。
 - 本轮未生成真实浏览器截图，因为当前执行环境没有 Chromium / Chrome，也没有 Playwright。
 
 这意味着：代码和资源层面的默认路径已经防止低质量控制图污染玩家视图；但真正的像素级截图验收仍需要在安装浏览器的环境中补做。
@@ -53,7 +53,7 @@ python3 -m http.server 8765
 ```text
 http://127.0.0.1:8765/frontend/index.html
 http://127.0.0.1:8765/frontend/app.js
-http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
+http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
 http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
@@ -62,7 +62,7 @@ http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime
 ```text
 200 http://127.0.0.1:8765/frontend/index.html
 200 http://127.0.0.1:8765/frontend/app.js
-200 http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png
+200 http://127.0.0.1:8765/game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
 200 http://127.0.0.1:8765/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
@@ -79,6 +79,7 @@ python3 -c 'import json; p=json.load(open("examples/map_runtime_packages/mvp_fir
   "strategic_control_sketch:reference_only",
   "battle_control_sketch:reference_only",
   "battle_reference_board:reference_only",
+  "painted_visual_layer:published_visual_layer",
   "battle_runtime_background:published_visual_layer"
 ]
 ```
@@ -111,5 +112,5 @@ npx playwright screenshot http://127.0.0.1:8765/frontend/index.html /tmp/ai_td_f
 当前风险不是“控制图会默认进入玩家视图”，这条已被代码防线挡住。当前风险是：
 
 - 由于缺少浏览器截图，本轮无法证明最终像素构图足够好看。
-- 后续如果替换 `battle_runtime_background`，仍需要重新跑本审计。
-- `painted_visual_layer` 作为未来 role 已在前端预留，但 `MapRuntimePackage v0.1` 目前仍以 `battle_runtime_background` 为主。
+- 后续如果替换 `painted_visual_layer` 或 `battle_runtime_background`，仍需要重新跑本审计。
+- `painted_visual_layer` 当前已进入 `MapRuntimePackage v0.1`，但仍需要在有浏览器环境时补做截图或录屏验收。

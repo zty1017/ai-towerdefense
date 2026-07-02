@@ -4,12 +4,13 @@
 
 地图也是可编译对象，但第一版不让图片反过来决定玩法逻辑。
 
-当前流水线以 `game_data/demo/initial_map.json` 与 `game_data/demo/first_battle_config.json` 为权威输入，生成四类 PNG：
+当前流水线以 `game_data/demo/initial_map.json` 与 `game_data/demo/first_battle_config.json` 为权威输入，生成或登记五类 PNG：
 
 - `strategic_control_sketch`：战略大地图控制草图，表达主城、节点、补给线、黑暗区域和威胁边界。
 - `battle_control_sketch`：战斗地图控制草图，表达路径、可部署槽位、核心、防守目标和出生方向。
 - `battle_reference_board`：编译参考图，用于给图像模型或审查流程说明路线和塔位关系。它不应直接作为玩家侧最终底图。
-- `battle_runtime_background`：玩家侧战斗画布的发布底图。它必须像完整塔防游戏地图，而不是控制图、棋盘、UI 面板或调试图；路径、塔基、核心和防守目标应自然嵌入地形中。
+- `painted_visual_layer`：玩家侧优先使用的发布级美术底图。MVP 当前使用 Agnes 真实图像生成候选，经人工审查确认无 UI、文字、敌人、已部署塔和角色后登记为发布层。
+- `battle_runtime_background`：逻辑对齐的确定性发布 fallback。它使用与前端一致的伪 3D 投影生成，保证路径、塔位、目标和出生点可对齐，但视觉质量不应被宣传为最终美术水准。
 
 这些 PNG 不是最终规则数据。前端仍然以战斗配置和 `MapRuntimePackage` 中的网格、路径、目标、敌人、塔位规则作为运行时真相。
 
@@ -39,7 +40,7 @@
 
 - `logical_map_layer`：从 `MapRuntimePackage` 复制的运行时真相，包括路径、塔位、目标、出生点和网格。
 - `control_layer`：控制图、参考图、composition sketch 等，只能作为图像模型和审查流程的参考。
-- `painted_visual_layer`：玩家可见发布底图候选，MVP 优先使用 `battle_runtime_background`。
+- `painted_visual_layer`：玩家可见发布底图，MVP 默认优先使用。它仍不是玩法真相，战斗路线和塔位必须由 `MapRuntimePackage` 叠层驱动。
 - `alignment_layer`：逻辑坐标到视觉平面的回配检查点、误差阈值和叠层修正策略。
 - `quality_gates`：视觉质量门，明确禁止 UI、文字、敌人、已部署防御塔、棋盘感和突兀边框进入玩家底图。
 - `export_refs`：指回最终前端应加载的 `MapRuntimePackage`。
@@ -52,7 +53,7 @@ python3 tools/asset_graph/validate_map_compile_package.py examples/map_compile_p
 python3 -m json.tool examples/map_compile_packages/mvp_first_battle.map_compile_package.json
 ```
 
-当前质量门中，`no_ui_text_enemy_tower_in_painted_map` 与 `alignment_requires_runtime_overlay` 仍为 `warning`，原因是 MVP 还没有接入真正的视觉模型自动验图和像素级回配检查。它们是后续增强点，不阻塞现有演示运行。
+当前质量门中，`no_ui_text_enemy_tower_in_painted_map` 仍为 `warning`，原因是 MVP 还没有接入真正的视觉模型自动验图。`alignment_requires_runtime_overlay` 在存在逻辑对齐 fallback 或人工审查发布图时可通过，但正式版仍需要自动化像素回配或视觉模型审查。
 
 ## 运行
 
@@ -61,6 +62,19 @@ python3 tools/media/build_map_visual_reference_pack.py
 python3 tools/asset_graph/build_map_runtime_package.py --output examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
+
+如果需要重新生成玩家侧美术候选，必须显式允许真实图像 provider 调用：
+
+```bash
+python3 tools/media/generate_map_painted_background.py \
+  --live \
+  --dotenv /home/zty/projects/ai-compiled-towerdefense/.env \
+  --image-profile agnes_image_flash \
+  --size 1280x720 \
+  --output game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png
+```
+
+该脚本只下载候选图和 sidecar，不自动发布。候选必须经过审查后才能被 `build_map_visual_reference_pack.py` 登记为 `painted_visual_layer`。
 
 默认输出到：
 
@@ -101,7 +115,7 @@ painted_visual_layer
 
 - 图片永远不是玩法真相。怪物路线、塔位、目标、出生点以 MapRuntimePackage 的结构化数据为准。
 - 控制图和参考图不进入玩家默认体验，也不作为发布底图缺失时的默认 fallback。
-- 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，并经过本地路径、hash、尺寸和 schema 校验。
+- 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，并经过本地路径、hash、尺寸、schema 校验和人工或自动视觉审查。
 - 若底图与结构化路线不完全对齐，MVP 可以用轻量叠层修正；正式版需要增加对齐审查或回写步骤。
 - `MapCompilePackage` 可以引用控制图和发布底图，但最终导出的玩家战斗数据仍应是 `MapRuntimePackage`。
 

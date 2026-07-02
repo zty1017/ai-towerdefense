@@ -1,0 +1,14 @@
+{
+  "schema_version": "map_painted_candidate.v0.1",
+  "candidate_path": "game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png",
+  "battle_config": "game_data/demo/first_battle_config.json",
+  "provider_profile": "agnes_image_flash",
+  "model": "agnes-image-2.1-flash",
+  "size": "1280x720",
+  "prompt_summary": [
+    "2D pseudo-isometric tower defense map",
+    "no UI, text, grid, enemies, towers, characters, watermark, or logo",
+    "road and empty tower foundations remain clear for runtime overlays"
+  ],
+  "review_status": "candidate_needs_alignment_review"
+}
