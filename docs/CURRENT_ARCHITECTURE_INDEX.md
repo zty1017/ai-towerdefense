@@ -65,6 +65,8 @@ Last updated: 2026-07-02
   - 前端 mock 内容包说明。
 - `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
   - 开发者预编译的战斗运行时 mock 美术包说明。
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
+  - 前端战斗视觉运行态审计，记录默认玩家地图底图防回退、静态资源读取和截图环境缺口。
 
 ### AI 编译器与 AssetGraph
 
