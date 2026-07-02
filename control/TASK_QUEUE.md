@@ -60,6 +60,7 @@ P2：本阶段明确不做
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 兼容多帧模式默认接入前端运行时；真实图生视频关键帧与实体 atlas PNG 仍未生成。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
+- Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -233,6 +234,23 @@ P2：本阶段明确不做
 - frontend mock sprite：`needs_review`，2 / 4 个需复核。
 - runtime battle sprite：`needs_review`，3 / 7 个需复核。
 - 无硬失败；这些报告用于后续重生素材、重抠图和真实视频关键帧替换排序。
+
+### P1-A-3 Sprite cutout repair plan
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_sprite_cutout_repair_plan.py`
+- `examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 repair plan 摘要和验证命令。
+
+当前结论：
+
+- frontend mock repair plan：2 个任务，优先级分布 `P1: 1, P2: 1`。
+- runtime repair plan：3 个任务，优先级分布 `P1: 2, P2: 1`。
+- 这些任务是下一轮素材重生 / 重抠图 / 视频关键帧替换的输入，不直接改动玩家侧资产。
 
 ## 4. 当前 P0 任务
 

@@ -53,6 +53,10 @@ PATHS = {
     / "examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json",
     "runtime_sprite_cutout_quality_report": ROOT
     / "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
+    "frontend_sprite_cutout_repair_plan": ROOT
+    / "examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json",
+    "runtime_sprite_cutout_repair_plan": ROOT
+    / "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -133,6 +137,26 @@ STATIC_VALIDATION_COMMANDS = [
             "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
             "--output",
             "/tmp/ai_td_frontend_runtime_sprite_cutout_quality_report.json",
+        ],
+    },
+    {
+        "name": "frontend_sprite_cutout_repair_plan",
+        "command": [
+            "python3",
+            "tools/media/build_sprite_cutout_repair_plan.py",
+            "examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json",
+            "--output",
+            "/tmp/ai_td_frontend_sprite_cutout_repair_plan.json",
+        ],
+    },
+    {
+        "name": "frontend_runtime_sprite_cutout_repair_plan",
+        "command": [
+            "python3",
+            "tools/media/build_sprite_cutout_repair_plan.py",
+            "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
+            "--output",
+            "/tmp/ai_td_frontend_runtime_sprite_cutout_repair_plan.json",
         ],
     },
     {
@@ -442,6 +466,30 @@ def sprite_cutout_quality_summary(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def sprite_repair_plan_summary(plan: dict[str, Any]) -> dict[str, Any]:
+    tasks = [task for task in as_list(plan.get("tasks")) if isinstance(task, dict)]
+    return {
+        "schema_version": plan.get("schema_version"),
+        "plan_id": plan.get("plan_id"),
+        "status": plan.get("status"),
+        "source_report": plan.get("source_report"),
+        "task_count": plan.get("task_count") if plan.get("task_count") is not None else len(tasks),
+        "priority_counts": as_obj(plan.get("priority_counts")),
+        "action_counts": as_obj(plan.get("action_counts")),
+        "task_samples": [
+            {
+                "task_id": task.get("task_id"),
+                "priority": task.get("priority"),
+                "asset_id": task.get("asset_id"),
+                "media_role": task.get("media_role"),
+                "recommended_action": task.get("recommended_action"),
+                "warnings": as_list(task.get("warnings")),
+            }
+            for task in tasks[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -620,10 +668,12 @@ def collect_assets_and_media(
     frontend_media_manifest: dict[str, Any],
     frontend_media_atlas_manifest: dict[str, Any],
     frontend_sprite_quality_report: dict[str, Any],
+    frontend_sprite_repair_plan: dict[str, Any],
     runtime_art_kit: dict[str, Any],
     runtime_art_media_manifest: dict[str, Any],
     runtime_art_atlas_manifest: dict[str, Any],
     runtime_sprite_quality_report: dict[str, Any],
+    runtime_sprite_repair_plan: dict[str, Any],
     map_visual_manifest: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
@@ -645,6 +695,7 @@ def collect_assets_and_media(
         "published_asset_media": media_manifest_summary(frontend_media_manifest),
         "published_asset_atlas": atlas_manifest_summary(frontend_media_atlas_manifest),
         "published_sprite_cutout_quality": sprite_cutout_quality_summary(frontend_sprite_quality_report),
+        "published_sprite_repair_plan": sprite_repair_plan_summary(frontend_sprite_repair_plan),
         "runtime_art": {
             "kit_id": runtime_art_kit.get("kit_id"),
             "mode": runtime_art_kit.get("mode"),
@@ -660,6 +711,7 @@ def collect_assets_and_media(
             "media_manifest": media_manifest_summary(runtime_art_media_manifest),
             "atlas_manifest": atlas_manifest_summary(runtime_art_atlas_manifest),
             "sprite_cutout_quality": sprite_cutout_quality_summary(runtime_sprite_quality_report),
+            "sprite_repair_plan": sprite_repair_plan_summary(runtime_sprite_repair_plan),
         },
         "map_visual_reference": {
             "pack_id": map_visual_manifest.get("pack_id"),
@@ -789,6 +841,8 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("runtime_art_atlas_manifest", PATHS["runtime_art_atlas_manifest"]),
         ("frontend_sprite_cutout_quality_report", PATHS["frontend_sprite_cutout_quality_report"]),
         ("runtime_sprite_cutout_quality_report", PATHS["runtime_sprite_cutout_quality_report"]),
+        ("frontend_sprite_cutout_repair_plan", PATHS["frontend_sprite_cutout_repair_plan"]),
+        ("runtime_sprite_cutout_repair_plan", PATHS["runtime_sprite_cutout_repair_plan"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -837,9 +891,11 @@ def build_evidence() -> dict[str, Any]:
     frontend_media_manifest = load_json(PATHS["frontend_media_manifest"])
     frontend_media_atlas_manifest = load_json(PATHS["frontend_media_atlas_manifest"])
     frontend_sprite_quality_report = load_json(PATHS["frontend_sprite_cutout_quality_report"])
+    frontend_sprite_repair_plan = load_json(PATHS["frontend_sprite_cutout_repair_plan"])
     runtime_art_media_manifest = load_json(PATHS["runtime_art_media_manifest"])
     runtime_art_atlas_manifest = load_json(PATHS["runtime_art_atlas_manifest"])
     runtime_sprite_quality_report = load_json(PATHS["runtime_sprite_cutout_quality_report"])
+    runtime_sprite_repair_plan = load_json(PATHS["runtime_sprite_cutout_repair_plan"])
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -884,10 +940,12 @@ def build_evidence() -> dict[str, Any]:
             frontend_media_manifest,
             frontend_media_atlas_manifest,
             frontend_sprite_quality_report,
+            frontend_sprite_repair_plan,
             runtime_art_kit,
             runtime_art_media_manifest,
             runtime_art_atlas_manifest,
             runtime_sprite_quality_report,
+            runtime_sprite_repair_plan,
             map_visual_manifest,
         ),
         "validation_summary": collect_validation_summary(
@@ -922,9 +980,13 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     sprite_quality = as_obj(
         as_obj(evidence.get("assets_and_media")).get("published_sprite_cutout_quality")
     )
+    sprite_repair = as_obj(
+        as_obj(evidence.get("assets_and_media")).get("published_sprite_repair_plan")
+    )
     runtime_art = as_obj(as_obj(evidence.get("assets_and_media")).get("runtime_art"))
     runtime_art_atlas = as_obj(runtime_art.get("atlas_manifest"))
     runtime_sprite_quality = as_obj(runtime_art.get("sprite_cutout_quality"))
+    runtime_sprite_repair = as_obj(runtime_art.get("sprite_repair_plan"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -1008,9 +1070,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- published PNG 媒体：`{media.get('media_count')}` 个，覆盖资产：`{media.get('asset_count')}`",
         f"- published atlas：动画 `{atlas.get('animation_count')}` 个，帧 `{atlas.get('frame_count')}` 个，模式 `{atlas.get('atlas_mode')}`",
         f"- published sprite cutout 质量：`{sprite_quality.get('status')}`，需复核 `{sprite_quality.get('needs_review_count')}` / `{sprite_quality.get('sprite_item_count')}`",
+        f"- published sprite repair plan：任务 `{sprite_repair.get('task_count')}` 个，优先级 `{as_obj(sprite_repair.get('priority_counts'))}`",
         f"- runtime art：美术对象 `{runtime_art.get('art_asset_count')}` 个，地图 token `{runtime_art.get('map_token_count')}` 个，程序化特效 `{runtime_art.get('procedural_effect_count')}` 个",
         f"- runtime art atlas：动画 `{runtime_art_atlas.get('animation_count')}` 个，帧 `{runtime_art_atlas.get('frame_count')}` 个，模式 `{runtime_art_atlas.get('atlas_mode')}`",
         f"- runtime sprite cutout 质量：`{runtime_sprite_quality.get('status')}`，需复核 `{runtime_sprite_quality.get('needs_review_count')}` / `{runtime_sprite_quality.get('sprite_item_count')}`",
+        f"- runtime sprite repair plan：任务 `{runtime_sprite_repair.get('task_count')}` 个，优先级 `{as_obj(runtime_sprite_repair.get('priority_counts'))}`",
         "",
         "## 4. 校验摘要",
         "",
@@ -1139,9 +1203,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     published_media = as_obj(assets_media.get("published_asset_media"))
     published_atlas = as_obj(assets_media.get("published_asset_atlas"))
     published_sprite_quality = as_obj(assets_media.get("published_sprite_cutout_quality"))
+    published_sprite_repair = as_obj(assets_media.get("published_sprite_repair_plan"))
     runtime_art = as_obj(assets_media.get("runtime_art"))
     runtime_art_atlas = as_obj(runtime_art.get("atlas_manifest"))
     runtime_sprite_quality = as_obj(runtime_art.get("sprite_cutout_quality"))
+    runtime_sprite_repair = as_obj(runtime_art.get("sprite_repair_plan"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -1305,6 +1371,16 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Runtime Sprite 复核</div>
           <div class="metric">{html_escape(runtime_sprite_quality.get("needs_review_count"))}/{html_escape(runtime_sprite_quality.get("sprite_item_count"))}</div>
           <p class="muted">战斗运行时 sprite cutout 自动审查，状态：{html_escape(runtime_sprite_quality.get("status"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Sprite 修复任务</div>
+          <div class="metric">{html_escape(published_sprite_repair.get("task_count"))}</div>
+          <p class="muted">前端 mock sprite repair plan，优先级：{html_escape(published_sprite_repair.get("priority_counts"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Runtime 修复任务</div>
+          <div class="metric">{html_escape(runtime_sprite_repair.get("task_count"))}</div>
+          <p class="muted">战斗运行时 sprite repair plan，优先级：{html_escape(runtime_sprite_repair.get("priority_counts"))}。</p>
         </article>
       </div>
     </section>
