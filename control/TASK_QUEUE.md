@@ -75,7 +75,7 @@ P2：本阶段明确不做
 - `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider，但最新真实调用已证明纯文本整图不适合作为地图发布候选路线。下一步应接支持参考图的 provider adapter、人工 paintover，或实现 `MapRuntimePackage` 驱动的分层程序化底图。
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
-- 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
+- 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。仍需要在有 Chromium / Playwright 的环境中补真实截图或人工录屏验收。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -477,7 +477,7 @@ P2：本阶段明确不做
 
 ### P0-M 前端战斗地图视觉底座改造
 
-状态：待启动。
+状态：已完成。
 
 目标：
 
@@ -507,11 +507,30 @@ python3 tools/frontend/validate_battle_visual_contract.py
 - 默认玩家视图不得显示 control sketch、reference board、箭头、网格标签或 provider 生成失败图。
 - 拖拽部署路径保持可用，点击放置可作为 fallback。
 
+已落地：
+
+- `frontend/app.js`：默认战斗底座改为 `MapRuntimePackage` seed 驱动的程序化地形、土石路、部署基座、目标地基和入口雾潮；整张玩家地图图像不再进入默认 preload / drawBackdrop。
+- `frontend/styles.css`：压低 HUD 遮挡，battle canvas 继续全屏铺底。
+- `tools/frontend/validate_battle_visual_contract.py`：增加程序化底座、棋盘 helper 禁止、失败视觉层禁止发布和 runtime package 结构检查。
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md` 与 `frontend/README.md`：同步玩家默认战斗底座事实源。
+
+已验证：
+
+```bash
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evidence
+```
+
+遗留风险：
+
+- 当前执行环境没有 Chromium / Playwright / Selenium，未生成真实浏览器截图；需要用户或具备浏览器环境的 worker 补桌面 / 移动视口截图或录屏。
+
 补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、批量 validator、首战示例、stage01-stage07 事务链和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
 
 补充：Campaign Router 消费的三节点 MVP 主线已经能通过战斗结算接口连续推进。`lamp_wick_store` 使用 stage04 battle_result transaction；`old_signal_tower` 当前只有 research_job 来源的 after-state，因此以 `fixture_bridge` 暴露，并在返回值中保留 `fixture_baseline` 说明。
 
-下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。`main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的有效媒体 guardrail 已合入 `develop`，但同步 `main` 前仍需保存草稿 diff 并确认是否晋级整个 `develop`。
+下一轮可进入 P1。执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md` 前仍需保护 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿，并确认是否晋级整个 `develop`。
 
 ## 5. P1 任务
 
@@ -616,8 +635,9 @@ python3 tools/frontend/validate_battle_visual_contract.py
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
 2. WorldStateDelta / review pack 继续从 refs/evidence 对齐推进到原生产物字段；Research Job、battle settlement evidence 与 frontend mock pack 已完成第一层原生快照迁移。
 3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
-4. `P1-A` 真实视频关键帧增强。
-5. `P1-B` Generation Scheduler 执行器 / live campaign router。
+4. 补 P0-M 浏览器截图或人工录屏验收。
+5. `P1-A` 真实视频关键帧增强。
+6. `P1-B` Generation Scheduler 执行器 / live campaign router。
 
 若需要并行，优先组合：
 

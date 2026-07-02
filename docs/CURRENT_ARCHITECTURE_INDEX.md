@@ -76,7 +76,7 @@ Last updated: 2026-07-02
 - `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
   - 开发者预编译的战斗运行时 mock 美术包说明。
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
-  - 前端战斗视觉运行态审计，记录默认玩家地图底图防回退、静态资源读取和截图环境缺口。
+  - 前端战斗视觉运行态审计，记录 P0-M 程序化战场底座、防控制图 / 失败整图回退、静态视觉合约和截图环境缺口。
 
 ### AI 编译器与 AssetGraph
 
@@ -151,6 +151,7 @@ MapControlledRegenerationRequestPack v0.1 已把三张 topology control sketch�
 ControlledMapCandidateGenerationRun v0.1 已提供 `tools/media/generate_controlled_map_candidates.py` 入口，默认 `reference-image` handoff 模式会从 request pack 生成三张 review-only sidecar，不调用 provider、不伪造图片；`text-fallback` 模式可在显式 `--live` 时走当前 OpenAI-compatible 图像接口，但产物仍必须重新过 review/alignment/overlay/visual/promotion gates。
 ControlledMapCandidateReview v0.1 已把上述 handoff sidecar 接入 `tools/media/build_node_map_candidate_review_pack.py`，当前审查状态为 `review_only_not_runtime_ready`，三个候选均 `awaiting_provider_or_paintover_output`。这证明受控候选已经进入统一候选审查门，但在真实 provider 或人工 paintover 产出图片前不会进入 alignment / runtime promotion。
 ControlledMapTextFallbackGenerationRun v0.1 已用真实 Agnes 调用产出三张受控 text-fallback 地图候选，并记录 provider 调用数、图片路径和 sidecar；审查结果为 `review_only_not_runtime_ready`，三张均 `needs_regeneration`。失败原因包括箭头 / 控制形状 / 棋盘边框被烙进背景、未授权人物或塔位被模型自行添加、视觉路线与 MapRuntimePackage 拓扑不一致。该结果冻结为负样本证据：地图不应继续依赖纯文本整图生成，下一轮应走 reference-image provider、人工 paintover，或由 MapRuntimePackage 驱动的分层程序化底图。
+FrontendProceduralBattleBackdrop v0.1 已完成 P0-M：默认玩家战斗画面不再绘制失败整图候选，而是由 `MapRuntimePackage` 的 grid、path_routes、build_slots、objectives 和 spawn_points 驱动 canvas 程序化绘制自然地形、土石路、部署基座、目标地基和入口雾潮。静态合约会阻止控制图 / 参考图 / 棋盘 helper / 失败整图发布进入默认玩家视图；仍需浏览器截图或录屏做最终像素验收。
 GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_queue_items` 已能提供 item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step，真实后台执行器仍未实现。
 ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。
 ```
@@ -204,6 +205,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 地图布局修订计划：`tools/media/build_map_layout_reconciliation_plan.py` 与 `examples/review_packs/map_layout_reconciliation_plan.v0.1.json` 已把每个节点拆成可执行后续动作、验收门和 fallback。下一轮应基于该计划产出 runtime patch candidate 或 topology-constrained regeneration prompt，而不是继续泛化生成地图。
 - 地图补丁、补丁后 overlay、拓扑重生、控制图、受控重生请求、候选 dry-run 与候选审查：`tools/media/build_runtime_map_patch_candidates.py`、`tools/media/build_map_patch_overlay_review.py`、`tools/media/build_topology_constrained_map_prompt_pack.py`、`tools/media/generate_topology_constrained_map_candidates.py`、`tools/media/build_map_topology_control_sketch_pack.py`、`tools/media/build_map_controlled_regeneration_request_pack.py`、`tools/media/generate_controlled_map_candidates.py`、`tools/media/build_node_map_candidate_review_pack.py` 与对应 `examples/review_packs/*.json` 已把布局修订计划拆成 review-only runtime 补丁、补丁后 overlay 复核、旧信号塔拓扑约束重生证据、三节点 topology control sketch、三节点 reference-image request、三节点 handoff sidecar 和受控候选审查。text-fallback live 已形成负样本，下一步应接入支持参考图的 provider、人工 paintover，或实现 MapRuntimePackage 驱动的分层程序化底图，再重新走 review/alignment/overlay/visual gate。
 - 地图 text-fallback 真实生成负样本：`examples/review_packs/controlled_map_text_fallback_generation_run.v0.1.json` 记录了三次真实 Agnes 图像调用，`examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json` 把三张候选全部阻断为 `needs_regeneration`。该负样本不进入 alignment / overlay / frontend runtime，是下一步地图编译改造的决策依据。
+- 前端默认战斗底座：`frontend/app.js` 当前用 `drawProceduralTerrain()`、`drawPath()`、`drawDeploymentBase()`、`drawTargetFoundation()` 和 `drawSpawnRift()` 从 `MapRuntimePackage` 稳定生成玩家默认战场画面；整张 map image 只保留为 future published layer / debug evidence 语义，不进入默认 preload 或 `drawBackdrop()`。`tools/frontend/validate_battle_visual_contract.py` 已把这一点纳入静态合约。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback 和 dry-run worker step 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
 - Campaign Router v0.1：`backend/app/services/campaign_router_service.py` 是当前最薄运行时游标入口；它根据 `RunWorldState.progress.phase` 返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可触发一次 fixture-backed dry-run 预取步。no-build 前端已在 API 模式消费该 route，静态模式保留灰灯驿站首战兜底。
