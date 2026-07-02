@@ -1,661 +1,422 @@
 # 任务队列
 
-Last updated: 2026-06-29
+Last updated: 2026-07-02
+
+本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
+
+若本文与早期任务文档冲突，以本文为准。字段级事实源仍以 `shared/schemas/`、`tools/`、`examples/` 和对应专题文档为准。
 
 ## 1. 使用规则
-
-本文是主会话生成给 CodeBuddy / OpenCode / Codex worker / 人类队友的任务来源。
 
 优先级：
 
 ```text
-P0：MVP 必须完成
-P1：时间允许
-P2：暂不做
+P0：MVP 当前闭环必须完成
+P1：时间允许时推进
+P2：本阶段明确不做
 ```
 
-执行规则：
+协作规则：
 
-- 每个任务优先在独立 `task/*` 分支或 worktree 中完成。
-- CodeBuddy 可以使用自身子代理，但必须遵守任务包的允许修改范围。
-- worker 不得修改 `.env`。
+- `main` 是稳定决策 / 发布基线，只在阶段性冻结窗口从 `develop` 受控同步。
+- `develop` 是当前集成事实源。
+- 具体实现优先在从 `develop` 派生的 `task/*` worktree 中完成。
 - worker 不得直接合并到 `main` 或 `develop`。
-- worker 完成后必须汇报修改文件、测试命令、结果和风险。
-- 主会话负责最终审查、合并和发布判断。
+- worker 不得修改 `.env`，不得打印 API key、secret、token。
+- worker 完成后必须汇报修改文件、验证命令、结果、风险和未解决问题。
+- 玩家侧页面、接口文案、演示文本不得出现 provider、prompt、schema、raw trace、API key 等技术词。
+- 内部证据、校验日志和演示导出可以保留技术信息，但必须过滤 secret 和原始未审内容。
 
-## 2. 推荐分支 / worktree
+外部 agent 调用说明：
 
-```text
-develop
-task/backend-session-and-runs
-task/backend-research-job
-task/frontend-shell
-task/frontend-battle-runtime
-task/content-demo-fixtures
-task/locked-manifest
-task/demo-evidence-export
-docs/mvp-control-docs
-```
+- CodeBuddy / OpenCode / Codex headless 可以在用户授权的 IDE / CLI 环境中作为 worker 使用。
+- 本 Codex 受控执行通道已验证 `opencode run` 的无项目上下文调用可用。
+- 本 Codex 受控执行通道不能依赖“把仓库或项目上下文直接发送给外部模型”的调用方式；这会被环境策略拦截为外部数据披露风险。
+- 因此，在本通道内需要使用外部 agent 时，应优先使用不包含仓库内容的公开任务指令；需要仓库上下文的任务由用户侧 CodeBuddy/OpenCode 工作区或本地 task worktree 执行。
+
+## 2. 当前已完成基线
+
+当前有效基线位于 `develop`。
+
+已落地内容：
+
+- FastAPI + SQLite 后端。
+- 匿名 session，不做真实注册登录。
+- Research proposal / job API。
+- Frontend mock API。
+- 内容 fixture 与 MVP 世界实例。
+- locked manifest / runtime package 基础合同与校验。
+- AssetGraph DAG / 有界 ReAct / 节点注册 / runtime package 构建与校验。
+- 真实 LLM 世界状态变化烟测与语义门。
+- 媒体后处理 mock assets、processed PNG、animation seed manifest。
+- 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效。
+- MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
+- 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。
+- 当前前端是 no-build MVP shell，不再以早期 React/Vite/Phaser 骨架任务为事实源。
+
+当前缺口：
+
+- 战斗和大地图视觉仍需明显游戏化，不能停留在调试图形或突兀棋盘感。
+- 证据导出脚本仍未独立成 `summary.md / evidence.json / index.html`。
+- 多个战斗节点还缺 MapRuntimePackage。
+- 视频帧、spritesheet、atlas 尚未默认接入前端运行时。
+- live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. P0 任务
 
-### P0-001 后端基础与匿名 session
+### P0-A 前端战斗画面与大地图视觉打磨
 
-任务类型：实现
+任务类型：实现 / 视觉
 
-推荐执行：CodeBuddy
+建议分支：
 
-允许 CodeBuddy 子代理：是
+```text
+task/frontend-visual-polish
+```
 
 目标：
 
 ```text
-建立 FastAPI + SQLite 后端骨架，实现匿名 session 创建、读取、重置。
-```
-
-允许修改：
-
-- `backend/`
-- `pyproject.toml`
-- `requirements.txt`
-- `README.md`
-- `control/TASK_QUEUE.md`
-
-禁止修改：
-
-- `.env`
-- `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
-- `docs/AI_ASSET_COMPILER_V0_1.md`
-- `docs/ASSET_GRAPH_COMPILER_V0_1.md`
-
-接口建议：
-
-```text
-POST /api/sessions
-GET /api/sessions/{session_id}
-POST /api/sessions/{session_id}/reset
-```
-
-验收命令：
-
-```bash
-python3 -m compileall backend
-pytest backend/tests
-```
-
-完成标准：
-
-- SQLite 表带 `session_id`。
-- 不做真实登录。
-- 不读取或打印 `.env`。
-
-### P0-002 内容 fixture 与世界实例配置
-
-任务类型：实现 / 内容
-
-推荐执行：CodeBuddy + 内容队友
-
-允许 CodeBuddy 子代理：是
-
-目标：
-
-```text
-创建 MVP 默认世界实例 fixture，包括世界书模板、开局配置、第一张大地图、第一危机节点、初始材料和 NPC 占位。
-```
-
-允许修改：
-
-- `content/`
-- `game_data/`
-- `shared/`
-- `examples/`
-
-验收命令：
-
-```bash
-python3 -m json.tool content/worldbooks/long_night_lanterns/world_instance_config.json
-python3 -m json.tool game_data/demo/initial_map.json
-```
-
-完成标准：
-
-- 使用稳定内部 ID。
-- 玩家侧名称可作为 locked 示例，但不得假定未来写死。
-- 不出现 provider / prompt / schema 技术词。
-
-### P0-003 locked manifest v0.1 schema 与校验器
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/locked_manifest_v0_1.md`
-- `/tmp/ai-compiled-td-research/locked_manifest_prototype/`
-- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
-
-目标：
-
-```text
-实现 locked manifest v0.1 的 JSON Schema、示例和校验脚本。
-```
-
-允许修改：
-
-- `shared/schemas/`
-- `examples/locked_manifests/`
-- `tools/content_pipeline/`
-
-验收命令：
-
-```bash
-python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_light_snare.locked_manifest.json
-python3 -m py_compile tools/content_pipeline/validate_locked_manifest.py
-```
-
-完成标准：
-
-- 递归拒绝 `provider`、`model`、`raw_prompt`、`full_trace`、`raw_json`、`api_key`、`secret`。
-- manifest 不内嵌完整 gameplay。
-- media refs 不使用 provider 临时 URL。
-
-### P0-004 研发任务状态机
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/research_job_state_machine/`
-- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
-
-目标：
-
-```text
-实现确认试作后的研发任务状态机：创建任务、倒计时、样品完成、战斗中送达、使用后进入战后观察。
-```
-
-允许修改：
-
-- `backend/`
-- `shared/`
-- `tools/`
-- `examples/`
-
-验收命令：
-
-```bash
-pytest backend/tests
-python3 -m compileall backend tools
-```
-
-完成标准：
-
-- 支持 happy path。
-- 支持 delayed / failed / unstable 状态枚举。
-- 玩家侧事件流不出现 AI/provider/schema/prompt。
-- 内部事件流可供证据导出读取。
-
-### P0-005 Mock AI 编译管线 API
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-目标：
-
-```text
-基于现有 content_pipeline，提供后端 API：玩家构想 -> 试作方案 -> 确认试作 -> compiled candidate / sample。
-```
-
-允许修改：
-
-- `backend/`
-- `tools/content_pipeline/`
-- `shared/schemas/`
-- `examples/`
-
-接口建议：
-
-```text
-POST /api/sessions/{session_id}/research/proposals
-POST /api/sessions/{session_id}/research/proposals/{proposal_id}/confirm
-GET /api/sessions/{session_id}/research/jobs/{job_id}
-```
-
-验收命令：
-
-```bash
-python3 tools/content_pipeline/run_mock_pipeline.py examples/proposals/light_slow_field.proposal.json --output-dir /tmp/ai_compiled_td_mock_runs
-pytest backend/tests
-```
-
-完成标准：
-
-- P0 可用 mock / fixture，不强制真实 provider。
-- 结构化输出必须经过本地校验。
-- 技术错误进入内部日志，玩家侧只显示世界内状态。
-
-### P0-006 前端应用骨架
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-目标：
-
-```text
-创建 React + Vite + TypeScript 前端骨架，包含页面路由和基础布局。
+让 MVP 前端第一眼更像完整塔防游戏画面，而不是调试面板或孤立几何图。
 ```
 
 允许修改：
 
 - `frontend/`
-- `package.json`
-- `pnpm-lock.yaml`
-- `README.md`
+- `game_data/media/`
+- `examples/map_runtime_packages/`
+- `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
 
-技术：
+关键要求：
 
-```text
-React
-Vite
-TypeScript
-react-router
-Zustand
-TanStack Query
-```
-
-页面：
-
-- 本地档案入口。
-- 世界实例配置。
-- 预制开场。
-- 大地图。
-- 节点 Briefing。
-- 现场应急研发。
-- 塔防战斗。
-- 战后结算。
+- 战斗主画面占据页面视觉中心，地图应是自然地形画面上的路径 / 塔位 / 目标叠层。
+- 不再使用突兀的平行四边形板块作为主地图表达。
+- 支持拖拽防御件到可放置塔位，保留点击放置 fallback。
+- 塔位、路径、目标、出生点必须来自 MapRuntimePackage。
+- UI 可以有调试辅助开关，但默认玩家视图应沉浸式。
+- 大地图需要包含主城、战斗节点、资源 / 存储节点、未知黑暗区域、剧情 / NPC 标记。
 
 验收命令：
 
 ```bash
-npm install
-npm run build
-npm run lint
+node --check frontend/app.js
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
-完成标准：
+验收要点：
 
-- 可启动本地前端。
-- 页面路由完整。
-- 不做登录。
-- 不显示 Studio/debug 页面。
+- 首屏视觉能支撑录屏演示。
+- 中部战斗区域不显得像临时调试画布。
+- 拖拽放置不会破坏现有 MapRuntimePackage 逻辑。
 
-### P0-007 Phaser 战斗运行时原型
+### P0-B 演示证据导出脚本
 
-任务类型：实现
+任务类型：实现 / 演示工程
 
-推荐执行：CodeBuddy
+建议分支：
 
-允许 CodeBuddy 子代理：是
+```text
+task/demo-evidence-export
+```
 
 目标：
 
 ```text
-实现 Phaser 3 战斗页原型：斜视角伪 3D 地图、敌人路径、样品热栏、减速陷阱、基础 HUD。
-```
-
-允许修改：
-
-- `frontend/src/game/`
-- `frontend/src/pages/Battle*`
-- `frontend/src/components/battle/`
-- `frontend/public/assets/`
-
-验收命令：
-
-```bash
-npm run build
-```
-
-完成标准：
-
-- 中央战场可见。
-- 敌人沿路径移动。
-- 研发倒计时后底部热栏点亮样品。
-- 玩家可部署样品。
-- 样品触发后敌人明显减速。
-- 有 `ring_pulse` / `aura_field` / `sprite_flash` 至少一种表现。
-
-### P0-008 前端玩家主链路集成
-
-任务类型：实现 / 集成
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-目标：
-
-```text
-把本地档案入口、世界配置、开场、大地图、briefing、现场研发、战斗、战后结算串成完整可走流程。
-```
-
-允许修改：
-
-- `frontend/`
-- `backend/`
-- `game_data/`
-- `content/`
-
-验收命令：
-
-```bash
-npm run build
-pytest backend/tests
-```
-
-完成标准：
-
-- 新 session 能走完整链路。
-- 结算后返回大地图且状态变化。
-- 玩家侧不出现 AI/provider/schema/prompt/raw JSON 等词。
-
-### P0-009 战后结算与世界生长
-
-任务类型：实现 / 内容
-
-推荐执行：CodeBuddy + 内容队友
-
-允许 CodeBuddy 子代理：是
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/settlement_world_growth.md`
-
-目标：
-
-```text
-实现战后结算页和后端结果记录：节点状态变化、资源变化、样品观察、NPC 反馈、下一步研发线索。
-```
-
-允许修改：
-
-- `frontend/`
-- `backend/`
-- `content/`
-- `game_data/`
-
-验收命令：
-
-```bash
-npm run build
-pytest backend/tests
-```
-
-完成标准：
-
-- 胜利和失败都能产生结果。
-- 样品表现写入内部记录。
-- 玩家侧用世界内语言表达。
-- 后续正式研发线索被记录但不强制实现正式研发页。
-
-### P0-010 演示证据导出脚本
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：否
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/demo_evidence_exporter/`
-
-目标：
-
-```text
-实现从 session / run 记录导出 summary.md、evidence.json、index.html 的脚本。
+从当前 fixture、runtime package、编译日志和审查报告中导出可录屏展示的证据包。
 ```
 
 允许修改：
 
 - `tools/demo/`
-- `backend/`
-- `control/`
+- `docs/`
+- `examples/`
+- `backend/tests/`
+
+产物建议：
+
+```text
+artifacts/demo_evidence/summary.md
+artifacts/demo_evidence/evidence.json
+artifacts/demo_evidence/index.html
+```
+
+关键要求：
+
+- 不导出 API key、secret、raw prompt、provider 原始响应。
+- 能展示 AI 编译链路存在：输入上下文、DAG 节点、校验结果、runtime package、前端可用资产。
+- 作为 Studio 证据替代物，不强制做复杂前端 Studio 页面。
 
 验收命令：
 
 ```bash
-python3 tools/demo/export_evidence.py --help
-python3 tools/demo/export_evidence.py --fixture examples/demo/run_bundle.json --out /tmp/ai_compiled_td_evidence
+python3 tools/demo/export_evidence.py --output-dir /tmp/ai_td_demo_evidence
+python3 -m json.tool /tmp/ai_td_demo_evidence/evidence.json
 ```
 
-完成标准：
+### P0-C 继续补齐 MapRuntimePackage 节点覆盖
 
-- 导出 Markdown、JSON、HTML。
-- 不泄露 API key。
-- 不输出完整敏感 prompt。
-- 不输出 provider 原始错误栈。
+任务类型：实现 / 内容管线
+
+建议分支：
+
+```text
+task/map-runtime-package-more-nodes
+```
+
+目标：
+
+```text
+为 MVP 大地图上的后续战斗节点生成 MapRuntimePackage，使前端可按统一合同加载地图运行时信息。
+```
+
+允许修改：
+
+- `examples/map_runtime_packages/`
+- `tools/asset_graph/`
+- `backend/`
+- `backend/tests/`
+- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
+
+节点目标：
+
+- `mvp_first_battle`
+- `lamp_wick_store`
+- `old_signal_tower`
+
+关键要求：
+
+- 每个可战斗节点返回非空 MapRuntimePackage。
+- path routes、build slots、objectives、spawn points 均需结构化。
+- visual_layers 只能引用本地发布资产或受控静态路径。
+- 校验器继续递归拒绝 provider、raw_prompt、secret、unreviewed_content。
+
+验收命令：
+
+```bash
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+python3 -m compileall tools/asset_graph backend
+```
+
+### P0-D 研发 / 编译接口与 CGOP 元数据对齐
+
+任务类型：实现 / 架构对齐
+
+建议分支：
+
+```text
+task/research-cgop-runtime-alignment
+```
+
+目标：
+
+```text
+让 research proposal / job / sample 输出更接近 AI 可编译游戏对象统一模型，并能引用 MapRuntimePackage、ContextPackage、WorldStateDeltaTransaction 等当前概念。
+```
+
+允许修改：
+
+- `backend/`
+- `shared/`
+- `tools/asset_graph/`
+- `examples/`
+- `docs/FRONTEND_MOCK_API_V0_1.md`
+
+关键要求：
+
+- 玩家侧仍是世界内研发 / 试作 / 样品语言。
+- 内部对象需要能表达 compiled object 类型、上下文来源、约束、校验状态和 runtime package 引用。
+- 编译失败要区分世界内失败、校验失败、provider / 调度失败、实现错误。
+- 技术错误不得直接污染玩家体验。
+
+验收命令：
+
+```bash
+python3 -m compileall backend tools
+```
+
+若测试依赖已可用，再运行：
+
+```bash
+pytest backend/tests
+```
+
+### P0-E 测试依赖与本地验证环境整理
+
+任务类型：工程治理
+
+建议分支：
+
+```text
+task/test-env-hardening
+```
+
+目标：
+
+```text
+让当前后端测试、工具测试和前端语法检查能被新 worker 稳定复现。
+```
+
+允许修改：
+
+- `requirements.txt`
+- `pyproject.toml`
+- `README.md`
+- `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+- `backend/tests/`
+- `tools/`
+
+关键要求：
+
+- 明确 FastAPI、pytest 等测试依赖安装方式。
+- 不强制 worker 修改全局 Python 环境。
+- README 中区分“无依赖可运行检查”和“完整测试检查”。
+
+验收命令：
+
+```bash
+python3 -m compileall backend tools
+node --check frontend/app.js
+```
+
+完整环境下再运行：
+
+```bash
+pytest backend/tests
+```
+
+### P0-F 前端 API / 静态 fallback 适配层整理
+
+任务类型：实现 / 简化
+
+建议分支：
+
+```text
+task/frontend-data-adapter
+```
+
+目标：
+
+```text
+把前端加载后端 API、静态 fixture、MapRuntimePackage fallback 的逻辑集中，减少散落兼容代码。
+```
+
+允许修改：
+
+- `frontend/`
+- `docs/FRONTEND_MOCK_API_V0_1.md`
+
+关键要求：
+
+- 优先后端 mock API。
+- 静态文件只作为本地无后端演示 fallback。
+- MapRuntimePackage 是战斗地图运行时事实源。
+- 不引入构建步骤，除非另开技术栈迁移任务。
+
+验收命令：
+
+```bash
+node --check frontend/app.js
+```
 
 ## 4. P1 任务
 
-### P1-001 真实 provider 接入
+### P1-A 视频帧 / spritesheet / atlas 默认接入
 
 目标：
 
 ```text
-把 mock 方案生成替换为可配置 provider，保留演示稳定模式。
+固化“图片 -> 图生视频 -> 关键帧 -> 后处理 -> atlas -> runtime manifest”路线。
 ```
 
-优先模型：
+要点：
 
-- 方舟 Coding Plan 长上下文模型。
-- DeepSeek 官方 fallback。
-- GLM fallback。
+- 首尾帧一致或 end frame 控制优先。
+- 加入 LoopContinuityCheck。
+- 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
+- 前端优先消费 atlas，静态 PNG 作为 fallback。
 
-### P1-002 离线图像生成与缓存
+### P1-B Map Visual Reference 生成管线
 
 目标：
 
 ```text
-用 Agnes / GLM / CodeBuddy Hunyuan 生成候选图标或动画卡，下载并缓存为 reviewed / locked 素材。
+实现逻辑地图 -> 控制图 / composition sketch -> 地图底图生成 -> 结构化路线与塔位回写的开发者管线。
 ```
 
-### P1-003 正式研发机构轻量入口
+要点：
+
+- 图像模型只负责自然游戏地图渲染。
+- 路线、塔位、目标以结构化数据为准。
+- 需要支持世界书风格、地形、威胁状态和黑暗区域。
+
+### P1-C 世界演化预生成与调度
 
 目标：
 
 ```text
-战后出现正式研发机构入口，只展示样品可登记为后续蓝图线索，不实现完整技术树。
+建立类似视频缓冲的后台预生成机制，让剧情、任务、地图、资产在玩家到达前被异步准备。
 ```
 
-### P1-004 第二战役节点
+要点：
+
+- 区分 blocking、prefetch、background、lazy。
+- 引入预算、失败重试、降级 fixture。
+- 世界演化必须服务玩法和进度，不自由失控生长。
+
+### P1-D 更多可编译对象覆盖
 
 目标：
 
 ```text
-增加一个节点，用第一场样品反馈推动第二次研发。
+继续扩展 NPC、任务、随机事件、剧情节点、材料、怪物、地图、设施等可编译对象。
 ```
 
-## 5. P2 不做任务
+要点：
 
-这些任务禁止进入 MVP：
+- 所有对象先进入统一 CGOP / package manifest 模型。
+- 不允许直接自由写 runtime。
+- 每类对象定义最小可玩字段和审查门禁。
 
-- 登录注册。
-- 多人联机。
-- 真 3D。
-- 实时视频生成。
-- 完整技术树。
-- 复杂经营系统。
-- 可视化 AssetGraph 编辑器。
-- 运行时动态注册新 node / effect。
-
-## 6. 首批推荐派工顺序
-
-建议顺序：
-
-```text
-1. P0-003 locked manifest schema 与校验器
-2. P0-001 后端 session
-3. P0-002 内容 fixture
-4. P0-004 研发任务状态机
-5. P0-005 Mock AI 编译管线 API
-6. P0-006 前端应用骨架
-7. P0-007 Phaser 战斗运行时
-8. P0-008 主链路集成
-9. P0-009 战后结算
-10. P0-010 演示证据导出
-```
-
-并行建议：
-
-```text
-P0-003、P0-001、P0-002 可以并行。
-P0-006 可以与后端并行。
-P0-007 等前端骨架完成后开始。
-P0-010 可以在后端 run 记录结构确定后开始。
-```
-
-## 7. 下一批 P0 任务（AssetGraph Kernel 之后）
-
-以下任务在 AssetGraph Kernel v0.1（task/assetgraph-kernel）落地后推进。已完成的 P0-001/P0-002/P0-003 不再改写。
-
-### P0-011 AssetGraph Kernel
-
-任务类型：实现
-
-推荐执行：CodeBuddy
+### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 目标：
 
 ```text
-建立可跑通的 AssetGraph Kernel v0.1，能用 DAG 执行现有 mock 编译管线，
-产生 artifact 与 execution trace。
+生成可粘贴给用户侧 CodeBuddy / OpenCode 主代理的任务包模板。
 ```
 
-允许修改：
+要点：
 
-- `docs/ASSET_GRAPH_COMPILER_V0_1.md`
-- `control/TASK_QUEUE.md`
-- `shared/schemas/`
-- `shared/asset_graph/`
-- `examples/workflows/`
-- `examples/asset_graph/`
-- `tools/asset_graph/`
-- `tools/content_pipeline/`（仅必要可复用函数适配，不破坏现有 CLI）
+- 任务包包含允许修改范围、验收命令、禁止事项、汇报格式。
+- 可被 IDE 侧代理读取完整仓库后执行。
+- 不要求本 Codex 受控通道直接外发仓库上下文。
 
-禁止修改：
+## 5. P2 暂不做
 
-- `.env`
-- `backend/`
-- `frontend/`
-- `content/`
-- `game_data/`
-- 已有 provider 配置与密钥
+本阶段明确不做：
 
-验收命令：
+- 复杂注册登录、多用户权限、联机同步。
+- 真 3D 战斗画面。
+- 玩家运行时任意代码执行。
+- 游戏内可视化 DAG 编辑器。
+- 游玩中实时生成长视频作为关键路径。
+- 完整长期存档和跨局世界继承。
+- 复杂后台管理系统。
 
-```bash
-python3 tools/asset_graph/validate_workflow.py examples/workflows/mvp_mock_asset_compile.workflow.json
-python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_mock_asset_compile.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/mock_asset_compile
-python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_temporary_trap_delivery.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/trap_delivery
-python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_media_stub_publish.workflow.json --output-dir /tmp/ai_td_assetgraph_runs/media_stub
-python3 -m compileall tools/asset_graph tools/content_pipeline
-python3 tools/content_pipeline/run_mock_pipeline.py examples/proposals/light_slow_field.proposal.json --output-dir /tmp/ai_compiled_td_mock_runs
-```
+## 6. 推荐执行顺序
 
-完成标准：
+建议当前批次按以下顺序推进：
 
-- DAG 拓扑排序执行，无循环。
-- 节点间传 ArtifactRef，不在边上塞大对象。
-- 每个节点写 artifact 到 output_dir，trace 记录 status/start/end/input refs/output refs/errors。
-- 只实现 deterministic/mock 节点，不调用真实 LLM/provider。
-- runtime_public artifact 不得引用 raw_media 或 provider 临时 URL。
-- 不允许 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content 出现在 runtime_public artifact。
-- 现有 content_pipeline CLI 仍然可用。
+1. `P0-A` 前端战斗画面与大地图视觉打磨。
+2. `P0-B` 演示证据导出脚本。
+3. `P0-C` 补齐更多节点 MapRuntimePackage。
+4. `P0-D` 研发 / 编译接口与 CGOP 元数据对齐。
+5. `P0-E` 测试依赖与本地验证环境整理。
+6. `P0-F` 前端 API / 静态 fallback 适配层整理。
 
-### P0-012 RuntimePackage v0.1 schema/builder
+若需要并行，优先组合：
 
-任务类型：实现
-
-目标：
-
-```text
-基于 AssetGraph 的 runtime.build_package_stub 节点产出，定义
-RuntimePackage v0.1 schema 与正式 builder，作为前端运行时加载的已锁定
-资产包。RuntimePackage 必须只引用 published_media，不得引用 raw_media /
-processed_media 或 provider 临时 URL。
-```
-
-允许修改：
-
-- `shared/schemas/`
-- `tools/asset_graph/`
-- `examples/`
-
-验收命令（建议）：
-
-```bash
-python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json
-python3 -m py_compile tools/asset_graph/validate_runtime_package.py
-```
-
-### P0-013 ResearchJob API 接入 AssetGraph
-
-任务类型：实现 / 集成
-
-目标：
-
-```text
-把后端 ResearchJob 状态机接入 AssetGraph Kernel。玩家确认试作后，
-后端创建 ResearchJob 并触发 mvp_mock_asset_compile workflow；
-研发倒计时结束后，runtime.build_package_stub / research.build_delivery_payload_stub
-节点产出的 artifact 写回 session 状态。
-```
-
-允许修改：
-
-- `backend/`
-- `tools/asset_graph/`
-- `shared/`
-
-完成标准：
-
-- ResearchJob 状态机驱动 workflow 执行。
-- 玩家侧不出现 AI/provider/schema/prompt。
-- 内部 trace 可供证据导出读取。
-
-### P0-014 DAG templates 扩展：defense / narrative / media
-
-任务类型：实现 / 内容
-
-目标：
-
-```text
-在 AssetGraph Kernel 上扩展三类 DAG 模板：
-- defense：防御塔蓝图编译流程（提案 -> 编译 -> 校验 -> 模拟 -> runtime package）。
-- narrative：NPC 反馈 / 战后结算 / 世界生长事件生成流程。
-- media：raw_media -> processed_media -> published_media 完整媒体发布子图，
-  体现 MVP 后第一梯队节点（remove_background、crop_and_pad、normalize_canvas、
-  assign_anchor、pack_sprite_sheet、build_atlas_json）的占位与边界。
-```
-
-允许修改：
-
-- `examples/workflows/`
-- `examples/asset_graph/`
-- `shared/asset_graph/`
-- `tools/asset_graph/`（仅必要时新增节点实现）
+- `P0-A` 与 `P0-B` 可并行。
+- `P0-C` 与 `P0-D` 可并行，但合并时先合 `P0-C`，再让 `P0-D` 引用新的地图包事实。
+- `P0-E` 可独立并行，但不得大规模重构业务代码。
 
