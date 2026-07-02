@@ -59,7 +59,7 @@ Last updated: 2026-07-02
 }
 ```
 
-`mvp_compiler_review_dossier.v0.1` 和 `mvp_stage_candidate_pack.v0.1` 已采用该方式。这样做不是跳过校验，而是把“不应迁移”的架构判断显式化，避免后续 worker 把总览证据包或阶段候选容器误改成 CGOP 或 WorldStateDeltaTransaction。对于 StageCandidatePack，后续核心对象迁移应落到单个阶段引用的 WorldStateDelta、WorldStateDeltaTransaction 或 runtime package。
+`mvp_compiler_review_dossier.v0.1`、`mvp_stage_candidate_pack.v0.1` 和 `mvp_multistage_stage_candidate_pack.v0.1` 已采用该方式。这样做不是跳过校验，而是把“不应迁移”的架构判断显式化，避免后续 worker 把总览证据包或阶段候选容器误改成 CGOP 或 WorldStateDeltaTransaction。对于 StageCandidatePack，后续核心对象迁移应落到单个阶段引用的 WorldStateDelta、WorldStateDeltaTransaction、runtime package，或具体 story asset review / promotion pack。
 
 ## 3. 安全边界
 
