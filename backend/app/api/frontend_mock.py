@@ -160,6 +160,20 @@ def get_runtime_package(session_id: str, node_id: str) -> FrontendMockPayloadRes
     return _payload(session_id, data)
 
 
+@router.get(
+    "/api/sessions/{session_id}/battles/{node_id}/map-runtime-package",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_map_runtime_package(session_id: str, node_id: str) -> FrontendMockPayloadResponse:
+    """Return the runtime-safe logical map package for a mock battle node."""
+    _require_session(session_id)
+    try:
+        data = frontend_mock_service.get_map_runtime_package(session_id, node_id)
+    except FixtureNotFoundError as exc:
+        raise _fixture_404(exc) from exc
+    return _payload(session_id, data)
+
+
 @router.post(
     "/api/sessions/{session_id}/battles/{node_id}/results",
     response_model=FrontendMockPayloadResponse,

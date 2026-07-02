@@ -59,6 +59,12 @@ _RUNTIME_PACKAGE_BY_NODE = {
     "old_signal_tower": _REPO_ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
 }
 
+_MAP_RUNTIME_PACKAGE_BY_NODE = {
+    "gray_lantern_station": (
+        _REPO_ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+    ),
+}
+
 
 class FixtureNotFoundError(LookupError):
     """Raised when a mock fixture cannot satisfy the requested node."""
@@ -339,11 +345,13 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
         raise FixtureNotFoundError(node_id)
     pack = _load_frontend_pack()
     config = _load_json(path)
+    map_runtime_package = _load_map_runtime_package_optional(node_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
         "battle_config": config,
+        "map_runtime_package": map_runtime_package,
         "toolbar_assets": _battle_toolbar_assets(pack),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         "media_manifest": _load_media_manifest(),
@@ -363,11 +371,35 @@ def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
         "runtime_package": _load_json(path),
+        "map_runtime_package": _load_map_runtime_package_optional(node_id),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         "media_manifest": _load_media_manifest(),
         "animation_seed_manifest": _load_animation_seed_manifest(),
         "animation_pipeline_status": "seed_images_ready_video_frames_not_generated",
         **_runtime_art_payload(),
+    }
+
+
+def _load_map_runtime_package(node_id: str) -> dict[str, Any]:
+    path = _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id)
+    if path is None or not path.exists():
+        raise FixtureNotFoundError(node_id)
+    return _load_json(path)
+
+
+def _load_map_runtime_package_optional(node_id: str) -> dict[str, Any] | None:
+    path = _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id)
+    if path is None or not path.exists():
+        return None
+    return _load_json(path)
+
+
+def get_map_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "node_id": node_id,
+        "map_runtime_package": _load_map_runtime_package(node_id),
     }
 
 

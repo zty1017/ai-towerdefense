@@ -107,6 +107,7 @@ Last updated: 2026-07-02
 processed PNG 已可用于前端 mock。
 animation seed 已可用于后续图生视频。
 frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
+MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路径、塔位、目标、出生点和本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 视频帧 / spritesheet / atlas 还未作为默认前端资产生成。
 ```
@@ -148,6 +149,7 @@ frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、�
 - processed 透明 PNG 媒体包。
 - animation seed manifest。
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest。
+- MapRuntimePackage v0.1：首战节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。

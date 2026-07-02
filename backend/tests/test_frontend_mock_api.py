@@ -105,6 +105,8 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
 
     battle = _payload(client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/config"))
     assert battle["battle_config"]["sample_asset"]["delivery_delay_ms"] == 30000
+    assert battle["map_runtime_package"]["schema_version"] == "map_runtime_package.v0.1"
+    assert battle["map_runtime_package"]["build_slots"]
     assert battle["toolbar_assets"]
     assert battle["sample_delivery_asset"]["stable_internal_id"] == "asset_mirror_lure_trap_001"
     assert battle["animation_pipeline_status"] == (
@@ -116,8 +118,22 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
         client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/runtime-package")
     )
     assert runtime["runtime_package"]["schema_version"] == "runtime_package.v0.1"
+    assert runtime["map_runtime_package"]["node_id"] == "gray_lantern_station"
     assert runtime["sample_delivery_asset"]["media_refs"]["mode"] == "generated"
     assert runtime["runtime_art_media_manifest"]["summary"]["media_count"] == 18
+
+    map_runtime = _payload(
+        client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/map-runtime-package")
+    )
+    map_package = map_runtime["map_runtime_package"]
+    assert map_package["schema_version"] == "map_runtime_package.v0.1"
+    assert len(map_package["path_routes"]) == 1
+    assert len(map_package["build_slots"]) >= 8
+    first_visual_url = map_package["visual_layers"][0]["url"]
+    assert first_visual_url.startswith("/assets/map_visual_reference/")
+    visual_resp = client.get(first_visual_url)
+    assert visual_resp.status_code == 200
+    assert visual_resp.headers["content-type"] == "image/png"
 
     settlement = _payload(
         client.post(

@@ -12,10 +12,23 @@
 
 这些 PNG 不是最终规则数据。前端仍然以战斗配置中的网格、路径、目标、敌人、塔位规则作为运行时真相。
 
+当前已补充 `MapRuntimePackage v0.1`，作为战斗地图运行时真相的更稳定入口。它从 battle config 派生：
+
+- `grid`
+- `path_routes`
+- `build_slots`
+- `objectives`
+- `spawn_points`
+- `visual_layers`
+
+因此后续前端应优先读取 map runtime package，而不是直接消费 battle config。battle config 仍是开发期和兼容层输入。
+
 ## 运行
 
 ```bash
 python3 tools/media/build_map_visual_reference_pack.py
+python3 tools/asset_graph/build_map_runtime_package.py --output examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
 默认输出到：
@@ -28,11 +41,12 @@ game_data/media/map_visual_reference/
 
 ```text
 game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json
+examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 ```
 
 ## 前端使用方式
 
-前端读取 `map_visual_reference_manifest.v0.1.json`，将 `battle_reference_board` 作为战斗画布的视觉参考底层。玩家侧不显示完整逻辑网格，只在其上实时绘制：
+前端通过后端接口读取 `map_runtime_package`，并从其中的 `visual_layers` 选择 `battle_reference_board` 作为战斗画布的视觉参考底层。玩家侧不显示完整逻辑网格，只在其上实时绘制：
 
 - 路径高光
 - 核心和防守目标

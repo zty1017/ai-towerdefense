@@ -21,6 +21,7 @@
 - 前端看到的是统一后端 API，不需要直接读仓库 JSON 文件。
 - 战斗运行时 mock 美术包是开发者预编译结果，不是玩家侧现场编译结果。
 - 当前动效资源处于 `animation seed` 阶段：种子图已经生成，视频帧 / spritesheet / atlas 后续再补。
+- 塔防战斗地图优先消费 `MapRuntimePackage v0.1`。`battle_config` 仍保留为旧兼容和调试输入，但前端不应从地图图片反推路径、塔位、碰撞或目标。
 
 ## 静态媒体
 
@@ -183,6 +184,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 返回：
 
 - battle config
+- map runtime package
 - bottom toolbar assets
 - sample delivery asset
 - media manifest
@@ -192,6 +194,41 @@ GET /api/sessions/{session_id}/battles/{node_id}/config
 
 前端可用该接口构建战斗页面。
 
+其中 `map_runtime_package` 是新的运行时地图真值入口，包含：
+
+- `grid`
+- `path_routes`
+- `build_slots`
+- `objectives`
+- `spawn_points`
+- `visual_layers`
+- `runtime_hints`
+
+前端应优先用它绘制拖拽部署、路径预览、目标标记和视觉底图引用；`battle_config.paths` 只是旧兼容字段。
+
+### 获取地图运行包
+
+```http
+GET /api/sessions/{session_id}/battles/{node_id}/map-runtime-package
+```
+
+返回：
+
+- `map_runtime_package`
+
+当前 MVP 首战节点支持：
+
+```text
+gray_lantern_station
+```
+
+`MapRuntimePackage v0.1` 的边界：
+
+- 路径、塔位、出生点和目标来自结构化逻辑数据。
+- `visual_layers` 只引用本地 `/assets/map_visual_reference/...` 视觉参考层。
+- 视觉参考层不是玩法真值，不决定碰撞、伤害、资源、部署或任务条件。
+- 后续 AI 生成 painted map 时，也必须重新对齐到同一个 map runtime package。
+
 ### 获取 runtime package
 
 ```http
@@ -199,6 +236,8 @@ GET /api/sessions/{session_id}/battles/{node_id}/runtime-package
 ```
 
 返回当前节点对应 reviewed runtime package，同时附带当前可用的样品展示资产、媒体清单和战斗运行时美术包。
+
+若该节点已经生成 `MapRuntimePackage v0.1`，响应中也会附带 `map_runtime_package`，便于战斗运行时在同一个请求中拿到资产包与地图包。
 
 ### 提交战斗结果
 
