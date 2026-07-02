@@ -1,0 +1,174 @@
+{
+  "candidate_review_path": "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
+  "candidates": [
+    {
+      "actual_size": {
+        "height": 736,
+        "width": 1312
+      },
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/gray_lantern_station.painted_candidate.png",
+      "candidate_review_status": "alignment_review_ready",
+      "issues": [],
+      "next_steps": [
+        "normalize_candidate_to_target_size",
+        "overlay_runtime_paths_for_visual_alignment_review",
+        "overlay_build_slots_for_drag_deploy_review",
+        "overlay_objectives_and_spawn_points_for_combat_readability_review",
+        "require_explicit_promotion_before_published_visual_layer"
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_policy": "review_only; do not update MapRuntimePackage or published visual layers",
+      "requested_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "spawn_point_count": 1,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 80.0,
+          "y_pixels_per_cell": 80.0
+        }
+      },
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_v2/gray_lantern_station.painted_candidate.png.candidate.json",
+      "status": "alignment_prerequisites_passed_with_transform_required",
+      "target_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "transform_required": true,
+      "warnings": [
+        "candidate_size_differs_from_requested_size"
+      ]
+    },
+    {
+      "actual_size": {
+        "height": 736,
+        "width": 1312
+      },
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/lamp_wick_store.painted_candidate.png",
+      "candidate_review_status": "alignment_review_ready",
+      "issues": [],
+      "next_steps": [
+        "normalize_candidate_to_target_size",
+        "overlay_runtime_paths_for_visual_alignment_review",
+        "overlay_build_slots_for_drag_deploy_review",
+        "overlay_objectives_and_spawn_points_for_combat_readability_review",
+        "require_explicit_promotion_before_published_visual_layer"
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_policy": "review_only; do not update MapRuntimePackage or published visual layers",
+      "requested_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 71.1111,
+          "y_pixels_per_cell": 72.0
+        }
+      },
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_v2/lamp_wick_store.painted_candidate.png.candidate.json",
+      "status": "alignment_prerequisites_passed_with_transform_required",
+      "target_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "transform_required": true,
+      "warnings": [
+        "candidate_size_differs_from_requested_size"
+      ]
+    },
+    {
+      "actual_size": {
+        "height": 736,
+        "width": 1312
+      },
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+      "candidate_review_status": "alignment_review_ready",
+      "issues": [],
+      "next_steps": [
+        "normalize_candidate_to_target_size",
+        "overlay_runtime_paths_for_visual_alignment_review",
+        "overlay_build_slots_for_drag_deploy_review",
+        "overlay_objectives_and_spawn_points_for_combat_readability_review",
+        "require_explicit_promotion_before_published_visual_layer"
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_policy": "review_only; do not update MapRuntimePackage or published visual layers",
+      "requested_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 71.1111,
+          "y_pixels_per_cell": 72.0
+        }
+      },
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png.candidate.json",
+      "status": "alignment_prerequisites_passed_with_transform_required",
+      "target_size": {
+        "height": 720,
+        "width": 1280
+      },
+      "transform_required": true,
+      "warnings": [
+        "candidate_size_differs_from_requested_size"
+      ]
+    }
+  ],
+  "policy": [
+    "This report checks alignment prerequisites only; it does not perform pixel-level semantic recognition.",
+    "Candidate images must be normalized and reviewed with runtime overlays before promotion.",
+    "MapRuntimePackage remains authoritative for paths, build slots, objectives, spawn points, and combat logic.",
+    "A candidate cannot become a published visual layer without an explicit promotion step."
+  ],
+  "report_id": "mvp_map_candidate_alignment_review",
+  "runtime_package_dir": "examples/map_runtime_packages",
+  "schema_version": "map_candidate_alignment_review.v0.1",
+  "status": "ready_for_overlay_review_with_transform_required",
+  "summary": {
+    "blocked_count": 0,
+    "candidate_count": 3,
+    "issue_counts": {},
+    "status_counts": {
+      "alignment_prerequisites_passed_with_transform_required": 3
+    },
+    "transform_required_count": 3,
+    "warning_counts": {
+      "candidate_size_differs_from_requested_size": 3
+    }
+  }
+}
