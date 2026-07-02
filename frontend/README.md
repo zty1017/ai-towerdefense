@@ -18,7 +18,21 @@ http://127.0.0.1:8000/frontend/index.html
 
 前端会优先创建匿名 session，并调用 `/api/sessions/{session_id}/...` 下的前端 mock API、研发提案 API 和战斗结果 API。媒体资源走后端挂载的 `/assets/frontend_mock/...` 与 `/assets/frontend_runtime_mock/...`。
 
-战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。视觉层优先使用 `battle_runtime_background`，控制草图和 reference board 只作为开发期 fallback。
+战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
+
+玩家默认战斗视图只允许使用发布级视觉层：未来的 `painted_visual_layer` 优先，其次是 `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
+
+控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
+
+```text
+?mapVisualDebug=1
+```
+
+或：
+
+```text
+?evidence=1
+```
 
 如果你希望用独立静态服务打开前端，也可以在 URL 上指定后端：
 

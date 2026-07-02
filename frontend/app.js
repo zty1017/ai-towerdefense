@@ -572,6 +572,25 @@
     return item ? assetUrl(item.url) : "";
   }
 
+  function allowsDebugMapVisuals() {
+    const params = new URLSearchParams(window.location.search);
+    return ["mapVisualDebug", "debugMapVisuals", "evidence"].some((key) =>
+      ["1", "true", "yes"].includes((params.get(key) || "").toLowerCase()),
+    );
+  }
+
+  function playerBattleMapVisualUrl() {
+    return mapVisualUrl("painted_visual_layer") || mapVisualUrl("battle_runtime_background");
+  }
+
+  function debugBattleMapVisualUrls() {
+    if (!allowsDebugMapVisuals()) return [];
+    return [
+      mapVisualUrl("battle_reference_board"),
+      mapVisualUrl("battle_control_sketch"),
+    ].filter(Boolean);
+  }
+
   function imageTag(url, alt) {
     if (!url) return `<span aria-hidden="true">✦</span>`;
     return `<img src="${safeText(url)}" alt="${safeText(alt)}" loading="lazy" />`;
@@ -1243,8 +1262,8 @@
       mediaUrl("objective_signal_beacon", "objective_sprite", true),
       mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true),
       sampleIconUrl(),
-      mapVisualUrl("battle_runtime_background"),
-      mapVisualUrl("battle_reference_board"),
+      playerBattleMapVisualUrl(),
+      ...debugBattleMapVisualUrls(),
       npcPortraitUrl("npc_gray_lantern_keeper"),
       npcPortraitUrl("npc_workshop_mentor"),
     ].forEach((url) => getImage(url));
@@ -1988,9 +2007,8 @@
   }
 
   function drawBackdrop(ctx, m) {
-    const board = getImage(
-      mapVisualUrl("battle_runtime_background") || mapVisualUrl("battle_reference_board"),
-    );
+    const board = getImage(playerBattleMapVisualUrl());
+    const debugBoard = board ? null : getImage(debugBattleMapVisualUrls()[0]);
     const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
     grd.addColorStop(0, "#202018");
     grd.addColorStop(0.55, "#101515");
@@ -2001,6 +2019,12 @@
       ctx.save();
       ctx.globalAlpha = 1;
       ctx.drawImage(board, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
+      ctx.restore();
+    } else if (debugBoard && debugBoard.complete && debugBoard.naturalWidth) {
+      ctx.save();
+      ctx.globalAlpha = 0.72;
+      ctx.filter = "saturate(0.55) contrast(0.82)";
+      ctx.drawImage(debugBoard, m.imageOffsetX, m.imageOffsetY, m.imageWidth, m.imageHeight);
       ctx.restore();
     }
     const shade = ctx.createRadialGradient(

@@ -77,7 +77,17 @@ examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 
 ## 前端使用方式
 
-前端通过后端接口读取 `map_runtime_package`，并从其中的 `visual_layers` 优先选择 `battle_runtime_background` 作为战斗画布底层。若该发布底图缺失，才允许临时回退到 `battle_reference_board`。玩家侧不显示完整逻辑网格，只在其上实时绘制：
+前端通过后端接口读取 `map_runtime_package`，并从其中的 `visual_layers` 选择玩家侧战斗画布底层。默认选择顺序是：
+
+```text
+painted_visual_layer
+  -> battle_runtime_background
+  -> 程序化大画面背景
+```
+
+默认玩家视图不得回退到 `battle_reference_board` 或 `battle_control_sketch`。若发布底图缺失，前端必须保持中部全屏 / 大画面表达，用程序化背景承托结构化玩法叠层，而不是把控制图、参考图、棋盘图或孤立几何块暴露给玩家。
+
+控制图和参考图只允许在 debug / evidence 模式中显示，例如通过 `?mapVisualDebug=1` 或 `?evidence=1` 临时开启。玩家侧不显示完整逻辑网格，只在底图上实时绘制：
 
 - 路径高光
 - 核心和防守目标
@@ -90,7 +100,7 @@ examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 关键边界：
 
 - 图片永远不是玩法真相。怪物路线、塔位、目标、出生点以 MapRuntimePackage 的结构化数据为准。
-- 控制图不进入玩家默认体验。
+- 控制图和参考图不进入玩家默认体验，也不作为发布底图缺失时的默认 fallback。
 - 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，并经过本地路径、hash、尺寸和 schema 校验。
 - 若底图与结构化路线不完全对齐，MVP 可以用轻量叠层修正；正式版需要增加对齐审查或回写步骤。
 - `MapCompilePackage` 可以引用控制图和发布底图，但最终导出的玩家战斗数据仍应是 `MapRuntimePackage`。
