@@ -58,7 +58,7 @@ P2：本阶段明确不做
 
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了玩家侧 `painted_visual_layer` 与逻辑对齐 fallback `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
-- `MediaAtlasManifest v0.1` 已以 `spritesheet` 兼容多帧模式默认接入前端运行时；真实图生视频关键帧与实体 atlas PNG 仍未生成。
+- `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
@@ -217,8 +217,10 @@ P2：本阶段明确不做
 - `tools/media/build_multiframe_atlas_manifest.py`
 - `tools/media/validate_multiframe_atlas_contract.py`
 - `game_data/media/frontend_mock/atlas_frames/`
+- `game_data/media/frontend_mock/atlas_sheets/`
 - `game_data/media/frontend_runtime_mock/atlas_frames/`
-- 前端 `mediaUrl()` 保持旧接口，但会按 battle elapsed time 从 atlas frames 中选择当前帧。
+- `game_data/media/frontend_runtime_mock/atlas_sheets/`
+- 前端 `mediaUrl()` 保持旧接口，战斗绘制优先按 battle elapsed time 从实体 spritesheet 裁剪当前帧。
 - sprite 类角色生成 4 帧循环，静态图标 / 头像 / UI 卡保持 1 帧。
 
 ### P1-A-2 Sprite cutout quality gate
@@ -359,11 +361,11 @@ P2：本阶段明确不做
 
 要点：
 
-- `virtual_single_frame` 与确定性 4 帧 frame sequence 已完成；本任务后续继续推进真实图生视频关键帧。
+- `virtual_single_frame`、确定性 4 帧 frame sequence 与实体 spritesheet atlas 已完成；本任务后续继续推进真实图生视频关键帧。
 - 首尾帧一致或 end frame 控制优先。
 - 加入 LoopContinuityCheck。
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
-- 前端已优先消费 atlas，静态 PNG 作为 fallback；后续需把当前独立 frame PNG 升级为真实视频关键帧和实体 spritesheet。
+- 前端已优先消费实体 spritesheet atlas，静态 PNG 作为 fallback；后续需把当前确定性 frame PNG 来源升级为真实视频关键帧。
 
 ### P1-B 世界演化预生成与调度
 
@@ -440,7 +442,7 @@ P2：本阶段明确不做
 建议当前批次按以下顺序推进：
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`。
-2. `P1-A` 真实视频帧 / 实体 spritesheet atlas 增强。
+2. `P1-A` 真实视频关键帧增强。
 3. `P1-B` Generation Scheduler 执行器 / live campaign router。
 
 若需要并行，优先组合：

@@ -33,6 +33,8 @@ def validate_contract(atlas: dict[str, Any]) -> list[str]:
         role = str(item.get("media_role") or "")
         playback = item.get("playback") if isinstance(item.get("playback"), dict) else {}
         frames = item.get("frames") if isinstance(item.get("frames"), list) else []
+        if not isinstance(item.get("spritesheet"), dict):
+            errors.append(f"items[{index}].spritesheet must be a physical spritesheet object")
         for frame in frames:
             if not isinstance(frame, dict):
                 continue

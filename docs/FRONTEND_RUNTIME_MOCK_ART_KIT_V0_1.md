@@ -71,7 +71,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/runtime-package
 ## 当前边界
 
 - 不生成视频帧。
-- 不生成 spritesheet / atlas。
+- 不生成真实视频关键帧；实体 spritesheet / atlas 由已发布 processed PNG 派生生成。
 - 不把攻击特效烘焙进主体图。
 - 不把玩家侧中文名写入图像 prompt。
 - 不在 manifest 中保存 provider、model、raw prompt、raw JSON 或临时 URL。
