@@ -409,6 +409,8 @@ codex exec \
 
 ### 3.2 CodeBuddy 任务包模板
 
+当前可验证任务包格式以 `docs/WORKER_TASK_PACK_V0_1.md`、`shared/schemas/worker_task_pack.v0.1.schema.json` 和 `tools/dev/validate_worker_task_pack.py` 为准。下面的文本模板只保留为人工粘贴时的可读结构；正式交付给 worker 前，应优先生成并校验 `WorkerTaskPack v0.1` JSON。
+
 ```text
 任务目标：
 

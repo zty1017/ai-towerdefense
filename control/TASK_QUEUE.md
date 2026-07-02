@@ -624,6 +624,8 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
+状态：已完成最小骨架。
+
 目标：
 
 ```text
@@ -635,6 +637,24 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 - 任务包包含允许修改范围、验收命令、禁止事项、汇报格式。
 - 可被 IDE 侧代理读取完整仓库后执行。
 - 不要求本 Codex 受控通道直接外发仓库上下文。
+- 新增 `WorkerTaskPack v0.1` schema、validator、中文文档和示例任务包。
+- 后续 worker 任务包应先通过 `tools/dev/validate_worker_task_pack.py` 校验，再交给 CodeBuddy / OpenCode / Codex headless / 人类 worker。
+
+已落地：
+
+- `shared/schemas/worker_task_pack.v0.1.schema.json`
+- `docs/WORKER_TASK_PACK_V0_1.md`
+- `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
+- `tools/dev/validate_worker_task_pack.py`
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json
+python3 -m py_compile tools/dev/validate_worker_task_pack.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/worker_task_pack_evidence
+git diff --check
+```
 
 ## 6. P2 暂不做
 
