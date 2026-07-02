@@ -1,0 +1,122 @@
+{
+  "schema_version": "sprite_repair_candidate_manifest.v0.1",
+  "candidate_pack_id": "frontend_runtime_sprite_repair_candidates_v0_1",
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "source_repair_plan": "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
+  "source_repair_plan_status": "ready",
+  "media_layer": "review_candidate_media",
+  "promotion_policy": "Candidates must pass quality audit and manual/vision review before replacing processed runtime media.",
+  "items": [
+    {
+      "candidate_id": "sprite_repair_001_objective_station_core_objective_sprite.fill_interior_holes",
+      "source_task_id": "sprite_repair_001_objective_station_core_objective_sprite",
+      "source_repair_plan": "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "priority": "P2",
+      "source_file": "game_data/media/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
+      "local_path": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/objective_station_core__objective_sprite__fill_interior_holes.png",
+      "width": 841,
+      "height": 841,
+      "sha256": "b4751df6c0d4d8b1e6b5c44b5a16f85b36776ce8c1f2e95691883f781785ac50",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "strategy": "fill_interior_holes",
+      "recommended_action": "manual_review_then_reprocess_if_needed",
+      "source_warnings": [
+        "interior_transparent_holes_need_review"
+      ],
+      "source_metrics": {
+        "visible_component_count": 4,
+        "largest_visible_component_ratio": 0.9917,
+        "interior_transparent_hole_ratio": 0.0253,
+        "max_interior_transparent_hole_ratio": 0.0052
+      },
+      "review_policy": "review_only_not_runtime"
+    },
+    {
+      "candidate_id": "sprite_repair_002_objective_signal_beacon_objective_sprite.fill_interior_holes",
+      "source_task_id": "sprite_repair_002_objective_signal_beacon_objective_sprite",
+      "source_repair_plan": "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "priority": "P1",
+      "source_file": "game_data/media/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
+      "local_path": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/objective_signal_beacon__objective_sprite__fill_interior_holes.png",
+      "width": 816,
+      "height": 816,
+      "sha256": "7c269bba716c1696ae0e4139530f74a078e199bb1a9044881e4b646ef38bc414",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "strategy": "fill_interior_holes",
+      "recommended_action": "regenerate_or_reprocess_cutout",
+      "source_warnings": [
+        "large_interior_transparent_holes"
+      ],
+      "source_metrics": {
+        "visible_component_count": 6,
+        "largest_visible_component_ratio": 0.951,
+        "interior_transparent_hole_ratio": 0.069,
+        "max_interior_transparent_hole_ratio": 0.03
+      },
+      "review_policy": "review_only_not_runtime"
+    },
+    {
+      "candidate_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite.fill_interior_holes",
+      "source_task_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite",
+      "source_repair_plan": "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "asset_type": "basic_defense",
+      "media_role": "defense_sprite",
+      "priority": "P1",
+      "source_file": "game_data/media/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
+      "local_path": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/defense_basic_lantern_barricade__defense_sprite__fill_interior_holes.png",
+      "width": 661,
+      "height": 661,
+      "sha256": "31afde38d52bd4f94268090176ec941b0942bc9c23eff0920b2e4292094e8cef",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "strategy": "fill_interior_holes",
+      "recommended_action": "regenerate_or_reprocess_cutout",
+      "source_warnings": [
+        "large_interior_transparent_holes"
+      ],
+      "source_metrics": {
+        "visible_component_count": 2,
+        "largest_visible_component_ratio": 0.9972,
+        "interior_transparent_hole_ratio": 0.0573,
+        "max_interior_transparent_hole_ratio": 0.0188
+      },
+      "review_policy": "review_only_not_runtime"
+    }
+  ],
+  "summary": {
+    "candidate_count": 3,
+    "asset_count": 3,
+    "priority_counts": {
+      "P1": 2,
+      "P2": 1
+    },
+    "strategy_counts": {
+      "fill_interior_holes": 3
+    }
+  },
+  "notes": [
+    "This manifest is review-only. It does not alter frontend media manifests or runtime atlases.",
+    "Regenerated candidates should be compared visually before promotion."
+  ]
+}
