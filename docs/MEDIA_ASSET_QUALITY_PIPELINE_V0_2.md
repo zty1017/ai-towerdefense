@@ -212,6 +212,30 @@ examples/review_packs/frontend_runtime_sprite_repair_candidate_quality_report.v0
 
 候选包只写入 `review_candidate_media`，不会替换 `processed` manifest、atlas 或前端默认资源。候选通过几何质量门后仍需人工/视觉审查，尤其是 `fill_interior_holes` 可能把本该中空的结构填实，只能作为“确定性修复是否可行”的证据。
 
+真实重生成候选使用：
+
+```text
+media.generate_sprite_regeneration_candidates
+```
+
+对应产物：
+
+```text
+examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json
+examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json
+game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/raw/
+game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/
+```
+
+这一步可以在 `--live` 显式开启后调用图像 provider，但仍然只产出 `review_candidate_media`。工具默认不保存完整 prompt、不保存 provider 原始响应、不替换 runtime manifest，并支持：
+
+- `--asset-id`：只重生成指定问题素材。
+- `--merge-existing`：保留已有合格候选，只替换本轮生成项。
+- `--reuse-raw-if-exists`：复用已有 raw 图重新后处理。
+- 默认 `keep_largest_alpha_component`：清理悬浮光点、碎片、箭头等 detached component。
+
+本轮真实重生成验证了一个重要经验：几何质量门只能证明“透明底、主体和画布基本可用”，不能证明语义完全正确。比如“灯栏”容易被模型理解成围栏，需要通过更强的正向物体定义、后处理和人工/视觉复核共同收敛。候选通过审计后仍保持 review-only，不能自动晋升 runtime。
+
 ## 5. 后续增强顺序
 
 ### 5.1 立即可做

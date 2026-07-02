@@ -62,6 +62,7 @@ P2：本阶段明确不做
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
+- Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -270,7 +271,26 @@ P2：本阶段明确不做
 
 - frontend repair candidates：2 个候选，几何质量门 `passed`，未晋升 runtime。
 - runtime repair candidates：3 个候选，几何质量门 `passed`，未替换正式战斗素材。
-- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此候选只能作为审查证据；下一轮应优先走真实重生成 / 更强分割 / 人工确认。
+- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此候选只能作为审查证据；后续应优先走真实重生成 / 更强分割 / 人工确认。
+
+### P1-A-5 Runtime sprite live regeneration candidates
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/generate_sprite_regeneration_candidates.py`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json`
+- `game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/raw/`
+- `game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/`
+- `tools/demo/export_evidence.py` 已纳入 live regeneration 候选摘要和离线验证命令。
+
+当前结论：
+
+- 使用 Agnes 真实生成 runtime P1 信标与基础灯栏候选，各 1 个，几何质量门 `passed`。
+- 基础灯栏经过多轮提示词收紧，从围栏 enclosure 收敛为单段便携路障；这说明重生成 DAG 需要支持单素材迭代、复用 raw 后处理和人工/视觉复核。
+- 候选包仍是 `review_candidate_media`，不会自动替换正式 runtime 素材；晋升需要下一步人工/视觉审查和显式 promotion。
 
 ## 4. 当前 P0 任务
 
