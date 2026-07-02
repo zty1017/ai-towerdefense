@@ -53,6 +53,15 @@ _RUNTIME_ART_ATLAS_MANIFEST = (
 )
 _AUDIT_REPORT = _REPO_ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json"
 _REVIEW_DOSSIER = _REPO_ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
+_CONTEXT_PACKAGE_EXAMPLE = (
+    _REPO_ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
+)
+_FACT_ENTRY_EXAMPLE = (
+    _REPO_ROOT / "examples/review_packs/mvp_gray_lantern.fact_entry.json"
+)
+_CGOP_EXAMPLE = (
+    _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+)
 
 _BATTLE_CONFIG_BY_NODE = {
     "gray_lantern_station": _FIRST_BATTLE_CONFIG,
@@ -124,6 +133,28 @@ def _load_runtime_art_animation_seed_manifest() -> dict[str, Any]:
 
 def _load_runtime_art_atlas_manifest() -> dict[str, Any]:
     return _load_json(_RUNTIME_ART_ATLAS_MANIFEST)
+
+
+def _rel(path: Path) -> str:
+    return path.relative_to(_REPO_ROOT).as_posix()
+
+
+def _core_artifact_refs() -> dict[str, str]:
+    return {
+        "context_package": _rel(_CONTEXT_PACKAGE_EXAMPLE),
+        "fact_entry": _rel(_FACT_ENTRY_EXAMPLE),
+        "compiled_game_object_package": _rel(_CGOP_EXAMPLE),
+    }
+
+
+def _load_ai_compile_core_artifacts() -> dict[str, Any]:
+    return {
+        "status": "field_boundary_examples_ready",
+        "refs": _core_artifact_refs(),
+        "context_package": _load_json(_CONTEXT_PACKAGE_EXAMPLE),
+        "fact_entry": _load_json(_FACT_ENTRY_EXAMPLE),
+        "compiled_game_object_package": _load_json(_CGOP_EXAMPLE),
+    }
 
 
 def _runtime_art_payload() -> dict[str, Any]:
@@ -307,6 +338,7 @@ def get_frontend_mock_pack(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "pack": _load_frontend_pack(),
+        "ai_compile_core_artifacts": _load_ai_compile_core_artifacts(),
         "media_manifest": _load_media_manifest(),
         "animation_seed_manifest": _load_animation_seed_manifest(),
         "media_atlas_manifest": _load_media_atlas_manifest(),
@@ -451,6 +483,10 @@ def record_battle_result(
         "sample_performance": "样品对高速敌潮有效，但稳定性偏低，适合进入后续正式研发。",
         "npc_feedback": "在场技师记录了样品迟滞效果，并建议保留战斗数据。",
         "world_delta": delta,
+        "core_artifact_refs": {
+            **_core_artifact_refs(),
+            "world_delta": _rel(_FIRST_BATTLE_DELTA),
+        },
         "run_world_state": next_state,
     }
     ts = now_iso()
@@ -529,6 +565,10 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "studio_surface": "simple_evidence",
+        "ai_compile_core_artifacts": {
+            "status": "field_boundary_examples_ready",
+            "refs": _core_artifact_refs(),
+        },
         "proposal": dict(proposal) if proposal else None,
         "research_job": dict(job) if job else None,
         "battle_result": json.loads(battle["payload"]) if battle else None,

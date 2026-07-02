@@ -53,6 +53,14 @@ _MAP_RUNTIME_PACKAGE_BY_NODE = {
     ),
 }
 
+_CORE_ARTIFACT_REFS = {
+    "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
+    "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+    "compiled_game_object_package": (
+        "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+    ),
+}
+
 # World-in-language node display names (subset of worldbook node_mapping).
 _NODE_DISPLAY = {
     "gray_lantern_station": "灰灯驿站",
@@ -197,6 +205,7 @@ def _compiler_metadata_for_proposal(
             "map_runtime_package_ref": _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id),
             "intent_source": "player_free_text",
         },
+        "core_artifact_refs": dict(_CORE_ARTIFACT_REFS),
         "validation": {
             "player_text_safety": "scrubbed",
             "local_gates": [
@@ -234,6 +243,11 @@ def _compiler_metadata_for_job(
         "runtime_package_path": result.get("runtime_package_path"),
         "delivery_payload_path": result.get("delivery_payload_path"),
         "trace_count": len(result.get("trace_paths") or []),
+    }
+    metadata["core_artifact_refs"] = {
+        **as_dict(metadata.get("core_artifact_refs")),
+        "runtime_package_path": result.get("runtime_package_path"),
+        "delivery_payload_path": result.get("delivery_payload_path"),
     }
     if status != "completed":
         metadata["failure"] = {
