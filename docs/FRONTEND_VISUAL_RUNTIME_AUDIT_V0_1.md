@@ -21,6 +21,8 @@ Last updated: 2026-07-03
 ```bash
 node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
 ```
 
 结果：通过。
@@ -32,6 +34,16 @@ OK battle visual contract
 - map runtime packages: 3
 - default battle backdrop: MapRuntimePackage-driven procedural terrain
 ```
+
+本机浏览器烟测输出：
+
+```text
+CAPTURED battle visual smoke: /tmp/p0m_browser_visual_smoke/battle_visual_smoke_report.v0.1.json
+- desktop: /tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png
+- mobile: /tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png
+```
+
+截图由临时下载到 `/tmp/pw-browsers` 的 Playwright Chromium 生成，不写入项目依赖；脚本会自动发现该临时浏览器。桌面视口为 1440x900，移动视口为 390x844。
 
 ## 3. 静态合约覆盖
 
@@ -46,11 +58,21 @@ OK battle visual contract
 - 失败视觉层不能以 `published_visual_layer` 权限进入 manifest 或 runtime package。
 - 每个 `MapRuntimePackage` 必须具备 grid、path_routes、build_slots、core objective 和 spawn_points。
 
-## 4. 仍需浏览器验收
+## 4. 浏览器验收
 
-本轮没有生成真实浏览器截图。仍需在有浏览器的环境中人工确认：
+已新增可复跑脚本：
 
-- 默认战斗首屏是否有足够全屏战场感。
-- 程序化地形、土路、塔位石基、目标地标和出生点雾潮在不同窗口比例下是否构图自然。
-- 拖拽部署与点击放置在新视觉底座上仍然清晰可用。
+```bash
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
+```
+
+脚本会启动本地静态服务，打开 `frontend/index.html?static=1&battleVisualSmoke=1`，并采集桌面与移动视口截图。`battleVisualSmoke=1` 只用于验收深链，默认玩家流程不使用。
+
+本轮截图确认：
+
+- 默认战斗首屏是全屏战场，不再是小块平行四边形调试地图。
+- 程序化地形、土路、塔位石基、目标地标和出生点雾潮在桌面与移动视口下都可见。
+- 移动端顶部状态已允许换行，底部工具栏已取消桌面居中 transform，三张工具卡完整可见。
 - debug / evidence 参数之外不会显示控制图、参考图、失败 text-fallback 地图、棋盘或箭头。
+
+残余限制：本轮是首战烟测截图，不替代后续对多节点地图、真实拖拽交互和完整录屏的人工验收。

@@ -1,0 +1,80 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P0-M-browser-visual-smoke",
+  "title": "P0-M 前端战斗画面浏览器视觉烟测",
+  "task_type": "test",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/p0m-browser-visual-smoke",
+  "worktree": "/tmp/ai-td-task-p0m-browser-visual-smoke",
+  "objective": "为 P0-M 前端战斗地图视觉底座补一个可重复执行的浏览器视觉烟测入口：在具备 Chromium / Playwright / Selenium 等浏览器能力的环境中自动打开 frontend/index.html，采集桌面和移动视口截图并生成 JSON 证据；在当前无浏览器环境中必须给出明确的环境探测结果和可复跑命令，不得伪造截图。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md",
+    "frontend/README.md",
+    "tools/frontend/validate_battle_visual_contract.py"
+  ],
+  "allowed_paths": [
+    "tools/frontend/",
+    "docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md",
+    "frontend/README.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/",
+    "examples/review_packs/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/media/",
+    "content/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p0m_browser_visual_smoke.v0.1.json",
+    "node --check frontend/app.js",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke",
+    "python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke",
+    "python3 -m py_compile tools/frontend/capture_battle_visual_smoke.py",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "browser_environment",
+    "screenshot_outputs",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不修改玩家战斗逻辑，只补浏览器视觉烟测工具、文档和任务状态。",
+    "烟测必须优先验证默认玩家视图，不打开 mapVisualDebug 或 evidence 参数。",
+    "截图证据必须来自真实浏览器；若环境没有浏览器能力，输出 browser_available=false 的 JSON 证据，并把 TASK_QUEUE 中遗留风险保留为未完成。",
+    "不得使用控制图、参考图或失败整图候选替代截图。"
+  ]
+}

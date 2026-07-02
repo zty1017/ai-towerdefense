@@ -257,7 +257,23 @@
     return fetchOptionalJson(STATIC_PATHS[key], fallback, timeoutMs);
   }
 
+  function queryFlag(name) {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has(name)) return false;
+    const value = String(params.get(name) || "1").toLowerCase();
+    return !["0", "false", "no", "off"].includes(value);
+  }
+
+  function forceStaticDataMode() {
+    return queryFlag("static") || queryFlag("staticMode");
+  }
+
+  function battleVisualSmokeMode() {
+    return queryFlag("battleVisualSmoke");
+  }
+
   function apiCandidates() {
+    if (forceStaticDataMode()) return [];
     const params = new URLSearchParams(window.location.search);
     const explicit = params.get("apiBase") || params.get("api");
     const candidates = [];
@@ -605,6 +621,13 @@
     try {
       await loadData();
       saveProfile();
+      if (battleVisualSmokeMode()) {
+        saveProfile({ worldCreated: true, completedBattle: false });
+        state.battle = null;
+        state.view = "battle";
+        render();
+        return;
+      }
       state.view = "profile";
       render();
     } catch (error) {
@@ -1473,11 +1496,13 @@
     window.addEventListener("resize", resizeBattleCanvas);
     resizeBattleCanvas();
     preloadBattleImages();
-    showDialogue(
-      "灰灯驿站守灯人",
-      "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
-      "npc_gray_lantern_keeper_portrait",
-    );
+    if (!battleVisualSmokeMode()) {
+      showDialogue(
+        "灰灯驿站守灯人",
+        "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
+        "npc_gray_lantern_keeper_portrait",
+      );
+    }
     requestAnimationFrame(battleFrame);
   }
 
