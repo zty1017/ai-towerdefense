@@ -1,0 +1,581 @@
+{
+  "schema_version": "map_compile_package.v0.2",
+  "package_id": "map_compile_gray_lantern_station_v0_2",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "created_at": "2026-07-02T00:00:00Z",
+  "source_refs": {
+    "battle_config_path": "game_data/demo/first_battle_config.json",
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "visual_reference_manifest_path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
+    "logic_authority": "map_runtime_package"
+  },
+  "logical_map_layer": {
+    "authority": "runtime_truth",
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 16,
+      "height_cells": 9,
+      "cell_size": 64
+    },
+    "path_route_count": 1,
+    "build_slot_count": 12,
+    "objective_count": 2,
+    "spawn_point_count": 1,
+    "path_routes": [
+      {
+        "route_id": "path_main_road",
+        "display_name": "主路径",
+        "waypoints": [
+          {
+            "x": 15,
+            "y": 4
+          },
+          {
+            "x": 10,
+            "y": 4
+          },
+          {
+            "x": 10,
+            "y": 2
+          },
+          {
+            "x": 5,
+            "y": 2
+          },
+          {
+            "x": 5,
+            "y": 6
+          },
+          {
+            "x": 1,
+            "y": 6
+          }
+        ],
+        "entry_label": "影潮涌入方向",
+        "exit_label": "驿站核心方向"
+      }
+    ],
+    "build_slots": [
+      {
+        "slot_id": "slot_01",
+        "position": {
+          "x": 15,
+          "y": 3
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_02",
+        "position": {
+          "x": 15,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_03",
+        "position": {
+          "x": 14,
+          "y": 3
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_04",
+        "position": {
+          "x": 14,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_05",
+        "position": {
+          "x": 10,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_06",
+        "position": {
+          "x": 9,
+          "y": 4
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_07",
+        "position": {
+          "x": 9,
+          "y": 3
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_08",
+        "position": {
+          "x": 11,
+          "y": 3
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_09",
+        "position": {
+          "x": 9,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_10",
+        "position": {
+          "x": 11,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_11",
+        "position": {
+          "x": 10,
+          "y": 1
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_12",
+        "position": {
+          "x": 11,
+          "y": 2
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      }
+    ],
+    "objectives": {
+      "core_target": {
+        "target_id": "target_node_core",
+        "display_name": "驿站核心",
+        "position": {
+          "x": 0,
+          "y": 6
+        },
+        "durability": 10
+      },
+      "optional_targets": [
+        {
+          "target_id": "target_signal_beacon",
+          "display_name": "信标天线",
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "durability": 4
+        }
+      ]
+    },
+    "spawn_points": [
+      {
+        "spawn_id": "spawn_path_main_road",
+        "route_id": "path_main_road",
+        "position": {
+          "x": 15,
+          "y": 4
+        },
+        "label": "影潮涌入方向"
+      }
+    ]
+  },
+  "control_layer": {
+    "authority": "reference_only",
+    "artifacts": [
+      {
+        "artifact_id": "artifact_strategic_control_sketch",
+        "role": "strategic_control_sketch",
+        "url": "/assets/map_visual_reference/mvp_strategic_control_sketch.png",
+        "local_path": "game_data/media/map_visual_reference/mvp_strategic_control_sketch.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "00c3eccda31d9f60804a9c42a2b63274c2575bf906123c9e921e5d49365f7882",
+        "authority": "reference_only"
+      },
+      {
+        "artifact_id": "artifact_battle_control_sketch",
+        "role": "battle_control_sketch",
+        "url": "/assets/map_visual_reference/mvp_battle_control_sketch.png",
+        "local_path": "game_data/media/map_visual_reference/mvp_battle_control_sketch.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "8718ef8e97408f7967d7226a72b21e4840dd24622805b9ded0b029d91e8e2e45",
+        "authority": "reference_only"
+      },
+      {
+        "artifact_id": "artifact_battle_reference_board",
+        "role": "battle_reference_board",
+        "url": "/assets/map_visual_reference/mvp_battle_reference_board.png",
+        "local_path": "game_data/media/map_visual_reference/mvp_battle_reference_board.png",
+        "width": 1280,
+        "height": 720,
+        "sha256": "1714362958f0252193fe265e246f92a09eb1a4cc9b9b039642548eb283b47f04",
+        "authority": "reference_only"
+      }
+    ],
+    "model_instruction_boundary": [
+      "Control images may guide composition but cannot define gameplay routes or build slots.",
+      "Generated map backgrounds must contain no UI, no text, no enemies, no deployed towers, and no obvious board frame.",
+      "Paths, tower bases, objectives, and threat entrances should be naturally embedded in the worldbook visual style."
+    ]
+  },
+  "painted_visual_layer": {
+    "authority": "published_visual_layer",
+    "status": "published",
+    "artifact": {
+      "artifact_id": "artifact_battle_runtime_background",
+      "role": "battle_runtime_background",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "width": 1672,
+      "height": 941,
+      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "authority": "published_visual_layer"
+    },
+    "visual_constraints": [
+      "player-facing map only",
+      "no tactical UI baked into the image",
+      "no monsters or towers baked into the background",
+      "path and tower bases readable but diegetic",
+      "worldbook style must be visible"
+    ]
+  },
+  "alignment_layer": {
+    "authority": "runtime_overlay_alignment",
+    "reference_size": {
+      "width": 1672,
+      "height": 941
+    },
+    "projection": "pseudo3d_oblique",
+    "coordinate_mapping": "map_runtime_cell_to_visual_plane",
+    "max_pixel_error": 48,
+    "overlay_correction_policy": "subtle_runtime_overlay",
+    "alignment_status": "needs_overlay_correction",
+    "checkpoints": [
+      {
+        "checkpoint_id": "route_start_01",
+        "kind": "route_start",
+        "logic_position": {
+          "x": 15,
+          "y": 4
+        },
+        "expected_pixel": {
+          "x": 1538,
+          "y": 470
+        }
+      },
+      {
+        "checkpoint_id": "route_turn_02",
+        "kind": "route_turn",
+        "logic_position": {
+          "x": 5,
+          "y": 2
+        },
+        "expected_pixel": {
+          "x": 602,
+          "y": 292
+        }
+      },
+      {
+        "checkpoint_id": "route_end_03",
+        "kind": "route_end",
+        "logic_position": {
+          "x": 1,
+          "y": 6
+        },
+        "expected_pixel": {
+          "x": 227,
+          "y": 649
+        }
+      },
+      {
+        "checkpoint_id": "objective_04",
+        "kind": "objective",
+        "logic_position": {
+          "x": 0,
+          "y": 6
+        },
+        "expected_pixel": {
+          "x": 134,
+          "y": 649
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_05",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 15,
+          "y": 3
+        },
+        "expected_pixel": {
+          "x": 1538,
+          "y": 381
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_06",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 15,
+          "y": 5
+        },
+        "expected_pixel": {
+          "x": 1538,
+          "y": 560
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_07",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 14,
+          "y": 3
+        },
+        "expected_pixel": {
+          "x": 1445,
+          "y": 381
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_08",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 14,
+          "y": 5
+        },
+        "expected_pixel": {
+          "x": 1445,
+          "y": 560
+        }
+      }
+    ]
+  },
+  "quality_gates": [
+    {
+      "gate_id": "runtime_truth_source",
+      "status": "passed",
+      "summary": "Routes, build slots, objectives, and spawn points are copied from MapRuntimePackage, not inferred from pixels."
+    },
+    {
+      "gate_id": "control_layers_not_player_default",
+      "status": "passed",
+      "summary": "Control sketches and reference boards are reference_only and must remain debug/evidence material."
+    },
+    {
+      "gate_id": "published_visual_layer_present",
+      "status": "passed",
+      "summary": "A player-facing painted background exists."
+    },
+    {
+      "gate_id": "no_ui_text_enemy_tower_in_painted_map",
+      "status": "warning",
+      "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled."
+    },
+    {
+      "gate_id": "alignment_requires_runtime_overlay",
+      "status": "warning",
+      "summary": "Pixel alignment is represented by checkpoints; subtle runtime overlays remain required until a stronger repaint/alignment checker lands."
+    }
+  ],
+  "export_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "frontend_default_visual_role": "battle_runtime_background"
+  },
+  "validation_report": {
+    "gate_status": "warning",
+    "runtime_truth_preserved": true,
+    "player_visual_safe": true,
+    "gates": [
+      {
+        "gate_id": "runtime_truth_source",
+        "status": "passed",
+        "summary": "Routes, build slots, objectives, and spawn points are copied from MapRuntimePackage, not inferred from pixels."
+      },
+      {
+        "gate_id": "control_layers_not_player_default",
+        "status": "passed",
+        "summary": "Control sketches and reference boards are reference_only and must remain debug/evidence material."
+      },
+      {
+        "gate_id": "published_visual_layer_present",
+        "status": "passed",
+        "summary": "A player-facing painted background exists."
+      },
+      {
+        "gate_id": "no_ui_text_enemy_tower_in_painted_map",
+        "status": "warning",
+        "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled."
+      },
+      {
+        "gate_id": "alignment_requires_runtime_overlay",
+        "status": "warning",
+        "summary": "Pixel alignment is represented by checkpoints; subtle runtime overlays remain required until a stronger repaint/alignment checker lands."
+      }
+    ]
+  }
+}
