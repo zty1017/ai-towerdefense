@@ -512,6 +512,36 @@ P2：本阶段明确不做
 - 它只把真实 provider 执行器前置的授权门、artifact manifest 门、校验门、人工/语义复核门和 activation / promotion gate 接入后端状态层。
 - 下一步真实执行器必须基于该 guard 继续补显式授权、provider adapter、产物 manifest、validator 结果和 promotion report，不能直接把 provider 输出写入 runtime。
 
+### P1-B-9 ProviderOutputEnvelope 安全产物信封
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_output_envelope.v0.1.schema.json`
+- `examples/provider_output_envelopes/p1b_provider_output_envelope.example.json`
+- `tools/dev/validate_provider_output_envelope.py`
+- `docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_output_envelope.v0.1.json`
+
+当前结论：
+
+- 该层不调用真实 provider，只定义真实调用后允许保存的脱敏 envelope。
+- Envelope 可以保存 provider profile、source refs、redacted request / result summary、本地 artifact refs、validation 状态和 activation gate。
+- Envelope 禁止保存 prompt 正文、provider 响应正文、secret、token、full trace、raw JSON 或 runtime-ready 声明。
+- 后续真实 executor 必须先生成并校验 ProviderOutputEnvelope，再进入 media / semantic gate 和 promotion report。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_output_envelope.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_output_envelopes/p1b_provider_output_envelope.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_envelope python3 -m py_compile tools/dev/validate_provider_output_envelope.py
+python3 -m json.tool shared/schemas/provider_output_envelope.v0.1.schema.json >/tmp/provider_output_envelope.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_output_envelope_evidence
+git diff --check
+```
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造
