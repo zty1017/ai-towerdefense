@@ -334,6 +334,14 @@ def record_battle_result(
     previous_state = _load_campaign_state(session_id)
     next_state = _apply_delta_to_state(previous_state, delta)
     submitted = result if isinstance(result, dict) else {}
+    ts = now_iso()
+    core_artifacts = ai_core_artifact_service.battle_settlement_core_artifacts(
+        node_id=node_id,
+        world_delta_ref=_rel(_FIRST_BATTLE_DELTA),
+        world_delta=delta,
+        transaction=transaction,
+        created_at=ts,
+    )
     settlement = {
         "node_id": node_id,
         "result": submitted.get("result", "victory"),
@@ -345,12 +353,12 @@ def record_battle_result(
         "world_delta": delta,
         "world_delta_transaction": transaction,
         "core_artifact_refs": {
-            **ai_core_artifact_service.core_artifact_refs(),
+            **core_artifacts["refs"],
             "world_delta": _rel(_FIRST_BATTLE_DELTA),
         },
+        "core_artifacts": core_artifacts,
         "run_world_state": next_state,
     }
-    ts = now_iso()
     with db_cursor() as cur:
         cur.execute(
             "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
@@ -426,10 +434,7 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "studio_surface": "simple_evidence",
-        "ai_compile_core_artifacts": {
-            "status": "field_boundary_examples_ready",
-            "refs": ai_core_artifact_service.core_artifact_refs(),
-        },
+        "ai_compile_core_artifacts": ai_core_artifact_service.core_artifact_payload(),
         "generation_scheduler": (
             generation_scheduler_service.get_generation_scheduler_evidence(session_id)
         ),

@@ -91,6 +91,159 @@ def core_artifact_payload() -> dict[str, Any]:
     }
 
 
+def _core_artifact_refs_with_world_delta(world_delta_ref: str) -> dict[str, str]:
+    return {
+        **core_artifact_refs(),
+        "world_delta": world_delta_ref,
+    }
+
+
+def battle_settlement_core_artifacts(
+    *,
+    node_id: str,
+    world_delta_ref: str,
+    world_delta: dict[str, Any],
+    transaction: dict[str, Any],
+    created_at: str,
+) -> dict[str, Any]:
+    """Build native core artifact snapshots for battle settlement evidence."""
+
+    transaction_id = str(transaction.get("transaction_id") or "battle_settlement")
+    delta_id = str(world_delta.get("delta_id") or "world_delta")
+    context_package_id = f"ctx_settlement_{transaction_id}"
+    fact_id = f"fact_settlement_{delta_id}"
+    node_scope = f"node.{node_id}"
+
+    context = _clone_context_package()
+    context.update(
+        {
+            "context_package_id": context_package_id,
+            "purpose": "world_delta",
+            "scope": node_scope,
+            "run_id": str(transaction.get("run_id") or context.get("run_id")),
+            "run_world_version": str(
+                transaction.get("base_world_version")
+                or context.get("run_world_version")
+            ),
+            "created_at": created_at,
+        }
+    )
+    for block in context.get("blocks", []):
+        if not isinstance(block, dict):
+            continue
+        if block.get("block_id") == "current_battle_node":
+            block["source_ref"] = world_delta_ref
+            block["summary"] = (
+                f"{node_id} 的战斗结果已被整理为受控 WorldStateDelta，"
+                "等待事务语义提交。"
+            )
+        if block.get("block_id") == "player_workshop_intent":
+            block["source_ref"] = world_delta_ref
+            block["summary"] = "战后结算只消费已验证的世界状态变化，不读取原始运行日志。"
+    context["source_refs"] = [
+        _artifact_ref("world_delta", "fixture", world_delta_ref),
+        _artifact_ref(
+            "world_delta_transaction",
+            "fixture",
+            core_artifact_refs()["world_delta_transaction"],
+        ),
+    ]
+
+    fact = _clone_fact_entry()
+    fact.update(
+        {
+            "fact_id": fact_id,
+            "subject": node_id,
+            "predicate": "battle_result_committed",
+            "content": (
+                f"{node_id} 的战斗结果已通过 WorldStateDeltaTransaction "
+                f"{transaction_id} 提交，后续剧情和研发应以提交后的世界状态为准。"
+            ),
+            "source": "world_state_delta",
+            "confidence": "observed",
+            "commit_state": "committed",
+            "created_at": created_at,
+            "source_tx_id": transaction_id,
+        }
+    )
+    fact["submission_policy"] = {
+        "can_mutate_run_world_state": False,
+        "commit_requires_world_state_delta": True,
+        "allowed_context_use": "committed_world_fact",
+    }
+    fact["activation_rules"] = {
+        "active_when": [f"world_delta:{delta_id}:committed"],
+        "deactivate_when": [],
+    }
+
+    cgop = _clone_cgop()
+    cgop.update(
+        {
+            "package_id": f"cgop_settlement_{delta_id}",
+            "content_version": "battle-settlement.0.1",
+            "lifecycle_state": "reviewed",
+            "source_intent": {
+                "intent_ref": f"world_delta:{delta_id}",
+                "summary": "战后结算把样品表现和节点变化封装为可审查世界状态提交证据。",
+            },
+            "context_package_id": context_package_id,
+            "execution_trace_ref": None,
+        }
+    )
+    cgop["world_context"] = {
+        "scope": node_scope,
+        "required_fact_ids": [fact_id],
+        "forbidden_world_mutations": [
+            "base_worldbook_rewrite",
+            "unmapped_effects",
+            "raw_patch_apply",
+        ],
+    }
+    cgop["runtime_contract"] = {
+        "runtime_loadable": False,
+        "load_surface": "review_only",
+        "manifest_refs": [],
+        "world_delta_refs": [
+            _artifact_ref("world_delta", "world_delta", world_delta_ref),
+        ],
+        "state_instance_policy": "review_only",
+    }
+    cgop["validation_report"] = {
+        "gate_status": "passed",
+        "runtime_loadable": False,
+        "gates": [
+            {
+                "gate_id": "world_delta_transaction",
+                "status": "passed",
+                "summary": "Settlement references a validated WorldStateDeltaTransaction wrapper.",
+            },
+            {
+                "gate_id": "operations_whitelist",
+                "status": "passed",
+                "summary": "World changes remain in WorldStateDelta.operations[].",
+            },
+        ],
+        "approved_scopes": ["battle_settlement_evidence"],
+        "failed_rules": [],
+        "warnings": [],
+    }
+    cgop["lineage"] = {
+        "compiled_at": created_at,
+        "compiler_version": "ai_compile_core.v0.1",
+        "parent_package_ids": ["cgop_mvp_light_snare_sample"],
+    }
+
+    return {
+        "status": "native_settlement_committed",
+        "refs": _core_artifact_refs_with_world_delta(world_delta_ref),
+        "context_package": context,
+        "fact_entry": fact,
+        "compiled_game_object_package": cgop,
+        "world_delta": copy.deepcopy(world_delta),
+        "world_delta_transaction": copy.deepcopy(transaction),
+    }
+
+
 def research_proposal_core_artifacts(
     *,
     session_id: str,

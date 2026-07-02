@@ -310,6 +310,23 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert settlement["settlement"]["core_artifact_refs"]["world_delta_transaction"].endswith(
         "first_battle_result.world_delta_transaction.json"
     )
+    settlement_core = settlement["settlement"]["core_artifacts"]
+    assert settlement_core["status"] == "native_settlement_committed"
+    assert settlement_core["refs"] == settlement["settlement"]["core_artifact_refs"]
+    assert settlement_core["context_package"]["purpose"] == "world_delta"
+    assert settlement_core["fact_entry"]["commit_state"] == "committed"
+    assert settlement_core["fact_entry"]["source_tx_id"] == (
+        "tx_first_battle_result_repaired_001"
+    )
+    assert settlement_core["compiled_game_object_package"]["runtime_contract"][
+        "world_delta_refs"
+    ][0]["path"] == settlement["settlement"]["core_artifact_refs"]["world_delta"]
+    assert settlement_core["world_delta"]["delta_id"] == settlement["settlement"][
+        "world_delta"
+    ]["delta_id"]
+    assert settlement_core["world_delta_transaction"]["transaction_id"] == settlement[
+        "settlement"
+    ]["world_delta_transaction"]["transaction_id"]
     assert settlement["settlement"]["run_world_state"]["progress"]["phase"] == (
         "post_first_defense"
     )
@@ -320,6 +337,12 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     evidence = _payload(client.get(f"/api/sessions/{sid}/evidence"))
     assert evidence["audit_summary"]["overall_status"] == "passed"
     assert evidence["battle_result"]["settlement"]["node_id"] == "gray_lantern_station"
+    assert evidence["battle_result"]["settlement"]["core_artifacts"]["status"] == (
+        "native_settlement_committed"
+    )
+    assert evidence["ai_compile_core_artifacts"]["context_package"]["schema_version"] == (
+        "context_package.v0.1"
+    )
     assert evidence["ai_compile_core_artifacts"]["refs"]["compiled_game_object_package"].endswith(
         "mvp_light_snare.compiled_game_object_package.json"
     )

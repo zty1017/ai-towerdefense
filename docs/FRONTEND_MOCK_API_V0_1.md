@@ -488,6 +488,7 @@ POST /api/sessions/{session_id}/battles/{node_id}/results
 - settlement
 - world delta
 - 更新后的 run world state
+- `settlement.core_artifacts`：战后结算对应的 ContextPackage、FactEntry、CGOP、WorldStateDelta、WorldStateDeltaTransaction 原生证据快照；旧 `world_delta`、`world_delta_transaction`、`core_artifact_refs` 仍保留用于兼容。
 
 并写入：
 
