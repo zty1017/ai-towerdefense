@@ -172,6 +172,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - Research proposal / job API。
 - Frontend mock API。
 - 前端 mock 内容包：11 个可玩资产、3 个阶段摘要、3 个 runtime package 摘要。
+- 战斗配置与 reviewed runtime package：三张 MVP 战斗节点均由 `backend/app/services/battle_content_service.py` 作为后端加载入口。
 - Agnes 生成的 22 张当前资产图片。
 - processed 透明 PNG 媒体包。
 - animation seed manifest。
