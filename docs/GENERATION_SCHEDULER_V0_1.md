@@ -16,6 +16,10 @@
 - `tools/scheduler/build_generation_schedule_plan.py`
 - `tools/scheduler/validate_generation_schedule_plan.py`
 - `examples/review_packs/mvp_generation_schedule_plan.v0.1.json`
+- `shared/schemas/generation_schedule_run_report.v0.1.schema.json`
+- `tools/scheduler/run_generation_schedule_plan.py`
+- `tools/scheduler/validate_generation_schedule_run_report.py`
+- `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
 
 默认构建并校验：
 
@@ -29,6 +33,13 @@ python3 tools/scheduler/build_generation_schedule_plan.py --validate
 python3 tools/scheduler/validate_generation_schedule_plan.py examples/review_packs/mvp_generation_schedule_plan.v0.1.json
 ```
 
+离线 dry-run 并校验执行报告：
+
+```bash
+python3 tools/scheduler/run_generation_schedule_plan.py --validate
+python3 tools/scheduler/validate_generation_schedule_run_report.py examples/review_packs/mvp_generation_schedule_run_report.v0.1.json
+```
+
 ## 边界
 
 当前构建器明确保证：
@@ -39,6 +50,7 @@ python3 tools/scheduler/validate_generation_schedule_plan.py examples/review_pac
 - 不修改 `RunWorldState`。
 - 不导出新的 runtime package。
 - 只生成 review-only 调度计划。
+- dry-run 执行报告只模拟复用、fallback 和排队动作，不实际执行生成。
 
 ## 延迟等级
 
@@ -71,3 +83,13 @@ python3 tools/scheduler/validate_generation_schedule_plan.py examples/review_pac
 - 非 runtime 的前端 mock sprite 修复作为懒加载项。
 
 这让系统可以像视频缓冲一样提前准备内容，但真正进入玩家流程前仍受结构化校验和审查门控制。
+
+当前 dry-run 报告会把这些调度项分成：
+
+- `reuse_ready`：已审同步内容直接复用。
+- `select_fallback`：静态兜底路径可用。
+- `schedule_prefetch`：进入预取队列，但不激活。
+- `schedule_background`：进入后台增强队列。
+- `schedule_lazy`：进入低优先级修复队列。
+
+报告中的 `provider_call_count` 和 `world_mutation_count` 必须保持为 0。真实执行器只能在后续任务中基于同一计划包实现，且需要继续保留 review、fallback 和启用前复验边界。

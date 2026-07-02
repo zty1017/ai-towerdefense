@@ -74,6 +74,8 @@ PATHS = {
     / "examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json",
     "generation_schedule_plan": ROOT
     / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
+    "generation_schedule_run_report": ROOT
+    / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -282,6 +284,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/scheduler/validate_generation_schedule_plan.py",
             "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
+        ],
+    },
+    {
+        "name": "generation_schedule_run_report",
+        "command": [
+            "python3",
+            "tools/scheduler/validate_generation_schedule_run_report.py",
+            "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
         ],
     },
     {
@@ -855,7 +865,7 @@ def collect_ai_compilation_link(
     }
 
 
-def collect_generation_scheduler(plan: dict[str, Any]) -> dict[str, Any]:
+def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any]) -> dict[str, Any]:
     items = [item for item in as_list(plan.get("items")) if isinstance(item, dict)]
     provider_modes: Counter[str] = Counter()
     for item in items:
@@ -866,6 +876,13 @@ def collect_generation_scheduler(plan: dict[str, Any]) -> dict[str, Any]:
         "visibility": plan.get("visibility"),
         "summary": as_obj(plan.get("summary")),
         "provider_mode_counts": dict(sorted(provider_modes.items())),
+        "run_report": {
+            "report_id": run_report.get("report_id"),
+            "run_mode": run_report.get("run_mode"),
+            "summary": as_obj(run_report.get("summary")),
+            "provider_call_count": as_obj(run_report.get("summary")).get("provider_call_count"),
+            "world_mutation_count": as_obj(run_report.get("summary")).get("world_mutation_count"),
+        },
         "control_plane_only": as_obj(plan.get("authority")).get("control_plane_only"),
         "calls_provider_during_build": as_obj(plan.get("authority")).get("schedule_builder_calls_provider"),
         "reads_env_during_build": as_obj(plan.get("authority")).get("schedule_builder_reads_env"),
@@ -1109,6 +1126,7 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["runtime_sprite_regeneration_promotion_report"],
         ),
         ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
+        ("generation_schedule_run_report", PATHS["generation_schedule_run_report"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -1180,6 +1198,7 @@ def build_evidence() -> dict[str, Any]:
         PATHS["runtime_sprite_regeneration_promotion_report"]
     )
     generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
+    generation_schedule_run_report = load_json(PATHS["generation_schedule_run_report"])
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -1216,7 +1235,10 @@ def build_evidence() -> dict[str, Any]:
         "ai_compilation_link": collect_ai_compilation_link(
             frontend_pack, dossier, multistage_pack
         ),
-        "generation_scheduler": collect_generation_scheduler(generation_schedule_plan),
+        "generation_scheduler": collect_generation_scheduler(
+            generation_schedule_plan,
+            generation_schedule_run_report,
+        ),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
@@ -1267,6 +1289,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
+    scheduler_run = as_obj(scheduler.get("run_report"))
+    scheduler_run_summary = as_obj(scheduler_run.get("summary"))
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
@@ -1364,6 +1388,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 调度计划：`{scheduler.get('plan_id')}`，调度项 `{scheduler_summary.get('item_count')}` 个",
         f"- 延迟分布：`{scheduler_summary.get('latency_class_counts')}`",
         f"- fallback 覆盖：`{scheduler_summary.get('fallback_covered_count')}` / `{scheduler_summary.get('item_count')}`",
+        f"- dry-run 动作分布：`{scheduler_run_summary.get('action_counts')}`",
+        f"- dry-run provider 调用：`{scheduler_run.get('provider_call_count')}`，世界修改：`{scheduler_run.get('world_mutation_count')}`",
         f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
@@ -1523,6 +1549,8 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
+    scheduler_run = as_obj(scheduler.get("run_report"))
+    scheduler_run_summary = as_obj(scheduler_run.get("summary"))
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1747,6 +1775,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     <section>
       <h2>Generation Scheduler</h2>
       <p>计划包：<code>{html_escape(scheduler.get("plan_id"))}</code>；延迟分布：<code>{html_escape(scheduler_summary.get("latency_class_counts"))}</code></p>
+      <p>dry-run：<code>{html_escape(scheduler_run.get("report_id"))}</code>；动作分布：<code>{html_escape(scheduler_run_summary.get("action_counts"))}</code></p>
       <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>
     </section>
     <section>
