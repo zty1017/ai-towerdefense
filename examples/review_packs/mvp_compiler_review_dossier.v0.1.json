@@ -3013,7 +3013,7 @@
       "path": "docs/COMPILABLE_OBJECT_PLAN_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "86345dbf5e0086a7a5b4a13cf18c6e3db9ea3c0665803ddcf0ad69ae9c431395"
+      "sha256": "6e00fbefe5fd64ca73e100ebeb9f2b3d6372f26de626b665f7a4ff52060af286"
     },
     {
       "path": "docs/FRONTEND_MOCK_PACK_V0_1.md",
@@ -3241,7 +3241,7 @@
       "path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
       "kind": "compilable_object_plan",
       "exists": true,
-      "sha256": "ec3d0e801dcbe620a68ebe7137c06af7d5b45a47398e85e9036fbe0390e0c0ac"
+      "sha256": "fbd3cabfc803dbc85a0bd112cc81690eac72a609670ec4e0a894bec67a267905"
     },
     {
       "path": "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json",
@@ -3511,7 +3511,7 @@
       "path": "shared/schemas/compilable_object_plan.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "0a633c10d8ccaa39935faa53efac4f736189a52fc5c6bf61ed06cabf535b6503"
+      "sha256": "4ed65830c69e4d71dc0079666a0568980069bfda4900b2e26ebdd573cab15a97"
     },
     {
       "path": "shared/schemas/frontend_mock_pack.v0.1.schema.json",
@@ -3553,7 +3553,7 @@
       "path": "tools/content_pipeline/build_compilable_object_plan.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "da6b58e5da57785fe598c4e9c1d0f7f1827ab303c0868e754855f2398f9d2313"
+      "sha256": "5a4eca82b755b05bfe3b7680e7208d143ffcb86682e47b9208341647e678d710"
     },
     {
       "path": "tools/content_pipeline/build_frontend_mock_pack.py",
