@@ -152,17 +152,20 @@ MediaAtlasManifest v0.1 已作为 virtual_single_frame 入口接入前端、后�
 - animation seed manifest。
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest。
 - MapRuntimePackage v0.1：首战节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用。
+- MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
+- 地图视觉层：`painted_visual_layer` 已作为玩家默认发布底图，`battle_runtime_background` 作为逻辑对齐 fallback，控制图和参考图只用于 debug / evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。
+- 演示证据导出脚本：可生成 `summary.md / evidence.json / index.html`。
+- 前端 MVP 页面：已有本地可运行 mock 体验入口，仍需浏览器环境补截图和视觉验收。
 
 当前尚未完成：
 
-- 正式前端页面。
 - 视频帧序列、spritesheet 和 atlas 默认接入。
-- 证据导出为 `summary.md / evidence.json / index.html` 的独立脚本。
 - 正式 live campaign router。
 - 多世界书选择与长期存档系统。
+- 自动化浏览器截图 / Playwright 视觉回归。
 
 ## 5. 历史文档处理规则
 
