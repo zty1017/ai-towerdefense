@@ -139,6 +139,12 @@ python3 tools/content_pipeline/validate_multistage_content_pack.py examples/revi
 - 不把候选内容自动晋升到默认战斗 runtime；Stage 05 runtime package 只是引用证据。
 - 不覆盖原有四阶段 MVP `mvp_stage_candidate_pack.v0.1.json`。
 
+`mvp_multistage_content_pack.v0.1.json` 顶层的 `core_artifact_alignment` 明确声明它是 review-only 多阶段内容生产审查包：
+
+- 它不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应落到它引用的 per-stage `WorldStateDelta`、`WorldStateDeltaTransaction`、compiled asset candidate、stage candidate pack 或 runtime package。
+
 当前 `mvp_multistage_stage_candidate_pack.v0.1.json` 的推荐结论是 `needs_human_review`。这是有意设计：内容和结构已经可审查，但资产还需要平衡、媒体 readiness 和 runtime package 晋升。
 
 该阶段候选包顶层的 `core_artifact_alignment` 明确声明它是 review-only 多阶段候选容器：

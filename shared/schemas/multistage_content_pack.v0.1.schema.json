@@ -47,6 +47,45 @@
         }
       }
     },
+    "core_artifact_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alignment_state",
+        "reason",
+        "expected_core_artifacts",
+        "present_core_artifacts",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "next_action"
+      ],
+      "properties": {
+        "alignment_state": {
+          "type": "string",
+          "const": "review_only_not_applicable"
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "expected_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "present_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "runtime_activation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "world_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
     "pipeline_logic": {
       "type": "array",
       "minItems": 1,

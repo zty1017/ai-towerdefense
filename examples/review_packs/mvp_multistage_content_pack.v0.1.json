@@ -12,6 +12,15 @@
     "base_worldbook_mutation": false,
     "stage_candidate_pack_promotion": "not_included"
   },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "MultistageContentPack 是 review-only 多阶段内容生产审查包；它串联 Stage 05/06/07 的叙事包、WorldStateDelta、compiled asset candidate 和阶段候选包引用，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对该 pack 引用的 per-stage WorldStateDelta / WorldStateDeltaTransaction / compiled asset candidate / stage candidate pack / runtime package，而不是激活整个多阶段内容审查包。"
+  },
   "pipeline_logic": [
     "从当前运行态和计划对象生成单阶段叙事包。",
     "叙事包只提出意图，真正提交必须落到受控 WorldStateDelta。",
