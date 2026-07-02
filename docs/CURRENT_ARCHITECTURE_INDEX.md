@@ -178,8 +178,10 @@ frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、�
 
 ## 6. 协作分支规则
 
-- `main`：稳定决策 / 发布基线。
+- `main`：稳定决策 / 发布基线，只在阶段性冻结窗口从 `develop` 受控同步。
 - `develop`：当前集成事实源。
 - `task/*` worktree：CodeBuddy / OpenCode / Codex headless 等代理执行任务。
 
 主聊天可以讨论和决策；具体实现应优先进入 `develop` 派生的 task worktree，验收后合回 `develop`。稳定后再统一同步到 `main`。
+
+`main` 允许短期落后于讨论和 `develop`，但这种落后应是受控滞后。同步前必须先检查 `main` 是否存在未识别的用户改动，并确认本次同步范围；不得为了追平文档而覆盖用户草稿。
