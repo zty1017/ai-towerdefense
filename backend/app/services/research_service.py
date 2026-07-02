@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import battle_content_service, map_runtime_service
+from . import ai_core_artifact_service, battle_content_service, map_runtime_service
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -35,17 +35,6 @@ _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.
 
 # All run artifacts land here, never inside the repo.
 _RUNS_ROOT = Path("/tmp/ai_compiled_td_backend_runs")
-
-_CORE_ARTIFACT_REFS = {
-    "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
-    "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
-    "compiled_game_object_package": (
-        "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
-    ),
-    "world_delta_transaction": (
-        "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
-    ),
-}
 
 # World-in-language node display names (subset of worldbook node_mapping).
 _NODE_DISPLAY = {
@@ -193,7 +182,7 @@ def _compiler_metadata_for_proposal(
             ),
             "intent_source": "player_free_text",
         },
-        "core_artifact_refs": dict(_CORE_ARTIFACT_REFS),
+        "core_artifact_refs": ai_core_artifact_service.core_artifact_refs(),
         "validation": {
             "player_text_safety": "scrubbed",
             "local_gates": [
