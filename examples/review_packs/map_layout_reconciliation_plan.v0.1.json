@@ -1,0 +1,237 @@
+{
+  "node_plans": [
+    {
+      "acceptance_gates": [
+        "normalized_png_exists",
+        "overlay_png_exists",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "visual_readability_passed",
+        "explicit_promotion_report_updates_published_visual_layer"
+      ],
+      "blocking_findings": [
+        "runtime_path_partly_follows_painted_road_but_has_mechanical_right_angle_segments",
+        "core_objective_marker_does_not_land_on_the_visible_station_core",
+        "optional_objective_marker_lands_near_the_station_area_but_needs_repositioning",
+        "build_slots_are_mostly_near_playable_terrain_but_need_spacing_review"
+      ],
+      "fallback": "regenerate_with_strict_station_core_at_runtime_coordinate",
+      "node_id": "gray_lantern_station",
+      "overlay_artifacts": {
+        "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.normalized_1280x720.png",
+        "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.png"
+      },
+      "priority": "P0",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "proposed_actions": [
+        {
+          "action": "reproject_core_objective",
+          "intent": "move core marker onto the visible station/outpost core area",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "target_node_core"
+        },
+        {
+          "action": "smooth_main_path",
+          "intent": "replace hard right-angle bends with waypoints following the painted dirt road",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "path_main_road"
+        },
+        {
+          "action": "review_build_slot_spacing",
+          "intent": "keep slots near readable clearings and remove edge-clustered slots if they do not map to visible pads",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "build_slots"
+        }
+      ],
+      "rationale": [
+        "painted road is readable and close enough for runtime path reprojection",
+        "core objective currently misses the visible station core",
+        "station-side landmarks can support a small layout-specific runtime patch"
+      ],
+      "recommendation": "hybrid_reproject_then_review",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+        "spawn_point_count": 1
+      },
+      "strengths": [
+        "clean_full_frame_map_without_units_or_projectiles",
+        "road_network_and_build_clearings_are_readable",
+        "world_style_matches_lantern_frontier"
+      ],
+      "visual_review_status": "needs_layout_reconciliation"
+    },
+    {
+      "acceptance_gates": [
+        "normalized_png_exists",
+        "overlay_png_exists",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "visual_readability_passed",
+        "explicit_promotion_report_updates_published_visual_layer"
+      ],
+      "blocking_findings": [
+        "painted_map_is_clean_but_runtime_paths_are_too_angular_for_the_visible_dirt_trails",
+        "some_build_slot_markers_align_with_round_pads_but_right_side_cluster_needs_spacing_review",
+        "left_side_objective_markers_do_not_clearly_attach_to_a_unique_core_inventory_landmark"
+      ],
+      "fallback": "regenerate_from_topology_control_sketch_if_reprojection_fails",
+      "node_id": "lamp_wick_store",
+      "overlay_artifacts": {
+        "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.normalized_1280x720.png",
+        "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.png"
+      },
+      "priority": "P0",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "proposed_actions": [
+        {
+          "action": "reproject_two_routes",
+          "intent": "trace the visible dirt trail network instead of preserving grid-like zigzags",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "path_wick_store_main_pipe,path_wick_store_service_lane"
+        },
+        {
+          "action": "retarget_left_side_objectives",
+          "intent": "attach objectives to unique visible depot or pad landmarks",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "target_wick_store_core,target_supply_line_coupler,target_lamp_oil_shelf"
+        },
+        {
+          "action": "deduplicate_right_slot_cluster",
+          "intent": "avoid stacking too many deployable slots on the same visible pad cluster",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "build_slots"
+        }
+      ],
+      "rationale": [
+        "candidate image is clean and has readable pads",
+        "main blocker is path geometry being too angular for visible dirt trails",
+        "runtime objectives can likely be retargeted without regenerating the whole map"
+      ],
+      "recommendation": "runtime_path_reprojection",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+        "spawn_point_count": 2
+      },
+      "strengths": [
+        "clean_background_without_arrows_units_or_projectiles",
+        "large_empty_pads_are_readable_for_tower_defense",
+        "supply_depot_style_is_clear"
+      ],
+      "visual_review_status": "needs_path_reprojection"
+    },
+    {
+      "acceptance_gates": [
+        "normalized_png_exists",
+        "overlay_png_exists",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "visual_readability_passed",
+        "explicit_promotion_report_updates_published_visual_layer"
+      ],
+      "blocking_findings": [
+        "visual_primary_objective_is_centered_but_runtime_core_objective_marker_is_left_of_center",
+        "runtime_paths_cross_the_central_tower_platform_instead_of_cleanly_following_painted_roads",
+        "build_slots_clustered_top_right_while_visible_build_pads_are_distributed",
+        "central_objective_size_may_reduce_combat_readability_without_layout_specific_runtime_package"
+      ],
+      "fallback": "keep_current_published_visual_layer_until_topology_decision",
+      "node_id": "old_signal_tower",
+      "overlay_artifacts": {
+        "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.normalized_1280x720.png",
+        "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.overlay_review.png"
+      },
+      "priority": "P0",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "proposed_actions": [
+        {
+          "action": "choose_topology_policy",
+          "intent": "decide whether old signal tower core should be central in gameplay or remain left-side as current runtime data",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "node_layout"
+        },
+        {
+          "action": "regenerate_or_recompose_map",
+          "intent": "if runtime topology is preserved, regenerate a map with core objective near the current runtime coordinate",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "painted_candidate"
+        },
+        {
+          "action": "layout_specific_runtime_patch",
+          "intent": "if central tower becomes the gameplay core, rebuild routes and slots around the central objective",
+          "requires_manual_or_vision_confirmation": true,
+          "target": "path_routes,objectives,build_slots"
+        }
+      ],
+      "rationale": [
+        "visual primary objective is centered while runtime core objective is left of center",
+        "moving runtime core to the visual tower would materially alter route/objective topology",
+        "current route overlays cross the central tower platform and reduce combat readability"
+      ],
+      "recommendation": "topology_constrained_regeneration_preferred",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+        "spawn_point_count": 2
+      },
+      "strengths": [
+        "strong_node_identity_and_painted_quality",
+        "clear roads_and_empty_pads",
+        "no_visible_arrows_or_units"
+      ],
+      "visual_review_status": "needs_layout_reconciliation"
+    }
+  ],
+  "plan_id": "mvp_map_layout_reconciliation_plan",
+  "policy": [
+    "This plan does not mutate runtime packages or published visual layers.",
+    "Runtime truth remains MapRuntimePackage until a later patch and promotion report are reviewed.",
+    "A map image can be high quality and still be blocked when its visible landmarks do not match gameplay coordinates."
+  ],
+  "runtime_package_dir": "examples/map_runtime_packages",
+  "schema_version": "map_layout_reconciliation_plan.v0.1",
+  "status": "ready_for_reconciliation_work",
+  "summary": {
+    "blocked_from_promotion_count": 3,
+    "node_count": 3,
+    "p0_count": 3,
+    "promotion_allowed_now_count": 0,
+    "recommendation_counts": {
+      "hybrid_reproject_then_review": 1,
+      "runtime_path_reprojection": 1,
+      "topology_constrained_regeneration_preferred": 1
+    }
+  },
+  "visual_review_path": "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+}
