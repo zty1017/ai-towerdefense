@@ -128,13 +128,19 @@ GET /api/sessions/{session_id}/opening
 GET /api/sessions/{session_id}/animation-seeds
 ```
 
-返回 `frontend_animation_seed_manifest.v0.1.json`。当前状态：
+返回 `frontend_animation_seed_manifest.v0.1.json`。当前单独动画种子接口状态：
 
 ```text
 seed_images_ready_video_frames_not_generated
 ```
 
 含义是：可以用种子图做前端临时 tween / shader / visual recipe 动效，但还没有真正的视频帧序列。
+
+前端总包和战斗配置会同时聚合 `media_atlas_manifest`，因此其中的 `animation_pipeline_status` 为：
+
+```text
+multiframe_atlas_ready_video_keyframes_not_generated
+```
 
 ### 获取战斗运行时美术包
 
@@ -156,7 +162,7 @@ GET /api/sessions/{session_id}/runtime-art-kit
 developer_compiled_multiframe_atlas_ready_video_keyframes_not_generated
 ```
 
-含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG，并且 sprite 类资产已经进入多帧 atlas；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；真实图生视频关键帧和实体 atlas PNG 后续再补。
+含义是：敌人、目标物、基础防御件和 NPC 头像已经有 processed PNG，并且 sprite 类资产已经进入多帧 atlas；地图 token 与攻击 / 命中 / 减速 / 死亡 / 漏怪反馈通过程序化 recipe 表示；真实图生视频关键帧后续再替换，当前实体 spritesheet PNG 由已发布 processed PNG 确定性派生。
 
 ### 获取调度缓冲证据
 
@@ -403,8 +409,38 @@ POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step
 - `worker_step`
 - `generation_schedule_queue_item`
 - 更新后的 `generation_schedule_queue`
+- `generation_schedule_worker_cache`
 
 当前所有 MVP 预取 / 后台 / 懒加载项都要求启用前复验，因此 dry worker step 会把这些项停在 `waiting_review`。它不会调用外部模型、不会写世界状态、不会激活预生成候选。
+
+每次 dry worker step 处理队列项时，会写入一条 review-only worker cache 记录。该记录只证明“本地 dry worker 已处理这个调度项，并停在复核/激活门前”，不代表真实 provider 已执行，也不代表资产已经可以进入运行时。
+
+### 获取调度 worker cache
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/worker-cache
+```
+
+返回最近一次调度 run 的 worker cache 视图：
+
+- `generation_schedule_run`: 最近一次运行的紧凑摘要。
+- `generation_schedule_worker_cache.summary`: cache 计数、对象类型计数、provider 调用计数、世界修改计数、激活计数、复核计数。
+- `generation_schedule_worker_cache.items`: 每个被 dry worker step 处理过的调度项的 review-only cache payload。
+
+当前 worker cache payload 明确包含以下安全边界：
+
+- `provider_call_performed: false`
+- `world_mutation_performed: false`
+- `activation_allowed_now: false`
+- `artifact_placeholder.status: review_only_placeholder`
+- `activation_gate.revalidate_before_activation`
+- `safe_content_policy.reads_env: false`
+- `safe_content_policy.calls_provider: false`
+- `safe_content_policy.writes_world_state: false`
+- `safe_content_policy.stores_raw_prompt: false`
+- `safe_content_policy.stores_provider_response: false`
+
+这张表不是正式生成缓存，不存 raw prompt，不存 provider response，不持有可直接发布的 runtime package。它的作用是给后续真实 worker / provider 调度器预留 session 级执行记录形态，同时让 Studio / evidence 能证明调度器已经具备“处理、等待复核、阻断激活”的最小闭环。
 
 ### 获取大地图
 

@@ -192,6 +192,19 @@ def get_generation_schedule_queue(session_id: str) -> FrontendMockPayloadRespons
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/worker-cache",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_schedule_worker_cache(session_id: str) -> FrontendMockPayloadResponse:
+    """Return review-only worker cache records derived from scheduler worker steps."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_schedule_worker_cache(session_id),
+    )
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

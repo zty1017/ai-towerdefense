@@ -473,6 +473,26 @@ P2：本阶段明确不做
 - 该层仍不调用 provider，不生成新内容，不写世界状态。
 - 它为后续真实 provider 调度建立最小 attempt 预算、重试上限和降级路径。
 
+### P1-B-7 Generation Scheduler worker cache skeleton
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_worker_cache` SQLite 表。
+- `GET /api/sessions/{session_id}/generation-schedule/worker-cache`
+- dry-run worker step 处理 `queued` 项后写入一条 review-only cache payload。
+- cache summary 统计 item、status、object kind、provider call、world mutation、activation allowed 和 review required。
+- session reset 会清除对应 worker cache 记录。
+- `/api/sessions/{session_id}/generation-schedule/queue` 会返回 worker cache summary。
+- `/api/sessions/{session_id}/generation-schedule/runs/latest` 与 `/api/sessions/{session_id}/evidence` 会返回最近 worker cache 摘要。
+
+当前结论：
+
+- 该层仍不调用 provider，不读取 `.env`，不保存 raw prompt 或 provider response，不生成新内容，不写世界状态。
+- 该层只证明 dry-run worker 已经具备“处理队列项 -> 停在复核门 -> 禁止激活”的 session 级执行记录形态。
+- 它不是正式后台生成缓存；后续真实 worker 必须继续补 provider 调用记录、产物 manifest、校验结果和显式 activation / promotion gate。
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造

@@ -66,10 +66,10 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
         "compiled_game_object_package.v0.1"
     )
     assert payload["animation_pipeline_status"] == (
-        "seed_images_ready_video_frames_not_generated"
+        "multiframe_atlas_ready_video_keyframes_not_generated"
     )
     assert payload["runtime_art_pipeline_status"] == (
-        "developer_compiled_processed_images_ready_video_frames_not_generated"
+        "developer_compiled_multiframe_atlas_ready_video_keyframes_not_generated"
     )
 
     first_icon = pack["assets"][0]["media_refs"]["generated_roles"]["icon"]["url"]
@@ -178,9 +178,18 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     latest_queue = _payload(client.get(f"/api/sessions/{sid}/generation-schedule/queue"))
     assert latest_queue["generation_schedule_run"]["run_id"] == run["run_id"]
     assert latest_queue["generation_schedule_queue"]["summary"]["status_counts"]["queued"] == 4
+    assert latest_queue["generation_schedule_worker_cache_summary"]["item_count"] == 0
     assert {
         item["latency_class"] for item in latest_queue["generation_schedule_queue"]["items"]
     } >= {"background_prefetch", "background", "lazy"}
+
+    initial_worker_cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/worker-cache")
+    )
+    assert initial_worker_cache["generation_schedule_run"]["run_id"] == run["run_id"]
+    assert initial_worker_cache["generation_schedule_worker_cache"]["summary"][
+        "item_count"
+    ] == 0
 
     worker_step = _payload(
         client.post(
@@ -195,6 +204,37 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert worker_step["generation_schedule_queue_item"]["worker_id"] == "dry-worker-test"
     assert worker_step["generation_schedule_queue"]["summary"]["waiting_review_count"] == 1
     assert worker_step["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+    worker_cache = worker_step["generation_schedule_worker_cache"]
+    assert worker_cache["summary"]["item_count"] == 1
+    assert worker_cache["summary"]["provider_call_count"] == 0
+    assert worker_cache["summary"]["world_mutation_count"] == 0
+    assert worker_cache["summary"]["activation_allowed_count"] == 0
+    assert worker_cache["summary"]["review_required_count"] == 1
+    cache_item = worker_cache["items"][0]
+    assert cache_item["schedule_item_id"] == (
+        worker_step["generation_schedule_queue_item"]["schedule_item_id"]
+    )
+    assert cache_item["worker_id"] == "dry-worker-test"
+    assert cache_item["status"] == "waiting_review"
+    assert cache_item["artifact_placeholder"]["status"] == "review_only_placeholder"
+    assert cache_item["artifact_placeholder"]["provider_call_performed"] is False
+    assert cache_item["artifact_placeholder"]["world_mutation_performed"] is False
+    assert cache_item["artifact_placeholder"]["activation_allowed_now"] is False
+    assert cache_item["activation_gate"]["blocked_reason"] == (
+        "review_required_before_activation"
+    )
+
+    latest_worker_cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/worker-cache")
+    )
+    assert latest_worker_cache["generation_schedule_worker_cache"]["summary"][
+        "item_count"
+    ] == 1
+    worker_cache_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_schedule_worker_cache WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert worker_cache_rows == 1
 
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
@@ -260,6 +300,14 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     )
     assert briefing["briefing"]["node_id"] == "gray_lantern_station"
     assert briefing["suggested_input"]
+
+    reset = client.post(f"/api/sessions/{sid}/reset")
+    assert reset.status_code == 200, reset.text
+    worker_cache_rows_after_reset = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_schedule_worker_cache WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert worker_cache_rows_after_reset == 0
 
 
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):
@@ -365,7 +413,7 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert battle["toolbar_assets"]
     assert battle["sample_delivery_asset"]["stable_internal_id"] == "asset_mirror_lure_trap_001"
     assert battle["animation_pipeline_status"] == (
-        "seed_images_ready_video_frames_not_generated"
+        "multiframe_atlas_ready_video_keyframes_not_generated"
     )
     assert battle["runtime_art_kit"]["coverage"]["battle_nodes"] == ["gray_lantern_station"]
 
