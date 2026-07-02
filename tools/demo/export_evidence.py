@@ -133,6 +133,8 @@ PATHS = {
     / "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
     "map_controlled_regeneration_request_pack": ROOT
     / "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+    "controlled_map_candidate_generation_run": ROOT
+    / "examples/review_packs/controlled_map_candidate_generation_run.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -515,6 +517,17 @@ STATIC_VALIDATION_COMMANDS = [
             "/tmp/ai_td_map_controlled_regeneration_requests",
             "--output",
             "/tmp/ai_td_map_controlled_regeneration_request_pack.json",
+        ],
+    },
+    {
+        "name": "controlled_map_candidate_generation_dry_run",
+        "command": [
+            "python3",
+            "tools/media/generate_controlled_map_candidates.py",
+            "--output-dir",
+            "/tmp/ai_td_controlled_map_candidates",
+            "--output",
+            "/tmp/ai_td_controlled_map_candidate_generation_run.json",
         ],
     },
     {
@@ -1245,6 +1258,39 @@ def map_controlled_regeneration_request_pack_summary(pack: dict[str, Any]) -> di
     }
 
 
+def controlled_map_candidate_generation_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    results = [result for result in as_list(report.get("results")) if isinstance(result, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "provider_mode": report.get("provider_mode"),
+        "live": report.get("live"),
+        "provider_profile": report.get("provider_profile"),
+        "request_count": summary.get("request_count"),
+        "result_count": summary.get("result_count"),
+        "failure_count": summary.get("failure_count"),
+        "image_exists_count": summary.get("image_exists_count"),
+        "provider_call_count": summary.get("provider_call_count"),
+        "handoff_ready_count": summary.get("handoff_ready_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "result_samples": [
+            {
+                "node_id": result.get("node_id"),
+                "status": result.get("status"),
+                "provider_mode": result.get("provider_mode"),
+                "image_exists": result.get("image_exists"),
+                "sidecar_path": result.get("sidecar_path"),
+                "control_sketch_png_path": result.get("control_sketch_png_path"),
+                "control_sketch_public_url": result.get("control_sketch_public_url"),
+                "review_status": result.get("review_status"),
+            }
+            for result in results[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -1541,6 +1587,7 @@ def collect_assets_and_media(
     topology_constrained_map_overlay_visual_review: dict[str, Any],
     map_topology_control_sketch_pack: dict[str, Any],
     map_controlled_regeneration_request_pack: dict[str, Any],
+    controlled_map_candidate_generation_run: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1649,6 +1696,9 @@ def collect_assets_and_media(
             ),
             "controlled_regeneration_request_pack": map_controlled_regeneration_request_pack_summary(
                 map_controlled_regeneration_request_pack
+            ),
+            "controlled_candidate_generation_run": controlled_map_candidate_generation_summary(
+                controlled_map_candidate_generation_run
             ),
             "published_visual_layers": [
                 {
@@ -1841,6 +1891,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_controlled_regeneration_request_pack",
             PATHS["map_controlled_regeneration_request_pack"],
         ),
+        (
+            "controlled_map_candidate_generation_run",
+            PATHS["controlled_map_candidate_generation_run"],
+        ),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1950,6 +2004,9 @@ def build_evidence() -> dict[str, Any]:
     map_controlled_regeneration_request_pack = load_json(
         PATHS["map_controlled_regeneration_request_pack"]
     )
+    controlled_map_candidate_generation_run = load_json(
+        PATHS["controlled_map_candidate_generation_run"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -2030,6 +2087,7 @@ def build_evidence() -> dict[str, Any]:
             topology_constrained_map_overlay_visual_review,
             map_topology_control_sketch_pack,
             map_controlled_regeneration_request_pack,
+            controlled_map_candidate_generation_run,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -2129,6 +2187,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     controlled_regeneration_request = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "controlled_regeneration_request_pack"
+        )
+    )
+    controlled_candidate_generation = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "controlled_candidate_generation_run"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -2282,6 +2345,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 旧信号塔拓扑候选：candidate `{topology_candidate_review.get('status')}`，alignment `{topology_alignment_review.get('status')}`，overlay `{topology_overlay_review.get('status')}`，visual `{topology_overlay_visual_review.get('status')}`，可晋升 `{topology_overlay_visual_review.get('promotable_count')}`",
         f"- 地图 topology control sketch：`{topology_control_sketch.get('status')}`，sketch `{topology_control_sketch.get('sketch_count')}`，ready `{topology_control_sketch.get('ready_count')}`，目标尺寸 `{topology_control_sketch.get('target_size')}`",
         f"- 地图受控重生请求包：`{controlled_regeneration_request.get('status')}`，request `{controlled_regeneration_request.get('request_count')}`，reference image request `{controlled_regeneration_request.get('reference_image_request_count')}`，blocked `{controlled_regeneration_request.get('blocked_count')}`",
+        f"- 地图受控候选生成 dry-run：`{controlled_candidate_generation.get('status')}`，handoff `{controlled_candidate_generation.get('handoff_ready_count')}`，图片 `{controlled_candidate_generation.get('image_exists_count')}`，provider calls `{controlled_candidate_generation.get('provider_call_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -2483,6 +2547,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     controlled_regeneration_request = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get(
             "controlled_regeneration_request_pack"
+        )
+    )
+    controlled_candidate_generation = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get(
+            "controlled_candidate_generation_run"
         )
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
@@ -2711,6 +2780,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">受控重生请求</div>
           <div class="metric">{html_escape(controlled_regeneration_request.get("status"))}</div>
           <p class="muted">request：{html_escape(controlled_regeneration_request.get("request_count"))}；reference image：{html_escape(controlled_regeneration_request.get("reference_image_request_count"))}；blocked：{html_escape(controlled_regeneration_request.get("blocked_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">受控候选 Dry-run</div>
+          <div class="metric">{html_escape(controlled_candidate_generation.get("status"))}</div>
+          <p class="muted">handoff：{html_escape(controlled_candidate_generation.get("handoff_ready_count"))}；图片：{html_escape(controlled_candidate_generation.get("image_exists_count"))}；provider calls：{html_escape(controlled_candidate_generation.get("provider_call_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>
