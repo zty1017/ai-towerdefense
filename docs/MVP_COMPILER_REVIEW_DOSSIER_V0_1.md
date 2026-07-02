@@ -70,6 +70,7 @@ python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate
 - 构建器不调用任何 provider。
 - 构建器不修改基础世界书。
 - runtime package 只做引用，不内嵌为玩家加载包。
+- `core_artifact_alignment.alignment_state: review_only_not_applicable`：该 dossier 是总审查交付包，不应被强行迁移为 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。后续核心对象迁移应针对它引用的阶段候选包、多阶段内容包或具体运行时产物。
 
 注意：交付包会引用 live workflow 和 provider 调用相关文档，但它本身不执行 live workflow，也不保存原始 provider payload。
 

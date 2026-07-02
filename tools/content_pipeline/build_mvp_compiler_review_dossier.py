@@ -1010,6 +1010,22 @@ def build_dossier(
         "multistage_content_pack_summary": multistage_content_pack_summary(
             DEFAULT_MULTISTAGE_CONTENT_PACK
         ),
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "该文件是 review-only 总审查交付包，只汇总已审证据、运行态摘要、"
+                "runtime package 引用和验证命令；它本身不是 ContextPackage、FactEntry、"
+                "CGOP 或 WorldStateDeltaTransaction，也不应进入玩家 runtime。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续迁移应针对 dossier 引用的阶段候选包、多阶段内容包或具体运行时产物，"
+                "不要把总审查包强行包装成核心对象。"
+            ),
+        },
         "runtime_state_summary": {
             "state_file": rel(final_state_path),
             "progress": as_obj(final_state.get("progress")),

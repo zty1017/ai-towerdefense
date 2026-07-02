@@ -41,6 +41,26 @@ Last updated: 2026-07-02
 
 `needs_migration` 不表示 MVP 阻断。它表示存在明确的下一批 P1 迁移任务。
 
+## 2.1 显式不适用边界
+
+某些 review pack 本身只是证据索引或审查交付包，不应该被强行包装成核心对象。此时应在对应产物中加入显式边界，例如：
+
+```json
+{
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "该文件是总审查交付包，不是 runtime package 或世界事务。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续迁移应针对它引用的具体内容包或运行时产物。"
+  }
+}
+```
+
+`mvp_compiler_review_dossier.v0.1` 已采用该方式。这样做不是跳过校验，而是把“不应迁移”的架构判断显式化，避免后续 worker 把总览证据包误改成 CGOP 或 WorldStateDeltaTransaction。
+
 ## 3. 安全边界
 
 该报告必须保持：
