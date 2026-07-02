@@ -117,6 +117,8 @@ PATHS = {
     / "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
     "runtime_map_patch_candidates": ROOT
     / "examples/review_packs/runtime_map_patch_candidates.v0.1.json",
+    "map_patch_overlay_review": ROOT
+    / "examples/review_packs/map_patch_overlay_review.v0.1.json",
     "topology_constrained_map_prompt_pack": ROOT
     / "examples/review_packs/topology_constrained_map_prompt_pack.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -400,6 +402,17 @@ STATIC_VALIDATION_COMMANDS = [
             "tools/media/build_runtime_map_patch_candidates.py",
             "--output",
             "/tmp/ai_td_runtime_map_patch_candidates.json",
+        ],
+    },
+    {
+        "name": "map_patch_overlay_review",
+        "command": [
+            "python3",
+            "tools/media/build_map_patch_overlay_review.py",
+            "--output-dir",
+            "/tmp/ai_td_map_patch_overlay_artifacts",
+            "--output",
+            "/tmp/ai_td_map_patch_overlay_review.json",
         ],
     },
     {
@@ -1024,6 +1037,38 @@ def runtime_map_patch_candidate_summary(report: dict[str, Any]) -> dict[str, Any
     }
 
 
+def map_patch_overlay_review_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    artifacts = [artifact for artifact in as_list(report.get("artifacts")) if isinstance(artifact, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "candidate_count": summary.get("candidate_count"),
+        "patched_overlay_artifact_ready_count": summary.get(
+            "patched_overlay_artifact_ready_count"
+        ),
+        "validation_failed_count": summary.get("validation_failed_count"),
+        "skipped_count": summary.get("skipped_count"),
+        "blocked_count": summary.get("blocked_count"),
+        "promotion_allowed_now_count": summary.get("promotion_allowed_now_count"),
+        "target_size": as_obj(summary.get("target_size")),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "artifact_samples": [
+            {
+                "node_id": artifact.get("node_id"),
+                "status": artifact.get("status"),
+                "patch_operation_count": artifact.get("patch_operation_count"),
+                "patched_overlay_review_png_path": artifact.get(
+                    "patched_overlay_review_png_path"
+                ),
+                "validation": as_obj(artifact.get("validation")),
+            }
+            for artifact in artifacts[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def topology_constrained_prompt_pack_summary(pack: dict[str, Any]) -> dict[str, Any]:
     summary = as_obj(pack.get("summary"))
     prompts = [prompt for prompt in as_list(pack.get("prompts")) if isinstance(prompt, dict)]
@@ -1336,6 +1381,7 @@ def collect_assets_and_media(
     map_candidate_overlay_visual_review: dict[str, Any],
     map_layout_reconciliation_plan: dict[str, Any],
     runtime_map_patch_candidates: dict[str, Any],
+    map_patch_overlay_review: dict[str, Any],
     topology_constrained_map_prompt_pack: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
@@ -1421,6 +1467,9 @@ def collect_assets_and_media(
             ),
             "runtime_patch_candidates": runtime_map_patch_candidate_summary(
                 runtime_map_patch_candidates
+            ),
+            "patch_overlay_review": map_patch_overlay_review_summary(
+                map_patch_overlay_review
             ),
             "topology_prompt_pack": topology_constrained_prompt_pack_summary(
                 topology_constrained_map_prompt_pack
@@ -1587,6 +1636,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("map_candidate_overlay_visual_review", PATHS["map_candidate_overlay_visual_review"]),
         ("map_layout_reconciliation_plan", PATHS["map_layout_reconciliation_plan"]),
         ("runtime_map_patch_candidates", PATHS["runtime_map_patch_candidates"]),
+        ("map_patch_overlay_review", PATHS["map_patch_overlay_review"]),
         (
             "topology_constrained_map_prompt_pack",
             PATHS["topology_constrained_map_prompt_pack"],
@@ -1678,6 +1728,7 @@ def build_evidence() -> dict[str, Any]:
     map_candidate_overlay_visual_review = load_json(PATHS["map_candidate_overlay_visual_review"])
     map_layout_reconciliation_plan = load_json(PATHS["map_layout_reconciliation_plan"])
     runtime_map_patch_candidates = load_json(PATHS["runtime_map_patch_candidates"])
+    map_patch_overlay_review = load_json(PATHS["map_patch_overlay_review"])
     topology_constrained_map_prompt_pack = load_json(
         PATHS["topology_constrained_map_prompt_pack"]
     )
@@ -1753,6 +1804,7 @@ def build_evidence() -> dict[str, Any]:
             map_candidate_overlay_visual_review,
             map_layout_reconciliation_plan,
             runtime_map_patch_candidates,
+            map_patch_overlay_review,
             topology_constrained_map_prompt_pack,
         ),
         "validation_summary": collect_validation_summary(
@@ -1813,6 +1865,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     runtime_map_patches = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "runtime_patch_candidates"
+        )
+    )
+    map_patch_overlay = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "patch_overlay_review"
         )
     )
     topology_prompt_pack = as_obj(
@@ -1966,6 +2023,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 地图候选视觉复核：`{map_candidate_overlay_visual.get('status')}`，可晋升 `{map_candidate_overlay_visual.get('promotable_count')}`，禁止晋升 `{map_candidate_overlay_visual.get('blocked_from_promotion_count')}`",
         f"- 地图布局修订计划：`{map_layout_reconciliation.get('status')}`，P0 `{map_layout_reconciliation.get('p0_count')}`，推荐分布 `{map_layout_reconciliation.get('recommendation_counts')}`",
         f"- Runtime 地图补丁候选：`{runtime_map_patches.get('status')}`，review candidates `{runtime_map_patches.get('review_candidate_count')}`，skipped `{runtime_map_patches.get('skipped_count')}`",
+        f"- 地图补丁后 overlay 审查：`{map_patch_overlay.get('status')}`，可复核 `{map_patch_overlay.get('patched_overlay_artifact_ready_count')}`，校验失败 `{map_patch_overlay.get('validation_failed_count')}`，禁止直接晋升 `{map_patch_overlay.get('promotion_allowed_now_count')}`",
         f"- 拓扑约束地图 prompt pack：`{topology_prompt_pack.get('status')}`，主 prompt `{topology_prompt_pack.get('primary_prompt_count')}`，fallback `{topology_prompt_pack.get('fallback_prompt_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
@@ -2142,6 +2200,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     runtime_map_patches = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("runtime_patch_candidates")
+    )
+    map_patch_overlay = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("patch_overlay_review")
     )
     topology_prompt_pack = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("topology_prompt_pack")
@@ -2347,6 +2408,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图补丁候选</div>
           <div class="metric">{html_escape(runtime_map_patches.get("status"))}</div>
           <p class="muted">review candidates：{html_escape(runtime_map_patches.get("review_candidate_count"))}；skipped：{html_escape(runtime_map_patches.get("skipped_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">补丁后 Overlay</div>
+          <div class="metric">{html_escape(map_patch_overlay.get("status"))}</div>
+          <p class="muted">可复核：{html_escape(map_patch_overlay.get("patched_overlay_artifact_ready_count"))}；校验失败：{html_escape(map_patch_overlay.get("validation_failed_count"))}；直接晋升：{html_escape(map_patch_overlay.get("promotion_allowed_now_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">拓扑 Prompt</div>

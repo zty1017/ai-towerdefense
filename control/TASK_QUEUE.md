@@ -67,7 +67,7 @@ P2：本阶段明确不做
 - `MapCandidateOverlayReview v0.1` 已接入 evidence，用于把三张 `clean_scene_v2` 候选标准化为 `1280x720` 并生成路径、塔位、出生点、目标的 SVG overlay 审查图；当前状态为 `overlay_artifacts_ready_review_required`，但仍是 review-only，不会自动进入前端 runtime，且 artifact ready 不等于视觉对齐已批准。
 - `MapCandidateOverlayVisualReview v0.1` 已接入 evidence，用 raster overlay PNG 记录人工视觉复核结论；当前三张候选均 `do_not_promote`，主要问题是 runtime 路径/目标/塔位与视觉道路、核心物和建造点未完全一致。下一轮应优先做 runtime 坐标重投影或拓扑约束重生，而不是直接晋升。
 - `MapLayoutReconciliationPlan v0.1` 已接入 evidence，把三张地图候选拆成 P0 后续动作：灰灯驿站混合重投影后复核，灯芯仓优先 runtime 路径重投影，旧信号塔优先拓扑约束重生或先做核心位置决策。该计划仍不修改 runtime 包，不晋升视觉层。
-- `RuntimeMapPatchCandidates v0.1` 与 `TopologyConstrainedMapPromptPack v0.1` 已接入 evidence。前者为灰灯驿站、灯芯仓产出 review-only 坐标补丁候选，后者为旧信号塔产出拓扑约束重生 prompt，并为另外两张图保留 fallback prompt。两者都不自动修改 runtime，不发布视觉层。
+- `RuntimeMapPatchCandidates v0.1`、`MapPatchOverlayReview v0.1` 与 `TopologyConstrainedMapPromptPack v0.1` 已接入 evidence。前者为灰灯驿站、灯芯仓产出 review-only 坐标/路径/塔位补丁候选；中者把补丁应用到内存 MapRuntimePackage 快照并生成补丁后 overlay PNG/SVG 与 review-only runtime 快照，当前两张补丁后包结构校验通过但仍不能晋升；后者为旧信号塔产出拓扑约束重生 prompt，并为另外两张图保留 fallback prompt。三者都不自动修改 runtime，不发布视觉层。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
@@ -578,8 +578,9 @@ P2：本阶段明确不做
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
 2. WorldStateDelta / review pack 继续从 refs/evidence 对齐推进到原生产物字段；Research Job、battle settlement evidence 与 frontend mock pack 已完成第一层原生快照迁移。
-3. `P1-A` 真实视频关键帧增强。
-4. `P1-B` Generation Scheduler 执行器 / live campaign router。
+3. 地图补丁后 overlay 人工/视觉模型复核，以及旧信号塔拓扑约束真实 provider 重生；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
+4. `P1-A` 真实视频关键帧增强。
+5. `P1-B` Generation Scheduler 执行器 / live campaign router。
 
 若需要并行，优先组合：
 
