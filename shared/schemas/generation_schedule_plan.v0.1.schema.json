@@ -1,0 +1,328 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/generation_schedule_plan.v0.1.schema.json",
+  "title": "GenerationSchedulePlan v0.1",
+  "description": "A review-only scheduling control-plane artifact that declares which reviewed or planned compiler outputs must be available synchronously, prefetched, generated in the background, lazily repaired, or used as static fallback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "authority",
+    "source_refs",
+    "budget_profile",
+    "fallback_policy",
+    "items",
+    "summary",
+    "validation_commands"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "generation_schedule_plan.v0.1" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "control_plane_only",
+        "content_truth_owner",
+        "schedule_builder_reads_env",
+        "schedule_builder_calls_provider",
+        "runtime_world_mutation_allowed",
+        "activation_requires_revalidation"
+      ],
+      "properties": {
+        "control_plane_only": { "type": "boolean", "const": true },
+        "content_truth_owner": {
+          "type": "string",
+          "enum": ["schemas_validators_and_reviewed_packages"]
+        },
+        "schedule_builder_reads_env": { "type": "boolean", "const": false },
+        "schedule_builder_calls_provider": { "type": "boolean", "const": false },
+        "runtime_world_mutation_allowed": { "type": "boolean", "const": false },
+        "activation_requires_revalidation": { "type": "boolean", "const": true }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "architecture_index",
+        "ai_compilation_system",
+        "compilable_object_plan",
+        "final_run_state",
+        "frontend_mock_pack",
+        "runtime_art_manifest",
+        "runtime_art_atlas_manifest",
+        "map_runtime_packages",
+        "map_compile_packages"
+      ],
+      "properties": {
+        "architecture_index": { "type": "string", "minLength": 1 },
+        "ai_compilation_system": { "type": "string", "minLength": 1 },
+        "compilable_object_plan": { "type": "string", "minLength": 1 },
+        "final_run_state": { "type": "string", "minLength": 1 },
+        "frontend_mock_pack": { "type": "string", "minLength": 1 },
+        "runtime_art_manifest": { "type": "string", "minLength": 1 },
+        "runtime_art_atlas_manifest": { "type": "string", "minLength": 1 },
+        "runtime_sprite_repair_plan": { "type": "string", "minLength": 1 },
+        "runtime_sprite_regeneration_promotion_report": { "type": "string", "minLength": 1 },
+        "map_runtime_packages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "map_compile_packages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "budget_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_sync_blocking_items",
+        "max_parallel_background_items",
+        "max_live_provider_items",
+        "default_timeout_seconds",
+        "retry_policy",
+        "degrade_on_budget_exhaustion"
+      ],
+      "properties": {
+        "max_sync_blocking_items": { "type": "integer", "minimum": 0 },
+        "max_parallel_background_items": { "type": "integer", "minimum": 0 },
+        "max_live_provider_items": { "type": "integer", "minimum": 0 },
+        "default_timeout_seconds": { "type": "integer", "minimum": 1 },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_attempts_per_item", "backoff_seconds"],
+          "properties": {
+            "max_attempts_per_item": { "type": "integer", "minimum": 0 },
+            "backoff_seconds": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "degrade_on_budget_exhaustion": { "type": "boolean" }
+      }
+    },
+    "fallback_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "player_safe_error_mode",
+        "technical_error_visibility",
+        "default_fallback_refs"
+      ],
+      "properties": {
+        "player_safe_error_mode": {
+          "type": "string",
+          "enum": ["world_explanation_only", "silent_static_fallback"]
+        },
+        "technical_error_visibility": { "type": "string", "const": "internal_only" },
+        "default_fallback_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/schedule_item" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_count",
+        "latency_class_counts",
+        "status_counts",
+        "sync_blocking_count",
+        "background_prefetch_count",
+        "background_count",
+        "lazy_count",
+        "fallback_static_count",
+        "live_provider_allowed_count",
+        "world_commit_gate_count",
+        "fallback_covered_count"
+      ],
+      "properties": {
+        "item_count": { "type": "integer", "minimum": 0 },
+        "latency_class_counts": { "$ref": "#/$defs/count_map" },
+        "status_counts": { "$ref": "#/$defs/count_map" },
+        "sync_blocking_count": { "type": "integer", "minimum": 0 },
+        "background_prefetch_count": { "type": "integer", "minimum": 0 },
+        "background_count": { "type": "integer", "minimum": 0 },
+        "lazy_count": { "type": "integer", "minimum": 0 },
+        "fallback_static_count": { "type": "integer", "minimum": 0 },
+        "live_provider_allowed_count": { "type": "integer", "minimum": 0 },
+        "world_commit_gate_count": { "type": "integer", "minimum": 0 },
+        "fallback_covered_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validation_command" }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "latency_class": {
+      "type": "string",
+      "enum": [
+        "sync_blocking",
+        "background_prefetch",
+        "background",
+        "lazy",
+        "fallback_static"
+      ]
+    },
+    "provider_mode": {
+      "type": "string",
+      "enum": ["no_live_provider", "allowed_after_review", "manual_only"]
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "schedule_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule_item_id",
+        "compile_request_id",
+        "object_ref",
+        "object_kind",
+        "purpose",
+        "latency_class",
+        "priority",
+        "status",
+        "trigger",
+        "dependencies",
+        "cache_policy",
+        "provider_policy",
+        "validation_gates",
+        "fallback_ref",
+        "commit_policy",
+        "player_visible"
+      ],
+      "properties": {
+        "schedule_item_id": { "type": "string", "minLength": 1 },
+        "compile_request_id": { "type": "string", "minLength": 1 },
+        "object_ref": { "type": "string", "minLength": 1 },
+        "object_kind": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "latency_class": { "$ref": "#/$defs/latency_class" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "status": {
+          "type": "string",
+          "enum": ["ready", "planned", "cached", "fallback_ready", "blocked", "review_only"]
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "description"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "session_start",
+                "node_visible",
+                "battle_started",
+                "battle_midpoint",
+                "battle_settlement",
+                "idle_window",
+                "manual_review"
+              ]
+            },
+            "description": { "type": "string", "minLength": 1 }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "cache_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cache_key", "reuse", "invalidation_refs"],
+          "properties": {
+            "cache_key": { "type": "string", "minLength": 1 },
+            "reuse": {
+              "type": "string",
+              "enum": ["reuse_if_inputs_match", "always_static", "never_reuse"]
+            },
+            "invalidation_refs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "provider_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "max_attempts", "profile"],
+          "properties": {
+            "mode": { "$ref": "#/$defs/provider_mode" },
+            "max_attempts": { "type": "integer", "minimum": 0 },
+            "profile": { "type": "string", "minLength": 1 }
+          }
+        },
+        "validation_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fallback_ref": { "type": "string", "minLength": 1 },
+        "commit_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "world_commit",
+            "runtime_activation",
+            "revalidate_before_activation"
+          ],
+          "properties": {
+            "world_commit": {
+              "type": "string",
+              "enum": [
+                "none",
+                "candidate_only",
+                "world_delta_semantic_gate",
+                "manual_review_required"
+              ]
+            },
+            "runtime_activation": {
+              "type": "string",
+              "enum": ["already_active", "activate_after_validation", "review_only", "never_activate"]
+            },
+            "revalidate_before_activation": { "type": "boolean" }
+          }
+        },
+        "player_visible": { "type": "boolean" }
+      }
+    }
+  }
+}

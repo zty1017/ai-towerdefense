@@ -50,13 +50,15 @@ Last updated: 2026-07-02
    - 产品定位、架构分层、协作治理基线。
 4. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
    - AI 编译系统总架构：Context Engine、Object Compiler、World Transaction System，以及作为横切控制面的 Generation Scheduler。
-5. `docs/DEMO_VERTICAL_SLICE.md`
+5. `docs/GENERATION_SCHEDULER_V0_1.md`
+   - Generation Scheduler 的字段级计划包、延迟等级、fallback 和预生成边界。
+6. `docs/DEMO_VERTICAL_SLICE.md`
    - MVP 演示主路径。
-6. `docs/FRONTEND_MOCK_API_V0_1.md`
+7. `docs/FRONTEND_MOCK_API_V0_1.md`
    - 当前前端应接入的 mock API。
-7. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
+8. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
    - 前端战斗运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
-8. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+9. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
    - 当前审查交付入口。
 
 ## 3. 当前有效设计文档
@@ -90,6 +92,8 @@ Last updated: 2026-07-02
   - 游戏中哪些对象可被 AI 编译。
 - `docs/COMPILABLE_OBJECT_PLAN_V0_1.md`
   - 下一阶段可编译对象规划。
+- `docs/GENERATION_SCHEDULER_V0_1.md`
+  - 预生成调度计划包、延迟等级、fallback 与启用前复验边界。
 - `docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md`
   - 玩法对象编译边界。
 
@@ -125,6 +129,7 @@ Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重
 Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并再次经过 cutout quality audit；候选不会自动替换正式 runtime 素材。
 Sprite live regeneration candidate pack 已可针对 runtime 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；当前候选覆盖信标、基础灯栏与驿站核心，候选仍不自动替换正式 runtime 素材。
 Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；信标、基础灯栏与驿站核心已替换 runtime processed PNG 并重建 atlas，runtime sprite cutout quality 已达到 `passed 7 / 7`，repair plan 已清空。
+GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence；真实后台执行器仍未实现。
 ```
 
 ### 审查与交付
@@ -167,18 +172,19 @@ Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；�
 - MapRuntimePackage v0.1：首战节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用。
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
 - 地图视觉层：`painted_visual_layer` 已作为玩家默认发布底图，`battle_runtime_background` 作为逻辑对齐 fallback，控制图和参考图只用于 debug / evidence。
+- GenerationSchedulePlan v0.1：已有 review-only 计划包、schema、builder、validator 与 evidence 摘要，用于声明同步、预取、后台、懒加载和静态 fallback 内容。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。
 - 演示证据导出脚本：可生成 `summary.md / evidence.json / index.html`。
-- Runtime sprite live regeneration 候选：已为 P1 信标与基础灯栏生成 review-only PNG，并接入 cutout quality report 与 demo evidence。
-- Runtime sprite 显式晋升：已把通过审查的信标与基础灯栏候选晋升到 published runtime media，重建 runtime atlas，并接入 promotion report。
+- Runtime sprite live regeneration 候选：已为信标、基础灯栏与驿站核心生成 review-only PNG，并接入 cutout quality report 与 demo evidence。
+- Runtime sprite 显式晋升：已把通过审查的信标、基础灯栏与驿站核心候选晋升到 published runtime media，重建 runtime atlas，并接入 promotion report。
 - 前端 MVP 页面：已有本地可运行 mock 体验入口，仍需浏览器环境补截图和视觉验收。
 
 当前尚未完成：
 
 - 真实图生视频帧序列，以及由这些真实帧打包出的实体 atlas PNG 的默认接入。
-- 正式 live campaign router。
+- 正式 live campaign router 与 Generation Scheduler 后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。
 
