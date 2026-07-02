@@ -607,12 +607,12 @@ git diff --check
 - `generation_artifact_ledger` SQLite 表，所有记录按 `session_id` 隔离，session reset 会清理。
 - `GET /api/sessions/{session_id}/generation-schedule/artifact-ledger`
 - `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts`
-- `backend/app/services/generation_scheduler_service.py` 中的 fixture-backed envelope / staging 校验、摘要、upsert 和 evidence 聚合。
+- `backend/app/services/generation_scheduler_service.py` 中的 fixture-backed envelope / staging / promotion report 校验、摘要、upsert 和 evidence 聚合。
 - `examples/worker_task_packs/p1b_provider_artifact_ledger_backend.v0.1.json`
 
 当前结论：
 
-- 该层只把已校验的 ProviderOutputEnvelope / ProviderArtifactStagingManifest 摘要登记到 session 台账。
+- 该层只把已校验的 ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport 摘要登记到 session 台账。
 - worker API 自身不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
 - 台账会记录 source 中“已发生过的 provider 调用摘要”，但 `provider_call_count_by_this_request` 始终为 0，避免把台账写入伪装成真实执行器。
 - `/api/sessions/{session_id}/evidence` 会返回 `generation_scheduler.latest_artifact_ledger`，供 Studio / evidence 页面使用。
@@ -653,6 +653,32 @@ python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provid
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/demo/export_evidence.py
 python3 -m json.tool shared/schemas/provider_artifact_promotion_report.v0.1.schema.json >/tmp/provider_artifact_promotion_report.schema.pretty.json
 python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_report_evidence
+git diff --check
+```
+
+### P1-B-14 ProviderArtifactPromotionReport 后端 ledger 接线
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts` 会额外校验并登记 `ProviderArtifactPromotionReport v0.1` 摘要。
+- `GET /api/sessions/{session_id}/generation-schedule/artifact-ledger` 会返回三类记录：provider output envelope、provider artifact staging manifest、provider artifact promotion report。
+- `backend/tests/test_frontend_mock_api.py` 已覆盖三类 ledger entry、promotion 阻断状态、reset 清理和 evidence 聚合。
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_ledger.v0.1.json`
+
+当前结论：
+
+- 当前 promotion report 是 `blocked_review_required`，因此 ledger 中 `promotion_allowed_count` 仍为 0。
+- 该层只登记摘要，不调用 provider、不读取 `.env`、不写世界状态、不修改 runtime。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_ledger.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion_ledger python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_ledger_evidence
 git diff --check
 ```
 
