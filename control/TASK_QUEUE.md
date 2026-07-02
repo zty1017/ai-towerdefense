@@ -75,6 +75,7 @@ P2：本阶段明确不做
 - `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider，但最新真实调用已证明纯文本整图不适合作为地图发布候选路线。下一步应接支持参考图的 provider adapter、人工 paintover，或实现 `MapRuntimePackage` 驱动的分层程序化底图。
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
+- `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
 - 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
@@ -1341,6 +1342,34 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 - 必须消费 `MapLayoutReconciliationPlan v0.1` 的节点级动作；下一步可拆为 `RuntimeMapPatchCandidate` 和 `TopologyConstrainedMapPromptPack` 两条任务，前者只产出 review-only runtime patch，后者只产出更严格的地图重生 prompt / control brief。
 - 必须消费 `RuntimeMapPatchCandidates v0.1`、`TopologyConstrainedMapPromptPack v0.1/v0.2`、`MapTopologyControlSketchPack v0.1`、`MapControlledRegenerationRequestPack v0.1`、`ControlledMapCandidateGenerationRun v0.1`、`ControlledMapCandidateReview v0.1`、`ControlledMapTextFallbackGenerationRun v0.1` 和 `ControlledMapTextFallbackCandidateReview v0.1`。下一步候选任务：对 runtime patch candidate 重新生成 overlay PNG 复核；接入支持参考图的真实图像 provider，或优先完成 `P0-M` 的 MapRuntimePackage 驱动分层程序化底图。不要再把纯文本整图生成作为地图发布候选路线。
 - 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
+
+#### P1-D-01 MapVisualPromotionGateReport 地图视觉发布闸门
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/media/build_map_visual_promotion_gate_report.py`
+- `examples/review_packs/map_visual_promotion_gate_report.v0.1.json`
+- `examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 `map_visual_promotion_gate` 静态校验和 evidence 摘要。
+
+当前结论：
+
+- 该闸门不评价地图是否漂亮，只检查已被 review 阻断、待重生、待 provider / paintover、`do_not_promote` 或 review-only 的地图候选是否被误发布给玩家侧。
+- 当前报告阻断候选 22 个、published 玩家图层 4 个、违规 0 个。
+- 这证明现有差图已被隔离在 review evidence / 负样本中；真正改善地图画面仍需后续 reference-image provider、paintover 或 MapRuntimePackage 驱动的分层程序化底图。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json
+python3 tools/media/build_map_visual_promotion_gate_report.py --output examples/review_packs/map_visual_promotion_gate_report.v0.1.json
+python3 -m py_compile tools/media/build_map_visual_promotion_gate_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_visual_promotion_gate_evidence
+python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
+```
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
