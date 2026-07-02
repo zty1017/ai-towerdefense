@@ -16,7 +16,7 @@ Last updated: 2026-07-02
 
 - 本索引不替代具体规范，只负责告诉 worker 应该读哪份规范。
 - 概念文档不替代 schema、semantic gate 或工具脚本；如果概念名与字段名冲突，先按字段级事实源实现，再回补文档映射。
-- `WorldStateDeltaTransaction` 是现有 `WorldStateDelta v0.1` 的事务外壳，不替换当前 delta schema。
+- `WorldStateDeltaTransaction v0.1` 是现有 `WorldStateDelta v0.1` 的事务外壳，不替换当前 delta schema；字段级事实源是 `shared/schemas/world_state_delta_transaction.v0.1.schema.json` 和 `tools/world_state/validate_world_delta_transaction.py`。
 - `Generation Scheduler` 是跨管线调度控制面，不是内容校验器，也不是流水线末端产物。
 - 任何世界状态变化都必须经过当前 `operations[]` 白名单、结构校验和语义校验；不得用通用 `effects[]` 绕过。
 
@@ -181,6 +181,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator 与 evidence 摘要，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；Research Job 与 frontend mock evidence 已开始引用这些核心对象。
+- WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例和 validator；示例包装可通过语义门的 repaired 首战 WorldStateDelta，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
 - MVP handoff audit 一键验证。
@@ -192,7 +193,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- Research Job / WorldStateDelta / frontend mock 包与 ContextPackage、FactEntry、CGOP 字段的全面迁移；当前只是 refs/evidence 层对齐，尚未把所有运行时产物改为原生核心对象。
+- Research Job / WorldStateDelta / frontend mock 包与 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 字段的全面迁移；当前已有 refs/evidence 层对齐，尚未把所有运行时产物改为原生核心对象。
 - 正式 live campaign router 与 Generation Scheduler 后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。

@@ -383,35 +383,39 @@ WorldStateDeltaTransaction
 
 ```json
 {
-  "tx_id": "tx_...",
+  "transaction_id": "tx_...",
   "actor": "player|system|developer|publisher",
-  "source_intent_id": "intent_...",
-  "context_package_id": "ctx_...",
+  "source": "battle_result|research_job|narrative_event|system",
   "base_world_version": "world_v...",
   "idempotency_key": "...",
-  "scope": "run|region|node|npc|quest|resource|global",
+  "scope": {},
+  "source_refs": {},
   "preconditions": [],
-  "effects": [],
-  "world_state_delta_ref": "delta_...",
-  "conflict_keys": [],
-  "conflict_policy": "reject_on_conflict|merge_if_safe|replace_if_newer",
-  "rollback_policy": "inverse_effects|required_snapshot|non_reversible",
-  "inverse_effects": [],
+  "operation_effects_mapping": [],
+  "world_state_delta_ref": {},
+  "conflict_policy": {},
+  "rollback_policy": {},
   "expires_at": null,
   "validation_report": {},
   "status": "candidate|validated|committed|rejected|rolled_back"
 }
 ```
 
+当前落地文件：
+
+- `shared/schemas/world_state_delta_transaction.v0.1.schema.json`
+- `tools/world_state/validate_world_delta_transaction.py`
+- `examples/world_delta_transactions/first_battle_result.world_delta_transaction.json`
+
 与现有 `WorldStateDelta v0.1` 的映射：
 
 | 事务概念 | 当前 MVP 落地字段 / 事实源 |
 | --- | --- |
-| `tx_id` | `delta_id` |
+| `transaction_id` | 事务外壳自己的 ID；不替代 `delta_id` |
 | `actor` | 由 `source`、调用方权限和 job metadata 推导 |
 | `base_world_version` | 当前 `RunWorldState` 的 turn / hash / snapshot metadata |
 | `scope` | `run_id`、`worldbook_id`、操作引用对象共同决定 |
-| `effects[]` | 当前只能落到 `operations[]`，不得自定义任意 effect DSL |
+| `operation_effects_mapping[]` | 逐项映射 `WorldStateDelta.operations[]` 的 index / op / target_ref / effect_kind；不是可执行 effect DSL |
 | `preconditions` | v0.1 主要由 schema、semantic gate 和当前 run state registry 表达 |
 | `validation_report` | `validate_world_delta.py` 与 `validate_world_delta_semantics.py` 的报告 |
 | `commit` | `apply_world_delta.py` 成功执行 |
@@ -422,7 +426,7 @@ WorldStateDeltaTransaction
 - 事务必须可幂等，或声明为什么不能幂等。
 - 多 AI、多系统 tick、多玩家操作并行时，必须通过 `conflict_keys` 和 `idempotency_key` 控制重复提交和冲突。
 - 预生成事务只能是候选；玩家真正到达相关节点时，必须基于最新世界状态重新校验。
-- v0.1 不新增任意 `effects` 执行器。所有世界变化仍必须写成当前 `WorldStateDelta v0.1` 允许的 `operations[]`。
+- v0.1 不新增任意 `effects` 执行器，也不允许顶层 `effects[]`。所有世界变化仍必须写成当前 `WorldStateDelta v0.1` 允许的 `operations[]`，事务外壳只能解释和校验这些 operation 的提交语义。
 - 如旧文档提到更少或不同的 op 集合，以当前 schema 与 `WorldStateDeltaSemanticGate` 为准；旧说法只保留为历史背景。
 
 ### 5.4 FactEntry
