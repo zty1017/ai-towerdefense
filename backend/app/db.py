@@ -84,6 +84,17 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS generation_schedule_runs (
+                run_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                completed_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -146,6 +157,8 @@ def init_db(path: str | None = None) -> None:
                 ON campaign_state(session_id);
             CREATE INDEX IF NOT EXISTS idx_asset_compile_runs_session
                 ON asset_compile_runs(session_id);
+            CREATE INDEX IF NOT EXISTS idx_generation_schedule_runs_session
+                ON generation_schedule_runs(session_id);
             CREATE INDEX IF NOT EXISTS idx_battle_results_session
                 ON battle_results(session_id);
             CREATE INDEX IF NOT EXISTS idx_provider_logs_session

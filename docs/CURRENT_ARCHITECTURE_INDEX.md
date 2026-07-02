@@ -135,7 +135,7 @@ Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重
 Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并再次经过 cutout quality audit；候选不会自动替换正式 runtime 素材。
 Sprite live regeneration candidate pack 已可针对 runtime 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；当前候选覆盖信标、基础灯栏与驿站核心，候选仍不自动替换正式 runtime 素材。
 Sprite regeneration promotion report 已记录 runtime 候选的显式晋升；信标、基础灯栏与驿站核心已替换 runtime processed PNG 并重建 atlas，runtime sprite cutout quality 已达到 `passed 7 / 7`，repair plan 已清空。
-GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0，真实后台执行器仍未实现。
+GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_runs` 已能持久化 session 级 dry-run 运行记录，真实后台执行器仍未实现。
 ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job metadata、frontend mock API 和 battle settlement/evidence 已开始携带 core artifact refs，但完整迁移仍未完成。
 ```
 
@@ -179,7 +179,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - MapRuntimePackage v0.1：首战节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用。
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
 - 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。
-- GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要与 `GET /api/sessions/{session_id}/generation-schedule` session API，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
+- GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API，以及 `generation_schedule_runs` 持久化 dry-run 运行记录，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；Research Job 与 frontend mock evidence 已开始引用这些核心对象。
 - WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例和 validator；示例包装可通过语义门的 repaired 首战 WorldStateDelta，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
@@ -194,7 +194,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
 - Research Job / WorldStateDelta / frontend mock 包与 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 字段的全面迁移；当前已有 refs/evidence 层对齐，尚未把所有运行时产物改为原生核心对象。
-- 正式 Generation Scheduler 后台执行器、队列、缓存、重试与长期状态持久化。
+- 正式 Generation Scheduler 后台执行器、真实队列、缓存、重试和 provider 调度。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。
 

@@ -9,6 +9,7 @@ content comes from existing JSON packages and generated media manifests.
 from __future__ import annotations
 
 import json
+import secrets
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -114,6 +115,10 @@ def _load_json(path: Path) -> Any:
 
 def _dump_payload(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _new_generation_schedule_run_id() -> str:
+    return f"gsrun_{secrets.token_urlsafe(12)}"
 
 
 def _load_frontend_pack() -> dict[str, Any]:
@@ -258,6 +263,75 @@ def _build_generation_schedule_buffer(
             and plan["authority"].get("activation_requires_revalidation") is True
         ),
         "items": buffer_items,
+    }
+
+
+def _build_generation_schedule_payload(
+    plan: dict[str, Any], run_report: dict[str, Any]
+) -> dict[str, Any]:
+    return {
+        "refs": _generation_schedule_refs(),
+        "buffer": _build_generation_schedule_buffer(plan, run_report),
+        "plan": plan,
+        "run_report": run_report,
+    }
+
+
+def _build_generation_schedule_run_payload(
+    session_id: str, run_id: str, ts: str
+) -> dict[str, Any]:
+    plan = _load_generation_schedule_plan()
+    run_report = _load_generation_schedule_run_report()
+    return {
+        "run_id": run_id,
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "status": "completed",
+        "scheduler_mode": "fixture_backed_dry_run",
+        "created_at": ts,
+        "updated_at": ts,
+        "completed_at": ts,
+        "generation_schedule": {
+            "refs": _generation_schedule_refs(),
+            "buffer": _build_generation_schedule_buffer(plan, run_report),
+        },
+        "execution_policy": run_report.get("execution_policy", {}),
+        "source_report_summary": run_report.get("summary", {}),
+        "notes": [
+            "本次运行只复用已审 fixture、静态 fallback 与 dry-run 报告。",
+            "本次运行不调用外部模型，不写入世界状态，不激活预生成候选。",
+        ],
+    }
+
+
+def _load_latest_generation_schedule_run(session_id: str) -> dict[str, Any] | None:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM generation_schedule_runs WHERE session_id = ? "
+            "ORDER BY updated_at DESC LIMIT 1",
+            (session_id,),
+        )
+        row = cur.fetchone()
+    if row is None or not row.get("payload"):
+        return None
+    return json.loads(row["payload"])
+
+
+def _compact_generation_schedule_run(run: dict[str, Any] | None) -> dict[str, Any] | None:
+    if run is None:
+        return None
+    schedule = run.get("generation_schedule", {})
+    buffer = schedule.get("buffer", {}) if isinstance(schedule, dict) else {}
+    return {
+        "run_id": run.get("run_id"),
+        "status": run.get("status"),
+        "scheduler_mode": run.get("scheduler_mode"),
+        "created_at": run.get("created_at"),
+        "completed_at": run.get("completed_at"),
+        "provider_call_count": buffer.get("provider_call_count"),
+        "world_mutation_count": buffer.get("world_mutation_count"),
+        "scheduled_count": buffer.get("scheduled_count"),
+        "fallback_selected_count": buffer.get("fallback_selected_count"),
     }
 
 
@@ -465,12 +539,43 @@ def get_generation_schedule(session_id: str) -> dict[str, Any]:
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
-        "generation_schedule": {
-            "refs": _generation_schedule_refs(),
-            "buffer": _build_generation_schedule_buffer(plan, run_report),
-            "plan": plan,
-            "run_report": run_report,
-        },
+        "generation_schedule": _build_generation_schedule_payload(plan, run_report),
+        "latest_generation_schedule_run": _load_latest_generation_schedule_run(session_id),
+    }
+
+
+def create_generation_schedule_run(session_id: str) -> dict[str, Any]:
+    run_id = _new_generation_schedule_run_id()
+    ts = now_iso()
+    payload = _build_generation_schedule_run_payload(session_id, run_id, ts)
+    with db_cursor() as cur:
+        cur.execute(
+            "INSERT INTO generation_schedule_runs "
+            "(run_id, session_id, status, payload, created_at, updated_at, completed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                run_id,
+                session_id,
+                payload["status"],
+                _dump_payload(payload),
+                ts,
+                ts,
+                ts,
+            ),
+        )
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": payload,
+    }
+
+
+def get_latest_generation_schedule_run(session_id: str) -> dict[str, Any]:
+    run = _load_latest_generation_schedule_run(session_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": run,
     }
 
 
@@ -682,6 +787,9 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         battle = cur.fetchone()
     audit = _load_json(_AUDIT_REPORT)
     dossier = _load_json(_REVIEW_DOSSIER)
+    plan = _load_generation_schedule_plan()
+    run_report = _load_generation_schedule_run_report()
+    latest_schedule_run = _load_latest_generation_schedule_run(session_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
@@ -692,10 +800,8 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         },
         "generation_scheduler": {
             "refs": _generation_schedule_refs(),
-            "buffer": _build_generation_schedule_buffer(
-                _load_generation_schedule_plan(),
-                _load_generation_schedule_run_report(),
-            ),
+            "buffer": _build_generation_schedule_buffer(plan, run_report),
+            "latest_run": _compact_generation_schedule_run(latest_schedule_run),
         },
         "proposal": dict(proposal) if proposal else None,
         "research_job": dict(job) if job else None,

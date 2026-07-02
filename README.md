@@ -122,6 +122,8 @@ uvicorn app.main:app --app-dir backend --reload
 | GET | `/api/sessions/{session_id}/animation-seeds` | Read image-to-video seed manifest |
 | GET | `/api/sessions/{session_id}/runtime-art-kit` | Read developer-compiled battle runtime art |
 | GET | `/api/sessions/{session_id}/generation-schedule` | Read fixture-backed scheduler buffer |
+| POST | `/api/sessions/{session_id}/generation-schedule/runs` | Persist a scheduler dry-run record |
+| GET | `/api/sessions/{session_id}/generation-schedule/runs/latest` | Read latest scheduler dry-run record |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/config` | Read battle config and toolbar assets |

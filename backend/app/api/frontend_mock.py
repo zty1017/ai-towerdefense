@@ -118,6 +118,33 @@ def get_generation_schedule(session_id: str) -> FrontendMockPayloadResponse:
     return _payload(session_id, frontend_mock_service.get_generation_schedule(session_id))
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/runs",
+    response_model=FrontendMockPayloadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_generation_schedule_run(session_id: str) -> FrontendMockPayloadResponse:
+    """Persist a fixture-backed dry-run generation scheduler execution."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        frontend_mock_service.create_generation_schedule_run(session_id),
+    )
+
+
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/runs/latest",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_latest_generation_schedule_run(session_id: str) -> FrontendMockPayloadResponse:
+    """Return the latest persisted scheduler dry-run for this session."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        frontend_mock_service.get_latest_generation_schedule_run(session_id),
+    )
+
+
 @router.get(
     "/api/sessions/{session_id}/map",
     response_model=FrontendMockPayloadResponse,

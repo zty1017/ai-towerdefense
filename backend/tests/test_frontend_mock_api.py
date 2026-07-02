@@ -129,6 +129,27 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "lazy",
         "fallback_static",
     }
+    assert schedule["latest_generation_schedule_run"] is None
+
+    schedule_run = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    run = schedule_run["generation_schedule_run"]
+    assert run["status"] == "completed"
+    assert run["scheduler_mode"] == "fixture_backed_dry_run"
+    assert run["generation_schedule"]["buffer"]["provider_call_count"] == 0
+    assert run["generation_schedule"]["buffer"]["world_mutation_count"] == 0
+    assert run["source_report_summary"]["scheduled_count"] == 4
+    schedule_run_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_schedule_runs WHERE session_id = ?", (sid,)
+    ).fetchone()[0]
+    assert schedule_run_rows == 1
+
+    latest_schedule_run = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/runs/latest")
+    )
+    assert latest_schedule_run["generation_schedule_run"]["run_id"] == run["run_id"]
+
+    schedule_after_run = _payload(client.get(f"/api/sessions/{sid}/generation-schedule"))
+    assert schedule_after_run["latest_generation_schedule_run"]["run_id"] == run["run_id"]
 
     map_payload = _payload(client.get(f"/api/sessions/{sid}/map"))
     assert map_payload["map"]["display_name"] == "余灯中枢态势图"
@@ -144,6 +165,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
 def test_battle_runtime_settlement_and_evidence_flow(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+    schedule_run = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
 
     battle = _payload(client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/config"))
     assert battle["battle_config"]["sample_asset"]["delivery_delay_ms"] == 30000
@@ -222,6 +244,12 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     )
     assert evidence["generation_scheduler"]["buffer"]["provider_call_count"] == 0
     assert evidence["generation_scheduler"]["buffer"]["world_mutation_count"] == 0
+    assert evidence["generation_scheduler"]["latest_run"]["run_id"] == (
+        schedule_run["generation_schedule_run"]["run_id"]
+    )
+    assert evidence["generation_scheduler"]["latest_run"]["scheduler_mode"] == (
+        "fixture_backed_dry_run"
+    )
 
 
 def test_all_battle_nodes_expose_map_runtime_packages(client):

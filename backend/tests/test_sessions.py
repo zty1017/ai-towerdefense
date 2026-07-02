@@ -84,6 +84,12 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
         "VALUES (?, ?, '')",
         (sid, "{}"),
     )
+    raw_conn.execute(
+        "INSERT INTO generation_schedule_runs "
+        "(run_id, session_id, status, payload, created_at, updated_at, completed_at) "
+        "VALUES (?, ?, ?, ?, '', '', '')",
+        ("gsrun_test", sid, "completed", "{}"),
+    )
     raw_conn.commit()
 
     def count(table, session_id):
@@ -93,6 +99,7 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
 
     assert count("world_instance", sid) == 1
     assert count("studio_logs", sid) == 1
+    assert count("generation_schedule_runs", sid) == 1
     assert count("world_instance", other) == 1
 
     resp = client.post(f"/api/sessions/{sid}/reset")
@@ -104,6 +111,7 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
     # Reset cleared this session's rows but left other sessions untouched.
     assert count("world_instance", sid) == 0
     assert count("studio_logs", sid) == 0
+    assert count("generation_schedule_runs", sid) == 0
     assert count("world_instance", other) == 1
 
 
@@ -159,6 +167,7 @@ def test_all_session_tables_carry_session_id(raw_conn: sqlite3.Connection):
         "world_instance",
         "campaign_state",
         "asset_compile_runs",
+        "generation_schedule_runs",
         "battle_results",
         "provider_logs",
         "studio_logs",
