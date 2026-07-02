@@ -105,6 +105,12 @@ PATHS = {
     / "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
     "provider_adapter_execution_receipt": ROOT
     / "examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json",
+    "provider_adapter_runner_executor_request": ROOT
+    / "examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json",
+    "provider_adapter_runner_receipt": ROOT
+    / "examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json",
+    "provider_adapter_runner_envelope": ROOT
+    / "examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -638,6 +644,39 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_provider_adapter_execution_receipt.py",
             "examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json",
+        ],
+    },
+    {
+        "name": "provider_adapter_runner_dry_run",
+        "command": [
+            "python3",
+            "tools/provider_adapter/run_provider_adapter.py",
+            "--executor-request",
+            "examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json",
+            "--authorization",
+            "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
+            "--receipt-output",
+            "/tmp/p1b_provider_adapter_runner.receipt.json",
+            "--envelope-output",
+            "/tmp/p1b_provider_adapter_runner.envelope.json",
+            "--created-at",
+            "2026-07-03T00:00:00Z",
+        ],
+    },
+    {
+        "name": "provider_adapter_runner_receipt",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_adapter_execution_receipt.py",
+            "examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json",
+        ],
+    },
+    {
+        "name": "provider_adapter_runner_envelope",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_output_envelope.py",
+            "examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json",
         ],
     },
     {
@@ -1816,6 +1855,57 @@ def collect_provider_adapter_execution_receipt(record: dict[str, Any]) -> dict[s
     }
 
 
+def collect_provider_adapter_runner(
+    request: dict[str, Any],
+    receipt: dict[str, Any],
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    request_source = as_obj(request.get("source"))
+    receipt_execution = as_obj(receipt.get("execution"))
+    envelope_call = as_obj(envelope.get("provider_call"))
+    envelope_result = as_obj(envelope.get("redacted_result_summary"))
+    envelope_manifest = as_obj(envelope.get("artifact_manifest"))
+    envelope_activation = as_obj(envelope.get("activation_gate"))
+    return {
+        "mode": "deterministic_dry_run_example",
+        "request": {
+            "request_id": request.get("request_id"),
+            "schedule_item_id": request_source.get("schedule_item_id"),
+            "object_kind": request_source.get("object_kind"),
+            "object_ref": request_source.get("object_ref"),
+        },
+        "receipt": {
+            "execution_receipt_id": receipt.get("execution_receipt_id"),
+            "status": receipt_execution.get("status"),
+            "mode": receipt_execution.get("mode"),
+            "authorization_ref": receipt_execution.get("authorization_ref"),
+            "provider_call_performed_by_receipt_builder": receipt_execution.get(
+                "provider_call_performed_by_receipt_builder"
+            ),
+        },
+        "envelope": {
+            "envelope_id": envelope.get("envelope_id"),
+            "provider_call_status": envelope_call.get("status"),
+            "provider_call_performed": envelope_call.get("performed"),
+            "authorization_granted": envelope_call.get("authorization_granted"),
+            "result_status": envelope_result.get("status"),
+            "result_kind": envelope_result.get("result_kind"),
+            "artifact_manifest_status": envelope_manifest.get("status"),
+            "output_ref_count": len(as_list(envelope_manifest.get("output_refs"))),
+            "activation_allowed": envelope_activation.get("activation_allowed"),
+            "blocked_reason": envelope_activation.get("blocked_reason"),
+        },
+        "safety": {
+            "reads_env": False,
+            "calls_external_services": False,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+        },
+    }
+
+
 def collect_provider_artifact_staging(
     manifest: dict[str, Any],
     source_envelope: dict[str, Any],
@@ -2331,6 +2421,18 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["provider_adapter_execution_receipt"],
         ),
         (
+            "provider_adapter_runner_executor_request",
+            PATHS["provider_adapter_runner_executor_request"],
+        ),
+        (
+            "provider_adapter_runner_receipt",
+            PATHS["provider_adapter_runner_receipt"],
+        ),
+        (
+            "provider_adapter_runner_envelope",
+            PATHS["provider_adapter_runner_envelope"],
+        ),
+        (
             "provider_artifact_staging_manifest",
             PATHS["provider_artifact_staging_manifest"],
         ),
@@ -2493,6 +2595,15 @@ def build_evidence() -> dict[str, Any]:
     provider_adapter_execution_receipt = load_json(
         PATHS["provider_adapter_execution_receipt"]
     )
+    provider_adapter_runner_executor_request = load_json(
+        PATHS["provider_adapter_runner_executor_request"]
+    )
+    provider_adapter_runner_receipt = load_json(
+        PATHS["provider_adapter_runner_receipt"]
+    )
+    provider_adapter_runner_envelope = load_json(
+        PATHS["provider_adapter_runner_envelope"]
+    )
     world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
     world_delta_transactions = [
         load_json(path) for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
@@ -2598,6 +2709,11 @@ def build_evidence() -> dict[str, Any]:
         ),
         "provider_adapter_execution_receipt": collect_provider_adapter_execution_receipt(
             provider_adapter_execution_receipt
+        ),
+        "provider_adapter_runner": collect_provider_adapter_runner(
+            provider_adapter_runner_executor_request,
+            provider_adapter_runner_receipt,
+            provider_adapter_runner_envelope,
         ),
         "provider_artifact_staging": collect_provider_artifact_staging(
             provider_artifact_staging_manifest,

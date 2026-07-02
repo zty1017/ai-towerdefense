@@ -388,6 +388,17 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter
 
 该回执必须与同一 `schedule_item_id` 和同一 `authorization_ref` 的 `ProviderExecutionAuthorization` 对齐。后续 live adapter 可以使用同一 schema 的 `live_redacted_provider_call` 模式，但仍只能保存脱敏摘要、digest 和本地 artifact refs；真实 provider 原始响应仍不得进入 evidence、ledger 或 runtime。
 
+工具层已经提供 provider adapter runner：
+
+```text
+tools/provider_adapter/run_provider_adapter.py
+examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json
+examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json
+examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
+```
+
+runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片、视频和媒体下载/后处理 adapter 不属于该 runner 的当前能力。
+
 ## ProviderOutputEnvelope
 
 真实 provider 执行器的下一层落点是 `ProviderOutputEnvelope v0.1`：
