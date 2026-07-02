@@ -60,6 +60,13 @@ python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
 
 当前输出是 review-only 草案。后续如果要晋升，需要进入阶段候选包、媒体 readiness、战斗模拟和人工审查。
 
+顶层的 `core_artifact_alignment` 明确声明：
+
+- `mvp_stage05_plan_realization_report.v0.1` 是 review-only 计划落地审查报告。
+- 它本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应针对它引用的 `NarrativeEventBundle`、`WorldStateDelta`、`WorldStateDeltaTransaction`、`CompiledAssetCandidate`、`StageCandidatePack` 或 runtime package。
+
 ## 受控演化规则
 
 Stage 05 有两个重要约束：

@@ -39,7 +39,7 @@ Last updated: 2026-07-02
 - `needs_migration`
 - `failed`
 
-`needs_migration` 不表示 MVP 阻断。它表示存在明确的下一批 P1 迁移任务。
+当前报告已经达到 `passed`：所有已纳入扫描的目标要么携带核心对象原生快照，要么显式声明为 `review_only_not_applicable`，没有剩余迁移任务。未来新增 review pack / provider artifact / runtime package 时，若没有核心对象快照或明确边界，报告会重新回到 `needs_migration`。
 
 ## 2.1 显式不适用边界
 
@@ -59,7 +59,7 @@ Last updated: 2026-07-02
 }
 ```
 
-`mvp_compiler_review_dossier.v0.1`、`mvp_stage_candidate_pack.v0.1`、`mvp_multistage_stage_candidate_pack.v0.1`、`mvp_multistage_content_pack.v0.1`、`mvp_next_stage_compilable_object_plan.v0.1`、`mvp_story_asset_review_pack.v0.1` 和 `mvp_story_asset_promotion_report.v0.1` 已采用该方式。这样做不是跳过校验，而是把“不应迁移”的架构判断显式化，避免后续 worker 把总览证据包、阶段候选容器、多阶段内容审查包、下一阶段计划、剧情资产审查索引或资产晋升决策报告误改成 CGOP 或 WorldStateDeltaTransaction。对于这些 review-only 容器、计划和报告，后续核心对象迁移应落到单个阶段引用的 WorldStateDelta、WorldStateDeltaTransaction、runtime package、compiled asset candidate，或具体 realization report。
+`mvp_compiler_review_dossier.v0.1`、`mvp_stage_candidate_pack.v0.1`、`mvp_multistage_stage_candidate_pack.v0.1`、`mvp_multistage_content_pack.v0.1`、`mvp_next_stage_compilable_object_plan.v0.1`、`mvp_story_asset_review_pack.v0.1`、`mvp_story_asset_promotion_report.v0.1` 和 `mvp_stage05_plan_realization_report.v0.1` 已采用该方式。这样做不是跳过校验，而是把“不应迁移”的架构判断显式化，避免后续 worker 把总览证据包、阶段候选容器、多阶段内容审查包、下一阶段计划、剧情资产审查索引、资产晋升决策报告或计划落地审查报告误改成 CGOP 或 WorldStateDeltaTransaction。对于这些 review-only 容器、计划和报告，后续核心对象迁移应落到单个阶段引用的 WorldStateDelta、WorldStateDeltaTransaction、runtime package、compiled asset candidate，或后续真正发布的 CGOP / media manifest。
 
 ## 3. 安全边界
 

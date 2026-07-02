@@ -3073,7 +3073,7 @@
       "path": "docs/STAGE05_PLAN_REALIZATION_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "e4eb556c091710f65354226c36aeb009eba191e51a031ebb9b8e87de6d7cbaad"
+      "sha256": "25197f473e1d39358df079c2d3257a77eedd276cb6fa6427332b50e53f6a4c35"
     },
     {
       "path": "docs/STAGE_CANDIDATE_PACK_V0_1.md",
@@ -3247,7 +3247,7 @@
       "path": "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json",
       "kind": "stage05_plan_realization_report",
       "exists": true,
-      "sha256": "eac0b439bb470c1a64ed99a597c793d1fe90ed7e6824d5c0b23419eb0b442e91"
+      "sha256": "42a0b5de5101445719f54659d42cd3bd9305a842db210cbbf16ab931ffd6706f"
     },
     {
       "path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
@@ -3571,7 +3571,7 @@
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "9b1163491a37958c506e21cbb39a2cb97f48f8a8a87d204e00257923cc1cb27e"
+      "sha256": "4abde98cddb51a28b16c93382ca6b51f1c0d9957cd3588e7dbb4b06983478255"
     },
     {
       "path": "tools/content_pipeline/build_stage_candidate_pack.py",

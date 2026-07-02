@@ -452,6 +452,24 @@ def build_report(
         "visibility": "review_only",
         "source_plan": rel(DEFAULT_PLAN),
         "target_stage_id": STAGE_ID,
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "Stage05PlanRealizationReport 是 review-only 计划落地审查报告；它证明 plan 可以落地成 "
+                "NarrativeEventBundle、WorldStateDelta、next RunWorldState、Proposal 和 "
+                "CompiledAssetCandidate，但自身不是 ContextPackage、FactEntry、CGOP 或 "
+                "WorldStateDeltaTransaction。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续核心对象迁移应针对该 report 引用的 NarrativeEventBundle、WorldStateDelta、"
+                "WorldStateDeltaTransaction、CompiledAssetCandidate、StageCandidatePack 或 runtime package，"
+                "而不是激活整个 realization report。"
+            ),
+        },
         "core_decisions": [
             "叙事对象按状态转移对象处理，必须落到 WorldStateDelta 或可审查的后续对象。",
             "本阶段只使用已在运行态或审查边界内的 NPC 和资源；候选材料先进入临时样本。",
