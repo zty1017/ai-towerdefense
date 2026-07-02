@@ -600,6 +600,8 @@ painted_visual_layer
   -> 程序化大画面背景
 ```
 
+当前 MVP 已登记 Agnes 生成并人工审查通过的 `painted_visual_layer` 作为默认玩家底图；`battle_runtime_background` 作为逻辑对齐 fallback，不作为首选美术地图宣传。
+
 `battle_control_sketch` 和 `battle_reference_board` 只能用于 debug / evidence，不得作为玩家默认体验的底图，也不得在发布底图缺失时自动顶上。
 
 塔位、路径、目标、出生点仍以 MapRuntimePackage 的结构化数据为准。前端可以在发布底图上绘制轻量路径高光、部署提示、目标和敌人，但不能让控制图、参考图、棋盘图或小面板式几何块成为玩家看到的主画面。

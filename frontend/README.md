@@ -20,7 +20,7 @@ http://127.0.0.1:8000/frontend/index.html
 
 战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
 
-玩家默认战斗视图只允许使用发布级视觉层：未来的 `painted_visual_layer` 优先，其次是 `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
+玩家默认战斗视图只允许使用发布级视觉层：当前优先使用 `painted_visual_layer`，其次是逻辑对齐 fallback `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
 
 媒体加载优先读取 atlas manifest：
 

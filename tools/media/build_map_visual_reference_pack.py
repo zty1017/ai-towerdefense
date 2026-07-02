@@ -2,8 +2,9 @@
 """Build deterministic map control/reference images from logical map data.
 
 This is the first executable slice of the map-as-compiled-object pipeline:
-logical battle/map data remains authoritative, while these generated PNGs are
-reference material for future image/video providers and for human review.
+logical battle/map data remains authoritative. Control/reference images remain
+debug and provider input material; the runtime background is a logic-aligned
+published fallback for the MVP player view.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import argparse
 import hashlib
 import json
 import math
+import struct
 from pathlib import Path
 from typing import Any
 
@@ -53,9 +55,21 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def png_dimensions(path: Path) -> tuple[int, int]:
+    with path.open("rb") as handle:
+        header = handle.read(24)
+    if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError(f"{path} is not a PNG file")
+    return struct.unpack(">II", header[16:24])
+
+
 def rgba(hex_color: str, alpha: int = 255) -> Color:
     value = hex_color.strip().lstrip("#")
     return int(value[:2], 16), int(value[2:4], 16), int(value[4:6], 16), alpha
+
+
+def clamp(value: float, minimum: float, maximum: float) -> float:
+    return max(minimum, min(maximum, value))
 
 
 def new_image(width: int, height: int, color: Color) -> png_pipeline.PngImage:
@@ -162,10 +176,10 @@ def project(x: float, y: float, tile_w: float, tile_h: float, ox: float, oy: flo
 def battle_metrics(width: int, height: int, grid: dict[str, Any]) -> dict[str, float]:
     gw = int(grid.get("width_cells", 16))
     gh = int(grid.get("height_cells", 9))
-    span = max(1, gw + gh - 2)
-    tile_w = min((width - 150) * 2 / span, (height - 110) * 4 / span)
-    tile_w = max(62, min(104, tile_w))
-    tile_h = tile_w * 0.54
+    span = max(1, gw + gh)
+    tile_w = min(((width - 80) * 2) / span, ((height - 110) * 4) / span)
+    tile_w = clamp(tile_w, 38, 112)
+    tile_h = tile_w * 0.52
     raw = [
         ((0 - 0) * tile_w / 2, (0 + 0) * tile_h / 2),
         (((gw - 1) - 0) * tile_w / 2, ((gw - 1) + 0) * tile_h / 2),
@@ -180,7 +194,7 @@ def battle_metrics(width: int, height: int, grid: dict[str, Any]) -> dict[str, f
         "tile_w": tile_w,
         "tile_h": tile_h,
         "offset_x": (width - (max_x - min_x)) / 2 - min_x,
-        "offset_y": (height - (max_y - min_y)) / 2 - min_y + 20,
+        "offset_y": (height - (max_y - min_y)) / 2 - min_y + 6,
     }
 
 
@@ -230,7 +244,7 @@ def build_battle_control(battle: dict[str, Any], path: Path) -> None:
     for x, y in iter_path_cells(waypoints):
         cx, cy = project(x, y, tile_w, tile_h, ox, oy)
         fill_polygon(image, diamond(cx, cy, tile_w * 1.08, tile_h * 1.08), rgba("ffffff", 255))
-    for cell in suggested_slots():
+    for cell in suggested_slots(battle):
         cx, cy = project(cell[0], cell[1], tile_w, tile_h, ox, oy)
         stroke_circle(image, cx, cy, 20, 7, rgba("48b8ff", 255))
     core = battle.get("core_target", {}).get("position", {"x": 1, "y": 6})
@@ -246,8 +260,56 @@ def build_battle_control(battle: dict[str, Any], path: Path) -> None:
     png_pipeline.write_png(path, image)
 
 
-def suggested_slots() -> list[tuple[int, int]]:
-    return [(12, 3), (9, 3), (8, 1), (5, 1), (6, 5), (3, 5)]
+def in_grid(cell: tuple[int, int], grid: dict[str, Any]) -> bool:
+    x, y = cell
+    return 0 <= x < int(grid.get("width_cells", 16)) and 0 <= y < int(grid.get("height_cells", 9))
+
+
+def battle_routes(battle: dict[str, Any]) -> list[dict[str, Any]]:
+    return [route for route in battle.get("paths", []) if isinstance(route, dict)]
+
+
+def path_cells_from_routes(routes: list[dict[str, Any]]) -> set[tuple[int, int]]:
+    cells: set[tuple[int, int]] = set()
+    for route in routes:
+        cells.update(iter_path_cells(route.get("waypoints", [])))
+    return cells
+
+
+def suggested_slots(battle: dict[str, Any], *, max_slots: int = 12) -> list[tuple[int, int]]:
+    grid = battle.get("grid", {})
+    routes = battle_routes(battle)
+    blocked = path_cells_from_routes(routes)
+    core = battle.get("core_target", {}).get("position", {})
+    blocked.add((int(core.get("x", 0)), int(core.get("y", 0))))
+    for target in battle.get("optional_targets", []):
+        pos = target.get("position", {})
+        blocked.add((int(pos.get("x", 0)), int(pos.get("y", 0))))
+
+    offsets = [
+        (0, -1),
+        (0, 1),
+        (-1, 0),
+        (1, 0),
+        (-1, -1),
+        (1, -1),
+        (-1, 1),
+        (1, 1),
+    ]
+    candidates: list[tuple[int, int]] = []
+    seen: set[tuple[int, int]] = set()
+    for route in routes:
+        for waypoint in route.get("waypoints", []):
+            wx, wy = int(waypoint["x"]), int(waypoint["y"])
+            for ox, oy in offsets:
+                candidate = (wx + ox, wy + oy)
+                if candidate in seen or candidate in blocked or not in_grid(candidate, grid):
+                    continue
+                seen.add(candidate)
+                candidates.append(candidate)
+                if len(candidates) >= max_slots:
+                    return candidates
+    return candidates
 
 
 def build_battle_reference(battle: dict[str, Any], path: Path) -> None:
@@ -295,7 +357,7 @@ def build_battle_reference(battle: dict[str, Any], path: Path) -> None:
     for index, (cx, cy) in enumerate(path_points):
         fill_circle(image, cx, cy, 28 + (index % 2) * 8, rgba("b9955d", 90))
 
-    for cell in suggested_slots():
+    for cell in suggested_slots(battle):
         cx, cy = project(cell[0], cell[1], tile_w, tile_h, ox, oy)
         fill_ellipse(image, cx, cy + 2, 34, 15, rgba("161d18", 150))
         stroke_circle(image, cx, cy, 20, 3, rgba("e5c878", 150))
@@ -326,6 +388,154 @@ def build_battle_reference(battle: dict[str, Any], path: Path) -> None:
 
     fill_polygon(image, [(0, 0), (1280, 0), (1280, 36), (0, 96)], rgba("050705", 80))
     fill_polygon(image, [(0, 720), (0, 646), (1280, 690), (1280, 720)], rgba("050705", 95))
+    png_pipeline.write_png(path, image)
+
+
+def noise01(x: int, y: int, seed: int = 0) -> float:
+    value = (x * 374761393 + y * 668265263 + seed * 362437) & 0xFFFFFFFF
+    value = (value ^ (value >> 13)) * 1274126177
+    value &= 0xFFFFFFFF
+    return ((value ^ (value >> 16)) & 0xFFFF) / 0xFFFF
+
+
+def add_runtime_terrain_noise(image: png_pipeline.PngImage) -> None:
+    for y in range(image.height):
+        for x in range(image.width):
+            if (x + y) % 3:
+                continue
+            n = noise01(x // 4, y // 4, 17)
+            if n > 0.74:
+                blend_pixel(image, x, y, rgba("6f7553", 26))
+            elif n < 0.15:
+                blend_pixel(image, x, y, rgba("080c0b", 22))
+
+
+def draw_runtime_tree(image: png_pipeline.PngImage, x: float, y: float, scale: float, variant: int) -> None:
+    fill_ellipse(image, x + scale * 7, y + scale * 13, scale * 19, scale * 7, rgba("030705", 90))
+    draw_line(image, (x, y + scale * 9), (x, y - scale * 19), max(2, int(scale * 5)), rgba("3e2d21", 210))
+    for i in range(4):
+        dx = (-13 + i * 8 + variant * 3) * scale
+        dy = (-15 - i * 7) * scale
+        color = ["16231d", "1f3024", "263720", "111917"][(variant + i) % 4]
+        fill_ellipse(image, x + dx, y + dy, scale * (18 - i), scale * (11 + i), rgba(color, 225))
+
+
+def draw_runtime_ruin(image: png_pipeline.PngImage, x: float, y: float, scale: float, variant: int) -> None:
+    fill_ellipse(image, x + scale * 8, y + scale * 9, scale * 38, scale * 11, rgba("050606", 70))
+    for i in range(3 + variant % 2):
+        px = x + (i * 15 - 20) * scale
+        py = y + ((i % 2) * 6 - 4) * scale
+        fill_polygon(
+            image,
+            [
+                (px - 10 * scale, py + 8 * scale),
+                (px + 14 * scale, py - 3 * scale),
+                (px + 20 * scale, py + 12 * scale),
+                (px - 5 * scale, py + 22 * scale),
+            ],
+            rgba("666051", 220),
+        )
+        fill_circle(image, px + 7 * scale, py + 7 * scale, scale * 3, rgba("c5b486", 85))
+
+
+def draw_runtime_lamp(image: png_pipeline.PngImage, x: float, y: float, scale: float) -> None:
+    fill_ellipse(image, x, y + 10 * scale, 18 * scale, 6 * scale, rgba("030705", 85))
+    draw_line(image, (x, y + 8 * scale), (x, y - 30 * scale), max(2, int(5 * scale)), rgba("6c5330", 230))
+    fill_circle(image, x, y - 36 * scale, 17 * scale, rgba("ffd072", 70))
+    fill_rect(image, int(x - 5 * scale), int(y - 43 * scale), max(2, int(10 * scale)), max(2, int(13 * scale)), rgba("ffd072", 215))
+
+
+def draw_runtime_pad(image: png_pipeline.PngImage, x: float, y: float, radius: float, variant: int) -> None:
+    fill_ellipse(image, x + 7, y + 12, radius * 1.25, radius * 0.38, rgba("040605", 95))
+    fill_ellipse(image, x, y + 4, radius * 1.12, radius * 0.5, rgba("4b463a", 190))
+    fill_ellipse(image, x, y + 1, radius * 0.86, radius * 0.38, rgba("716b5a", 225))
+    stroke_circle(image, x, y, radius * 0.56, max(2, int(radius * 0.08)), rgba("d2b56e", 95))
+    if variant % 3 == 0:
+        fill_circle(image, x - radius * 0.22, y - radius * 0.02, radius * 0.06, rgba("70d7ce", 120))
+
+
+def draw_runtime_core(image: png_pipeline.PngImage, x: float, y: float) -> None:
+    fill_ellipse(image, x, y + 28, 88, 24, rgba("030605", 110))
+    fill_polygon(image, [(x - 58, y + 18), (x - 36, y - 40), (x + 20, y - 58), (x + 62, y - 14), (x + 38, y + 36)], rgba("4b4b44", 240))
+    fill_polygon(image, [(x - 31, y + 12), (x - 10, y - 35), (x + 24, y - 20), (x + 24, y + 22)], rgba("7d6741", 240))
+    fill_circle(image, x + 9, y - 24, 42, rgba("ffd477", 80))
+    fill_rect(image, int(x - 4), int(y - 52), 18, 32, rgba("ffd477", 235))
+
+
+def build_battle_runtime_background(battle: dict[str, Any], path: Path) -> None:
+    width, height = 1280, 720
+    image = new_image(width, height, rgba("1a211b"))
+    grid = battle.get("grid", {})
+    metrics = battle_metrics(width, height, grid)
+    tile_w = metrics["tile_w"]
+    tile_h = metrics["tile_h"]
+    ox = metrics["offset_x"]
+    oy = metrics["offset_y"]
+
+    fill_polygon(image, [(0, 0), (1280, 0), (1280, 255), (1080, 236), (870, 188), (640, 216), (425, 176), (180, 222), (0, 205)], rgba("111915", 220))
+    fill_polygon(image, [(0, 462), (190, 385), (395, 424), (585, 335), (780, 374), (1015, 307), (1280, 248), (1280, 720), (0, 720)], rgba("314428", 210))
+    fill_polygon(image, [(0, 560), (190, 508), (380, 585), (590, 530), (850, 612), (1280, 525), (1280, 720), (0, 720)], rgba("222b22", 185))
+    fill_ellipse(image, 1045, 133, 330, 88, rgba("101714", 175))
+    fill_ellipse(image, 122, 590, 310, 106, rgba("52633b", 58))
+    fill_ellipse(image, 1125, 555, 285, 132, rgba("1b1422", 128))
+    fill_ellipse(image, 1165, 558, 95, 52, rgba("4932a5", 45))
+    add_runtime_terrain_noise(image)
+
+    waypoints = ((battle.get("paths") or [{}])[0]).get("waypoints", [])
+    path_points = [project(p["x"], p["y"], tile_w, tile_h, ox, oy) for p in waypoints]
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, (a[0] + 5, a[1] + 9), (b[0] + 5, b[1] + 9), int(tile_w * 0.96), rgba("050605", 65))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, int(tile_w * 0.82), rgba("4b3827", 230))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, int(tile_w * 0.66), rgba("8c6d48", 245))
+    for a, b in zip(path_points, path_points[1:]):
+        draw_line(image, a, b, int(tile_w * 0.38), rgba("c0995e", 145))
+    for i, (cx, cy) in enumerate(path_points):
+        fill_circle(image, cx, cy, 34 + (i % 2) * 7, rgba("b58b55", 105))
+        fill_circle(image, cx + 12, cy - 4, 8 + i % 3, rgba("d0b078", 50))
+
+    for index, cell in enumerate(suggested_slots(battle)):
+        cx, cy = project(cell[0], cell[1], tile_w, tile_h, ox, oy)
+        draw_runtime_pad(image, cx, cy + 3, 30, index)
+
+    decorations = [
+        (13, 1, "tree"),
+        (11, 7, "ruin"),
+        (7, 7, "tree"),
+        (4, 0, "ruin"),
+        (2, 3, "lamp"),
+        (14, 6, "tree"),
+        (8, 0, "tree"),
+        (1, 4, "ruin"),
+        (12, 5, "lamp"),
+    ]
+    for index, (gx, gy, kind) in enumerate(decorations):
+        cx, cy = project(gx, gy, tile_w, tile_h, ox, oy)
+        if kind == "tree":
+            draw_runtime_tree(image, cx, cy, 0.9 + (index % 3) * 0.16, index)
+        elif kind == "lamp":
+            draw_runtime_lamp(image, cx, cy, 1.0)
+        else:
+            draw_runtime_ruin(image, cx, cy, 1.0, index)
+
+    for target in battle.get("optional_targets", []):
+        pos = target.get("position", {})
+        tx, ty = project(pos.get("x", 0), pos.get("y", 0), tile_w, tile_h, ox, oy)
+        draw_runtime_lamp(image, tx, ty, 1.15)
+
+    core = battle.get("core_target", {}).get("position", {"x": 0, "y": 6})
+    cx, cy = project(core["x"], core["y"], tile_w, tile_h, ox, oy)
+    draw_runtime_core(image, cx, cy)
+
+    if path_points:
+        sx, sy = path_points[0]
+        fill_circle(image, sx + 74, sy, 112, rgba("180f24", 150))
+        fill_circle(image, sx + 74, sy, 54, rgba("5f43ff", 78))
+        fill_circle(image, sx + 38, sy - 15, 22, rgba("07050b", 115))
+
+    fill_polygon(image, [(0, 0), (1280, 0), (1280, 34), (0, 82)], rgba("030504", 72))
+    fill_polygon(image, [(0, 720), (0, 664), (1280, 690), (1280, 720)], rgba("030504", 85))
     png_pipeline.write_png(path, image)
 
 
@@ -396,20 +606,34 @@ def main() -> int:
         "battle_control_sketch": output_dir / "mvp_battle_control_sketch.png",
         "battle_reference_board": output_dir / "mvp_battle_reference_board.png",
     }
+    painted_candidate = output_dir / "mvp_battle_painted_candidate_agnes_02.png"
+    if painted_candidate.exists():
+        files["painted_visual_layer"] = painted_candidate
+    files["battle_runtime_background"] = output_dir / "mvp_battle_runtime_background.v0.2.png"
     build_strategic_control(map_data, files["strategic_control_sketch"])
     build_battle_control(battle, files["battle_control_sketch"])
     build_battle_reference(battle, files["battle_reference_board"])
+    build_battle_runtime_background(battle, files["battle_runtime_background"])
     items = []
     for role, file_path in files.items():
+        published = role in {"battle_runtime_background", "painted_visual_layer"}
+        width, height = png_dimensions(file_path)
+        if role == "painted_visual_layer":
+            source_kind = "human_reviewed_painted_visual_runtime_overlay"
+        elif role == "battle_runtime_background":
+            source_kind = "deterministic_logic_aligned_runtime_background"
+        else:
+            source_kind = "deterministic_logical_map_reference"
         items.append(
             {
                 "role": role,
                 "url": f"/assets/map_visual_reference/{file_path.name}",
                 "local_path": file_path.relative_to(ROOT).as_posix(),
-                "width": 1280,
-                "height": 720,
+                "width": width,
+                "height": height,
                 "sha256": sha256_file(file_path),
-                "source_kind": "deterministic_logical_map_reference",
+                "source_kind": source_kind,
+                "authority": "published_visual_layer" if published else "reference_only",
             }
         )
     manifest = {
@@ -418,9 +642,9 @@ def main() -> int:
         "source_map": map_path.relative_to(ROOT).as_posix(),
         "source_battle_config": battle_path.relative_to(ROOT).as_posix(),
         "usage": {
-            "authority": "reference_only",
+            "authority": "mixed_reference_and_published_runtime",
             "logic_source": "battle_config_and_initial_map_remain_authoritative",
-            "next_step": "send control sketch plus style references to image provider, then re-align and publish visual layers",
+            "next_step": "external painted candidates must prove alignment before replacing the deterministic runtime background",
         },
         "items": items,
     }

@@ -4,9 +4,9 @@
   "source_map": "game_data/demo/initial_map.json",
   "source_battle_config": "game_data/demo/first_battle_config.json",
   "usage": {
-    "authority": "reference_only",
+    "authority": "mixed_reference_and_published_runtime",
     "logic_source": "battle_config_and_initial_map_remain_authoritative",
-    "next_step": "send control sketch plus style references to image provider, then re-align and publish visual layers"
+    "next_step": "external painted candidates must prove alignment before replacing the deterministic runtime background"
   },
   "items": [
     {
@@ -16,7 +16,8 @@
       "width": 1280,
       "height": 720,
       "sha256": "00c3eccda31d9f60804a9c42a2b63274c2575bf906123c9e921e5d49365f7882",
-      "source_kind": "deterministic_logical_map_reference"
+      "source_kind": "deterministic_logical_map_reference",
+      "authority": "reference_only"
     },
     {
       "role": "battle_control_sketch",
@@ -24,8 +25,9 @@
       "local_path": "game_data/media/map_visual_reference/mvp_battle_control_sketch.png",
       "width": 1280,
       "height": 720,
-      "sha256": "8718ef8e97408f7967d7226a72b21e4840dd24622805b9ded0b029d91e8e2e45",
-      "source_kind": "deterministic_logical_map_reference"
+      "sha256": "eab4b291dff77ef747796610d274f020e7311d904484e724e12e68d43ec9f915",
+      "source_kind": "deterministic_logical_map_reference",
+      "authority": "reference_only"
     },
     {
       "role": "battle_reference_board",
@@ -33,17 +35,28 @@
       "local_path": "game_data/media/map_visual_reference/mvp_battle_reference_board.png",
       "width": 1280,
       "height": 720,
-      "sha256": "1714362958f0252193fe265e246f92a09eb1a4cc9b9b039642548eb283b47f04",
-      "source_kind": "deterministic_logical_map_reference"
+      "sha256": "6597608bf4b2dd882369786062855b0ffb49bfe4e79ff51a285210dc36c39adc",
+      "source_kind": "deterministic_logical_map_reference",
+      "authority": "reference_only"
+    },
+    {
+      "role": "painted_visual_layer",
+      "url": "/assets/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png",
+      "width": 1312,
+      "height": 736,
+      "sha256": "62fee3fe24845c4dacc9232e208fe7a724b4b3d36b0a405aa2d26e98ca234787",
+      "source_kind": "human_reviewed_painted_visual_runtime_overlay",
+      "authority": "published_visual_layer"
     },
     {
       "role": "battle_runtime_background",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "width": 1672,
-      "height": 941,
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
-      "source_kind": "generated_painted_runtime_background",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "source_kind": "deterministic_logic_aligned_runtime_background",
       "authority": "published_visual_layer"
     }
   ]

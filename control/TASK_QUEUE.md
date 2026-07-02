@@ -56,7 +56,7 @@ P2：本阶段明确不做
 
 当前缺口：
 
-- 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2` 和玩家侧 `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点发布底图。
+- 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了玩家侧 `painted_visual_layer` 与逻辑对齐 fallback `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，并完成无浏览器环境下的替代审计，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `virtual_single_frame` 模式默认接入前端运行时；真实视频帧与 spritesheet 仍未生成。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
@@ -71,7 +71,7 @@ P2：本阶段明确不做
 
 已落地：
 
-- 战斗主画面默认使用 `battle_runtime_background` 作为玩家可见发布底图。
+- 战斗主画面默认使用 `painted_visual_layer` 作为玩家可见发布底图；`battle_runtime_background` 只作为逻辑对齐 fallback。
 - `battle_control_sketch` 与 `battle_reference_board` 被降级为控制 / 参考层，不应进入默认玩家体验。
 - 前端根据 `MapRuntimePackage` 叠加路径、塔位、目标、出生点和拖拽部署预览。
 

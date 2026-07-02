@@ -212,6 +212,8 @@ OpenCode headless 是第二优先实现通道，适合可自动化、边界清�
 - headless 模式只允许调用指定模型。
 - OpenCode headless 中优先使用 `volcengine-plan/*`。
 - 其他免费或官方 API 模型作为候选 / fallback。
+- 在当前 Codex 受控执行通道内，`opencode run --dir <private-project-worktree>` 会被平台视为可能向外部模型披露私有仓库上下文，即使用户允许也可能被拒绝。不得通过复制仓库、改目录、压缩上下文等方式绕过。
+- 因此，本通道内 OpenCode 只适合无项目上下文的公开任务建议、模型能力探针或用户明确在自己 IDE/CLI 环境中执行的 worker。需要读取私有仓库并修改代码时，优先使用本地 task worktree、CodeBuddy IDE 主代理或 Codex worker。
 
 允许模型白名单：
 

@@ -111,6 +111,7 @@ VISUAL_ROLES = frozenset(
         "battle_control_sketch",
         "battle_reference_board",
         "battle_runtime_background",
+        "painted_visual_layer",
         "strategic_control_sketch",
     }
 )

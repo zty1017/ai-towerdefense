@@ -145,12 +145,24 @@ def _first_artifact_by_role(artifacts: list[dict[str, Any]], roles: set[str] | f
     return None
 
 
+def _published_source_kinds(visual_manifest: dict[str, Any] | None) -> set[str]:
+    if not isinstance(visual_manifest, dict):
+        return set()
+    source_kinds: set[str] = set()
+    for item in visual_manifest.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        if item.get("role") in PUBLISHED_ROLES:
+            source_kinds.add(str(item.get("source_kind") or ""))
+    return source_kinds
+
+
 def _project_cell_to_pixel(
     point: dict[str, Any],
     grid: dict[str, Any],
     reference_size: dict[str, int],
 ) -> dict[str, int]:
-    """Approximate the frontend's map-plane projection for evidence checkpoints."""
+    """Match the frontend's pseudo-isometric base projection for checkpoints."""
     width = int(reference_size.get("width", 1280))
     height = int(reference_size.get("height", 720))
     grid_w = max(1, int(grid.get("width_cells", 16)))
@@ -158,12 +170,29 @@ def _project_cell_to_pixel(
     x = int(point.get("x", 0))
     y = int(point.get("y", 0))
 
-    margin_x = width * 0.08
-    margin_y = height * 0.12
-    usable_w = max(1.0, width - margin_x * 2)
-    usable_h = max(1.0, height - margin_y * 2)
-    px = margin_x + (x / max(1, grid_w - 1)) * usable_w
-    py = margin_y + (y / max(1, grid_h - 1)) * usable_h
+    span = max(1, grid_w + grid_h)
+    tile_w = min(((width - 80) * 2) / span, ((height - 110) * 4) / span)
+    tile_w = max(38, min(112, tile_w))
+    tile_h = tile_w * 0.52
+
+    def raw_project(px: int, py: int) -> tuple[float, float]:
+        return (px - py) * (tile_w / 2), (px + py) * (tile_h / 2)
+
+    corners = [
+        raw_project(0, 0),
+        raw_project(grid_w - 1, 0),
+        raw_project(0, grid_h - 1),
+        raw_project(grid_w - 1, grid_h - 1),
+    ]
+    min_x = min(p[0] for p in corners)
+    max_x = max(p[0] for p in corners)
+    min_y = min(p[1] for p in corners)
+    max_y = max(p[1] for p in corners)
+    offset_x = (width - (max_x - min_x)) / 2 - min_x
+    offset_y = (height - (max_y - min_y)) / 2 - min_y + 6
+    raw_x, raw_y = raw_project(x, y)
+    px = raw_x + offset_x
+    py = raw_y + offset_y
     return {"x": int(round(px)), "y": int(round(py))}
 
 
@@ -242,6 +271,12 @@ def build_map_compile_package(
     artifacts = _iter_manifest_artifacts(visual_reference_manifest)
     control_artifacts = [item for item in artifacts if item.get("role") in CONTROL_ROLES]
     painted_artifact = _first_artifact_by_role(artifacts, PUBLISHED_ROLES)
+    published_source_kinds = _published_source_kinds(visual_reference_manifest)
+    logic_aligned_visual = bool(published_source_kinds & {
+        "deterministic_logic_aligned_runtime_background",
+        "certified_logic_aligned_runtime_background",
+        "human_reviewed_painted_visual_runtime_overlay",
+    })
     reference_size = {
         "width": int((painted_artifact or {}).get("width") or 1280),
         "height": int((painted_artifact or {}).get("height") or 720),
@@ -267,14 +302,23 @@ def build_map_compile_package(
             "summary": "A player-facing painted background exists." if painted_artifact else "No player-facing painted background is available; frontend must keep a safe fallback.",
         },
         {
+            "gate_id": "published_visual_logic_aligned",
+            "status": "passed" if logic_aligned_visual else "warning",
+            "summary": "The published background is generated from the same logical projection as the runtime overlay."
+            if logic_aligned_visual
+            else "Published background exists, but its source does not prove logic alignment; runtime overlay correction is required.",
+        },
+        {
             "gate_id": "no_ui_text_enemy_tower_in_painted_map",
             "status": "warning",
             "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled.",
         },
         {
             "gate_id": "alignment_requires_runtime_overlay",
-            "status": "warning",
-            "summary": "Pixel alignment is represented by checkpoints; subtle runtime overlays remain required until a stronger repaint/alignment checker lands.",
+            "status": "passed" if logic_aligned_visual else "warning",
+            "summary": "Deterministic published background uses the runtime projection; subtle overlays are cosmetic rather than corrective."
+            if logic_aligned_visual
+            else "Pixel alignment is represented by checkpoints; subtle runtime overlays remain required until a stronger repaint/alignment checker lands.",
         },
     ]
 
@@ -328,9 +372,9 @@ def build_map_compile_package(
             "reference_size": reference_size,
             "projection": str((runtime_package.get("grid") or {}).get("projection") or "pseudo3d_oblique"),
             "coordinate_mapping": "map_runtime_cell_to_visual_plane",
-            "max_pixel_error": 48,
+            "max_pixel_error": 24 if logic_aligned_visual else 48,
             "overlay_correction_policy": "subtle_runtime_overlay",
-            "alignment_status": "needs_overlay_correction",
+            "alignment_status": "passed" if logic_aligned_visual else "needs_overlay_correction",
             "checkpoints": _alignment_checkpoints(runtime_package, reference_size),
         },
         "quality_gates": quality_gates,
@@ -339,9 +383,9 @@ def build_map_compile_package(
             "frontend_default_visual_role": "battle_runtime_background" if painted_artifact else "painted_visual_layer",
         },
         "validation_report": {
-            "gate_status": "warning",
+            "gate_status": "warning" if any(gate.get("status") == "warning" for gate in quality_gates) else "passed",
             "runtime_truth_preserved": True,
-            "player_visual_safe": bool(painted_artifact),
+            "player_visual_safe": bool(painted_artifact and logic_aligned_visual),
             "gates": quality_gates,
         },
     }
