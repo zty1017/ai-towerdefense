@@ -69,6 +69,8 @@ PATHS = {
     / "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
     "runtime_sprite_regeneration_candidate_quality_report": ROOT
     / "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json",
+    "runtime_sprite_regeneration_promotion_report": ROOT
+    / "examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -246,6 +248,27 @@ STATIC_VALIDATION_COMMANDS = [
             "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
             "--output",
             "/tmp/ai_td_frontend_runtime_sprite_regeneration_candidate_quality.json",
+        ],
+    },
+    {
+        "name": "frontend_runtime_sprite_regeneration_promotion_dry_run",
+        "command": [
+            "python3",
+            "tools/media/promote_sprite_regeneration_candidates.py",
+            "--candidate-manifest",
+            "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+            "--candidate-quality-report",
+            "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json",
+            "--runtime-manifest",
+            "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+            "--output-manifest",
+            "/tmp/ai_td_frontend_runtime_art_media_manifest_promoted_dry_run.json",
+            "--promotion-report",
+            "/tmp/ai_td_frontend_runtime_sprite_regeneration_promotion_dry_run.json",
+            "--asset-id",
+            "objective_signal_beacon",
+            "--asset-id",
+            "defense_basic_lantern_barricade",
         ],
     },
     {
@@ -621,6 +644,31 @@ def sprite_repair_candidate_summary(
     }
 
 
+def sprite_regeneration_promotion_summary(report: dict[str, Any]) -> dict[str, Any]:
+    items = [item for item in as_list(report.get("items")) if isinstance(item, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "mode": report.get("mode"),
+        "source_candidate_pack_id": report.get("source_candidate_pack_id"),
+        "source_quality_status": report.get("source_quality_status"),
+        "selected_candidate_count": report.get("selected_candidate_count"),
+        "promoted_count": report.get("promoted_count"),
+        "would_promote_count": report.get("would_promote_count"),
+        "runtime_effect": as_obj(report.get("runtime_effect")),
+        "promoted_assets": [
+            {
+                "asset_id": item.get("asset_id"),
+                "media_role": item.get("media_role"),
+                "candidate_id": item.get("candidate_id"),
+                "runtime_target_path": item.get("runtime_target_path"),
+                "new_sha256": item.get("new_sha256"),
+            }
+            for item in items[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -811,6 +859,7 @@ def collect_assets_and_media(
     runtime_sprite_repair_candidate_quality_report: dict[str, Any],
     runtime_sprite_regeneration_candidates: dict[str, Any],
     runtime_sprite_regeneration_candidate_quality_report: dict[str, Any],
+    runtime_sprite_regeneration_promotion_report: dict[str, Any],
     map_visual_manifest: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
@@ -860,6 +909,9 @@ def collect_assets_and_media(
             "sprite_regeneration_candidates": sprite_repair_candidate_summary(
                 runtime_sprite_regeneration_candidates,
                 runtime_sprite_regeneration_candidate_quality_report,
+            ),
+            "sprite_regeneration_promotion": sprite_regeneration_promotion_summary(
+                runtime_sprite_regeneration_promotion_report
             ),
         },
         "map_visual_reference": {
@@ -1007,6 +1059,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "runtime_sprite_regeneration_candidate_quality_report",
             PATHS["runtime_sprite_regeneration_candidate_quality_report"],
         ),
+        (
+            "runtime_sprite_regeneration_promotion_report",
+            PATHS["runtime_sprite_regeneration_promotion_report"],
+        ),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -1074,6 +1130,9 @@ def build_evidence() -> dict[str, Any]:
     runtime_sprite_regeneration_candidate_quality_report = load_json(
         PATHS["runtime_sprite_regeneration_candidate_quality_report"]
     )
+    runtime_sprite_regeneration_promotion_report = load_json(
+        PATHS["runtime_sprite_regeneration_promotion_report"]
+    )
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -1130,6 +1189,7 @@ def build_evidence() -> dict[str, Any]:
             runtime_sprite_repair_candidate_quality_report,
             runtime_sprite_regeneration_candidates,
             runtime_sprite_regeneration_candidate_quality_report,
+            runtime_sprite_regeneration_promotion_report,
             map_visual_manifest,
         ),
         "validation_summary": collect_validation_summary(
@@ -1176,6 +1236,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     runtime_sprite_repair = as_obj(runtime_art.get("sprite_repair_plan"))
     runtime_sprite_candidates = as_obj(runtime_art.get("sprite_repair_candidates"))
     runtime_sprite_regeneration = as_obj(runtime_art.get("sprite_regeneration_candidates"))
+    runtime_sprite_promotion = as_obj(runtime_art.get("sprite_regeneration_promotion"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -1267,6 +1328,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- runtime sprite repair plan：任务 `{runtime_sprite_repair.get('task_count')}` 个，优先级 `{as_obj(runtime_sprite_repair.get('priority_counts'))}`",
         f"- runtime sprite repair candidates：候选 `{runtime_sprite_candidates.get('candidate_count')}` 个，候选质量 `{runtime_sprite_candidates.get('quality_status')}`，已晋升 runtime：`{runtime_sprite_candidates.get('promoted_to_runtime')}`",
         f"- runtime sprite live regeneration：候选 `{runtime_sprite_regeneration.get('candidate_count')}` 个，真实生成 `{runtime_sprite_regeneration.get('generated_count')}` 个，候选质量 `{runtime_sprite_regeneration.get('quality_status')}`，已晋升 runtime：`{runtime_sprite_regeneration.get('promoted_to_runtime')}`",
+        f"- runtime sprite promotion：显式晋升 `{runtime_sprite_promotion.get('promoted_count')}` 个，模式 `{runtime_sprite_promotion.get('mode')}`，atlas 需重建：`{as_obj(runtime_sprite_promotion.get('runtime_effect')).get('atlas_rebuild_required')}`",
         "",
         "## 4. 校验摘要",
         "",
@@ -1403,6 +1465,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     runtime_sprite_repair = as_obj(runtime_art.get("sprite_repair_plan"))
     runtime_sprite_candidates = as_obj(runtime_art.get("sprite_repair_candidates"))
     runtime_sprite_regeneration = as_obj(runtime_art.get("sprite_regeneration_candidates"))
+    runtime_sprite_promotion = as_obj(runtime_art.get("sprite_regeneration_promotion"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -1591,6 +1654,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Runtime 真实重生</div>
           <div class="metric">{html_escape(runtime_sprite_regeneration.get("generated_count"))}</div>
           <p class="muted">review-only 候选：{html_escape(runtime_sprite_regeneration.get("candidate_count"))}；质量：{html_escape(runtime_sprite_regeneration.get("quality_status"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Runtime 显式晋升</div>
+          <div class="metric">{html_escape(runtime_sprite_promotion.get("promoted_count"))}</div>
+          <p class="muted">模式：{html_escape(runtime_sprite_promotion.get("mode"))}；候选通过审查后才替换 runtime 素材。</p>
         </article>
       </div>
     </section>

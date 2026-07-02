@@ -236,6 +236,29 @@ game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/
 
 本轮真实重生成验证了一个重要经验：几何质量门只能证明“透明底、主体和画布基本可用”，不能证明语义完全正确。比如“灯栏”容易被模型理解成围栏，需要通过更强的正向物体定义、后处理和人工/视觉复核共同收敛。候选通过审计后仍保持 review-only，不能自动晋升 runtime。
 
+候选进入正式 runtime 需要再经过显式晋升门：
+
+```text
+media.promote_sprite_regeneration_candidates
+```
+
+对应产物：
+
+```text
+examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json
+```
+
+该工具默认 dry-run，只有传入 `--apply` 后才会：
+
+- 校验候选包是 `review_candidate_media`。
+- 要求候选质量报告为 `passed`。
+- 只选择 `generated_review_candidate` 且对应质量项为 `passed` 的候选。
+- 复制候选 PNG 覆盖 runtime processed PNG。
+- 更新 runtime media manifest 的 `width`、`height`、`sha256`、`source_kind` 和受限 `promotion` 元数据。
+- 生成 promotion report，并要求后续重建 atlas 和重新跑 cutout quality。
+
+本轮已把 runtime P1 的信标与基础灯栏候选显式晋升，随后重建 atlas，并把 runtime cutout 复核从 3 项降到 1 项；剩余项为 P2 驿站核心，需要人工/视觉复核后再决定是否重生。
+
 ## 5. 后续增强顺序
 
 ### 5.1 立即可做

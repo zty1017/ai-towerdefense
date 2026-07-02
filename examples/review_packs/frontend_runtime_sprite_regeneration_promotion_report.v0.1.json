@@ -1,0 +1,60 @@
+{
+  "schema_version": "sprite_regeneration_promotion_report.v0.1",
+  "report_id": "frontend_runtime_sprite_regeneration_promotion_v0_1",
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "mode": "applied",
+  "source_candidate_manifest": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+  "source_candidate_pack_id": "frontend_runtime_sprite_regeneration_candidates_v0_1",
+  "source_quality_report": "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json",
+  "source_quality_status": "passed",
+  "runtime_manifest": "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+  "selected_candidate_count": 2,
+  "promoted_count": 2,
+  "would_promote_count": 2,
+  "items": [
+    {
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "media_role": "objective_sprite",
+      "candidate_id": "sprite_repair_002_objective_signal_beacon_objective_sprite.regenerated",
+      "source_task_id": "sprite_repair_002_objective_signal_beacon_objective_sprite",
+      "source_candidate_path": "game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/objective_signal_beacon__objective_sprite__regenerated.processed.png",
+      "runtime_target_path": "game_data/media/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
+      "applied": true,
+      "old_sha256": "fd69f03fec42283036fdf6d62bc4a6b91062ff8bd35f2d895053be7750c2110d",
+      "old_width": 816,
+      "old_height": 816,
+      "candidate_sha256": "c44f89a877bd0bf46622260a0e04316a998594d586afefff5c4c6125c796c2e0",
+      "new_sha256": "c44f89a877bd0bf46622260a0e04316a998594d586afefff5c4c6125c796c2e0",
+      "new_width": 878,
+      "new_height": 878
+    },
+    {
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "media_role": "defense_sprite",
+      "candidate_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite.regenerated",
+      "source_task_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite",
+      "source_candidate_path": "game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/defense_basic_lantern_barricade__defense_sprite__regenerated.processed.png",
+      "runtime_target_path": "game_data/media/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
+      "applied": true,
+      "old_sha256": "7504f174aca23a877395ac3dcec5d6155eded84d0a5864914a61c270b593c6b1",
+      "old_width": 661,
+      "old_height": 661,
+      "candidate_sha256": "f20338e921d922955b3edfe02f88fb0cd29ab07194561a66895484f28f003ef9",
+      "new_sha256": "f20338e921d922955b3edfe02f88fb0cd29ab07194561a66895484f28f003ef9",
+      "new_width": 645,
+      "new_height": 645
+    }
+  ],
+  "runtime_effect": {
+    "manifest_rewritten": true,
+    "runtime_png_replaced": true,
+    "atlas_rebuild_required": true
+  },
+  "notes": [
+    "This report contains bounded promotion metadata only.",
+    "It does not include provider responses, full prompts, API keys, or raw traces.",
+    "Promotion is explicit and review-gated; candidates are never promoted automatically."
+  ]
+}
