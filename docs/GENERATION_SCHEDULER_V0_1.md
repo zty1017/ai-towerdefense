@@ -341,7 +341,7 @@ authorization.granted = false
 ```text
 live executor guard
   -> GenerationExecutorRunRequest
-  -> explicit authorization
+  -> ProviderExecutionAuthorization
   -> provider adapter
   -> ProviderOutputEnvelope
   -> ProviderArtifactStagingManifest
@@ -349,6 +349,29 @@ live executor guard
   -> ProviderArtifactPromotionReport
   -> runtime package or WorldStateDeltaTransaction
 ```
+
+## ProviderExecutionAuthorization
+
+`ProviderExecutionAuthorization v0.1` 是 `GenerationExecutorRunRequest` 之后、真实 provider adapter 之前的显式授权记录：
+
+```text
+shared/schemas/provider_execution_authorization.v0.1.schema.json
+tools/dev/validate_provider_execution_authorization.py
+examples/provider_authorizations/p1b_provider_execution_authorization.example.json
+POST /api/sessions/{session_id}/generation-schedule/workers/grant-provider-authorization
+```
+
+它只证明“某个已经过 guard、已经生成 executor request 的调度项，允许后续 provider adapter 执行一次受约束调用”。它本身仍然不调用 provider，不读取 `.env`，不保存 prompt / provider 正文，不写世界状态，不激活 runtime。
+
+授权记录必须与 `GenerationExecutorRunRequest` 的同一 `run_id` / `schedule_item_id` 对齐，并生成 `authorization_ref`。后续 `ProviderOutputEnvelope.provider_call.authorization_ref` 必须能匹配该记录，否则 provider 输出、staging manifest 和 promotion report 不能登记到 `generation_artifact_ledger`。
+
+授权范围冻结为：
+
+```text
+provider_adapter_execution_only
+```
+
+这意味着它只允许进入 provider adapter 边界；不等于 runtime 激活授权，不等于世界状态写入授权，也不等于晋升通过。
 
 ## ProviderOutputEnvelope
 
@@ -381,7 +404,7 @@ docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md
 ```text
 live executor guard
   -> GenerationExecutorRunRequest
-  -> explicit authorization
+  -> ProviderExecutionAuthorization
   -> provider adapter
   -> ProviderOutputEnvelope
   -> ProviderArtifactStagingManifest
@@ -392,7 +415,7 @@ live executor guard
 
 `ProviderArtifactStagingManifest` 只登记从 envelope 输出 refs 转入本地审查暂存区的候选文件。它不是 runtime package，不写世界状态，也不能让 review-only artifact 被前端或战斗运行时直接消费。
 
-后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记与 `ProviderOutputEnvelope.source.schedule_item_id` 相同的 `generation_executor_run_request`。如果缺少匹配请求包，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard 和执行请求边界，或挂到错误的调度项下。
+后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记与 `ProviderOutputEnvelope.source.schedule_item_id` 相同的 `generation_executor_run_request`，并且已登记与 `ProviderOutputEnvelope.provider_call.authorization_ref` 相同的 `ProviderExecutionAuthorization`。如果缺少匹配请求包或匹配授权记录，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard、执行请求边界和显式授权边界，或挂到错误的调度项下。
 
 `ProviderArtifactPromotionReport` 是 staging 之后的显式晋升/阻断报告。它可以允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，也可以阻断候选继续前进；但报告本身仍不修改 runtime、published media 或世界状态。
 

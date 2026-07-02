@@ -343,6 +343,73 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert request_ledger_rows == 1
 
+    pre_authorization_stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "artifact-ledger-test", "note": "missing authorization"},
+    )
+    assert pre_authorization_stage.status_code == 409
+    assert "matching provider execution authorization" in pre_authorization_stage.json()[
+        "detail"
+    ]
+
+    provider_authorization = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/grant-provider-authorization",
+            json={
+                "worker_id": "provider-auth-test",
+                "note": "authorize provider fixture",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    authorization_ref = "auth_sched_next_map_visual_prefetch_fixture_001"
+    assert provider_authorization["worker_step"]["status"] == "authorized"
+    assert provider_authorization["worker_step"]["provider_call_count"] == 0
+    assert provider_authorization["worker_step"]["world_mutation_count"] == 0
+    assert provider_authorization["worker_step"]["activation_allowed_count"] == 0
+    assert provider_authorization["worker_step"]["authorization_ref"] == authorization_ref
+    assert provider_authorization["worker_step"]["upstream_request_id"] == (
+        executor_request["request_id"]
+    )
+    authorization_record = provider_authorization["provider_execution_authorization"]
+    assert authorization_record["schema_version"] == (
+        "provider_execution_authorization.v0.1"
+    )
+    assert authorization_record["authorization_ref"] == authorization_ref
+    assert authorization_record["source"]["schedule_item_id"] == (
+        "sched_next_map_visual_prefetch"
+    )
+    assert authorization_record["source"]["executor_request_id"] == (
+        executor_request["request_id"]
+    )
+    assert authorization_record["authorization"]["granted"] is True
+    assert authorization_record["authorization"]["scope"] == (
+        "provider_adapter_execution_only"
+    )
+    assert authorization_record["authority"]["provider_execution_authorized"] is True
+    assert authorization_record["authority"]["runtime_activation_allowed"] is False
+    assert authorization_record["authority"]["world_mutation_allowed"] is False
+    assert authorization_record["authorization_builder_safety"]["calls_provider"] is False
+    assert authorization_record["authorization_builder_safety"][
+        "writes_world_state"
+    ] is False
+    assert authorization_record["authorization_builder_safety"][
+        "activates_runtime"
+    ] is False
+    authorization_ledger = provider_authorization["generation_artifact_ledger"]
+    assert authorization_ledger["summary"]["item_count"] == 2
+    assert authorization_ledger["summary"]["artifact_kind_counts"][
+        "generation_executor_run_request"
+    ] == 1
+    assert authorization_ledger["summary"]["artifact_kind_counts"][
+        "provider_execution_authorization"
+    ] == 1
+    authorization_ledger_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert authorization_ledger_rows == 2
+
     artifact_stage = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -356,9 +423,16 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert artifact_stage["worker_step"]["upstream_request_id"] == (
         executor_request["request_id"]
     )
+    assert artifact_stage["worker_step"]["authorization_ref"] == authorization_ref
     assert artifact_stage["generation_executor_run_request"]["request_id"] == (
         executor_request["request_id"]
     )
+    assert artifact_stage["provider_execution_authorization"]["authorization_ref"] == (
+        authorization_ref
+    )
+    assert artifact_stage["provider_execution_authorization"]["authorization"][
+        "granted"
+    ] is True
     assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
         "pout_performed_stage05_map_visual_001"
     )
@@ -366,6 +440,9 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "sched_next_map_visual_prefetch"
     )
     assert artifact_stage["provider_output_envelope"]["provider_call"]["performed"] is True
+    assert artifact_stage["provider_output_envelope"]["provider_call"][
+        "authorization_ref"
+    ] == authorization_ref
     assert artifact_stage["provider_artifact_staging"]["manifest_id"] == (
         "pstaging_stage05_map_visual_001"
     )
@@ -382,8 +459,9 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "promotion_allowed"
     ] is False
     ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
-    assert ledger_summary["item_count"] == 4
+    assert ledger_summary["item_count"] == 5
     assert ledger_summary["artifact_kind_counts"]["generation_executor_run_request"] == 1
+    assert ledger_summary["artifact_kind_counts"]["provider_execution_authorization"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_output_envelope"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_staging_manifest"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_promotion_report"] == 1
@@ -395,12 +473,13 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ledger = _payload(
         client.get(f"/api/sessions/{sid}/generation-schedule/artifact-ledger")
     )
-    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 4
-    assert len(ledger["generation_artifact_ledger"]["items"]) == 4
+    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 5
+    assert len(ledger["generation_artifact_ledger"]["items"]) == 5
     assert {
         item["artifact_kind"] for item in ledger["generation_artifact_ledger"]["items"]
     } == {
         "generation_executor_run_request",
+        "provider_execution_authorization",
         "provider_output_envelope",
         "provider_artifact_staging_manifest",
         "provider_artifact_promotion_report",
@@ -409,7 +488,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
         (sid,),
     ).fetchone()[0]
-    assert ledger_rows == 4
+    assert ledger_rows == 5
 
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
@@ -657,6 +736,24 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
             },
         )
     )
+    pre_authorization_stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "evidence-ledger", "note": "authorization missing"},
+    )
+    assert pre_authorization_stage.status_code == 409
+    assert "matching provider execution authorization" in pre_authorization_stage.json()[
+        "detail"
+    ]
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/grant-provider-authorization",
+            json={
+                "worker_id": "evidence-provider-auth",
+                "note": "authorize provider fixture for evidence",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -774,10 +871,13 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 3
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "item_count"
-    ] == 4
+    ] == 5
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "artifact_kind_counts"
     ]["generation_executor_run_request"] == 1
+    assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
+        "artifact_kind_counts"
+    ]["provider_execution_authorization"] == 1
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "promotion_allowed_count"
     ] == 0
