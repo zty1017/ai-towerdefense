@@ -40,6 +40,13 @@ PYTHONDONTWRITEBYTECODE=1 python3 tools/content_pipeline/validate_mvp_story_asse
 
 这道校验门的作用是确认审查包确实服务 MVP 内容交付：它汇总剧情阶段、NPC、材料、资产与玩法钩子，但不直接改写基础世界书，也不把未审查内容推进前端。
 
+顶层的 `core_artifact_alignment` 进一步声明：
+
+- `mvp_story_asset_review_pack.v0.1` 是 review-only 多阶段剧情与玩法对象审查索引。
+- 它本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应落到它引用的 `NarrativeEventBundle`、`WorldStateDelta`、`WorldStateDeltaTransaction`、`CGOP`、runtime package 或具体 promotion report。
+
 跨文件契约校验会继续确认这些剧情 hook 已经被 WorldStateDelta 和最终 RunWorldState 承接：
 
 ```bash

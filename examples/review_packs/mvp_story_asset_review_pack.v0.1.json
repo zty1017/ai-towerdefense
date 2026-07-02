@@ -10,6 +10,15 @@
     "base_worldbook_mutation": false,
     "commit_rule": "NarrativeEventBundle proposes intent; WorldStateDelta commits selected changes in serial order."
   },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "StoryAssetReviewPack 是 review-only 多阶段剧情与玩法对象审查索引；它汇总阶段剧情、NPC、材料、地图节点、战斗节点、研发 hook 和资产引用，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对它引用的 NarrativeEventBundle、WorldStateDelta、WorldStateDeltaTransaction、CGOP、runtime package 或具体 promotion report，而不是激活整个 story asset review pack。"
+  },
   "pipeline_summary": [
     "RunWorldState, BattleResult, SessionContext are reduced to a stage brief.",
     "The stage brief produces one NarrativeEventBundle with world_line, player_line, and shared nodes.",
