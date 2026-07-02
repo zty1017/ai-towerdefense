@@ -42,6 +42,20 @@ python3 tools/frontend/validate_campaign_router_frontend_contract.py
 
 这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、失败整图被发布、程序化底座入口缺失、战斗画布被压成小面板，以及 API 模式退回固定首战节点。
 
+浏览器视觉烟测在具备 Chromium 兼容浏览器的环境中运行：
+
+```bash
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
+```
+
+它会启动本地静态服务，打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面和移动视口截图，并写出 `battle_visual_smoke_report.v0.1.json`。`battleVisualSmoke=1` 只是验收深链，正常玩家流程不会使用；`static=1` 用于让烟测不依赖后端服务。
+
+如果当前机器没有浏览器，可先记录环境探测结果：
+
+```bash
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
+```
+
 控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
 
 ```text

@@ -76,6 +76,7 @@ P2：本阶段明确不做
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。仍需要在有 Chromium / Playwright 的环境中补真实截图或人工录屏验收。
+- 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -204,7 +205,7 @@ P2：本阶段明确不做
 
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
 - 已验证前端语法、默认玩家底图代码路径、发布底图资源、首战 `MapRuntimePackage` 视觉层 authority、本地 HTTP 静态读取。
-- 当前环境缺 Chromium / Playwright，因此未生成真实截图；该缺口已记录为后续人工或具备浏览器环境的验证项。
+- 已新增 `tools/frontend/capture_battle_visual_smoke.py` 作为可复跑浏览器烟测入口；本轮通过临时 Playwright Chromium 捕获桌面 / 移动截图，输出目录为 `/tmp/p0m_browser_visual_smoke`。
 
 ### P0-I main 文档受控同步准备
 
@@ -1030,12 +1031,14 @@ python3 tools/frontend/validate_battle_visual_contract.py
 ```bash
 node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
 python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evidence
 ```
 
 遗留风险：
 
-- 当前执行环境没有 Chromium / Playwright / Selenium，未生成真实浏览器截图；需要用户或具备浏览器环境的 worker 补桌面 / 移动视口截图或录屏。
+- 当前截图只覆盖首战视觉烟测，不替代后续多节点地图、真实拖拽交互和完整录屏的人工验收。
 
 补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、批量 validator、首战示例、stage01-stage07 事务链和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
 
@@ -1166,7 +1169,7 @@ git diff --check
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
 2. 新增 WorldStateDelta / review pack / provider artifact 继续按 CoreArtifactAlignmentReport 口径进入原生产物字段、core refs 或显式 not-applicable 边界；当前已扫描范围的 migration task 已清零。
 3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
-4. 补 P0-M 浏览器截图或人工录屏验收。
+4. 扩展地图补丁后的 overlay / 视觉模型复核，并在新增战斗节点后复跑 `tools/frontend/capture_battle_visual_smoke.py`。
 5. `P1-A` 真实视频关键帧增强。
 6. `P1-B` Generation Scheduler 执行器 / live campaign router。
 
