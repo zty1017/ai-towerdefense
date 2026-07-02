@@ -2961,6 +2961,15 @@
     "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
     "stage_candidate_pack_file": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
   },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "该文件是 review-only 总审查交付包，只汇总已审证据、运行态摘要、runtime package 引用和验证命令；它本身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction，也不应进入玩家 runtime。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续迁移应针对 dossier 引用的阶段候选包、多阶段内容包或具体运行时产物，不要把总审查包强行包装成核心对象。"
+  },
   "runtime_state_summary": {
     "state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
     "progress": {
@@ -3010,7 +3019,7 @@
       "path": "docs/FRONTEND_MOCK_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "42d17ffc0c30c7a1f1113d87c4f1a0e4899b881b68c241f0c3fd4a7f0b64820e"
+      "sha256": "9f30ecfa63c013312a0be5b799c56d3ca2fb1a8ae3c54ebfc874b1d6b416d44e"
     },
     {
       "path": "docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md",
@@ -3022,7 +3031,7 @@
       "path": "docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "bd9e14e5ac822552f46e483a166374e03a6127dd44a572fbeb86c29452fe1a65"
+      "sha256": "fa0c71f50e683b9f1111d13814a3fc1d05e785b401f3a20093cb6e83d188b77f"
     },
     {
       "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
@@ -3034,13 +3043,13 @@
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "7bd037fcc666051e2dce52feb56ca19e8fbe5e15dcd1d3dfe5f83ed7c1dc794f"
+      "sha256": "d8e4662ad507a3eddfd77e55c7f27a80a89035c27ae283b4c04309033617639e"
     },
     {
       "path": "docs/MVP_REVIEW_HANDOFF_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "6372e7445c097d7970b1ef7e0febc90f8e11099e59410470fee1d7f0eb98ef2b"
+      "sha256": "9e474b59bd7a024e0a20abacfd7a2fb00990bad272b7e9525bcb74ad57b37928"
     },
     {
       "path": "docs/MVP_STORY_ASSET_PROMOTION_REPORT_V0_1.md",
@@ -3052,7 +3061,7 @@
       "path": "docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "c90127af2e2608f691467cd051dc14966bc0d4fbb442aed349dab4f97ac27dc3"
+      "sha256": "44832c3d19763df7b3797efdcad1490aab34a8e68a49103c8d34c9cd09d21eb9"
     },
     {
       "path": "docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md",
@@ -3130,7 +3139,7 @@
       "path": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
       "kind": "frontend_mock_pack",
       "exists": true,
-      "sha256": "8a3e96018b962ddf725120aa26ec2cdabaaab12517dc7897dbf90bef1e07c1af"
+      "sha256": "2b1d73a7dc33822bc62ece791db3e24e389bffefa7f3ffd21bca36bdbc1c76a4"
     },
     {
       "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json",
@@ -3508,7 +3517,7 @@
       "path": "shared/schemas/frontend_mock_pack.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "fb8172d4b8a01e5a505385d7e519fc317b81ced6ae5ac600bbd2c15563b2029c"
+      "sha256": "3538361c7869b310bcfdee39e914382c97391fe43116a2e4ade09ce7635f01c3"
     },
     {
       "path": "shared/schemas/multistage_content_pack.v0.1.schema.json",
@@ -3520,7 +3529,7 @@
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "c79e80363ca292a7c441d1e36d3e6b034ff338bb0738651696fdacb95add1091"
+      "sha256": "12d12abe45d29311b09b932d449d3c70952034152a455829dab68b95686fffc9"
     },
     {
       "path": "shared/schemas/mvp_handoff_audit_report.v0.1.schema.json",
@@ -3550,7 +3559,7 @@
       "path": "tools/content_pipeline/build_frontend_mock_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "3b75228756fbd1993428b625e5074ec04954486805a2a03f28bbef03ca2350da"
+      "sha256": "a8c3f858cd4308a0d6fac5a444c4a12888ed009d9bd833f4d1090a47419f797b"
     },
     {
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
@@ -3598,7 +3607,7 @@
       "path": "tools/content_pipeline/validate_frontend_mock_pack.py",
       "kind": "validator",
       "exists": true,
-      "sha256": "9e7b91fc7ff901f143b4e2ea6149935923cbefab3ada41c08e0065110ab26ed6"
+      "sha256": "161ce96a4ac21fdcc26eec1eb9750c3c01e2fc84ae15e1a66333c52cea7c42e4"
     },
     {
       "path": "tools/content_pipeline/validate_multistage_content_pack.py",

@@ -275,6 +275,15 @@ def _world_transaction_targets() -> list[dict[str, Any]]:
 
 
 def _review_pack_alignment_state(path: Path, payload: dict[str, Any]) -> tuple[str, str]:
+    explicit = as_obj(payload.get("core_artifact_alignment"))
+    if explicit.get("alignment_state") == "review_only_not_applicable":
+        return (
+            "review_only_not_applicable",
+            str(
+                explicit.get("next_action")
+                or "该 review pack 已声明为专项 evidence，不应强行迁移成核心对象。"
+            ),
+        )
     schema_version = str(payload.get("schema_version") or path.stem)
     lowered = f"{schema_version} {path.name}".lower()
     if any(keyword in lowered for keyword in MIGRATION_CANDIDATE_SCHEMA_KEYWORDS):
