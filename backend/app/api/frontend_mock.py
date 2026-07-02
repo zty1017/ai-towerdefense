@@ -16,10 +16,14 @@ from ..db import db_cursor
 from ..models import (
     BattleResultSubmitRequest,
     FrontendMockPayloadResponse,
+    GenerationScheduleQueueTransitionRequest,
     WorldInstanceCreateRequest,
 )
 from ..services import frontend_mock_service
-from ..services.frontend_mock_service import FixtureNotFoundError
+from ..services.frontend_mock_service import (
+    FixtureNotFoundError,
+    InvalidQueueTransitionError,
+)
 
 router = APIRouter()
 
@@ -48,6 +52,13 @@ def _fixture_404(exc: FixtureNotFoundError) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"mock fixture not found for: {exc}",
+    )
+
+
+def _queue_transition_409(exc: InvalidQueueTransitionError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=str(exc),
     )
 
 
@@ -155,6 +166,82 @@ def get_generation_schedule_queue(session_id: str) -> FrontendMockPayloadRespons
     return _payload(
         session_id,
         frontend_mock_service.get_generation_schedule_queue(session_id),
+    )
+
+
+def _transition_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    transition: str,
+    body: GenerationScheduleQueueTransitionRequest | None,
+) -> FrontendMockPayloadResponse:
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = frontend_mock_service.transition_generation_schedule_queue_item(
+            session_id,
+            schedule_item_id,
+            transition,
+            metadata,
+        )
+    except FixtureNotFoundError as exc:
+        raise _fixture_404(exc) from exc
+    except InvalidQueueTransitionError as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim",
+    response_model=FrontendMockPayloadResponse,
+)
+def claim_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Claim a queued scheduler item for a future worker."""
+    return _transition_generation_schedule_queue_item(
+        session_id,
+        schedule_item_id,
+        "claim",
+        body,
+    )
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete",
+    response_model=FrontendMockPayloadResponse,
+)
+def complete_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Mark a claimed or queued scheduler item as completed."""
+    return _transition_generation_schedule_queue_item(
+        session_id,
+        schedule_item_id,
+        "complete",
+        body,
+    )
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail",
+    response_model=FrontendMockPayloadResponse,
+)
+def fail_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Mark a claimed or queued scheduler item as failed."""
+    return _transition_generation_schedule_queue_item(
+        session_id,
+        schedule_item_id,
+        "fail",
+        body,
     )
 
 

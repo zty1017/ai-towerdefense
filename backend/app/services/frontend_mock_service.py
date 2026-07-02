@@ -108,6 +108,10 @@ class FixtureNotFoundError(LookupError):
     """Raised when a mock fixture cannot satisfy the requested node."""
 
 
+class InvalidQueueTransitionError(ValueError):
+    """Raised when a scheduler queue transition violates the current state."""
+
+
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -464,6 +468,96 @@ def _compact_generation_queue(items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _load_generation_queue_item_row(
+    session_id: str, schedule_item_id: str
+) -> dict[str, Any]:
+    latest = _load_latest_generation_schedule_run(session_id)
+    if latest is None:
+        raise FixtureNotFoundError("generation_schedule_queue")
+    run_id = str(latest.get("run_id", ""))
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT id, run_id, schedule_item_id, status, payload FROM "
+            "generation_schedule_queue_items "
+            "WHERE session_id = ? AND run_id = ? AND schedule_item_id = ?",
+            (session_id, run_id, schedule_item_id),
+        )
+        row = cur.fetchone()
+    if row is None or not row.get("payload"):
+        raise FixtureNotFoundError(schedule_item_id)
+    payload = json.loads(row["payload"])
+    return {
+        "id": row["id"],
+        "run_id": row["run_id"],
+        "schedule_item_id": row["schedule_item_id"],
+        "status": row["status"],
+        "payload": payload,
+    }
+
+
+def _next_generation_queue_status(current_status: str, transition: str) -> str:
+    if transition == "claim":
+        if current_status != "queued":
+            raise InvalidQueueTransitionError(
+                f"cannot claim scheduler item in status {current_status}"
+            )
+        return "claimed"
+    if transition == "complete":
+        if current_status not in ("queued", "claimed"):
+            raise InvalidQueueTransitionError(
+                f"cannot complete scheduler item in status {current_status}"
+            )
+        return "completed"
+    if transition == "fail":
+        if current_status not in ("queued", "claimed"):
+            raise InvalidQueueTransitionError(
+                f"cannot fail scheduler item in status {current_status}"
+            )
+        return "failed"
+    raise InvalidQueueTransitionError(f"unknown scheduler queue transition {transition}")
+
+
+def _transition_generation_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    transition: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    row = _load_generation_queue_item_row(session_id, schedule_item_id)
+    payload = row["payload"]
+    current_status = str(row["status"])
+    next_status = _next_generation_queue_status(current_status, transition)
+    ts = now_iso()
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    transition_entry = {
+        "transition": transition,
+        "from_status": current_status,
+        "to_status": next_status,
+        "worker_id": safe_metadata.get("worker_id") or "frontend_mock_scheduler",
+        "note": safe_metadata.get("note"),
+        "created_at": ts,
+    }
+    transitions = payload.setdefault("transitions", [])
+    if isinstance(transitions, list):
+        transitions.append(transition_entry)
+    payload["status"] = next_status
+    payload["updated_at"] = ts
+    if transition == "claim":
+        payload["claimed_at"] = ts
+        payload["claimed_by"] = transition_entry["worker_id"]
+    elif transition == "complete":
+        payload["completed_at"] = ts
+    elif transition == "fail":
+        payload["failed_at"] = ts
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE generation_schedule_queue_items "
+            "SET status = ?, payload = ?, updated_at = ? WHERE id = ?",
+            (next_status, _dump_payload(payload), ts, row["id"]),
+        )
+    return payload
+
+
 def _runtime_art_payload() -> dict[str, Any]:
     return {
         "runtime_art_kit": _load_runtime_art_kit(),
@@ -720,6 +814,27 @@ def get_generation_schedule_queue(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "generation_schedule_run": _compact_generation_schedule_run(run),
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+    }
+
+
+def transition_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    transition: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    item = _transition_generation_queue_item(
+        session_id,
+        schedule_item_id,
+        transition,
+        metadata,
+    )
+    queue_items = _load_generation_queue_items(session_id, str(item["run_id"]))
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_queue_item": item,
         "generation_schedule_queue": _compact_generation_queue(queue_items),
     }
 

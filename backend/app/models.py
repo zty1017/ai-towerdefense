@@ -125,3 +125,10 @@ class BattleResultSubmitRequest(BaseModel):
     deployed_asset_ids: list[str] = Field(default_factory=list)
     leaked_enemy_count: int = 0
     notes: Optional[str] = None
+
+
+class GenerationScheduleQueueTransitionRequest(BaseModel):
+    """Optional metadata for fixture-backed scheduler queue transitions."""
+
+    worker_id: Optional[str] = Field(default=None)
+    note: Optional[str] = Field(default=None)
