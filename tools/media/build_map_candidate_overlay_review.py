@@ -309,6 +309,133 @@ def build_overlay_svg(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def blend_pixel(rows: list[bytearray], width: int, height: int, x: int, y: int, color: tuple[int, int, int], alpha: float) -> None:
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return
+    offset = x * 3
+    row = rows[y]
+    inv = 1.0 - alpha
+    row[offset] = int(row[offset] * inv + color[0] * alpha) & 0xFF
+    row[offset + 1] = int(row[offset + 1] * inv + color[1] * alpha) & 0xFF
+    row[offset + 2] = int(row[offset + 2] * inv + color[2] * alpha) & 0xFF
+
+
+def draw_disc(
+    rows: list[bytearray],
+    width: int,
+    height: int,
+    cx: float,
+    cy: float,
+    radius: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
+    min_x = max(0, int(cx - radius))
+    max_x = min(width - 1, int(cx + radius))
+    min_y = max(0, int(cy - radius))
+    max_y = min(height - 1, int(cy + radius))
+    r2 = radius * radius
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r2:
+                blend_pixel(rows, width, height, x, y, color, alpha)
+
+
+def draw_line(
+    rows: list[bytearray],
+    width: int,
+    height: int,
+    start: tuple[float, float],
+    end: tuple[float, float],
+    radius: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
+    x0, y0 = start
+    x1, y1 = end
+    steps = max(1, int(max(abs(x1 - x0), abs(y1 - y0))))
+    for step in range(steps + 1):
+        t = step / steps
+        draw_disc(rows, width, height, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, radius, color, alpha)
+
+
+def draw_polyline(
+    rows: list[bytearray],
+    width: int,
+    height: int,
+    points: list[tuple[float, float]],
+    radius: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
+    for start, end in zip(points, points[1:]):
+        draw_line(rows, width, height, start, end, radius, color, alpha)
+
+
+def draw_square(
+    rows: list[bytearray],
+    width: int,
+    height: int,
+    cx: float,
+    cy: float,
+    half: int,
+    color: tuple[int, int, int],
+    alpha: float,
+) -> None:
+    for y in range(max(0, int(cy - half)), min(height - 1, int(cy + half)) + 1):
+        for x in range(max(0, int(cx - half)), min(width - 1, int(cx + half)) + 1):
+            blend_pixel(rows, width, height, x, y, color, alpha)
+
+
+def build_overlay_png(
+    path: Path,
+    normalized_rows: list[bytearray],
+    package: dict[str, Any],
+    width: int,
+    height: int,
+) -> None:
+    rows = [bytearray(row) for row in normalized_rows]
+    grid = as_obj(package.get("grid"))
+    for route in as_list(package.get("path_routes")):
+        if not isinstance(route, dict):
+            continue
+        points = [
+            grid_to_pixel(point, grid, width, height)
+            for point in as_list(route.get("waypoints"))
+            if isinstance(point, dict)
+        ]
+        if len(points) >= 2:
+            draw_polyline(rows, width, height, points, 10, (250, 204, 21), 0.54)
+            draw_polyline(rows, width, height, points, 3, (17, 24, 39), 0.74)
+
+    for slot in as_list(package.get("build_slots")):
+        if not isinstance(slot, dict):
+            continue
+        x, y = grid_to_pixel(as_obj(slot.get("position")), grid, width, height)
+        draw_disc(rows, width, height, x, y, 19, (34, 211, 238), 0.58)
+        draw_disc(rows, width, height, x, y, 11, (8, 47, 73), 0.34)
+
+    for spawn in as_list(package.get("spawn_points")):
+        if not isinstance(spawn, dict):
+            continue
+        x, y = grid_to_pixel(as_obj(spawn.get("position")), grid, width, height)
+        draw_disc(rows, width, height, x, y, 24, (167, 139, 250), 0.68)
+        draw_disc(rows, width, height, x, y, 11, (31, 17, 71), 0.5)
+
+    objectives = as_obj(package.get("objectives"))
+    objective_items = []
+    core = objectives.get("core_target")
+    if isinstance(core, dict):
+        objective_items.append(core)
+    objective_items.extend(target for target in as_list(objectives.get("optional_targets")) if isinstance(target, dict))
+    for target in objective_items:
+        x, y = grid_to_pixel(as_obj(target.get("position")), grid, width, height)
+        draw_square(rows, width, height, x, y, 22, (251, 113, 133), 0.68)
+        draw_square(rows, width, height, x, y, 10, (127, 29, 29), 0.42)
+
+    write_png(path, width, height, 2, rows)
+
+
 def build_package_index(alignment_review: dict[str, Any]) -> dict[str, dict[str, Any]]:
     packages: dict[str, dict[str, Any]] = {}
     for candidate in as_list(alignment_review.get("candidates")):
@@ -349,8 +476,10 @@ def build_candidate_artifact(
     )
     normalized_path = output_dir / f"{node_id}.normalized_{target_width}x{target_height}.png"
     overlay_path = output_dir / f"{node_id}.overlay_review.svg"
+    overlay_png_path = output_dir / f"{node_id}.overlay_review.png"
     write_png(normalized_path, target_width, target_height, color_type, normalized_rows)
     build_overlay_svg(overlay_path, normalized_path, package, target_width, target_height)
+    build_overlay_png(overlay_png_path, normalized_rows, package, target_width, target_height)
 
     runtime_structure = as_obj(candidate.get("runtime_structure"))
     return {
@@ -359,8 +488,10 @@ def build_candidate_artifact(
         "source_candidate_path": candidate.get("candidate_path"),
         "normalized_path": rel(normalized_path),
         "overlay_review_path": rel(overlay_path),
+        "overlay_review_png_path": rel(overlay_png_path),
         "normalized_sha256": sha256_file(normalized_path),
         "overlay_sha256": sha256_file(overlay_path),
+        "overlay_png_sha256": sha256_file(overlay_png_path),
         "transform": transform,
         "runtime_structure": runtime_structure,
         "review_notes": [

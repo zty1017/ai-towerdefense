@@ -1,0 +1,87 @@
+{
+  "overlay_review_path": "examples/review_packs/map_candidate_overlay_review.v0.1.json",
+  "policy": [
+    "This is a visual review report, not a promotion report.",
+    "All candidates remain review-only until a later promotion report updates published visual layers.",
+    "Beautiful map art is insufficient when runtime paths, tower slots, objectives, or spawn points do not align with visible landmarks."
+  ],
+  "report_id": "mvp_map_candidate_overlay_visual_review",
+  "reviews": [
+    {
+      "findings": [
+        "runtime_path_partly_follows_painted_road_but_has_mechanical_right_angle_segments",
+        "core_objective_marker_does_not_land_on_the_visible_station_core",
+        "optional_objective_marker_lands_near_the_station_area_but_needs_repositioning",
+        "build_slots_are_mostly_near_playable_terrain_but_need_spacing_review"
+      ],
+      "next_action": "adjust runtime package objective/path coordinates to the painted station layout or regenerate from a stricter topology prompt",
+      "node_id": "gray_lantern_station",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.normalized_1280x720.png",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.svg",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.png",
+      "promotion_recommendation": "do_not_promote",
+      "source_status": "overlay_artifact_ready",
+      "status": "needs_layout_reconciliation",
+      "strengths": [
+        "clean_full_frame_map_without_units_or_projectiles",
+        "road_network_and_build_clearings_are_readable",
+        "world_style_matches_lantern_frontier"
+      ]
+    },
+    {
+      "findings": [
+        "painted_map_is_clean_but_runtime_paths_are_too_angular_for_the_visible_dirt_trails",
+        "some_build_slot_markers_align_with_round_pads_but_right_side_cluster_needs_spacing_review",
+        "left_side_objective_markers_do_not_clearly_attach_to_a_unique_core_inventory_landmark"
+      ],
+      "next_action": "reproject runtime paths and objectives onto the visible dirt trails before considering promotion",
+      "node_id": "lamp_wick_store",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.normalized_1280x720.png",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.svg",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.png",
+      "promotion_recommendation": "do_not_promote",
+      "source_status": "overlay_artifact_ready",
+      "status": "needs_path_reprojection",
+      "strengths": [
+        "clean_background_without_arrows_units_or_projectiles",
+        "large_empty_pads_are_readable_for_tower_defense",
+        "supply_depot_style_is_clear"
+      ]
+    },
+    {
+      "findings": [
+        "visual_primary_objective_is_centered_but_runtime_core_objective_marker_is_left_of_center",
+        "runtime_paths_cross_the_central_tower_platform_instead_of_cleanly_following_painted_roads",
+        "build_slots_clustered_top_right_while_visible_build_pads_are_distributed",
+        "central_objective_size_may_reduce_combat_readability_without_layout_specific_runtime_package"
+      ],
+      "next_action": "either move runtime objectives/routes around the central signal tower or regenerate a map with the objective located at the current runtime core coordinate",
+      "node_id": "old_signal_tower",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.normalized_1280x720.png",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.overlay_review.svg",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.overlay_review.png",
+      "promotion_recommendation": "do_not_promote",
+      "source_status": "overlay_artifact_ready",
+      "status": "needs_layout_reconciliation",
+      "strengths": [
+        "strong_node_identity_and_painted_quality",
+        "clear roads_and_empty_pads",
+        "no_visible_arrows_or_units"
+      ]
+    }
+  ],
+  "schema_version": "map_candidate_overlay_visual_review.v0.1",
+  "status": "needs_layout_reconciliation",
+  "summary": {
+    "blocked_from_promotion_count": 3,
+    "candidate_count": 3,
+    "promotable_count": 0,
+    "promotion_recommendation_counts": {
+      "do_not_promote": 3
+    },
+    "status_counts": {
+      "needs_layout_reconciliation": 2,
+      "needs_path_reprojection": 1
+    }
+  }
+}
