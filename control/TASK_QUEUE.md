@@ -65,7 +65,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail 状态流转和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -434,6 +434,24 @@ P2：本阶段明确不做
 
 - dry-run worker step 不调用 provider，不生成新内容，不写世界状态，不激活预取候选。
 - 它只把后续后台 worker 的领取、处理、等待复核状态面跑通。
+
+### P1-B-6 Generation Scheduler retry / fallback 守门
+
+状态：已完成最小骨架。
+
+已落地：
+
+- 队列项从 `GenerationSchedulePlan.provider_policy.max_attempts` 继承 `max_attempts`。
+- dry-run worker step 每处理一次 `queued` 项会递增 `attempt_count`。
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback`
+- `retry` 只允许 `failed -> queued`，且 `attempt_count < max_attempts`。
+- `fallback` 允许 `failed|waiting_review -> fallback_ready`，且必须存在 `fallback_ref`。
+
+当前结论：
+
+- 该层仍不调用 provider，不生成新内容，不写世界状态。
+- 它为后续真实 provider 调度建立最小 attempt 预算、重试上限和降级路径。
 
 ## 4. 当前 P0 任务
 

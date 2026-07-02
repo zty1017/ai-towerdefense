@@ -234,8 +234,10 @@ def _build_generation_schedule_buffer(
                 "object_ref": item.get("object_ref"),
                 "latency_class": item.get("latency_class"),
                 "plan_status": item.get("status"),
+                "priority": item.get("priority"),
                 "dry_run_action": report_item.get("action"),
                 "dry_run_status": report_item.get("result_status"),
+                "provider_policy": item.get("provider_policy", {}),
                 "provider_review_required": (
                     report_item.get("provider_review_required") is True
                 ),
@@ -340,6 +342,13 @@ def _build_generation_queue_item_payload(
         "provider_review_required": item.get("provider_review_required") is True,
         "player_visible": item.get("player_visible") is True,
         "fallback_ref": item.get("fallback_ref"),
+        "provider_policy": item.get("provider_policy", {}),
+        "max_attempts": int(
+            item.get("provider_policy", {}).get("max_attempts", 0)
+            if isinstance(item.get("provider_policy"), dict)
+            else 0
+        ),
+        "attempt_count": 0,
         "revalidate_before_activation": item.get("revalidate_before_activation") is True,
         "created_at": ts,
         "updated_at": ts,
@@ -518,6 +527,18 @@ def _next_generation_queue_status(current_status: str, transition: str) -> str:
                 f"cannot fail scheduler item in status {current_status}"
             )
         return "failed"
+    if transition == "retry":
+        if current_status != "failed":
+            raise InvalidQueueTransitionError(
+                f"cannot retry scheduler item in status {current_status}"
+            )
+        return "queued"
+    if transition == "fallback":
+        if current_status not in ("failed", "waiting_review"):
+            raise InvalidQueueTransitionError(
+                f"cannot fallback scheduler item in status {current_status}"
+            )
+        return "fallback_ready"
     raise InvalidQueueTransitionError(f"unknown scheduler queue transition {transition}")
 
 
@@ -531,6 +552,15 @@ def _transition_generation_queue_item(
     payload = row["payload"]
     current_status = str(row["status"])
     next_status = _next_generation_queue_status(current_status, transition)
+    if transition == "retry":
+        attempt_count = int(payload.get("attempt_count", 0))
+        max_attempts = int(payload.get("max_attempts", 0))
+        if attempt_count >= max_attempts:
+            raise InvalidQueueTransitionError(
+                f"cannot retry scheduler item after {attempt_count}/{max_attempts} attempts"
+            )
+    if transition == "fallback" and not payload.get("fallback_ref"):
+        raise InvalidQueueTransitionError("cannot fallback scheduler item without fallback_ref")
     ts = now_iso()
     safe_metadata = metadata if isinstance(metadata, dict) else {}
     transition_entry = {
@@ -553,6 +583,10 @@ def _transition_generation_queue_item(
         payload["completed_at"] = ts
     elif transition == "fail":
         payload["failed_at"] = ts
+    elif transition == "retry":
+        payload["retried_at"] = ts
+    elif transition == "fallback":
+        payload["fallback_selected_at"] = ts
     with db_cursor() as cur:
         cur.execute(
             "UPDATE generation_schedule_queue_items "
@@ -598,6 +632,7 @@ def _run_generation_dry_worker_step(
     ts = now_iso()
     safe_metadata = metadata if isinstance(metadata, dict) else {}
     worker_id = safe_metadata.get("worker_id") or "frontend_mock_dry_worker"
+    attempt_count = int(payload.get("attempt_count", 0)) + 1
     requires_review = payload.get("provider_review_required") is True
     next_status = "waiting_review" if requires_review else "completed"
     transition_entry = {
@@ -615,6 +650,8 @@ def _run_generation_dry_worker_step(
     payload["updated_at"] = ts
     payload["worker_step_at"] = ts
     payload["worker_id"] = worker_id
+    payload["attempt_count"] = attempt_count
+    payload["attempt_budget_exhausted"] = attempt_count >= int(payload.get("max_attempts", 0))
     payload["provider_call_performed"] = False
     payload["world_mutation_performed"] = False
     if next_status == "waiting_review":
