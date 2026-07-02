@@ -26,6 +26,7 @@ DEFAULT_OUTPUT_DIR = ROOT / "demo_evidence"
 MAX_VALIDATION_OUTPUT_CHARS = 1400
 MAX_SAMPLE_ITEMS = 12
 MAP_RUNTIME_PACKAGE_DIR = ROOT / "examples/map_runtime_packages"
+MAP_COMPILE_PACKAGE_DIR = ROOT / "examples/map_compile_packages"
 
 
 PATHS = {
@@ -186,6 +187,10 @@ def map_runtime_package_paths() -> list[Path]:
     return sorted(MAP_RUNTIME_PACKAGE_DIR.glob("*.map_runtime_package.json"))
 
 
+def map_compile_package_paths() -> list[Path]:
+    return sorted(MAP_COMPILE_PACKAGE_DIR.glob("*.map_compile_package.json"))
+
+
 def validation_commands() -> list[dict[str, Any]]:
     commands = list(STATIC_VALIDATION_COMMANDS)
     for path in map_runtime_package_paths():
@@ -195,6 +200,17 @@ def validation_commands() -> list[dict[str, Any]]:
                 "command": [
                     "python3",
                     "tools/asset_graph/validate_map_runtime_package.py",
+                    rel(path),
+                ],
+            }
+        )
+    for path in map_compile_package_paths():
+        commands.append(
+            {
+                "name": f"map_compile_package_{path.stem.replace('.', '_')}",
+                "command": [
+                    "python3",
+                    "tools/asset_graph/validate_map_compile_package.py",
                     rel(path),
                 ],
             }
@@ -350,6 +366,50 @@ def collect_map_runtime_packages(map_packages: list[dict[str, Any]]) -> dict[str
             int(package.get("published_visual_layer_count") or 0) for package in packages
         ),
         "packages": packages,
+    }
+
+
+def collect_map_compile_package(package: dict[str, Any]) -> dict[str, Any]:
+    logical = as_obj(package.get("logical_map_layer"))
+    control = as_obj(package.get("control_layer"))
+    painted = as_obj(package.get("painted_visual_layer"))
+    alignment = as_obj(package.get("alignment_layer"))
+    validation = as_obj(package.get("validation_report"))
+    quality_gates = as_list(package.get("quality_gates"))
+    return {
+        "schema_version": package.get("schema_version"),
+        "package_id": package.get("package_id"),
+        "worldbook_id": package.get("worldbook_id"),
+        "node_id": package.get("node_id"),
+        "map_runtime_package_path": as_obj(package.get("source_refs")).get("map_runtime_package_path"),
+        "logical_counts": {
+            "path_routes": logical.get("path_route_count"),
+            "build_slots": logical.get("build_slot_count"),
+            "objectives": logical.get("objective_count"),
+            "spawn_points": logical.get("spawn_point_count"),
+        },
+        "control_artifact_count": len(as_list(control.get("artifacts"))),
+        "painted_visual_status": painted.get("status"),
+        "painted_visual_role": as_obj(painted.get("artifact")).get("role"),
+        "alignment_status": alignment.get("alignment_status"),
+        "alignment_checkpoint_count": len(as_list(alignment.get("checkpoints"))),
+        "quality_gate_count": len(quality_gates),
+        "quality_gate_statuses": count_by(quality_gates, "status"),
+        "validation_report": {
+            "gate_status": validation.get("gate_status"),
+            "runtime_truth_preserved": validation.get("runtime_truth_preserved"),
+            "player_visual_safe": validation.get("player_visual_safe"),
+        },
+    }
+
+
+def collect_map_compile_packages(packages: list[dict[str, Any]]) -> dict[str, Any]:
+    summaries = [collect_map_compile_package(package) for package in packages]
+    return {
+        "package_count": len(summaries),
+        "node_ids": [package.get("node_id") for package in summaries],
+        "total_quality_gate_count": sum(int(package.get("quality_gate_count") or 0) for package in summaries),
+        "packages": summaries,
     }
 
 
@@ -529,6 +589,7 @@ def collect_validation_summary(
     audit_report: dict[str, Any],
     dossier: dict[str, Any],
     map_packages: list[dict[str, Any]],
+    map_compile_packages: list[dict[str, Any]],
 ) -> dict[str, Any]:
     command_results = as_list(audit_report.get("command_results"))
     coverage_checks = as_list(audit_report.get("coverage_checks"))
@@ -561,6 +622,14 @@ def collect_validation_summary(
             }
             for package in map_packages
         ],
+        "map_compile_validation_reports": [
+            {
+                "package_id": package.get("package_id"),
+                "node_id": package.get("node_id"),
+                "validation_report": as_obj(package.get("validation_report")),
+            }
+            for package in map_compile_packages
+        ],
     }
 
 
@@ -590,6 +659,9 @@ def collect_source_files() -> list[dict[str, Any]]:
     source_paths.extend(
         ("map_runtime_package", path) for path in map_runtime_package_paths()
     )
+    source_paths.extend(
+        ("map_compile_package", path) for path in map_compile_package_paths()
+    )
     source_paths.extend(("reviewed_workflow", path) for path in REVIEWED_WORKFLOW_FILES)
     return [file_ref(path, role) for role, path in source_paths]
 
@@ -613,6 +685,11 @@ def build_evidence() -> dict[str, Any]:
     map_packages = [
         package
         for package in (load_json(path) for path in map_runtime_package_paths())
+        if isinstance(package, dict)
+    ]
+    map_compile_packages = [
+        package
+        for package in (load_json(path) for path in map_compile_package_paths())
         if isinstance(package, dict)
     ]
     frontend_media_manifest = load_json(PATHS["frontend_media_manifest"])
@@ -654,6 +731,7 @@ def build_evidence() -> dict[str, Any]:
             frontend_pack, dossier, multistage_pack
         ),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
+        "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
             frontend_pack,
@@ -663,7 +741,7 @@ def build_evidence() -> dict[str, Any]:
             map_visual_manifest,
         ),
         "validation_summary": collect_validation_summary(
-            validation_results, audit_report, dossier, map_packages
+            validation_results, audit_report, dossier, map_packages, map_compile_packages
         ),
         "frontend_entry": collect_frontend_entry(frontend_pack),
         "source_files": collect_source_files(),
@@ -686,6 +764,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
+    map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
@@ -724,6 +803,17 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         for package in as_list(map_packages.get("packages"))
         for layer in as_list(as_obj(package).get("visual_layers"))
     ]
+    compile_rows = [
+        [
+            package.get("node_id"),
+            package.get("package_id"),
+            package.get("painted_visual_status"),
+            package.get("alignment_status"),
+            package.get("quality_gate_count"),
+            as_obj(package.get("validation_report")).get("runtime_truth_preserved"),
+        ]
+        for package in as_list(map_compile_packages.get("packages"))
+    ]
     lines = [
         "# AI 编译塔防 MVP 演示证据包",
         "",
@@ -745,10 +835,13 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         f"- RuntimePackage：`{runtime_pkg.get('package_id')}`，战斗：{runtime_pkg.get('battle_display_name')}，资产数：`{runtime_pkg.get('asset_count')}`",
         f"- MapRuntimePackage 数：`{map_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_packages.get('node_ids')))}`",
+        f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
+        "",
+        md_table(["节点", "地图编译包", "发布图状态", "对齐状态", "质量门", "玩法真相保留"], compile_rows),
         "",
         md_table(["节点", "层角色", "权威性", "尺寸", "本地路径"], layer_rows),
         "",
@@ -839,6 +932,25 @@ def render_map_packages(packages: list[Any]) -> str:
     return "\n".join(rows)
 
 
+def render_map_compile_packages(packages: list[Any]) -> str:
+    rows = []
+    for package in packages:
+        if not isinstance(package, dict):
+            continue
+        report = as_obj(package.get("validation_report"))
+        rows.append(
+            "<tr>"
+            f"<td><code>{html_escape(package.get('node_id'))}</code></td>"
+            f"<td><code>{html_escape(package.get('package_id'))}</code></td>"
+            f"<td>{html_escape(package.get('painted_visual_status'))}</td>"
+            f"<td>{html_escape(package.get('alignment_status'))}</td>"
+            f"<td>{html_escape(package.get('quality_gate_count'))}</td>"
+            f"<td>{html_escape(report.get('runtime_truth_preserved'))}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
+
+
 def render_asset_samples(samples: list[Any]) -> str:
     rows = []
     for item in samples:
@@ -861,6 +973,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
+    map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1005,6 +1118,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <p class="muted">地图包数量；包含路径、塔位、目标、出生点和视觉层。</p>
         </article>
         <article class="card">
+          <div class="eyebrow">MapCompilePackage</div>
+          <div class="metric">{html_escape(map_compile_packages.get("package_count"))}</div>
+          <p class="muted">地图编译证据包；包含控制层、发布图、对齐和质量门。</p>
+        </article>
+        <article class="card">
           <div class="eyebrow">媒体</div>
           <div class="metric">{html_escape(published_media.get("media_count"))}</div>
           <p class="muted">published PNG，可由前端静态挂载读取。</p>
@@ -1022,6 +1140,13 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <table>
         <thead><tr><th>节点</th><th>地图包</th><th>路径</th><th>塔位</th><th>发布底图层</th></tr></thead>
         <tbody>{render_map_packages(as_list(map_packages.get("packages")))}</tbody>
+      </table>
+    </section>
+    <section>
+      <h2>MapCompilePackage 编译证据</h2>
+      <table>
+        <thead><tr><th>节点</th><th>地图编译包</th><th>发布图状态</th><th>对齐状态</th><th>质量门</th><th>玩法真相保留</th></tr></thead>
+        <tbody>{render_map_compile_packages(as_list(map_compile_packages.get("packages")))}</tbody>
       </table>
     </section>
     <section>
