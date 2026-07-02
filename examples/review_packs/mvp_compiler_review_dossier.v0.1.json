@@ -3037,7 +3037,7 @@
       "path": "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
       "kind": "architecture_doc",
       "exists": true,
-      "sha256": "e3b5e04d1c3edcc1cc95a9b93f90d2db578255aa04b75c2c88f1f36989f3678c"
+      "sha256": "f0edfe3a4ca5c16c0b62cb13a264bb6d28a8498abf6e0093c5564198d2945048"
     },
     {
       "path": "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
@@ -3229,7 +3229,7 @@
       "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
       "kind": "multistage_content_pack",
       "exists": true,
-      "sha256": "ccfd25a3a2054926921cd69683ed52172b650360bfb9af6d064a36d4ba139b7e"
+      "sha256": "5add78ad6687ce332d16b3cf3d85825ca9b5475a794cc4f04fcc5653369667b8"
     },
     {
       "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
@@ -3523,7 +3523,7 @@
       "path": "shared/schemas/multistage_content_pack.v0.1.schema.json",
       "kind": "schema",
       "exists": true,
-      "sha256": "0f52d501801097cc3e3278bfa8aff766c7406513a2b721b51653860274daca7a"
+      "sha256": "913a06c6ec7cfe43430e4b9e1ae09564ff692f09401cdb032b2724f802c5b2ad"
     },
     {
       "path": "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
@@ -3565,7 +3565,7 @@
       "path": "tools/content_pipeline/build_multistage_content_pack.py",
       "kind": "builder",
       "exists": true,
-      "sha256": "47f685d8df9e90741db8eadd111a5dfe436e7be628ecee9e33f39f4456218e61"
+      "sha256": "6ce53bf5ac0cec199d3adf08b6d05396fb0c1046cb2244d694e2bef3bbe374cd"
     },
     {
       "path": "tools/content_pipeline/build_stage05_plan_realization.py",

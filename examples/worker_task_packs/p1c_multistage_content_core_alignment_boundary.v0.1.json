@@ -1,0 +1,81 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-C-5-multistage-content-core-alignment-boundary",
+  "title": "MultistageContentPack 核心对象对齐边界",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/multistage-content-core-alignment",
+  "worktree": "/tmp/ai-td-task-multistage-content-core-alignment",
+  "objective": "为 mvp_multistage_content_pack.v0.1 增加显式 core_artifact_alignment 边界，声明该 pack 是 review-only 多阶段内容生产审查包，不应直接伪装成 ContextPackage / FactEntry / CGOP / WorldStateDeltaTransaction；真正权威的世界修改与 runtime 加载仍来自它引用的 per-stage WorldStateDelta、WorldStateDeltaTransaction 链、compiled asset candidate、stage candidate pack 与 runtime package。同步 schema、deterministic builder、生成样例、dossier 摘要、CoreArtifactAlignmentReport 与相关文档，使该 pack 从 missing_core_alignment 变为 review_only_not_applicable。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md",
+    "docs/MULTISTAGE_CONTENT_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md"
+  ],
+  "allowed_paths": [
+    "shared/schemas/multistage_content_pack.v0.1.schema.json",
+    "tools/content_pipeline/build_multistage_content_pack.py",
+    "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+    "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
+    "examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "examples/worker_task_packs/",
+    "docs/",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "backend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_multistage_content_core_alignment_boundary.v0.1.json",
+    "python3 tools/content_pipeline/build_multistage_content_pack.py --validate",
+    "python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+    "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate",
+    "python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate",
+    "python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "python3 -m py_compile tools/content_pipeline/build_multistage_content_pack.py tools/content_pipeline/validate_multistage_content_pack.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/multistage_content_core_alignment_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "不要把 MultistageContentPack 伪装成 runtime package、CGOP 或 WorldStateDeltaTransaction。",
+    "该 pack 是多阶段内容生产审查包；它引用的单阶段 delta、事务链、compiled asset candidate、stage candidate pack 和 runtime package 才是后续核心对象迁移与激活对象。",
+    "本任务只减少 CoreArtifactAlignmentReport 中的一个迁移目标；story asset review/promotion、Stage05 realization report 与 next-stage plan 仍留给后续任务。",
+    "如果 OpenCode headless 因外部数据披露策略被拒绝，允许主代理在同一 worktree 本地完成。"
+  ]
+}
