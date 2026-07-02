@@ -1,0 +1,113 @@
+{
+  "schema_version": "provider_artifact_promotion_report.v0.1",
+  "report_id": "ppromo_stage05_map_visual_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source_staging_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+  "source_staging_id": "pstaging_stage05_map_visual_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "report_only": true,
+    "direct_runtime_mutation_allowed": false,
+    "direct_world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required"
+  },
+  "decision": {
+    "promotion_decision": "blocked_review_required",
+    "promotion_allowed": false,
+    "blocked_reason": "media_semantic_and_human_review_not_complete",
+    "required_next_actions": [
+      "run_media_gate_for_concrete_image_or_video",
+      "run_semantic_or_gameplay_alignment_gate",
+      "complete_human_or_visual_model_review",
+      "rebuild_promotion_report_after_gates_pass"
+    ],
+    "notes": [
+      "The staged artifact is valid evidence, but not runtime content.",
+      "No runtime package, published media layer, or world transaction may be updated from this report."
+    ]
+  },
+  "reviewed_artifacts": [
+    {
+      "staged_artifact_id": "stage05_map_visual_candidate_summary_staged",
+      "source_artifact_id": "stage05_map_visual_candidate_summary",
+      "kind": "json_candidate",
+      "path": "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
+      "review_result": "blocked_pending_review",
+      "notes": [
+        "Only a review summary exists in this example.",
+        "Concrete media and topology review are still required."
+      ]
+    }
+  ],
+  "gate_results": {
+    "source_staging_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+      "notes": [
+        "The referenced staging manifest validates."
+      ]
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The reviewed artifact path is local and exists."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "No concrete image or video media gate has passed."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Map topology and gameplay semantics are not reviewed yet."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual model review is still required."
+      ]
+    },
+    "simulation_gate": {
+      "status": "not_applicable",
+      "required_before_promotion": false,
+      "report_ref": null,
+      "notes": [
+        "This summary artifact does not run a battle simulation."
+      ]
+    }
+  },
+  "promotion_targets": {
+    "target_kind": "none",
+    "runtime_package_refs": [],
+    "world_transaction_refs": [],
+    "published_media_refs": []
+  },
+  "safety_summary": {
+    "provider_call_count_by_report": 0,
+    "world_mutation_count_by_report": 0,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "stores_secret": false,
+    "uses_temporary_url": false
+  }
+}

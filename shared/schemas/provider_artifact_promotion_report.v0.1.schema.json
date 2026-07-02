@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/provider_artifact_promotion_report.v0.1.schema.json",
+  "title": "ProviderArtifactPromotionReport v0.1",
+  "description": "An explicit review report deciding whether review-only provider artifacts may proceed toward runtime package build or WorldStateDeltaTransaction. The report itself never mutates runtime or world state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_staging_ref",
+    "source_staging_id",
+    "authority",
+    "retention_policy",
+    "decision",
+    "reviewed_artifacts",
+    "gate_results",
+    "promotion_targets",
+    "safety_summary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "provider_artifact_promotion_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "source_staging_ref": { "type": "string", "minLength": 1 },
+    "source_staging_id": { "type": "string", "minLength": 1 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visibility",
+        "report_only",
+        "direct_runtime_mutation_allowed",
+        "direct_world_mutation_allowed",
+        "player_visible"
+      ],
+      "properties": {
+        "visibility": { "type": "string", "const": "internal_evidence" },
+        "report_only": { "type": "boolean", "const": true },
+        "direct_runtime_mutation_allowed": { "type": "boolean", "const": false },
+        "direct_world_mutation_allowed": { "type": "boolean", "const": false },
+        "player_visible": { "type": "boolean", "const": false }
+      }
+    },
+    "retention_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_body_storage",
+        "provider_body_storage",
+        "secret_storage",
+        "temporary_url_policy"
+      ],
+      "properties": {
+        "prompt_body_storage": { "type": "string", "const": "forbidden" },
+        "provider_body_storage": { "type": "string", "const": "forbidden" },
+        "secret_storage": { "type": "string", "const": "forbidden" },
+        "temporary_url_policy": { "type": "string", "const": "local_ref_required" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "promotion_decision",
+        "promotion_allowed",
+        "blocked_reason",
+        "required_next_actions"
+      ],
+      "properties": {
+        "promotion_decision": {
+          "type": "string",
+          "enum": [
+            "blocked_review_required",
+            "blocked_validation_failed",
+            "rejected",
+            "approved_for_runtime_package_build",
+            "approved_for_world_transaction_build",
+            "approved_for_runtime_and_world_build"
+          ]
+        },
+        "promotion_allowed": { "type": "boolean" },
+        "blocked_reason": { "type": ["string", "null"] },
+        "required_next_actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "reviewed_artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/reviewed_artifact" }
+    },
+    "gate_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_staging_gate",
+        "local_ref_gate",
+        "media_gate",
+        "semantic_gate",
+        "human_review",
+        "simulation_gate"
+      ],
+      "properties": {
+        "source_staging_gate": { "$ref": "#/$defs/gate_status" },
+        "local_ref_gate": { "$ref": "#/$defs/gate_status" },
+        "media_gate": { "$ref": "#/$defs/gate_status" },
+        "semantic_gate": { "$ref": "#/$defs/gate_status" },
+        "human_review": { "$ref": "#/$defs/gate_status" },
+        "simulation_gate": { "$ref": "#/$defs/gate_status" }
+      }
+    },
+    "promotion_targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_kind",
+        "runtime_package_refs",
+        "world_transaction_refs",
+        "published_media_refs"
+      ],
+      "properties": {
+        "target_kind": {
+          "type": "string",
+          "enum": [
+            "none",
+            "runtime_package",
+            "world_transaction",
+            "runtime_and_world",
+            "published_media"
+          ]
+        },
+        "runtime_package_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/local_ref" }
+        },
+        "world_transaction_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/local_ref" }
+        },
+        "published_media_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/local_ref" }
+        }
+      }
+    },
+    "safety_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_call_count_by_report",
+        "world_mutation_count_by_report",
+        "runtime_mutation_count_by_report",
+        "stores_prompt_body",
+        "stores_provider_body",
+        "stores_secret",
+        "uses_temporary_url"
+      ],
+      "properties": {
+        "provider_call_count_by_report": { "type": "integer", "const": 0 },
+        "world_mutation_count_by_report": { "type": "integer", "const": 0 },
+        "runtime_mutation_count_by_report": { "type": "integer", "const": 0 },
+        "stores_prompt_body": { "type": "boolean", "const": false },
+        "stores_provider_body": { "type": "boolean", "const": false },
+        "stores_secret": { "type": "boolean", "const": false },
+        "uses_temporary_url": { "type": "boolean", "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "reviewed_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "staged_artifact_id",
+        "source_artifact_id",
+        "kind",
+        "path",
+        "review_result"
+      ],
+      "properties": {
+        "staged_artifact_id": { "type": "string", "minLength": 1 },
+        "source_artifact_id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "review_result": {
+          "type": "string",
+          "enum": [
+            "blocked_pending_review",
+            "approved",
+            "rejected",
+            "needs_repair"
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "gate_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "required_before_promotion"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "required_before_promotion": { "type": "boolean" },
+        "report_ref": { "type": ["string", "null"] },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "local_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

@@ -627,6 +627,35 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_ledger
 git diff --check
 ```
 
+### P1-B-13 ProviderArtifactPromotionReport 显式晋升报告
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json`
+- `tools/dev/validate_provider_artifact_promotion_report.py`
+- `docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json`
+
+当前结论：
+
+- 该层只表达 staging 之后的显式晋升/阻断结论，不执行 provider、不读取 `.env`、不修改 runtime package、published media 或世界状态。
+- 当前示例会因 `media_gate`、`semantic_gate`、`human_review` 仍为 `not_run` 而阻断晋升。
+- 后续如果报告批准候选继续前进，也只是允许后续构建器生成 runtime package / WorldStateDeltaTransaction；真正写入仍必须由对应构建器和 validator 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/demo/export_evidence.py
+python3 -m json.tool shared/schemas/provider_artifact_promotion_report.v0.1.schema.json >/tmp/provider_artifact_promotion_report.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_report_evidence
+git diff --check
+```
+
 ## 4. 当前 P0 任务
 
 ### P0-M 前端战斗地图视觉底座改造
