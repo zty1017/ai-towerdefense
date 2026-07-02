@@ -59,6 +59,7 @@ P2：本阶段明确不做
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了玩家侧 `painted_visual_layer` 与逻辑对齐 fallback `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 兼容多帧模式默认接入前端运行时；真实图生视频关键帧与实体 atlas PNG 仍未生成。
+- Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -215,6 +216,23 @@ P2：本阶段明确不做
 - `game_data/media/frontend_runtime_mock/atlas_frames/`
 - 前端 `mediaUrl()` 保持旧接口，但会按 battle elapsed time 从 atlas frames 中选择当前帧。
 - sprite 类角色生成 4 帧循环，静态图标 / 头像 / UI 卡保持 1 帧。
+
+### P1-A-2 Sprite cutout quality gate
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/audit_sprite_cutout_quality.py`
+- `examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 cutout quality 摘要和验证命令。
+
+当前结论：
+
+- frontend mock sprite：`needs_review`，2 / 4 个需复核。
+- runtime battle sprite：`needs_review`，3 / 7 个需复核。
+- 无硬失败；这些报告用于后续重生素材、重抠图和真实视频关键帧替换排序。
 
 ## 4. 当前 P0 任务
 

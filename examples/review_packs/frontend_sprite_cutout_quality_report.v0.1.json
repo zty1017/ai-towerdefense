@@ -1,0 +1,177 @@
+{
+  "report_version": "sprite_cutout_quality_report.v0.1",
+  "schema_version": "frontend_media_manifest.v0.1",
+  "media_pack_id": "frontend_mock_media_pack_v0_1",
+  "manifest_path": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+  "status": "needs_review",
+  "sprite_item_count": 4,
+  "passed_count": 2,
+  "needs_review_count": 2,
+  "failed_count": 0,
+  "warning_counts": {
+    "sprite_fragmented_visible_components": 2
+  },
+  "issue_counts": {},
+  "items": [
+    {
+      "asset_id": "asset_ash_burst_lantern",
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+      "status": "needs_review",
+      "issues": [],
+      "warnings": [
+        "sprite_fragmented_visible_components"
+      ],
+      "metrics": {
+        "width": 949,
+        "height": 949,
+        "alpha_visible_ratio": 0.2822,
+        "alpha_transparent_ratio": 0.7178,
+        "subject_bbox": {
+          "x": 192,
+          "y": 36,
+          "w": 564,
+          "h": 877
+        },
+        "subject_bbox_coverage": 0.5492,
+        "visible_component_count": 15,
+        "largest_visible_component_ratio": 0.9519,
+        "detached_visible_component_count": 14,
+        "detached_visible_ratio": 0.0481,
+        "interior_transparent_component_count": 2,
+        "interior_transparent_hole_ratio": 0.0008,
+        "max_interior_transparent_hole_ratio": 0.0004,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+      "status": "needs_review",
+      "issues": [],
+      "warnings": [
+        "sprite_fragmented_visible_components"
+      ],
+      "metrics": {
+        "width": 979,
+        "height": 979,
+        "alpha_visible_ratio": 0.2526,
+        "alpha_transparent_ratio": 0.7474,
+        "subject_bbox": {
+          "x": 210,
+          "y": 36,
+          "w": 558,
+          "h": 907
+        },
+        "subject_bbox_coverage": 0.5281,
+        "visible_component_count": 15,
+        "largest_visible_component_ratio": 0.977,
+        "detached_visible_component_count": 14,
+        "detached_visible_ratio": 0.023,
+        "interior_transparent_component_count": 7,
+        "interior_transparent_hole_ratio": 0.0038,
+        "max_interior_transparent_hole_ratio": 0.0011,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "asset_light_slow_tower_001",
+      "asset_name": "聚光迟滞塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 935,
+        "height": 935,
+        "alpha_visible_ratio": 0.2805,
+        "alpha_transparent_ratio": 0.7195,
+        "subject_bbox": {
+          "x": 230,
+          "y": 36,
+          "w": 475,
+          "h": 863
+        },
+        "subject_bbox_coverage": 0.4689,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 3,
+        "interior_transparent_hole_ratio": 0.0073,
+        "max_interior_transparent_hole_ratio": 0.0046,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "asset_wick_barrier_pylon",
+      "asset_name": "灯芯护幕桩",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 946,
+        "height": 946,
+        "alpha_visible_ratio": 0.2517,
+        "alpha_transparent_ratio": 0.7483,
+        "subject_bbox": {
+          "x": 227,
+          "y": 36,
+          "w": 491,
+          "h": 874
+        },
+        "subject_bbox_coverage": 0.4795,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 9,
+        "interior_transparent_hole_ratio": 0.0018,
+        "max_interior_transparent_hole_ratio": 0.0004,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    }
+  ],
+  "thresholds": {
+    "alpha_threshold": 8,
+    "min_largest_component_ratio": 0.94,
+    "review_hole_ratio": 0.015,
+    "review_max_hole_ratio": 0.006,
+    "severe_hole_ratio": 0.05
+  },
+  "notes": [
+    "This report is deterministic and offline.",
+    "needs_review does not block the MVP; it orders assets for repair/regeneration.",
+    "Large transparent holes may be intentional for fences/windows, so this report flags them for review instead of failing by default."
+  ]
+}
