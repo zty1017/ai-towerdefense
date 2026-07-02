@@ -20,6 +20,7 @@ from ..models import (
     WorldInstanceCreateRequest,
 )
 from ..services import (
+    campaign_router_service,
     frontend_mock_service,
     generation_scheduler_service,
     map_runtime_service,
@@ -321,6 +322,26 @@ def run_generation_schedule_dry_worker_step(
             metadata,
         ),
     )
+
+
+@router.get(
+    "/api/sessions/{session_id}/campaign-router",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_campaign_router(session_id: str) -> FrontendMockPayloadResponse:
+    """Return the thin campaign cursor, next node, and prefetch window."""
+    _require_session(session_id)
+    return _payload(session_id, campaign_router_service.get_campaign_router(session_id))
+
+
+@router.post(
+    "/api/sessions/{session_id}/campaign-router/prefetch-next",
+    response_model=FrontendMockPayloadResponse,
+)
+def prefetch_next_campaign_node(session_id: str) -> FrontendMockPayloadResponse:
+    """Ask the fixture-backed scheduler to dry-run one lookahead prefetch step."""
+    _require_session(session_id)
+    return _payload(session_id, campaign_router_service.prefetch_next(session_id))
 
 
 @router.get(
