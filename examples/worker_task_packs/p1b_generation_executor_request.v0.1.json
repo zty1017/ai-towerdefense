@@ -1,0 +1,86 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-15-generation-executor-request",
+  "title": "Generation Scheduler 执行请求包边界",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/p1b-executor-request",
+  "worktree": "/tmp/ai-td-task-p1b-executor-request",
+  "objective": "在 live executor guard 之后新增 GenerationExecutorRunRequest v0.1：从 waiting_review 队列项生成一个可校验、脱敏、review-only 的执行请求/计划包，并登记到 generation_artifact_ledger。该请求包只能描述后续真实 provider 执行器需要的对象引用、预算、授权门、输入引用和必过 gates，不得调用 provider、不得读取 .env、不得保存 prompt 正文或 provider 响应正文、不得写世界状态、不得激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md"
+  ],
+  "allowed_paths": [
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "shared/schemas/",
+    "tools/dev/",
+    "tools/demo/export_evidence.py",
+    "examples/generation_executor_requests/",
+    "examples/worker_task_packs/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/",
+    "backend/app/db.py",
+    "backend/app/api/sessions.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_executor_request.v0.1.json",
+    "python3 tools/dev/validate_generation_executor_run_request.py examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
+    "python3 -m json.tool shared/schemas/generation_executor_run_request.v0.1.schema.json",
+    "python3 -m py_compile tools/dev/validate_generation_executor_run_request.py tools/demo/export_evidence.py",
+    "python3 -m compileall backend",
+    "pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/generation_executor_request_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "新增请求包应作为真实 provider adapter 的统一入口前置产物，而不是 provider 输出。",
+    "请求包必须使用 input_refs / context_refs / source refs 表达输入，不能保存 prompt 正文。",
+    "API 建议命名为 prepare-executor-request 或同义的内部 worker endpoint，并保持玩家侧不可见。",
+    "ledger artifact_kind 建议使用 generation_executor_run_request。"
+  ]
+}

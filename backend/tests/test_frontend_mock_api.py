@@ -236,6 +236,12 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert worker_cache_rows == 1
 
+    pre_guard_executor_request = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+        json={"worker_id": "too-early", "note": "guard missing"},
+    )
+    assert pre_guard_executor_request.status_code == 409
+
     live_guard = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
@@ -271,6 +277,55 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ).fetchone()[0]
     assert provider_log_rows == 1
 
+    executor_request_response = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={"worker_id": "executor-request-test", "note": "prepare only"},
+        )
+    )
+    assert executor_request_response["worker_step"]["status"] == "prepared"
+    assert executor_request_response["worker_step"]["provider_call_count"] == 0
+    assert executor_request_response["worker_step"]["world_mutation_count"] == 0
+    executor_request = executor_request_response["generation_executor_run_request"]
+    assert executor_request["schema_version"] == "generation_executor_run_request.v0.1"
+    assert executor_request["source"]["guard_id"] == live_guard["live_executor_guard"][
+        "guard_id"
+    ]
+    assert executor_request["source"]["worker_id"] == "executor-request-test"
+    assert executor_request["authority"]["review_only"] is True
+    assert executor_request["authority"]["provider_call_allowed_by_request_builder"] is False
+    assert executor_request["authority"]["runtime_activation_allowed"] is False
+    assert executor_request["authority"]["world_mutation_allowed"] is False
+    assert executor_request["authority"]["player_visible"] is False
+    assert executor_request["provider_execution_intent"]["authorization_required"] is True
+    assert executor_request["provider_execution_intent"]["authorization_granted"] is False
+    assert executor_request["provider_execution_intent"][
+        "provider_call_performed_by_request_builder"
+    ] is False
+    assert executor_request["request_builder_safety"]["reads_env"] is False
+    assert executor_request["request_builder_safety"]["calls_provider"] is False
+    assert executor_request["request_builder_safety"]["writes_world_state"] is False
+    assert executor_request["request_builder_safety"]["activates_runtime"] is False
+    assert "explicit_user_authorization" in executor_request["required_gates"][
+        "before_provider_execution"
+    ]
+    assert "provider_output_envelope" in executor_request["required_gates"][
+        "after_provider_execution"
+    ]
+    assert "promotion_report" in executor_request["required_gates"]["before_activation"]
+    request_ledger = executor_request_response["generation_artifact_ledger"]
+    assert request_ledger["summary"]["item_count"] == 1
+    assert request_ledger["summary"]["artifact_kind_counts"][
+        "generation_executor_run_request"
+    ] == 1
+    assert request_ledger["summary"]["provider_call_count_by_this_request"] == 0
+    assert request_ledger["summary"]["world_mutation_count_by_this_request"] == 0
+    request_ledger_rows = raw_conn.execute(
+        "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
+        (sid,),
+    ).fetchone()[0]
+    assert request_ledger_rows == 1
+
     artifact_stage = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
@@ -301,7 +356,8 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "promotion_allowed"
     ] is False
     ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
-    assert ledger_summary["item_count"] == 3
+    assert ledger_summary["item_count"] == 4
+    assert ledger_summary["artifact_kind_counts"]["generation_executor_run_request"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_output_envelope"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_staging_manifest"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_promotion_report"] == 1
@@ -313,11 +369,12 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ledger = _payload(
         client.get(f"/api/sessions/{sid}/generation-schedule/artifact-ledger")
     )
-    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 3
-    assert len(ledger["generation_artifact_ledger"]["items"]) == 3
+    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 4
+    assert len(ledger["generation_artifact_ledger"]["items"]) == 4
     assert {
         item["artifact_kind"] for item in ledger["generation_artifact_ledger"]["items"]
     } == {
+        "generation_executor_run_request",
         "provider_output_envelope",
         "provider_artifact_staging_manifest",
         "provider_artifact_promotion_report",
@@ -326,7 +383,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
         "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
         (sid,),
     ).fetchone()[0]
-    assert ledger_rows == 3
+    assert ledger_rows == 4
 
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(

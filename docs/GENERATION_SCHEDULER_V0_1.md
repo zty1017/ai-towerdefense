@@ -289,6 +289,65 @@ explicit_provider_authorization_required
 
 这一步仍不读取 `.env`，不调用 provider，不写世界状态，不创建 runtime package，不激活 review-only 产物。它只是把“真实 provider 执行前必须有授权、产物 manifest、校验和晋升门”的形态接到 session 状态层和 evidence 中。
 
+## GenerationExecutorRunRequest
+
+`GenerationExecutorRunRequest v0.1` 是 live executor guard 之后、真实 provider adapter 之前的执行请求边界：
+
+```text
+shared/schemas/generation_executor_run_request.v0.1.schema.json
+tools/dev/validate_generation_executor_run_request.py
+examples/generation_executor_requests/p1b_generation_executor_run_request.example.json
+POST /api/sessions/{session_id}/generation-schedule/workers/prepare-executor-request
+```
+
+它的职责不是调用 provider，也不是保存 provider 输出，而是把一个已经停在 `waiting_review`、且已经写入 `generation_live_executor_guard.v0.1` 的队列项，整理成真实执行器后续可消费的最小请求包。
+
+请求包允许包含：
+
+- run / schedule item / object ref / latency class / guard id。
+- provider mode 与 provider profile 的脱敏执行意图。
+- attempt budget、fallback ref 和必经 gates。
+- `input_refs` / `context_refs` 形式的本地引用。
+- output intent、artifact policy 和 activation policy。
+
+请求包禁止包含：
+
+- prompt 正文。
+- provider 响应正文。
+- secret、token、API key。
+- 临时 provider URL 作为最终 refs。
+- runtime-ready 声明。
+- 世界状态写入或 runtime 激活行为。
+
+后端入口会把请求包摘要登记到 `generation_artifact_ledger`，artifact kind 为：
+
+```text
+generation_executor_run_request
+```
+
+它保持：
+
+```text
+provider_call_count = 0
+world_mutation_count = 0
+activation_allowed_count = 0
+authorization.granted = false
+```
+
+因此真实 executor 的最小顺序更新为：
+
+```text
+live executor guard
+  -> GenerationExecutorRunRequest
+  -> explicit authorization
+  -> provider adapter
+  -> ProviderOutputEnvelope
+  -> ProviderArtifactStagingManifest
+  -> validator / media gate / semantic gate
+  -> ProviderArtifactPromotionReport
+  -> runtime package or WorldStateDeltaTransaction
+```
+
 ## ProviderOutputEnvelope
 
 真实 provider 执行器的下一层落点是 `ProviderOutputEnvelope v0.1`：
@@ -319,6 +378,7 @@ docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md
 
 ```text
 live executor guard
+  -> GenerationExecutorRunRequest
   -> explicit authorization
   -> provider adapter
   -> ProviderOutputEnvelope

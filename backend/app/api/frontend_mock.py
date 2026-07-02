@@ -371,6 +371,27 @@ def run_generation_schedule_live_executor_guard(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/prepare-executor-request",
+    response_model=FrontendMockPayloadResponse,
+)
+def prepare_generation_executor_run_request(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Prepare a guarded, review-only executor request without provider calls."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.prepare_generation_executor_run_request(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts",
     response_model=FrontendMockPayloadResponse,
 )

@@ -705,6 +705,42 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promot
 git diff --check
 ```
 
+### P1-B-15 GenerationExecutorRunRequest 执行请求包边界
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/generation_executor_run_request.v0.1.schema.json`
+- `examples/generation_executor_requests/p1b_generation_executor_run_request.example.json`
+- `tools/dev/validate_generation_executor_run_request.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/prepare-executor-request`
+- `backend/app/services/generation_scheduler_service.py` 中从 `waiting_review` 队列项和 live executor guard 生成执行请求包的逻辑。
+- `generation_artifact_ledger` 现在可登记 `generation_executor_run_request` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 GenerationExecutorRunRequest 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_generation_executor_request.v0.1.json`
+
+当前结论：
+
+- 该层位于 live executor guard 之后、真实 provider adapter 之前。
+- 请求包只保存 source refs、input refs、context refs、attempt budget、provider mode/profile、授权门和必过 gates。
+- 该层不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 如果队列项尚未经过 live executor guard，后端会以 409 阻断 `prepare-executor-request`。
+- 后续真实执行器必须消费该请求包，再在显式授权后生成 `ProviderOutputEnvelope`、`ProviderArtifactStagingManifest` 和 `ProviderArtifactPromotionReport`，不能直接把 provider 输出写入 runtime 或 WorldStateDelta。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_executor_request.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/generation_executor_requests/p1b_generation_executor_run_request.example.json
+python3 -m json.tool shared/schemas/generation_executor_run_request.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_generation_executor_run_request.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/generation_executor_request_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

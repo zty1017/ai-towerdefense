@@ -36,6 +36,12 @@ _PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
     _REPO_ROOT
     / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json"
 )
+_MVP_CONTEXT_PACKAGE_EXAMPLE = (
+    _REPO_ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
+)
+_MVP_CGOP_EXAMPLE = (
+    _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+)
 _TOOLS_DEV_DIR = _REPO_ROOT / "tools" / "dev"
 if str(_TOOLS_DEV_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DEV_DIR))
@@ -47,6 +53,9 @@ from validate_provider_artifact_promotion_report import (  # noqa: E402
     validate_provider_artifact_promotion_report,
 )
 from validate_provider_output_envelope import validate_provider_output_envelope  # noqa: E402
+from validate_generation_executor_run_request import (  # noqa: E402
+    validate_generation_executor_run_request,
+)
 
 
 class GenerationSchedulerFixtureNotFoundError(LookupError):
@@ -72,6 +81,13 @@ def _rel(path: Path) -> str:
 
 def _new_generation_schedule_run_id() -> str:
     return f"gsrun_{secrets.token_urlsafe(12)}"
+
+
+def _safe_id_fragment(value: Any) -> str:
+    return "".join(
+        ch if ch.isalnum() or ch in {"_", "-"} else "_"
+        for ch in str(value or "")
+    )
 
 
 def _generation_schedule_refs() -> dict[str, str]:
@@ -699,11 +715,14 @@ def _load_next_generation_item_row_by_status(
 def _provider_guard_id(payload: dict[str, Any], attempt_count: int) -> str:
     run_id = str(payload.get("run_id") or "")
     schedule_item_id = str(payload.get("schedule_item_id") or "")
-    safe_item_id = "".join(
-        ch if ch.isalnum() or ch in {"_", "-"} else "_"
-        for ch in schedule_item_id
-    )
+    safe_item_id = _safe_id_fragment(schedule_item_id)
     return f"pguard_{run_id}_{safe_item_id}_{attempt_count:02d}"
+
+
+def _generation_executor_request_id(payload: dict[str, Any], attempt_count: int) -> str:
+    run_id = str(payload.get("run_id") or "")
+    schedule_item_id = str(payload.get("schedule_item_id") or "")
+    return f"gexec_{run_id}_{_safe_id_fragment(schedule_item_id)}_{attempt_count:02d}"
 
 
 def _build_live_executor_guard_payload(
@@ -855,6 +874,225 @@ def _compact_provider_output_envelope(envelope: dict[str, Any]) -> dict[str, Any
             "blocked_reason": activation.get("blocked_reason"),
             "required_next_gates": activation.get("required_next_gates", []),
         },
+    }
+
+
+def _infer_executor_result_kind(object_kind: Any) -> str:
+    lowered = str(object_kind or "").lower()
+    if any(token in lowered for token in ("image", "sprite", "visual", "map")):
+        return "image_candidate"
+    if any(token in lowered for token in ("video", "animation")):
+        return "video_candidate"
+    if any(token in lowered for token in ("story", "narrative", "quest", "dialogue")):
+        return "text_candidate"
+    if any(token in lowered for token in ("json", "package", "manifest", "cgop")):
+        return "json_candidate"
+    return "mixed_candidate"
+
+
+def _build_generation_executor_run_request_payload(
+    queue_payload: dict[str, Any],
+    guard_payload: dict[str, Any],
+    metadata: dict[str, Any] | None,
+    ts: str,
+) -> dict[str, Any]:
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    provider_policy = queue_payload.get("provider_policy")
+    if not isinstance(provider_policy, dict):
+        provider_policy = {}
+    attempt_count = int(queue_payload.get("attempt_count", 0))
+    max_attempts = int(queue_payload.get("max_attempts", 0))
+    latency_class = str(queue_payload.get("latency_class") or "unknown")
+    object_kind = str(queue_payload.get("object_kind") or "unknown")
+    worker_id = str(safe_metadata.get("worker_id") or "generation_executor_request_preparer")
+    return {
+        "schema_version": "generation_executor_run_request.v0.1",
+        "request_id": _generation_executor_request_id(queue_payload, attempt_count),
+        "created_at": ts,
+        "source": {
+            "session_id": queue_payload.get("session_id"),
+            "run_id": queue_payload.get("run_id"),
+            "schedule_item_id": queue_payload.get("schedule_item_id"),
+            "object_kind": object_kind,
+            "object_ref": queue_payload.get("object_ref"),
+            "latency_class": latency_class,
+            "guard_id": guard_payload.get("guard_id"),
+            "worker_id": worker_id,
+            "note": safe_metadata.get("note"),
+        },
+        "authority": {
+            "visibility": "internal_evidence",
+            "review_only": True,
+            "provider_call_allowed_by_request_builder": False,
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "provider_execution_intent": {
+            "status": "prepared_pending_explicit_authorization",
+            "provider_mode": str(
+                guard_payload.get("provider_mode")
+                or provider_policy.get("mode")
+                or "unknown"
+            ),
+            "provider_profile": str(
+                guard_payload.get("provider_profile")
+                or provider_policy.get("profile")
+                or "unknown"
+            ),
+            "authorization_required": True,
+            "authorization_granted": False,
+            "authorization_ref": None,
+            "provider_call_performed_by_request_builder": False,
+        },
+        "execution_budget": {
+            "attempt_count": attempt_count,
+            "max_attempts": max_attempts,
+            "remaining_attempts": max(0, max_attempts - attempt_count),
+            "latency_class": latency_class,
+            "fallback_ref": queue_payload.get("fallback_ref"),
+        },
+        "input_refs": [
+            {
+                "ref_id": "generation_schedule_plan",
+                "kind": "schedule_plan",
+                "path": _rel(_GENERATION_SCHEDULE_PLAN),
+                "notes": [
+                    "Use only scheduler item structure and refs; prompt body storage is forbidden."
+                ],
+            },
+            {
+                "ref_id": "generation_schedule_run_report",
+                "kind": "schedule_run_report",
+                "path": _rel(_GENERATION_SCHEDULE_RUN_REPORT),
+            },
+        ],
+        "context_refs": [
+            {
+                "ref_id": "context_package",
+                "kind": "context_package",
+                "path": _rel(_MVP_CONTEXT_PACKAGE_EXAMPLE),
+            },
+            {
+                "ref_id": "target_cgop",
+                "kind": "compiled_game_object_package",
+                "path": _rel(_MVP_CGOP_EXAMPLE),
+            },
+        ],
+        "requested_output": {
+            "intent_class": f"prepare_review_only_{object_kind}_candidate",
+            "result_kind": _infer_executor_result_kind(object_kind),
+            "artifact_policy": "review_only_local_refs_required",
+            "activation_policy": "promotion_required_before_runtime_or_world_state",
+            "notes": [
+                "Future executor must write ProviderOutputEnvelope and local staging refs before promotion."
+            ],
+        },
+        "required_gates": {
+            "before_provider_execution": [
+                "explicit_user_authorization",
+                "provider_adapter_selected",
+                "sanitized_prompt_or_request_materialized_outside_request_record",
+            ],
+            "after_provider_execution": [
+                "provider_output_envelope",
+                "local_artifact_staging_manifest",
+                "schema_or_media_validation",
+            ],
+            "before_activation": [
+                "semantic_gate",
+                "human_review",
+                "promotion_report",
+                "runtime_package_or_world_delta_transaction_builder",
+            ],
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "download_then_local_ref_only",
+            "executor_result_storage": "provider_output_envelope_redacted_only",
+        },
+        "request_builder_safety": {
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+        },
+    }
+
+
+def _compact_generation_executor_run_request(request: dict[str, Any]) -> dict[str, Any]:
+    source = request.get("source", {})
+    if not isinstance(source, dict):
+        source = {}
+    intent = request.get("provider_execution_intent", {})
+    if not isinstance(intent, dict):
+        intent = {}
+    budget = request.get("execution_budget", {})
+    if not isinstance(budget, dict):
+        budget = {}
+    output = request.get("requested_output", {})
+    if not isinstance(output, dict):
+        output = {}
+    gates = request.get("required_gates", {})
+    if not isinstance(gates, dict):
+        gates = {}
+    return {
+        "schema_version": request.get("schema_version"),
+        "request_id": request.get("request_id"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "latency_class": source.get("latency_class"),
+            "guard_id": source.get("guard_id"),
+            "worker_id": source.get("worker_id"),
+        },
+        "provider_execution_intent": {
+            "status": intent.get("status"),
+            "provider_mode": intent.get("provider_mode"),
+            "provider_profile": intent.get("provider_profile"),
+            "authorization_required": intent.get("authorization_required"),
+            "authorization_granted": intent.get("authorization_granted"),
+            "provider_call_performed_by_request_builder": intent.get(
+                "provider_call_performed_by_request_builder"
+            ),
+        },
+        "execution_budget": {
+            "attempt_count": budget.get("attempt_count"),
+            "max_attempts": budget.get("max_attempts"),
+            "remaining_attempts": budget.get("remaining_attempts"),
+            "fallback_ref": budget.get("fallback_ref"),
+        },
+        "input_ref_count": len(request.get("input_refs", []))
+        if isinstance(request.get("input_refs"), list)
+        else 0,
+        "context_ref_count": len(request.get("context_refs", []))
+        if isinstance(request.get("context_refs"), list)
+        else 0,
+        "requested_output": {
+            "intent_class": output.get("intent_class"),
+            "result_kind": output.get("result_kind"),
+            "artifact_policy": output.get("artifact_policy"),
+            "activation_policy": output.get("activation_policy"),
+        },
+        "required_gate_counts": {
+            "before_provider_execution": len(gates.get("before_provider_execution", []))
+            if isinstance(gates.get("before_provider_execution"), list)
+            else 0,
+            "after_provider_execution": len(gates.get("after_provider_execution", []))
+            if isinstance(gates.get("after_provider_execution"), list)
+            else 0,
+            "before_activation": len(gates.get("before_activation", []))
+            if isinstance(gates.get("before_activation"), list)
+            else 0,
+        },
+        "authority": request.get("authority", {}),
+        "request_builder_safety": request.get("request_builder_safety", {}),
     }
 
 
@@ -1223,6 +1461,95 @@ def _run_live_executor_guard(
     return guard_payload
 
 
+def _find_guard_payload_for_queue_payload(
+    session_id: str,
+    queue_payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    guard = queue_payload.get("live_executor_guard")
+    if not isinstance(guard, dict):
+        return None
+    guard_id = guard.get("guard_id")
+    if not guard_id:
+        return None
+    logs = _load_provider_guard_logs(session_id, str(queue_payload.get("run_id") or ""))
+    for log in logs:
+        if log.get("guard_id") == guard_id:
+            return log
+    return None
+
+
+def _prepare_generation_executor_run_request(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    row = _load_next_generation_item_row_by_status(session_id, "waiting_review")
+    if row is None:
+        return None
+    payload = row["payload"]
+    guard_payload = _find_guard_payload_for_queue_payload(session_id, payload)
+    if guard_payload is None:
+        raise InvalidQueueTransitionError(
+            "live executor guard is required before preparing executor request"
+        )
+    ts = now_iso()
+    request_payload = _build_generation_executor_run_request_payload(
+        payload,
+        guard_payload,
+        metadata,
+        ts,
+    )
+    request_errors = validate_generation_executor_run_request(request_payload)
+    if request_errors:
+        raise ValueError(
+            "generation executor request failed validation: "
+            + "; ".join(request_errors)
+        )
+    transition_entry = {
+        "transition": "prepare_executor_request",
+        "from_status": row["status"],
+        "to_status": row["status"],
+        "worker_id": request_payload["source"]["worker_id"],
+        "note": request_payload["source"].get("note"),
+        "created_at": ts,
+        "provider_call_performed": False,
+        "world_mutation_performed": False,
+    }
+    transitions = payload.setdefault("transitions", [])
+    if isinstance(transitions, list):
+        transitions.append(transition_entry)
+    payload["executor_request"] = {
+        "request_id": request_payload["request_id"],
+        "status": request_payload["provider_execution_intent"]["status"],
+        "created_at": ts,
+    }
+    payload["updated_at"] = ts
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE generation_schedule_queue_items "
+            "SET payload = ?, updated_at = ? WHERE id = ?",
+            (_dump_payload(payload), ts, row["id"]),
+        )
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    ledger_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="generation_executor_run_request",
+        source_id=str(request_payload["request_id"]),
+        status="prepared_pending_explicit_authorization",
+        compact=_compact_generation_executor_run_request(request_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(payload.get("schedule_item_id") or ""),
+        worker_id=str(request_payload["source"]["worker_id"]),
+        note=(
+            str(request_payload["source"].get("note"))
+            if request_payload["source"].get("note") is not None
+            else None
+        ),
+    )
+    _upsert_generation_artifact_ledger(ledger_entry)
+    return request_payload
+
+
 def _run_generation_dry_worker_step(
     session_id: str, metadata: dict[str, Any] | None = None
 ) -> dict[str, Any] | None:
@@ -1415,6 +1742,31 @@ def run_generation_schedule_live_executor_guard(
         "generation_schedule_queue": _compact_generation_queue(queue_items),
         "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
         "provider_guard_logs": _compact_provider_guard_logs(guard_logs),
+    }
+
+
+def prepare_generation_executor_run_request(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    request_payload = _prepare_generation_executor_run_request(session_id, metadata)
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    queue_items = _load_generation_queue_items(session_id, run_id)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "idle" if request_payload is None else "prepared",
+            "worker_mode": "generation_executor_request_preparer",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+        },
+        "generation_executor_run_request": request_payload,
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
     }
 
 
