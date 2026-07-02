@@ -195,6 +195,23 @@ examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json
 
 修复计划把 `needs_review` 项转成优先级、建议动作、重生成提示词约束和验收命令。它不直接修改素材，只作为后续后台重生 / 重抠图任务的输入。
 
+修复计划之后可以生成审查候选：
+
+```text
+media.build_sprite_repair_candidates
+```
+
+对应产物：
+
+```text
+examples/review_packs/frontend_sprite_repair_candidates.v0.1.json
+examples/review_packs/frontend_runtime_sprite_repair_candidates.v0.1.json
+examples/review_packs/frontend_sprite_repair_candidate_quality_report.v0.1.json
+examples/review_packs/frontend_runtime_sprite_repair_candidate_quality_report.v0.1.json
+```
+
+候选包只写入 `review_candidate_media`，不会替换 `processed` manifest、atlas 或前端默认资源。候选通过几何质量门后仍需人工/视觉审查，尤其是 `fill_interior_holes` 可能把本该中空的结构填实，只能作为“确定性修复是否可行”的证据。
+
 ## 5. 后续增强顺序
 
 ### 5.1 立即可做

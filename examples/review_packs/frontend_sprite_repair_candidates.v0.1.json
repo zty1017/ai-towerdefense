@@ -1,0 +1,90 @@
+{
+  "schema_version": "sprite_repair_candidate_manifest.v0.1",
+  "candidate_pack_id": "frontend_sprite_repair_candidates_v0_1",
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "source_repair_plan": "examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json",
+  "source_repair_plan_status": "ready",
+  "media_layer": "review_candidate_media",
+  "promotion_policy": "Candidates must pass quality audit and manual/vision review before replacing processed runtime media.",
+  "items": [
+    {
+      "candidate_id": "sprite_repair_001_asset_ash_burst_lantern_tower_sprite.keep_largest_component",
+      "source_task_id": "sprite_repair_001_asset_ash_burst_lantern_tower_sprite",
+      "source_repair_plan": "examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json",
+      "asset_id": "asset_ash_burst_lantern",
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "priority": "P1",
+      "source_file": "game_data/media/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+      "local_path": "game_data/media/sprite_repair_candidates/frontend_mock/asset_ash_burst_lantern__tower_sprite__keep_largest_component.png",
+      "width": 949,
+      "height": 949,
+      "sha256": "b1b521e2dafe99c519afd6079aa63b813d3fb3f093ce0fd847d48b35720a2efb",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "strategy": "keep_largest_component",
+      "recommended_action": "rerun_postprocess_component_cleanup",
+      "source_warnings": [
+        "sprite_fragmented_visible_components"
+      ],
+      "source_metrics": {
+        "visible_component_count": 15,
+        "largest_visible_component_ratio": 0.9519,
+        "interior_transparent_hole_ratio": 0.0008,
+        "max_interior_transparent_hole_ratio": 0.0004
+      },
+      "review_policy": "review_only_not_runtime"
+    },
+    {
+      "candidate_id": "sprite_repair_002_asset_echo_prism_relay_tower_sprite.keep_largest_component",
+      "source_task_id": "sprite_repair_002_asset_echo_prism_relay_tower_sprite",
+      "source_repair_plan": "examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json",
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "priority": "P2",
+      "source_file": "game_data/media/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+      "local_path": "game_data/media/sprite_repair_candidates/frontend_mock/asset_echo_prism_relay__tower_sprite__keep_largest_component.png",
+      "width": 979,
+      "height": 979,
+      "sha256": "90d613a2a386907b33dcca6bdcdb88fdfd8f1b5b5a5c33abc7eb3fcddd192f3a",
+      "anchor": {
+        "preset": "bottom_center",
+        "x": 0.5,
+        "y": 1.0
+      },
+      "strategy": "keep_largest_component",
+      "recommended_action": "rerun_postprocess_component_cleanup",
+      "source_warnings": [
+        "sprite_fragmented_visible_components"
+      ],
+      "source_metrics": {
+        "visible_component_count": 15,
+        "largest_visible_component_ratio": 0.977,
+        "interior_transparent_hole_ratio": 0.0038,
+        "max_interior_transparent_hole_ratio": 0.0011
+      },
+      "review_policy": "review_only_not_runtime"
+    }
+  ],
+  "summary": {
+    "candidate_count": 2,
+    "asset_count": 2,
+    "priority_counts": {
+      "P1": 1,
+      "P2": 1
+    },
+    "strategy_counts": {
+      "keep_largest_component": 2
+    }
+  },
+  "notes": [
+    "This manifest is review-only. It does not alter frontend media manifests or runtime atlases.",
+    "Regenerated candidates should be compared visually before promotion."
+  ]
+}

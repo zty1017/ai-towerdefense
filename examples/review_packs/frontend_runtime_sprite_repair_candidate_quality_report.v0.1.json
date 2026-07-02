@@ -1,0 +1,135 @@
+{
+  "report_version": "sprite_cutout_quality_report.v0.1",
+  "schema_version": "sprite_repair_candidate_manifest.v0.1",
+  "media_pack_id": null,
+  "manifest_path": "examples/review_packs/frontend_runtime_sprite_repair_candidates.v0.1.json",
+  "status": "passed",
+  "sprite_item_count": 3,
+  "passed_count": 3,
+  "needs_review_count": 0,
+  "failed_count": 0,
+  "warning_counts": {},
+  "issue_counts": {},
+  "items": [
+    {
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/objective_station_core__objective_sprite__fill_interior_holes.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 841,
+        "height": 841,
+        "alpha_visible_ratio": 0.3402,
+        "alpha_transparent_ratio": 0.6598,
+        "subject_bbox": {
+          "x": 187,
+          "y": 36,
+          "w": 467,
+          "h": 769
+        },
+        "subject_bbox_coverage": 0.5078,
+        "visible_component_count": 4,
+        "largest_visible_component_ratio": 0.992,
+        "detached_visible_component_count": 3,
+        "detached_visible_ratio": 0.008,
+        "interior_transparent_component_count": 0,
+        "interior_transparent_hole_ratio": 0.0,
+        "max_interior_transparent_hole_ratio": 0.0,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "file": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/objective_signal_beacon__objective_sprite__fill_interior_holes.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 816,
+        "height": 816,
+        "alpha_visible_ratio": 0.1514,
+        "alpha_transparent_ratio": 0.8486,
+        "subject_bbox": {
+          "x": 230,
+          "y": 36,
+          "w": 355,
+          "h": 744
+        },
+        "subject_bbox_coverage": 0.3967,
+        "visible_component_count": 6,
+        "largest_visible_component_ratio": 0.9598,
+        "detached_visible_component_count": 5,
+        "detached_visible_ratio": 0.0402,
+        "interior_transparent_component_count": 0,
+        "interior_transparent_hole_ratio": 0.0,
+        "max_interior_transparent_hole_ratio": 0.0,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "asset_type": "basic_defense",
+      "media_role": "defense_sprite",
+      "file": "game_data/media/sprite_repair_candidates/frontend_runtime_mock/defense_basic_lantern_barricade__defense_sprite__fill_interior_holes.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 661,
+        "height": 661,
+        "alpha_visible_ratio": 0.388,
+        "alpha_transparent_ratio": 0.612,
+        "subject_bbox": {
+          "x": 36,
+          "y": 36,
+          "w": 589,
+          "h": 554
+        },
+        "subject_bbox_coverage": 0.7468,
+        "visible_component_count": 2,
+        "largest_visible_component_ratio": 0.9975,
+        "detached_visible_component_count": 1,
+        "detached_visible_ratio": 0.0025,
+        "interior_transparent_component_count": 0,
+        "interior_transparent_hole_ratio": 0.0,
+        "max_interior_transparent_hole_ratio": 0.0,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    }
+  ],
+  "thresholds": {
+    "alpha_threshold": 8,
+    "min_largest_component_ratio": 0.94,
+    "review_hole_ratio": 0.015,
+    "review_max_hole_ratio": 0.006,
+    "severe_hole_ratio": 0.05
+  },
+  "notes": [
+    "This report is deterministic and offline.",
+    "needs_review does not block the MVP; it orders assets for repair/regeneration.",
+    "Large transparent holes may be intentional for fences/windows, so this report flags them for review instead of failing by default."
+  ]
+}

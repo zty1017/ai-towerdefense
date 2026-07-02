@@ -61,6 +61,7 @@ P2：本阶段明确不做
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 兼容多帧模式默认接入前端运行时；真实图生视频关键帧与实体 atlas PNG 仍未生成。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
+- Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -251,6 +252,25 @@ P2：本阶段明确不做
 - frontend mock repair plan：2 个任务，优先级分布 `P1: 1, P2: 1`。
 - runtime repair plan：3 个任务，优先级分布 `P1: 2, P2: 1`。
 - 这些任务是下一轮素材重生 / 重抠图 / 视频关键帧替换的输入，不直接改动玩家侧资产。
+
+### P1-A-4 Sprite repair candidates
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_sprite_repair_candidates.py`
+- `examples/review_packs/frontend_sprite_repair_candidates.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_repair_candidates.v0.1.json`
+- `examples/review_packs/frontend_sprite_repair_candidate_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_repair_candidate_quality_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入候选包摘要和验证命令。
+
+当前结论：
+
+- frontend repair candidates：2 个候选，几何质量门 `passed`，未晋升 runtime。
+- runtime repair candidates：3 个候选，几何质量门 `passed`，未替换正式战斗素材。
+- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此候选只能作为审查证据；下一轮应优先走真实重生成 / 更强分割 / 人工确认。
 
 ## 4. 当前 P0 任务
 
