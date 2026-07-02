@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import map_runtime_service
+from . import battle_content_service, map_runtime_service
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -35,12 +35,6 @@ _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.
 
 # All run artifacts land here, never inside the repo.
 _RUNS_ROOT = Path("/tmp/ai_compiled_td_backend_runs")
-
-_BATTLE_CONFIG_BY_NODE = {
-    "gray_lantern_station": "game_data/demo/first_battle_config.json",
-    "lamp_wick_store": "game_data/demo/wick_store_pressure_battle_config.json",
-    "old_signal_tower": "game_data/demo/old_signal_tower_pressure_battle_config.json",
-}
 
 _CORE_ARTIFACT_REFS = {
     "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
@@ -193,7 +187,7 @@ def _compiler_metadata_for_proposal(
         "context_package": {
             "worldbook_id": "long_night_lanterns",
             "node_id": node_id,
-            "battle_config_ref": _BATTLE_CONFIG_BY_NODE.get(node_id),
+            "battle_config_ref": battle_content_service.battle_config_ref(node_id),
             "map_runtime_package_ref": map_runtime_service.map_runtime_package_ref(
                 node_id
             ),

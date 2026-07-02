@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import frontend_media_service, generation_scheduler_service, map_runtime_service
+from . import (
+    battle_content_service,
+    frontend_media_service,
+    generation_scheduler_service,
+    map_runtime_service,
+)
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -25,7 +30,6 @@ _OPENING = _REPO_ROOT / "content/worldbooks/long_night_lanterns/opening.json"
 _INITIAL_RUN_STATE = _REPO_ROOT / "examples/run_world_states/demo_initial.run_world_state.json"
 _INITIAL_MAP = _REPO_ROOT / "game_data/demo/initial_map.json"
 _FIRST_CRISIS_NODE = _REPO_ROOT / "game_data/demo/first_crisis_node.json"
-_FIRST_BATTLE_CONFIG = _REPO_ROOT / "game_data/demo/first_battle_config.json"
 _FIRST_BATTLE_DELTA = (
     _REPO_ROOT / "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json"
 )
@@ -45,18 +49,6 @@ _FACT_ENTRY_EXAMPLE = (
 _CGOP_EXAMPLE = (
     _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
 )
-
-_BATTLE_CONFIG_BY_NODE = {
-    "gray_lantern_station": _FIRST_BATTLE_CONFIG,
-    "lamp_wick_store": _REPO_ROOT / "game_data/demo/wick_store_pressure_battle_config.json",
-    "old_signal_tower": _REPO_ROOT / "game_data/demo/old_signal_tower_pressure_battle_config.json",
-}
-
-_RUNTIME_PACKAGE_BY_NODE = {
-    "gray_lantern_station": _REPO_ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
-    "lamp_wick_store": _REPO_ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
-    "old_signal_tower": _REPO_ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
-}
 
 class FixtureNotFoundError(LookupError):
     """Raised when a mock fixture cannot satisfy the requested node."""
@@ -324,11 +316,11 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
 
 
 def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
-    path = _BATTLE_CONFIG_BY_NODE.get(node_id)
-    if path is None or not path.exists():
-        raise FixtureNotFoundError(node_id)
+    try:
+        config = battle_content_service.load_battle_config(node_id)
+    except battle_content_service.BattleContentNotFoundError as exc:
+        raise FixtureNotFoundError(node_id) from exc
     pack = _load_frontend_pack()
-    config = _load_json(path)
     map_runtime_package = map_runtime_service.load_map_runtime_package_optional(node_id)
     return {
         "session_id": session_id,
@@ -344,15 +336,16 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
 
 
 def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
-    path = _RUNTIME_PACKAGE_BY_NODE.get(node_id)
-    if path is None or not path.exists():
-        raise FixtureNotFoundError(node_id)
+    try:
+        runtime_package = battle_content_service.load_runtime_package(node_id)
+    except battle_content_service.BattleContentNotFoundError as exc:
+        raise FixtureNotFoundError(node_id) from exc
     pack = _load_frontend_pack()
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
-        "runtime_package": _load_json(path),
+        "runtime_package": runtime_package,
         "map_runtime_package": map_runtime_service.load_map_runtime_package_optional(node_id),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         **frontend_media_service.frontend_media_payload(),
@@ -367,7 +360,7 @@ def record_battle_result(
 ) -> dict[str, Any]:
     if node_id != "gray_lantern_station":
         raise FixtureNotFoundError(node_id)
-    battle_config = _load_json(_FIRST_BATTLE_CONFIG)
+    battle_config = battle_content_service.load_battle_config(node_id)
     delta = _load_json(_FIRST_BATTLE_DELTA)
     transaction = _load_json(_FIRST_BATTLE_TRANSACTION)
     previous_state = _load_campaign_state(session_id)
