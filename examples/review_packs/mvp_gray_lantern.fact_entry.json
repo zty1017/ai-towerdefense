@@ -1,0 +1,25 @@
+{
+  "schema_version": "fact_entry.v0.1",
+  "fact_id": "fact_gray_lantern_first_battle_pressure",
+  "fact_kind": "runtime_fact",
+  "scope": "node",
+  "subject": "gray_lantern_station",
+  "predicate": "is_under_first_tide_pressure",
+  "content": "灰灯驿站在首轮影潮中暴露出侧翼压力，后续研发和剧情推进应优先服务防线稳定。",
+  "source": "battle_result",
+  "confidence": "observed",
+  "visibility": "ai_visible",
+  "activation_rules": {
+    "active_when": ["stage_01_gray_lantern_first_defense_complete"],
+    "deactivate_when": []
+  },
+  "commit_state": "candidate",
+  "submission_policy": {
+    "can_mutate_run_world_state": false,
+    "commit_requires_world_state_delta": true,
+    "allowed_context_use": "context_only_until_committed"
+  },
+  "expires_at": null,
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "source_tx_id": null
+}

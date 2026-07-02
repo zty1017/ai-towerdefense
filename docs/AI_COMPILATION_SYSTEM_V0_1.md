@@ -500,7 +500,8 @@ draft
 
 当前 v0.1 对应关系：
 
-- `CGOP` 是可安装对象包的概念事实源；具体字段仍需后续 schema 固化。
+- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 已有字段级 schema 草案和统一 validator；它们冻结 v0.1 边界，但不要求旧包一次性全部迁移。
+- `CGOP` 是可安装对象包的概念事实源；字段级落地文件是 `compiled_game_object_package.v0.1.schema.json`。
 - `locked_manifest.v0.1`、`runtime_package.v0.1`、`frontend_mock_pack.v0.1` 和各类 review pack 是当前已落地的包形态。
 - `MediaAtlasManifest v0.1` 承接已发布媒体，当前已经包含确定性 frame sequence 与实体 `atlas_sheets`；真实图生视频关键帧后续只替换 frames 来源，不改变运行时只读 published media 的原则。
 - `MapCompilePackage v0.2` 记录地图编译证据，`MapRuntimePackage v0.1` 是前端战斗地图运行时事实源；地图是否可复用进入模板池，应由 `certified` 语义表达。
@@ -840,8 +841,8 @@ v0.1 不做：
 
 建议顺序：
 
-1. 写 `ContextPackage v0.1`、`FactEntry v0.1`、`CGOP v0.1` 的 schema 草案，并为现有 `WorldStateDelta v0.1` 补事务 metadata / 映射说明；不要替换现有 delta schema。
-2. 把现有 Research Job / WorldStateDelta / frontend mock 包对齐到这些字段，并统一机器可读 validation report。
+1. 为现有 `WorldStateDelta v0.1` 补事务 metadata / 映射说明；不要替换现有 delta schema。
+2. 把现有 Research Job / WorldStateDelta / frontend mock 包对齐到 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 字段，并统一机器可读 validation report。
 3. 实现 live campaign router 与 Generation Scheduler 后台执行器，让预生成、缓存和 fallback 真正进入游玩流程。
 4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas。
 5. 推进 AI 生成 painted map 的受控图像管线，但仍以 `MapRuntimePackage` 的路径、塔位、碰撞和目标为运行时事实源。
