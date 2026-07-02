@@ -355,7 +355,10 @@
         "width": 1280,
         "height": 720,
         "sha256": "00c3eccda31d9f60804a9c42a2b63274c2575bf906123c9e921e5d49365f7882",
-        "authority": "reference_only"
+        "authority": "reference_only",
+        "review_status": "reference_only",
+        "player_visible_quality": "not_applicable",
+        "logic_alignment_status": "not_applicable"
       },
       {
         "artifact_id": "artifact_battle_control_sketch",
@@ -365,7 +368,10 @@
         "width": 1280,
         "height": 720,
         "sha256": "eab4b291dff77ef747796610d274f020e7311d904484e724e12e68d43ec9f915",
-        "authority": "reference_only"
+        "authority": "reference_only",
+        "review_status": "reference_only",
+        "player_visible_quality": "not_applicable",
+        "logic_alignment_status": "not_applicable"
       },
       {
         "artifact_id": "artifact_battle_reference_board",
@@ -375,7 +381,10 @@
         "width": 1280,
         "height": 720,
         "sha256": "6597608bf4b2dd882369786062855b0ffb49bfe4e79ff51a285210dc36c39adc",
-        "authority": "reference_only"
+        "authority": "reference_only",
+        "review_status": "reference_only",
+        "player_visible_quality": "not_applicable",
+        "logic_alignment_status": "not_applicable"
       }
     ],
     "model_instruction_boundary": [
@@ -390,12 +399,15 @@
     "artifact": {
       "artifact_id": "artifact_painted_visual_layer",
       "role": "painted_visual_layer",
-      "url": "/assets/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png",
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_painted_candidate_agnes_02.png",
-      "width": 1312,
-      "height": 736,
-      "sha256": "62fee3fe24845c4dacc9232e208fe7a724b4b3d36b0a405aa2d26e98ca234787",
-      "authority": "published_visual_layer"
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "width": 1672,
+      "height": 941,
+      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "authority": "published_visual_layer",
+      "review_status": "passed_player_visual_quality",
+      "player_visible_quality": "passed",
+      "logic_alignment_status": "needs_overlay_correction"
     },
     "visual_constraints": [
       "player-facing map only",
@@ -408,8 +420,8 @@
   "alignment_layer": {
     "authority": "runtime_overlay_alignment",
     "reference_size": {
-      "width": 1312,
-      "height": 736
+      "width": 1672,
+      "height": 941
     },
     "projection": "pseudo3d_oblique",
     "coordinate_mapping": "map_runtime_cell_to_visual_plane",
@@ -425,8 +437,8 @@
           "y": 4
         },
         "expected_pixel": {
-          "x": 1026,
-          "y": 566
+          "x": 1256,
+          "y": 695
         }
       },
       {
@@ -437,8 +449,8 @@
           "y": 2
         },
         "expected_pixel": {
-          "x": 631,
-          "y": 259
+          "x": 808,
+          "y": 345
         }
       },
       {
@@ -449,8 +461,8 @@
           "y": 6
         },
         "expected_pixel": {
-          "x": 237,
-          "y": 259
+          "x": 360,
+          "y": 345
         }
       },
       {
@@ -461,8 +473,8 @@
           "y": 6
         },
         "expected_pixel": {
-          "x": 188,
-          "y": 233
+          "x": 304,
+          "y": 316
         }
       },
       {
@@ -473,8 +485,8 @@
           "y": 3
         },
         "expected_pixel": {
-          "x": 1075,
-          "y": 541
+          "x": 1312,
+          "y": 666
         }
       },
       {
@@ -485,8 +497,8 @@
           "y": 5
         },
         "expected_pixel": {
-          "x": 976,
-          "y": 592
+          "x": 1200,
+          "y": 724
         }
       },
       {
@@ -497,8 +509,8 @@
           "y": 3
         },
         "expected_pixel": {
-          "x": 1026,
-          "y": 515
+          "x": 1256,
+          "y": 637
         }
       },
       {
@@ -509,8 +521,8 @@
           "y": 5
         },
         "expected_pixel": {
-          "x": 927,
-          "y": 566
+          "x": 1144,
+          "y": 695
         }
       }
     ]
@@ -532,6 +544,11 @@
       "summary": "A player-facing painted background exists."
     },
     {
+      "gate_id": "player_visual_quality_passed",
+      "status": "passed",
+      "summary": "The selected player-facing map layer passed visual quality review."
+    },
+    {
       "gate_id": "published_visual_logic_aligned",
       "status": "passed",
       "summary": "The published background is generated from the same logical projection as the runtime overlay."
@@ -549,7 +566,7 @@
   ],
   "export_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
-    "frontend_default_visual_role": "battle_runtime_background"
+    "frontend_default_visual_role": "painted_visual_layer"
   },
   "validation_report": {
     "gate_status": "warning",
@@ -570,6 +587,11 @@
         "gate_id": "published_visual_layer_present",
         "status": "passed",
         "summary": "A player-facing painted background exists."
+      },
+      {
+        "gate_id": "player_visual_quality_passed",
+        "status": "passed",
+        "summary": "The selected player-facing map layer passed visual quality review."
       },
       {
         "gate_id": "published_visual_logic_aligned",

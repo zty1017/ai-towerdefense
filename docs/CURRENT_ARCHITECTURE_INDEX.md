@@ -127,7 +127,7 @@ Last updated: 2026-07-02
 processed PNG 已可用于前端 mock。
 animation seed 已可用于后续图生视频。
 frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
-MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路径、塔位、目标、出生点和本地视觉层引用。
+MapRuntimePackage v0.1 已作为三张 MVP 战斗节点运行时地图包入口，包含路径、塔位、目标、出生点和带质量状态的本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 MediaAtlasManifest v0.1 已作为 spritesheet 多帧入口接入前端、后端 mock API 和 demo evidence；实体 atlas PNG 已由确定性 frame sequence 打包生成，真实图生视频关键帧仍未生成。
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
@@ -178,7 +178,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest。
 - MapRuntimePackage v0.1：首战节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用。
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
-- 地图视觉层：`painted_visual_layer` 已作为玩家默认发布底图，`battle_runtime_background` 作为逻辑对齐 fallback，控制图和参考图只用于 debug / evidence。
+- 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator 与 evidence 摘要，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；Research Job 与 frontend mock evidence 已开始引用这些核心对象。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
