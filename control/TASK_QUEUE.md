@@ -56,261 +56,157 @@ P2：本阶段明确不做
 
 当前缺口：
 
-- 战斗和大地图视觉仍需明显游戏化，不能停留在调试图形或突兀棋盘感。
-- 证据导出脚本仍未独立成 `summary.md / evidence.json / index.html`。
-- 多个战斗节点还缺 MapRuntimePackage。
+- 地图已经有 `MapRuntimePackage` 和玩家侧 `battle_runtime_background`，但“地图作为可编译对象”的上游合同仍偏弱：逻辑层、控制图、玩家可见渲染层、坐标回配、质量门还没有统一包。
+- 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布。
 - 视频帧、spritesheet、atlas 尚未默认接入前端运行时。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
-## 3. P0 任务
+## 3. 已完成的 P0 基线
 
-### P0-A 前端战斗画面与大地图视觉打磨
+以下任务已经合入 `develop`，后续 worker 不应重复实现；如需修改，应另开精确修补任务。
 
-任务类型：实现 / 视觉
+### P0-A 前端战斗画面与大地图视觉初版
 
-建议分支：
+状态：已完成。
 
-```text
-task/frontend-visual-polish
-```
+已落地：
 
-目标：
-
-```text
-让 MVP 前端第一眼更像完整塔防游戏画面，而不是调试面板或孤立几何图。
-```
-
-允许修改：
-
-- `frontend/`
-- `game_data/media/`
-- `examples/map_runtime_packages/`
-- `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
-
-关键要求：
-
-- 战斗主画面占据页面视觉中心，地图应是自然地形画面上的路径 / 塔位 / 目标叠层。
-- 不再使用突兀的平行四边形板块作为主地图表达。
-- 支持拖拽防御件到可放置塔位，保留点击放置 fallback。
-- 塔位、路径、目标、出生点必须来自 MapRuntimePackage。
-- UI 可以有调试辅助开关，但默认玩家视图应沉浸式。
-- 大地图需要包含主城、战斗节点、资源 / 存储节点、未知黑暗区域、剧情 / NPC 标记。
-
-验收命令：
-
-```bash
-node --check frontend/app.js
-python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
-```
-
-验收要点：
-
-- 首屏视觉能支撑录屏演示。
-- 中部战斗区域不显得像临时调试画布。
-- 拖拽放置不会破坏现有 MapRuntimePackage 逻辑。
+- 战斗主画面默认使用 `battle_runtime_background` 作为玩家可见发布底图。
+- `battle_control_sketch` 与 `battle_reference_board` 被降级为控制 / 参考层，不应进入默认玩家体验。
+- 前端根据 `MapRuntimePackage` 叠加路径、塔位、目标、出生点和拖拽部署预览。
 
 ### P0-B 演示证据导出脚本
 
-任务类型：实现 / 演示工程
+状态：已完成。
 
-建议分支：
+已落地：
 
-```text
-task/demo-evidence-export
-```
-
-目标：
-
-```text
-从当前 fixture、runtime package、编译日志和审查报告中导出可录屏展示的证据包。
-```
-
-允许修改：
-
-- `tools/demo/`
-- `docs/`
-- `examples/`
-- `backend/tests/`
-
-产物建议：
-
-```text
-artifacts/demo_evidence/summary.md
-artifacts/demo_evidence/evidence.json
-artifacts/demo_evidence/index.html
-```
-
-关键要求：
-
-- 不导出 API key、secret、raw prompt、provider 原始响应。
-- 能展示 AI 编译链路存在：输入上下文、DAG 节点、校验结果、runtime package、前端可用资产。
-- 作为 Studio 证据替代物，不强制做复杂前端 Studio 页面。
-
-验收命令：
-
-```bash
-python3 tools/demo/export_evidence.py --output-dir /tmp/ai_td_demo_evidence
-python3 -m json.tool /tmp/ai_td_demo_evidence/evidence.json
-```
+- `tools/demo/export_evidence.py`
+- 可导出 `summary.md`、`evidence.json`、`index.html`。
+- 覆盖 frontend mock pack、runtime package、全部 map runtime package、media manifest、审查包和验证命令。
 
 ### P0-C 继续补齐 MapRuntimePackage 节点覆盖
 
-任务类型：实现 / 内容管线
+状态：已完成。
 
-建议分支：
-
-```text
-task/map-runtime-package-more-nodes
-```
-
-目标：
-
-```text
-为 MVP 大地图上的后续战斗节点生成 MapRuntimePackage，使前端可按统一合同加载地图运行时信息。
-```
-
-允许修改：
-
-- `examples/map_runtime_packages/`
-- `tools/asset_graph/`
-- `backend/`
-- `backend/tests/`
-- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
-
-节点目标：
+已落地：
 
 - `mvp_first_battle`
 - `lamp_wick_store`
 - `old_signal_tower`
 
-关键要求：
-
-- 每个可战斗节点返回非空 MapRuntimePackage。
-- path routes、build slots、objectives、spawn points 均需结构化。
-- visual_layers 只能引用本地发布资产或受控静态路径。
-- 校验器继续递归拒绝 provider、raw_prompt、secret、unreviewed_content。
-
-验收命令：
-
-```bash
-python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
-python3 -m compileall tools/asset_graph backend
-```
-
 ### P0-D 研发 / 编译接口与 CGOP 元数据对齐
 
-任务类型：实现 / 架构对齐
+状态：已完成。
 
-建议分支：
+已落地：
 
-```text
-task/research-cgop-runtime-alignment
-```
-
-目标：
-
-```text
-让 research proposal / job / sample 输出更接近 AI 可编译游戏对象统一模型，并能引用 MapRuntimePackage、ContextPackage、WorldStateDeltaTransaction 等当前概念。
-```
-
-允许修改：
-
-- `backend/`
-- `shared/`
-- `tools/asset_graph/`
-- `examples/`
-- `docs/FRONTEND_MOCK_API_V0_1.md`
-
-关键要求：
-
-- 玩家侧仍是世界内研发 / 试作 / 样品语言。
-- 内部对象需要能表达 compiled object 类型、上下文来源、约束、校验状态和 runtime package 引用。
-- 编译失败要区分世界内失败、校验失败、provider / 调度失败、实现错误。
-- 技术错误不得直接污染玩家体验。
-
-验收命令：
-
-```bash
-python3 -m compileall backend tools
-```
-
-若测试依赖已可用，再运行：
-
-```bash
-pytest backend/tests
-```
+- Research proposal / job 返回内部 `compiler_metadata`。
+- 玩家侧仍使用世界内研发 / 试作 / 样品语言。
+- 内部证据可表达 compiled object、context package、validation、runtime refs 和失败分类。
 
 ### P0-E 测试依赖与本地验证环境整理
 
-任务类型：工程治理
+状态：已完成。
+
+已落地：
+
+- `tools/dev/check_test_env.py`
+- README 与 handoff 文档区分无依赖检查和完整测试检查。
+
+### P0-F 前端 API / 静态 fallback 适配层整理
+
+状态：已完成。
+
+已落地：
+
+- 前端加载逻辑集中到数据适配层。
+- API 优先，静态 fixture 作为本地 fallback。
+- `MapRuntimePackage` 是战斗地图运行时事实源。
+
+## 4. 当前 P0 任务
+
+### P0-G MapCompilePackage v0.2
+
+任务类型：实现 / 编译合同 / 地图管线
 
 建议分支：
 
 ```text
-task/test-env-hardening
+task/map-compile-package-v02
 ```
 
 目标：
 
 ```text
-让当前后端测试、工具测试和前端语法检查能被新 worker 稳定复现。
+把“地图也是可编译对象”从讨论落成可校验合同：逻辑地图 -> 控制层 -> 玩家可见渲染层 -> 坐标回配 -> 质量门 -> MapRuntimePackage。
 ```
 
 允许修改：
 
-- `requirements.txt`
-- `pyproject.toml`
-- `README.md`
-- `docs/MVP_REVIEW_HANDOFF_V0_1.md`
-- `backend/tests/`
-- `tools/`
+- `shared/schemas/`
+- `tools/asset_graph/`
+- `tools/media/`
+- `examples/map_runtime_packages/`
+- `examples/map_compile_packages/`
+- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
 
 关键要求：
 
-- 明确 FastAPI、pytest 等测试依赖安装方式。
-- 不强制 worker 修改全局 Python 环境。
-- README 中区分“无依赖可运行检查”和“完整测试检查”。
+- 新增 `MapCompilePackage v0.2` 或等价包，表达地图编译过程而不是只表达运行时结果。
+- 必须区分：
+  - `logical_map_layer`：路径、塔位、目标、出生点、资源点、黑暗区域等玩法真相。
+  - `control_layer`：给图像模型 / 人类审查的 composition sketch、path mask、slot mask 等。
+  - `painted_visual_layer`：玩家可见发布底图候选。
+  - `alignment_layer`：像素坐标与逻辑坐标回配、误差阈值、叠层修正策略。
+  - `quality_gates`：禁止 UI、文字、敌人、塔、棋盘感、突兀边框；检查路径可读性、塔位可读性、世界观一致性。
+- 图片不能反向决定玩法逻辑；最终战斗仍以 `MapRuntimePackage` 为运行时事实源。
+- 禁止将 provider、raw_prompt、secret、unreviewed_content 写入发布包。
 
 验收命令：
 
 ```bash
-python3 -m compileall backend tools
-node --check frontend/app.js
+python3 -m py_compile tools/asset_graph/map_runtime_package.py tools/asset_graph/validate_map_runtime_package.py
+python3 tools/asset_graph/validate_map_runtime_package.py examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+python3 -m json.tool examples/map_compile_packages/mvp_first_battle.map_compile_package.json
 ```
 
-完整环境下再运行：
+验收要点：
 
-```bash
-pytest backend/tests
-```
+- worker 需要说明 `MapCompilePackage` 和 `MapRuntimePackage` 的边界。
+- 必须能解释为什么旧的低质量控制 / 参考图不会污染玩家侧。
 
-### P0-F 前端 API / 静态 fallback 适配层整理
+### P0-H 前端地图表现质量防线
 
-任务类型：实现 / 简化
+任务类型：实现 / 前端体验 / 防回退
 
 建议分支：
 
 ```text
-task/frontend-data-adapter
+task/frontend-map-quality-guard
 ```
 
 目标：
 
 ```text
-把前端加载后端 API、静态 fixture、MapRuntimePackage fallback 的逻辑集中，减少散落兼容代码。
+确保默认玩家视图永远优先使用发布底图和结构化叠层，不再把控制图 / 参考图 / 棋盘图当成正式地图画面。
 ```
 
 允许修改：
 
 - `frontend/`
-- `docs/FRONTEND_MOCK_API_V0_1.md`
+- `frontend/README.md`
+- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
+- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
 
 关键要求：
 
-- 优先后端 mock API。
-- 静态文件只作为本地无后端演示 fallback。
-- MapRuntimePackage 是战斗地图运行时事实源。
-- 不引入构建步骤，除非另开技术栈迁移任务。
+- 默认画面以 `battle_runtime_background` 或后续 `painted_visual_layer` 为主。
+- `battle_control_sketch`、`battle_reference_board` 只能在 debug / evidence 模式显示。
+- 战斗地图主体必须占据页面中部视觉重心，不应像一个小面板或孤立几何块。
+- 塔位、路径、目标、出生点仍来自 `MapRuntimePackage`。
+- 保留拖拽部署；点击放置只能作为 fallback。
+- 不引入构建步骤。
 
 验收命令：
 
@@ -318,7 +214,52 @@ task/frontend-data-adapter
 node --check frontend/app.js
 ```
 
-## 4. P1 任务
+验收要点：
+
+- 首屏录屏不能出现明显“调试图当游戏图”的问题。
+- worker 需要汇报无法进行浏览器截图时的替代验证。
+
+### P0-I main 文档受控同步准备
+
+任务类型：治理 / 同步计划
+
+建议分支：
+
+```text
+task/main-sync-plan
+```
+
+目标：
+
+```text
+生成一份从 develop 同步到 main 前的中文清单，明确哪些文档/实现应同步，哪些用户草稿不能覆盖。
+```
+
+允许修改：
+
+- `docs/`
+- `control/`
+
+禁止修改：
+
+- `main` 工作区。
+- `.env`
+- 用户未提交草稿。
+
+关键要求：
+
+- 只在 `develop` 派生的 task worktree 中准备同步清单。
+- 不直接合并到 `main`。
+- 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 时的处理策略。
+- 清单应服务下一次人工 / 主代理同步窗口。
+
+验收命令：
+
+```bash
+git diff --check
+```
+
+## 5. P1 任务
 
 ### P1-A 视频帧 / spritesheet / atlas 默认接入
 
@@ -335,21 +276,7 @@ node --check frontend/app.js
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
 - 前端优先消费 atlas，静态 PNG 作为 fallback。
 
-### P1-B Map Visual Reference 生成管线
-
-目标：
-
-```text
-实现逻辑地图 -> 控制图 / composition sketch -> 地图底图生成 -> 结构化路线与塔位回写的开发者管线。
-```
-
-要点：
-
-- 图像模型只负责自然游戏地图渲染。
-- 路线、塔位、目标以结构化数据为准。
-- 需要支持世界书风格、地形、威胁状态和黑暗区域。
-
-### P1-C 世界演化预生成与调度
+### P1-B 世界演化预生成与调度
 
 目标：
 
@@ -363,7 +290,7 @@ node --check frontend/app.js
 - 引入预算、失败重试、降级 fixture。
 - 世界演化必须服务玩法和进度，不自由失控生长。
 
-### P1-D 更多可编译对象覆盖
+### P1-C 更多可编译对象覆盖
 
 目标：
 
@@ -376,6 +303,21 @@ node --check frontend/app.js
 - 所有对象先进入统一 CGOP / package manifest 模型。
 - 不允许直接自由写 runtime。
 - 每类对象定义最小可玩字段和审查门禁。
+
+### P1-D Map Visual Reference 生成管线升级
+
+目标：
+
+```text
+把地图参考图升级为可选的开发者管线：逻辑地图 -> 控制图 / composition sketch -> 地图底图生成 -> 结构化路线与塔位回写。
+```
+
+要点：
+
+- 图像模型只负责自然游戏地图渲染。
+- 路线、塔位、目标以结构化数据为准。
+- 需要支持世界书风格、地形、威胁状态和黑暗区域。
+- 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
@@ -391,7 +333,7 @@ node --check frontend/app.js
 - 可被 IDE 侧代理读取完整仓库后执行。
 - 不要求本 Codex 受控通道直接外发仓库上下文。
 
-## 5. P2 暂不做
+## 6. P2 暂不做
 
 本阶段明确不做：
 
@@ -403,20 +345,16 @@ node --check frontend/app.js
 - 完整长期存档和跨局世界继承。
 - 复杂后台管理系统。
 
-## 6. 推荐执行顺序
+## 7. 推荐执行顺序
 
 建议当前批次按以下顺序推进：
 
-1. `P0-A` 前端战斗画面与大地图视觉打磨。
-2. `P0-B` 演示证据导出脚本。
-3. `P0-C` 补齐更多节点 MapRuntimePackage。
-4. `P0-D` 研发 / 编译接口与 CGOP 元数据对齐。
-5. `P0-E` 测试依赖与本地验证环境整理。
-6. `P0-F` 前端 API / 静态 fallback 适配层整理。
+1. `P0-G` MapCompilePackage v0.2。
+2. `P0-H` 前端地图表现质量防线。
+3. `P0-I` main 文档受控同步准备。
 
 若需要并行，优先组合：
 
-- `P0-A` 与 `P0-B` 可并行。
-- `P0-C` 与 `P0-D` 可并行，但合并时先合 `P0-C`，再让 `P0-D` 引用新的地图包事实。
-- `P0-E` 可独立并行，但不得大规模重构业务代码。
-
+- `P0-G` 与 `P0-I` 可并行。
+- `P0-H` 依赖当前 `MapRuntimePackage`，但不必等待 `P0-G` 完成。
+- `P1-A` 视频帧 / atlas 默认接入应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。
