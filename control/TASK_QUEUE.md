@@ -73,6 +73,7 @@ P2：本阶段明确不做
 - `MapTopologyControlSketchPack v0.1` 已把三张 MapRuntimePackage 确定性转成无文字、无 UI、无敌人、无塔的控制构图 PNG，以及带开发者标签的 SVG 审查图；该包只用于 compile-time reference / evidence，不进入玩家 runtime。下一步应基于控制图做受控图像重生、局部清理或视觉模型审查，再重新走 candidate / alignment / overlay / visual / promotion gates。
 - `MapControlledRegenerationRequestPack v0.1` 已把控制构图 PNG、v0.2 prompt repair、负面约束、目标候选目录和 review gates 编译成三张地图的 reference-image request。下一步真实 provider 调用、人工 paintover 或局部清理应消费该 request pack，避免继续从散落 prompt 或截图临时拼输入。
 - `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider。下一步可以接支持参考图的 provider adapter，或先运行 text-fallback live 候选并重新走完整 review gates。
+- `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
@@ -548,7 +549,7 @@ P2：本阶段明确不做
 - 必须消费 `MapCandidateOverlayReview v0.1` 的 normalized PNG 与 SVG overlay；下一步应做人眼或视觉模型 overlay 复核，确认路径、塔位、目标与画面语义不冲突，再通过独立 promotion report 晋升。
 - 必须消费 `MapCandidateOverlayVisualReview v0.1` 的拒绝晋升结论；下一步任务应生成 layout reconciliation plan，明确每个节点是重投影 runtime coordinates，还是重新生成符合现有 topology 的地图。
 - 必须消费 `MapLayoutReconciliationPlan v0.1` 的节点级动作；下一步可拆为 `RuntimeMapPatchCandidate` 和 `TopologyConstrainedMapPromptPack` 两条任务，前者只产出 review-only runtime patch，后者只产出更严格的地图重生 prompt / control brief。
-- 必须消费 `RuntimeMapPatchCandidates v0.1`、`TopologyConstrainedMapPromptPack v0.1/v0.2`、`MapTopologyControlSketchPack v0.1`、`MapControlledRegenerationRequestPack v0.1` 和 `ControlledMapCandidateGenerationRun v0.1`。下一步候选任务：对 runtime patch candidate 重新生成 overlay PNG 复核；接入支持参考图的真实图像 provider，或用 `generate_controlled_map_candidates.py --provider-mode text-fallback --live` 生成 review-only 候选，并重新走 candidate / alignment / overlay / visual review gates。
+- 必须消费 `RuntimeMapPatchCandidates v0.1`、`TopologyConstrainedMapPromptPack v0.1/v0.2`、`MapTopologyControlSketchPack v0.1`、`MapControlledRegenerationRequestPack v0.1`、`ControlledMapCandidateGenerationRun v0.1` 和 `ControlledMapCandidateReview v0.1`。下一步候选任务：对 runtime patch candidate 重新生成 overlay PNG 复核；接入支持参考图的真实图像 provider，或用 `generate_controlled_map_candidates.py --provider-mode text-fallback --live` 生成 review-only 候选，并重新走 candidate / alignment / overlay / visual review gates。
 - 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
 
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
