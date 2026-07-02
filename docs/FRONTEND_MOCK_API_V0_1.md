@@ -112,7 +112,7 @@ GET /api/sessions/{session_id}/frontend-mock-pack
 - `runtime_art_atlas_manifest`: 战斗运行时美术 atlas 清单，当前为 `spritesheet` 多帧 frame sequence + 实体 spritesheet
 - `runtime_art_pipeline_status`
 
-`ai_compile_core_artifacts` 是 Studio / evidence 辅助数据，不是玩家默认界面文案。它用于证明前端 mock 包已经开始对齐统一 AI 编译对象模型；实际玩家流程仍读取 `pack`、runtime package、地图包和媒体清单。其中 `world_delta_transaction` 只解释世界状态提交语义，不替代 `WorldStateDelta.operations[]`。后端加载入口是 `backend/app/services/ai_core_artifact_service.py`。Research proposal / job metadata 也通过同一服务生成 ContextPackage、FactEntry、CGOP 原生快照，并继续保留 `core_artifact_refs` 兼容字段。
+`ai_compile_core_artifacts` 和 `pack.core_artifacts` 都是 Studio / evidence 辅助数据，不是玩家默认界面文案。它们用于证明前端 mock 包已经开始对齐统一 AI 编译对象模型；实际玩家流程仍读取 `pack.assets`、runtime package、地图包和媒体清单。其中 `world_delta_transaction` 只解释世界状态提交语义，不替代 `WorldStateDelta.operations[]`。后端加载入口是 `backend/app/services/ai_core_artifact_service.py`。Research proposal / job metadata 也通过同一服务生成 ContextPackage、FactEntry、CGOP 原生快照，并继续保留 `core_artifact_refs` 兼容字段。
 
 ### 获取开场
 

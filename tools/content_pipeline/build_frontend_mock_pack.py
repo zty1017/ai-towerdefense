@@ -40,6 +40,12 @@ RUNTIME_PACKAGE_PATHS = [
     ROOT / "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
     ROOT / "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
 ]
+CONTEXT_PACKAGE_PATH = ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
+FACT_ENTRY_PATH = ROOT / "examples/review_packs/mvp_gray_lantern.fact_entry.json"
+CGOP_PATH = ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+WORLD_DELTA_TRANSACTION_PATH = (
+    ROOT / "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+)
 
 
 def load_json(path: Path) -> Any:
@@ -67,6 +73,23 @@ def rel(path: Path) -> str:
         return str(path.relative_to(ROOT))
     except ValueError:
         return str(path)
+
+
+def core_artifacts_payload() -> dict[str, Any]:
+    return {
+        "status": "frontend_pack_review_only_core_artifacts_ready",
+        "refs": {
+            "context_package": rel(CONTEXT_PACKAGE_PATH),
+            "fact_entry": rel(FACT_ENTRY_PATH),
+            "compiled_game_object_package": rel(CGOP_PATH),
+            "world_delta_transaction": rel(WORLD_DELTA_TRANSACTION_PATH),
+        },
+        "context_package": load_json(CONTEXT_PACKAGE_PATH),
+        "fact_entry": load_json(FACT_ENTRY_PATH),
+        "compiled_game_object_package": load_json(CGOP_PATH),
+        "world_delta_transaction": load_json(WORLD_DELTA_TRANSACTION_PATH),
+        "review_only": True,
+    }
 
 
 def with_effect_catalog_defaults(recipe: dict[str, Any], effect_catalog: dict[str, Any]) -> dict[str, Any]:
@@ -568,6 +591,10 @@ def build_pack(created_at: str) -> dict[str, Any]:
             "review_packs": [
                 rel(MULTISTAGE_CONTENT_PACK_PATH),
                 rel(MULTISTAGE_STAGE_CANDIDATE_PACK_PATH),
+                rel(CONTEXT_PACKAGE_PATH),
+                rel(FACT_ENTRY_PATH),
+                rel(CGOP_PATH),
+                rel(WORLD_DELTA_TRANSACTION_PATH),
             ],
             "runtime_packages": [summary["package_file"] for summary in runtime_packages],
             "source_boundary": {
@@ -582,6 +609,7 @@ def build_pack(created_at: str) -> dict[str, Any]:
                 "final_state_file": as_obj(multistage_content_pack.get("summary")).get("final_state_file"),
             },
         },
+        "core_artifacts": core_artifacts_payload(),
         "effect_catalog": effect_catalog,
         "world": {
             "display_name": worldbook.get("display_name"),

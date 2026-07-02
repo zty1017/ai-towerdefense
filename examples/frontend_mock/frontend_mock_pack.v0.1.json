@@ -57,7 +57,11 @@
   "content_sources": {
     "review_packs": [
       "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
-      "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+      "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "examples/review_packs/mvp_first_battle.context_package.json",
+      "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+      "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+      "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
     ],
     "runtime_packages": [
       "examples/runtime_packages/mvp_demo.runtime_package.json",
@@ -75,6 +79,431 @@
       "stage_count": 3,
       "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
     }
+  },
+  "core_artifacts": {
+    "status": "frontend_pack_review_only_core_artifacts_ready",
+    "refs": {
+      "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
+      "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+      "compiled_game_object_package": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+      "world_delta_transaction": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+    },
+    "context_package": {
+      "schema_version": "context_package.v0.1",
+      "context_package_id": "ctx_mvp_first_battle_asset_compile",
+      "run_id": "demo_run_001",
+      "worldbook_id": "long_night_lanterns",
+      "run_world_version": "turn_001_demo_snapshot",
+      "purpose": "asset_compile",
+      "scope": "node.gray_lantern_station",
+      "authority": {
+        "advisory_only": true,
+        "can_mutate_world": false,
+        "can_publish_runtime": false,
+        "requires_downstream_validation": true
+      },
+      "blocks": [
+        {
+          "block_id": "worldbook_boundary",
+          "block_kind": "worldbook",
+          "source_ref": "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+          "trust_level": "developer",
+          "visibility": "ai_visible",
+          "priority": 100,
+          "token_budget": 900,
+          "trim_policy": "summarize",
+          "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "summary": "长夜灯火是本局启动模板，所有生成内容必须服务塔防玩法与当前节点。"
+        },
+        {
+          "block_id": "current_battle_node",
+          "block_kind": "map_context",
+          "source_ref": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+          "trust_level": "system",
+          "visibility": "ai_visible",
+          "priority": 92,
+          "token_budget": 700,
+          "trim_policy": "keep_full",
+          "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "summary": "首战节点的路径、塔位、保护目标与出生点来自 MapRuntimePackage。"
+        },
+        {
+          "block_id": "player_workshop_intent",
+          "block_kind": "player_input",
+          "source_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+          "trust_level": "player_claim",
+          "visibility": "ai_visible",
+          "priority": 75,
+          "token_budget": 300,
+          "trim_policy": "keep_full",
+          "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "summary": "玩家正在现场试作一个能缓解首战压力的临时防御构想。"
+        }
+      ],
+      "policy_refs": [
+        {
+          "ref_id": "ai_compilation_boundary",
+          "ref_kind": "document",
+          "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+        },
+        {
+          "ref_id": "world_delta_schema",
+          "ref_kind": "schema",
+          "path": "shared/schemas/world_state_delta.v0.1.schema.json"
+        }
+      ],
+      "source_refs": [
+        {
+          "ref_id": "map_runtime_package",
+          "ref_kind": "map_package",
+          "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+        },
+        {
+          "ref_id": "run_state",
+          "ref_kind": "world_state",
+          "path": "examples/run_world_states/demo_initial.run_world_state.json"
+        }
+      ],
+      "token_budget": {
+        "max_tokens": 8192,
+        "reserved_response_tokens": 2048
+      },
+      "insertion_plan": [
+        {
+          "slot": "system_context",
+          "block_ids": [
+            "worldbook_boundary"
+          ]
+        },
+        {
+          "slot": "runtime_context",
+          "block_ids": [
+            "current_battle_node"
+          ]
+        },
+        {
+          "slot": "user_context",
+          "block_ids": [
+            "player_workshop_intent"
+          ]
+        }
+      ],
+      "redaction_report": {
+        "redacted_block_count": 0,
+        "dropped_block_count": 0,
+        "notes": [
+          "示例包只保留引用与摘要，不携带隐藏运行日志。"
+        ]
+      },
+      "created_at": "2026-07-02T00:00:00+08:00",
+      "hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "fact_entry": {
+      "schema_version": "fact_entry.v0.1",
+      "fact_id": "fact_gray_lantern_first_battle_pressure",
+      "fact_kind": "runtime_fact",
+      "scope": "node",
+      "subject": "gray_lantern_station",
+      "predicate": "is_under_first_tide_pressure",
+      "content": "灰灯驿站在首轮影潮中暴露出侧翼压力，后续研发和剧情推进应优先服务防线稳定。",
+      "source": "battle_result",
+      "confidence": "observed",
+      "visibility": "ai_visible",
+      "activation_rules": {
+        "active_when": [
+          "stage_01_gray_lantern_first_defense_complete"
+        ],
+        "deactivate_when": []
+      },
+      "commit_state": "candidate",
+      "submission_policy": {
+        "can_mutate_run_world_state": false,
+        "commit_requires_world_state_delta": true,
+        "allowed_context_use": "context_only_until_committed"
+      },
+      "expires_at": null,
+      "created_at": "2026-07-02T00:00:00+08:00",
+      "source_tx_id": null
+    },
+    "compiled_game_object_package": {
+      "schema_version": "compiled_game_object_package.v0.1",
+      "package_id": "cgop_mvp_light_snare_sample",
+      "object_type": "trap",
+      "content_version": "0.1.0",
+      "artifact_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "worldbook_id": "long_night_lanterns",
+      "run_world_version": "turn_001_demo_snapshot",
+      "lifecycle_state": "reviewed",
+      "authority": {
+        "compile_actor": "player",
+        "can_lock": false,
+        "can_publish": false,
+        "direct_world_mutation_allowed": false,
+        "runtime_activation_requires_review": true
+      },
+      "source_intent": {
+        "intent_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+        "summary": "玩家希望把临时材料转化成能延缓影潮的现场试作品。"
+      },
+      "context_package_id": "ctx_mvp_first_battle_asset_compile",
+      "source_refs": [
+        {
+          "ref_id": "context_package",
+          "ref_kind": "review_pack",
+          "path": "examples/review_packs/mvp_first_battle.context_package.json"
+        },
+        {
+          "ref_id": "locked_manifest",
+          "ref_kind": "locked_manifest",
+          "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+        }
+      ],
+      "policy_refs": [
+        {
+          "ref_id": "ai_compilation_boundary",
+          "ref_kind": "document",
+          "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+        }
+      ],
+      "execution_trace_ref": null,
+      "world_context": {
+        "scope": "node.gray_lantern_station",
+        "required_fact_ids": [
+          "fact_gray_lantern_first_battle_pressure"
+        ],
+        "forbidden_world_mutations": [
+          "base_worldbook_rewrite",
+          "direct_resource_change",
+          "unreviewed_npc_creation"
+        ]
+      },
+      "semantic_spec": {
+        "player_visible_name_hint": "临时缚光索",
+        "world_fit": "以余灯材料短时束缚影潮脚步，适合教学关中途送达。"
+      },
+      "gameplay_spec": {
+        "role": "temporary_trap_sample",
+        "allowed_effects": [
+          "slow",
+          "short_stun"
+        ],
+        "deployment_limit": 2
+      },
+      "runtime_contract": {
+        "runtime_loadable": false,
+        "load_surface": "review_only",
+        "manifest_refs": [
+          {
+            "ref_id": "locked_manifest",
+            "ref_kind": "locked_manifest",
+            "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+          }
+        ],
+        "world_delta_refs": [],
+        "state_instance_policy": "blueprint_only"
+      },
+      "media_presentation": {
+        "media_manifest_ref": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+        "atlas_manifest_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json"
+      },
+      "dependencies": [
+        "map_runtime_package:mvp_first_battle"
+      ],
+      "conflicts": [],
+      "required_capabilities": [
+        "battle_runtime.trap_deploy",
+        "effect_catalog.ring_pulse"
+      ],
+      "runtime_budget": {
+        "max_instances": 2,
+        "texture_budget_kb": 1024,
+        "particle_budget": 32,
+        "cpu_budget_hint": "low",
+        "browser_tier": "mvp"
+      },
+      "validation_report": {
+        "gate_status": "passed",
+        "runtime_loadable": false,
+        "gates": [
+          {
+            "gate_id": "schema",
+            "status": "passed",
+            "summary": "示例 CGOP 通过结构校验，但尚未进入运行时激活。"
+          },
+          {
+            "gate_id": "semantic_boundary",
+            "status": "passed",
+            "summary": "对象包不直接修改世界状态，也不携带完整世界资料。"
+          }
+        ],
+        "approved_scopes": [
+          "review_pack"
+        ],
+        "failed_rules": [],
+        "warnings": []
+      },
+      "lineage": {
+        "compiled_at": "2026-07-02T00:00:00+08:00",
+        "compiler_version": "ai_compile_core.v0.1",
+        "parent_package_ids": []
+      }
+    },
+    "world_delta_transaction": {
+      "schema_version": "world_state_delta_transaction.v0.1",
+      "transaction_id": "tx_first_battle_result_repaired_001",
+      "run_id": "run_demo_001",
+      "worldbook_id": "long_night_lanterns",
+      "actor": "system",
+      "source": "battle_result",
+      "created_turn": 2,
+      "created_at": "2026-07-02T00:00:00Z",
+      "base_world_version": "run_demo_001_turn_1",
+      "idempotency_key": "run_demo_001:first_battle_result:delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+      "scope": {
+        "kind": "battle_result_commit",
+        "node_ids": [
+          "gray_lantern_station"
+        ],
+        "object_refs": [
+          "battle:first_battle",
+          "sample:sample_trap_7f3a_repaired",
+          "fact:sample_trap_tested_in_battle_repaired"
+        ],
+        "state_fields": [
+          "progress_phase",
+          "map_nodes.gray_lantern_station",
+          "resources.lamp_oil",
+          "global_state.hope",
+          "global_state.pressure",
+          "facts.sample_trap_tested_in_battle_repaired",
+          "research.temporary_samples.sample_trap_7f3a_repaired",
+          "events.gray_lantern_first_defense_repaired_success",
+          "flags.tutorial_first_battle_completed"
+        ]
+      },
+      "source_refs": {
+        "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+        "battle_result_path": "examples/asset_graph/battle_result.sample.json",
+        "run_state_before_path": "examples/run_world_states/demo_initial.run_world_state.json"
+      },
+      "world_state_delta_ref": {
+        "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+        "schema_version": "world_state_delta.v0.1",
+        "delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+        "sha256": "82cbdd4dea51f417ece7d1f07ba22e6ee2ec49c1514bfb8735140243ecd03c16"
+      },
+      "preconditions": [
+        {
+          "kind": "run_state_version",
+          "ref": "run_demo_001_turn_1",
+          "summary": "提交前使用首战前的演示运行态。"
+        },
+        {
+          "kind": "node_state",
+          "ref": "map_nodes.gray_lantern_station",
+          "summary": "灰灯驿站仍是当前首战节点。"
+        },
+        {
+          "kind": "artifact_available",
+          "ref": "battle:first_battle",
+          "summary": "首战结算已经产生，可被世界状态提交消费。"
+        }
+      ],
+      "operation_effects_mapping": [
+        {
+          "operation_index": 0,
+          "op": "append_event",
+          "target_ref": "events.gray_lantern_first_defense_repaired_success",
+          "effect_kind": "event_append",
+          "summary": "追加首战结束事件。"
+        },
+        {
+          "operation_index": 1,
+          "op": "set_map_node_state",
+          "target_ref": "map_nodes.gray_lantern_station",
+          "effect_kind": "map_node_patch",
+          "summary": "灰灯驿站进入 secured 状态。"
+        },
+        {
+          "operation_index": 2,
+          "op": "adjust_resource",
+          "target_ref": "resources.lamp_oil",
+          "effect_kind": "resource_delta",
+          "summary": "扣除首战消耗的灯油。"
+        },
+        {
+          "operation_index": 3,
+          "op": "unlock_fact",
+          "target_ref": "facts.sample_trap_tested_in_battle_repaired",
+          "effect_kind": "fact_unlock",
+          "summary": "解锁折光绊索实战效果事实。"
+        },
+        {
+          "operation_index": 4,
+          "op": "add_temporary_sample",
+          "target_ref": "research.temporary_samples.sample_trap_7f3a_repaired",
+          "effect_kind": "sample_registration",
+          "summary": "登记战后回收的折光绊索样品。"
+        },
+        {
+          "operation_index": 5,
+          "op": "set_progress_phase",
+          "target_ref": "progress_phase",
+          "effect_kind": "phase_change",
+          "summary": "阶段推进到首防战后。"
+        },
+        {
+          "operation_index": 6,
+          "op": "set_flag",
+          "target_ref": "flags.tutorial_first_battle_completed",
+          "effect_kind": "flag_set",
+          "summary": "标记教学首战完成。"
+        },
+        {
+          "operation_index": 7,
+          "op": "adjust_global_state",
+          "target_ref": "global_state.hope",
+          "effect_kind": "global_state_delta",
+          "summary": "提升幸存者希望。"
+        },
+        {
+          "operation_index": 8,
+          "op": "adjust_global_state",
+          "target_ref": "global_state.pressure",
+          "effect_kind": "global_state_delta",
+          "summary": "降低短期压迫。"
+        }
+      ],
+      "conflict_policy": {
+        "mode": "reject_on_conflict",
+        "conflict_keys": [
+          "progress_phase",
+          "map_nodes.gray_lantern_station",
+          "resources.lamp_oil",
+          "global_state.hope",
+          "global_state.pressure",
+          "facts.sample_trap_tested_in_battle_repaired",
+          "research.temporary_samples.sample_trap_7f3a_repaired",
+          "events.gray_lantern_first_defense_repaired_success",
+          "flags.tutorial_first_battle_completed"
+        ]
+      },
+      "rollback_policy": {
+        "mode": "required_snapshot",
+        "inverse_operations_required": false,
+        "notes": "v0.1 事务壳只登记提交语义；回滚依赖提交前运行态快照，不生成通用逆向 DSL。"
+      },
+      "validation_report": {
+        "gate_status": "passed",
+        "world_delta_structure": "passed",
+        "world_delta_semantics": "passed",
+        "operation_mapping": "passed",
+        "runtime_apply_checked": true,
+        "warnings": []
+      },
+      "status": "committed"
+    },
+    "review_only": true
   },
   "effect_catalog": {
     "schema_version": "effect_catalog.v0.1",

@@ -25,6 +25,7 @@ examples/frontend_mock/frontend_mock_pack.v0.1.json
 - 3 个 runtime package 摘要：第一战、灯芯仓压力战、旧信号塔压力战。
 - 世界书基础信息、开局地图、第一危机节点、NPC、材料和开场剧情。
 - effect catalog、visual recipes、fallback media token 和已生成媒体引用。
+- `core_artifacts`：review-only 的 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 原生证据快照，用于证明 mock pack 已对齐统一 AI 编译对象模型。
 
 ## 边界
 
@@ -34,6 +35,7 @@ examples/frontend_mock/frontend_mock_pack.v0.1.json
 - 不调用外部模型或媒体服务。
 - 不包含 provider、model、raw prompt、raw JSON、full trace、api key 或 secret。
 - 不把 review-only 内容伪装成正式 campaign router。
+- `core_artifacts` 只作为审查证据和接口迁移锚点，不是玩家 UI 文案，也不授权前端直接修改世界状态。
 - 不要求前端已经实现正式加载逻辑。
 
 ## 和审查包的关系
@@ -45,6 +47,10 @@ examples/frontend_mock/frontend_mock_pack.v0.1.json
 - `mvp_demo.runtime_package.json`
 - `mvp_wick_store_pressure.runtime_package.json`
 - `mvp_old_signal_tower.runtime_package.json`
+- `mvp_first_battle.context_package.json`
+- `mvp_gray_lantern.fact_entry.json`
+- `mvp_light_snare.compiled_game_object_package.json`
+- `first_battle_result.world_delta_transaction.json`
 
 前端可以先使用这个包开发页面和交互，但正式运行时仍应以后端 API、locked manifest 和 runtime package 为准。
 
@@ -62,4 +68,5 @@ python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_
 - visual recipes 只引用 effect catalog 中的特效 primitive。
 - stage outline 引用的资产必须存在于 `assets`。
 - stage outline 引用的 runtime package 必须存在于 `runtime_packages`。
+- `core_artifacts` 中的 ContextPackage、FactEntry、CGOP、WorldStateDeltaTransaction 必须能通过对应 validator。
 - 不允许出现 provider、model、raw prompt、full trace、api key 等技术或敏感字段。
