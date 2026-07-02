@@ -106,7 +106,7 @@ PATHS = {
     "map_visual_quality_report": ROOT
     / "examples/review_packs/map_visual_quality_report.v0.1.json",
     "node_map_candidate_review": ROOT
-    / "examples/review_packs/node_map_painted_candidate_review.v0.1.json",
+    / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -335,6 +335,10 @@ STATIC_VALIDATION_COMMANDS = [
         "command": [
             "python3",
             "tools/media/build_node_map_candidate_review_pack.py",
+            "--candidate-dir",
+            "game_data/media/map_visual_reference/node_candidates_v2",
+            "--review-profile",
+            "clean_scene_v2",
             "--output",
             "/tmp/ai_td_node_map_painted_candidate_review.json",
         ],
