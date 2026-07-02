@@ -78,7 +78,9 @@ def frontend_media_payload() -> dict[str, Any]:
         "media_manifest": load_media_manifest(),
         "animation_seed_manifest": load_animation_seed_manifest(),
         "media_atlas_manifest": load_media_atlas_manifest(),
-        "animation_pipeline_status": "virtual_atlas_ready_video_frames_not_generated",
+        "animation_pipeline_status": (
+            "multiframe_atlas_ready_video_keyframes_not_generated"
+        ),
     }
 
 
@@ -91,6 +93,6 @@ def runtime_art_payload() -> dict[str, Any]:
         ),
         "runtime_art_atlas_manifest": load_runtime_art_atlas_manifest(),
         "runtime_art_pipeline_status": (
-            "developer_compiled_virtual_atlas_ready_video_frames_not_generated"
+            "developer_compiled_multiframe_atlas_ready_video_keyframes_not_generated"
         ),
     }

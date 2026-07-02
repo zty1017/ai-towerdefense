@@ -326,6 +326,35 @@ def _generation_queue_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _worker_cache_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    status_counts = Counter(str(item.get("status", "unknown")) for item in items)
+    kind_counts = Counter(str(item.get("object_kind", "unknown")) for item in items)
+    return {
+        "item_count": len(items),
+        "status_counts": dict(sorted(status_counts.items())),
+        "object_kind_counts": dict(sorted(kind_counts.items())),
+        "provider_call_count": sum(
+            1 for item in items if item.get("provider_call_performed") is True
+        ),
+        "world_mutation_count": sum(
+            1 for item in items if item.get("world_mutation_performed") is True
+        ),
+        "activation_allowed_count": sum(
+            1 for item in items if item.get("activation_allowed_now") is True
+        ),
+        "review_required_count": sum(
+            1 for item in items if item.get("review_required") is True
+        ),
+    }
+
+
+def _compact_worker_cache(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "summary": _worker_cache_summary(items),
+        "items": items,
+    }
+
+
 def _compact_generation_schedule_run(run: dict[str, Any] | None) -> dict[str, Any] | None:
     if run is None:
         return None
@@ -376,6 +405,127 @@ def _load_generation_queue_item_row(
         "status": row["status"],
         "payload": payload,
     }
+
+
+def _worker_cache_id(run_id: str, schedule_item_id: str) -> str:
+    safe_item_id = "".join(
+        ch if ch.isalnum() or ch in {"_", "-"} else "_"
+        for ch in str(schedule_item_id)
+    )
+    return f"gcache_{run_id}_{safe_item_id}"
+
+
+def _activation_blocked_reason(payload: dict[str, Any]) -> str:
+    if payload.get("provider_review_required") is True:
+        return "review_required_before_activation"
+    if payload.get("revalidate_before_activation") is True:
+        return "revalidation_required_before_activation"
+    return "fixture_worker_does_not_activate_content"
+
+
+def _build_worker_cache_payload(payload: dict[str, Any], ts: str) -> dict[str, Any]:
+    run_id = str(payload.get("run_id") or "")
+    session_id = str(payload.get("session_id") or "")
+    schedule_item_id = str(payload.get("schedule_item_id") or "")
+    review_required = payload.get("provider_review_required") is True
+    return {
+        "cache_id": _worker_cache_id(run_id, schedule_item_id),
+        "run_id": run_id,
+        "session_id": session_id,
+        "schedule_item_id": schedule_item_id,
+        "object_kind": payload.get("object_kind"),
+        "object_ref": payload.get("object_ref"),
+        "latency_class": payload.get("latency_class"),
+        "worker_id": payload.get("worker_id"),
+        "attempt_count": int(payload.get("attempt_count", 0)),
+        "max_attempts": int(payload.get("max_attempts", 0)),
+        "status": payload.get("status"),
+        "review_required": review_required,
+        "provider_review_required": review_required,
+        "provider_call_performed": False,
+        "world_mutation_performed": False,
+        "activation_allowed_now": False,
+        "artifact_placeholder": {
+            "status": "review_only_placeholder",
+            "artifact_id": f"placeholder:{schedule_item_id}:{payload.get('attempt_count', 0)}",
+            "provider_call_performed": False,
+            "world_mutation_performed": False,
+            "activation_allowed_now": False,
+            "generated_content_ref": None,
+        },
+        "activation_gate": {
+            "revalidate_before_activation": (
+                payload.get("revalidate_before_activation") is True
+            ),
+            "blocked_reason": _activation_blocked_reason(payload),
+        },
+        "safe_content_policy": {
+            "reads_env": False,
+            "calls_provider": False,
+            "writes_world_state": False,
+            "stores_raw_prompt": False,
+            "stores_provider_response": False,
+        },
+        "created_at": ts,
+        "updated_at": ts,
+    }
+
+
+def _upsert_worker_cache_from_queue_item(payload: dict[str, Any], ts: str) -> dict[str, Any]:
+    cache_payload = _build_worker_cache_payload(payload, ts)
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT created_at FROM generation_schedule_worker_cache WHERE cache_id = ?",
+            (cache_payload["cache_id"],),
+        )
+        existing = cur.fetchone()
+        created_at = (
+            str(existing["created_at"])
+            if existing is not None and existing.get("created_at")
+            else ts
+        )
+        cache_payload["created_at"] = created_at
+        cur.execute(
+            "INSERT INTO generation_schedule_worker_cache "
+            "(cache_id, run_id, session_id, schedule_item_id, status, payload, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(cache_id) DO UPDATE SET "
+            "status = excluded.status, payload = excluded.payload, updated_at = excluded.updated_at",
+            (
+                cache_payload["cache_id"],
+                cache_payload["run_id"],
+                cache_payload["session_id"],
+                cache_payload["schedule_item_id"],
+                str(cache_payload["status"]),
+                _dump_payload(cache_payload),
+                cache_payload["created_at"],
+                cache_payload["updated_at"],
+            ),
+        )
+    return cache_payload
+
+
+def _load_worker_cache_items(
+    session_id: str, run_id: str | None = None
+) -> list[dict[str, Any]]:
+    if run_id is None:
+        latest = _load_latest_generation_schedule_run(session_id)
+        if latest is None:
+            return []
+        run_id = str(latest.get("run_id", ""))
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM generation_schedule_worker_cache "
+            "WHERE session_id = ? AND run_id = ? ORDER BY id ASC",
+            (session_id, run_id),
+        )
+        rows = cur.fetchall()
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        payload = row.get("payload") if isinstance(row, dict) else None
+        if payload:
+            items.append(json.loads(payload))
+    return items
 
 
 def _next_generation_queue_status(current_status: str, transition: str) -> str:
@@ -535,6 +685,7 @@ def _run_generation_dry_worker_step(
             "SET status = ?, payload = ?, updated_at = ? WHERE id = ?",
             (next_status, _dump_payload(payload), ts, row["id"]),
         )
+    _upsert_worker_cache_from_queue_item(payload, ts)
     return payload
 
 
@@ -581,22 +732,37 @@ def create_generation_schedule_run(session_id: str) -> dict[str, Any]:
 def get_latest_generation_schedule_run(session_id: str) -> dict[str, Any]:
     run = _load_latest_generation_schedule_run(session_id)
     queue_items = _load_generation_queue_items(session_id) if run is not None else []
+    cache_items = _load_worker_cache_items(session_id) if run is not None else []
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "generation_schedule_run": run,
         "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
     }
 
 
 def get_generation_schedule_queue(session_id: str) -> dict[str, Any]:
     run = _load_latest_generation_schedule_run(session_id)
     queue_items = _load_generation_queue_items(session_id) if run is not None else []
+    cache_items = _load_worker_cache_items(session_id) if run is not None else []
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "generation_schedule_run": _compact_generation_schedule_run(run),
         "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache_summary": _worker_cache_summary(cache_items),
+    }
+
+
+def get_generation_schedule_worker_cache(session_id: str) -> dict[str, Any]:
+    run = _load_latest_generation_schedule_run(session_id)
+    cache_items = _load_worker_cache_items(session_id) if run is not None else []
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": _compact_generation_schedule_run(run),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
     }
 
 
@@ -627,6 +793,7 @@ def run_generation_schedule_dry_worker_step(
 ) -> dict[str, Any]:
     item = _run_generation_dry_worker_step(session_id, metadata)
     queue_items = _load_generation_queue_items(session_id)
+    cache_items = _load_worker_cache_items(session_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
@@ -638,6 +805,7 @@ def run_generation_schedule_dry_worker_step(
         },
         "generation_schedule_queue_item": item,
         "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
     }
 
 
@@ -646,9 +814,13 @@ def get_generation_scheduler_evidence(session_id: str) -> dict[str, Any]:
     run_report = _load_generation_schedule_run_report()
     latest_run = _load_latest_generation_schedule_run(session_id)
     latest_queue = _load_generation_queue_items(session_id) if latest_run is not None else []
+    latest_worker_cache = (
+        _load_worker_cache_items(session_id) if latest_run is not None else []
+    )
     return {
         "refs": _generation_schedule_refs(),
         "buffer": _build_generation_schedule_buffer(plan, run_report),
         "latest_run": _compact_generation_schedule_run(latest_run),
         "latest_queue": _compact_generation_queue(latest_queue),
+        "latest_worker_cache": _compact_worker_cache(latest_worker_cache),
     }

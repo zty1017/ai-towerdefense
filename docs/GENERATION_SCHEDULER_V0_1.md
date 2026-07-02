@@ -217,6 +217,41 @@ POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step
 
 这一步的目的不是完成真实生成，而是把后续 worker 的领取 / 处理 / 等待复核状态面跑通。
 
+## Worker Cache Skeleton
+
+dry-run worker step 处理队列项时，会把该队列项的处理结果写入 session-scoped worker cache：
+
+```text
+generation_schedule_worker_cache
+GET /api/sessions/{session_id}/generation-schedule/worker-cache
+```
+
+这不是正式产物缓存，也不是 provider response 存储。它只记录 review-only worker step 的可审计状态：
+
+- 处理的是哪个 `run_id` / `schedule_item_id`。
+- 对应对象类型、对象引用和 latency class。
+- 使用的 `worker_id`、`attempt_count` 和当前 `status`。
+- 是否需要复核。
+- 是否调用 provider。
+- 是否写世界状态。
+- 是否允许立即激活。
+- 被哪个 activation gate 阻断。
+
+当前 MVP 中，这些安全字段必须保持：
+
+```text
+provider_call_performed = false
+world_mutation_performed = false
+activation_allowed_now = false
+artifact_placeholder.status = review_only_placeholder
+safe_content_policy.calls_provider = false
+safe_content_policy.writes_world_state = false
+safe_content_policy.stores_raw_prompt = false
+safe_content_policy.stores_provider_response = false
+```
+
+因此 worker cache 只能作为后端状态层和 Studio / evidence 证据使用，不能作为玩家侧内容事实源，不能绕过 CGOP、WorldStateDelta、semantic gate、media gate 或人工 review。后续真实后台执行器可以复用这张表的形态，但必须新增独立的 provider 调用记录、产物 manifest、校验结果和显式 activation / promotion gate。
+
 ## Campaign Router 接入
 
 当前后端已经提供最薄的战役路由层：
