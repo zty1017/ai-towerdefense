@@ -58,6 +58,13 @@ python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
 - 不导出 runtime package。
 - 只生成 review-only 计划。
 
+顶层的 `core_artifact_alignment` 明确声明：
+
+- `CompilableObjectPlan` 是 review-only 下一阶段编译计划。
+- 它本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- 后续核心对象迁移应落到它驱动生成的 `ContextPackage`、`FactEntry`、`CGOP`、`WorldStateDeltaTransaction` 或 runtime package。
+
 计划允许后续 LLM 填充，但必须在审查通过后执行。
 
 ## 当前 Stage 05 计划

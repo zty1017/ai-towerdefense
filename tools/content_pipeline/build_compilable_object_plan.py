@@ -522,6 +522,22 @@ def build_plan(
             "review_pack": rel(review_pack_path),
             "promotion_report": rel(promotion_report_path),
         },
+        "core_artifact_alignment": {
+            "alignment_state": "review_only_not_applicable",
+            "reason": (
+                "CompilableObjectPlan 是 review-only 下一阶段编译计划；它声明要生成哪些对象、"
+                "依赖什么证据和验证门，但自身不是 ContextPackage、FactEntry、CGOP 或 "
+                "WorldStateDeltaTransaction。"
+            ),
+            "expected_core_artifacts": [],
+            "present_core_artifacts": [],
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "next_action": (
+                "后续核心对象迁移应落到该 plan 驱动生成的 ContextPackage / FactEntry / CGOP / "
+                "WorldStateDeltaTransaction / runtime package，而不是激活 plan 本身。"
+            ),
+        },
         "planning_context": {
             "target_stage_id": "act_1_stage_05_old_signal_tower_pressure",
             "target_stage_title": "旧信号塔回光压力",
