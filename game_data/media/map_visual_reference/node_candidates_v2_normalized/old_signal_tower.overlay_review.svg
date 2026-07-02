@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <image href="old_signal_tower.normalized_1280x720.png" x="0" y="0" width="1280" height="720"/>
+  <rect x="0" y="0" width="1280" height="720" fill="none" stroke="#f8fafc" stroke-width="3" opacity="0.8"/>
+  <g id="runtime-paths" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="1244.4,180.0 1031.1,180.0 888.9,324.0 604.4,324.0 391.1,396.0 177.8,396.0" stroke="#facc15" stroke-width="13" opacity="0.62"><title>path_old_signal_north_ridge</title></polyline>
+    <polyline points="1244.4,180.0 1031.1,180.0 888.9,324.0 604.4,324.0 391.1,396.0 177.8,396.0" stroke="#111827" stroke-width="4" opacity="0.75"/>
+    <polyline points="1173.3,612.0 960.0,540.0 746.7,540.0 533.3,468.0 248.9,468.0 177.8,396.0" stroke="#facc15" stroke-width="13" opacity="0.62"><title>path_old_signal_copper_trench</title></polyline>
+    <polyline points="1173.3,612.0 960.0,540.0 746.7,540.0 533.3,468.0 248.9,468.0 177.8,396.0" stroke="#111827" stroke-width="4" opacity="0.75"/>
+  </g>
+  <g id="build-slots" fill="rgba(34,211,238,0.16)" stroke="#22d3ee" stroke-width="4">
+    <circle cx="1244.4" cy="108.0" r="20"><title>slot_01</title></circle>
+    <circle cx="1244.4" cy="252.0" r="20"><title>slot_02</title></circle>
+    <circle cx="1173.3" cy="108.0" r="20"><title>slot_03</title></circle>
+    <circle cx="1173.3" cy="252.0" r="20"><title>slot_04</title></circle>
+    <circle cx="1031.1" cy="108.0" r="20"><title>slot_05</title></circle>
+    <circle cx="1031.1" cy="252.0" r="20"><title>slot_06</title></circle>
+    <circle cx="960.0" cy="180.0" r="20"><title>slot_07</title></circle>
+    <circle cx="960.0" cy="108.0" r="20"><title>slot_08</title></circle>
+    <circle cx="1102.2" cy="108.0" r="20"><title>slot_09</title></circle>
+    <circle cx="1102.2" cy="252.0" r="20"><title>slot_10</title></circle>
+    <circle cx="888.9" cy="252.0" r="20"><title>slot_11</title></circle>
+    <circle cx="888.9" cy="396.0" r="20"><title>slot_12</title></circle>
+  </g>
+  <g id="spawn-points" fill="#a78bfa" stroke="#1f1147" stroke-width="3">
+    <polygon points="1244.4,156.0 1222.4,198.0 1266.4,198.0"><title>spawn_path_old_signal_north_ridge</title></polygon>
+    <polygon points="1173.3,588.0 1151.3,630.0 1195.3,630.0"><title>spawn_path_old_signal_copper_trench</title></polygon>
+  </g>
+  <g id="objectives" fill="#fb7185" stroke="#7f1d1d" stroke-width="4">
+    <rect x="84.7" y="374.0" width="44" height="44" transform="rotate(45 106.7 396.0)"><title>target_old_signal_tower_base</title></rect>
+    <rect x="298.0" y="302.0" width="44" height="44" transform="rotate(45 320.0 324.0)"><title>target_resonant_glass_fixture</title></rect>
+    <rect x="440.2" y="518.0" width="44" height="44" transform="rotate(45 462.2 540.0)"><title>target_copper_grounding_pin</title></rect>
+  </g>
+  <text x="16" y="30" font-family="monospace" font-size="18" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke">review overlay: path / build slot / spawn / objective</text>
+</svg>
