@@ -103,6 +103,8 @@ PATHS = {
     / "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
     "provider_execution_authorization": ROOT
     / "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
+    "provider_adapter_execution_receipt": ROOT
+    / "examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -628,6 +630,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_provider_execution_authorization.py",
             "examples/provider_authorizations/p1b_provider_execution_authorization.example.json",
+        ],
+    },
+    {
+        "name": "provider_adapter_execution_receipt",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_adapter_execution_receipt.py",
+            "examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json",
         ],
     },
     {
@@ -1750,6 +1760,62 @@ def collect_provider_execution_authorization(record: dict[str, Any]) -> dict[str
     }
 
 
+def collect_provider_adapter_execution_receipt(record: dict[str, Any]) -> dict[str, Any]:
+    source = as_obj(record.get("source"))
+    execution = as_obj(record.get("execution"))
+    contract = as_obj(record.get("output_contract"))
+    authority = as_obj(record.get("authority"))
+    safety = as_obj(record.get("adapter_safety"))
+    return {
+        "execution_receipt_id": record.get("execution_receipt_id"),
+        "schema_version": record.get("schema_version"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "executor_request_id": source.get("executor_request_id"),
+            "authorization_ref": source.get("authorization_ref"),
+            "guard_id": source.get("guard_id"),
+            "provider_mode": source.get("provider_mode"),
+            "provider_profile": source.get("provider_profile"),
+        },
+        "execution": {
+            "status": execution.get("status"),
+            "mode": execution.get("mode"),
+            "authorization_ref": execution.get("authorization_ref"),
+            "provider_call_performed_by_receipt_builder": execution.get(
+                "provider_call_performed_by_receipt_builder"
+            ),
+            "requires_provider_output_envelope": execution.get(
+                "requires_provider_output_envelope"
+            ),
+            "finish_reason": execution.get("finish_reason"),
+        },
+        "output_contract": {
+            "must_write_provider_output_envelope": contract.get(
+                "must_write_provider_output_envelope"
+            ),
+            "allowed_result_storage": contract.get("allowed_result_storage"),
+            "temporary_url_policy": contract.get("temporary_url_policy"),
+            "required_next_gates": as_list(contract.get("required_next_gates")),
+        },
+        "evidence_boundary": {
+            "review_only": authority.get("review_only"),
+            "provider_adapter_boundary_entered": authority.get(
+                "provider_adapter_boundary_entered"
+            ),
+            "runtime_activation_allowed": authority.get("runtime_activation_allowed"),
+            "world_mutation_allowed": authority.get("world_mutation_allowed"),
+            "player_visible": authority.get("player_visible"),
+            "reads_env": safety.get("reads_env"),
+            "calls_provider": safety.get("calls_provider"),
+            "writes_world_state": safety.get("writes_world_state"),
+            "activates_runtime": safety.get("activates_runtime"),
+        },
+    }
+
+
 def collect_provider_artifact_staging(
     manifest: dict[str, Any],
     source_envelope: dict[str, Any],
@@ -2261,6 +2327,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["provider_execution_authorization"],
         ),
         (
+            "provider_adapter_execution_receipt",
+            PATHS["provider_adapter_execution_receipt"],
+        ),
+        (
             "provider_artifact_staging_manifest",
             PATHS["provider_artifact_staging_manifest"],
         ),
@@ -2420,6 +2490,9 @@ def build_evidence() -> dict[str, Any]:
     provider_execution_authorization = load_json(
         PATHS["provider_execution_authorization"]
     )
+    provider_adapter_execution_receipt = load_json(
+        PATHS["provider_adapter_execution_receipt"]
+    )
     world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
     world_delta_transactions = [
         load_json(path) for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
@@ -2522,6 +2595,9 @@ def build_evidence() -> dict[str, Any]:
         ),
         "provider_execution_authorization": collect_provider_execution_authorization(
             provider_execution_authorization
+        ),
+        "provider_adapter_execution_receipt": collect_provider_adapter_execution_receipt(
+            provider_adapter_execution_receipt
         ),
         "provider_artifact_staging": collect_provider_artifact_staging(
             provider_artifact_staging_manifest,
