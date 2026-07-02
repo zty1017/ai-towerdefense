@@ -18,6 +18,8 @@ http://127.0.0.1:8000/frontend/index.html
 
 前端会优先创建匿名 session，并调用 `/api/sessions/{session_id}/...` 下的前端 mock API、研发提案 API 和战斗结果 API。媒体资源走后端挂载的 `/assets/frontend_mock/...` 与 `/assets/frontend_runtime_mock/...`，包含 `processed`、`generated`、`atlas_frames` 和 `atlas_sheets`。
 
+API 模式下，前端会读取 `/api/sessions/{session_id}/campaign-router` 决定当前节点、下一节点和前视窗口；进入当前节点时会静默调用 `/api/sessions/{session_id}/campaign-router/prefetch-next` 触发一次 fixture-backed dry-run 预取。静态模式仍固定使用灰灯驿站首战作为可玩兜底。
+
 战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
 
 玩家默认战斗视图只允许使用发布级视觉层：当前优先使用 `painted_visual_layer`，其次是逻辑对齐 fallback `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
@@ -35,9 +37,10 @@ game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.j
 
 ```bash
 python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/validate_campaign_router_frontend_contract.py
 ```
 
-它不会替代真实截图，但会阻止控制图进入玩家默认体验、玩家底图优先级倒置、地图 PNG 尺寸不一致和战斗画布被压成小面板。
+这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、玩家底图优先级倒置、地图 PNG 尺寸不一致、战斗画布被压成小面板，以及 API 模式退回固定首战节点。
 
 控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
 

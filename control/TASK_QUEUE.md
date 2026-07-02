@@ -70,7 +70,7 @@ P2：本阶段明确不做
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
 - GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
-- Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；它不调用 provider、不写世界状态、不创建新内容。
+- Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API，并已被 no-build 前端消费：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，前端进入当前节点时会通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；它不调用 provider、不写世界状态、不创建新内容。
 
 ## 3. 已完成的 P0 基线
 

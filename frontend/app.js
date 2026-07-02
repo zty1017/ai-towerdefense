@@ -109,6 +109,7 @@
       visual_style_id: "lantern_wasteland_pseudo3d",
     },
     data: {},
+    campaignPrefetch: null,
     profile: {},
     openingIndex: 0,
     intentText: "我想做一个能拖慢影潮的临时装置。",
@@ -326,7 +327,8 @@
           opening: openingResponse.opening,
           worldConfig: DEFAULT_WORLD_CONFIG,
         });
-        await Promise.all([loadMap(), loadBriefing(), loadBattleConfig()]);
+        await Promise.all([loadMap(), loadCampaignRoute()]);
+        await Promise.all([loadBriefing(), loadBattleConfig()]);
       },
       async loadMap() {
         const response = await apiGet(sessionApiPath("/map"), 3600);
@@ -336,8 +338,34 @@
         });
         return state.data.map;
       },
+      async loadCampaignRoute() {
+        try {
+          const response = await apiGet(sessionApiPath("/campaign-router"), 3200);
+          state.data.campaignRouter = response.campaign_router || null;
+          const nodeId = (state.data.campaignRouter && state.data.campaignRouter.current || {}).node_id;
+          if (nodeId) {
+            state.selectedNodeId = nodeId;
+            state.selectedMapNodeId = nodeId;
+          }
+        } catch {
+          state.data.campaignRouter = null;
+          state.selectedNodeId = state.selectedNodeId || NODE_ID;
+        }
+        return state.data.campaignRouter;
+      },
       async loadBriefing() {
-        const response = await apiGet(sessionApiPath(`/nodes/${NODE_ID}/briefing`), 3600);
+        const nodeId = currentNodeId();
+        let response = null;
+        try {
+          response = await apiGet(sessionApiPath(`/nodes/${nodeId}/briefing`), 3600);
+        } catch {
+          response = {
+            briefing: buildBriefingFallback(nodeId),
+            materials: (state.data.pack || {}).materials || [],
+            npcs: (state.data.pack || {}).npcs || [],
+            suggested_input: "我想做一个能稳住当前节点防线的临时装置。",
+          };
+        }
         Object.assign(state.data, {
           briefing: response.briefing,
           materials: response.materials,
@@ -347,7 +375,8 @@
         return state.data.briefing;
       },
       async loadBattleConfig() {
-        const response = await apiGet(sessionApiPath(`/battles/${NODE_ID}/config`), 5000);
+        const nodeId = currentNodeId();
+        const response = await apiGet(sessionApiPath(`/battles/${nodeId}/config`), 5000);
         Object.assign(state.data, {
           battleConfig: response.battle_config,
           mapRuntimePackage: response.map_runtime_package || null,
@@ -363,7 +392,7 @@
         if (!state.data.mapRuntimePackage) {
           try {
             const mapResponse = await apiGet(
-              sessionApiPath(`/battles/${NODE_ID}/map-runtime-package`),
+              sessionApiPath(`/battles/${nodeId}/map-runtime-package`),
               3600,
             );
             state.data.mapRuntimePackage = mapResponse.map_runtime_package;
@@ -423,9 +452,32 @@
           battleConfig,
           mapRuntimePackage,
         };
+        await this.loadCampaignRoute();
       },
       async loadMap() {
         return state.data.map;
+      },
+      async loadCampaignRoute() {
+        state.data.campaignRouter = {
+          schema_version: "campaign_router.v0.1",
+          router_mode: "static_fallback_route",
+          current: {
+            node_id: NODE_ID,
+            display_name: "灰灯驿站",
+            playable: true,
+            asset_handle: {
+              status: "ready",
+              map_runtime_package_ref: STATIC_PATHS.mapRuntimePackage,
+              battle_config_ref: STATIC_PATHS.battleConfig,
+            },
+          },
+          next: null,
+          lookahead: [],
+          route: [],
+        };
+        state.selectedNodeId = NODE_ID;
+        state.selectedMapNodeId = NODE_ID;
+        return state.data.campaignRouter;
       },
       async loadBriefing() {
         return state.data.briefing;
@@ -457,6 +509,92 @@
 
   async function loadBattleConfig() {
     return dataAdapter().loadBattleConfig();
+  }
+
+  async function loadCampaignRoute() {
+    return dataAdapter().loadCampaignRoute();
+  }
+
+  function routeData() {
+    return state.data.campaignRouter || null;
+  }
+
+  function routeCurrent() {
+    const route = routeData();
+    return (route && route.current) || null;
+  }
+
+  function routeNext() {
+    const route = routeData();
+    return (route && route.next) || null;
+  }
+
+  function currentNodeId() {
+    return (routeCurrent() || {}).node_id || state.selectedNodeId || NODE_ID;
+  }
+
+  function currentNodeDisplayName() {
+    return (
+      (routeCurrent() || {}).display_name ||
+      (battleConfig() || {}).display_name ||
+      "灰灯驿站"
+    );
+  }
+
+  function routeNodeFor(nodeId) {
+    const route = routeData();
+    const nodes = route && Array.isArray(route.route) ? route.route : [];
+    return nodes.find((node) => node.node_id === nodeId) || null;
+  }
+
+  function nodePlayable(nodeId) {
+    const routeNode = routeNodeFor(nodeId);
+    if (!routeNode) return nodeId === NODE_ID;
+    return routeNode.playable === true;
+  }
+
+  function isCurrentNode(nodeId) {
+    return nodeId === currentNodeId();
+  }
+
+  function buildBriefingFallback(nodeId) {
+    const nodes = mapData().nodes || [];
+    const node = nodes.find((item) => item.stable_internal_id === nodeId) || {};
+    const pack = state.data.pack || {};
+    return {
+      node_id: nodeId,
+      display_name: node.display_name || (routeNodeFor(nodeId) || {}).display_name || "危机节点",
+      summary: node.summary || "前线节点需要临时处理。",
+      threat: {
+        enemy_traits: "影潮压力正在升高。",
+        approach_direction: "由暗区边缘向节点逼近。",
+      },
+      protection_targets: [
+        {
+          display_name: node.display_name || "节点核心",
+          summary: node.summary || "守住节点设施，避免防线被撕开。",
+        },
+      ],
+      available_materials: pack.materials || [],
+      facility_state: { summary: "现场工坊可进行应急试作。" },
+      constraints: { sample_delivery: "样品可在战斗中途送达。" },
+    };
+  }
+
+  function requestNextPrefetch() {
+    if (!isApiMode()) return;
+    apiPost(sessionApiPath("/campaign-router/prefetch-next"), {}, 2600)
+      .then((response) => {
+        state.campaignPrefetch = response.prefetch_request || null;
+        if (response.campaign_router) {
+          state.data.campaignRouter = response.campaign_router;
+          const nodeId = (response.campaign_router.current || {}).node_id;
+          if (nodeId) state.selectedNodeId = nodeId;
+        }
+      })
+      .catch(() => {
+        state.campaignPrefetch = { status: "silent_fallback" };
+      });
   }
 
   async function boot() {
@@ -905,6 +1043,9 @@
   }
 
   function nodeState(node) {
+    const runNodes = (state.data.runWorldState || {}).map_nodes || [];
+    const runNode = runNodes.find((item) => item.node_id === node.stable_internal_id);
+    if (runNode && runNode.status) return runNode.status;
     if (state.profile.completedBattle && node.stable_internal_id === NODE_ID) return "secured";
     return node.state;
   }
@@ -913,6 +1054,7 @@
     const nodes = mapData().nodes || [];
     return (
       nodes.find((node) => node.stable_internal_id === state.selectedMapNodeId) ||
+      nodes.find((node) => node.stable_internal_id === currentNodeId()) ||
       nodes.find((node) => node.stable_internal_id === NODE_ID) ||
       nodes[0]
     );
@@ -976,7 +1118,7 @@
         const color = mapNodeColor(node.kind, nodeState(node));
         const radius = node.kind === "main_city" ? 30 : node.kind === "battle_hotspot" ? 24 : 20;
         const pulse =
-          node.stable_internal_id === NODE_ID && !state.profile.completedBattle
+          node.stable_internal_id === currentNodeId()
             ? `<circle cx="${node.position.x}" cy="${node.position.y}" r="${radius + 12}" fill="none" stroke="${color}" stroke-width="3" opacity=".6"><animate attributeName="r" values="${radius + 8};${radius + 26};${radius + 8}" dur="1.4s" repeatCount="indefinite" /></circle>`
             : "";
         return `
@@ -1024,9 +1166,16 @@
               <span class="tag">${safeText(selected ? nodeState(selected) : "")}</span>
             </div>
             <div class="screen-actions">
-              <button class="primary-button" data-action="enter-node" ${selected && selected.stable_internal_id === NODE_ID ? "" : "disabled"}>进入危机节点</button>
+              <button class="primary-button" data-action="enter-node" ${selected && isCurrentNode(selected.stable_internal_id) && nodePlayable(selected.stable_internal_id) ? "" : "disabled"}>进入当前节点</button>
               <button class="ghost-button" data-action="refresh-map">刷新态势</button>
             </div>
+            ${
+              routeNext()
+                ? `<div class="event-list" style="margin-top:12px">
+                    <div class="event-item"><strong>下一处</strong><span>${safeText(routeNext().display_name || "前方节点")}</span></div>
+                  </div>`
+                : ""
+            }
           </aside>
         </section>
       </main>
@@ -1078,9 +1227,10 @@
     const threat = briefing.threat || {};
     const npcUrl = npcPortraitUrl("npc_workshop_mentor");
     const sampleUrl = sampleIconUrl();
+    const nodeName = currentNodeDisplayName();
     ROOT.innerHTML = `
       <main class="screen">
-        ${screenHeader("灰灯驿站应急改造间", briefing.summary || "影潮正在接近。", "现场试作")}
+        ${screenHeader(`${nodeName}应急改造间`, briefing.summary || "影潮正在接近。", "现场试作")}
         <section class="workshop-grid">
           <aside class="panel">
             <h2 class="panel-title">当前危机</h2>
@@ -1216,6 +1366,29 @@
     await sleep(260);
   }
 
+  async function enterCurrentNode() {
+    renderLoading("整理节点");
+    if (isApiMode()) {
+      try {
+        await loadCampaignRoute();
+      } catch {
+        // Keep the last known route.
+      }
+    }
+    const selected = selectedMapNode();
+    if (selected && isCurrentNode(selected.stable_internal_id)) {
+      state.selectedNodeId = selected.stable_internal_id;
+    }
+    try {
+      await Promise.all([loadBriefing(), loadBattleConfig()]);
+    } catch {
+      // Static fallback content is already loaded.
+    }
+    requestNextPrefetch();
+    state.view = "workshop";
+    render();
+  }
+
   async function confirmPrototype() {
     state.research.status = "confirming";
     renderWorkshop();
@@ -1224,7 +1397,7 @@
       try {
         const proposal = await apiPost(
           sessionApiPath("/research/proposals"),
-          { intent_text: intent, node_id: NODE_ID },
+          { intent_text: intent, node_id: currentNodeId() },
           4200,
         );
         state.research.proposal = proposal;
@@ -1246,6 +1419,7 @@
     }
     state.research.status = "in_progress";
     state.battle = null;
+    requestNextPrefetch();
     state.view = "battle";
     render();
   }
@@ -2511,7 +2685,7 @@
     if (isApiMode()) {
       try {
         const response = await apiPost(
-          sessionApiPath(`/battles/${NODE_ID}/results`),
+          sessionApiPath(`/battles/${currentNodeId()}/results`),
           {
             result: state.battleOutcome.result,
             protected_core_hp: state.battleOutcome.protected_core_hp,
@@ -2526,6 +2700,12 @@
       } catch {
         // Keep the locally calculated settlement.
       }
+      try {
+        await Promise.all([loadMap(), loadCampaignRoute()]);
+      } catch {
+        // Keep the last known map/route projection.
+      }
+      requestNextPrefetch();
       state.evidence = await fetchEvidence();
     }
     state.settlement = settlement;
@@ -2536,7 +2716,7 @@
 
   function buildLocalSettlement(outcome) {
     return {
-      node_id: NODE_ID,
+      node_id: currentNodeId(),
       result: outcome.result,
       battle_summary:
         outcome.result === "victory"
@@ -2633,12 +2813,12 @@
   async function returnToMap() {
     if (isApiMode()) {
       try {
-        await loadMap();
+        await Promise.all([loadMap(), loadCampaignRoute()]);
       } catch {
         // Keep current map projection.
       }
     }
-    state.selectedMapNodeId = NODE_ID;
+    state.selectedMapNodeId = currentNodeId();
     state.view = "map";
     render();
   }
@@ -2696,8 +2876,7 @@
         renderMap();
         break;
       case "enter-node":
-        state.view = "workshop";
-        render();
+        enterCurrentNode();
         break;
       case "refresh-map":
         loadMap().finally(renderMap);
