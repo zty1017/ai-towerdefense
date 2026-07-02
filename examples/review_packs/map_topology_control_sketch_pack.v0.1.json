@@ -1,0 +1,137 @@
+{
+  "output_dir": "game_data/media/map_visual_reference/topology_control_sketches",
+  "pack_id": "mvp_map_topology_control_sketch_pack",
+  "policy": [
+    "Control sketches are compile-time references only.",
+    "The frontend player runtime must not consume these sketches as map backgrounds.",
+    "Painted candidates generated from these sketches must still pass candidate, alignment, overlay, visual, and promotion gates."
+  ],
+  "runtime_package_dir": "examples/map_runtime_packages",
+  "schema_version": "map_topology_control_sketch_pack.v0.1",
+  "sketches": [
+    {
+      "composition_constraints": [
+        "preserve route directions and branch structure",
+        "keep build pads near routes but visually empty",
+        "keep objectives compact and readable",
+        "do not include characters, enemies, projectiles, UI, arrows, or text in generated painted map"
+      ],
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.png",
+      "control_sketch_svg_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.svg",
+      "dimensions": {
+        "height": 720,
+        "width": 1280
+      },
+      "node_id": "gray_lantern_station",
+      "png_sha256": "af250812793f5a8e973d49691ed42a339460a0bcfe4b69df0b705715143f3592",
+      "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "spawn_point_count": 1
+      },
+      "status": "control_sketch_ready",
+      "svg_sha256": "d164af005525aa8660c49d4034c36773871ce4fdb119793d501340103c8f7beb",
+      "usage_policy": [
+        "developer_reference_only",
+        "not_player_visible",
+        "not_a_published_visual_layer",
+        "image_provider_reference_or_manual_paintover_input"
+      ]
+    },
+    {
+      "composition_constraints": [
+        "preserve route directions and branch structure",
+        "keep build pads near routes but visually empty",
+        "keep objectives compact and readable",
+        "do not include characters, enemies, projectiles, UI, arrows, or text in generated painted map"
+      ],
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.png",
+      "control_sketch_svg_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.svg",
+      "dimensions": {
+        "height": 720,
+        "width": 1280
+      },
+      "node_id": "old_signal_tower",
+      "png_sha256": "8bd68e321c2f8cfd0441045b9c490701120005ab5e5f27a3f6c6d1e0eec02332",
+      "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "status": "control_sketch_ready",
+      "svg_sha256": "eecdc180a908d638a310f4ec91d969d5655e118d502c7e9049356093a4330036",
+      "usage_policy": [
+        "developer_reference_only",
+        "not_player_visible",
+        "not_a_published_visual_layer",
+        "image_provider_reference_or_manual_paintover_input"
+      ]
+    },
+    {
+      "composition_constraints": [
+        "preserve route directions and branch structure",
+        "keep build pads near routes but visually empty",
+        "keep objectives compact and readable",
+        "do not include characters, enemies, projectiles, UI, arrows, or text in generated painted map"
+      ],
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.png",
+      "control_sketch_svg_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.svg",
+      "dimensions": {
+        "height": 720,
+        "width": 1280
+      },
+      "node_id": "lamp_wick_store",
+      "png_sha256": "d1591cab2bcec7436f20df2042ac95398fb15e1efb406c48bfdfdc25fc618ded",
+      "runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "runtime_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "status": "control_sketch_ready",
+      "svg_sha256": "b61d98471885603a41340d358ab0057b5eeff1b38b6fac737ac9e5b27179df90",
+      "usage_policy": [
+        "developer_reference_only",
+        "not_player_visible",
+        "not_a_published_visual_layer",
+        "image_provider_reference_or_manual_paintover_input"
+      ]
+    }
+  ],
+  "status": "control_sketches_ready_review_only",
+  "summary": {
+    "blocked_count": 0,
+    "ready_count": 3,
+    "sketch_count": 3,
+    "status_counts": {
+      "control_sketch_ready": 3
+    },
+    "target_size": {
+      "height": 720,
+      "width": 1280
+    }
+  }
+}
