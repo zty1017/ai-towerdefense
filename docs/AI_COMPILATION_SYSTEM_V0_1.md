@@ -777,7 +777,7 @@ generated
 
 媒体表现不能决定碰撞、伤害、路线、资源和任务条件。
 
-当前 MVP 允许用确定性多帧 frame sequence 先占位循环动画，并打包为实体 spritesheet；这只是媒体表现层的已发布资源形态。后续接入图片 -> 视频 -> 关键帧链路时，必须重新经过后处理、审查、atlas 打包和 runtime 引用校验。
+当前 MVP 允许用确定性多帧 frame sequence 先占位循环动画，并打包为实体 spritesheet；这只是媒体表现层的已发布资源形态。两套 atlas 已补 `frame_source_kind` / `loop_continuity_ref`，并通过 `LoopContinuityReport v0.1` 记录“可循环但仍是 deterministic placeholder”的审查状态。后续接入图片 -> 视频 -> 关键帧链路时，必须重新经过后处理、LoopContinuityReport、atlas 打包和 runtime 引用校验。
 
 ## 13. MVP 实现边界
 
@@ -848,7 +848,7 @@ v0.1 不做：
 1. `WorldStateDelta v0.1` 的事务 metadata / 映射说明已落到 `WorldStateDeltaTransaction v0.1`；当前已有首战样例和 stage01-stage07 事务链，不替换现有 delta schema。
 2. Research Job、battle settlement evidence 与 frontend mock pack 已先行携带 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 原生快照；当前已纳入 `CoreArtifactAlignmentReport v0.1` 的 review pack 已完成核心对象边界收敛。下一步新增 review pack、真实 provider 产物或 runtime package 时，必须继续对齐到核心对象字段、core refs 或显式 not-applicable 边界，并统一机器可读 validation report。
 3. 实现 live campaign router 与 Generation Scheduler 后台执行器，让预生成、缓存和 fallback 真正进入游玩流程。
-4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas。
+4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas 与 LoopContinuityReport 门禁。
 5. 推进 AI 生成 painted map 的受控图像管线，但仍以 `MapRuntimePackage` 的路径、塔位、碰撞和目标为运行时事实源。
 
 这份文档冻结的是架构边界，不要求所有对象一次性实现。后续所有具体管线都应说明自己属于哪一层、产出哪个对象、能否改变世界事实、如何被调度和校验。

@@ -75,9 +75,9 @@ P2：本阶段明确不做
 - `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider，但最新真实调用已证明纯文本整图不适合作为地图发布候选路线。下一步应接支持参考图的 provider adapter、人工 paintover，或实现 `MapRuntimePackage` 驱动的分层程序化底图。
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
-- 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。仍需要在有 Chromium / Playwright 的环境中补真实截图或人工录屏验收。
+- 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
-- `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
+- `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
@@ -340,6 +340,28 @@ P2：本阶段明确不做
 - runtime sprite cutout quality 从 `needs_review 3 / 7` 推进到 `passed 7 / 7`。
 - runtime sprite repair plan 已清空；后续新增问题仍走同一套重生成和 promotion 流程。
 - 晋升工具默认 dry-run，必须显式 `--apply` 才能替换 runtime PNG 和 manifest。
+
+### P1-A-7 LoopContinuityReport 与视频帧门禁骨架
+
+状态：已完成。
+
+已落地：
+
+- `shared/schemas/loop_continuity_report.v0.1.schema.json`
+- `tools/media/build_loop_continuity_report.py`
+- `tools/media/validate_loop_continuity_report.py`
+- `tools/media/build_multiframe_atlas_manifest.py`：atlas item 已标注 `frame_source_kind` 与 `loop_continuity_ref`。
+- `shared/schemas/media_atlas_manifest.v0.1.schema.json`：补充受限 `frame_source_kind` / `loop_continuity_ref` 字段。
+- `examples/review_packs/frontend_loop_continuity_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 loop continuity 摘要和验证命令。
+
+当前结论：
+
+- frontend mock：4 个动画序列已检查，`passed_with_warnings 4 / 4`，无 failed。
+- runtime art：7 个动画序列已检查，`passed_with_warnings 7 / 7`，无 failed。
+- warning 主要是 `deterministic_placeholder_not_real_video_keyframes` 和首尾帧 sha 不同；这说明现有帧序列适合 MVP 循环播放，但仍不是最终图生视频关键帧。
+- 下一步真实图生视频帧接入必须复用该门禁：`video_keyframe_sequence` 进入 atlas 前必须重新跑 LoopContinuityReport、atlas contract 和前端视觉烟测。
 
 ### P1-B-0 Generation Scheduler review-only 计划包
 
@@ -1058,7 +1080,7 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 
 要点：
 
-- `virtual_single_frame`、确定性 4 帧 frame sequence 与实体 spritesheet atlas 已完成；本任务后续继续推进真实图生视频关键帧。
+- `virtual_single_frame`、确定性 4 帧 frame sequence、实体 spritesheet atlas 与 LoopContinuityReport 已完成；本任务后续继续推进真实图生视频关键帧。
 - 首尾帧一致或 end frame 控制优先。
 - 加入 LoopContinuityCheck。
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。

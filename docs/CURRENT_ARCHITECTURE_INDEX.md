@@ -147,7 +147,9 @@ animation seed 已可用于后续图生视频。
 frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
 MapRuntimePackage v0.1 已作为三张 MVP 战斗节点运行时地图包入口，包含路径、塔位、目标、出生点和带质量状态的本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
-MediaAtlasManifest v0.1 已作为 spritesheet 多帧入口接入前端、后端 mock API 和 demo evidence；实体 atlas PNG 已由确定性 frame sequence 打包生成，真实图生视频关键帧仍未生成。
+MediaAtlasManifest v0.1 已作为 spritesheet 多帧入口接入前端、后端 mock API 和 demo evidence；实体 atlas PNG 已由确定性 frame sequence 打包生成，并已标注 `frame_source_kind` / `loop_continuity_ref`。
+LoopContinuityReport v0.1 已接入 frontend mock 与 runtime art 两套 atlas：当前所有动画机械连续性通过，但均标记为 deterministic placeholder warning，说明它们可用于 MVP 循环播放，却还不是最终真实图生视频关键帧。
+真实图生视频关键帧仍未生成。
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
 Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重生成或人工复核的素材任务，作为下一轮素材重生的输入。
 Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并再次经过 cutout quality audit；候选不会自动替换正式 runtime 素材。
@@ -244,15 +246,15 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 演示证据导出脚本：可生成 `summary.md / evidence.json / index.html`。
 - Runtime sprite live regeneration 候选：已为信标、基础灯栏与驿站核心生成 review-only PNG，并接入 cutout quality report 与 demo evidence。
 - Runtime sprite 显式晋升：已把通过审查的信标、基础灯栏与驿站核心候选晋升到 published runtime media，重建 runtime atlas，并接入 promotion report。
-- 前端 MVP 页面：已有本地可运行 mock 体验入口，仍需浏览器环境补截图和视觉验收。
+- 前端 MVP 页面：已有本地可运行 mock 体验入口，已补桌面 / 移动浏览器截图烟测；后续仍需多节点和交互录屏验收。
 
 当前尚未完成：
 
-- 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
+- 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入；LoopContinuityReport 已经先行提供替换前后的循环连续性门禁。
 - 新增 WorldStateDelta / review pack / provider artifact 与 ContextPackage、FactEntry、CGOP 字段的持续对齐；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移。CoreArtifactAlignmentReport 当前已清零，未来新增产物若缺核心对象快照、core refs 或显式 not-applicable 边界，会重新进入迁移队列。
 - 正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求缓存和持久化预生成产物；当前 Campaign Router 只触发 dry-run 预取，不是真实后台执行器。
 - 多世界书选择与长期存档系统。
-- 自动化浏览器截图 / Playwright 视觉回归。
+- 多页面 / 多节点自动化浏览器视觉回归；当前只有首战桌面 / 移动截图烟测。
 
 ## 5. 历史文档处理规则
 

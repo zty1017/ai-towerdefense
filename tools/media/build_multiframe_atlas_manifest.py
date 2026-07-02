@@ -224,6 +224,7 @@ def build_atlas_manifest(
     spritesheet_url_prefix: str,
     animated_frame_count: int,
     animated_fps: int,
+    loop_continuity_report_ref: str | None = None,
     created_at: str = DEFAULT_CREATED_AT,
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
@@ -269,6 +270,13 @@ def build_atlas_manifest(
         for frame in frames:
             frame["anchor"] = dict(anchor)
         animation_state = animation_state_for_role(role)
+        is_animated = frame_count > 1
+        frame_source_kind = "deterministic_frame_sequence" if is_animated else "single_frame_static"
+        loop_ref = (
+            f"{loop_continuity_report_ref}#{asset_id}.{role}.{animation_state}"
+            if loop_continuity_report_ref and is_animated
+            else None
+        )
         spritesheet = pack_animation_spritesheet(
             frames=frames,
             output_dir=spritesheet_dir,
@@ -285,6 +293,8 @@ def build_atlas_manifest(
                 "asset_name": item.get("asset_name"),
                 "asset_type": item.get("asset_type"),
                 "media_role": role,
+                "frame_source_kind": frame_source_kind,
+                "loop_continuity_ref": loop_ref,
                 "playback": {
                     "state": animation_state,
                     "fps": animated_fps if frame_count > 1 else 1,
@@ -328,6 +338,7 @@ def main() -> int:
     parser.add_argument("--spritesheet-url-prefix", help="Public URL prefix for generated spritesheet PNGs.")
     parser.add_argument("--animated-frame-count", type=int, default=4)
     parser.add_argument("--animated-fps", type=int, default=6)
+    parser.add_argument("--loop-continuity-report-ref", default="")
     parser.add_argument("--created-at", default=DEFAULT_CREATED_AT)
     args = parser.parse_args()
 
@@ -362,6 +373,7 @@ def main() -> int:
         spritesheet_url_prefix=spritesheet_url_prefix,
         animated_frame_count=args.animated_frame_count,
         animated_fps=args.animated_fps,
+        loop_continuity_report_ref=args.loop_continuity_report_ref or None,
         created_at=args.created_at,
     )
     write_json(output_path, atlas)

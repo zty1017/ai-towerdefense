@@ -104,6 +104,22 @@ game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.j
 
 这两份 manifest 当前已经进入 `spritesheet` 模式：sprite 类角色由已发布 processed PNG 派生出确定性的 4 帧循环 frame sequence，并打包为实体 spritesheet PNG；静态角色仍保持 1 帧。它还不是最终图生视频关键帧成果，但已经让前端、后端 mock API、demo evidence 和 validator 都按多帧 atlas 合同工作。
 
+当前已补充 `LoopContinuityReport v0.1`：
+
+```text
+examples/review_packs/frontend_loop_continuity_report.v0.1.json
+examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json
+```
+
+两套 atlas item 已标注：
+
+```text
+frame_source_kind: single_frame_static | deterministic_frame_sequence | video_keyframe_sequence
+loop_continuity_ref: examples/review_packs/...#animation_id
+```
+
+当前 deterministic frame sequence 的机械循环连续性通过，但报告会保留 `deterministic_placeholder_not_real_video_keyframes` warning。后续真实图生视频关键帧进入 atlas 时，应把 `frame_source_kind` 改为 `video_keyframe_sequence` 并重新跑同一报告。
+
 后续接入图生视频和关键帧时，应在同一合同上扩展：
 
 - `frames` 从当前 4 帧临时循环扩展为 8-16 帧真实关键帧。
@@ -147,6 +163,7 @@ MVP 可以拆成两条并行线：
     -> GenerateVideoFromImage
     -> ExtractKeyframes
     -> BatchPostprocessFrames
+    -> LoopContinuityReport
     -> Atlas / AnimationState
 ```
 
@@ -231,6 +248,16 @@ MVP 优先使用 `ffmpeg` CLI，因为它稳定、可复现、易调试。
 输出：
 
 - `loop_continuity_report.v0.1`
+
+当前落地：
+
+```text
+tools/media/build_loop_continuity_report.py
+tools/media/validate_loop_continuity_report.py
+shared/schemas/loop_continuity_report.v0.1.schema.json
+```
+
+它读取 `MediaAtlasManifest v0.1`，对 looping animation 的首帧和末帧计算 alpha bbox、anchor、alpha coverage 和 RGBA 差异。报告是 review-only evidence：可以阻止明显无法循环的帧序列进入发布态，但不直接替换 runtime 资源，也不调用 provider。
 
 检查项：
 

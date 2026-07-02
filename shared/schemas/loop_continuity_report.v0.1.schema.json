@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/loop_continuity_report.v0.1.schema.json",
+  "title": "LoopContinuityReport v0.1",
+  "description": "Review-only deterministic report for checking whether animation frame sequences are mechanically safe to loop.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "report_id",
+    "created_at",
+    "atlas_ref",
+    "source_atlas_id",
+    "status",
+    "summary",
+    "thresholds",
+    "items"
+  ],
+  "properties": {
+    "report_version": { "type": "string", "const": "loop_continuity_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "atlas_ref": { "type": "string", "minLength": 1 },
+    "source_atlas_id": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["passed", "passed_with_warnings", "failed"] },
+    "summary": { "$ref": "#/$defs/summary" },
+    "thresholds": { "$ref": "#/$defs/thresholds" },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+  },
+  "$defs": {
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animation_count",
+        "checked_count",
+        "passed_count",
+        "passed_with_warnings_count",
+        "failed_count",
+        "skipped_static_count",
+        "frame_source_counts"
+      ],
+      "properties": {
+        "animation_count": { "type": "integer", "minimum": 0 },
+        "checked_count": { "type": "integer", "minimum": 0 },
+        "passed_count": { "type": "integer", "minimum": 0 },
+        "passed_with_warnings_count": { "type": "integer", "minimum": 0 },
+        "failed_count": { "type": "integer", "minimum": 0 },
+        "skipped_static_count": { "type": "integer", "minimum": 0 },
+        "frame_source_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alpha_threshold",
+        "max_bbox_delta_ratio",
+        "max_anchor_delta",
+        "max_alpha_coverage_delta",
+        "max_mean_rgba_delta"
+      ],
+      "properties": {
+        "alpha_threshold": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "max_bbox_delta_ratio": { "type": "number", "minimum": 0 },
+        "max_anchor_delta": { "type": "number", "minimum": 0 },
+        "max_alpha_coverage_delta": { "type": "number", "minimum": 0 },
+        "max_mean_rgba_delta": { "type": "number", "minimum": 0 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animation_id",
+        "asset_id",
+        "asset_name",
+        "asset_type",
+        "media_role",
+        "frame_source_kind",
+        "atlas_ref",
+        "frame_count",
+        "playback",
+        "status",
+        "issues",
+        "warnings",
+        "metrics"
+      ],
+      "properties": {
+        "animation_id": { "type": "string", "minLength": 1 },
+        "asset_id": { "type": "string", "minLength": 1 },
+        "asset_name": { "type": ["string", "null"] },
+        "asset_type": { "type": ["string", "null"] },
+        "media_role": { "type": "string", "minLength": 1 },
+        "frame_source_kind": {
+          "type": "string",
+          "enum": ["single_frame_static", "deterministic_frame_sequence", "video_keyframe_sequence", "unknown"]
+        },
+        "atlas_ref": { "type": "string", "minLength": 1 },
+        "frame_count": { "type": "integer", "minimum": 1 },
+        "playback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "fps", "loop"],
+          "properties": {
+            "state": { "type": ["string", "null"] },
+            "fps": { "type": ["integer", "null"], "minimum": 1 },
+            "loop": { "type": ["boolean", "null"] }
+          }
+        },
+        "status": { "type": "string", "enum": ["passed", "passed_with_warnings", "failed", "skipped_static"] },
+        "issues": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "metrics": { "type": "object" }
+      }
+    }
+  }
+}
