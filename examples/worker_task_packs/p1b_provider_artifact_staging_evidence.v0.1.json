@@ -1,0 +1,71 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-11-provider-artifact-staging-evidence",
+  "title": "ProviderArtifactStaging demo evidence 接线",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-artifact-staging-evidence",
+  "worktree": "/tmp/ai-td-task-provider-artifact-staging-evidence",
+  "objective": "把 ProviderArtifactStagingManifest v0.1 接入 demo evidence exporter，使演示证据包能展示 source envelope、staged artifact 数量、promotion gate 和校验状态。不得调用 provider，不得读取 .env，不得输出 prompt 正文、provider 响应正文、secret 或 runtime-ready 声明。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md"
+  ],
+  "allowed_paths": [
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging_evidence.v0.1.json",
+    "python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence_connected",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只接入 demo evidence，不生成新内容、不调用 provider。",
+    "Evidence 页面只能展示摘要、计数、路径和 gate 状态，不能输出敏感正文或把暂存产物标为 runtime-ready。"
+  ]
+}

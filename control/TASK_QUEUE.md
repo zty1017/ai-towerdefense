@@ -562,6 +562,7 @@ git diff --check
 - staging manifest 必须保持 review-only、internal evidence、非玩家可见、非 runtime 激活、非世界状态修改。
 - staged artifact 必须是本地路径，不能是 provider 临时 URL、data URI 或 runtime package。
 - 后续真实 executor 必须先生成并校验 ProviderOutputEnvelope，再写 ProviderArtifactStagingManifest，然后进入 media / semantic / human review 和 promotion report。
+- demo evidence exporter 已能展示 staging manifest、source envelope、暂存 artifact 数量、gate 状态和 promotion 阻断摘要。
 
 验收：
 
@@ -571,6 +572,29 @@ python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provid
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_staging python3 -m py_compile tools/dev/validate_provider_artifact_staging_manifest.py
 python3 -m json.tool shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json >/tmp/provider_artifact_staging.schema.pretty.json
 python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence
+git diff --check
+```
+
+### P1-B-11 ProviderArtifactStaging demo evidence 接线
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/demo/export_evidence.py` 已增加 ProviderArtifactStagingManifest 的 PATHS、source file 指纹、validation command、机器可读摘要、summary.md 摘要和 index.html 快速展示。
+- `examples/worker_task_packs/p1b_provider_artifact_staging_evidence.v0.1.json`
+
+当前结论：
+
+- evidence 只展示 staging 摘要、计数、路径、gate 状态和 promotion 阻断。
+- evidence 不输出 prompt 正文、provider 响应正文、secret、token、临时 URL 或 runtime-ready 声明。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging_evidence.v0.1.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence_connected
 git diff --check
 ```
 
