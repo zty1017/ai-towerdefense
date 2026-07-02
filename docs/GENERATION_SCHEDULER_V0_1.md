@@ -29,6 +29,8 @@
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim`
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete`
 - `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback`
 - `POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step`
 
 默认构建并校验：
@@ -158,6 +160,9 @@ waiting_review -> completed
 queued -> failed
 claimed -> failed
 waiting_review -> failed
+failed -> queued
+failed -> fallback_ready
+waiting_review -> fallback_ready
 ```
 
 对应接口：
@@ -169,6 +174,25 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 ```
 
 这些接口只改本地队列状态和 item payload 中的 transition log，不触发 provider、不提交世界状态、不激活候选。非法状态流转返回 `409`，例如对已经 `completed` 的同步复用项再次 `claim`。
+
+## Retry / Fallback Budget
+
+队列项会从 `GenerationSchedulePlan.items[].provider_policy` 继承：
+
+```text
+max_attempts
+provider_policy.mode
+provider_policy.profile
+fallback_ref
+```
+
+dry-run worker 每处理一次 `queued` 项会把 `attempt_count` 加 1。失败后：
+
+- 若 `attempt_count < max_attempts`，可以 `retry` 回到 `queued`。
+- 若 `attempt_count >= max_attempts`，`retry` 返回 `409`。
+- 若存在 `fallback_ref`，可通过 `fallback` 进入 `fallback_ready`。
+
+MVP 中这些动作仍只改变本地状态，不触发真实生成。它们用于证明未来接入 provider 前已经有预算、重试和降级边界。
 
 ## Dry-run Worker Step
 

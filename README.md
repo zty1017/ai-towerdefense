@@ -128,6 +128,8 @@ uvicorn app.main:app --app-dir backend --reload
 | POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim` | Claim a queued scheduler item |
 | POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete` | Complete a queued or claimed scheduler item |
 | POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail` | Fail a queued or claimed scheduler item |
+| POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry` | Requeue a failed scheduler item within budget |
+| POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback` | Select static fallback for a failed/review-blocked item |
 | POST | `/api/sessions/{session_id}/generation-schedule/workers/dry-run-step` | Process one queued scheduler item without providers |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |

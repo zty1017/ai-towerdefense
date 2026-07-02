@@ -341,6 +341,74 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 4
 
 
+def test_generation_scheduler_retry_budget_and_fallback_flow(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+
+    first_step = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={"worker_id": "budget-worker"},
+        )
+    )
+    item_id = first_step["generation_schedule_queue_item"]["schedule_item_id"]
+    assert first_step["generation_schedule_queue_item"]["status"] == "waiting_review"
+    assert first_step["generation_schedule_queue_item"]["attempt_count"] == 1
+    assert first_step["generation_schedule_queue_item"]["max_attempts"] == 2
+
+    first_fail = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{item_id}/fail",
+            json={"worker_id": "budget-worker", "note": "first attempt rejected"},
+        )
+    )
+    assert first_fail["generation_schedule_queue_item"]["status"] == "failed"
+
+    retry = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{item_id}/retry",
+            json={"worker_id": "budget-worker", "note": "retry within budget"},
+        )
+    )
+    assert retry["generation_schedule_queue_item"]["status"] == "queued"
+    assert retry["generation_schedule_queue"]["summary"]["claimable_count"] == 4
+
+    second_step = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={"worker_id": "budget-worker"},
+        )
+    )
+    assert second_step["generation_schedule_queue_item"]["schedule_item_id"] == item_id
+    assert second_step["generation_schedule_queue_item"]["attempt_count"] == 2
+    assert second_step["generation_schedule_queue_item"]["attempt_budget_exhausted"] is True
+
+    second_fail = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{item_id}/fail",
+            json={"worker_id": "budget-worker", "note": "second attempt rejected"},
+        )
+    )
+    assert second_fail["generation_schedule_queue_item"]["status"] == "failed"
+
+    retry_conflict = client.post(
+        f"/api/sessions/{sid}/generation-schedule/queue/{item_id}/retry",
+        json={"worker_id": "budget-worker"},
+    )
+    assert retry_conflict.status_code == 409
+    assert "cannot retry" in retry_conflict.json()["detail"]
+
+    fallback = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{item_id}/fallback",
+            json={"worker_id": "budget-worker", "note": "use reviewed fallback"},
+        )
+    )
+    assert fallback["generation_schedule_queue_item"]["status"] == "fallback_ready"
+    assert fallback["generation_schedule_queue_item"]["fallback_ref"]
+    assert fallback["generation_schedule_queue"]["summary"]["fallback_ready_count"] == 2
+
+
 def test_all_battle_nodes_expose_map_runtime_packages(client):
     sid = _create_session(client)
     expected = {

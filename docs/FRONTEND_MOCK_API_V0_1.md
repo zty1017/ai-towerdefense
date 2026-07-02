@@ -275,6 +275,8 @@ GET /api/sessions/{session_id}/generation-schedule/queue
 POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim
 POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete
 POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback
 ```
 
 请求体可选：
@@ -291,6 +293,8 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 - `claim`: 只允许 `queued -> claimed`。
 - `complete`: 允许 `queued|claimed|waiting_review -> completed`。
 - `fail`: 允许 `queued|claimed|waiting_review -> failed`。
+- `retry`: 只允许 `failed -> queued`，且 `attempt_count < max_attempts`。
+- `fallback`: 允许 `failed|waiting_review -> fallback_ready`，且必须存在 `fallback_ref`。
 - `completed`、`fallback_ready`、`failed`、`blocked` 不能再被 claim。
 
 返回：
@@ -301,6 +305,15 @@ POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fai
 非法状态流转返回 `409`。未知队列项返回 `404`。
 
 这些接口只更新本地 dry-run 队列状态，仍不会调用外部模型、不会写世界状态、不会激活预生成候选。它们的作用是给后续真实后台 worker 预留最小领取和回写接口。
+
+队列项会携带从 `GenerationSchedulePlan.provider_policy` 派生的预算字段：
+
+- `max_attempts`
+- `attempt_count`
+- `attempt_budget_exhausted`
+- `fallback_ref`
+
+dry-run worker 每处理一次 `queued` 项会递增 `attempt_count`。当 `attempt_count >= max_attempts` 时，`retry` 会返回 `409`，此时只能由人工 / 系统选择 `fallback` 或保持失败状态。
 
 ### 调度 dry-run worker step
 

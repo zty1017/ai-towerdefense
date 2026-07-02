@@ -246,6 +246,42 @@ def fail_generation_schedule_queue_item(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry",
+    response_model=FrontendMockPayloadResponse,
+)
+def retry_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Requeue a failed scheduler item if its retry budget allows it."""
+    return _transition_generation_schedule_queue_item(
+        session_id,
+        schedule_item_id,
+        "retry",
+        body,
+    )
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback",
+    response_model=FrontendMockPayloadResponse,
+)
+def fallback_generation_schedule_queue_item(
+    session_id: str,
+    schedule_item_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Select the static fallback for a failed or review-blocked scheduler item."""
+    return _transition_generation_schedule_queue_item(
+        session_id,
+        schedule_item_id,
+        "fallback",
+        body,
+    )
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/dry-run-step",
     response_model=FrontendMockPayloadResponse,
 )
