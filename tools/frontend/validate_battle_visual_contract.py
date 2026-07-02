@@ -78,7 +78,11 @@ def validate_app_contract(errors: list[str]) -> None:
     for name in (
         "terrainFeatureSet",
         "drawProceduralTerrain",
+        "drawDarkTidePools",
+        "drawRouteShoulders",
         "drawRoadPebbles",
+        "drawRoadRuts",
+        "drawBattlefieldLandmarks",
         "drawDeploymentBase",
         "drawTargetFoundation",
         "drawSpawnRift",
@@ -89,8 +93,12 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawProceduralTerrain(ctx, m)" in backdrop, "drawBackdrop must start from procedural terrain", errors)
     require("drawMapDebugOverlay(ctx, m)" in backdrop, "debug map overlay must be isolated behind its own helper", errors)
     require("playerBattleMapVisualUrl" not in backdrop, "drawBackdrop must not draw whole-map player images by default", errors)
+    require("drawDarkTidePools" in app, "procedural terrain must include world-space dark tide pools", errors)
+    require("drawRouteShoulders" in path, "drawPath must render terrain shoulders around roads", errors)
     require("drawRoadPebbles" in path, "drawPath must render textured world road details", errors)
+    require("drawRoadRuts" in path, "drawPath must render road ruts or plank details", errors)
     require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
+    require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
     require("drawSpawnRift" in spawn, "spawn markers must render ambient entry effects, not arrows", errors)
     require("function drawGrid" not in app and "function drawDiamond" not in app, "battle view must not keep checkerboard/grid drawing helpers", errors)

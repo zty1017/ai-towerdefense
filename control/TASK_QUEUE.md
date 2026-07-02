@@ -76,7 +76,7 @@ P2：本阶段明确不做
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
-- 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
+- 前端战斗地图视觉底座已完成 P0-M / v0.2 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地和世界内废墟 / 补给 / 灯具地标；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -1249,8 +1249,9 @@ python3 tools/frontend/validate_battle_visual_contract.py
 已落地：
 
 - `frontend/app.js`：默认战斗底座改为 `MapRuntimePackage` seed 驱动的程序化地形、土石路、部署基座、目标地基和入口雾潮；整张玩家地图图像不再进入默认 preload / drawBackdrop。
+- `frontend/app.js` v0.2：新增平滑路口、路肩、车辙 / 木板细节、暗潮洼地、废墟 / 补给 / 灯具 / 信号残骸地标，让玩家默认战场更接近完整塔防关卡画面。
 - `frontend/styles.css`：压低 HUD 遮挡，battle canvas 继续全屏铺底。
-- `tools/frontend/validate_battle_visual_contract.py`：增加程序化底座、棋盘 helper 禁止、失败视觉层禁止发布和 runtime package 结构检查。
+- `tools/frontend/validate_battle_visual_contract.py`：增加程序化底座、棋盘 helper 禁止、失败视觉层禁止发布、runtime package 结构、路肩、车辙、暗潮洼地和世界地标检查。
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md` 与 `frontend/README.md`：同步玩家默认战斗底座事实源。
 
 已验证：
@@ -1260,6 +1261,7 @@ node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
 python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
 python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/frontend_procedural_map_polish_smoke
 python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evidence
 ```
 
