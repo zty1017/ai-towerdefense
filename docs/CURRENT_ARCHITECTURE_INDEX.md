@@ -189,3 +189,7 @@ MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路
 主聊天可以讨论和决策；具体实现应优先进入 `develop` 派生的 task worktree，验收后合回 `develop`。稳定后再统一同步到 `main`。
 
 `main` 允许短期落后于讨论和 `develop`，但这种落后应是受控滞后。同步前必须先检查 `main` 是否存在未识别的用户改动，并确认本次同步范围；不得为了追平文档而覆盖用户草稿。
+
+当前 main 同步准备清单见：
+
+- `docs/MAIN_SYNC_PLAN_2026_07_02.md`
