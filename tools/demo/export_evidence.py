@@ -982,6 +982,7 @@ def collect_assets_and_media(
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
+    core_artifacts = as_obj(frontend_pack.get("core_artifacts"))
     runtime_art_assets = as_list(runtime_art_kit.get("art_assets"))
     map_tokens = as_list(runtime_art_kit.get("map_tokens"))
     procedural_effects = as_list(runtime_art_kit.get("procedural_effects"))
@@ -994,6 +995,20 @@ def collect_assets_and_media(
             "playable_count": compiler_summary.get("playable_count"),
             "asset_count_by_type": as_obj(compiler_summary.get("asset_count_by_type")),
             "promotion_states": as_obj(compiler_summary.get("promotion_states")),
+            "core_artifacts": {
+                "status": core_artifacts.get("status"),
+                "review_only": core_artifacts.get("review_only"),
+                "ref_count": len(as_obj(core_artifacts.get("refs"))),
+                "schema_versions": {
+                    key: as_obj(core_artifacts.get(key)).get("schema_version")
+                    for key in (
+                        "context_package",
+                        "fact_entry",
+                        "compiled_game_object_package",
+                        "world_delta_transaction",
+                    )
+                },
+            },
             "asset_samples": [safe_asset_summary(asset) for asset in assets[:MAX_SAMPLE_ITEMS]],
         },
         "published_asset_media": media_manifest_summary(frontend_media_manifest),
@@ -1371,6 +1386,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     sprite_candidates = as_obj(
         as_obj(evidence.get("assets_and_media")).get("published_sprite_repair_candidates")
     )
+    frontend_pack_core = as_obj(assets.get("core_artifacts"))
     runtime_art = as_obj(as_obj(evidence.get("assets_and_media")).get("runtime_art"))
     runtime_art_atlas = as_obj(runtime_art.get("atlas_manifest"))
     runtime_sprite_quality = as_obj(runtime_art.get("sprite_cutout_quality"))
@@ -1486,6 +1502,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         f"- Frontend mock pack：`{assets.get('pack_id')}`",
         f"- 资产数：`{assets.get('asset_count')}`，可玩：`{assets.get('playable_count')}`",
+        f"- Frontend mock core artifacts：`{frontend_pack_core.get('status')}`，review-only：`{frontend_pack_core.get('review_only')}`，schema：`{frontend_pack_core.get('schema_versions')}`",
         f"- published PNG 媒体：`{media.get('media_count')}` 个，覆盖资产：`{media.get('asset_count')}`",
         f"- published atlas：动画 `{atlas.get('animation_count')}` 个，帧 `{atlas.get('frame_count')}` 个，模式 `{atlas.get('atlas_mode')}`",
         f"- published sprite cutout 质量：`{sprite_quality.get('status')}`，需复核 `{sprite_quality.get('needs_review_count')}` / `{sprite_quality.get('sprite_item_count')}`",

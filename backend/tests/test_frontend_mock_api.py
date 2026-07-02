@@ -52,6 +52,19 @@ def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     assert core_artifacts["refs"]["world_delta_transaction"].endswith(
         "first_battle_result.world_delta_transaction.json"
     )
+    pack_core_artifacts = pack["core_artifacts"]
+    assert pack_core_artifacts["status"] == (
+        "frontend_pack_review_only_core_artifacts_ready"
+    )
+    assert pack_core_artifacts["review_only"] is True
+    assert pack_core_artifacts["refs"] == core_artifacts["refs"]
+    assert pack_core_artifacts["context_package"]["schema_version"] == (
+        "context_package.v0.1"
+    )
+    assert pack_core_artifacts["fact_entry"]["schema_version"] == "fact_entry.v0.1"
+    assert pack_core_artifacts["compiled_game_object_package"]["schema_version"] == (
+        "compiled_game_object_package.v0.1"
+    )
     assert payload["animation_pipeline_status"] == (
         "seed_images_ready_video_frames_not_generated"
     )

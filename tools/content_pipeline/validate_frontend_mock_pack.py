@@ -5,10 +5,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+WORLD_STATE_DIR = ROOT / "tools" / "world_state"
+if str(WORLD_STATE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORLD_STATE_DIR))
+
+import validate_ai_compile_core_artifacts
 import validate_effect_catalog
+from validate_world_delta_transaction import validate_transaction
 
 
 FORBIDDEN_KEYS = {
@@ -27,6 +35,12 @@ REQUIRED_ASSET_TYPES = {
     "temporary_mod",
     "intel_asset",
 }
+REQUIRED_CORE_ARTIFACT_KEYS = (
+    "context_package",
+    "fact_entry",
+    "compiled_game_object_package",
+    "world_delta_transaction",
+)
 
 
 def load_json(path: Path) -> Any:
@@ -73,6 +87,40 @@ def validate_media_role_refs(
                 errors.append(f"{path}.{role}.{dim_key} must be positive integer")
 
 
+def validate_core_artifacts(core_artifacts: Any, errors: list[str]) -> None:
+    if not isinstance(core_artifacts, dict):
+        errors.append("core_artifacts must be object")
+        return
+    if core_artifacts.get("review_only") is not True:
+        errors.append("core_artifacts.review_only must be true")
+    refs = core_artifacts.get("refs")
+    if not isinstance(refs, dict):
+        errors.append("core_artifacts.refs must be object")
+        refs = {}
+    for key in REQUIRED_CORE_ARTIFACT_KEYS:
+        if key not in core_artifacts:
+            errors.append(f"core_artifacts missing {key}")
+        if key not in refs:
+            errors.append(f"core_artifacts.refs missing {key}")
+
+    for key in ("context_package", "fact_entry", "compiled_game_object_package"):
+        artifact = core_artifacts.get(key)
+        if not isinstance(artifact, dict):
+            continue
+        artifact_errors = validate_ai_compile_core_artifacts.validate_ai_compile_core_artifact(
+            artifact
+        )
+        errors.extend(f"core_artifacts.{key}: {error}" for error in artifact_errors)
+
+    transaction = core_artifacts.get("world_delta_transaction")
+    if isinstance(transaction, dict):
+        transaction_errors = validate_transaction(transaction)
+        errors.extend(
+            f"core_artifacts.world_delta_transaction: {error}"
+            for error in transaction_errors
+        )
+
+
 def validate(pack: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if pack.get("schema_version") != "frontend_mock_pack.v0.1":
@@ -83,6 +131,7 @@ def validate(pack: dict[str, Any]) -> list[str]:
         "compiler_summary",
         "frontend_contract",
         "content_sources",
+        "core_artifacts",
         "effect_catalog",
         "world",
         "map",
@@ -185,6 +234,8 @@ def validate(pack: dict[str, Any]) -> list[str]:
             errors.append("compiler_summary.playable_count mismatch")
     if playable != len(assets):
         errors.append("all frontend mock assets must be playable")
+
+    validate_core_artifacts(pack.get("core_artifacts"), errors)
 
     if not pack.get("npcs"):
         errors.append("npcs must not be empty")
