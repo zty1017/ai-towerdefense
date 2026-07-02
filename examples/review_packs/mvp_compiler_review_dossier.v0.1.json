@@ -3265,7 +3265,7 @@
       "path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
       "kind": "review_pack",
       "exists": true,
-      "sha256": "1c50ccdc3055f1a80b2130e678553ad33e8e1b7e555d81706a9ac577529ce8f4"
+      "sha256": "a8824b7f640c19cc2b4763fd97acd9916a1494d6d05f745c178f7ecca6e168a0"
     },
     {
       "path": "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
