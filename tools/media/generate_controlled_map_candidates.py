@@ -154,7 +154,7 @@ def write_sidecar(
             )
         ),
         "review_status": (
-            "candidate_needs_alignment_overlay_and_visual_review"
+            "candidate_needs_candidate_review_first"
             if image_exists
             else "awaiting_provider_or_paintover_output"
         ),

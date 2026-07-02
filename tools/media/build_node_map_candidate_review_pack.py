@@ -177,40 +177,46 @@ REVIEW_PROFILES: dict[str, dict[str, dict[str, Any]]] = {
     },
     "controlled_text_fallback_v1": {
         "gray_lantern_station": {
-            "status": "alignment_review_ready",
+            "status": "needs_regeneration",
             "blocking_findings": [
-                "text_fallback_is_lower_confidence_than_reference_image_generation",
-                "requires_overlay_and_visual_review_before_promotion",
+                "text_fallback_baked_direction_arrows_into_background",
+                "text_fallback_baked_control_shapes_into_background",
+                "parchment_board_frame_not_valid_battlefield_background",
+                "runtime_path_and_build_slots_cannot_be_trusted_from_image",
             ],
             "strengths": [
                 "uses_controlled_regeneration_request_pack",
-                "candidate_remains_review_only",
+                "useful_negative_sample_for_map_compiler_quality_gate",
             ],
-            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+            "recommended_next_action": "reject this candidate; switch to reference-image, paintover, or layered procedural map background before any overlay review",
         },
         "lamp_wick_store": {
-            "status": "alignment_review_ready",
+            "status": "needs_regeneration",
             "blocking_findings": [
-                "text_fallback_is_lower_confidence_than_reference_image_generation",
-                "requires_overlay_and_visual_review_before_promotion",
+                "text_fallback_baked_direction_arrows_into_background",
+                "text_fallback_baked_unverified_pad_markers_into_background",
+                "text_fallback_added_unverified_figures_or_units",
+                "runtime_path_and_build_slots_cannot_be_trusted_from_image",
             ],
             "strengths": [
                 "uses_controlled_regeneration_request_pack",
-                "candidate_remains_review_only",
+                "route_readability_is_a_useful_reference_for_future_layout_briefs",
             ],
-            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+            "recommended_next_action": "reject this candidate; rebuild the battlefield from MapRuntimePackage topology and only use image generation for style-compliant terrain layers",
         },
         "old_signal_tower": {
-            "status": "alignment_review_ready",
+            "status": "needs_regeneration",
             "blocking_findings": [
-                "text_fallback_is_lower_confidence_than_reference_image_generation",
-                "requires_overlay_and_visual_review_before_promotion",
+                "text_fallback_added_unverified_people_or_unit_like_figures",
+                "text_fallback_added_unverified_fenced_build_zones",
+                "route_topology_visually_diverges_from_runtime_package",
+                "large_world_landmarks_are_not_locked_to_runtime_objectives",
             ],
             "strengths": [
-                "uses_controlled_regeneration_request_pack",
-                "candidate_remains_review_only",
+                "world_mood_and_painted_style_are_closer_than_the_other_text_fallback_samples",
+                "useful_negative_sample_for_reference_image_requirement",
             ],
-            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+            "recommended_next_action": "reject this candidate for runtime; keep as style reference only and regenerate through a controlled topology or manual paintover path",
         },
     },
 }
@@ -260,6 +266,20 @@ def build_candidate(sidecar_path: Path, review_profile: str) -> dict[str, Any]:
     )
     dims = png_dimensions(candidate_path)
     file_status = "present_png" if dims else ("missing" if not candidate_path.exists() else "not_png")
+    review_status = notes["status"]
+    blocking_findings = list(notes["blocking_findings"])
+    recommended_next_action = notes["recommended_next_action"]
+    if file_status != "present_png" and review_status == "alignment_review_ready":
+        review_status = "awaiting_provider_or_paintover_output"
+        blocking_findings = sorted(
+            {
+                *blocking_findings,
+                "candidate_image_missing_or_not_png",
+            }
+        )
+        recommended_next_action = (
+            "generate or attach a valid PNG candidate before alignment review"
+        )
     return {
         "node_id": node_id,
         "display_name": sidecar.get("display_name"),
@@ -277,10 +297,10 @@ def build_candidate(sidecar_path: Path, review_profile: str) -> dict[str, Any]:
         "file_status": file_status,
         "dimensions": {"width": dims[0], "height": dims[1]} if dims else None,
         "image_size_bytes": sidecar.get("image_size_bytes"),
-        "review_status": notes["status"],
-        "blocking_findings": notes["blocking_findings"],
+        "review_status": review_status,
+        "blocking_findings": blocking_findings,
         "strengths": notes["strengths"],
-        "recommended_next_action": notes["recommended_next_action"],
+        "recommended_next_action": recommended_next_action,
         "runtime_promotion": "blocked_until_explicit_review",
     }
 
