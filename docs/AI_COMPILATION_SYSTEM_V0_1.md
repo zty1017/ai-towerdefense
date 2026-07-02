@@ -25,6 +25,18 @@ shared/schemas/ + tools/ + 专题文档
 
 如果本文中的概念名称与现有 schema 字段不完全一致，以具体 schema 和校验器为准；本文应在下一轮修订中补齐映射，而不是要求实现层直接改名。
 
+### 0.1 执行冻结规则
+
+后续 worker、子代理和人工实现应按以下规则使用本文：
+
+- 本文可以定义概念、边界、生命周期和权限，但不能单独发明运行时字段。任何要被代码读取的字段，都必须落到 `shared/schemas/`、`tools/` 或对应专题文档。
+- 字段级冲突时，以当前 schema、校验器和构建脚本为准；概念文档只能触发后续 schema 修订，不能让实现绕过现有工具。
+- `Generation Scheduler` 是横切控制面，不拥有内容真值，也不替代 schema gate、semantic gate、simulation gate、media gate 或人工审查。
+- `WorldStateDeltaTransaction` 是当前 `WorldStateDelta v0.1` 的事务语义外壳。除非 `world_state_delta.v0.1.schema.json` 或后续 schema 明确允许，不得把事务字段直接塞进现有 delta 顶层。
+- 所有世界状态变化必须落到当前 `operations[]` 白名单，不能通过通用 `effects[]`、自然语言 summary、raw JSON patch 或 provider trace 进入 `RunWorldState`。
+- `generated`、`reviewed`、`locked`、`published`、`active`、`certified` 等状态名称可以在不同对象线中使用，但必须能映射回本文第 6 节的生命周期，而不是各管线自行解释。
+- `main` 与早期文档可以保留讨论痕迹；真正派发实现任务时，默认以 `develop` 的本索引、本文、schema 和 tools 为事实源。
+
 ## 1. 总定义
 
 AI 编译系统由四个协作层组成：
