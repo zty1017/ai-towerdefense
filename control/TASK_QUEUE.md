@@ -54,6 +54,7 @@ P2：本阶段明确不做
 - 战斗配置和 reviewed runtime package 的后端加载入口已拆分到 `backend/app/services/battle_content_service.py`。
 - MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
 - MapRuntimePackage 后端加载入口已拆分到 `backend/app/services/map_runtime_service.py`；`frontend_mock_service.py` 只在战斗配置和 runtime package 聚合响应中附带地图包。
+- AI 编译核心对象示例与 refs 的后端加载入口已拆分到 `backend/app/services/ai_core_artifact_service.py`。
 - 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。
 - 当前前端是 no-build MVP shell，不再以早期 React/Vite/Phaser 骨架任务为事实源。
 

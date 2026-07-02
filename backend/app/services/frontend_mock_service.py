@@ -14,6 +14,7 @@ from typing import Any
 
 from ..db import db_cursor, now_iso
 from . import (
+    ai_core_artifact_service,
     battle_content_service,
     frontend_media_service,
     generation_scheduler_service,
@@ -33,22 +34,9 @@ _FIRST_CRISIS_NODE = _REPO_ROOT / "game_data/demo/first_crisis_node.json"
 _FIRST_BATTLE_DELTA = (
     _REPO_ROOT / "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json"
 )
-_FIRST_BATTLE_TRANSACTION = (
-    _REPO_ROOT
-    / "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
-)
 _FRONTEND_MOCK_PACK = _REPO_ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json"
 _AUDIT_REPORT = _REPO_ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json"
 _REVIEW_DOSSIER = _REPO_ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
-_CONTEXT_PACKAGE_EXAMPLE = (
-    _REPO_ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
-)
-_FACT_ENTRY_EXAMPLE = (
-    _REPO_ROOT / "examples/review_packs/mvp_gray_lantern.fact_entry.json"
-)
-_CGOP_EXAMPLE = (
-    _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
-)
 
 class FixtureNotFoundError(LookupError):
     """Raised when a mock fixture cannot satisfy the requested node."""
@@ -69,26 +57,6 @@ def _load_frontend_pack() -> dict[str, Any]:
 
 def _rel(path: Path) -> str:
     return path.relative_to(_REPO_ROOT).as_posix()
-
-
-def _core_artifact_refs() -> dict[str, str]:
-    return {
-        "context_package": _rel(_CONTEXT_PACKAGE_EXAMPLE),
-        "fact_entry": _rel(_FACT_ENTRY_EXAMPLE),
-        "compiled_game_object_package": _rel(_CGOP_EXAMPLE),
-        "world_delta_transaction": _rel(_FIRST_BATTLE_TRANSACTION),
-    }
-
-
-def _load_ai_compile_core_artifacts() -> dict[str, Any]:
-    return {
-        "status": "field_boundary_examples_ready",
-        "refs": _core_artifact_refs(),
-        "context_package": _load_json(_CONTEXT_PACKAGE_EXAMPLE),
-        "fact_entry": _load_json(_FACT_ENTRY_EXAMPLE),
-        "compiled_game_object_package": _load_json(_CGOP_EXAMPLE),
-        "world_delta_transaction": _load_json(_FIRST_BATTLE_TRANSACTION),
-    }
 
 
 def _load_campaign_state(session_id: str) -> dict[str, Any]:
@@ -260,7 +228,7 @@ def get_frontend_mock_pack(session_id: str) -> dict[str, Any]:
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "pack": _load_frontend_pack(),
-        "ai_compile_core_artifacts": _load_ai_compile_core_artifacts(),
+        "ai_compile_core_artifacts": ai_core_artifact_service.core_artifact_payload(),
         **frontend_media_service.frontend_media_payload(),
         **frontend_media_service.runtime_art_payload(),
     }
@@ -362,7 +330,7 @@ def record_battle_result(
         raise FixtureNotFoundError(node_id)
     battle_config = battle_content_service.load_battle_config(node_id)
     delta = _load_json(_FIRST_BATTLE_DELTA)
-    transaction = _load_json(_FIRST_BATTLE_TRANSACTION)
+    transaction = ai_core_artifact_service.load_world_delta_transaction()
     previous_state = _load_campaign_state(session_id)
     next_state = _apply_delta_to_state(previous_state, delta)
     submitted = result if isinstance(result, dict) else {}
@@ -377,7 +345,7 @@ def record_battle_result(
         "world_delta": delta,
         "world_delta_transaction": transaction,
         "core_artifact_refs": {
-            **_core_artifact_refs(),
+            **ai_core_artifact_service.core_artifact_refs(),
             "world_delta": _rel(_FIRST_BATTLE_DELTA),
         },
         "run_world_state": next_state,
@@ -460,7 +428,7 @@ def get_evidence(session_id: str) -> dict[str, Any]:
         "studio_surface": "simple_evidence",
         "ai_compile_core_artifacts": {
             "status": "field_boundary_examples_ready",
-            "refs": _core_artifact_refs(),
+            "refs": ai_core_artifact_service.core_artifact_refs(),
         },
         "generation_scheduler": (
             generation_scheduler_service.get_generation_scheduler_evidence(session_id)
