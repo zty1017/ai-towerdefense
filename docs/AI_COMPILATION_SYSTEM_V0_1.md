@@ -2,32 +2,55 @@
 
 Last updated: 2026-07-02
 
-本文是项目级 AI 编译系统的当前事实源。若早期文档中关于“AI 资产编译器”“世界书”“剧情编译”“地图编译”“媒体生成”的描述与本文冲突，以本文的分层、权限和生命周期边界为准。
+本文是项目级 AI 编译系统的概念与边界事实源。若早期文档中关于“AI 资产编译器”“世界书”“剧情编译”“地图编译”“媒体生成”的描述与本文冲突，以本文的分层、权限和生命周期边界为准。
+
+本文不替代具体 schema、semantic gate 或工具脚本。字段级事实源仍以 `shared/schemas/`、`tools/` 和对应专题文档为准；本文只规定这些对象为什么存在、彼此如何分工、哪些东西不能绕过校验进入运行时。
 
 本项目不是单纯让 LLM 生成文本、图片或 JSON，而是把玩家、系统、开发者或发布层的意图，在世界状态、玩法规则、运行时契约、调度约束和校验器共同限制下，转化为可运行、可验证、可回滚的游戏对象与世界状态变化。
+
+## 0. 事实源层级
+
+当前文档层级按以下顺序使用：
+
+```text
+docs/CURRENT_ARCHITECTURE_INDEX.md
+  -> 导航、阅读顺序、当前有效文档入口
+
+docs/AI_COMPILATION_SYSTEM_V0_1.md
+  -> AI 编译系统的概念、边界、权限、生命周期事实源
+
+shared/schemas/ + tools/ + 专题文档
+  -> 字段级、白名单、校验器、运行命令事实源
+```
+
+如果本文中的概念名称与现有 schema 字段不完全一致，以具体 schema 和校验器为准；本文应在下一轮修订中补齐映射，而不是要求实现层直接改名。
 
 ## 1. 总定义
 
 AI 编译系统由四个协作层组成：
 
 ```text
-Context Engine
-  -> Object Compiler
-  -> World Transaction System
-  -> Generation Scheduler
+Generation Scheduler (control plane)
+  -> CompileRequest / queue / cache / fallback
+     -> Context Engine
+     -> Object Compiler
+     -> World Transaction System
+     -> Runtime / RunWorldState
 ```
 
 更精确地说：
 
 ```text
-CompileRequest
-  -> ContextPackage
-  -> CandidateGeneration
-  -> ObjectNormalization
-  -> Validation / Simulation
-  -> CGOP 或 WorldStateDeltaTransaction
-  -> Lock / Commit / Fallback
-  -> Runtime / RunWorldState
+Generation Scheduler
+  surrounds:
+    CompileRequest
+      -> ContextPackage
+      -> CandidateGeneration
+      -> ObjectNormalization
+      -> Validation / Simulation
+      -> CGOP 或 WorldStateDelta v0.1 / Transaction wrapper
+      -> Lock / Commit / Fallback
+      -> Runtime / RunWorldState
 ```
 
 统一口径：
@@ -78,7 +101,7 @@ Object Compiler 把候选内容规范化、校验、打包为不可变的 `CGOP`
 - 地图运行包、关卡包、路径、塔位、碰撞、波次库、敌人池、Boss 机制。
 - 图像、视频帧、sprite、atlas、特效 recipe、音效、UI 图标。
 
-Object Compiler 不直接修改 `RunWorldState`。如果对象需要改变世界，必须产出或关联 `WorldStateDeltaTransaction`，交给 World Transaction System 提交。
+Object Compiler 不直接修改 `RunWorldState`。如果对象需要改变世界，必须产出或关联当前 `WorldStateDelta v0.1`，并按 `WorldStateDeltaTransaction` 的事务语义交给 World Transaction System 提交。
 
 ### 2.3 World Transaction System
 
@@ -95,7 +118,7 @@ World Transaction System 是唯一能修改 `RunWorldState` 的入口。
 世界变化必须表示为事务，而不是普通文本：
 
 ```text
-WorldStateDeltaTransaction
+WorldStateDelta v0.1 / Transaction wrapper
   -> authorize
   -> validate
   -> commit
@@ -110,7 +133,7 @@ WorldStateDeltaTransaction
 schedule, parallelize, prefetch, cache, fallback
 ```
 
-Generation Scheduler 不决定事实，也不决定对象是否有效；它决定何时生成、如何并发、如何缓存、如何降级，避免 AI 编译卡死实时游玩。
+Generation Scheduler 是横切控制面，不是编译流水线的末端步骤。它不决定事实，也不决定对象是否有效；它决定何时生成、如何并发、如何缓存、如何降级，避免 AI 编译卡死实时游玩。
 
 它负责：
 
@@ -120,6 +143,7 @@ Generation Scheduler 不决定事实，也不决定对象是否有效；它决�
 - 复用兼容缓存。
 - 在失败时切换到已锁定 fallback。
 - 隐藏 provider / rate limit / schema error 等技术错误。
+- 让耗时内容在玩家到达前预生成，并在真正启用前重新过校验门。
 
 ## 3. 核心原则
 
@@ -137,7 +161,7 @@ Generation Scheduler 不决定事实，也不决定对象是否有效；它决�
 
 ### 3.4 World-evolving
 
-部分对象会通过受控 `WorldStateDeltaTransaction` 改变单局世界状态。世界演化必须服务玩法，不是自由续写。
+部分对象会通过受控 `WorldStateDelta v0.1` / `WorldStateDeltaTransaction` 改变单局世界状态。世界演化必须服务玩法，不是自由续写。
 
 ### 3.5 Role-aware
 
@@ -226,13 +250,26 @@ FactEntry
 {
   "context_package_id": "ctx_...",
   "run_id": "run_...",
+  "worldbook_id": "long_night_lanterns",
+  "run_world_version": "turn_003_hash_...",
   "purpose": "asset_compile|encounter_compile|world_delta|narrative|media",
   "scope": "region.gray_lantern_station",
-  "blocks": [],
-  "token_budget": {},
+  "blocks": [
+    {
+      "block_id": "block_...",
+      "block_kind": "worldbook|runtime_fact|memory|policy|player_input|developer_instruction|recent_event",
+      "source_ref": "...",
+      "trust_level": "developer|system|ai_inferred|player_claim",
+      "visibility": "player_visible|ai_visible|system_private|spoiler",
+      "priority": 100,
+      "token_budget": 256,
+      "trim_policy": "keep_full|trim_middle|summarize|drop_if_over_budget",
+      "content_hash": "sha256:..."
+    }
+  ],
+  "policy_refs": [],
   "source_refs": [],
-  "trust_level": "developer|system|ai_inferred|player_claim",
-  "visibility": "player_visible|ai_visible|system_private|spoiler",
+  "token_budget": {},
   "insertion_plan": [],
   "redaction_report": {},
   "created_at": "...",
@@ -245,6 +282,7 @@ FactEntry
 - Context Engine 可以召回、排序、裁剪、脱敏上下文。
 - ContextPackage 不能覆盖 system / developer / runtime policy。
 - 玩家输入、世界书、AI 生成内容必须标记来源和权限级别。
+- 每个 `blocks[]` 条目必须能追溯来源、可见性、信任等级和裁剪策略；否则不能作为高优先级上下文进入编译。
 - 上下文可以影响 LLM 输出，但不能直接改变游戏事实。
 
 ### 5.2 CGOP
@@ -260,12 +298,17 @@ FactEntry
   "schema_version": "cgop.v0.1",
   "content_version": "0.1.0",
   "artifact_hash": "sha256:...",
+  "worldbook_id": "long_night_lanterns",
+  "run_world_version": "turn_003_hash_...",
+  "lifecycle_state": "draft|compiled|validated|reviewed|locked|published|active",
 
   "authority": {},
-  "lifecycle": {},
 
   "source_intent": {},
   "context_package_id": "ctx_...",
+  "source_refs": [],
+  "policy_refs": [],
+  "execution_trace_ref": "trace_...",
   "world_context": {},
 
   "semantic_spec": {},
@@ -278,7 +321,11 @@ FactEntry
   "required_capabilities": [],
   "runtime_budget": {},
 
-  "validation_report": {},
+  "validation_report": {
+    "gate_status": "passed|failed|warning|skipped",
+    "runtime_loadable": false,
+    "gates": []
+  },
   "lineage": {}
 }
 ```
@@ -304,7 +351,21 @@ CGOP 不应包含：
 
 ### 5.3 WorldStateDeltaTransaction
 
-世界状态变化事务。它是 `RunWorldState` 的唯一写入入口。
+世界状态变化事务。它是 `RunWorldState` 写入行为的事务外壳和解释模型，不替代当前已经落地的 `WorldStateDelta v0.1`。
+
+v0.1 兼容策略：
+
+```text
+WorldStateDeltaTransaction
+  wraps / interprets:
+    WorldStateDelta v0.1
+      -> validate_world_delta.py
+      -> validate_world_delta_semantics.py
+      -> apply_world_delta.py
+      -> RunWorldState
+```
+
+也就是说，当前 MVP 的可执行事实源仍是 `shared/schemas/world_state_delta.v0.1.schema.json`、`docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md` 和 `tools/world_state/`。本文中的事务字段用于说明未来需要的并发、幂等、回滚和冲突控制，不允许用通用 `effects[]` 绕过现有 `operations[]` 白名单。
 
 最小字段：
 
@@ -319,6 +380,7 @@ CGOP 不应包含：
   "scope": "run|region|node|npc|quest|resource|global",
   "preconditions": [],
   "effects": [],
+  "world_state_delta_ref": "delta_...",
   "conflict_keys": [],
   "conflict_policy": "reject_on_conflict|merge_if_safe|replace_if_newer",
   "rollback_policy": "inverse_effects|required_snapshot|non_reversible",
@@ -329,12 +391,27 @@ CGOP 不应包含：
 }
 ```
 
+与现有 `WorldStateDelta v0.1` 的映射：
+
+| 事务概念 | 当前 MVP 落地字段 / 事实源 |
+| --- | --- |
+| `tx_id` | `delta_id` |
+| `actor` | 由 `source`、调用方权限和 job metadata 推导 |
+| `base_world_version` | 当前 `RunWorldState` 的 turn / hash / snapshot metadata |
+| `scope` | `run_id`、`worldbook_id`、操作引用对象共同决定 |
+| `effects[]` | 当前只能落到 `operations[]`，不得自定义任意 effect DSL |
+| `preconditions` | v0.1 主要由 schema、semantic gate 和当前 run state registry 表达 |
+| `validation_report` | `validate_world_delta.py` 与 `validate_world_delta_semantics.py` 的报告 |
+| `commit` | `apply_world_delta.py` 成功执行 |
+
 规则：
 
 - 事务必须基于明确 `base_world_version`。
 - 事务必须可幂等，或声明为什么不能幂等。
 - 多 AI、多系统 tick、多玩家操作并行时，必须通过 `conflict_keys` 和 `idempotency_key` 控制重复提交和冲突。
 - 预生成事务只能是候选；玩家真正到达相关节点时，必须基于最新世界状态重新校验。
+- v0.1 不新增任意 `effects` 执行器。所有世界变化仍必须写成当前 `WorldStateDelta v0.1` 允许的 `operations[]`。
+- 如旧文档提到更少或不同的 op 集合，以当前 schema 与 `WorldStateDeltaSemanticGate` 为准；旧说法只保留为历史背景。
 
 ### 5.4 FactEntry
 
@@ -374,6 +451,7 @@ CGOP 主生命周期：
 draft
   -> compiled
   -> validated
+  -> reviewed
   -> locked
   -> published
   -> active
@@ -385,6 +463,7 @@ draft
 - `draft`：草稿或未完整生成。
 - `compiled`：已生成结构化候选。
 - `validated`：通过当前校验器。
+- `reviewed`：通过人工、确定性规则或指定审查包的发布前审查；仍不等于运行时可加载。
 - `locked`：不可变封存，带 hash。
 - `published`：进入可被运行时选择的内容池。
 - `active`：当前 session / run 已启用。
@@ -394,6 +473,18 @@ draft
 - `rolled_back`：发布层回退到旧版本。
 
 `locked` 后不得原地修改。任何变化都必须生成新的 `content_version` 和 `artifact_hash`。
+
+不同对象线的状态名称可以不同，但必须能映射到统一生命周期：
+
+| 对象线 | 典型状态 | 映射说明 |
+| --- | --- | --- |
+| AI 文本 / 内容候选 | `generated` -> `reviewed` -> `locked` | 早期“生成后审查再锁定”的口径继续有效。 |
+| CGOP | `draft` -> `compiled` -> `validated` -> `reviewed` -> `locked` -> `published` -> `active` | 游戏对象包主生命周期。 |
+| locked manifest / runtime package | `reviewed` -> `locked` -> `published` -> `active` | runtime 只读已锁定或已发布内容。 |
+| 媒体资产 | `raw_media` -> `processed_media` -> `reviewed` -> `published_media` | 图片、视频帧、atlas 先后处理，再进入发布媒体池。 |
+| 地图 / 关卡模板 | `candidate_map` -> `validated` -> `certified` -> `published` / `active` | `certified` 表示地图逻辑、塔位、路径、预算、视觉包均已通过设计与机器校验，可进入认证模板池。 |
+
+`certified` 只用于需要被重复调度或作为 fallback 的高风险模板，例如地图、关卡、遭遇组合和重资产内容。普通玩家临时样品不必进入 `certified`，通过 `validated` / `reviewed` / `locked` 即可进入受限 runtime。
 
 ## 7. 包与实例分离
 
@@ -430,6 +521,16 @@ CGOP 是蓝图，不是运行时实例。
 {
   "gate_status": "passed|failed|warning|skipped",
   "runtime_loadable": true,
+  "gates": [
+    {
+      "gate_id": "schema",
+      "status": "passed|failed|warning|skipped",
+      "validator_version": "...",
+      "summary": "...",
+      "failed_rules": [],
+      "warnings": []
+    }
+  ],
   "validator_versions": {},
   "approved_scopes": [],
   "failed_rules": [],
@@ -597,7 +698,7 @@ SillyTavern、NovelAI、AI Dungeon 这类系统成熟之处在于 Context Engine
   WorldBookTemplate + RunWorldState + PlayerAction + BattleResult
     -> ContextPackage
     -> candidate
-    -> CGOP 或 WorldStateDeltaTransaction
+    -> CGOP 或 WorldStateDelta v0.1 / Transaction wrapper
     -> validation
     -> locked / committed
 ```
@@ -607,7 +708,7 @@ SillyTavern、NovelAI、AI Dungeon 这类系统成熟之处在于 Context Engine
 - 世界书条目可以进入 ContextPackage。
 - 世界书条目不能直接改变 `RunWorldState`。
 - AI 生成的新 lore 先是候选 FactEntry。
-- 只有通过 WorldStateDeltaTransaction 的事实才是游戏事实。
+- 只有通过当前 `WorldStateDelta v0.1` 流水线提交，并被 `WorldStateDeltaTransaction` 语义约束解释的事实，才是游戏事实。
 
 ## 12. 地图、剧情、媒体的特殊边界
 
@@ -628,12 +729,12 @@ EncounterSpec
 
 ### 12.2 剧情
 
-剧情不是自由续写。可落地剧情必须服务玩法，并通过 WorldStateDeltaTransaction 提交：
+剧情不是自由续写。可落地剧情必须服务玩法，并通过当前 `WorldStateDelta v0.1` 流水线提交；`WorldStateDeltaTransaction` 是它的事务语义外壳：
 
 ```text
 NarrativeEventBundle
   -> Gameplay Purpose Gate
-  -> WorldStateDeltaTransaction
+  -> WorldStateDelta v0.1 / WorldStateDeltaTransaction wrapper
   -> RunWorldState
 ```
 
@@ -660,7 +761,7 @@ MVP 应实现或固化：
 ContextPackage v0.1
 FactEntry v0.1
 CGOP v0.1
-WorldStateDeltaTransaction v0.1
+WorldStateDelta v0.1 + transaction metadata / mapping
 GenerationScheduler 最小字段
 MapRuntimePackage v0.1
 ```
@@ -673,7 +774,7 @@ MapRuntimePackage v0.1
   -> 编译一个临时样品 CGOP
   -> 校验通过
   -> 战斗中 async_visible 倒计时送达
-  -> 战后生成 WorldStateDeltaTransaction
+  -> 战后生成 WorldStateDelta v0.1，并以 WorldStateDeltaTransaction 语义提交
   -> 提交 RunWorldState
   -> 返回大地图时看到世界状态变化
 ```
@@ -715,7 +816,7 @@ v0.1 不做：
 
 建议顺序：
 
-1. 写 `ContextPackage v0.1`、`FactEntry v0.1`、`CGOP v0.1`、`WorldStateDeltaTransaction v0.1` 的 schema 草案。
+1. 写 `ContextPackage v0.1`、`FactEntry v0.1`、`CGOP v0.1` 的 schema 草案，并为现有 `WorldStateDelta v0.1` 补事务 metadata / 映射说明；不要替换现有 delta schema。
 2. 实现机器可读 validation report 最小格式。
 3. 把现有 Research Job / WorldStateDelta / frontend mock 包对齐到这些字段。
 4. 实现 `MapRuntimePackage v0.1`，前端从显式 `build_slots` 和 `path_curves` 读取运行时地图。

@@ -1,10 +1,16 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
 若其他早期文档与本文档冲突，以本文档列出的当前事实源为准。
+
+事实源层级：
+
+- 本索引用于导航、阅读顺序和优先级路由。
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md` 用于 AI 编译系统的概念、边界、权限和生命周期事实源。
+- 具体字段、op 白名单、semantic gate、运行命令和校验行为，以 `shared/schemas/`、`tools/` 和对应专题文档为字段级事实源。
 
 ## 1. 当前事实源
 
@@ -35,7 +41,7 @@ Last updated: 2026-07-01
 3. `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
    - 产品定位、架构分层、协作治理基线。
 4. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
-   - AI 编译系统四层总架构：Context Engine、Object Compiler、World Transaction System、Generation Scheduler。
+   - AI 编译系统总架构：Context Engine、Object Compiler、World Transaction System，以及作为横切控制面的 Generation Scheduler。
 5. `docs/DEMO_VERTICAL_SLICE.md`
    - MVP 演示主路径。
 6. `docs/FRONTEND_MOCK_API_V0_1.md`
@@ -63,7 +69,7 @@ Last updated: 2026-07-01
 ### AI 编译器与 AssetGraph
 
 - `docs/AI_COMPILATION_SYSTEM_V0_1.md`
-  - 当前 AI 编译总架构事实源。定义 Context Engine、Object Compiler、World Transaction System、Generation Scheduler，以及 CGOP、ContextPackage、FactEntry、WorldStateDeltaTransaction 的 v0.1 边界。
+  - 当前 AI 编译总架构边界事实源。定义 Context Engine、Object Compiler、World Transaction System、Generation Scheduler，以及 CGOP、ContextPackage、FactEntry、WorldStateDelta / WorldStateDeltaTransaction 映射的 v0.1 边界。具体字段仍以 schema 和 semantic gate 为准。
 - `docs/AI_ASSET_COMPILER_V0_1.md`
   - AI 资产编译器基础定位。
 - `docs/ASSET_GRAPH_COMPILER_V0_1.md`
