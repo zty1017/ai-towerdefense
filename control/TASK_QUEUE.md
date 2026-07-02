@@ -63,6 +63,7 @@ P2：本阶段明确不做
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
+- Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -291,6 +292,28 @@ P2：本阶段明确不做
 - 使用 Agnes 真实生成 runtime P1 信标与基础灯栏候选，各 1 个，几何质量门 `passed`。
 - 基础灯栏经过多轮提示词收紧，从围栏 enclosure 收敛为单段便携路障；这说明重生成 DAG 需要支持单素材迭代、复用 raw 后处理和人工/视觉复核。
 - 候选包仍是 `review_candidate_media`，不会自动替换正式 runtime 素材；晋升需要下一步人工/视觉审查和显式 promotion。
+
+### P1-A-6 Runtime sprite regeneration promotion
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/promote_sprite_regeneration_candidates.py`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/atlas_frames/`
+- `examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 promotion report 摘要和 dry-run 验证命令。
+
+当前结论：
+
+- 信标与基础灯栏候选已显式晋升到 published runtime media，并重建 runtime atlas。
+- runtime sprite cutout quality 从 `needs_review 3 / 7` 降到 `needs_review 1 / 7`。
+- 剩余 `objective_station_core` 为 P2 复核项，不阻断当前 MVP；后续可走同一套重生成和 promotion 流程。
+- 晋升工具默认 dry-run，必须显式 `--apply` 才能替换 runtime PNG 和 manifest。
 
 ## 4. 当前 P0 任务
 

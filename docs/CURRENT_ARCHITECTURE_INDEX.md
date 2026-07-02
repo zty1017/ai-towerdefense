@@ -124,6 +124,7 @@ Sprite cutout quality report 已接入 demo evidence，用于标记内部透明�
 Sprite cutout repair plan 已从质量报告派生，列出需要重抠图、重生成或人工复核的素材任务，作为下一轮素材重生的输入。
 Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并再次经过 cutout quality audit；候选不会自动替换正式 runtime 素材。
 Sprite live regeneration candidate pack 已可针对 runtime P1 素材调用 Agnes 生成 review-only 候选，并支持单素材迭代、复用 raw 后处理和最大主体保留；候选仍不自动替换正式 runtime 素材。
+Sprite regeneration promotion report 已记录 runtime P1 候选的显式晋升；信标与基础灯栏已替换 runtime processed PNG 并重建 atlas，runtime cutout 复核降为 1 个 P2 项。
 ```
 
 ### 审查与交付
@@ -171,6 +172,7 @@ Sprite live regeneration candidate pack 已可针对 runtime P1 素材调用 Agn
 - MVP handoff audit 一键验证。
 - 演示证据导出脚本：可生成 `summary.md / evidence.json / index.html`。
 - Runtime sprite live regeneration 候选：已为 P1 信标与基础灯栏生成 review-only PNG，并接入 cutout quality report 与 demo evidence。
+- Runtime sprite 显式晋升：已把通过审查的信标与基础灯栏候选晋升到 published runtime media，重建 runtime atlas，并接入 promotion report。
 - 前端 MVP 页面：已有本地可运行 mock 体验入口，仍需浏览器环境补截图和视觉验收。
 
 当前尚未完成：

@@ -205,15 +205,24 @@
       "media_layer": "published_media",
       "url": "/assets/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
       "local_path": "game_data/media/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
-      "width": 816,
-      "height": 816,
-      "sha256": "fd69f03fec42283036fdf6d62bc4a6b91062ff8bd35f2d895053be7750c2110d",
+      "width": 878,
+      "height": 878,
+      "sha256": "c44f89a877bd0bf46622260a0e04316a998594d586afefff5c4c6125c796c2e0",
       "fallback_used": false,
-      "source_kind": "processed_generated_image",
+      "source_kind": "promoted_sprite_regeneration_candidate",
       "anchor": {
         "preset": "bottom_center",
         "x": 0.5,
         "y": 1.0
+      },
+      "promotion": {
+        "state": "promoted_from_review_candidate",
+        "promoted_at": "2026-07-02T00:00:00+08:00",
+        "candidate_pack_id": "frontend_runtime_sprite_regeneration_candidates_v0_1",
+        "candidate_id": "sprite_repair_002_objective_signal_beacon_objective_sprite.regenerated",
+        "source_task_id": "sprite_repair_002_objective_signal_beacon_objective_sprite",
+        "candidate_manifest": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+        "quality_report": "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json"
       }
     },
     {
@@ -289,15 +298,24 @@
       "media_layer": "published_media",
       "url": "/assets/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
       "local_path": "game_data/media/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
-      "width": 661,
-      "height": 661,
-      "sha256": "7504f174aca23a877395ac3dcec5d6155eded84d0a5864914a61c270b593c6b1",
+      "width": 645,
+      "height": 645,
+      "sha256": "f20338e921d922955b3edfe02f88fb0cd29ab07194561a66895484f28f003ef9",
       "fallback_used": false,
-      "source_kind": "processed_generated_image",
+      "source_kind": "promoted_sprite_regeneration_candidate",
       "anchor": {
         "preset": "bottom_center",
         "x": 0.5,
         "y": 1.0
+      },
+      "promotion": {
+        "state": "promoted_from_review_candidate",
+        "promoted_at": "2026-07-02T00:00:00+08:00",
+        "candidate_pack_id": "frontend_runtime_sprite_regeneration_candidates_v0_1",
+        "candidate_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite.regenerated",
+        "source_task_id": "sprite_repair_003_defense_basic_lantern_barricade_defense_sprite",
+        "candidate_manifest": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+        "quality_report": "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json"
       }
     },
     {
