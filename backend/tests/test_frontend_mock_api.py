@@ -291,10 +291,20 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert artifact_stage["provider_artifact_staging"]["promotion_gate"][
         "promotion_allowed"
     ] is False
+    assert artifact_stage["provider_artifact_promotion_report"]["report_id"] == (
+        "ppromo_stage05_map_visual_001"
+    )
+    assert artifact_stage["provider_artifact_promotion_report"][
+        "promotion_decision"
+    ] == "blocked_review_required"
+    assert artifact_stage["provider_artifact_promotion_report"][
+        "promotion_allowed"
+    ] is False
     ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
-    assert ledger_summary["item_count"] == 2
+    assert ledger_summary["item_count"] == 3
     assert ledger_summary["artifact_kind_counts"]["provider_output_envelope"] == 1
     assert ledger_summary["artifact_kind_counts"]["provider_artifact_staging_manifest"] == 1
+    assert ledger_summary["artifact_kind_counts"]["provider_artifact_promotion_report"] == 1
     assert ledger_summary["provider_call_count_by_this_request"] == 0
     assert ledger_summary["world_mutation_count_by_this_request"] == 0
     assert ledger_summary["activation_allowed_count"] == 0
@@ -303,19 +313,20 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     ledger = _payload(
         client.get(f"/api/sessions/{sid}/generation-schedule/artifact-ledger")
     )
-    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 2
-    assert len(ledger["generation_artifact_ledger"]["items"]) == 2
+    assert ledger["generation_artifact_ledger"]["summary"]["item_count"] == 3
+    assert len(ledger["generation_artifact_ledger"]["items"]) == 3
     assert {
         item["artifact_kind"] for item in ledger["generation_artifact_ledger"]["items"]
     } == {
         "provider_output_envelope",
         "provider_artifact_staging_manifest",
+        "provider_artifact_promotion_report",
     }
     ledger_rows = raw_conn.execute(
         "SELECT COUNT(*) FROM generation_artifact_ledger WHERE session_id = ?",
         (sid,),
     ).fetchone()[0]
-    assert ledger_rows == 2
+    assert ledger_rows == 3
 
     reviewed_item_id = worker_step["generation_schedule_queue_item"]["schedule_item_id"]
     reviewed_complete = _payload(
@@ -613,7 +624,7 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert evidence["generation_scheduler"]["latest_queue"]["summary"]["claimable_count"] == 4
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "item_count"
-    ] == 2
+    ] == 3
     assert evidence["generation_scheduler"]["latest_artifact_ledger"]["summary"][
         "promotion_allowed_count"
     ] == 0

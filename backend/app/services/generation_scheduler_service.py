@@ -32,12 +32,19 @@ _PROVIDER_OUTPUT_ENVELOPE_EXAMPLE = (
 _PROVIDER_ARTIFACT_STAGING_EXAMPLE = (
     _REPO_ROOT / "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json"
 )
+_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
+    _REPO_ROOT
+    / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json"
+)
 _TOOLS_DEV_DIR = _REPO_ROOT / "tools" / "dev"
 if str(_TOOLS_DEV_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DEV_DIR))
 
 from validate_provider_artifact_staging_manifest import (  # noqa: E402
     validate_provider_artifact_staging_manifest,
+)
+from validate_provider_artifact_promotion_report import (  # noqa: E402
+    validate_provider_artifact_promotion_report,
 )
 from validate_provider_output_envelope import validate_provider_output_envelope  # noqa: E402
 
@@ -904,6 +911,69 @@ def _compact_provider_artifact_staging(manifest: dict[str, Any]) -> dict[str, An
     }
 
 
+def _compact_provider_artifact_promotion_report(report: dict[str, Any]) -> dict[str, Any]:
+    decision = report.get("decision", {})
+    if not isinstance(decision, dict):
+        decision = {}
+    gates = report.get("gate_results", {})
+    if not isinstance(gates, dict):
+        gates = {}
+    targets = report.get("promotion_targets", {})
+    if not isinstance(targets, dict):
+        targets = {}
+    safety = report.get("safety_summary", {})
+    if not isinstance(safety, dict):
+        safety = {}
+    reviewed = report.get("reviewed_artifacts", [])
+    if not isinstance(reviewed, list):
+        reviewed = []
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "source_staging_id": report.get("source_staging_id"),
+        "source_staging_ref": report.get("source_staging_ref"),
+        "promotion_decision": decision.get("promotion_decision"),
+        "promotion_allowed": decision.get("promotion_allowed"),
+        "blocked_reason": decision.get("blocked_reason"),
+        "required_next_actions": decision.get("required_next_actions", []),
+        "reviewed_artifact_count": len(reviewed),
+        "gate_statuses": {
+            gate_name: gate.get("status")
+            for gate_name, gate in gates.items()
+            if isinstance(gate, dict)
+        },
+        "promotion_targets": {
+            "target_kind": targets.get("target_kind"),
+            "runtime_package_ref_count": len(
+                targets.get("runtime_package_refs", [])
+                if isinstance(targets.get("runtime_package_refs"), list)
+                else []
+            ),
+            "world_transaction_ref_count": len(
+                targets.get("world_transaction_refs", [])
+                if isinstance(targets.get("world_transaction_refs"), list)
+                else []
+            ),
+            "published_media_ref_count": len(
+                targets.get("published_media_refs", [])
+                if isinstance(targets.get("published_media_refs"), list)
+                else []
+            ),
+        },
+        "safety_summary": {
+            "provider_call_count_by_report": safety.get("provider_call_count_by_report"),
+            "world_mutation_count_by_report": safety.get("world_mutation_count_by_report"),
+            "runtime_mutation_count_by_report": safety.get(
+                "runtime_mutation_count_by_report"
+            ),
+            "stores_prompt_body": safety.get("stores_prompt_body"),
+            "stores_provider_body": safety.get("stores_provider_body"),
+            "stores_sensitive_value": safety.get("stores_secret"),
+            "uses_temporary_url": safety.get("uses_temporary_url"),
+        },
+    }
+
+
 def _build_artifact_ledger_payload(
     *,
     session_id: str,
@@ -1016,6 +1086,8 @@ def _artifact_ledger_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
         provider_call = compact.get("provider_call", {})
         if isinstance(provider_call, dict) and provider_call.get("performed") is True:
             recorded_provider_call_count += 1
+        if compact.get("promotion_allowed") is True:
+            promotion_allowed_count += 1
         promotion_gate = compact.get("promotion_gate", {})
         if isinstance(promotion_gate, dict) and promotion_gate.get("promotion_allowed") is True:
             promotion_allowed_count += 1
@@ -1368,12 +1440,15 @@ def stage_provider_artifacts_fixture(
     note = safe_metadata.get("note")
     envelope = _load_json(_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE)
     staging = _load_json(_PROVIDER_ARTIFACT_STAGING_EXAMPLE)
+    promotion = _load_json(_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE)
     envelope_errors = validate_provider_output_envelope(envelope)
     staging_errors = validate_provider_artifact_staging_manifest(staging)
-    if envelope_errors or staging_errors:
+    promotion_errors = validate_provider_artifact_promotion_report(promotion)
+    if envelope_errors or staging_errors or promotion_errors:
         raise ValueError(
             "provider artifact fixtures failed validation: "
-            f"envelope={envelope_errors}; staging={staging_errors}"
+            f"envelope={envelope_errors}; staging={staging_errors}; "
+            f"promotion={promotion_errors}"
         )
     latest_run = _load_latest_generation_schedule_run(session_id)
     source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
@@ -1402,8 +1477,26 @@ def stage_provider_artifacts_fixture(
         worker_id=str(worker_id),
         note=str(note) if note is not None else None,
     )
+    promotion_decision = promotion.get("decision", {})
+    promotion_allowed = (
+        isinstance(promotion_decision, dict)
+        and promotion_decision.get("promotion_allowed") is True
+    )
+    promotion_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_artifact_promotion_report",
+        source_id=str(promotion.get("report_id")),
+        status="promotion_allowed" if promotion_allowed else "promotion_blocked",
+        compact=_compact_provider_artifact_promotion_report(promotion),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(schedule_item_id) if schedule_item_id else None,
+        worker_id=str(worker_id),
+        note=str(note) if note is not None else None,
+    )
     _upsert_generation_artifact_ledger(envelope_entry)
     _upsert_generation_artifact_ledger(staging_entry)
+    _upsert_generation_artifact_ledger(promotion_entry)
     run_id = str(latest_run.get("run_id")) if latest_run is not None else None
     items = _load_generation_artifact_ledger_items(session_id, run_id)
     return {
@@ -1418,6 +1511,7 @@ def stage_provider_artifacts_fixture(
         },
         "provider_output_envelope": envelope_entry["compact"],
         "provider_artifact_staging": staging_entry["compact"],
+        "provider_artifact_promotion_report": promotion_entry["compact"],
         "generation_artifact_ledger": _compact_generation_artifact_ledger(items),
     }
 
