@@ -65,7 +65,7 @@ P2：本阶段明确不做
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
-- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化；真实后台执行器、长期存档还未形成稳定实现。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化与 item 级队列视图；真实后台执行器、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
 
@@ -379,6 +379,26 @@ P2：本阶段明确不做
 
 - 该层仍不启动后台 worker，不调用 provider，不修改世界状态，不激活预取候选。
 - 它把 Generation Scheduler 从离线 evidence 推进到后端状态层，为下一步真实队列、缓存、重试和 provider 调度留出落点。
+
+### P1-B-3 Generation Scheduler item 级队列视图
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_queue_items` SQLite 表。
+- `GET /api/sessions/{session_id}/generation-schedule/queue`
+- 每次 dry-run 会把 8 个 schedule items 派生为队列记录。
+- `completed` 表示已审同步内容复用完成。
+- `fallback_ready` 表示静态兜底可用。
+- `queued` 表示预取、后台或懒加载候选等待后续 worker 处理。
+- session reset 会清除对应队列项。
+- `/api/sessions/{session_id}/evidence` 会返回最近一次队列摘要。
+
+当前结论：
+
+- 该队列仍不自动调用 provider，不领取真实任务，不修改世界状态。
+- 它为后续后台 worker、缓存、重试、provider 调度和启用前复验提供最小可查询状态面。
 
 ## 4. 当前 P0 任务
 

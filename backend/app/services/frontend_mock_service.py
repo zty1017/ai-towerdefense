@@ -232,6 +232,9 @@ def _build_generation_schedule_buffer(
                 "plan_status": item.get("status"),
                 "dry_run_action": report_item.get("action"),
                 "dry_run_status": report_item.get("result_status"),
+                "provider_review_required": (
+                    report_item.get("provider_review_required") is True
+                ),
                 "player_visible": item.get("player_visible") is True,
                 "fallback_ref": item.get("fallback_ref"),
                 "revalidate_before_activation": (
@@ -304,6 +307,84 @@ def _build_generation_schedule_run_payload(
     }
 
 
+def _generation_queue_status(item: dict[str, Any]) -> str:
+    dry_run_status = item.get("dry_run_status")
+    if dry_run_status == "passed":
+        return "completed"
+    if dry_run_status == "fallback":
+        return "fallback_ready"
+    if dry_run_status == "scheduled":
+        return "queued"
+    return "blocked"
+
+
+def _build_generation_queue_item_payload(
+    session_id: str, run_id: str, item: dict[str, Any], position: int, ts: str
+) -> dict[str, Any]:
+    status = _generation_queue_status(item)
+    return {
+        "queue_item_id": f"gq_{run_id}_{position:02d}",
+        "run_id": run_id,
+        "session_id": session_id,
+        "schedule_item_id": item.get("schedule_item_id"),
+        "object_kind": item.get("object_kind"),
+        "object_ref": item.get("object_ref"),
+        "latency_class": item.get("latency_class"),
+        "status": status,
+        "action": item.get("dry_run_action"),
+        "dry_run_status": item.get("dry_run_status"),
+        "provider_review_required": item.get("provider_review_required") is True,
+        "player_visible": item.get("player_visible") is True,
+        "fallback_ref": item.get("fallback_ref"),
+        "revalidate_before_activation": item.get("revalidate_before_activation") is True,
+        "created_at": ts,
+        "updated_at": ts,
+    }
+
+
+def _build_generation_queue_items_from_run(
+    run_payload: dict[str, Any], ts: str
+) -> list[dict[str, Any]]:
+    schedule = run_payload.get("generation_schedule", {})
+    buffer = schedule.get("buffer", {}) if isinstance(schedule, dict) else {}
+    items = buffer.get("items", []) if isinstance(buffer, dict) else []
+    if not isinstance(items, list):
+        return []
+    return [
+        _build_generation_queue_item_payload(
+            str(run_payload["session_id"]),
+            str(run_payload["run_id"]),
+            item,
+            position,
+            ts,
+        )
+        for position, item in enumerate(items, start=1)
+        if isinstance(item, dict)
+    ]
+
+
+def _insert_generation_queue_items(items: list[dict[str, Any]]) -> None:
+    with db_cursor() as cur:
+        for item in items:
+            cur.execute(
+                "INSERT INTO generation_schedule_queue_items "
+                "(run_id, session_id, schedule_item_id, latency_class, status, action, "
+                "payload, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    item["run_id"],
+                    item["session_id"],
+                    item["schedule_item_id"],
+                    item["latency_class"],
+                    item["status"],
+                    item.get("action"),
+                    _dump_payload(item),
+                    item["created_at"],
+                    item["updated_at"],
+                ),
+            )
+
+
 def _load_latest_generation_schedule_run(session_id: str) -> dict[str, Any] | None:
     with db_cursor() as cur:
         cur.execute(
@@ -315,6 +396,47 @@ def _load_latest_generation_schedule_run(session_id: str) -> dict[str, Any] | No
     if row is None or not row.get("payload"):
         return None
     return json.loads(row["payload"])
+
+
+def _load_generation_queue_items(
+    session_id: str, run_id: str | None = None
+) -> list[dict[str, Any]]:
+    if run_id is None:
+        latest = _load_latest_generation_schedule_run(session_id)
+        if latest is None:
+            return []
+        run_id = str(latest.get("run_id", ""))
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM generation_schedule_queue_items "
+            "WHERE session_id = ? AND run_id = ? ORDER BY id ASC",
+            (session_id, run_id),
+        )
+        rows = cur.fetchall()
+    items = []
+    for row in rows:
+        payload = row.get("payload") if isinstance(row, dict) else None
+        if payload:
+            items.append(json.loads(payload))
+    return items
+
+
+def _generation_queue_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    status_counts = Counter(str(item.get("status", "unknown")) for item in items)
+    latency_counts = Counter(str(item.get("latency_class", "unknown")) for item in items)
+    return {
+        "item_count": len(items),
+        "status_counts": dict(sorted(status_counts.items())),
+        "latency_class_counts": dict(sorted(latency_counts.items())),
+        "claimable_count": sum(1 for item in items if item.get("status") == "queued"),
+        "completed_count": sum(1 for item in items if item.get("status") == "completed"),
+        "fallback_ready_count": sum(
+            1 for item in items if item.get("status") == "fallback_ready"
+        ),
+        "provider_review_required_count": sum(
+            1 for item in items if item.get("provider_review_required") is True
+        ),
+    }
 
 
 def _compact_generation_schedule_run(run: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -332,6 +454,13 @@ def _compact_generation_schedule_run(run: dict[str, Any] | None) -> dict[str, An
         "world_mutation_count": buffer.get("world_mutation_count"),
         "scheduled_count": buffer.get("scheduled_count"),
         "fallback_selected_count": buffer.get("fallback_selected_count"),
+    }
+
+
+def _compact_generation_queue(items: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "summary": _generation_queue_summary(items),
+        "items": items,
     }
 
 
@@ -563,19 +692,35 @@ def create_generation_schedule_run(session_id: str) -> dict[str, Any]:
                 ts,
             ),
         )
+    queue_items = _build_generation_queue_items_from_run(payload, ts)
+    _insert_generation_queue_items(queue_items)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "generation_schedule_run": payload,
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
     }
 
 
 def get_latest_generation_schedule_run(session_id: str) -> dict[str, Any]:
     run = _load_latest_generation_schedule_run(session_id)
+    queue_items = _load_generation_queue_items(session_id) if run is not None else []
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "generation_schedule_run": run,
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+    }
+
+
+def get_generation_schedule_queue(session_id: str) -> dict[str, Any]:
+    run = _load_latest_generation_schedule_run(session_id)
+    queue_items = _load_generation_queue_items(session_id) if run is not None else []
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": _compact_generation_schedule_run(run),
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
     }
 
 
@@ -802,6 +947,11 @@ def get_evidence(session_id: str) -> dict[str, Any]:
             "refs": _generation_schedule_refs(),
             "buffer": _build_generation_schedule_buffer(plan, run_report),
             "latest_run": _compact_generation_schedule_run(latest_schedule_run),
+            "latest_queue": _compact_generation_queue(
+                _load_generation_queue_items(session_id)
+                if latest_schedule_run is not None
+                else []
+            ),
         },
         "proposal": dict(proposal) if proposal else None,
         "research_job": dict(job) if job else None,

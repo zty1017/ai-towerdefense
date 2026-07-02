@@ -146,6 +146,19 @@ def get_latest_generation_schedule_run(session_id: str) -> FrontendMockPayloadRe
 
 
 @router.get(
+    "/api/sessions/{session_id}/generation-schedule/queue",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_schedule_queue(session_id: str) -> FrontendMockPayloadResponse:
+    """Return queue items derived from the latest persisted scheduler run."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        frontend_mock_service.get_generation_schedule_queue(session_id),
+    )
+
+
+@router.get(
     "/api/sessions/{session_id}/map",
     response_model=FrontendMockPayloadResponse,
 )
