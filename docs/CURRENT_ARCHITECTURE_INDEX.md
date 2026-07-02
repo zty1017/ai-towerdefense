@@ -12,6 +12,14 @@ Last updated: 2026-07-02
 - `docs/AI_COMPILATION_SYSTEM_V0_1.md` 用于 AI 编译系统的概念、边界、权限和生命周期事实源。
 - 具体字段、op 白名单、semantic gate、运行命令和校验行为，以 `shared/schemas/`、`tools/` 和对应专题文档为字段级事实源。
 
+实现规则：
+
+- 本索引不替代具体规范，只负责告诉 worker 应该读哪份规范。
+- 概念文档不替代 schema、semantic gate 或工具脚本；如果概念名与字段名冲突，先按字段级事实源实现，再回补文档映射。
+- `WorldStateDeltaTransaction` 是现有 `WorldStateDelta v0.1` 的事务外壳，不替换当前 delta schema。
+- `Generation Scheduler` 是跨管线调度控制面，不是内容校验器，也不是流水线末端产物。
+- 任何世界状态变化都必须经过当前 `operations[]` 白名单、结构校验和语义校验；不得用通用 `effects[]` 绕过。
+
 ## 1. 当前事实源
 
 当前事实源是 `develop` 分支的最新集成结果。`main` 只在稳定同步后作为发布 / 决策基线使用。
@@ -165,7 +173,7 @@ Sprite repair candidate pack 已可从 repair plan 生成 review-only PNG，并�
 
 当前尚未完成：
 
-- 视频帧序列、spritesheet 和 atlas 默认接入。
+- 真实图生视频帧序列，以及由这些真实帧打包出的实体 atlas PNG 的默认接入。
 - 正式 live campaign router。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。
