@@ -1,0 +1,170 @@
+{
+  "alignment_review_path": "examples/review_packs/map_candidate_alignment_review.v0.1.json",
+  "artifacts": [
+    {
+      "node_id": "gray_lantern_station",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.normalized_1280x720.png",
+      "normalized_sha256": "37da37d07553d7b7a204e78cd1a5d953245a7bb5c1875983249e788fa8213a23",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.svg",
+      "overlay_sha256": "15fe7044d4215d3fb23faf453d5f7af6eff9e877712c535f1ca61119f9010271",
+      "review_notes": [
+        "Overlay is approximate and uses logical grid-to-pixel projection.",
+        "This artifact is for alignment review only and is not a published runtime visual layer.",
+        "Overlay artifact readiness does not mean visual alignment approval.",
+        "Promotion still requires visual readability approval and MapRuntimePackage update in a separate step."
+      ],
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "spawn_point_count": 1,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 80.0,
+          "y_pixels_per_cell": 80.0
+        }
+      },
+      "source_candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/gray_lantern_station.painted_candidate.png",
+      "status": "overlay_artifact_ready",
+      "transform": {
+        "crop_rect": {
+          "height": 736,
+          "width": 1308,
+          "x": 2,
+          "y": 0
+        },
+        "method": "center_crop_nearest_neighbor_resize",
+        "source_size": {
+          "height": 736,
+          "width": 1312
+        },
+        "target_size": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "node_id": "lamp_wick_store",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.normalized_1280x720.png",
+      "normalized_sha256": "147ebaa1781e4a5d30f0671236e3409dff0a1c3545b619e760abfee3accc767a",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.svg",
+      "overlay_sha256": "566e285c9428065ff40d786a9c6cb3a06055d69c563177dc56e5e420557f816b",
+      "review_notes": [
+        "Overlay is approximate and uses logical grid-to-pixel projection.",
+        "This artifact is for alignment review only and is not a published runtime visual layer.",
+        "Overlay artifact readiness does not mean visual alignment approval.",
+        "Promotion still requires visual readability approval and MapRuntimePackage update in a separate step."
+      ],
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 71.1111,
+          "y_pixels_per_cell": 72.0
+        }
+      },
+      "source_candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/lamp_wick_store.painted_candidate.png",
+      "status": "overlay_artifact_ready",
+      "transform": {
+        "crop_rect": {
+          "height": 736,
+          "width": 1308,
+          "x": 2,
+          "y": 0
+        },
+        "method": "center_crop_nearest_neighbor_resize",
+        "source_size": {
+          "height": 736,
+          "width": 1312
+        },
+        "target_size": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "node_id": "old_signal_tower",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.normalized_1280x720.png",
+      "normalized_sha256": "a689882a1d9f2b8c920fc3eb7959689448771772a711d35129266a6d1923da83",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.overlay_review.svg",
+      "overlay_sha256": "868bf3bf61110a453075531ca2b90dc87e9a8d9f429c120ebba25acf81aac868",
+      "review_notes": [
+        "Overlay is approximate and uses logical grid-to-pixel projection.",
+        "This artifact is for alignment review only and is not a published runtime visual layer.",
+        "Overlay artifact readiness does not mean visual alignment approval.",
+        "Promotion still requires visual readability approval and MapRuntimePackage update in a separate step."
+      ],
+      "runtime_structure": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2,
+        "target_pixel_scale": {
+          "x_pixels_per_cell": 71.1111,
+          "y_pixels_per_cell": 72.0
+        }
+      },
+      "source_candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+      "status": "overlay_artifact_ready",
+      "transform": {
+        "crop_rect": {
+          "height": 736,
+          "width": 1308,
+          "x": 2,
+          "y": 0
+        },
+        "method": "center_crop_nearest_neighbor_resize",
+        "source_size": {
+          "height": 736,
+          "width": 1312
+        },
+        "target_size": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    }
+  ],
+  "output_dir": "game_data/media/map_visual_reference/node_candidates_v2_normalized",
+  "policy": [
+    "Normalized PNGs and overlay SVGs are review-only artifacts.",
+    "The frontend runtime must not consume these files unless a later promotion report updates the published visual layer.",
+    "Runtime truth remains MapRuntimePackage; the overlay exists to inspect whether the visual candidate fits that truth."
+  ],
+  "report_id": "mvp_map_candidate_overlay_review",
+  "schema_version": "map_candidate_overlay_review.v0.1",
+  "status": "overlay_artifacts_ready_review_required",
+  "summary": {
+    "blocked_count": 0,
+    "candidate_count": 3,
+    "overlay_artifact_ready_count": 3,
+    "status_counts": {
+      "overlay_artifact_ready": 3
+    },
+    "target_size": {
+      "height": 720,
+      "width": 1280
+    }
+  }
+}
