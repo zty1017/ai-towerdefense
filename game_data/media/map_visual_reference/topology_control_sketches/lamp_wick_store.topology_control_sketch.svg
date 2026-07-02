@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <image href="lamp_wick_store.topology_control_sketch.png" x="0" y="0" width="1280" height="720"/>
+  <g id="developer-labels" font-family="monospace" font-size="18" fill="#0f172a" stroke="#f8fafc" stroke-width="4" paint-order="stroke">
+    <text x="920.0" y="304.0">path_wick_store_main_pipe</text>
+    <text x="920.0" y="592.0">path_wick_store_service_lane</text>
+    <text x="63.6" y="404.0">target_wick_store_core</text>
+    <text x="205.8" y="548.0">target_supply_line_coupler</text>
+    <text x="348.0" y="260.0">target_lamp_oil_shelf</text>
+  </g>
+</svg>
