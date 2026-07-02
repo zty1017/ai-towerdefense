@@ -77,7 +77,7 @@ P2：本阶段明确不做
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - 前端战斗地图视觉底座已完成 P0-M 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、土路、部署基座、目标地标与入口雾潮；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。仍需要在有 Chromium / Playwright 的环境中补真实截图或人工录屏验收。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用，真实图生视频关键帧仍未生成。
-- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链，后续缺口是把更广义的 review pack 和真实 provider 产物继续迁移到原生对象字段。
+- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前无 validator 失败，但仍列出 8 个 P1 迁移任务。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
 - Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
 - Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
@@ -679,6 +679,38 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_pr
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion_ledger python3 -m compileall backend
 uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_ledger_evidence
+git diff --check
+```
+
+### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/core_artifact_alignment_report.v0.1.schema.json`
+- `tools/content_pipeline/build_core_artifact_alignment_report.py`
+- `tools/content_pipeline/validate_core_artifact_alignment_report.py`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+- `docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md`
+- `examples/worker_task_packs/p1c_core_artifact_alignment_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入报告摘要和 validation command。
+
+当前结论：
+
+- 该报告只做内部 evidence / 迁移审计，不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+- 当前报告状态为 `needs_migration`，无核心对象 validator 失败。
+- 前端 mock pack、核心示例和 stage01-stage07 WorldStateDeltaTransaction 链已处于 `native_snapshot_ready`。
+- 8 个早期叙事 / 阶段 / dossier review pack 被列为 P1 迁移任务，需要后续补 core artifact refs、原生 core artifacts 快照或明确 not-applicable 边界。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_core_artifact_alignment_report.v0.1.json
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_core_artifact_alignment_report.py tools/content_pipeline/validate_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/core_artifact_alignment_report_evidence
 git diff --check
 ```
 

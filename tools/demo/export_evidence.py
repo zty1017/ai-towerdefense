@@ -54,6 +54,8 @@ PATHS = {
     "generation_scheduler_doc": ROOT / "docs/GENERATION_SCHEDULER_V0_1.md",
     "frontend_mock_api_doc": ROOT / "docs/FRONTEND_MOCK_API_V0_1.md",
     "frontend_runtime_art_doc": ROOT / "docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md",
+    "core_artifact_alignment_doc": ROOT
+    / "docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md",
     "demo_vertical_slice_doc": ROOT / "docs/DEMO_VERTICAL_SLICE.md",
     "frontend_mock_pack": ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json",
     "runtime_art_kit": ROOT
@@ -154,6 +156,8 @@ PATHS = {
     / "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
     "provider_artifact_promotion_report": ROOT
     / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+    "core_artifact_alignment_report": ROOT
+    / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
 }
 
 STATIC_VALIDATION_COMMANDS = [
@@ -610,6 +614,14 @@ STATIC_VALIDATION_COMMANDS = [
             "examples/review_packs/mvp_first_battle.context_package.json",
             "examples/review_packs/mvp_gray_lantern.fact_entry.json",
             "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+        ],
+    },
+    {
+        "name": "core_artifact_alignment_report",
+        "command": [
+            "python3",
+            "tools/content_pipeline/validate_core_artifact_alignment_report.py",
+            "examples/review_packs/core_artifact_alignment_report.v0.1.json",
         ],
     },
     {
@@ -1658,6 +1670,39 @@ def collect_provider_artifact_promotion_report(report: dict[str, Any]) -> dict[s
     }
 
 
+def collect_core_artifact_alignment_report(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    targets = as_list(report.get("target_reports"))
+    migration_tasks = as_list(report.get("migration_tasks"))
+    sample_targets = [
+        {
+            "target_id": target.get("target_id"),
+            "target_kind": target.get("target_kind"),
+            "alignment_state": target.get("alignment_state"),
+            "present_artifacts": as_list(target.get("present_artifacts")),
+            "next_action": target.get("next_action"),
+        }
+        for target in targets
+        if isinstance(target, dict)
+        and target.get("alignment_state") in {"missing_core_alignment", "refs_only"}
+    ][:MAX_SAMPLE_ITEMS]
+    return {
+        "report_id": report.get("report_id"),
+        "schema_version": report.get("schema_version"),
+        "overall_status": summary.get("overall_status"),
+        "target_count": summary.get("target_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "native_snapshot_ready_count": summary.get("native_snapshot_ready_count"),
+        "refs_only_count": summary.get("refs_only_count"),
+        "missing_core_alignment_count": summary.get("missing_core_alignment_count"),
+        "validation_failed_count": summary.get("validation_failed_count"),
+        "review_only_not_applicable_count": summary.get("review_only_not_applicable_count"),
+        "migration_task_count": len(migration_tasks),
+        "sample_migration_targets": sample_targets,
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
 def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, Any]:
     delta_ref = as_obj(transaction.get("world_state_delta_ref"))
     report = as_obj(transaction.get("validation_report"))
@@ -1985,6 +2030,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("generation_scheduler_design", PATHS["generation_scheduler_doc"]),
         ("frontend_mock_api_design", PATHS["frontend_mock_api_doc"]),
         ("frontend_runtime_art_design", PATHS["frontend_runtime_art_doc"]),
+        ("core_artifact_alignment_design", PATHS["core_artifact_alignment_doc"]),
         ("demo_vertical_slice", PATHS["demo_vertical_slice_doc"]),
         ("frontend_mock_pack", PATHS["frontend_mock_pack"]),
         ("runtime_art_kit", PATHS["runtime_art_kit"]),
@@ -2033,6 +2079,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         (
             "provider_artifact_promotion_report",
             PATHS["provider_artifact_promotion_report"],
+        ),
+        (
+            "core_artifact_alignment_report",
+            PATHS["core_artifact_alignment_report"],
         ),
         ("context_package_example", PATHS["context_package_example"]),
         ("fact_entry_example", PATHS["fact_entry_example"]),
@@ -2221,6 +2271,9 @@ def build_evidence() -> dict[str, Any]:
     provider_artifact_promotion_report = load_json(
         PATHS["provider_artifact_promotion_report"]
     )
+    core_artifact_alignment_report = load_json(
+        PATHS["core_artifact_alignment_report"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -2266,6 +2319,9 @@ def build_evidence() -> dict[str, Any]:
         ),
         "provider_artifact_promotion_report": collect_provider_artifact_promotion_report(
             provider_artifact_promotion_report
+        ),
+        "core_artifact_alignment_report": collect_core_artifact_alignment_report(
+            core_artifact_alignment_report
         ),
         "world_delta_transaction": collect_world_delta_transaction(world_delta_transaction),
         "world_delta_transaction_chain": collect_world_delta_transaction_chain(
@@ -2441,6 +2497,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
     provider_promotion_report = as_obj(evidence.get("provider_artifact_promotion_report"))
+    core_alignment = as_obj(evidence.get("core_artifact_alignment_report"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
     world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
@@ -2530,6 +2587,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for artifact in as_list(provider_staging.get("staged_artifacts"))
     ]
+    core_alignment_rows = [
+        [
+            target.get("target_id"),
+            target.get("target_kind"),
+            target.get("alignment_state"),
+            ", ".join(str(item) for item in as_list(target.get("present_artifacts"))),
+            target.get("next_action"),
+        ]
+        for target in as_list(core_alignment.get("sample_migration_targets"))
+    ]
     world_transaction_rows = [
         [
             item.get("transaction_id"),
@@ -2586,7 +2653,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- target：`{as_obj(provider_promotion_report.get('promotion_targets')).get('target_kind')}`，reviewed artifacts `{provider_promotion_report.get('reviewed_artifact_count')}`",
         f"- 报告自身 provider 调用：`{as_obj(provider_promotion_report.get('safety_summary')).get('provider_call_count_by_report')}`，世界修改：`{as_obj(provider_promotion_report.get('safety_summary')).get('world_mutation_count_by_report')}`，runtime 修改：`{as_obj(provider_promotion_report.get('safety_summary')).get('runtime_mutation_count_by_report')}`",
         "",
-        "## 2.3 世界状态事务",
+        "## 2.3 核心对象对齐报告",
+        "",
+        f"- 报告：`{core_alignment.get('report_id')}`，状态：`{core_alignment.get('overall_status')}`，目标 `{core_alignment.get('target_count')}` 个",
+        f"- 原生快照 ready：`{core_alignment.get('native_snapshot_ready_count')}`；refs-only：`{core_alignment.get('refs_only_count')}`；待迁移：`{core_alignment.get('missing_core_alignment_count')}`；校验失败：`{core_alignment.get('validation_failed_count')}`",
+        f"- review-only / 不适用：`{core_alignment.get('review_only_not_applicable_count')}`；迁移任务：`{core_alignment.get('migration_task_count')}`",
+        f"- 安全边界：读环境 `{as_obj(core_alignment.get('safety_summary')).get('reads_env')}`，调用外部服务 `{as_obj(core_alignment.get('safety_summary')).get('calls_external_service')}`，runtime 修改 `{as_obj(core_alignment.get('safety_summary')).get('runtime_mutation_count')}`，世界修改 `{as_obj(core_alignment.get('safety_summary')).get('world_mutation_count')}`",
+        "",
+        md_table(["目标", "类型", "状态", "已有核心对象", "下一步"], core_alignment_rows),
+        "",
+        "## 2.4 世界状态事务",
         "",
         f"- 事务：`{world_transaction.get('transaction_id')}`，状态：`{world_transaction.get('status')}`",
         f"- Delta：`{world_transaction.get('delta_id')}`，来源：`{world_transaction.get('source')}`，节点：`{', '.join(str(node) for node in as_list(world_transaction.get('node_ids')))}`",

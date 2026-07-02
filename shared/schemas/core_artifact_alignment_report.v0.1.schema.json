@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/core_artifact_alignment_report.v0.1.schema.json",
+  "title": "CoreArtifactAlignmentReport v0.1",
+  "description": "An offline evidence report showing how reviewed artifacts align with ContextPackage, FactEntry, CompiledGameObjectPackage, WorldStateDelta, and WorldStateDeltaTransaction. It is evidence only and never mutates runtime or world state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "authority",
+    "summary",
+    "target_reports",
+    "migration_tasks",
+    "safety_summary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "core_artifact_alignment_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visibility",
+        "report_only",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "player_visible"
+      ],
+      "properties": {
+        "visibility": { "type": "string", "const": "internal_evidence" },
+        "report_only": { "type": "boolean", "const": true },
+        "runtime_activation_allowed": { "type": "boolean", "const": false },
+        "world_mutation_allowed": { "type": "boolean", "const": false },
+        "player_visible": { "type": "boolean", "const": false }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overall_status",
+        "target_count",
+        "status_counts",
+        "native_snapshot_ready_count",
+        "refs_only_count",
+        "missing_core_alignment_count",
+        "validation_failed_count",
+        "review_only_not_applicable_count"
+      ],
+      "properties": {
+        "overall_status": {
+          "type": "string",
+          "enum": ["passed", "needs_migration", "failed"]
+        },
+        "target_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "native_snapshot_ready_count": { "type": "integer", "minimum": 0 },
+        "refs_only_count": { "type": "integer", "minimum": 0 },
+        "missing_core_alignment_count": { "type": "integer", "minimum": 0 },
+        "validation_failed_count": { "type": "integer", "minimum": 0 },
+        "review_only_not_applicable_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "target_reports": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target_report" }
+    },
+    "migration_tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/migration_task" }
+    },
+    "safety_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reads_env",
+        "calls_external_service",
+        "stores_prompt_body",
+        "stores_provider_body",
+        "runtime_mutation_count",
+        "world_mutation_count"
+      ],
+      "properties": {
+        "reads_env": { "type": "boolean", "const": false },
+        "calls_external_service": { "type": "boolean", "const": false },
+        "stores_prompt_body": { "type": "boolean", "const": false },
+        "stores_provider_body": { "type": "boolean", "const": false },
+        "runtime_mutation_count": { "type": "integer", "const": 0 },
+        "world_mutation_count": { "type": "integer", "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "target_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "target_kind",
+        "source_path",
+        "alignment_state",
+        "review_only",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "expected_artifacts",
+        "present_artifacts",
+        "refs",
+        "validation_results",
+        "next_action"
+      ],
+      "properties": {
+        "target_id": { "type": "string", "minLength": 1 },
+        "target_kind": {
+          "type": "string",
+          "enum": [
+            "frontend_mock_pack",
+            "core_artifact_example",
+            "world_delta_transaction",
+            "world_delta_transaction_chain",
+            "review_pack",
+            "provider_artifact_stage",
+            "provider_artifact_promotion"
+          ]
+        },
+        "source_path": { "type": "string", "minLength": 1 },
+        "alignment_state": {
+          "type": "string",
+          "enum": [
+            "native_snapshot_ready",
+            "refs_only",
+            "missing_core_alignment",
+            "review_only_not_applicable",
+            "validation_failed"
+          ]
+        },
+        "review_only": { "type": "boolean" },
+        "runtime_activation_allowed": { "type": "boolean", "const": false },
+        "world_mutation_allowed": { "type": "boolean", "const": false },
+        "expected_artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_kind" },
+          "uniqueItems": true
+        },
+        "present_artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_kind" },
+          "uniqueItems": true
+        },
+        "refs": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "validation_results": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/validation_result" }
+        },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "context_package",
+        "fact_entry",
+        "compiled_game_object_package",
+        "world_delta",
+        "world_delta_transaction"
+      ]
+    },
+    "validation_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_kind", "status", "error_count"],
+      "properties": {
+        "artifact_kind": { "$ref": "#/$defs/artifact_kind" },
+        "status": { "type": "string", "enum": ["passed", "failed", "not_run"] },
+        "ref": { "type": "string", "minLength": 1 },
+        "error_count": { "type": "integer", "minimum": 0 },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "migration_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "priority", "source_target_id", "objective", "blocked_until"],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "priority": { "type": "string", "enum": ["P1", "P2"] },
+        "source_target_id": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "minLength": 1 },
+        "blocked_until": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

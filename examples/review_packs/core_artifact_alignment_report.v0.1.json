@@ -1,0 +1,990 @@
+{
+  "authority": {
+    "player_visible": false,
+    "report_only": true,
+    "runtime_activation_allowed": false,
+    "visibility": "internal_evidence",
+    "world_mutation_allowed": false
+  },
+  "created_at": "2026-07-02T00:00:00Z",
+  "migration_tasks": [
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_compiler_review_dossier.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_compiler_review_dossier.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_multistage_content_pack.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_multistage_content_pack.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_multistage_stage_candidate_pack.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_multistage_stage_candidate_pack.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_next_stage_compilable_object_plan.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_next_stage_compilable_object_plan.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_stage05_plan_realization_report.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_stage05_plan_realization_report.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_stage_candidate_pack.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_stage_candidate_pack.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_story_asset_promotion_report.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_story_asset_promotion_report.v0.1"
+    },
+    {
+      "blocked_until": "决定该产物是否会进入后续 runtime package / WorldStateDeltaTransaction 构建。",
+      "objective": "为该 review pack 补 core_artifact_refs、原生 core_artifacts 快照或明确 not-applicable 边界。",
+      "priority": "P1",
+      "source_target_id": "review_pack.mvp_story_asset_review_pack.v0.1",
+      "task_id": "core_alignment::review_pack.mvp_story_asset_review_pack.v0.1"
+    }
+  ],
+  "report_id": "core_artifact_alignment_report_mvp_2026_07_02",
+  "safety_summary": {
+    "calls_external_service": false,
+    "reads_env": false,
+    "runtime_mutation_count": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count": 0
+  },
+  "schema_version": "core_artifact_alignment_report.v0.1",
+  "summary": {
+    "missing_core_alignment_count": 8,
+    "native_snapshot_ready_count": 6,
+    "overall_status": "needs_migration",
+    "refs_only_count": 0,
+    "review_only_not_applicable_count": 39,
+    "status_counts": {
+      "missing_core_alignment": 8,
+      "native_snapshot_ready": 6,
+      "review_only_not_applicable": 39
+    },
+    "target_count": 53,
+    "validation_failed_count": 0
+  },
+  "target_reports": [
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "context_package",
+        "fact_entry",
+        "compiled_game_object_package",
+        "world_delta_transaction"
+      ],
+      "next_action": "保持为 evidence / Studio 辅助字段；玩家 runtime 仍只消费 reviewed assets、runtime package 与 map package。",
+      "present_artifacts": [
+        "context_package",
+        "fact_entry",
+        "compiled_game_object_package",
+        "world_delta_transaction"
+      ],
+      "refs": {
+        "compiled_game_object_package": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+        "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
+        "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+        "world_delta_transaction": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "target_id": "frontend_mock_pack.core_artifacts",
+      "target_kind": "frontend_mock_pack",
+      "validation_results": [
+        {
+          "artifact_kind": "context_package",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_first_battle.context_package.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "fact_entry",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "compiled_game_object_package",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "context_package"
+      ],
+      "next_action": "作为字段级示例和迁移锚点保留；不要直接写入玩家 runtime。",
+      "present_artifacts": [
+        "context_package"
+      ],
+      "refs": {
+        "context_package": "examples/review_packs/mvp_first_battle.context_package.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_first_battle.context_package.json",
+      "target_id": "context_package.example",
+      "target_kind": "core_artifact_example",
+      "validation_results": [
+        {
+          "artifact_kind": "context_package",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_first_battle.context_package.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "fact_entry"
+      ],
+      "next_action": "作为字段级示例和迁移锚点保留；不要直接写入玩家 runtime。",
+      "present_artifacts": [
+        "fact_entry"
+      ],
+      "refs": {
+        "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+      "target_id": "fact_entry.example",
+      "target_kind": "core_artifact_example",
+      "validation_results": [
+        {
+          "artifact_kind": "fact_entry",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "compiled_game_object_package"
+      ],
+      "next_action": "作为字段级示例和迁移锚点保留；不要直接写入玩家 runtime。",
+      "present_artifacts": [
+        "compiled_game_object_package"
+      ],
+      "refs": {
+        "compiled_game_object_package": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+      "target_id": "cgop.example",
+      "target_kind": "core_artifact_example",
+      "validation_results": [
+        {
+          "artifact_kind": "compiled_game_object_package",
+          "error_count": 0,
+          "ref": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "world_delta_transaction"
+      ],
+      "next_action": "继续作为首战事务语义样例；不得把事务字段塞回 WorldStateDelta 顶层。",
+      "present_artifacts": [
+        "world_delta_transaction"
+      ],
+      "refs": {
+        "world_delta_transaction": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+      "target_id": "first_battle_result.world_delta_transaction",
+      "target_kind": "world_delta_transaction",
+      "validation_results": [
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "native_snapshot_ready",
+      "expected_artifacts": [
+        "world_delta_transaction"
+      ],
+      "next_action": "后续剧情 / 世界演化包应继续引用事务链，而不是写通用 effects[]。",
+      "present_artifacts": [
+        "world_delta_transaction"
+      ],
+      "refs": {
+        "first_battle_result.world_delta_transaction": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+        "stage_01_gray_lantern_first_defense.world_delta_transaction": "examples/world_delta_transactions/stage_01_gray_lantern_first_defense.world_delta_transaction.json",
+        "stage_02_dawn_review_supply_line.world_delta_transaction": "examples/world_delta_transactions/stage_02_dawn_review_supply_line.world_delta_transaction.json",
+        "stage_03_northern_road_scouting.world_delta_transaction": "examples/world_delta_transactions/stage_03_northern_road_scouting.world_delta_transaction.json",
+        "stage_04_wick_store_pressure_battle.world_delta_transaction": "examples/world_delta_transactions/stage_04_wick_store_pressure_battle.world_delta_transaction.json",
+        "stage_05_old_signal_tower_pressure.world_delta_transaction": "examples/world_delta_transactions/stage_05_old_signal_tower_pressure.world_delta_transaction.json",
+        "stage_06_signal_resonance_trial.world_delta_transaction": "examples/world_delta_transactions/stage_06_signal_resonance_trial.world_delta_transaction.json",
+        "stage_07_split_tide_containment.world_delta_transaction": "examples/world_delta_transactions/stage_07_split_tide_containment.world_delta_transaction.json"
+      },
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/world_delta_transactions",
+      "target_id": "stage01_stage07.world_delta_transaction_chain",
+      "target_kind": "world_delta_transaction_chain",
+      "validation_results": [
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_01_gray_lantern_first_defense.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_02_dawn_review_supply_line.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_03_northern_road_scouting.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_04_wick_store_pressure_battle.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_05_old_signal_tower_pressure.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_06_signal_resonance_trial.world_delta_transaction.json",
+          "status": "passed"
+        },
+        {
+          "artifact_kind": "world_delta_transaction",
+          "error_count": 0,
+          "ref": "examples/world_delta_transactions/stage_07_split_tide_containment.world_delta_transaction.json",
+          "status": "passed"
+        }
+      ],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为 review-only staging；通过 promotion report 后仍需独立 runtime package / WorldStateDeltaTransaction builder。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+      "target_id": "provider_artifact_staging_manifest",
+      "target_kind": "provider_artifact_stage",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "当前报告只表达阻断/晋升许可，不直接携带可运行核心对象；批准后也只能作为后续 builder 输入。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+      "target_id": "provider_artifact_promotion_report",
+      "target_kind": "provider_artifact_promotion",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/controlled_map_candidate_generation_run.v0.1.json",
+      "target_id": "review_pack.controlled_map_candidate_generation_run.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/controlled_map_candidate_review.v0.1.json",
+      "target_id": "review_pack.controlled_map_candidate_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
+      "target_id": "review_pack.controlled_map_text_fallback_candidate_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/controlled_map_text_fallback_generation_run.v0.1.json",
+      "target_id": "review_pack.controlled_map_text_fallback_generation_run.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_cutout_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_cutout_repair_plan.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_regeneration_candidates.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_regeneration_promotion_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_repair_candidate_quality_report.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_repair_candidate_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_runtime_sprite_repair_candidates.v0.1.json",
+      "target_id": "review_pack.frontend_runtime_sprite_repair_candidates.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json",
+      "target_id": "review_pack.frontend_sprite_cutout_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json",
+      "target_id": "review_pack.frontend_sprite_cutout_repair_plan.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_sprite_repair_candidate_quality_report.v0.1.json",
+      "target_id": "review_pack.frontend_sprite_repair_candidate_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/frontend_sprite_repair_candidates.v0.1.json",
+      "target_id": "review_pack.frontend_sprite_repair_candidates.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_candidate_alignment_review.v0.1.json",
+      "target_id": "review_pack.map_candidate_alignment_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_candidate_overlay_review.v0.1.json",
+      "target_id": "review_pack.map_candidate_overlay_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+      "target_id": "review_pack.map_candidate_overlay_visual_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+      "target_id": "review_pack.map_controlled_regeneration_request_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
+      "target_id": "review_pack.map_layout_reconciliation_plan.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_patch_overlay_review.v0.1.json",
+      "target_id": "review_pack.map_patch_overlay_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+      "target_id": "review_pack.map_topology_control_sketch_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/map_visual_quality_report.v0.1.json",
+      "target_id": "review_pack.map_visual_quality_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_compilable_object_catalog.v0.1.json",
+      "target_id": "review_pack.mvp_compilable_object_catalog.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
+      "target_id": "review_pack.mvp_compiler_review_dossier.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
+      "target_id": "review_pack.mvp_generation_schedule_plan.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+      "target_id": "review_pack.mvp_generation_schedule_run_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
+      "target_id": "review_pack.mvp_handoff_audit_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+      "target_id": "review_pack.mvp_multistage_content_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "target_id": "review_pack.mvp_multistage_stage_candidate_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+      "target_id": "review_pack.mvp_next_stage_compilable_object_plan.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json",
+      "target_id": "review_pack.mvp_stage05_plan_realization_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+      "target_id": "review_pack.mvp_stage_candidate_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
+      "target_id": "review_pack.mvp_story_asset_promotion_report.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "missing_core_alignment",
+      "expected_artifacts": [],
+      "next_action": "补充 core_artifact_refs 或原生 core_artifacts 快照，并通过统一 validator。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+      "target_id": "review_pack.mvp_story_asset_review_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/node_map_painted_candidate_review.v0.1.json",
+      "target_id": "review_pack.node_map_painted_candidate_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
+      "target_id": "review_pack.node_map_painted_candidate_review.v0.2",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/runtime_map_patch_candidates.v0.1.json",
+      "target_id": "review_pack.runtime_map_patch_candidates.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_alignment_review.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_alignment_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_candidate_review.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_candidate_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_candidate_review_v2_agnes.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_candidate_review_v2_agnes.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_overlay_review.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_overlay_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_overlay_visual_review.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_prompt_pack.v0.1.json",
+      "target_id": "review_pack.topology_constrained_map_prompt_pack.v0.1",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    },
+    {
+      "alignment_state": "review_only_not_applicable",
+      "expected_artifacts": [],
+      "next_action": "保持为专项 review-only 证据；若未来要进入 runtime/world，先经对应 builder 生成核心对象或事务。",
+      "present_artifacts": [],
+      "refs": {},
+      "review_only": true,
+      "runtime_activation_allowed": false,
+      "source_path": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+      "target_id": "review_pack.topology_constrained_map_prompt_pack.v0.2",
+      "target_kind": "review_pack",
+      "validation_results": [],
+      "world_mutation_allowed": false
+    }
+  ]
+}

@@ -102,6 +102,8 @@ Last updated: 2026-07-02
   - ProviderOutputEnvelope 之后的本地候选 artifact 暂存层：只登记 review-only local refs、校验状态和 promotion gate，不声明 runtime-ready。
 - `docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md`
   - ProviderArtifactStagingManifest 之后的显式晋升/阻断报告：决定候选是否可进入 runtime package build、WorldStateDeltaTransaction build 或 published media 更新。
+- `docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md`
+  - AI 编译核心对象对齐审计报告：扫描前端 mock pack、review pack、provider staging/promotion 示例和事务链，说明哪些已经携带 ContextPackage / FactEntry / CGOP / WorldStateDeltaTransaction 原生字段或 refs，哪些仍需迁移。
 - `docs/GAMEPLAY_OBJECT_COMPILER_V0_1.md`
   - 玩法对象编译边界。
 - `shared/schemas/context_package.v0.1.schema.json`
@@ -116,6 +118,8 @@ Last updated: 2026-07-02
   - ProviderArtifactStagingManifest 字段级事实源：把 ProviderOutputEnvelope 中的本地 refs 转入 review-only staging，仍不写世界状态、不激活 runtime、不绕过 media / semantic / human review / promotion gate。
 - `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
   - ProviderArtifactPromotionReport 字段级事实源：只表达显式晋升/阻断结论，不直接修改 runtime package、published media 或世界状态。
+- `shared/schemas/core_artifact_alignment_report.v0.1.schema.json`
+  - CoreArtifactAlignmentReport 字段级事实源：只做内部 evidence / 迁移审计，不激活 review-only 产物、不写世界状态、不替代任何 runtime package 或事务构建器。
 
 ### 剧情、任务与世界状态
 
@@ -167,7 +171,7 @@ ControlledMapCandidateReview v0.1 已把上述 handoff sidecar 接入 `tools/med
 ControlledMapTextFallbackGenerationRun v0.1 已用真实 Agnes 调用产出三张受控 text-fallback 地图候选，并记录 provider 调用数、图片路径和 sidecar；审查结果为 `review_only_not_runtime_ready`，三张均 `needs_regeneration`。失败原因包括箭头 / 控制形状 / 棋盘边框被烙进背景、未授权人物或塔位被模型自行添加、视觉路线与 MapRuntimePackage 拓扑不一致。该结果冻结为负样本证据：地图不应继续依赖纯文本整图生成，下一轮应走 reference-image provider、人工 paintover，或由 MapRuntimePackage 驱动的分层程序化底图。
 FrontendProceduralBattleBackdrop v0.1 已完成 P0-M：默认玩家战斗画面不再绘制失败整图候选，而是由 `MapRuntimePackage` 的 grid、path_routes、build_slots、objectives 和 spawn_points 驱动 canvas 程序化绘制自然地形、土石路、部署基座、目标地基和入口雾潮。静态合约会阻止控制图 / 参考图 / 棋盘 helper / 失败整图发布进入默认玩家视图；仍需浏览器截图或录屏做最终像素验收。
 GenerationSchedulePlan v0.1 已作为 Generation Scheduler 的 review-only 计划包入口，覆盖 sync_blocking、background_prefetch、background、lazy、fallback_static 五类调度，并接入 demo evidence 与后端 session mock API；GenerationScheduleRunReport v0.1 已可离线 dry-run 调度计划并证明 provider 调用数和世界修改数为 0；`generation_schedule_queue_items` 已能提供 item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；`generation_schedule_worker_cache` 已提供 review-only worker step 执行痕迹；`generation_live_executor_guard.v0.1` provider guard log 已能记录真实 provider 执行前的显式授权阻断、artifact manifest 门、校验门和 activation gate；`ProviderOutputEnvelope v0.1` 已定义真实 provider 调用后允许保存的脱敏摘要和 artifact refs；`ProviderArtifactStagingManifest v0.1` 已定义这些本地 refs 进入 review-only 暂存区的清单和 promotion gate，并接入 demo evidence 摘要；`ProviderArtifactPromotionReport v0.1` 已定义 staging 之后的显式晋升/阻断报告，当前示例会因 media / semantic / human review 未完成而阻断；`generation_artifact_ledger` 后端状态层已能把已校验的 envelope / staging / promotion report 摘要登记到匿名 session SQLite 台账并暴露 GET / stage-worker API；这些层都不保存 raw prompt / provider response、不写世界状态、不激活候选，真实后台执行器仍未实现。
-ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。
+ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。CoreArtifactAlignmentReport v0.1 已把前端 mock pack、核心示例、事务链、provider staging/promotion 示例和 review pack 的核心对象对齐状态纳入 evidence；当前整体为 `needs_migration`，无 validator 失败，主要输出 P1 迁移任务而不阻断 MVP。
 ```
 
 ### 审查与交付
@@ -232,6 +236,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - Campaign Router v0.1：`backend/app/services/campaign_router_service.py` 是当前最薄运行时游标入口；它根据 `RunWorldState.progress.phase` 返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可触发一次 fixture-backed dry-run 预取步。no-build 前端已在 API 模式消费该 route，静态模式保留灰灯驿站首战兜底。
 - 多节点战斗结算桥：`backend/app/services/frontend_mock_service.py` 当前支持 `gray_lantern_station`、`lamp_wick_store`、`old_signal_tower` 三个路由节点的战斗结果提交。前两个节点使用 `battle_result` transaction；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，并在 API 返回中显式标注来源，避免把研究任务基线误当战斗结果。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 与 battle settlement evidence 原生快照构造入口。
+- CoreArtifactAlignmentReport v0.1：`shared/schemas/core_artifact_alignment_report.v0.1.schema.json`、`tools/content_pipeline/build_core_artifact_alignment_report.py`、`tools/content_pipeline/validate_core_artifact_alignment_report.py` 和 `examples/review_packs/core_artifact_alignment_report.v0.1.json` 已作为核心对象迁移审计入口。它只报告 native / refs-only / missing / not-applicable / validation-failed 状态，不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
 - WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例、stage01-stage07 事务链、批量 validator 和 deterministic builder；它包装可通过语义门的 `WorldStateDelta`，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
 - 多阶段叙事 / 世界状态 / 资产候选审查包。
@@ -244,7 +249,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP 字段的全面迁移；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移，但其他运行时产物仍未全部改为原生核心对象。
+- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP 字段的全面迁移；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移。CoreArtifactAlignmentReport 已列出当前待迁移 review pack，但其他运行时产物仍未全部改为原生核心对象。
 - 正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求缓存和持久化预生成产物；当前 Campaign Router 只触发 dry-run 预取，不是真实后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。
