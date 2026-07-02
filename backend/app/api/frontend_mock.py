@@ -19,11 +19,16 @@ from ..models import (
     GenerationScheduleQueueTransitionRequest,
     WorldInstanceCreateRequest,
 )
-from ..services import frontend_mock_service, generation_scheduler_service
+from ..services import (
+    frontend_mock_service,
+    generation_scheduler_service,
+    map_runtime_service,
+)
 from ..services.generation_scheduler_service import (
     GenerationSchedulerFixtureNotFoundError,
     InvalidQueueTransitionError,
 )
+from ..services.map_runtime_service import MapRuntimePackageNotFoundError
 from ..services.frontend_mock_service import (
     FixtureNotFoundError,
 )
@@ -62,6 +67,13 @@ def _scheduler_fixture_404(exc: GenerationSchedulerFixtureNotFoundError) -> HTTP
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"scheduler fixture not found for: {exc}",
+    )
+
+
+def _map_runtime_fixture_404(exc: MapRuntimePackageNotFoundError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"map runtime package not found for: {exc}",
     )
 
 
@@ -371,9 +383,9 @@ def get_map_runtime_package(session_id: str, node_id: str) -> FrontendMockPayloa
     """Return the runtime-safe logical map package for a mock battle node."""
     _require_session(session_id)
     try:
-        data = frontend_mock_service.get_map_runtime_package(session_id, node_id)
-    except FixtureNotFoundError as exc:
-        raise _fixture_404(exc) from exc
+        data = map_runtime_service.get_map_runtime_package(session_id, node_id)
+    except MapRuntimePackageNotFoundError as exc:
+        raise _map_runtime_fixture_404(exc) from exc
     return _payload(session_id, data)
 
 
