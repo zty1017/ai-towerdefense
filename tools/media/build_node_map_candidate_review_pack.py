@@ -120,6 +120,20 @@ REVIEW_PROFILES: dict[str, dict[str, dict[str, Any]]] = {
             "recommended_next_action": "run normalization and runtime overlay review; do not promote without visual-model or human approval",
         },
     },
+    "topology_repair_v2_failed": {
+        "old_signal_tower": {
+            "status": "needs_regeneration",
+            "blocking_findings": [
+                "provider_output_still_violates_negative_constraints",
+                "visible_people_or_character_like_marks_or_watermark_risk",
+                "objective_and_build_pad_readability_not_ready_for_runtime_promotion",
+            ],
+            "strengths": [
+                "prompt_repair_attempt_is_recorded_as_provider_comparison_evidence",
+            ],
+            "recommended_next_action": "stop blind prompt-only retries; use a topology control sketch, reference composition, inpaint cleanup, or stronger vision review before another provider call",
+        },
+    },
 }
 
 
