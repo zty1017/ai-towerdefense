@@ -88,10 +88,26 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "frontend_media_multiframe_atlas_contract",
+        "command": [
+            "python3",
+            "tools/media/validate_multiframe_atlas_contract.py",
+            "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+        ],
+    },
+    {
         "name": "frontend_runtime_art_atlas",
         "command": [
             "python3",
             "tools/media/validate_media_atlas_manifest.py",
+            "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+        ],
+    },
+    {
+        "name": "frontend_runtime_art_multiframe_atlas_contract",
+        "command": [
+            "python3",
+            "tools/media/validate_multiframe_atlas_contract.py",
             "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
         ],
     },
@@ -622,8 +638,10 @@ def collect_frontend_entry(frontend_pack: dict[str, Any]) -> dict[str, Any]:
         "static_media_mounts": [
             "/assets/frontend_mock/processed",
             "/assets/frontend_mock/generated",
+            "/assets/frontend_mock/atlas_frames",
             "/assets/frontend_runtime_mock/processed",
             "/assets/frontend_runtime_mock/generated",
+            "/assets/frontend_runtime_mock/atlas_frames",
             "/assets/map_visual_reference",
         ],
         "player_safe_boundary": {

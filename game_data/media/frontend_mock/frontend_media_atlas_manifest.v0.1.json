@@ -5,7 +5,7 @@
   "source_manifest": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
   "source_media_pack_id": "frontend_mock_media_pack_v0_1",
   "media_layer": "published_media",
-  "atlas_mode": "virtual_single_frame",
+  "atlas_mode": "spritesheet",
   "public_url_prefix": "/assets/frontend_mock/processed",
   "items": [
     {
@@ -51,9 +51,9 @@
       "media_role": "tower_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -66,8 +66,59 @@
           "y": 0,
           "width": 949,
           "height": 949,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "8bf1eec5f91f89900b043ba437db6fae5aa1aa0a4b61ad519099b54662f90eb9",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_ash_burst_lantern.tower_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 949,
+          "height": 949,
+          "duration_ms": 167,
+          "sha256": "b0864b84977fea0be97efa5700be80e9aa4a790622755ecdaec2042ac1c98ad3",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_ash_burst_lantern.tower_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 949,
+          "height": 949,
+          "duration_ms": 167,
+          "sha256": "c450e3fa6eb70b8b3203d84f4a05c927876a82f8d61dcac3ecdf6765dd71cf93",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_ash_burst_lantern.tower_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_ash_burst_lantern__tower_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 949,
+          "height": 949,
+          "duration_ms": 167,
+          "sha256": "b0864b84977fea0be97efa5700be80e9aa4a790622755ecdaec2042ac1c98ad3",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -187,9 +238,9 @@
       "media_role": "tower_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -202,8 +253,59 @@
           "y": 0,
           "width": 979,
           "height": 979,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "6972fb914bb4fbcc56722cedb11e9fd35fb47ee9302e97dc3a834c7e4671487e",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_echo_prism_relay.tower_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 979,
+          "height": 979,
+          "duration_ms": 167,
+          "sha256": "25d4bb02fc34b5a84d3f18f9150c20b7c8963c36f5edbbfe6da52718b1240663",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_echo_prism_relay.tower_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 979,
+          "height": 979,
+          "duration_ms": 167,
+          "sha256": "27b04f53b6aea7b7736b5da583a5ac67fc76d8bc6c4d852e8a136a43b15b6e05",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_echo_prism_relay.tower_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_echo_prism_relay__tower_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 979,
+          "height": 979,
+          "duration_ms": 167,
+          "sha256": "25d4bb02fc34b5a84d3f18f9150c20b7c8963c36f5edbbfe6da52718b1240663",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -255,9 +357,9 @@
       "media_role": "tower_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -270,8 +372,59 @@
           "y": 0,
           "width": 935,
           "height": 935,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "c8e100101ab57563b4dcdeb9957e1fa7940dc37daaa69384e7cb3e1b19352570",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_light_slow_tower_001.tower_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 935,
+          "height": 935,
+          "duration_ms": 167,
+          "sha256": "2aa184a3e76d3a18d469fc3bfe8f9962a634affe56a23c43b02de0187c770f13",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_light_slow_tower_001.tower_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 935,
+          "height": 935,
+          "duration_ms": 167,
+          "sha256": "54e4c013bd5d7329250962811f3fb7b518985dd1c227ceac5aaf730daf5660b2",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_light_slow_tower_001.tower_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_light_slow_tower_001__tower_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 935,
+          "height": 935,
+          "duration_ms": 167,
+          "sha256": "2aa184a3e76d3a18d469fc3bfe8f9962a634affe56a23c43b02de0187c770f13",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -731,9 +884,9 @@
       "media_role": "tower_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -746,8 +899,59 @@
           "y": 0,
           "width": 946,
           "height": 946,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "8a40bad9a58f93f2f0faacb495b5122b063316b4320903cf46deaabce782fb3d",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_wick_barrier_pylon.tower_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 946,
+          "height": 946,
+          "duration_ms": 167,
+          "sha256": "34491e0887281b365807217c8381a5c8f4a293d0e502a8b9c7fb3cc35257aa90",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_wick_barrier_pylon.tower_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 946,
+          "height": 946,
+          "duration_ms": 167,
+          "sha256": "b11fb32eb72ac1204954dd0eefe59ce236a7de0b926172bdcee3f17f50d1f02e",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "asset_wick_barrier_pylon.tower_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_mock/atlas_frames/asset_wick_barrier_pylon__tower_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 946,
+          "height": 946,
+          "duration_ms": 167,
+          "sha256": "34491e0887281b365807217c8381a5c8f4a293d0e502a8b9c7fb3cc35257aa90",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -759,7 +963,7 @@
   ],
   "summary": {
     "animation_count": 22,
-    "frame_count": 22,
+    "frame_count": 34,
     "asset_count": 11,
     "roles": {
       "icon": 11,

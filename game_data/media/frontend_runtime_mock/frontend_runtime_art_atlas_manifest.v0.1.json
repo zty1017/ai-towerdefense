@@ -5,7 +5,7 @@
   "source_manifest": "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
   "source_media_pack_id": "frontend_runtime_art_media_pack_v0_1",
   "media_layer": "published_media",
-  "atlas_mode": "virtual_single_frame",
+  "atlas_mode": "spritesheet",
   "public_url_prefix": "/assets/frontend_runtime_mock/processed",
   "items": [
     {
@@ -51,9 +51,9 @@
       "media_role": "unit_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -66,8 +66,59 @@
           "y": 0,
           "width": 836,
           "height": 836,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "79267e53a177494af1a824381cd6bc3ddc41bfe7f651cf1b41a637f2d1406b9d",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_runner.unit_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 836,
+          "height": 836,
+          "duration_ms": 167,
+          "sha256": "c233f6f062bfc88c02be5473df547daed78fe8afabcdc1a74f7ee295bd783321",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_runner.unit_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 836,
+          "height": 836,
+          "duration_ms": 167,
+          "sha256": "6ae803ae0401c03fbfdd4081e157ae02201dfc081b797c34ecdfd2b5a6e9bbc2",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_runner.unit_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 836,
+          "height": 836,
+          "duration_ms": 167,
+          "sha256": "9f5feddc7c763486065921ed0e4311820ebc0cf996179c65ad3d716f594b1202",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -119,9 +170,9 @@
       "media_role": "unit_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -134,8 +185,59 @@
           "y": 0,
           "width": 889,
           "height": 889,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "a6b50eccaea431fb0554b393dfeb747af7c4ac1388f77b43dbba33e5589a689a",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_shade.unit_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 889,
+          "height": 889,
+          "duration_ms": 167,
+          "sha256": "6c6986a4bfc0d5fc915401285e61eba6346918890f7e673d28761916fa857bdc",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_shade.unit_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 889,
+          "height": 889,
+          "duration_ms": 167,
+          "sha256": "ff0a4be2e14178d2fc9f35bdc56b7b4edd9d970f10dc314f7482c6e05ded1682",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_shade.unit_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 889,
+          "height": 889,
+          "duration_ms": 167,
+          "sha256": "813734e5337958e28a8fc8336916c8facf0da9fcdd68d61cced04e9902c9fce0",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -187,9 +289,9 @@
       "media_role": "unit_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -202,8 +304,59 @@
           "y": 0,
           "width": 809,
           "height": 809,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "770e73d3ea657e291a4420b1d20a23da93a28f75090a9d1191e93f3ebba0236b",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_cluster.unit_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 809,
+          "height": 809,
+          "duration_ms": 167,
+          "sha256": "b3cbee62a2d50bf7247026c1f030fe0939654c777338584b56c3d977260db43c",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_cluster.unit_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 809,
+          "height": 809,
+          "duration_ms": 167,
+          "sha256": "f216069fd9b9f976d679b3199f256b81d398b03efd293cae91e13e6cf13fc35c",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "enemy_shadow_tide_cluster.unit_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 809,
+          "height": 809,
+          "duration_ms": 167,
+          "sha256": "8ef21ac6a664d8db4ea0f915ae8e3218e301031a3d06f569309f13eb676a97dd",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -255,9 +408,9 @@
       "media_role": "objective_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -270,8 +423,59 @@
           "y": 0,
           "width": 841,
           "height": 841,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "791b33524c5b2c567d2ce29e44a359dc11a7fec10bca6d839304d69f527db236",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_station_core.objective_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 841,
+          "height": 841,
+          "duration_ms": 167,
+          "sha256": "9cdc83c47fedcf9cee3a78258e318b9d8c98d3c86bbb054c3754d2628ce06902",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_station_core.objective_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 841,
+          "height": 841,
+          "duration_ms": 167,
+          "sha256": "a13a81a84c03e3aaf0fe8505a21d0223809f6f6a2913fc423065105ad6b2b072",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_station_core.objective_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 841,
+          "height": 841,
+          "duration_ms": 167,
+          "sha256": "9cdc83c47fedcf9cee3a78258e318b9d8c98d3c86bbb054c3754d2628ce06902",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -323,9 +527,9 @@
       "media_role": "objective_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -338,8 +542,59 @@
           "y": 0,
           "width": 816,
           "height": 816,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "fd69f03fec42283036fdf6d62bc4a6b91062ff8bd35f2d895053be7750c2110d",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_signal_beacon.objective_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 816,
+          "height": 816,
+          "duration_ms": 167,
+          "sha256": "fb0e4e01730dc99cee07b41792735a89355294ba0e4550bdcf2fa2b6f7efc75b",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_signal_beacon.objective_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 816,
+          "height": 816,
+          "duration_ms": 167,
+          "sha256": "1e22a0e8b849851c76274eb3a09dae61e45cbe57dcfaab6cbbe2cf0750ce0b41",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_signal_beacon.objective_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 816,
+          "height": 816,
+          "duration_ms": 167,
+          "sha256": "fb0e4e01730dc99cee07b41792735a89355294ba0e4550bdcf2fa2b6f7efc75b",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -391,9 +646,9 @@
       "media_role": "objective_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -406,8 +661,59 @@
           "y": 0,
           "width": 846,
           "height": 846,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "b93447132887f0a8ff268f5a95fa92be58e44ea268b410733de9cd12fa616d9c",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_lamp_wick_cache.objective_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 846,
+          "height": 846,
+          "duration_ms": 167,
+          "sha256": "f6148afb4f9948ac1a1571f8620b1d7163fcee6fd119a679a5e6021b17751ca5",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_lamp_wick_cache.objective_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 846,
+          "height": 846,
+          "duration_ms": 167,
+          "sha256": "65f56f151cc421307146ccdafe4838f20a6fb8c293136dd49a361e7425426df1",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "objective_lamp_wick_cache.objective_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 846,
+          "height": 846,
+          "duration_ms": 167,
+          "sha256": "f6148afb4f9948ac1a1571f8620b1d7163fcee6fd119a679a5e6021b17751ca5",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -459,9 +765,9 @@
       "media_role": "defense_sprite",
       "playback": {
         "state": "idle",
-        "fps": 1,
-        "loop": false,
-        "frame_count": 1
+        "fps": 6,
+        "loop": true,
+        "frame_count": 4
       },
       "spritesheet": null,
       "frames": [
@@ -474,8 +780,59 @@
           "y": 0,
           "width": 661,
           "height": 661,
-          "duration_ms": 1000,
+          "duration_ms": 167,
           "sha256": "7504f174aca23a877395ac3dcec5d6155eded84d0a5864914a61c270b593c6b1",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "defense_basic_lantern_barricade.defense_sprite.idle.frame_001",
+          "index": 1,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_001.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_001.png",
+          "x": 0,
+          "y": 0,
+          "width": 661,
+          "height": 661,
+          "duration_ms": 167,
+          "sha256": "3fab7d89fc5341d0e9013fc6a892791ab07b4189c5f623f093ca24290f678380",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "defense_basic_lantern_barricade.defense_sprite.idle.frame_002",
+          "index": 2,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_002.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_002.png",
+          "x": 0,
+          "y": 0,
+          "width": 661,
+          "height": 661,
+          "duration_ms": 167,
+          "sha256": "398669d1585f23ecff028f63a4f21514604a2ec4aa729969c70811d8487081e3",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        },
+        {
+          "frame_id": "defense_basic_lantern_barricade.defense_sprite.idle.frame_003",
+          "index": 3,
+          "url": "/assets/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_003.png",
+          "local_path": "game_data/media/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_003.png",
+          "x": 0,
+          "y": 0,
+          "width": 661,
+          "height": 661,
+          "duration_ms": 167,
+          "sha256": "3fab7d89fc5341d0e9013fc6a892791ab07b4189c5f623f093ca24290f678380",
           "anchor": {
             "preset": "bottom_center",
             "x": 0.5,
@@ -623,7 +980,7 @@
   ],
   "summary": {
     "animation_count": 18,
-    "frame_count": 18,
+    "frame_count": 39,
     "asset_count": 9,
     "roles": {
       "defense_sprite": 1,

@@ -48,7 +48,7 @@ P2：本阶段明确不做
 - locked manifest / runtime package 基础合同与校验。
 - AssetGraph DAG / 有界 ReAct / 节点注册 / runtime package 构建与校验。
 - 真实 LLM 世界状态变化烟测与语义门。
-- 媒体后处理 mock assets、processed PNG、animation seed manifest、virtual atlas manifest。
+- 媒体后处理 mock assets、processed PNG、animation seed manifest、spritesheet 兼容多帧 atlas manifest。
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效。
 - MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
 - 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。
@@ -58,7 +58,7 @@ P2：本阶段明确不做
 
 - 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了玩家侧 `painted_visual_layer` 与逻辑对齐 fallback `battle_runtime_background`；后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
 - 战斗和大地图视觉仍需继续游戏化，不能停留在控制图、参考图、突兀棋盘或临时调试画布；默认玩家视图已加防线，战斗 HUD 已压低遮挡，并完成无浏览器环境下的静态视觉合约校验，但仍需要在有 Chromium / Playwright 的环境中补截图。
-- `MediaAtlasManifest v0.1` 已以 `virtual_single_frame` 模式默认接入前端运行时；真实视频帧与 spritesheet 仍未生成。
+- `MediaAtlasManifest v0.1` 已以 `spritesheet` 兼容多帧模式默认接入前端运行时；真实图生视频关键帧与实体 atlas PNG 仍未生成。
 - live campaign router、预生成调度、长期存档还未形成稳定实现。
 
 ## 3. 已完成的 P0 基线
@@ -203,6 +203,19 @@ P2：本阶段明确不做
 - 前端优先通过 atlas 第一帧查找媒体，缺失时回退旧 media manifest。
 - 后端 mock API 和 demo evidence 已返回 / 展示 atlas manifest。
 
+### P1-A-1 MediaAtlasManifest 多帧 frame sequence 接入
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_multiframe_atlas_manifest.py`
+- `tools/media/validate_multiframe_atlas_contract.py`
+- `game_data/media/frontend_mock/atlas_frames/`
+- `game_data/media/frontend_runtime_mock/atlas_frames/`
+- 前端 `mediaUrl()` 保持旧接口，但会按 battle elapsed time 从 atlas frames 中选择当前帧。
+- sprite 类角色生成 4 帧循环，静态图标 / 头像 / UI 卡保持 1 帧。
+
 ## 4. 当前 P0 任务
 
 暂无。当前 P0 已全部关闭。
@@ -221,11 +234,11 @@ P2：本阶段明确不做
 
 要点：
 
-- `virtual_single_frame` 已完成；本任务继续推进真实多帧。
+- `virtual_single_frame` 与确定性 4 帧 frame sequence 已完成；本任务后续继续推进真实图生视频关键帧。
 - 首尾帧一致或 end frame 控制优先。
 - 加入 LoopContinuityCheck。
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
-- 前端已优先消费 atlas，静态 PNG 作为 fallback；后续需让 atlas 从单帧扩展为多帧 spritesheet。
+- 前端已优先消费 atlas，静态 PNG 作为 fallback；后续需把当前独立 frame PNG 升级为真实视频关键帧和实体 spritesheet。
 
 ### P1-B 世界演化预生成与调度
 
