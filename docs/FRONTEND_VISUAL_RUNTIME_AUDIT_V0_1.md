@@ -11,7 +11,9 @@ Last updated: 2026-07-02
 - 默认玩家视图的地图底图选择顺序已固定为 `painted_visual_layer -> battle_runtime_background -> 程序化大画面背景`。
 - `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助 fallback，不进入默认玩家体验。
 - 首战 `MapRuntimePackage` 中 `painted_visual_layer` 和 `battle_runtime_background` 均标记为 `published_visual_layer`；前者是玩家默认美术底图，后者是逻辑对齐 fallback。
+- 战斗 UI 已压缩为低遮挡 HUD：画布全屏铺底，顶部 HUD 更薄，左右侧栏更窄，底部工具条降低高度，避免把主战场变成后台面板。
 - 前端静态入口、前端脚本、首战 `painted_visual_layer` PNG、首战 `MapRuntimePackage` 均可通过本地 HTTP 服务读取。
+- 已补充无浏览器环境下的静态视觉合约校验脚本，用于防止控制图泄漏、玩家底图优先级倒置、战斗画布塌缩和侧栏过宽。
 - 本轮未生成真实浏览器截图，因为当前执行环境没有 Chromium / Chrome，也没有 Playwright。
 
 这意味着：代码和资源层面的默认路径已经防止低质量控制图污染玩家视图；但真正的像素级截图验收仍需要在安装浏览器的环境中补做。
@@ -22,6 +24,7 @@ Last updated: 2026-07-02
 
 ```bash
 node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
 git diff --check
 ```
 
@@ -91,6 +94,7 @@ python3 -c 'import json; p=json.load(open("examples/map_runtime_packages/mvp_fir
 - `playerBattleMapVisualUrl()`：默认只返回 `painted_visual_layer` 或 `battle_runtime_background`。
 - `debugBattleMapVisualUrls()`：只有 `?mapVisualDebug=1`、`?debugMapVisuals=1` 或 `?evidence=1` 时才返回 `battle_reference_board` / `battle_control_sketch`。
 - `drawBackdrop()`：优先绘制玩家发布底图；发布底图缺失时使用程序化背景，只有 debug/evidence 模式才允许调试图 fallback。
+- `tools/frontend/validate_battle_visual_contract.py`：检查玩家地图层优先级、debug 图隔离、PNG 尺寸、runtime package 视觉层、全屏 battle canvas 和 HUD 宽度约束。
 
 ## 4. 未完成项
 

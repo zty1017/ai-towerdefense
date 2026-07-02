@@ -616,7 +616,7 @@ button:disabled {
   overflow: hidden;
   padding: 0;
   background:
-    radial-gradient(circle at 50% 58%, rgba(240, 189, 88, 0.08), transparent 36rem),
+    radial-gradient(circle at 50% 58%, rgba(240, 189, 88, 0.06), transparent 38rem),
     linear-gradient(140deg, #0a0d0d, #171914 46%, #100f13);
 }
 
@@ -629,12 +629,12 @@ button:disabled {
 .battle-top {
   position: absolute;
   z-index: 5;
-  top: 12px;
-  left: 14px;
-  right: 14px;
+  top: 10px;
+  left: 12px;
+  right: 12px;
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 230px;
-  gap: 10px;
+  grid-template-columns: minmax(210px, 0.95fr) minmax(320px, 1.5fr) minmax(154px, 0.75fr);
+  gap: 8px;
   pointer-events: none;
 }
 
@@ -643,8 +643,8 @@ button:disabled {
 }
 
 .mini-map {
-  width: 86px;
-  height: 86px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   border: 2px solid rgba(255, 225, 161, 0.68);
   background:
@@ -658,7 +658,7 @@ button:disabled {
 .battle-status {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -667,14 +667,14 @@ button:disabled {
 .battle-tools {
   border: 1px solid rgba(242, 205, 130, 0.2);
   border-radius: var(--radius);
-  background: rgba(10, 12, 10, 0.62);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(10px) saturate(1.05);
+  background: rgba(8, 10, 9, 0.48);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px) saturate(1.03);
 }
 
 .top-stat {
   min-width: 94px;
-  padding: 8px 10px;
+  padding: 6px 9px;
 }
 
 .top-stat span {
@@ -687,7 +687,10 @@ button:disabled {
   display: block;
   margin-top: 2px;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .battle-controls {
@@ -700,22 +703,22 @@ button:disabled {
 .battle-side {
   position: absolute;
   z-index: 4;
-  top: 112px;
-  bottom: 146px;
-  width: 232px;
-  padding: 12px;
+  top: 98px;
+  bottom: 126px;
+  width: 206px;
+  padding: 10px;
   min-height: 0;
   overflow: auto;
-  opacity: 0.9;
+  opacity: 0.82;
 }
 
 .battle-left {
-  left: 18px;
+  left: 14px;
 }
 
 .battle-right {
-  right: 18px;
-  width: 248px;
+  right: 14px;
+  width: 214px;
 }
 
 .battle-stage {
@@ -757,24 +760,24 @@ button:disabled {
   z-index: 5;
   left: 50%;
   right: auto;
-  bottom: 16px;
+  bottom: 12px;
   transform: translateX(-50%);
-  width: min(760px, calc(100vw - 32px));
+  width: min(680px, calc(100vw - 28px));
   display: grid;
-  grid-template-columns: repeat(3, minmax(148px, 1fr));
+  grid-template-columns: repeat(3, minmax(132px, 1fr));
   justify-content: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 9px;
+  padding: 9px;
 }
 
 .toolbar-card {
   display: grid;
-  grid-template-columns: 58px 1fr;
+  grid-template-columns: 48px 1fr;
   align-items: center;
-  gap: 10px;
-  padding: 9px;
+  gap: 8px;
+  padding: 7px;
   min-width: 0;
-  background: linear-gradient(180deg, rgba(30, 31, 22, 0.88), rgba(9, 12, 10, 0.86));
+  background: linear-gradient(180deg, rgba(30, 31, 22, 0.8), rgba(9, 12, 10, 0.78));
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -797,8 +800,8 @@ button:disabled {
 }
 
 .tool-icon {
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
 }
 
 .tool-body {
