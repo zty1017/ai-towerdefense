@@ -3,14 +3,14 @@
   "envelope_id": "pout_performed_stage05_map_visual_001",
   "created_at": "2026-07-03T00:00:00Z",
   "source": {
-    "run_id": "gsrun_example_stage05",
-    "schedule_item_id": "schedule_map_visual_reference_old_signal_tower",
-    "object_kind": "map_visual_reference",
-    "object_ref": "old_signal_tower",
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_next_map_visual_prefetch",
+    "object_kind": "map_visual_prefetch",
+    "object_ref": "map_compile_package:old_signal_tower_pressure",
     "provider_profile": "image_map_visual_after_review",
     "provider_mode": "manual_authorized_demo",
     "worker_id": "provider_adapter_demo",
-    "guard_id": "pguard_example_stage05_map_visual_001"
+    "guard_id": "pguard_example_next_map_visual_prefetch_001"
   },
   "authority": {
     "visibility": "internal_evidence",

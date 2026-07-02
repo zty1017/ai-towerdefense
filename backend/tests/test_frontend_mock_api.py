@@ -194,7 +194,11 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     worker_step = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
-            json={"worker_id": "dry-worker-test", "note": "dry worker smoke test"},
+            json={
+                "worker_id": "dry-worker-test",
+                "note": "dry worker smoke test",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     assert worker_step["worker_step"]["status"] == "processed"
@@ -238,14 +242,22 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
 
     pre_guard_executor_request = client.post(
         f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
-        json={"worker_id": "too-early", "note": "guard missing"},
+        json={
+            "worker_id": "too-early",
+            "note": "guard missing",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
     )
     assert pre_guard_executor_request.status_code == 409
 
     live_guard = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
-            json={"worker_id": "live-guard-test", "note": "guard before provider"},
+            json={
+                "worker_id": "live-guard-test",
+                "note": "guard before provider",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     assert live_guard["worker_step"]["status"] == "blocked"
@@ -280,7 +292,11 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     executor_request_response = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
-            json={"worker_id": "executor-request-test", "note": "prepare only"},
+            json={
+                "worker_id": "executor-request-test",
+                "note": "prepare only",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     assert executor_request_response["worker_step"]["status"] == "prepared"
@@ -288,6 +304,7 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert executor_request_response["worker_step"]["world_mutation_count"] == 0
     executor_request = executor_request_response["generation_executor_run_request"]
     assert executor_request["schema_version"] == "generation_executor_run_request.v0.1"
+    assert executor_request["source"]["schedule_item_id"] == "sched_next_map_visual_prefetch"
     assert executor_request["source"]["guard_id"] == live_guard["live_executor_guard"][
         "guard_id"
     ]
@@ -344,6 +361,9 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     )
     assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
         "pout_performed_stage05_map_visual_001"
+    )
+    assert artifact_stage["provider_output_envelope"]["source"]["schedule_item_id"] == (
+        "sched_next_map_visual_prefetch"
     )
     assert artifact_stage["provider_output_envelope"]["provider_call"]["performed"] is True
     assert artifact_stage["provider_artifact_staging"]["manifest_id"] == (
@@ -475,6 +495,38 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert ledger_rows_after_reset == 0
 
 
+def test_provider_artifact_staging_requires_matching_executor_request(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    first_step = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={"worker_id": "wrong-item-worker"},
+        )
+    )
+    assert first_step["generation_schedule_queue_item"]["schedule_item_id"] == (
+        "sched_stage05_worldline_prefetch"
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={"worker_id": "wrong-item-guard"},
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={"worker_id": "wrong-item-request"},
+        )
+    )
+    stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={"worker_id": "must-not-stage"},
+    )
+    assert stage.status_code == 409
+    assert "matching generation executor request" in stage.json()["detail"]
+
+
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))
@@ -578,19 +630,31 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
-            json={"worker_id": "evidence-dry-worker", "note": "prepare evidence queue"},
+            json={
+                "worker_id": "evidence-dry-worker",
+                "note": "prepare evidence queue",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
-            json={"worker_id": "evidence-live-guard", "note": "guard evidence stage"},
+            json={
+                "worker_id": "evidence-live-guard",
+                "note": "guard evidence stage",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
-            json={"worker_id": "evidence-executor-request", "note": "prepare staging"},
+            json={
+                "worker_id": "evidence-executor-request",
+                "note": "prepare staging",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
         )
     )
     _payload(

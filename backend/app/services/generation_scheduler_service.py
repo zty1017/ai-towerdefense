@@ -685,6 +685,16 @@ def _load_next_queued_generation_item_row(session_id: str) -> dict[str, Any] | N
     return _load_next_generation_item_row_by_status(session_id, "queued")
 
 
+def _requested_schedule_item_id(metadata: dict[str, Any] | None) -> str | None:
+    if not isinstance(metadata, dict):
+        return None
+    value = metadata.get("schedule_item_id")
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
 def _load_next_generation_item_row_by_status(
     session_id: str, status: str
 ) -> dict[str, Any] | None:
@@ -710,6 +720,21 @@ def _load_next_generation_item_row_by_status(
         "status": row["status"],
         "payload": json.loads(row["payload"]),
     }
+
+
+def _load_generation_item_row_by_status(
+    session_id: str,
+    status: str,
+    schedule_item_id: str | None,
+) -> dict[str, Any] | None:
+    if schedule_item_id is None:
+        return _load_next_generation_item_row_by_status(session_id, status)
+    row = _load_generation_queue_item_row(session_id, schedule_item_id)
+    if str(row["status"]) != status:
+        raise InvalidQueueTransitionError(
+            f"schedule item {schedule_item_id} must be {status}, got {row['status']}"
+        )
+    return row
 
 
 def _provider_guard_id(payload: dict[str, Any], attempt_count: int) -> str:
@@ -1374,6 +1399,7 @@ def _compact_generation_artifact_ledger(items: list[dict[str, Any]]) -> dict[str
 def _latest_generation_executor_request_ledger_entry(
     session_id: str,
     run_id: str,
+    schedule_item_id: str | None = None,
 ) -> dict[str, Any] | None:
     items = _load_generation_artifact_ledger_items(session_id, run_id)
     executor_requests = [
@@ -1381,6 +1407,10 @@ def _latest_generation_executor_request_ledger_entry(
         for item in items
         if item.get("artifact_kind") == "generation_executor_run_request"
         and item.get("status") == "prepared_pending_explicit_authorization"
+        and (
+            schedule_item_id is None
+            or str(item.get("schedule_item_id")) == str(schedule_item_id)
+        )
     ]
     return executor_requests[-1] if executor_requests else None
 
@@ -1439,7 +1469,11 @@ def _run_live_executor_guard(
     session_id: str,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    row = _load_next_generation_item_row_by_status(session_id, "waiting_review")
+    row = _load_generation_item_row_by_status(
+        session_id,
+        "waiting_review",
+        _requested_schedule_item_id(metadata),
+    )
     if row is None:
         return None
     payload = row["payload"]
@@ -1496,7 +1530,11 @@ def _prepare_generation_executor_run_request(
     session_id: str,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    row = _load_next_generation_item_row_by_status(session_id, "waiting_review")
+    row = _load_generation_item_row_by_status(
+        session_id,
+        "waiting_review",
+        _requested_schedule_item_id(metadata),
+    )
     if row is None:
         return None
     payload = row["payload"]
@@ -1567,7 +1605,11 @@ def _prepare_generation_executor_run_request(
 def _run_generation_dry_worker_step(
     session_id: str, metadata: dict[str, Any] | None = None
 ) -> dict[str, Any] | None:
-    row = _load_next_queued_generation_item_row(session_id)
+    row = _load_generation_item_row_by_status(
+        session_id,
+        "queued",
+        _requested_schedule_item_id(metadata),
+    )
     if row is None:
         return None
     payload = row["payload"]
@@ -1810,14 +1852,6 @@ def stage_provider_artifacts_fixture(
             "generation schedule run is required before staging provider artifacts"
         )
     run_id = str(latest_run.get("run_id"))
-    executor_request_entry = _latest_generation_executor_request_ledger_entry(
-        session_id,
-        run_id,
-    )
-    if executor_request_entry is None:
-        raise InvalidQueueTransitionError(
-            "generation executor request is required before staging provider artifacts"
-        )
     envelope = _load_json(_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE)
     staging = _load_json(_PROVIDER_ARTIFACT_STAGING_EXAMPLE)
     promotion = _load_json(_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE)
@@ -1832,6 +1866,15 @@ def stage_provider_artifacts_fixture(
         )
     source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
     schedule_item_id = source.get("schedule_item_id")
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+        str(schedule_item_id) if schedule_item_id else None,
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching generation executor request is required before staging provider artifacts"
+        )
     envelope_entry = _build_artifact_ledger_payload(
         session_id=session_id,
         artifact_kind="provider_output_envelope",

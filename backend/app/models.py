@@ -132,3 +132,7 @@ class GenerationScheduleQueueTransitionRequest(BaseModel):
 
     worker_id: Optional[str] = Field(default=None)
     note: Optional[str] = Field(default=None)
+    schedule_item_id: Optional[str] = Field(
+        default=None,
+        description="Optional scheduler queue item to target for worker actions.",
+    )
