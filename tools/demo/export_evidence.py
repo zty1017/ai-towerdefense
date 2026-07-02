@@ -113,6 +113,8 @@ PATHS = {
     / "examples/review_packs/map_candidate_overlay_review.v0.1.json",
     "map_candidate_overlay_visual_review": ROOT
     / "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+    "map_layout_reconciliation_plan": ROOT
+    / "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -376,6 +378,15 @@ STATIC_VALIDATION_COMMANDS = [
             "tools/media/build_map_candidate_overlay_visual_review.py",
             "--output",
             "/tmp/ai_td_map_candidate_overlay_visual_review.json",
+        ],
+    },
+    {
+        "name": "map_layout_reconciliation_plan",
+        "command": [
+            "python3",
+            "tools/media/build_map_layout_reconciliation_plan.py",
+            "--output",
+            "/tmp/ai_td_map_layout_reconciliation_plan.json",
         ],
     },
     {
@@ -942,6 +953,31 @@ def map_candidate_overlay_visual_summary(report: dict[str, Any]) -> dict[str, An
     }
 
 
+def map_layout_reconciliation_summary(plan: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(plan.get("summary"))
+    node_plans = [node_plan for node_plan in as_list(plan.get("node_plans")) if isinstance(node_plan, dict)]
+    return {
+        "schema_version": plan.get("schema_version"),
+        "plan_id": plan.get("plan_id"),
+        "status": plan.get("status"),
+        "node_count": summary.get("node_count"),
+        "p0_count": summary.get("p0_count"),
+        "promotion_allowed_now_count": summary.get("promotion_allowed_now_count"),
+        "blocked_from_promotion_count": summary.get("blocked_from_promotion_count"),
+        "recommendation_counts": as_obj(summary.get("recommendation_counts")),
+        "node_samples": [
+            {
+                "node_id": node_plan.get("node_id"),
+                "priority": node_plan.get("priority"),
+                "recommendation": node_plan.get("recommendation"),
+                "promotion_allowed_now": node_plan.get("promotion_allowed_now"),
+                "proposed_actions": as_list(node_plan.get("proposed_actions")),
+            }
+            for node_plan in node_plans[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -1228,6 +1264,7 @@ def collect_assets_and_media(
     map_candidate_alignment_review: dict[str, Any],
     map_candidate_overlay_review: dict[str, Any],
     map_candidate_overlay_visual_review: dict[str, Any],
+    map_layout_reconciliation_plan: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1306,6 +1343,9 @@ def collect_assets_and_media(
             "overlay_review": map_candidate_overlay_summary(map_candidate_overlay_review),
             "overlay_visual_review": map_candidate_overlay_visual_summary(
                 map_candidate_overlay_visual_review
+            ),
+            "layout_reconciliation_plan": map_layout_reconciliation_summary(
+                map_layout_reconciliation_plan
             ),
             "published_visual_layers": [
                 {
@@ -1467,6 +1507,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
         ("map_candidate_overlay_visual_review", PATHS["map_candidate_overlay_visual_review"]),
+        ("map_layout_reconciliation_plan", PATHS["map_layout_reconciliation_plan"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1552,6 +1593,7 @@ def build_evidence() -> dict[str, Any]:
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
     map_candidate_overlay_visual_review = load_json(PATHS["map_candidate_overlay_visual_review"])
+    map_layout_reconciliation_plan = load_json(PATHS["map_layout_reconciliation_plan"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -1622,6 +1664,7 @@ def build_evidence() -> dict[str, Any]:
             map_candidate_alignment_review,
             map_candidate_overlay_review,
             map_candidate_overlay_visual_review,
+            map_layout_reconciliation_plan,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -1671,6 +1714,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_candidate_overlay_visual = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "overlay_visual_review"
+        )
+    )
+    map_layout_reconciliation = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "layout_reconciliation_plan"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -1817,6 +1865,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 地图候选对齐审查：`{map_candidate_alignment.get('status')}`，需尺寸标准化 `{map_candidate_alignment.get('transform_required_count')}`，阻断 `{map_candidate_alignment.get('blocked_count')}`",
         f"- 地图候选 overlay 审查：`{map_candidate_overlay.get('status')}`，overlay artifacts `{map_candidate_overlay.get('overlay_artifact_ready_count')}`，目标尺寸 `{map_candidate_overlay.get('target_size')}`",
         f"- 地图候选视觉复核：`{map_candidate_overlay_visual.get('status')}`，可晋升 `{map_candidate_overlay_visual.get('promotable_count')}`，禁止晋升 `{map_candidate_overlay_visual.get('blocked_from_promotion_count')}`",
+        f"- 地图布局修订计划：`{map_layout_reconciliation.get('status')}`，P0 `{map_layout_reconciliation.get('p0_count')}`，推荐分布 `{map_layout_reconciliation.get('recommendation_counts')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -1986,6 +2035,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_candidate_overlay_visual = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("overlay_visual_review")
+    )
+    map_layout_reconciliation = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("layout_reconciliation_plan")
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -2178,6 +2230,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图候选复核</div>
           <div class="metric">{html_escape(map_candidate_overlay_visual.get("status"))}</div>
           <p class="muted">可晋升：{html_escape(map_candidate_overlay_visual.get("promotable_count"))}；禁止晋升：{html_escape(map_candidate_overlay_visual.get("blocked_from_promotion_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">地图布局修订</div>
+          <div class="metric">{html_escape(map_layout_reconciliation.get("status"))}</div>
+          <p class="muted">P0：{html_escape(map_layout_reconciliation.get("p0_count"))}；推荐：{html_escape(map_layout_reconciliation.get("recommendation_counts"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>
