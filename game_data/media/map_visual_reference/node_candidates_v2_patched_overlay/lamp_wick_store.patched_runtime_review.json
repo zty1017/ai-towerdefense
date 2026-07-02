@@ -1,0 +1,498 @@
+{
+  "battle_config_version": "wick_store_pressure_battle.v0.1",
+  "build_slots": [
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 17,
+        "y": 3
+      },
+      "slot_id": "slot_01",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 17,
+        "y": 5
+      },
+      "slot_id": "slot_02",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 16,
+        "y": 3
+      },
+      "slot_id": "slot_03",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 16,
+        "y": 5
+      },
+      "slot_id": "slot_04",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 13,
+        "y": 5
+      },
+      "slot_id": "slot_05",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 12,
+        "y": 6
+      },
+      "slot_id": "slot_06",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 12,
+        "y": 3
+      },
+      "slot_id": "slot_07",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 14,
+        "y": 3
+      },
+      "slot_id": "slot_08",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 12,
+        "y": 5
+      },
+      "slot_id": "slot_09",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 14,
+        "y": 5
+      },
+      "slot_id": "slot_10",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 13,
+        "y": 1
+      },
+      "slot_id": "slot_11",
+      "visual_hint": "ground_plate"
+    },
+    {
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "footprint": {
+        "height_cells": 1,
+        "width_cells": 1
+      },
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "position": {
+        "x": 14,
+        "y": 2
+      },
+      "slot_id": "slot_12",
+      "visual_hint": "ground_plate"
+    }
+  ],
+  "created_at": "2026-07-02T00:00:00Z",
+  "grid": {
+    "cell_size": 64,
+    "height_cells": 10,
+    "projection": "pseudo3d_oblique",
+    "width_cells": 18
+  },
+  "node_id": "lamp_wick_store",
+  "objectives": {
+    "core_target": {
+      "display_name": "灯芯仓核心库存",
+      "durability": 14,
+      "position": {
+        "x": 1,
+        "y": 5
+      },
+      "target_id": "target_wick_store_core"
+    },
+    "optional_targets": [
+      {
+        "display_name": "补给线接点",
+        "durability": 6,
+        "position": {
+          "x": 2,
+          "y": 7
+        },
+        "target_id": "target_supply_line_coupler"
+      },
+      {
+        "display_name": "灯油架",
+        "durability": 5,
+        "position": {
+          "x": 4,
+          "y": 3
+        },
+        "target_id": "target_lamp_oil_shelf"
+      }
+    ]
+  },
+  "package_id": "map_pkg_lamp_wick_store_v0_1",
+  "path_routes": [
+    {
+      "display_name": "旧管线主路",
+      "entry_label": "影潮沿旧管线渗入",
+      "exit_label": "灯芯仓门",
+      "route_id": "path_wick_store_main_pipe",
+      "waypoints": [
+        {
+          "x": 17,
+          "y": 4
+        },
+        {
+          "x": 15,
+          "y": 4
+        },
+        {
+          "x": 13,
+          "y": 4
+        },
+        {
+          "x": 11,
+          "y": 4
+        },
+        {
+          "x": 9,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 3,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 5
+        }
+      ]
+    },
+    {
+      "display_name": "仓外窄道",
+      "entry_label": "残影绕行方向",
+      "exit_label": "补给线接点",
+      "route_id": "path_wick_store_service_lane",
+      "waypoints": [
+        {
+          "x": 17,
+          "y": 8
+        },
+        {
+          "x": 15,
+          "y": 8
+        },
+        {
+          "x": 13,
+          "y": 8
+        },
+        {
+          "x": 11,
+          "y": 7
+        },
+        {
+          "x": 9,
+          "y": 7
+        },
+        {
+          "x": 7,
+          "y": 7
+        },
+        {
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 3,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 5
+        }
+      ]
+    }
+  ],
+  "runtime_hints": {
+    "drag_deploy_enabled": true,
+    "path_preview_policy": "subtle_highlight",
+    "show_grid_policy": "hidden_until_drag",
+    "target_marker_policy": "icon_overlay"
+  },
+  "schema_version": "map_runtime_package.v0.1",
+  "source_refs": {
+    "battle_config_path": "game_data/demo/wick_store_pressure_battle_config.json",
+    "logic_authority": "battle_config",
+    "visual_reference_manifest_path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
+  },
+  "spawn_points": [
+    {
+      "label": "影潮沿旧管线渗入",
+      "position": {
+        "x": 17,
+        "y": 4
+      },
+      "route_id": "path_wick_store_main_pipe",
+      "spawn_id": "spawn_path_wick_store_main_pipe"
+    },
+    {
+      "label": "残影绕行方向",
+      "position": {
+        "x": 17,
+        "y": 8
+      },
+      "route_id": "path_wick_store_service_lane",
+      "spawn_id": "spawn_path_wick_store_service_lane"
+    }
+  ],
+  "validation_report": {
+    "gate_status": "passed",
+    "gates": [
+      {
+        "gate_id": "logic_first_map_contract",
+        "status": "passed",
+        "summary": "Routes, objectives, spawn points, and build slots are explicit runtime data."
+      }
+    ],
+    "runtime_loadable": true
+  },
+  "visual_layers": [
+    {
+      "authority": "reference_only",
+      "height": 720,
+      "layer_id": "layer_strategic_control_sketch",
+      "local_path": "game_data/media/map_visual_reference/mvp_strategic_control_sketch.png",
+      "logic_alignment_status": "not_applicable",
+      "player_visible_quality": "not_applicable",
+      "review_status": "reference_only",
+      "role": "strategic_control_sketch",
+      "sha256": "00c3eccda31d9f60804a9c42a2b63274c2575bf906123c9e921e5d49365f7882",
+      "url": "/assets/map_visual_reference/mvp_strategic_control_sketch.png",
+      "width": 1280
+    },
+    {
+      "authority": "reference_only",
+      "height": 720,
+      "layer_id": "layer_battle_control_sketch",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_control_sketch.png",
+      "logic_alignment_status": "not_applicable",
+      "player_visible_quality": "not_applicable",
+      "review_status": "reference_only",
+      "role": "battle_control_sketch",
+      "sha256": "eab4b291dff77ef747796610d274f020e7311d904484e724e12e68d43ec9f915",
+      "url": "/assets/map_visual_reference/mvp_battle_control_sketch.png",
+      "width": 1280
+    },
+    {
+      "authority": "reference_only",
+      "height": 720,
+      "layer_id": "layer_battle_reference_board",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_reference_board.png",
+      "logic_alignment_status": "not_applicable",
+      "player_visible_quality": "not_applicable",
+      "review_status": "reference_only",
+      "role": "battle_reference_board",
+      "sha256": "6597608bf4b2dd882369786062855b0ffb49bfe4e79ff51a285210dc36c39adc",
+      "url": "/assets/map_visual_reference/mvp_battle_reference_board.png",
+      "width": 1280
+    },
+    {
+      "authority": "published_visual_layer",
+      "height": 941,
+      "layer_id": "layer_painted_visual_layer",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "logic_alignment_status": "needs_overlay_correction",
+      "player_visible_quality": "passed",
+      "review_status": "passed_player_visual_quality",
+      "role": "painted_visual_layer",
+      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
+      "width": 1672
+    },
+    {
+      "authority": "candidate_visual_layer",
+      "height": 720,
+      "layer_id": "layer_battle_runtime_background",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
+      "player_visible_quality": "failed",
+      "review_status": "failed_player_visual_quality",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "width": 1280
+    }
+  ],
+  "worldbook_id": "long_night_lanterns"
+}

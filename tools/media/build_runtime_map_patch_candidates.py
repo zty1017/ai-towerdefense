@@ -56,6 +56,12 @@ PATCH_NOTES: dict[str, dict[str, Any]] = {
                 "position": {"x": 15, "y": 4},
                 "reason": "Preserve the right-edge enemy entry.",
             },
+            {
+                "op": "move_build_slot",
+                "slot_id": "slot_06",
+                "position": {"x": 8, "y": 3},
+                "reason": "Keep slot_06 adjacent to the reprojected road without overlapping the new path cells.",
+            },
         ],
     },
     "lamp_wick_store": {
@@ -113,6 +119,12 @@ PATCH_NOTES: dict[str, dict[str, Any]] = {
                 "position": {"x": 4, "y": 3},
                 "reason": "Keep the oil shelf near the upper-left visible depot pad.",
             },
+            {
+                "op": "move_build_slot",
+                "slot_id": "slot_06",
+                "position": {"x": 12, "y": 6},
+                "reason": "Move the old roadside slot off the reprojected main route while keeping it near the central service band.",
+            },
         ],
     },
 }
@@ -166,6 +178,11 @@ def apply_patch_candidate(runtime_package: dict[str, Any], operations: list[dict
         for spawn in as_list(patched.get("spawn_points"))
         if isinstance(spawn, dict)
     }
+    slot_by_id = {
+        slot.get("slot_id"): slot
+        for slot in as_list(patched.get("build_slots"))
+        if isinstance(slot, dict)
+    }
     for op in operations:
         kind = op.get("op")
         if kind == "replace_path_waypoints" and op.get("route_id") in route_by_id:
@@ -174,6 +191,8 @@ def apply_patch_candidate(runtime_package: dict[str, Any], operations: list[dict
             objective_items[op.get("target_id")]["position"] = op.get("position")
         elif kind == "move_spawn_point" and op.get("spawn_id") in spawn_by_id:
             spawn_by_id[op.get("spawn_id")]["position"] = op.get("position")
+        elif kind == "move_build_slot" and op.get("slot_id") in slot_by_id:
+            slot_by_id[op.get("slot_id")]["position"] = op.get("position")
     return patched
 
 

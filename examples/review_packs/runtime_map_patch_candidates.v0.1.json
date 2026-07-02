@@ -96,6 +96,15 @@
           },
           "reason": "Preserve the right-edge enemy entry.",
           "spawn_id": "spawn_path_main_road"
+        },
+        {
+          "op": "move_build_slot",
+          "position": {
+            "x": 8,
+            "y": 3
+          },
+          "reason": "Keep slot_06 adjacent to the reprojected road without overlapping the new path cells.",
+          "slot_id": "slot_06"
         }
       ],
       "patch_strategy": "hybrid_runtime_reprojection",
@@ -247,6 +256,15 @@
           },
           "reason": "Keep the oil shelf near the upper-left visible depot pad.",
           "target_id": "target_lamp_oil_shelf"
+        },
+        {
+          "op": "move_build_slot",
+          "position": {
+            "x": 12,
+            "y": 6
+          },
+          "reason": "Move the old roadside slot off the reprojected main route while keeping it near the central service band.",
+          "slot_id": "slot_06"
         }
       ],
       "patch_strategy": "runtime_path_reprojection",
