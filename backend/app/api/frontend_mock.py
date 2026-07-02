@@ -19,10 +19,13 @@ from ..models import (
     GenerationScheduleQueueTransitionRequest,
     WorldInstanceCreateRequest,
 )
-from ..services import frontend_mock_service
+from ..services import frontend_mock_service, generation_scheduler_service
+from ..services.generation_scheduler_service import (
+    GenerationSchedulerFixtureNotFoundError,
+    InvalidQueueTransitionError,
+)
 from ..services.frontend_mock_service import (
     FixtureNotFoundError,
-    InvalidQueueTransitionError,
 )
 
 router = APIRouter()
@@ -52,6 +55,13 @@ def _fixture_404(exc: FixtureNotFoundError) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"mock fixture not found for: {exc}",
+    )
+
+
+def _scheduler_fixture_404(exc: GenerationSchedulerFixtureNotFoundError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"scheduler fixture not found for: {exc}",
     )
 
 
@@ -126,7 +136,7 @@ def get_runtime_art_kit(session_id: str) -> FrontendMockPayloadResponse:
 def get_generation_schedule(session_id: str) -> FrontendMockPayloadResponse:
     """Return the fixture-backed generation scheduler buffer for this session."""
     _require_session(session_id)
-    return _payload(session_id, frontend_mock_service.get_generation_schedule(session_id))
+    return _payload(session_id, generation_scheduler_service.get_generation_schedule(session_id))
 
 
 @router.post(
@@ -139,7 +149,7 @@ def create_generation_schedule_run(session_id: str) -> FrontendMockPayloadRespon
     _require_session(session_id)
     return _payload(
         session_id,
-        frontend_mock_service.create_generation_schedule_run(session_id),
+        generation_scheduler_service.create_generation_schedule_run(session_id),
     )
 
 
@@ -152,7 +162,7 @@ def get_latest_generation_schedule_run(session_id: str) -> FrontendMockPayloadRe
     _require_session(session_id)
     return _payload(
         session_id,
-        frontend_mock_service.get_latest_generation_schedule_run(session_id),
+        generation_scheduler_service.get_latest_generation_schedule_run(session_id),
     )
 
 
@@ -165,7 +175,7 @@ def get_generation_schedule_queue(session_id: str) -> FrontendMockPayloadRespons
     _require_session(session_id)
     return _payload(
         session_id,
-        frontend_mock_service.get_generation_schedule_queue(session_id),
+        generation_scheduler_service.get_generation_schedule_queue(session_id),
     )
 
 
@@ -178,14 +188,14 @@ def _transition_generation_schedule_queue_item(
     _require_session(session_id)
     metadata = body.model_dump() if body is not None else {}
     try:
-        data = frontend_mock_service.transition_generation_schedule_queue_item(
+        data = generation_scheduler_service.transition_generation_schedule_queue_item(
             session_id,
             schedule_item_id,
             transition,
             metadata,
         )
-    except FixtureNotFoundError as exc:
-        raise _fixture_404(exc) from exc
+    except GenerationSchedulerFixtureNotFoundError as exc:
+        raise _scheduler_fixture_404(exc) from exc
     except InvalidQueueTransitionError as exc:
         raise _queue_transition_409(exc) from exc
     return _payload(session_id, data)
@@ -294,7 +304,7 @@ def run_generation_schedule_dry_worker_step(
     metadata = body.model_dump() if body is not None else {}
     return _payload(
         session_id,
-        frontend_mock_service.run_generation_schedule_dry_worker_step(
+        generation_scheduler_service.run_generation_schedule_dry_worker_step(
             session_id,
             metadata,
         ),
