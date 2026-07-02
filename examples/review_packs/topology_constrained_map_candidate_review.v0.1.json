@@ -1,0 +1,53 @@
+{
+  "candidate_dir": "game_data/media/map_visual_reference/node_candidates_topology_v1",
+  "candidates": [
+    {
+      "battle_config": null,
+      "blocking_findings": [
+        "needs_coordinate_alignment_before_runtime_promotion",
+        "tiny_figure_like_marks_or_props_may_need_cleanup",
+        "signal_tower_is_still_visually_large_and_requires_readability_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_topology_v1/old_signal_tower.topology_constrained_candidate.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": null,
+      "file_status": "present_png",
+      "generation_status": "live_generated",
+      "image_size_bytes": 1846475,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "old_signal_tower",
+      "prompt_sha256": "2819383be5314ffc7a50f65abc31d40b805a41ca3fa8c9afe30e15c48e9d0db8",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "run normalization and runtime overlay review; do not promote without visual-model or human approval",
+      "review_status": "alignment_review_ready",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_topology_v1/old_signal_tower.topology_constrained_candidate.png.candidate.json",
+      "strengths": [
+        "topology_constrained_prompt_reduced_the_centered_objective_problem",
+        "split_paths_and_flat_build_clearings_are_more_readable",
+        "world_style_matches_cold_signal_ridge"
+      ]
+    }
+  ],
+  "policy": [
+    "This report reviews provider-generated map candidates only.",
+    "Candidates do not update MapRuntimePackage or player runtime visual layers.",
+    "Runtime truth remains paths, build slots, objectives, spawn points, and explicitly published visual layers.",
+    "Bad candidates are useful compiler evidence: they tune prompts, control sketches, and review gates."
+  ],
+  "report_id": "mvp_node_map_painted_candidate_review_topology_constrained_v1",
+  "review_profile": "topology_constrained_v1",
+  "schema_version": "node_map_painted_candidate_review.v0.1",
+  "status": "review_only_alignment_required",
+  "summary": {
+    "blocking_candidate_count": 1,
+    "candidate_count": 1,
+    "review_status_counts": {
+      "alignment_review_ready": 1
+    },
+    "runtime_promotion_count": 0
+  }
+}

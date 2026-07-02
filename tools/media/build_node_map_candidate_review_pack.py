@@ -104,6 +104,22 @@ REVIEW_PROFILES: dict[str, dict[str, dict[str, Any]]] = {
             "recommended_next_action": "run coordinate alignment and combat-readability review before optional runtime promotion",
         },
     },
+    "topology_constrained_v1": {
+        "old_signal_tower": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "needs_coordinate_alignment_before_runtime_promotion",
+                "tiny_figure_like_marks_or_props_may_need_cleanup",
+                "signal_tower_is_still_visually_large_and_requires_readability_review",
+            ],
+            "strengths": [
+                "topology_constrained_prompt_reduced_the_centered_objective_problem",
+                "split_paths_and_flat_build_clearings_are_more_readable",
+                "world_style_matches_cold_signal_ridge",
+            ],
+            "recommended_next_action": "run normalization and runtime overlay review; do not promote without visual-model or human approval",
+        },
+    },
 }
 
 
@@ -185,6 +201,7 @@ def build_report_with_profile(
 ) -> dict[str, Any]:
     if candidates is None:
         sidecars = sorted(candidate_dir.glob("*.painted_candidate.png.candidate.json"))
+        sidecars.extend(sorted(candidate_dir.glob("*.topology_constrained_candidate.png.candidate.json")))
         candidates = [build_candidate(path, review_profile) for path in sidecars]
     status_counts = Counter(str(candidate.get("review_status")) for candidate in candidates)
     blocking_count = sum(1 for candidate in candidates if candidate.get("blocking_findings"))

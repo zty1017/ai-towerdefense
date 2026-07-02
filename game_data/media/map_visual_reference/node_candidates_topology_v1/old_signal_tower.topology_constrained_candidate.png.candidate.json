@@ -1,0 +1,48 @@
+{
+  "candidate_id": "old_signal_tower.topology_constrained_candidate",
+  "candidate_path": "game_data/media/map_visual_reference/node_candidates_topology_v1/old_signal_tower.topology_constrained_candidate.png",
+  "generation_status": "live_generated",
+  "image_exists": true,
+  "image_size_bytes": 1846475,
+  "model": "agnes-image-2.1-flash",
+  "negative_constraints": [
+    "no_centered_primary_tower_objective",
+    "no_arrows_or_direction_symbols",
+    "no_units_or_projectiles",
+    "no_top_right_only_build_slot_cluster",
+    "no_paths_crossing_through_objective_platform"
+  ],
+  "node_id": "old_signal_tower",
+  "primary_use": "topology_constrained_regeneration",
+  "promotion_allowed_now": false,
+  "promotion_policy": "must not update runtime package or published visual layer without explicit promotion report",
+  "prompt_pack_path": "examples/review_packs/topology_constrained_map_prompt_pack.v0.1.json",
+  "prompt_sha256": "2819383be5314ffc7a50f65abc31d40b805a41ca3fa8c9afe30e15c48e9d0db8",
+  "provider_called_this_run": true,
+  "provider_profile": "agnes_image_flash",
+  "required_review_gates": [
+    "no_visible_arrows_text_units_projectiles",
+    "paths_visually_match_runtime_topology",
+    "objective_landmark_matches_runtime_policy",
+    "build_pads_distributed_near_routes",
+    "overlay_review_generated_before_promotion"
+  ],
+  "review_status": "candidate_needs_alignment_overlay_and_visual_review",
+  "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+  "runtime_topology_summary": {
+    "build_slot_count": 12,
+    "grid": {
+      "cell_size": 64,
+      "height_cells": 10,
+      "projection": "pseudo3d_oblique",
+      "width_cells": 18
+    },
+    "objective_count": 3,
+    "path_route_count": 2,
+    "spawn_point_count": 2
+  },
+  "schema_version": "topology_constrained_map_candidate.v0.1",
+  "size": "1280x720",
+  "source_prompt_status": "prompt_ready",
+  "topology_policy": "preserve_existing_runtime_topology"
+}

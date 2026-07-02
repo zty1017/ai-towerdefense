@@ -73,6 +73,33 @@ VISUAL_REVIEW_NOTES: dict[str, dict[str, Any]] = {
 }
 
 
+TOPOLOGY_CONSTRAINED_REVIEW_NOTES: dict[str, dict[str, Any]] = {
+    "old_signal_tower": {
+        "status": "needs_prompt_iteration",
+        "promotion_recommendation": "do_not_promote",
+        "findings": [
+            "topology_is_more_readable_than_previous_candidate_but_runtime_paths_still_cross_near_the_large_tower_landmark",
+            "signal_tower_is_still_too_large_for_unobstructed_combat_readability",
+            "tiny_figure_like_marks_or_props_are_visible_near_the_lower_route",
+            "build_slots_are_readable_but_require_visual_model_or_human_confirmation_before_promotion",
+        ],
+        "strengths": [
+            "split_right_to_left_routes_are_visible",
+            "flat_build_clearings_are_more_explicit",
+            "cold_signal_ridge_world_style_is_strong",
+            "no_ui_text_arrows_or_grid_are_visible",
+        ],
+        "next_action": "iterate prompt to remove figure-like details and reduce the tower landmark scale, then regenerate or run a vision-model cleanup review",
+    },
+}
+
+
+REVIEW_NOTE_PROFILES = {
+    "clean_scene_v2": VISUAL_REVIEW_NOTES,
+    "topology_constrained_v1": TOPOLOGY_CONSTRAINED_REVIEW_NOTES,
+}
+
+
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -94,9 +121,9 @@ def rel(path: Path) -> str:
         return path.as_posix()
 
 
-def build_artifact_review(artifact: dict[str, Any]) -> dict[str, Any]:
+def build_artifact_review(artifact: dict[str, Any], notes_by_node: dict[str, dict[str, Any]]) -> dict[str, Any]:
     node_id = str(artifact.get("node_id") or "")
-    notes = VISUAL_REVIEW_NOTES.get(
+    notes = notes_by_node.get(
         node_id,
         {
             "status": "needs_manual_review",
@@ -120,10 +147,11 @@ def build_artifact_review(artifact: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_report(overlay_review_path: Path) -> dict[str, Any]:
+def build_report(overlay_review_path: Path, review_profile: str) -> dict[str, Any]:
     overlay_review = load_json(overlay_review_path)
+    notes_by_node = REVIEW_NOTE_PROFILES[review_profile]
     reviews = [
-        build_artifact_review(artifact)
+        build_artifact_review(artifact, notes_by_node)
         for artifact in as_list(overlay_review.get("artifacts"))
         if isinstance(artifact, dict)
     ]
@@ -132,8 +160,9 @@ def build_report(overlay_review_path: Path) -> dict[str, Any]:
     promotable_count = recommendation_counts.get("promote", 0)
     return {
         "schema_version": REPORT_VERSION,
-        "report_id": "mvp_map_candidate_overlay_visual_review",
+        "report_id": f"mvp_map_candidate_overlay_visual_review_{review_profile}",
         "overlay_review_path": rel(overlay_review_path),
+        "review_profile": review_profile,
         "status": "needs_layout_reconciliation" if promotable_count == 0 else "partially_promotable",
         "summary": {
             "candidate_count": len(reviews),
@@ -155,6 +184,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build map candidate overlay visual review report.")
     parser.add_argument("--overlay-review", default=str(DEFAULT_OVERLAY_REVIEW))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--review-profile", default="clean_scene_v2", choices=sorted(REVIEW_NOTE_PROFILES))
     args = parser.parse_args()
 
     overlay_review = Path(args.overlay_review)
@@ -163,7 +193,7 @@ def main() -> int:
     output = Path(args.output)
     if not output.is_absolute():
         output = ROOT / output
-    report = build_report(overlay_review)
+    report = build_report(overlay_review, args.review_profile)
     write_json(output, report)
     print(f"Wrote {output}")
     print(f"- status: {report['status']}")
