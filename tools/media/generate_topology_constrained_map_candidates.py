@@ -58,7 +58,11 @@ def select_prompt(pack: dict[str, Any], node_id: str, include_fallback: bool) ->
         raise RuntimeError(f"prompt pack does not contain node_id={node_id!r}")
     if include_fallback:
         return matches[0]
-    preferred = [prompt for prompt in matches if prompt.get("status") == "prompt_ready"]
+    preferred = [
+        prompt
+        for prompt in matches
+        if isinstance(prompt.get("status"), str) and str(prompt.get("status")).startswith("prompt_ready")
+    ]
     if preferred:
         return preferred[0]
     raise RuntimeError(f"node_id={node_id!r} has no prompt_ready entry; pass --include-fallback to use fallback prompts")
