@@ -134,6 +134,85 @@ REVIEW_PROFILES: dict[str, dict[str, dict[str, Any]]] = {
             "recommended_next_action": "stop blind prompt-only retries; use a topology control sketch, reference composition, inpaint cleanup, or stronger vision review before another provider call",
         },
     },
+    "controlled_reference_handoff_v1": {
+        "gray_lantern_station": {
+            "status": "awaiting_provider_or_paintover_output",
+            "blocking_findings": [
+                "candidate_image_not_generated_yet",
+                "reference_image_handoff_sidecar_only",
+            ],
+            "strengths": [
+                "request_pack_links_topology_control_sketch",
+                "provider_prompt_and_text_fallback_are_hash_tracked",
+                "promotion_is_explicitly_blocked_until_full_gates_pass",
+            ],
+            "recommended_next_action": "call a reference-image capable provider or run text-fallback live generation, then rebuild candidate review",
+        },
+        "lamp_wick_store": {
+            "status": "awaiting_provider_or_paintover_output",
+            "blocking_findings": [
+                "candidate_image_not_generated_yet",
+                "reference_image_handoff_sidecar_only",
+            ],
+            "strengths": [
+                "request_pack_links_topology_control_sketch",
+                "provider_prompt_and_text_fallback_are_hash_tracked",
+                "promotion_is_explicitly_blocked_until_full_gates_pass",
+            ],
+            "recommended_next_action": "call a reference-image capable provider or run text-fallback live generation, then rebuild candidate review",
+        },
+        "old_signal_tower": {
+            "status": "awaiting_provider_or_paintover_output",
+            "blocking_findings": [
+                "candidate_image_not_generated_yet",
+                "reference_image_handoff_sidecar_only",
+            ],
+            "strengths": [
+                "request_pack_links_topology_control_sketch",
+                "provider_prompt_and_text_fallback_are_hash_tracked",
+                "promotion_is_explicitly_blocked_until_full_gates_pass",
+            ],
+            "recommended_next_action": "call a reference-image capable provider or run text-fallback live generation, then rebuild candidate review",
+        },
+    },
+    "controlled_text_fallback_v1": {
+        "gray_lantern_station": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "text_fallback_is_lower_confidence_than_reference_image_generation",
+                "requires_overlay_and_visual_review_before_promotion",
+            ],
+            "strengths": [
+                "uses_controlled_regeneration_request_pack",
+                "candidate_remains_review_only",
+            ],
+            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+        },
+        "lamp_wick_store": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "text_fallback_is_lower_confidence_than_reference_image_generation",
+                "requires_overlay_and_visual_review_before_promotion",
+            ],
+            "strengths": [
+                "uses_controlled_regeneration_request_pack",
+                "candidate_remains_review_only",
+            ],
+            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+        },
+        "old_signal_tower": {
+            "status": "alignment_review_ready",
+            "blocking_findings": [
+                "text_fallback_is_lower_confidence_than_reference_image_generation",
+                "requires_overlay_and_visual_review_before_promotion",
+            ],
+            "strengths": [
+                "uses_controlled_regeneration_request_pack",
+                "candidate_remains_review_only",
+            ],
+            "recommended_next_action": "run alignment and overlay review; do not promote without visual approval",
+        },
+    },
 }
 
 
@@ -186,6 +265,10 @@ def build_candidate(sidecar_path: Path, review_profile: str) -> dict[str, Any]:
         "display_name": sidecar.get("display_name"),
         "candidate_path": rel(candidate_path),
         "sidecar_path": rel(sidecar_path),
+        "sidecar_kind": sidecar.get("sidecar_kind"),
+        "request_id": sidecar.get("request_id"),
+        "provider_mode": sidecar.get("provider_mode"),
+        "control_sketch_png_path": sidecar.get("control_sketch_png_path"),
         "battle_config": sidecar.get("battle_config"),
         "provider_profile": sidecar.get("provider_profile"),
         "model": sidecar.get("model"),
@@ -216,6 +299,8 @@ def build_report_with_profile(
     if candidates is None:
         sidecars = sorted(candidate_dir.glob("*.painted_candidate.png.candidate.json"))
         sidecars.extend(sorted(candidate_dir.glob("*.topology_constrained_candidate.png.candidate.json")))
+        sidecars.extend(sorted(candidate_dir.glob("*.controlled_reference_candidate.png.candidate.json")))
+        sidecars.extend(sorted(candidate_dir.glob("*.controlled_text_fallback_candidate.png.candidate.json")))
         candidates = [build_candidate(path, review_profile) for path in sidecars]
     status_counts = Counter(str(candidate.get("review_status")) for candidate in candidates)
     blocking_count = sum(1 for candidate in candidates if candidate.get("blocking_findings"))
