@@ -121,6 +121,14 @@ PATHS = {
     / "examples/review_packs/map_patch_overlay_review.v0.1.json",
     "topology_constrained_map_prompt_pack": ROOT
     / "examples/review_packs/topology_constrained_map_prompt_pack.v0.1.json",
+    "topology_constrained_map_candidate_review": ROOT
+    / "examples/review_packs/topology_constrained_map_candidate_review.v0.1.json",
+    "topology_constrained_map_alignment_review": ROOT
+    / "examples/review_packs/topology_constrained_map_alignment_review.v0.1.json",
+    "topology_constrained_map_overlay_review": ROOT
+    / "examples/review_packs/topology_constrained_map_overlay_review.v0.1.json",
+    "topology_constrained_map_overlay_visual_review": ROOT
+    / "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -422,6 +430,65 @@ STATIC_VALIDATION_COMMANDS = [
             "tools/media/build_topology_constrained_map_prompt_pack.py",
             "--output",
             "/tmp/ai_td_topology_constrained_map_prompt_pack.json",
+        ],
+    },
+    {
+        "name": "topology_constrained_map_candidate_dry_run",
+        "command": [
+            "python3",
+            "tools/media/generate_topology_constrained_map_candidates.py",
+            "--output-dir",
+            "/tmp/ai_td_topology_constrained_map_candidates_dry_run",
+        ],
+    },
+    {
+        "name": "topology_constrained_map_candidate_review",
+        "command": [
+            "python3",
+            "tools/media/build_node_map_candidate_review_pack.py",
+            "--candidate-dir",
+            "game_data/media/map_visual_reference/node_candidates_topology_v1",
+            "--review-profile",
+            "topology_constrained_v1",
+            "--output",
+            "/tmp/ai_td_topology_constrained_map_candidate_review.json",
+        ],
+    },
+    {
+        "name": "topology_constrained_map_alignment_review",
+        "command": [
+            "python3",
+            "tools/media/build_map_candidate_alignment_review.py",
+            "--candidate-review",
+            "examples/review_packs/topology_constrained_map_candidate_review.v0.1.json",
+            "--output",
+            "/tmp/ai_td_topology_constrained_map_alignment_review.json",
+        ],
+    },
+    {
+        "name": "topology_constrained_map_overlay_review",
+        "command": [
+            "python3",
+            "tools/media/build_map_candidate_overlay_review.py",
+            "--alignment-review",
+            "examples/review_packs/topology_constrained_map_alignment_review.v0.1.json",
+            "--output-dir",
+            "/tmp/ai_td_topology_constrained_map_overlay_artifacts",
+            "--report",
+            "/tmp/ai_td_topology_constrained_map_overlay_review.json",
+        ],
+    },
+    {
+        "name": "topology_constrained_map_overlay_visual_review",
+        "command": [
+            "python3",
+            "tools/media/build_map_candidate_overlay_visual_review.py",
+            "--overlay-review",
+            "examples/review_packs/topology_constrained_map_overlay_review.v0.1.json",
+            "--review-profile",
+            "topology_constrained_v1",
+            "--output",
+            "/tmp/ai_td_topology_constrained_map_overlay_visual_review.json",
         ],
     },
     {
@@ -1383,6 +1450,10 @@ def collect_assets_and_media(
     runtime_map_patch_candidates: dict[str, Any],
     map_patch_overlay_review: dict[str, Any],
     topology_constrained_map_prompt_pack: dict[str, Any],
+    topology_constrained_map_candidate_review: dict[str, Any],
+    topology_constrained_map_alignment_review: dict[str, Any],
+    topology_constrained_map_overlay_review: dict[str, Any],
+    topology_constrained_map_overlay_visual_review: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1473,6 +1544,18 @@ def collect_assets_and_media(
             ),
             "topology_prompt_pack": topology_constrained_prompt_pack_summary(
                 topology_constrained_map_prompt_pack
+            ),
+            "topology_candidate_review": node_map_candidate_review_summary(
+                topology_constrained_map_candidate_review
+            ),
+            "topology_alignment_review": map_candidate_alignment_summary(
+                topology_constrained_map_alignment_review
+            ),
+            "topology_overlay_review": map_candidate_overlay_summary(
+                topology_constrained_map_overlay_review
+            ),
+            "topology_overlay_visual_review": map_candidate_overlay_visual_summary(
+                topology_constrained_map_overlay_visual_review
             ),
             "published_visual_layers": [
                 {
@@ -1641,6 +1724,22 @@ def collect_source_files() -> list[dict[str, Any]]:
             "topology_constrained_map_prompt_pack",
             PATHS["topology_constrained_map_prompt_pack"],
         ),
+        (
+            "topology_constrained_map_candidate_review",
+            PATHS["topology_constrained_map_candidate_review"],
+        ),
+        (
+            "topology_constrained_map_alignment_review",
+            PATHS["topology_constrained_map_alignment_review"],
+        ),
+        (
+            "topology_constrained_map_overlay_review",
+            PATHS["topology_constrained_map_overlay_review"],
+        ),
+        (
+            "topology_constrained_map_overlay_visual_review",
+            PATHS["topology_constrained_map_overlay_visual_review"],
+        ),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1732,6 +1831,18 @@ def build_evidence() -> dict[str, Any]:
     topology_constrained_map_prompt_pack = load_json(
         PATHS["topology_constrained_map_prompt_pack"]
     )
+    topology_constrained_map_candidate_review = load_json(
+        PATHS["topology_constrained_map_candidate_review"]
+    )
+    topology_constrained_map_alignment_review = load_json(
+        PATHS["topology_constrained_map_alignment_review"]
+    )
+    topology_constrained_map_overlay_review = load_json(
+        PATHS["topology_constrained_map_overlay_review"]
+    )
+    topology_constrained_map_overlay_visual_review = load_json(
+        PATHS["topology_constrained_map_overlay_visual_review"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -1806,6 +1917,10 @@ def build_evidence() -> dict[str, Any]:
             runtime_map_patch_candidates,
             map_patch_overlay_review,
             topology_constrained_map_prompt_pack,
+            topology_constrained_map_candidate_review,
+            topology_constrained_map_alignment_review,
+            topology_constrained_map_overlay_review,
+            topology_constrained_map_overlay_visual_review,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -1875,6 +1990,26 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     topology_prompt_pack = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "topology_prompt_pack"
+        )
+    )
+    topology_candidate_review = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "topology_candidate_review"
+        )
+    )
+    topology_alignment_review = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "topology_alignment_review"
+        )
+    )
+    topology_overlay_review = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "topology_overlay_review"
+        )
+    )
+    topology_overlay_visual_review = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "topology_overlay_visual_review"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -2025,6 +2160,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Runtime 地图补丁候选：`{runtime_map_patches.get('status')}`，review candidates `{runtime_map_patches.get('review_candidate_count')}`，skipped `{runtime_map_patches.get('skipped_count')}`",
         f"- 地图补丁后 overlay 审查：`{map_patch_overlay.get('status')}`，可复核 `{map_patch_overlay.get('patched_overlay_artifact_ready_count')}`，校验失败 `{map_patch_overlay.get('validation_failed_count')}`，禁止直接晋升 `{map_patch_overlay.get('promotion_allowed_now_count')}`",
         f"- 拓扑约束地图 prompt pack：`{topology_prompt_pack.get('status')}`，主 prompt `{topology_prompt_pack.get('primary_prompt_count')}`，fallback `{topology_prompt_pack.get('fallback_prompt_count')}`",
+        f"- 旧信号塔拓扑候选：candidate `{topology_candidate_review.get('status')}`，alignment `{topology_alignment_review.get('status')}`，overlay `{topology_overlay_review.get('status')}`，visual `{topology_overlay_visual_review.get('status')}`，可晋升 `{topology_overlay_visual_review.get('promotable_count')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -2206,6 +2342,17 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     topology_prompt_pack = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("topology_prompt_pack")
+    )
+    topology_candidate_review = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("topology_candidate_review")
+    )
+    topology_alignment_review = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("topology_alignment_review")
+    )
+    topology_overlay_visual_review = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get(
+            "topology_overlay_visual_review"
+        )
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -2418,6 +2565,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">拓扑 Prompt</div>
           <div class="metric">{html_escape(topology_prompt_pack.get("status"))}</div>
           <p class="muted">主 prompt：{html_escape(topology_prompt_pack.get("primary_prompt_count"))}；fallback：{html_escape(topology_prompt_pack.get("fallback_prompt_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">旧信号塔拓扑候选</div>
+          <div class="metric">{html_escape(topology_overlay_visual_review.get("status"))}</div>
+          <p class="muted">candidate：{html_escape(topology_candidate_review.get("status"))}；alignment：{html_escape(topology_alignment_review.get("status"))}；可晋升：{html_escape(topology_overlay_visual_review.get("promotable_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>

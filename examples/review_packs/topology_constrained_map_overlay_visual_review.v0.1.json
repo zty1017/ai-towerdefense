@@ -1,0 +1,47 @@
+{
+  "overlay_review_path": "examples/review_packs/topology_constrained_map_overlay_review.v0.1.json",
+  "policy": [
+    "This is a visual review report, not a promotion report.",
+    "All candidates remain review-only until a later promotion report updates published visual layers.",
+    "Beautiful map art is insufficient when runtime paths, tower slots, objectives, or spawn points do not align with visible landmarks."
+  ],
+  "report_id": "mvp_map_candidate_overlay_visual_review_topology_constrained_v1",
+  "review_profile": "topology_constrained_v1",
+  "reviews": [
+    {
+      "findings": [
+        "topology_is_more_readable_than_previous_candidate_but_runtime_paths_still_cross_near_the_large_tower_landmark",
+        "signal_tower_is_still_too_large_for_unobstructed_combat_readability",
+        "tiny_figure_like_marks_or_props_are_visible_near_the_lower_route",
+        "build_slots_are_readable_but_require_visual_model_or_human_confirmation_before_promotion"
+      ],
+      "next_action": "iterate prompt to remove figure-like details and reduce the tower landmark scale, then regenerate or run a vision-model cleanup review",
+      "node_id": "old_signal_tower",
+      "normalized_path": "game_data/media/map_visual_reference/node_candidates_topology_v1_normalized/old_signal_tower.normalized_1280x720.png",
+      "overlay_review_path": "game_data/media/map_visual_reference/node_candidates_topology_v1_normalized/old_signal_tower.overlay_review.svg",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_topology_v1_normalized/old_signal_tower.overlay_review.png",
+      "promotion_recommendation": "do_not_promote",
+      "source_status": "overlay_artifact_ready",
+      "status": "needs_prompt_iteration",
+      "strengths": [
+        "split_right_to_left_routes_are_visible",
+        "flat_build_clearings_are_more_explicit",
+        "cold_signal_ridge_world_style_is_strong",
+        "no_ui_text_arrows_or_grid_are_visible"
+      ]
+    }
+  ],
+  "schema_version": "map_candidate_overlay_visual_review.v0.1",
+  "status": "needs_layout_reconciliation",
+  "summary": {
+    "blocked_from_promotion_count": 1,
+    "candidate_count": 1,
+    "promotable_count": 0,
+    "promotion_recommendation_counts": {
+      "do_not_promote": 1
+    },
+    "status_counts": {
+      "needs_prompt_iteration": 1
+    }
+  }
+}
