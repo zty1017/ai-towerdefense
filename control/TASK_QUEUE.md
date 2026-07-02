@@ -71,6 +71,7 @@ P2：本阶段明确不做
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
 - GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
 - Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API，并已被 no-build 前端消费：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，前端进入当前节点时会通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；它不调用 provider、不写世界状态、不创建新内容。
+- 多节点战斗结算桥已接入后端 mock API：`gray_lantern_station` 与 `lamp_wick_store` 使用真实 `battle_result` transaction 推进运行态；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，不得伪装成战斗结果。`tools/dev/validate_multinode_battle_settlement.py` 已接入 demo evidence。
 
 ## 3. 已完成的 P0 基线
 
@@ -464,6 +465,8 @@ P2：本阶段明确不做
 
 补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、批量 validator、首战示例、stage01-stage07 事务链和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
 
+补充：Campaign Router 消费的三节点 MVP 主线已经能通过战斗结算接口连续推进。`lamp_wick_store` 使用 stage04 battle_result transaction；`old_signal_tower` 当前只有 research_job 来源的 after-state，因此以 `fixture_bridge` 暴露，并在返回值中保留 `fixture_baseline` 说明。
+
 下一轮进入 P1 前，应先确认是否开始执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，尤其是 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿的合并策略。
 
 ## 5. P1 任务
@@ -512,7 +515,7 @@ P2：本阶段明确不做
 - 所有对象先进入统一 CGOP / package manifest 模型。
 - 不允许直接自由写 runtime。
 - 每类对象定义最小可玩字段和审查门禁。
-- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；下一步应把现有 review pack 和真实 provider 产物继续映射到同一套核心对象字段，而不是继续新增平行元数据口径。
+- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack、多节点 battle settlement 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；下一步应把现有 review pack 和真实 provider 产物继续映射到同一套核心对象字段，而不是继续新增平行元数据口径。
 
 ### P1-D Map Visual Reference 生成管线升级
 

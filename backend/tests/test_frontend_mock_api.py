@@ -301,6 +301,58 @@ def test_campaign_router_prefetches_next_node_without_provider_calls(client):
     assert after_router["next"]["node_id"] == "old_signal_tower"
 
 
+def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+
+    _payload(client.post(f"/api/sessions/{sid}/battles/gray_lantern_station/results"))
+    wick_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/lamp_wick_store/briefing"))
+    assert wick_briefing["briefing"]["node_id"] == "lamp_wick_store"
+    wick_battle = _payload(client.get(f"/api/sessions/{sid}/battles/lamp_wick_store/config"))
+    assert wick_battle["map_runtime_package"]["node_id"] == "lamp_wick_store"
+    wick = _payload(
+        client.post(
+            f"/api/sessions/{sid}/battles/lamp_wick_store/results",
+            json={"result": "victory", "protected_core_hp": 6},
+        )
+    )
+    wick_settlement = wick["settlement"]
+    assert wick_settlement["settlement_mode"] == "transaction"
+    assert wick_settlement["world_delta"]["source"] == "battle_result"
+    assert wick_settlement["world_delta_transaction"]["source"] == "battle_result"
+    assert wick_settlement["world_delta_transaction"]["transaction_id"] == (
+        "tx_stage_04_wick_store_pressure_battle_001"
+    )
+    assert wick_settlement["core_artifact_refs"]["world_delta_transaction"].endswith(
+        "stage_04_wick_store_pressure_battle.world_delta_transaction.json"
+    )
+    assert wick_settlement["run_world_state"]["progress"]["phase"] == (
+        "post_wick_store_defense"
+    )
+
+    tower_route = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
+    assert tower_route["campaign_router"]["current"]["node_id"] == "old_signal_tower"
+    tower_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/old_signal_tower/briefing"))
+    assert tower_briefing["briefing"]["node_id"] == "old_signal_tower"
+    tower = _payload(
+        client.post(
+            f"/api/sessions/{sid}/battles/old_signal_tower/results",
+            json={"result": "victory", "protected_core_hp": 5},
+        )
+    )
+    tower_settlement = tower["settlement"]
+    assert tower_settlement["settlement_mode"] == "fixture_bridge"
+    assert tower_settlement["world_delta"] is None
+    assert tower_settlement["world_delta_transaction"]["source"] == "research_job"
+    assert tower_settlement["fixture_baseline"]["baseline_type"] == "research_job"
+    assert tower_settlement["fixture_baseline"]["baseline_ref"].endswith(
+        "demo_after_stage_06_signal_resonance.run_world_state.json"
+    )
+    assert tower_settlement["run_world_state"]["progress"]["phase"] == (
+        "signal_resonance_trial"
+    )
+
+
 def test_battle_runtime_settlement_and_evidence_flow(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))

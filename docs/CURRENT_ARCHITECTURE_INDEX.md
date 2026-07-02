@@ -183,6 +183,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - GenerationSchedulePlan v0.1 / GenerationScheduleRunReport v0.1：已有 review-only 计划包、dry-run 执行报告、schema、builder、validator、evidence 摘要、`GET /api/sessions/{session_id}/generation-schedule` session API、`generation_schedule_runs` 持久化 dry-run 运行记录，以及 `generation_schedule_queue_items` item 级队列视图、状态流转、attempt 预算、retry / fallback 和 dry-run worker step，用于声明并离线验证同步、预取、后台、懒加载和静态 fallback 内容。
 - Generation Scheduler 后端状态层：`backend/app/services/generation_scheduler_service.py` 是当前 session 缓冲、dry-run run、队列状态流转、attempt 预算、retry / fallback 和 dry-run worker step 的实现入口；`frontend_mock_service.py` 只聚合玩家侧 fixture 与 evidence。
 - Campaign Router v0.1：`backend/app/services/campaign_router_service.py` 是当前最薄运行时游标入口；它根据 `RunWorldState.progress.phase` 返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可触发一次 fixture-backed dry-run 预取步。no-build 前端已在 API 模式消费该 route，静态模式保留灰灯驿站首战兜底。
+- 多节点战斗结算桥：`backend/app/services/frontend_mock_service.py` 当前支持 `gray_lantern_station`、`lamp_wick_store`、`old_signal_tower` 三个路由节点的战斗结果提交。前两个节点使用 `battle_result` transaction；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，并在 API 返回中显式标注来源，避免把研究任务基线误当战斗结果。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 与 battle settlement evidence 原生快照构造入口。
 - WorldStateDeltaTransaction v0.1：已有 schema、首战 committed 示例、stage01-stage07 事务链、批量 validator 和 deterministic builder；它包装可通过语义门的 `WorldStateDelta`，并接入 demo evidence。
 - AssetGraph workflow、节点注册表、runtime package 构建与校验。
@@ -196,7 +197,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 当前尚未完成：
 
 - 真实图生视频帧序列，以及用真实关键帧替换当前确定性 frame sequence 的默认接入。
-- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP 字段的全面迁移；Research Job、battle settlement evidence、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移，但其他运行时产物仍未全部改为原生核心对象。
+- WorldStateDelta / review pack 与 ContextPackage、FactEntry、CGOP 字段的全面迁移；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移，但其他运行时产物仍未全部改为原生核心对象。
 - 正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求缓存和持久化预生成产物；当前 Campaign Router 只触发 dry-run 预取，不是真实后台执行器。
 - 多世界书选择与长期存档系统。
 - 自动化浏览器截图 / Playwright 视觉回归。

@@ -91,9 +91,12 @@ def core_artifact_payload() -> dict[str, Any]:
     }
 
 
-def _core_artifact_refs_with_world_delta(world_delta_ref: str) -> dict[str, str]:
+def _core_artifact_refs_with_world_delta(
+    world_delta_ref: str, transaction_ref: str | None = None
+) -> dict[str, str]:
     return {
         **core_artifact_refs(),
+        **({"world_delta_transaction": transaction_ref} if transaction_ref else {}),
         "world_delta": world_delta_ref,
     }
 
@@ -105,6 +108,7 @@ def battle_settlement_core_artifacts(
     world_delta: dict[str, Any],
     transaction: dict[str, Any],
     created_at: str,
+    transaction_ref: str | None = None,
 ) -> dict[str, Any]:
     """Build native core artifact snapshots for battle settlement evidence."""
 
@@ -145,7 +149,7 @@ def battle_settlement_core_artifacts(
         _artifact_ref(
             "world_delta_transaction",
             "fixture",
-            core_artifact_refs()["world_delta_transaction"],
+            transaction_ref or core_artifact_refs()["world_delta_transaction"],
         ),
     ]
 
@@ -235,7 +239,7 @@ def battle_settlement_core_artifacts(
 
     return {
         "status": "native_settlement_committed",
-        "refs": _core_artifact_refs_with_world_delta(world_delta_ref),
+        "refs": _core_artifact_refs_with_world_delta(world_delta_ref, transaction_ref),
         "context_package": context,
         "fact_entry": fact,
         "compiled_game_object_package": cgop,
