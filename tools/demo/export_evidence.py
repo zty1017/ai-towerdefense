@@ -105,6 +105,8 @@ PATHS = {
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "map_visual_quality_report": ROOT
     / "examples/review_packs/map_visual_quality_report.v0.1.json",
+    "node_map_candidate_review": ROOT
+    / "examples/review_packs/node_map_painted_candidate_review.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
     "compiler_dossier": ROOT
     / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
@@ -326,6 +328,15 @@ STATIC_VALIDATION_COMMANDS = [
             "tools/media/audit_map_visual_quality.py",
             "--output",
             "/tmp/ai_td_map_visual_quality_report.json",
+        ],
+    },
+    {
+        "name": "node_map_candidate_review_pack",
+        "command": [
+            "python3",
+            "tools/media/build_node_map_candidate_review_pack.py",
+            "--output",
+            "/tmp/ai_td_node_map_painted_candidate_review.json",
         ],
     },
     {
@@ -792,6 +803,30 @@ def map_visual_quality_summary(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def node_map_candidate_review_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    candidates = [candidate for candidate in as_list(report.get("candidates")) if isinstance(candidate, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "candidate_count": summary.get("candidate_count"),
+        "runtime_promotion_count": summary.get("runtime_promotion_count"),
+        "blocking_candidate_count": summary.get("blocking_candidate_count"),
+        "review_status_counts": as_obj(summary.get("review_status_counts")),
+        "candidate_samples": [
+            {
+                "node_id": candidate.get("node_id"),
+                "candidate_path": candidate.get("candidate_path"),
+                "review_status": candidate.get("review_status"),
+                "blocking_findings": as_list(candidate.get("blocking_findings")),
+                "recommended_next_action": candidate.get("recommended_next_action"),
+            }
+            for candidate in candidates[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -1074,6 +1109,7 @@ def collect_assets_and_media(
     runtime_sprite_regeneration_promotion_report: dict[str, Any],
     map_visual_manifest: dict[str, Any],
     map_visual_quality_report: dict[str, Any],
+    node_map_candidate_review: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -1147,6 +1183,7 @@ def collect_assets_and_media(
             "schema_version": map_visual_manifest.get("schema_version"),
             "item_count": len(map_visual_items),
             "quality_audit": map_visual_quality_summary(map_visual_quality_report),
+            "candidate_review": node_map_candidate_review_summary(node_map_candidate_review),
             "published_visual_layers": [
                 {
                     "role": item.get("role"),
@@ -1303,6 +1340,7 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("world_delta_transaction_example", PATHS["world_delta_transaction_example"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("map_visual_quality_report", PATHS["map_visual_quality_report"]),
+        ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
         ("multistage_content_pack", PATHS["multistage_content_pack"]),
@@ -1384,6 +1422,7 @@ def build_evidence() -> dict[str, Any]:
     ]
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     map_visual_quality_report = load_json(PATHS["map_visual_quality_report"])
+    node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -1450,6 +1489,7 @@ def build_evidence() -> dict[str, Any]:
             runtime_sprite_regeneration_promotion_report,
             map_visual_manifest,
             map_visual_quality_report,
+            node_map_candidate_review,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -1479,6 +1519,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "quality_audit"
+        )
+    )
+    node_map_candidate_review = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "candidate_review"
         )
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
@@ -1621,6 +1666,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
         f"- 地图视觉审计：`{map_visual_quality.get('status')}`，共享玩家底图组 `{map_visual_quality.get('shared_player_visual_layer_group_count')}`，警告 `{map_visual_quality.get('warning_counts')}`",
+        f"- 节点地图候选：`{node_map_candidate_review.get('status')}`，候选 `{node_map_candidate_review.get('candidate_count')}`，晋升 runtime `{node_map_candidate_review.get('runtime_promotion_count')}`，状态 `{node_map_candidate_review.get('review_status_counts')}`",
         "",
         md_table(["节点", "地图包", "路径", "塔位", "发布底图层"], package_rows),
         "",
@@ -1778,6 +1824,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     assets_media = as_obj(evidence.get("assets_and_media"))
     map_visual_quality = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get("quality_audit")
+    )
+    node_map_candidate_review = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("candidate_review")
     )
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
@@ -1950,6 +1999,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图视觉审计</div>
           <div class="metric">{html_escape(map_visual_quality.get("status"))}</div>
           <p class="muted">共享玩家底图组：{html_escape(map_visual_quality.get("shared_player_visual_layer_group_count"))}；警告：{html_escape(map_visual_quality.get("warning_counts"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">节点地图候选</div>
+          <div class="metric">{html_escape(node_map_candidate_review.get("status"))}</div>
+          <p class="muted">候选：{html_escape(node_map_candidate_review.get("candidate_count"))}；晋升 runtime：{html_escape(node_map_candidate_review.get("runtime_promotion_count"))}；状态：{html_escape(node_map_candidate_review.get("review_status_counts"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">媒体</div>
