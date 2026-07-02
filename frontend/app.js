@@ -9,8 +9,11 @@
     pack: "/examples/frontend_mock/frontend_mock_pack.v0.1.json",
     runtimeKit: "/examples/frontend_mock/frontend_battle_mock_art_kit.v0.1.json",
     mediaManifest: "/game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+    mediaAtlasManifest: "/game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
     runtimeMediaManifest:
       "/game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+    runtimeArtAtlasManifest:
+      "/game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
     mapVisualManifest:
       "/game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     opening: "/content/worldbooks/long_night_lanterns/opening.json",
@@ -305,8 +308,10 @@
         Object.assign(state.data, {
           pack: packResponse.pack,
           mediaManifest: packResponse.media_manifest,
+          mediaAtlasManifest: packResponse.media_atlas_manifest,
           runtimeKit: packResponse.runtime_art_kit,
           runtimeMediaManifest: packResponse.runtime_art_media_manifest,
+          runtimeArtAtlasManifest: packResponse.runtime_art_atlas_manifest,
           mapVisualManifest,
           opening: openingResponse.opening,
           worldConfig: DEFAULT_WORLD_CONFIG,
@@ -339,8 +344,11 @@
           toolbarAssets: response.toolbar_assets,
           sampleDeliveryAsset: response.sample_delivery_asset,
           mediaManifest: response.media_manifest,
+          mediaAtlasManifest: response.media_atlas_manifest || state.data.mediaAtlasManifest,
           runtimeKit: response.runtime_art_kit,
           runtimeMediaManifest: response.runtime_art_media_manifest,
+          runtimeArtAtlasManifest:
+            response.runtime_art_atlas_manifest || state.data.runtimeArtAtlasManifest,
         });
         if (!state.data.mapRuntimePackage) {
           try {
@@ -365,7 +373,9 @@
           pack,
           runtimeKit,
           mediaManifest,
+          mediaAtlasManifest,
           runtimeMediaManifest,
+          runtimeArtAtlasManifest,
           mapVisualManifest,
           opening,
           worldConfig,
@@ -377,7 +387,9 @@
           fetchStaticJson("pack"),
           fetchStaticJson("runtimeKit"),
           fetchStaticJson("mediaManifest"),
+          fetchStaticJson("mediaAtlasManifest"),
           fetchStaticJson("runtimeMediaManifest"),
+          fetchStaticJson("runtimeArtAtlasManifest"),
           fetchOptionalStaticJson("mapVisualManifest"),
           fetchStaticJson("opening"),
           fetchOptionalStaticJson("worldConfig", DEFAULT_WORLD_CONFIG),
@@ -390,7 +402,9 @@
           pack,
           runtimeKit,
           mediaManifest,
+          mediaAtlasManifest,
           runtimeMediaManifest,
+          runtimeArtAtlasManifest,
           mapVisualManifest,
           opening,
           worldConfig,
@@ -559,8 +573,28 @@
   }
 
   function mediaUrl(assetId, role, runtime = false) {
+    const frameUrl = atlasFrameUrl(assetId, role, runtime);
+    if (frameUrl) return frameUrl;
     const item = mediaItem(assetId, role, runtime);
     return item ? assetUrl(item.url) : "";
+  }
+
+  function atlasItems(runtime = false) {
+    const manifest = runtime ? state.data.runtimeArtAtlasManifest : state.data.mediaAtlasManifest;
+    return Array.isArray(manifest && manifest.items) ? manifest.items : [];
+  }
+
+  function atlasFrameUrl(assetId, role, runtime = false) {
+    const item = atlasItems(runtime).find(
+      (entry) =>
+        entry &&
+        entry.asset_id === assetId &&
+        entry.media_role === role &&
+        Array.isArray(entry.frames) &&
+        entry.frames.length,
+    );
+    const frame = item && item.frames[0];
+    return frame && frame.url ? assetUrl(frame.url) : "";
   }
 
   function mapVisualUrl(role) {

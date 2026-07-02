@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_atlas_manifest.v0.1.schema.json",
+  "title": "MediaAtlasManifest v0.1",
+  "description": "Runtime animation/atlas manifest. MVP v0.1 supports virtual single-frame atlases over existing published PNGs, while preserving the contract for later spritesheets and video-derived frame sequences.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "atlas_id",
+    "created_at",
+    "source_manifest",
+    "source_media_pack_id",
+    "media_layer",
+    "atlas_mode",
+    "public_url_prefix",
+    "items",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "media_atlas_manifest.v0.1" },
+    "atlas_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_manifest": { "type": "string", "minLength": 1 },
+    "source_media_pack_id": { "type": "string", "minLength": 1 },
+    "media_layer": { "type": "string", "enum": ["published_media"] },
+    "atlas_mode": { "type": "string", "enum": ["virtual_single_frame", "spritesheet"] },
+    "public_url_prefix": { "type": "string", "pattern": "^/assets/.+" },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/animation" } },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "animation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animation_id",
+        "asset_id",
+        "asset_name",
+        "asset_type",
+        "media_role",
+        "playback",
+        "spritesheet",
+        "frames"
+      ],
+      "properties": {
+        "animation_id": { "type": "string", "minLength": 1 },
+        "asset_id": { "type": "string", "minLength": 1 },
+        "source_game_id": { "type": ["string", "null"] },
+        "asset_name": { "type": ["string", "null"] },
+        "asset_type": { "type": ["string", "null"] },
+        "media_role": { "type": "string", "minLength": 1 },
+        "playback": { "$ref": "#/$defs/playback" },
+        "spritesheet": { "oneOf": [{ "$ref": "#/$defs/spritesheet" }, { "type": "null" }] },
+        "frames": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/frame" }
+        }
+      }
+    },
+    "playback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "fps", "loop", "frame_count"],
+      "properties": {
+        "state": { "type": "string", "minLength": 1 },
+        "fps": { "type": "integer", "minimum": 1 },
+        "loop": { "type": "boolean" },
+        "frame_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "spritesheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "local_path", "width", "height", "sha256"],
+      "properties": {
+        "url": { "type": "string", "pattern": "^/assets/.+" },
+        "local_path": { "type": "string", "minLength": 1 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_id",
+        "index",
+        "url",
+        "local_path",
+        "x",
+        "y",
+        "width",
+        "height",
+        "duration_ms",
+        "sha256",
+        "anchor"
+      ],
+      "properties": {
+        "frame_id": { "type": "string", "minLength": 1 },
+        "index": { "type": "integer", "minimum": 0 },
+        "url": { "type": "string", "pattern": "^/assets/.+" },
+        "local_path": { "type": "string", "minLength": 1 },
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "duration_ms": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "anchor": { "$ref": "#/$defs/anchor" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset", "x", "y"],
+      "properties": {
+        "preset": { "type": "string", "minLength": 1 },
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["animation_count", "frame_count", "asset_count", "roles"],
+      "properties": {
+        "animation_count": { "type": "integer", "minimum": 0 },
+        "frame_count": { "type": "integer", "minimum": 0 },
+        "asset_count": { "type": "integer", "minimum": 0 },
+        "roles": { "type": "object" }
+      }
+    }
+  }
+}

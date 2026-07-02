@@ -1,0 +1,770 @@
+{
+  "schema_version": "media_atlas_manifest.v0.1",
+  "atlas_id": "frontend_mock_media_atlas_v0_1",
+  "created_at": "2026-07-02T00:00:00+08:00",
+  "source_manifest": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+  "source_media_pack_id": "frontend_mock_media_pack_v0_1",
+  "media_layer": "published_media",
+  "atlas_mode": "virtual_single_frame",
+  "public_url_prefix": "/assets/frontend_mock/processed",
+  "items": [
+    {
+      "animation_id": "asset_ash_burst_lantern.icon.static",
+      "asset_id": "asset_ash_burst_lantern",
+      "source_game_id": null,
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_ash_burst_lantern.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_icon_5045e492.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_ash_burst_lantern_icon_5045e492.png",
+          "x": 0,
+          "y": 0,
+          "width": 899,
+          "height": 899,
+          "duration_ms": 1000,
+          "sha256": "837f30374a78269ae6e751925b21fdbba6f8ae18df30967c7c78598034541259",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_ash_burst_lantern.tower_sprite.idle",
+      "asset_id": "asset_ash_burst_lantern",
+      "source_game_id": null,
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "playback": {
+        "state": "idle",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_ash_burst_lantern.tower_sprite.idle.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+          "x": 0,
+          "y": 0,
+          "width": 949,
+          "height": 949,
+          "duration_ms": 1000,
+          "sha256": "8bf1eec5f91f89900b043ba437db6fae5aa1aa0a4b61ad519099b54662f90eb9",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "intel_dark_echo_survey_001.icon.static",
+      "asset_id": "intel_dark_echo_survey_001",
+      "source_game_id": null,
+      "asset_name": "东暗回声测记",
+      "asset_type": "intel_asset",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "intel_dark_echo_survey_001.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_icon_cec61ac8.png",
+          "local_path": "game_data/media/frontend_mock/processed/intel_dark_echo_survey_001_icon_cec61ac8.png",
+          "x": 0,
+          "y": 0,
+          "width": 887,
+          "height": 887,
+          "duration_ms": 1000,
+          "sha256": "39ed0b776301863d6e36d57559262448d0dcfc541725b4ccb3e2d1269350d139",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "intel_dark_echo_survey_001.ui_card.static",
+      "asset_id": "intel_dark_echo_survey_001",
+      "source_game_id": null,
+      "asset_name": "东暗回声测记",
+      "asset_type": "intel_asset",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "intel_dark_echo_survey_001.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_ui_card_7219d045.png",
+          "local_path": "game_data/media/frontend_mock/processed/intel_dark_echo_survey_001_ui_card_7219d045.png",
+          "x": 0,
+          "y": 0,
+          "width": 823,
+          "height": 823,
+          "duration_ms": 1000,
+          "sha256": "36dc356389cb85b2fa6bb3efd89faeef0007abaa746ced1e96e60ec7dc060c78",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_echo_prism_relay.icon.static",
+      "asset_id": "asset_echo_prism_relay",
+      "source_game_id": null,
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_echo_prism_relay.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_echo_prism_relay_icon_da5766a5.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_echo_prism_relay_icon_da5766a5.png",
+          "x": 0,
+          "y": 0,
+          "width": 896,
+          "height": 896,
+          "duration_ms": 1000,
+          "sha256": "9f3a7f6338ce27843a07308d936494b0dd173ee75df5ba92dd59c6aeb47e9b9c",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_echo_prism_relay.tower_sprite.idle",
+      "asset_id": "asset_echo_prism_relay",
+      "source_game_id": null,
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "playback": {
+        "state": "idle",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_echo_prism_relay.tower_sprite.idle.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+          "x": 0,
+          "y": 0,
+          "width": 979,
+          "height": 979,
+          "duration_ms": 1000,
+          "sha256": "6972fb914bb4fbcc56722cedb11e9fd35fb47ee9302e97dc3a834c7e4671487e",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_light_slow_tower_001.icon.static",
+      "asset_id": "asset_light_slow_tower_001",
+      "source_game_id": null,
+      "asset_name": "聚光迟滞塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_light_slow_tower_001.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_icon_1a0e42e9.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_light_slow_tower_001_icon_1a0e42e9.png",
+          "x": 0,
+          "y": 0,
+          "width": 890,
+          "height": 890,
+          "duration_ms": 1000,
+          "sha256": "af88849731e80768891a570735060dc0d614363a5e3e3304f20c755e4d769b03",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_light_slow_tower_001.tower_sprite.idle",
+      "asset_id": "asset_light_slow_tower_001",
+      "source_game_id": null,
+      "asset_name": "聚光迟滞塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "playback": {
+        "state": "idle",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_light_slow_tower_001.tower_sprite.idle.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+          "x": 0,
+          "y": 0,
+          "width": 935,
+          "height": 935,
+          "duration_ms": 1000,
+          "sha256": "c8e100101ab57563b4dcdeb9957e1fa7940dc37daaa69384e7cb3e1b19352570",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_mirror_lure_trap_001.icon.static",
+      "asset_id": "asset_mirror_lure_trap_001",
+      "source_game_id": null,
+      "asset_name": "折光诱饵陷阱",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_mirror_lure_trap_001.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+          "x": 0,
+          "y": 0,
+          "width": 775,
+          "height": 775,
+          "duration_ms": 1000,
+          "sha256": "76db63165a84e5a0ca6acc37ba557f813e32cae8ee36829b9484c84596dbc705",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_mirror_lure_trap_001.ui_card.static",
+      "asset_id": "asset_mirror_lure_trap_001",
+      "source_game_id": null,
+      "asset_name": "折光诱饵陷阱",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_mirror_lure_trap_001.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+          "x": 0,
+          "y": 0,
+          "width": 835,
+          "height": 835,
+          "duration_ms": 1000,
+          "sha256": "79d3a43f7e41dbec047f47f5dcc9f4ec960380b9711d1543dcf7808219f8c961",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_overload_chain_breaker.icon.static",
+      "asset_id": "asset_overload_chain_breaker",
+      "source_game_id": null,
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_overload_chain_breaker.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_overload_chain_breaker_icon_7234f228.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_overload_chain_breaker_icon_7234f228.png",
+          "x": 0,
+          "y": 0,
+          "width": 752,
+          "height": 752,
+          "duration_ms": 1000,
+          "sha256": "36b24d9746ff3d5d1205a590dae6eb684ce10ec73c9f41cab0bf783dedd3b95f",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_overload_chain_breaker.ui_card.static",
+      "asset_id": "asset_overload_chain_breaker",
+      "source_game_id": null,
+      "asset_name": "过载连弧断潮改造资产",
+      "asset_type": "temporary_mod",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_overload_chain_breaker.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+          "x": 0,
+          "y": 0,
+          "width": 790,
+          "height": 790,
+          "duration_ms": 1000,
+          "sha256": "8874035e83add68512ffc4d0cf8935b0db92b99923999d8b95d959466e3744e1",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "mod_overload_chain_arc_001.icon.static",
+      "asset_id": "mod_overload_chain_arc_001",
+      "source_game_id": null,
+      "asset_name": "过载连弧改造",
+      "asset_type": "temporary_mod",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "mod_overload_chain_arc_001.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_icon_6c776311.png",
+          "local_path": "game_data/media/frontend_mock/processed/mod_overload_chain_arc_001_icon_6c776311.png",
+          "x": 0,
+          "y": 0,
+          "width": 771,
+          "height": 771,
+          "duration_ms": 1000,
+          "sha256": "38beb8f4382359575bbccaa90bfdf8723f22422b724db0a25512e874ac48e822",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "mod_overload_chain_arc_001.ui_card.static",
+      "asset_id": "mod_overload_chain_arc_001",
+      "source_game_id": null,
+      "asset_name": "过载连弧改造",
+      "asset_type": "temporary_mod",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "mod_overload_chain_arc_001.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+          "local_path": "game_data/media/frontend_mock/processed/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+          "x": 0,
+          "y": 0,
+          "width": 790,
+          "height": 790,
+          "duration_ms": 1000,
+          "sha256": "ed6cf69a645e25ed38c8354c8f514df99e4f081535a682c9f2998af987ec1612",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "intel_shadow_tide_survey.icon.static",
+      "asset_id": "intel_shadow_tide_survey",
+      "source_game_id": null,
+      "asset_name": "影潮测绘札记",
+      "asset_type": "intel_asset",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "intel_shadow_tide_survey.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_icon_3ba77691.png",
+          "local_path": "game_data/media/frontend_mock/processed/intel_shadow_tide_survey_icon_3ba77691.png",
+          "x": 0,
+          "y": 0,
+          "width": 808,
+          "height": 808,
+          "duration_ms": 1000,
+          "sha256": "6a6c96668885ba3c7ad201652ad10647899e541b9d95c595e92b2b313b157876",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "intel_shadow_tide_survey.ui_card.static",
+      "asset_id": "intel_shadow_tide_survey",
+      "source_game_id": null,
+      "asset_name": "影潮测绘札记",
+      "asset_type": "intel_asset",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "intel_shadow_tide_survey.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_ui_card_192910c1.png",
+          "local_path": "game_data/media/frontend_mock/processed/intel_shadow_tide_survey_ui_card_192910c1.png",
+          "x": 0,
+          "y": 0,
+          "width": 810,
+          "height": 810,
+          "duration_ms": 1000,
+          "sha256": "36bdb7e966a33768b5f294b5cf66d44e9313494044ede3ab709fc88574c97643",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_signal_echo_marker.icon.static",
+      "asset_id": "asset_signal_echo_marker",
+      "source_game_id": null,
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_signal_echo_marker.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_signal_echo_marker_icon_e71e85ac.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_signal_echo_marker_icon_e71e85ac.png",
+          "x": 0,
+          "y": 0,
+          "width": 871,
+          "height": 871,
+          "duration_ms": 1000,
+          "sha256": "676ba215da696b7db7268242c6f20120c7e111c287c7a381d7c9d2d4ef9a9f8c",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_signal_echo_marker.ui_card.static",
+      "asset_id": "asset_signal_echo_marker",
+      "source_game_id": null,
+      "asset_name": "回声测标短札资产",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_signal_echo_marker.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_signal_echo_marker_ui_card_75f14373.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_signal_echo_marker_ui_card_75f14373.png",
+          "x": 0,
+          "y": 0,
+          "width": 920,
+          "height": 920,
+          "duration_ms": 1000,
+          "sha256": "75eea2d5e7731ee7d079509511d6dc8c755e518f18c13b31d4f5bfee96b6ea2a",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_signal_wick_decoy.icon.static",
+      "asset_id": "asset_signal_wick_decoy",
+      "source_game_id": null,
+      "asset_name": "信标灯芯诱饵",
+      "asset_type": "support_item",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_signal_wick_decoy.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_icon_9fac3cb5.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_signal_wick_decoy_icon_9fac3cb5.png",
+          "x": 0,
+          "y": 0,
+          "width": 852,
+          "height": 852,
+          "duration_ms": 1000,
+          "sha256": "0a244f55302edbd1bed65c6d6b1d92529aa59a93d26d635720ba4f99fa5e81e3",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_signal_wick_decoy.ui_card.static",
+      "asset_id": "asset_signal_wick_decoy",
+      "source_game_id": null,
+      "asset_name": "信标灯芯诱饵",
+      "asset_type": "support_item",
+      "media_role": "ui_card",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_signal_wick_decoy.ui_card.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+          "x": 0,
+          "y": 0,
+          "width": 894,
+          "height": 894,
+          "duration_ms": 1000,
+          "sha256": "1105031d2afccca2bd7e2e6ef3c4560b3b4575d7fba6be5bc3af6e55e8a52763",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_wick_barrier_pylon.icon.static",
+      "asset_id": "asset_wick_barrier_pylon",
+      "source_game_id": null,
+      "asset_name": "灯芯护幕桩",
+      "asset_type": "tower_blueprint",
+      "media_role": "icon",
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_wick_barrier_pylon.icon.static.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_icon_09e6177c.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_wick_barrier_pylon_icon_09e6177c.png",
+          "x": 0,
+          "y": 0,
+          "width": 906,
+          "height": 906,
+          "duration_ms": 1000,
+          "sha256": "4ab5068c4243e3b791aefe925e0ac74a21279ce5fbf93b63ab55534751af9d34",
+          "anchor": {
+            "preset": "center",
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "animation_id": "asset_wick_barrier_pylon.tower_sprite.idle",
+      "asset_id": "asset_wick_barrier_pylon",
+      "source_game_id": null,
+      "asset_name": "灯芯护幕桩",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "playback": {
+        "state": "idle",
+        "fps": 1,
+        "loop": false,
+        "frame_count": 1
+      },
+      "spritesheet": null,
+      "frames": [
+        {
+          "frame_id": "asset_wick_barrier_pylon.tower_sprite.idle.frame_000",
+          "index": 0,
+          "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+          "local_path": "game_data/media/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+          "x": 0,
+          "y": 0,
+          "width": 946,
+          "height": 946,
+          "duration_ms": 1000,
+          "sha256": "8a40bad9a58f93f2f0faacb495b5122b063316b4320903cf46deaabce782fb3d",
+          "anchor": {
+            "preset": "bottom_center",
+            "x": 0.5,
+            "y": 1.0
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "animation_count": 22,
+    "frame_count": 22,
+    "asset_count": 11,
+    "roles": {
+      "icon": 11,
+      "tower_sprite": 4,
+      "ui_card": 7
+    }
+  }
+}

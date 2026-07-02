@@ -22,6 +22,15 @@ http://127.0.0.1:8000/frontend/index.html
 
 玩家默认战斗视图只允许使用发布级视觉层：未来的 `painted_visual_layer` 优先，其次是 `battle_runtime_background`。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；如果发布底图缺失，前端会使用程序化大画面背景叠加 MapRuntimePackage 的路径、塔位、目标和出生点，避免控制图、参考图或棋盘图进入首屏体验。
 
+媒体加载优先读取 atlas manifest：
+
+```text
+game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json
+game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json
+```
+
+当前 atlas 是 `virtual_single_frame` 模式，每个动画入口指向一张已发布 PNG；找不到 atlas 帧时会回退到旧的 media manifest。后续视频关键帧和 spritesheet 可以沿用同一接口扩展。
+
 控制图和参考图只允许作为调试 / evidence 辅助素材。需要临时查看时，在 URL 上追加：
 
 ```text

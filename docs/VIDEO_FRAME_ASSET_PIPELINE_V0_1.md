@@ -95,6 +95,23 @@ game_data/media/frontend_mock/frontend_media_manifest.v0.1.json
 
 MVP 前端 mock 当前先直接使用 `frontend_media_manifest.v0.1.json` 中的 processed PNG。后续正式 runtime package 应继续走 atlas 打包和 readiness gate。
 
+当前已补充 `MediaAtlasManifest v0.1` 作为 P1-A 的最小可运行切片：
+
+```text
+game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json
+game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json
+```
+
+这两份 manifest 当前是 `virtual_single_frame` 模式：每个动画入口先引用一张已发布 processed PNG，形成 1 帧 animation。它不是最终视频帧成果，但已经让前端、后端 mock API、demo evidence 和 validator 都按 atlas 合同工作。
+
+后续接入图生视频和关键帧时，应在同一合同上扩展：
+
+- `atlas_mode` 可从 `virtual_single_frame` 变为 `spritesheet`。
+- `frames` 从 1 帧扩展为 8-16 帧。
+- `spritesheet` 从 `null` 变为真实 atlas PNG。
+- `playback.fps` 和 `loop` 按动画状态设置。
+- 单张 PNG fallback 仍保留，避免视频链路失败影响 MVP。
+
 ## 2. 标准路线
 
 ```text
@@ -122,6 +139,7 @@ MVP 可以拆成两条并行线：
   GenerateRawImage
     -> PostprocessSingleImage
     -> FrontendMockMediaManifest
+    -> MediaAtlasManifest(virtual_single_frame)
 
 动画资产路线:
   GenerateRawImage

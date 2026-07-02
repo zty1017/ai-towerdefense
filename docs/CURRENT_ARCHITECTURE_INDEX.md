@@ -111,7 +111,7 @@ animation seed 已可用于后续图生视频。
 frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
 MapRuntimePackage v0.1 已作为首战节点运行时地图包入口，包含路径、塔位、目标、出生点和本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
-视频帧 / spritesheet / atlas 还未作为默认前端资产生成。
+MediaAtlasManifest v0.1 已作为 virtual_single_frame 入口接入前端、后端 mock API 和 demo evidence；真实视频帧 / spritesheet 仍未生成。
 ```
 
 ### 审查与交付

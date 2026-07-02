@@ -43,8 +43,12 @@ PATHS = {
     "runtime_package": ROOT / "examples/runtime_packages/mvp_demo.runtime_package.json",
     "frontend_media_manifest": ROOT
     / "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+    "frontend_media_atlas_manifest": ROOT
+    / "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
     "runtime_art_media_manifest": ROOT
     / "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+    "runtime_art_atlas_manifest": ROOT
+    / "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
     "map_visual_manifest": ROOT
     / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
     "handoff_audit": ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
@@ -74,6 +78,22 @@ STATIC_VALIDATION_COMMANDS = [
     {
         "name": "frontend_runtime_art_pack",
         "command": ["python3", "tools/media/validate_frontend_runtime_art_pack.py"],
+    },
+    {
+        "name": "frontend_media_atlas",
+        "command": [
+            "python3",
+            "tools/media/validate_media_atlas_manifest.py",
+            "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+        ],
+    },
+    {
+        "name": "frontend_runtime_art_atlas",
+        "command": [
+            "python3",
+            "tools/media/validate_media_atlas_manifest.py",
+            "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+        ],
     },
     {
         "name": "runtime_package_first_battle",
@@ -314,6 +334,32 @@ def media_manifest_summary(manifest: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def atlas_manifest_summary(manifest: dict[str, Any]) -> dict[str, Any]:
+    items = as_list(manifest.get("items"))
+    summary = as_obj(manifest.get("summary"))
+    return {
+        "schema_version": manifest.get("schema_version"),
+        "atlas_id": manifest.get("atlas_id"),
+        "atlas_mode": manifest.get("atlas_mode"),
+        "source_media_pack_id": manifest.get("source_media_pack_id"),
+        "animation_count": summary.get("animation_count") or len(items),
+        "frame_count": summary.get("frame_count")
+        or sum(len(as_list(as_obj(item).get("frames"))) for item in items),
+        "asset_count": summary.get("asset_count"),
+        "roles": as_obj(summary.get("roles")),
+        "sample_animations": [
+            {
+                "animation_id": item.get("animation_id"),
+                "asset_id": item.get("asset_id"),
+                "media_role": item.get("media_role"),
+                "frame_count": len(as_list(item.get("frames"))),
+            }
+            for item in items[:MAX_SAMPLE_ITEMS]
+            if isinstance(item, dict)
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -490,8 +536,10 @@ def collect_ai_compilation_link(
 def collect_assets_and_media(
     frontend_pack: dict[str, Any],
     frontend_media_manifest: dict[str, Any],
+    frontend_media_atlas_manifest: dict[str, Any],
     runtime_art_kit: dict[str, Any],
     runtime_art_media_manifest: dict[str, Any],
+    runtime_art_atlas_manifest: dict[str, Any],
     map_visual_manifest: dict[str, Any],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
@@ -511,6 +559,7 @@ def collect_assets_and_media(
             "asset_samples": [safe_asset_summary(asset) for asset in assets[:MAX_SAMPLE_ITEMS]],
         },
         "published_asset_media": media_manifest_summary(frontend_media_manifest),
+        "published_asset_atlas": atlas_manifest_summary(frontend_media_atlas_manifest),
         "runtime_art": {
             "kit_id": runtime_art_kit.get("kit_id"),
             "mode": runtime_art_kit.get("mode"),
@@ -524,6 +573,7 @@ def collect_assets_and_media(
                 if isinstance(effect, dict)
             ],
             "media_manifest": media_manifest_summary(runtime_art_media_manifest),
+            "atlas_manifest": atlas_manifest_summary(runtime_art_atlas_manifest),
         },
         "map_visual_reference": {
             "pack_id": map_visual_manifest.get("pack_id"),
@@ -646,7 +696,9 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("runtime_art_kit", PATHS["runtime_art_kit"]),
         ("runtime_package", PATHS["runtime_package"]),
         ("frontend_media_manifest", PATHS["frontend_media_manifest"]),
+        ("frontend_media_atlas_manifest", PATHS["frontend_media_atlas_manifest"]),
         ("runtime_art_media_manifest", PATHS["runtime_art_media_manifest"]),
+        ("runtime_art_atlas_manifest", PATHS["runtime_art_atlas_manifest"]),
         ("map_visual_manifest", PATHS["map_visual_manifest"]),
         ("handoff_audit", PATHS["handoff_audit"]),
         ("compiler_dossier", PATHS["compiler_dossier"]),
@@ -693,7 +745,9 @@ def build_evidence() -> dict[str, Any]:
         if isinstance(package, dict)
     ]
     frontend_media_manifest = load_json(PATHS["frontend_media_manifest"])
+    frontend_media_atlas_manifest = load_json(PATHS["frontend_media_atlas_manifest"])
     runtime_art_media_manifest = load_json(PATHS["runtime_art_media_manifest"])
+    runtime_art_atlas_manifest = load_json(PATHS["runtime_art_atlas_manifest"])
     map_visual_manifest = load_json(PATHS["map_visual_manifest"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -736,8 +790,10 @@ def build_evidence() -> dict[str, Any]:
         "assets_and_media": collect_assets_and_media(
             frontend_pack,
             frontend_media_manifest,
+            frontend_media_atlas_manifest,
             runtime_art_kit,
             runtime_art_media_manifest,
+            runtime_art_atlas_manifest,
             map_visual_manifest,
         ),
         "validation_summary": collect_validation_summary(
@@ -768,7 +824,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     runtime_pkg = as_obj(evidence.get("runtime_package"))
     assets = as_obj(as_obj(evidence.get("assets_and_media")).get("frontend_pack"))
     media = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_media"))
+    atlas = as_obj(as_obj(evidence.get("assets_and_media")).get("published_asset_atlas"))
     runtime_art = as_obj(as_obj(evidence.get("assets_and_media")).get("runtime_art"))
+    runtime_art_atlas = as_obj(runtime_art.get("atlas_manifest"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -850,7 +908,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Frontend mock pack：`{assets.get('pack_id')}`",
         f"- 资产数：`{assets.get('asset_count')}`，可玩：`{assets.get('playable_count')}`",
         f"- published PNG 媒体：`{media.get('media_count')}` 个，覆盖资产：`{media.get('asset_count')}`",
+        f"- published atlas：动画 `{atlas.get('animation_count')}` 个，帧 `{atlas.get('frame_count')}` 个，模式 `{atlas.get('atlas_mode')}`",
         f"- runtime art：美术对象 `{runtime_art.get('art_asset_count')}` 个，地图 token `{runtime_art.get('map_token_count')}` 个，程序化特效 `{runtime_art.get('procedural_effect_count')}` 个",
+        f"- runtime art atlas：动画 `{runtime_art_atlas.get('animation_count')}` 个，帧 `{runtime_art_atlas.get('frame_count')}` 个，模式 `{runtime_art_atlas.get('atlas_mode')}`",
         "",
         "## 4. 校验摘要",
         "",
@@ -977,7 +1037,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     assets_media = as_obj(evidence.get("assets_and_media"))
     frontend_pack = as_obj(assets_media.get("frontend_pack"))
     published_media = as_obj(assets_media.get("published_asset_media"))
+    published_atlas = as_obj(assets_media.get("published_asset_atlas"))
     runtime_art = as_obj(assets_media.get("runtime_art"))
+    runtime_art_atlas = as_obj(runtime_art.get("atlas_manifest"))
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     frontend_entry = as_obj(evidence.get("frontend_entry"))
@@ -1127,6 +1189,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="metric">{html_escape(published_media.get("media_count"))}</div>
           <p class="muted">published PNG，可由前端静态挂载读取。</p>
         </article>
+        <article class="card">
+          <div class="eyebrow">Atlas 动画</div>
+          <div class="metric">{html_escape(published_atlas.get("animation_count"))}</div>
+          <p class="muted">virtual atlas 动画入口；后续可替换为多帧 spritesheet。</p>
+        </article>
       </div>
     </section>
     <section>
@@ -1169,6 +1236,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         <article class="card"><div class="eyebrow">美术对象</div><div class="metric">{html_escape(runtime_art.get("art_asset_count"))}</div></article>
         <article class="card"><div class="eyebrow">地图 token</div><div class="metric">{html_escape(runtime_art.get("map_token_count"))}</div></article>
         <article class="card"><div class="eyebrow">程序化特效</div><div class="metric">{html_escape(runtime_art.get("procedural_effect_count"))}</div></article>
+        <article class="card"><div class="eyebrow">Runtime Atlas</div><div class="metric">{html_escape(runtime_art_atlas.get("animation_count"))}</div></article>
       </div>
     </section>
     <section>
