@@ -1,0 +1,284 @@
+{
+  "candidates": [
+    {
+      "acceptance_gates": [
+        "patch_schema_reviewed",
+        "overlay_png_regenerated_from_patched_runtime",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "battle_simulation_still_valid",
+        "explicit_promotion_report_updates_MapRuntimePackage"
+      ],
+      "after_summary": {
+        "path_route_count": 1,
+        "route_bounds": {
+          "max_x": 15,
+          "max_y": 4,
+          "min_x": 3,
+          "min_y": 2
+        }
+      },
+      "before_summary": {
+        "path_route_count": 1,
+        "route_bounds": {
+          "max_x": 15,
+          "max_y": 6,
+          "min_x": 1,
+          "min_y": 2
+        }
+      },
+      "node_id": "gray_lantern_station",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.png",
+      "patch_operations": [
+        {
+          "op": "replace_path_waypoints",
+          "reason": "Follow the painted road toward the station instead of preserving the old right-angle grid route.",
+          "route_id": "path_main_road",
+          "waypoints": [
+            {
+              "x": 15,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 4
+            },
+            {
+              "x": 11,
+              "y": 4
+            },
+            {
+              "x": 9,
+              "y": 4
+            },
+            {
+              "x": 7,
+              "y": 4
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 2
+            }
+          ]
+        },
+        {
+          "op": "move_objective",
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "reason": "Place the core marker on the visible station/outpost area.",
+          "target_id": "target_node_core"
+        },
+        {
+          "op": "move_objective",
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "reason": "Keep the optional beacon near the station-side landmark cluster.",
+          "target_id": "target_signal_beacon"
+        },
+        {
+          "op": "move_spawn_point",
+          "position": {
+            "x": 15,
+            "y": 4
+          },
+          "reason": "Preserve the right-edge enemy entry.",
+          "spawn_id": "spawn_path_main_road"
+        }
+      ],
+      "patch_strategy": "hybrid_runtime_reprojection",
+      "promotion_allowed_now": false,
+      "risk_level": "medium",
+      "source_runtime_package": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "status": "review_candidate"
+    },
+    {
+      "acceptance_gates": [
+        "patch_schema_reviewed",
+        "overlay_png_regenerated_from_patched_runtime",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "battle_simulation_still_valid",
+        "explicit_promotion_report_updates_MapRuntimePackage"
+      ],
+      "after_summary": {
+        "path_route_count": 2,
+        "route_bounds": {
+          "max_x": 17,
+          "max_y": 8,
+          "min_x": 1,
+          "min_y": 4
+        }
+      },
+      "before_summary": {
+        "path_route_count": 2,
+        "route_bounds": {
+          "max_x": 17,
+          "max_y": 8,
+          "min_x": 1,
+          "min_y": 2
+        }
+      },
+      "node_id": "lamp_wick_store",
+      "overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.png",
+      "patch_operations": [
+        {
+          "op": "replace_path_waypoints",
+          "reason": "Trace the broad visible central trail instead of a grid-like upper zigzag.",
+          "route_id": "path_wick_store_main_pipe",
+          "waypoints": [
+            {
+              "x": 17,
+              "y": 4
+            },
+            {
+              "x": 15,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 4
+            },
+            {
+              "x": 11,
+              "y": 4
+            },
+            {
+              "x": 9,
+              "y": 5
+            },
+            {
+              "x": 7,
+              "y": 5
+            },
+            {
+              "x": 5,
+              "y": 5
+            },
+            {
+              "x": 3,
+              "y": 5
+            },
+            {
+              "x": 1,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "op": "replace_path_waypoints",
+          "reason": "Keep the secondary route on the lower visible trail band.",
+          "route_id": "path_wick_store_service_lane",
+          "waypoints": [
+            {
+              "x": 17,
+              "y": 8
+            },
+            {
+              "x": 15,
+              "y": 8
+            },
+            {
+              "x": 13,
+              "y": 8
+            },
+            {
+              "x": 11,
+              "y": 7
+            },
+            {
+              "x": 9,
+              "y": 7
+            },
+            {
+              "x": 7,
+              "y": 7
+            },
+            {
+              "x": 5,
+              "y": 6
+            },
+            {
+              "x": 3,
+              "y": 6
+            },
+            {
+              "x": 2,
+              "y": 5
+            }
+          ]
+        },
+        {
+          "op": "move_objective",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "reason": "Attach the core inventory to the left-side depot approach.",
+          "target_id": "target_wick_store_core"
+        },
+        {
+          "op": "move_objective",
+          "position": {
+            "x": 2,
+            "y": 7
+          },
+          "reason": "Keep the coupler near the lower-left supply linkage.",
+          "target_id": "target_supply_line_coupler"
+        },
+        {
+          "op": "move_objective",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "reason": "Keep the oil shelf near the upper-left visible depot pad.",
+          "target_id": "target_lamp_oil_shelf"
+        }
+      ],
+      "patch_strategy": "runtime_path_reprojection",
+      "promotion_allowed_now": false,
+      "risk_level": "medium",
+      "source_runtime_package": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "status": "review_candidate"
+    },
+    {
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "reason": "No runtime patch candidate is proposed for this node; use topology-constrained prompt pack instead.",
+      "recommendation": "topology_constrained_regeneration_preferred",
+      "status": "skipped"
+    }
+  ],
+  "layout_plan_path": "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
+  "policy": [
+    "These are review-only patch candidates; they do not mutate MapRuntimePackage.",
+    "Candidates must be rendered into fresh overlay artifacts and reviewed before any runtime patch is accepted.",
+    "A later explicit promotion report is required before published visual layers or runtime packages change."
+  ],
+  "report_id": "mvp_runtime_map_patch_candidates",
+  "schema_version": "runtime_map_patch_candidates.v0.1",
+  "status": "review_only_patch_candidates_ready",
+  "summary": {
+    "candidate_count": 3,
+    "review_candidate_count": 2,
+    "skipped_count": 1,
+    "status_counts": {
+      "review_candidate": 2,
+      "skipped": 1
+    }
+  }
+}

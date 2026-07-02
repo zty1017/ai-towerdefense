@@ -1,0 +1,123 @@
+{
+  "layout_plan_path": "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
+  "pack_id": "mvp_topology_constrained_map_prompt_pack",
+  "policy": [
+    "Prompt briefs are developer/review artifacts; they are not player-visible content.",
+    "Generated images from this pack must re-enter candidate review, alignment review, overlay review, and promotion gates.",
+    "Prompt briefs must not override MapRuntimePackage topology unless a separate runtime patch is approved."
+  ],
+  "prompts": [
+    {
+      "negative_constraints": [
+        "no_disconnected_core_landmark",
+        "no_mechanical_right_angle_road",
+        "no_edge_only_build_slot_cluster"
+      ],
+      "node_id": "gray_lantern_station",
+      "primary_use": "fallback_if_runtime_reprojection_fails",
+      "prompt_brief": "Wide 16:9 empty fantasy lantern frontier map. The station/outpost must be a clear protected objective near the left upper side, with one natural road entering from the right and curving toward it. Use flat empty build clearings beside the road. No arrows, no units, no projectiles, no deployed towers, no UI.",
+      "recommendation_source": "hybrid_reproject_then_review",
+      "required_review_gates": [
+        "no_visible_arrows_text_units_projectiles",
+        "paths_visually_match_runtime_topology",
+        "objective_landmark_matches_runtime_policy",
+        "build_pads_distributed_near_routes",
+        "overlay_review_generated_before_promotion"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 9,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16
+        },
+        "objective_count": 2,
+        "path_route_count": 1,
+        "spawn_point_count": 1
+      },
+      "status": "fallback_prompt_ready",
+      "topology_policy": "station_core_near_runtime_objective_or_reprojected_station_core"
+    },
+    {
+      "negative_constraints": [
+        "no_grid_like_zigzag_paths",
+        "no_unclear_left_side_objective",
+        "no_duplicate_right_side_pad_cluster"
+      ],
+      "node_id": "lamp_wick_store",
+      "primary_use": "fallback_if_runtime_path_reprojection_fails",
+      "prompt_brief": "Wide 16:9 empty lamp-wick supply depot map. Preserve two readable routes entering from the right and leading toward distinct left-side depot landmarks. Use natural dirt trails and empty round build pads beside them. Avoid angular diagram roads. No arrows, no units, no projectiles, no deployed towers, no UI.",
+      "recommendation_source": "runtime_path_reprojection",
+      "required_review_gates": [
+        "no_visible_arrows_text_units_projectiles",
+        "paths_visually_match_runtime_topology",
+        "objective_landmark_matches_runtime_policy",
+        "build_pads_distributed_near_routes",
+        "overlay_review_generated_before_promotion"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "status": "fallback_prompt_ready",
+      "topology_policy": "preserve_two_right_to_left_routes"
+    },
+    {
+      "negative_constraints": [
+        "no_centered_primary_tower_objective",
+        "no_arrows_or_direction_symbols",
+        "no_units_or_projectiles",
+        "no_top_right_only_build_slot_cluster",
+        "no_paths_crossing_through_objective_platform"
+      ],
+      "node_id": "old_signal_tower",
+      "primary_use": "topology_constrained_regeneration",
+      "prompt_brief": "Wide 16:9 hand-painted fantasy strategy game terrain background, high three-quarter camera, empty playable map art, no UI. Scene: cold mountain ridge with ruined signal tower structures, snow patches, blue-violet echo light, broken antenna debris. Preserve gameplay topology: the protected core objective must read visually near the left-side lower-mid approach area, not as a huge centered tower; two enemy routes should enter from the right side and curve naturally toward the left-side objective. Show visible dirt or ridge paths matching those routes. Place empty flat build clearings distributed along the two routes, not clustered only in the top-right. No arrows, no text, no units, no projectiles, no UI, no deployed towers, no road lane markings. The map must be ready for runtime overlays.",
+      "recommendation_source": "topology_constrained_regeneration_preferred",
+      "required_review_gates": [
+        "no_visible_arrows_text_units_projectiles",
+        "paths_visually_match_runtime_topology",
+        "objective_landmark_matches_runtime_policy",
+        "build_pads_distributed_near_routes",
+        "overlay_review_generated_before_promotion"
+      ],
+      "runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "runtime_topology_summary": {
+        "build_slot_count": 12,
+        "grid": {
+          "cell_size": 64,
+          "height_cells": 10,
+          "projection": "pseudo3d_oblique",
+          "width_cells": 18
+        },
+        "objective_count": 3,
+        "path_route_count": 2,
+        "spawn_point_count": 2
+      },
+      "status": "prompt_ready",
+      "topology_policy": "preserve_existing_runtime_topology"
+    }
+  ],
+  "schema_version": "topology_constrained_map_prompt_pack.v0.1",
+  "status": "prompt_pack_ready",
+  "summary": {
+    "fallback_prompt_count": 2,
+    "primary_prompt_count": 1,
+    "prompt_count": 3,
+    "status_counts": {
+      "fallback_prompt_ready": 2,
+      "prompt_ready": 1
+    }
+  }
+}
