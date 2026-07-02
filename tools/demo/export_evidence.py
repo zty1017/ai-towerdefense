@@ -99,6 +99,8 @@ PATHS = {
     / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
     "generation_schedule_run_report": ROOT
     / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+    "generation_executor_run_request": ROOT
+    / "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -608,6 +610,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/scheduler/validate_generation_schedule_run_report.py",
             "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "generation_executor_run_request",
+        "command": [
+            "python3",
+            "tools/dev/validate_generation_executor_run_request.py",
+            "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
         ],
     },
     {
@@ -1626,6 +1636,63 @@ def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any
     }
 
 
+def collect_generation_executor_run_request(request: dict[str, Any]) -> dict[str, Any]:
+    source = as_obj(request.get("source"))
+    intent = as_obj(request.get("provider_execution_intent"))
+    budget = as_obj(request.get("execution_budget"))
+    gates = as_obj(request.get("required_gates"))
+    authority = as_obj(request.get("authority"))
+    safety = as_obj(request.get("request_builder_safety"))
+    return {
+        "request_id": request.get("request_id"),
+        "schema_version": request.get("schema_version"),
+        "source": {
+            "run_id": source.get("run_id"),
+            "schedule_item_id": source.get("schedule_item_id"),
+            "object_kind": source.get("object_kind"),
+            "object_ref": source.get("object_ref"),
+            "latency_class": source.get("latency_class"),
+            "guard_id": source.get("guard_id"),
+        },
+        "provider_execution_intent": {
+            "status": intent.get("status"),
+            "provider_mode": intent.get("provider_mode"),
+            "provider_profile": intent.get("provider_profile"),
+            "authorization_required": intent.get("authorization_required"),
+            "authorization_granted": intent.get("authorization_granted"),
+            "provider_call_performed_by_request_builder": intent.get(
+                "provider_call_performed_by_request_builder"
+            ),
+        },
+        "execution_budget": {
+            "attempt_count": budget.get("attempt_count"),
+            "max_attempts": budget.get("max_attempts"),
+            "remaining_attempts": budget.get("remaining_attempts"),
+            "fallback_ref": budget.get("fallback_ref"),
+        },
+        "input_ref_count": len(as_list(request.get("input_refs"))),
+        "context_ref_count": len(as_list(request.get("context_refs"))),
+        "required_gate_counts": {
+            "before_provider_execution": len(as_list(gates.get("before_provider_execution"))),
+            "after_provider_execution": len(as_list(gates.get("after_provider_execution"))),
+            "before_activation": len(as_list(gates.get("before_activation"))),
+        },
+        "evidence_boundary": {
+            "review_only": authority.get("review_only"),
+            "provider_call_allowed_by_request_builder": authority.get(
+                "provider_call_allowed_by_request_builder"
+            ),
+            "runtime_activation_allowed": authority.get("runtime_activation_allowed"),
+            "world_mutation_allowed": authority.get("world_mutation_allowed"),
+            "player_visible": authority.get("player_visible"),
+            "reads_env": safety.get("reads_env"),
+            "calls_provider": safety.get("calls_provider"),
+            "writes_world_state": safety.get("writes_world_state"),
+            "activates_runtime": safety.get("activates_runtime"),
+        },
+    }
+
+
 def collect_provider_artifact_staging(
     manifest: dict[str, Any],
     source_envelope: dict[str, Any],
@@ -2129,6 +2196,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
         ("generation_schedule_run_report", PATHS["generation_schedule_run_report"]),
         (
+            "generation_executor_run_request",
+            PATHS["generation_executor_run_request"],
+        ),
+        (
             "provider_artifact_staging_manifest",
             PATHS["provider_artifact_staging_manifest"],
         ),
@@ -2282,6 +2353,9 @@ def build_evidence() -> dict[str, Any]:
     )
     generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
     generation_schedule_run_report = load_json(PATHS["generation_schedule_run_report"])
+    generation_executor_run_request = load_json(
+        PATHS["generation_executor_run_request"]
+    )
     world_delta_transaction = load_json(PATHS["world_delta_transaction_example"])
     world_delta_transactions = [
         load_json(path) for path in STAGE_WORLD_DELTA_TRANSACTION_PATHS
@@ -2378,6 +2452,9 @@ def build_evidence() -> dict[str, Any]:
         "generation_scheduler": collect_generation_scheduler(
             generation_schedule_plan,
             generation_schedule_run_report,
+        ),
+        "generation_executor_run_request": collect_generation_executor_run_request(
+            generation_executor_run_request
         ),
         "provider_artifact_staging": collect_provider_artifact_staging(
             provider_artifact_staging_manifest,

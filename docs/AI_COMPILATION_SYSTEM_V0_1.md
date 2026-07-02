@@ -32,6 +32,7 @@ shared/schemas/ + tools/ + 专题文档
 - 本文可以定义概念、边界、生命周期和权限，但不能单独发明运行时字段。任何要被代码读取的字段，都必须落到 `shared/schemas/`、`tools/` 或对应专题文档。
 - 字段级冲突时，以当前 schema、校验器和构建脚本为准；概念文档只能触发后续 schema 修订，不能让实现绕过现有工具。
 - `Generation Scheduler` 是横切控制面，不拥有内容真值，也不替代 schema gate、semantic gate、simulation gate、media gate 或人工审查。
+- `GenerationExecutorRunRequest` 是 Scheduler guard 之后、provider adapter 之前的执行请求包，只能携带 refs、预算、授权门和必过 gates；它不是 provider 输出，不允许保存 prompt / provider 正文，也不允许写世界状态或激活 runtime。
 - `WorldStateDeltaTransaction` 是当前 `WorldStateDelta v0.1` 的事务语义外壳。除非 `world_state_delta.v0.1.schema.json` 或后续 schema 明确允许，不得把事务字段直接塞进现有 delta 顶层。
 - 所有世界状态变化必须落到当前 `operations[]` 白名单，不能通过通用 `effects[]`、自然语言 summary、raw JSON patch 或 provider trace 进入 `RunWorldState`。
 - `generated`、`reviewed`、`locked`、`published`、`active`、`certified` 等状态名称可以在不同对象线中使用，但必须能映射回本文第 6 节的生命周期，而不是各管线自行解释。
@@ -499,6 +500,7 @@ draft
 | locked manifest / runtime package | `reviewed` -> `locked` -> `published` -> `active` | runtime 只读已锁定或已发布内容。 |
 | 媒体资产 | `raw_media` -> `processed_media` -> `reviewed` -> `published_media` | 图片、视频帧、atlas 先后处理，再进入发布媒体池。 |
 | 地图 / 关卡模板 | `candidate_map` -> `validated` -> `certified` -> `published` / `active` | `certified` 表示地图逻辑、塔位、路径、预算、视觉包均已通过设计与机器校验，可进入认证模板池。 |
+| GenerationExecutorRunRequest | `prepared_pending_explicit_authorization` -> provider adapter | guard 后、provider adapter 前的脱敏执行请求包；不是 provider 输出，也不是 runtime-ready。 |
 
 `certified` 只用于需要被重复调度或作为 fallback 的高风险模板，例如地图、关卡、遭遇组合和重资产内容。普通玩家临时样品不必进入 `certified`，通过 `validated` / `reviewed` / `locked` 即可进入受限 runtime。
 
