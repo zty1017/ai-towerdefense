@@ -322,10 +322,13 @@ live executor guard
   -> explicit authorization
   -> provider adapter
   -> ProviderOutputEnvelope
+  -> ProviderArtifactStagingManifest
   -> validator / media gate / semantic gate
   -> promotion report
   -> runtime package or WorldStateDeltaTransaction
 ```
+
+`ProviderArtifactStagingManifest` 只登记从 envelope 输出 refs 转入本地审查暂存区的候选文件。它不是 runtime package，不写世界状态，也不能让 review-only artifact 被前端或战斗运行时直接消费。
 
 ## Campaign Router 接入
 

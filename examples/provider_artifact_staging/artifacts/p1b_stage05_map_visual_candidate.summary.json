@@ -1,0 +1,12 @@
+{
+  "schema_version": "review_candidate_summary.v0.1",
+  "artifact_id": "stage05_map_visual_candidate_summary",
+  "object_kind": "map_visual_reference",
+  "object_ref": "old_signal_tower",
+  "candidate_kind": "image_reference_summary",
+  "description": "A local candidate summary used to exercise the review-only staging manifest path before a concrete image or video file is promoted.",
+  "review_notes": [
+    "The candidate is local evidence only.",
+    "It must still pass media, semantic, and human review before promotion."
+  ]
+}
