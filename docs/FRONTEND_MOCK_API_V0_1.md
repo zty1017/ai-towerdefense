@@ -197,6 +197,37 @@ GET /api/sessions/{session_id}/generation-schedule
 
 - `latest_generation_schedule_run`: 当前 session 最近一次持久化 dry-run 运行记录；如果尚未执行，则为 `null`。
 
+### 获取战役路由游标
+
+```http
+GET /api/sessions/{session_id}/campaign-router
+```
+
+返回当前 session 的薄战役游标：
+
+- `campaign_router.current`: 当前应展示 / 游玩的节点。
+- `campaign_router.next`: 前视一步节点。
+- `campaign_router.lookahead`: 前视窗口，MVP 固定为最多 2 个节点。
+- `campaign_router.route`: 当前已审 MVP 路线表。
+- `campaign_router.scheduler_signal`: 最近一次调度 dry-run 与队列摘要。
+- `campaign_router.boundary`: 明确该接口不调用 provider、不写世界状态。
+
+该接口只仲裁“当前节点 -> 下一节点”和可用资产入口，不生成内容、不提交世界状态。节点内容仍以 battle config、runtime package、MapRuntimePackage 和 `WorldStateDeltaTransaction` 为事实源。
+
+### 请求下一节点预取
+
+```http
+POST /api/sessions/{session_id}/campaign-router/prefetch-next
+```
+
+该接口会：
+
+- 若当前 session 尚无 scheduler dry-run，则创建一条 fixture-backed dry-run 运行记录。
+- 处理一个 queued 调度项，模拟后台预取 worker 的最小闭环。
+- 返回 `prefetch_request`、`worker_step`、`generation_schedule_queue` 和更新后的 `campaign_router`。
+
+它仍然不会调用外部模型，不会读取 `.env`，不会创建新内容，也不会写入世界状态。MVP 中它用于证明玩家进入当前节点时，系统已经可以把下一节点的预生成 / fallback 检查挂到同一条运行时链路上。
+
 ### 创建调度 dry-run 运行记录
 
 ```http

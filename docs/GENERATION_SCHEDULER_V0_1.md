@@ -217,6 +217,33 @@ POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step
 
 这一步的目的不是完成真实生成，而是把后续 worker 的领取 / 处理 / 等待复核状态面跑通。
 
+## Campaign Router 接入
+
+当前后端已经提供最薄的战役路由层：
+
+```http
+GET /api/sessions/{session_id}/campaign-router
+POST /api/sessions/{session_id}/campaign-router/prefetch-next
+```
+
+`CampaignRouter` 不替代 Generation Scheduler，也不替代 `WorldStateDeltaTransaction`。它只根据当前 `RunWorldState.progress.phase`、已审战斗节点表和已审 runtime/map package 判断：
+
+- 当前节点。
+- 下一节点。
+- 前视窗口。
+- 下一节点资产是否已有 reviewed package。
+- 是否需要触发 scheduler dry-run 预取。
+
+`prefetch-next` 会在没有 session dry-run 时创建一条 `generation_schedule_run`，然后执行一个 dry-run worker step。它仍然保持以下边界：
+
+- 不读取 `.env`。
+- 不调用 provider。
+- 不创建新内容。
+- 不写世界状态。
+- 不激活预取候选。
+
+这一步的意义是把“玩家进入当前节点时，系统提前检查下一节点资产 / fallback”的运行时胶水接上，而不是把 Scheduler 升级成正式后台执行器。
+
 边界保持不变：
 
 - 不读取 `.env`。

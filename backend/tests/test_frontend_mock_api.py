@@ -262,6 +262,45 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert briefing["suggested_input"]
 
 
+def test_campaign_router_prefetches_next_node_without_provider_calls(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+
+    router_payload = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
+    router = router_payload["campaign_router"]
+    assert router["schema_version"] == "campaign_router.v0.1"
+    assert router["router_mode"] == "fixture_backed_thin_router"
+    assert router["current"]["node_id"] == "gray_lantern_station"
+    assert router["current"]["playable"] is True
+    assert router["next"]["node_id"] == "lamp_wick_store"
+    assert router["next"]["asset_handle"]["status"] == "ready"
+    assert router["scheduler_signal"]["latest_run_id"] is None
+    assert router["boundary"]["provider_calls"] is False
+    assert router["boundary"]["world_mutations"] is False
+
+    prefetch_payload = _payload(
+        client.post(f"/api/sessions/{sid}/campaign-router/prefetch-next")
+    )
+    request = prefetch_payload["prefetch_request"]
+    assert request["target_node_id"] == "lamp_wick_store"
+    assert request["created_generation_schedule_run"] is True
+    assert request["provider_call_count"] == 0
+    assert request["world_mutation_count"] == 0
+    assert prefetch_payload["worker_step"]["status"] == "processed"
+    assert prefetch_payload["generation_schedule_queue_item"]["status"] in {
+        "completed",
+        "waiting_review",
+    }
+    assert prefetch_payload["campaign_router"]["scheduler_signal"]["latest_run_id"]
+
+    _payload(client.post(f"/api/sessions/{sid}/battles/gray_lantern_station/results"))
+    after_battle_payload = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
+    after_router = after_battle_payload["campaign_router"]
+    assert after_router["run_progress"]["phase"] == "post_first_defense"
+    assert after_router["current"]["node_id"] == "lamp_wick_store"
+    assert after_router["next"]["node_id"] == "old_signal_tower"
+
+
 def test_battle_runtime_settlement_and_evidence_flow(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))
