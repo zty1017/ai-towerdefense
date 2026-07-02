@@ -269,6 +269,39 @@ GET /api/sessions/{session_id}/generation-schedule/queue
 
 该接口为后续真实 worker 领取任务预留形态；MVP mock 模式不会真正执行 `queued` 项，也不会调用外部模型。
 
+### 调度队列项状态流转
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail
+```
+
+请求体可选：
+
+```json
+{
+  "worker_id": "local-mock-worker",
+  "note": "short internal note"
+}
+```
+
+状态规则：
+
+- `claim`: 只允许 `queued -> claimed`。
+- `complete`: 允许 `queued|claimed -> completed`。
+- `fail`: 允许 `queued|claimed -> failed`。
+- `completed`、`fallback_ready`、`failed`、`blocked` 不能再被 claim。
+
+返回：
+
+- `generation_schedule_queue_item`: 被更新的队列项。
+- `generation_schedule_queue`: 更新后的最近队列摘要。
+
+非法状态流转返回 `409`。未知队列项返回 `404`。
+
+这些接口只更新本地 dry-run 队列状态，仍不会调用外部模型、不会写世界状态、不会激活预生成候选。它们的作用是给后续真实后台 worker 预留最小领取和回写接口。
+
 ### 获取大地图
 
 ```http

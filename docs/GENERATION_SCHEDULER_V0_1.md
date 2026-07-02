@@ -26,6 +26,9 @@
 - `POST /api/sessions/{session_id}/generation-schedule/runs`
 - `GET /api/sessions/{session_id}/generation-schedule/runs/latest`
 - `GET /api/sessions/{session_id}/generation-schedule/queue`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail`
 
 默认构建并校验：
 
@@ -141,6 +144,28 @@ GET /api/sessions/{session_id}/generation-schedule/queue
 ```
 
 它为后续真正 worker 领取任务预留形态，但当前不会自动执行 `queued` 项。
+
+## 队列状态流转
+
+当前 API 支持最小 worker 状态流转：
+
+```text
+queued -> claimed
+queued -> completed
+claimed -> completed
+queued -> failed
+claimed -> failed
+```
+
+对应接口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete
+POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail
+```
+
+这些接口只改本地队列状态和 item payload 中的 transition log，不触发 provider、不提交世界状态、不激活候选。非法状态流转返回 `409`，例如对已经 `completed` 的同步复用项再次 `claim`。
 
 边界保持不变：
 

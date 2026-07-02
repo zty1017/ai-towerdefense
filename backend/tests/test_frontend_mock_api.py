@@ -168,6 +168,42 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     assert {
         item["latency_class"] for item in latest_queue["generation_schedule_queue"]["items"]
     } >= {"background_prefetch", "background", "lazy"}
+    queued_item_id = next(
+        item["schedule_item_id"]
+        for item in latest_queue["generation_schedule_queue"]["items"]
+        if item["status"] == "queued"
+    )
+    claimed = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{queued_item_id}/claim",
+            json={"worker_id": "test-worker", "note": "claim for smoke test"},
+        )
+    )
+    assert claimed["generation_schedule_queue_item"]["status"] == "claimed"
+    assert claimed["generation_schedule_queue_item"]["claimed_by"] == "test-worker"
+    assert claimed["generation_schedule_queue"]["summary"]["status_counts"]["claimed"] == 1
+    assert claimed["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+
+    completed = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/queue/{queued_item_id}/complete",
+            json={"worker_id": "test-worker", "note": "complete for smoke test"},
+        )
+    )
+    assert completed["generation_schedule_queue_item"]["status"] == "completed"
+    assert completed["generation_schedule_queue"]["summary"]["status_counts"]["completed"] == 4
+    assert completed["generation_schedule_queue"]["summary"]["claimable_count"] == 3
+
+    completed_sync_item_id = next(
+        item["schedule_item_id"]
+        for item in completed["generation_schedule_queue"]["items"]
+        if item["dry_run_status"] == "passed"
+    )
+    conflict = client.post(
+        f"/api/sessions/{sid}/generation-schedule/queue/{completed_sync_item_id}/claim"
+    )
+    assert conflict.status_code == 409
+    assert "cannot claim" in conflict.json()["detail"]
 
     schedule_after_run = _payload(client.get(f"/api/sessions/{sid}/generation-schedule"))
     assert schedule_after_run["latest_generation_schedule_run"]["run_id"] == run["run_id"]
