@@ -289,6 +289,44 @@ explicit_provider_authorization_required
 
 这一步仍不读取 `.env`，不调用 provider，不写世界状态，不创建 runtime package，不激活 review-only 产物。它只是把“真实 provider 执行前必须有授权、产物 manifest、校验和晋升门”的形态接到 session 状态层和 evidence 中。
 
+## ProviderOutputEnvelope
+
+真实 provider 执行器的下一层落点是 `ProviderOutputEnvelope v0.1`：
+
+```text
+shared/schemas/provider_output_envelope.v0.1.schema.json
+tools/dev/validate_provider_output_envelope.py
+docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md
+```
+
+它定义“provider 调用之后允许保留什么”，而不是“如何调用 provider”。允许保存：
+
+- 脱敏 request / result summary。
+- source run、schedule item、object ref。
+- 本地 artifact refs。
+- schema / semantic / media / human review gate 状态。
+- activation gate 阻断原因。
+
+禁止保存：
+
+- prompt 正文。
+- provider 响应正文。
+- secret、token、API key。
+- full trace 或 raw JSON。
+- review-only 直接 runtime-ready 的声明。
+
+因此真实 executor 的最小顺序应是：
+
+```text
+live executor guard
+  -> explicit authorization
+  -> provider adapter
+  -> ProviderOutputEnvelope
+  -> validator / media gate / semantic gate
+  -> promotion report
+  -> runtime package or WorldStateDeltaTransaction
+```
+
 ## Campaign Router 接入
 
 当前后端已经提供最薄的战役路由层：
