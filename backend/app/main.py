@@ -62,7 +62,7 @@ def create_app() -> FastAPI:
 def _mount_frontend_mock_media(app: FastAPI) -> None:
     """Serve reviewed/generated mock media through the URLs in media manifests."""
     for namespace, media_dir in _STATIC_MEDIA_ROOTS.items():
-        for role_dir in ("processed", "generated", "atlas_frames"):
+        for role_dir in ("processed", "generated", "atlas_frames", "atlas_sheets"):
             directory = media_dir / role_dir
             if directory.exists():
                 app.mount(

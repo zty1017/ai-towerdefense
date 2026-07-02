@@ -102,12 +102,12 @@ game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json
 game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json
 ```
 
-这两份 manifest 当前已经进入 `spritesheet` 兼容模式：sprite 类角色由已发布 processed PNG 派生出确定性的 4 帧循环 frame sequence，静态角色仍保持 1 帧。它还不是最终图生视频关键帧成果，但已经让前端、后端 mock API、demo evidence 和 validator 都按多帧 atlas 合同工作。
+这两份 manifest 当前已经进入 `spritesheet` 模式：sprite 类角色由已发布 processed PNG 派生出确定性的 4 帧循环 frame sequence，并打包为实体 spritesheet PNG；静态角色仍保持 1 帧。它还不是最终图生视频关键帧成果，但已经让前端、后端 mock API、demo evidence 和 validator 都按多帧 atlas 合同工作。
 
 后续接入图生视频和关键帧时，应在同一合同上扩展：
 
 - `frames` 从当前 4 帧临时循环扩展为 8-16 帧真实关键帧。
-- `spritesheet` 从 `null` 变为真实 atlas PNG。
+- `spritesheet` 继续由真实关键帧重打包为 atlas PNG。
 - `playback.fps` 和 `loop` 按动画状态设置。
 - 单张 PNG fallback 仍保留，避免视频链路失败影响 MVP。
 

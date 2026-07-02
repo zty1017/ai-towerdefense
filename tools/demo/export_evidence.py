@@ -1023,9 +1023,11 @@ def collect_frontend_entry(frontend_pack: dict[str, Any]) -> dict[str, Any]:
             "/assets/frontend_mock/processed",
             "/assets/frontend_mock/generated",
             "/assets/frontend_mock/atlas_frames",
+            "/assets/frontend_mock/atlas_sheets",
             "/assets/frontend_runtime_mock/processed",
             "/assets/frontend_runtime_mock/generated",
             "/assets/frontend_runtime_mock/atlas_frames",
+            "/assets/frontend_runtime_mock/atlas_sheets",
             "/assets/map_visual_reference",
         ],
         "player_safe_boundary": {

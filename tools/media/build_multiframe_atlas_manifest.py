@@ -168,6 +168,51 @@ def build_frames(
     return frames
 
 
+def pack_animation_spritesheet(
+    *,
+    frames: list[dict[str, Any]],
+    output_dir: Path,
+    url_prefix: str,
+    asset_id: str,
+    role: str,
+    animation_state: str,
+) -> dict[str, Any]:
+    loaded: list[tuple[dict[str, Any], PngImage]] = []
+    for frame in frames:
+        local_path = Path(str(frame.get("local_path") or ""))
+        if not local_path.is_absolute():
+            local_path = ROOT / local_path
+        if not local_path.exists():
+            raise FileNotFoundError(f"missing atlas frame for spritesheet: {local_path}")
+        loaded.append((frame, read_png(local_path)))
+
+    width = sum(image.width for _, image in loaded)
+    height = max((image.height for _, image in loaded), default=1)
+    spritesheet = transparent_image(max(width, 1), max(height, 1))
+    cursor = 0
+    for frame, image in loaded:
+        for y in range(image.height):
+            for x in range(image.width):
+                src = (y * image.width + x) * 4
+                dst = (y * spritesheet.width + cursor + x) * 4
+                spritesheet.pixels[dst : dst + 4] = image.pixels[src : src + 4]
+        frame["x"] = cursor
+        frame["y"] = 0
+        cursor += image.width
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{slug(asset_id)}__{slug(role)}__{slug(animation_state)}__spritesheet.png"
+    output_path = output_dir / filename
+    write_png(output_path, spritesheet)
+    return {
+        "url": f"{url_prefix.rstrip('/')}/{filename}",
+        "local_path": rel(output_path),
+        "width": spritesheet.width,
+        "height": spritesheet.height,
+        "sha256": sha256_file(output_path),
+    }
+
+
 def build_atlas_manifest(
     media_manifest: dict[str, Any],
     *,
@@ -175,6 +220,8 @@ def build_atlas_manifest(
     atlas_id: str,
     frames_dir: Path,
     frames_url_prefix: str,
+    spritesheet_dir: Path,
+    spritesheet_url_prefix: str,
     animated_frame_count: int,
     animated_fps: int,
     created_at: str = DEFAULT_CREATED_AT,
@@ -222,6 +269,14 @@ def build_atlas_manifest(
         for frame in frames:
             frame["anchor"] = dict(anchor)
         animation_state = animation_state_for_role(role)
+        spritesheet = pack_animation_spritesheet(
+            frames=frames,
+            output_dir=spritesheet_dir,
+            url_prefix=spritesheet_url_prefix,
+            asset_id=asset_id,
+            role=role,
+            animation_state=animation_state,
+        )
         items.append(
             {
                 "animation_id": f"{asset_id}.{role}.{animation_state}",
@@ -236,7 +291,7 @@ def build_atlas_manifest(
                     "loop": frame_count > 1,
                     "frame_count": frame_count,
                 },
-                "spritesheet": None,
+                "spritesheet": spritesheet,
                 "frames": frames,
             }
         )
@@ -269,6 +324,8 @@ def main() -> int:
     parser.add_argument("--atlas-id", required=True, help="Atlas manifest id.")
     parser.add_argument("--frames-output-dir", required=True, help="Directory for generated frame PNGs.")
     parser.add_argument("--frames-url-prefix", required=True, help="Public URL prefix for generated frame PNGs.")
+    parser.add_argument("--spritesheet-output-dir", help="Directory for generated spritesheet PNGs.")
+    parser.add_argument("--spritesheet-url-prefix", help="Public URL prefix for generated spritesheet PNGs.")
     parser.add_argument("--animated-frame-count", type=int, default=4)
     parser.add_argument("--animated-fps", type=int, default=6)
     parser.add_argument("--created-at", default=DEFAULT_CREATED_AT)
@@ -288,6 +345,10 @@ def main() -> int:
     frames_dir = Path(args.frames_output_dir)
     if not frames_dir.is_absolute():
         frames_dir = ROOT / frames_dir
+    spritesheet_dir = Path(args.spritesheet_output_dir or args.frames_output_dir)
+    if not spritesheet_dir.is_absolute():
+        spritesheet_dir = ROOT / spritesheet_dir
+    spritesheet_url_prefix = args.spritesheet_url_prefix or args.frames_url_prefix
     source = load_json(manifest_path)
     if not isinstance(source, dict):
         raise SystemExit("input media manifest root must be an object")
@@ -297,6 +358,8 @@ def main() -> int:
         atlas_id=args.atlas_id,
         frames_dir=frames_dir,
         frames_url_prefix=args.frames_url_prefix,
+        spritesheet_dir=spritesheet_dir,
+        spritesheet_url_prefix=spritesheet_url_prefix,
         animated_frame_count=args.animated_frame_count,
         animated_fps=args.animated_fps,
         created_at=args.created_at,

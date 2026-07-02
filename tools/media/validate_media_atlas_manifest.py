@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -39,6 +40,10 @@ def scan_forbidden(value: Any, path: str, errors: list[str]) -> None:
     elif isinstance(value, list):
         for index, child in enumerate(value):
             scan_forbidden(child, f"{path}[{index}]", errors)
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def validate_atlas(atlas: dict[str, Any]) -> list[str]:
@@ -84,6 +89,31 @@ def validate_atlas(atlas: dict[str, Any]) -> list[str]:
         if not isinstance(frames, list) or not frames:
             errors.append(f"items[{index}].frames must be non-empty")
             frames = []
+        spritesheet = item.get("spritesheet")
+        if atlas.get("atlas_mode") == "spritesheet":
+            if not isinstance(spritesheet, dict):
+                errors.append(f"items[{index}].spritesheet must be object when atlas_mode is spritesheet")
+            else:
+                sheet_url = spritesheet.get("url")
+                if not isinstance(sheet_url, str) or not sheet_url.startswith("/assets/"):
+                    errors.append(f"items[{index}].spritesheet.url must start with /assets/")
+                sheet_local = spritesheet.get("local_path")
+                sheet_path: Path | None = None
+                if not isinstance(sheet_local, str) or not sheet_local:
+                    errors.append(f"items[{index}].spritesheet.local_path must be non-empty")
+                else:
+                    sheet_path = ROOT / sheet_local
+                    if not sheet_path.exists():
+                        errors.append(f"missing spritesheet local_path: {sheet_local}")
+                for key in ("width", "height"):
+                    value = spritesheet.get(key)
+                    if not isinstance(value, int) or value <= 0:
+                        errors.append(f"items[{index}].spritesheet.{key} must be positive integer")
+                sheet_sha = spritesheet.get("sha256")
+                if not isinstance(sheet_sha, str) or not SHA256_RE.match(sheet_sha):
+                    errors.append(f"items[{index}].spritesheet.sha256 must be lowercase sha256")
+                elif sheet_path and sheet_path.exists() and sha256_file(sheet_path) != sheet_sha:
+                    errors.append(f"items[{index}].spritesheet.sha256 does not match file")
         if playback.get("frame_count") != len(frames):
             errors.append(f"items[{index}].playback.frame_count must match frames length")
         for frame_index, frame in enumerate(frames):

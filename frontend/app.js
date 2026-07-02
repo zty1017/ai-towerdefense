@@ -38,9 +38,14 @@
       /^\/assets\/frontend_runtime_mock\/atlas_frames\//,
       "/game_data/media/frontend_runtime_mock/atlas_frames/",
     ],
+    [
+      /^\/assets\/frontend_runtime_mock\/atlas_sheets\//,
+      "/game_data/media/frontend_runtime_mock/atlas_sheets/",
+    ],
     [/^\/assets\/frontend_mock\/processed\//, "/game_data/media/frontend_mock/processed/"],
     [/^\/assets\/frontend_mock\/generated\//, "/game_data/media/frontend_mock/generated/"],
     [/^\/assets\/frontend_mock\/atlas_frames\//, "/game_data/media/frontend_mock/atlas_frames/"],
+    [/^\/assets\/frontend_mock\/atlas_sheets\//, "/game_data/media/frontend_mock/atlas_sheets/"],
     [/^\/assets\/map_visual_reference\//, "/game_data/media/map_visual_reference/"],
   ];
 
@@ -623,10 +628,44 @@
     return frame && frame.url ? assetUrl(frame.url) : "";
   }
 
+  function atlasFrameRef(assetId, role, runtime = false) {
+    const item = atlasItem(assetId, role, runtime);
+    const frames = Array.isArray(item && item.frames) ? item.frames : [];
+    const frame = frames[atlasFrameIndex(item)];
+    if (!frame) return null;
+    const sheet = item && item.spritesheet;
+    if (sheet && sheet.url) {
+      return {
+        url: assetUrl(sheet.url),
+        source: {
+          x: Number(frame.x) || 0,
+          y: Number(frame.y) || 0,
+          width: Math.max(1, Number(frame.width) || 1),
+          height: Math.max(1, Number(frame.height) || 1),
+        },
+      };
+    }
+    if (frame.url) return { url: assetUrl(frame.url), source: null };
+    return null;
+  }
+
   function atlasFrameUrls(assetId, role, runtime = false) {
     const item = atlasItem(assetId, role, runtime);
     const frames = Array.isArray(item && item.frames) ? item.frames : [];
-    return frames.map((frame) => (frame && frame.url ? assetUrl(frame.url) : "")).filter(Boolean);
+    const urls = [];
+    const sheet = item && item.spritesheet;
+    if (sheet && sheet.url) urls.push(assetUrl(sheet.url));
+    for (const frame of frames) {
+      if (frame && frame.url) urls.push(assetUrl(frame.url));
+    }
+    return [...new Set(urls.filter(Boolean))];
+  }
+
+  function mediaSpriteRef(assetId, role, runtime = false) {
+    const frameRef = atlasFrameRef(assetId, role, runtime);
+    if (frameRef) return frameRef;
+    const url = mediaUrl(assetId, role, runtime);
+    return url ? { url, source: null } : null;
   }
 
   function mediaPreloadUrls(assetId, role, runtime = false) {
@@ -2202,7 +2241,13 @@
       ctx.save();
       ctx.globalAlpha = valid ? 0.92 : 0.42;
       if (tool === "basic") {
-        drawSprite(ctx, mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true), p.x, p.y, 62);
+        drawSprite(
+          ctx,
+          mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true),
+          p.x,
+          p.y,
+          62,
+        );
       } else if (tool === "sample") {
         drawGroundGlow(ctx, p.x, p.y, "#9edcff", 0.3, 42);
         ctx.strokeStyle = "#9edcff";
@@ -2234,14 +2279,14 @@
     const objectives = mapObjectives();
     const core = objectives.core_target || { position: { x: 0, y: 6 } };
     const coreP = projectCell(core.position.x, core.position.y);
-    drawSprite(ctx, mediaUrl("objective_station_core", "objective_sprite", true), coreP.x, coreP.y, 92);
+    drawSprite(ctx, mediaSpriteRef("objective_station_core", "objective_sprite", true), coreP.x, coreP.y, 92);
     for (const target of objectives.optional_targets || []) {
       const p = projectCell(target.position.x, target.position.y);
-      drawSprite(ctx, mediaUrl("objective_signal_beacon", "objective_sprite", true), p.x, p.y, 72);
+      drawSprite(ctx, mediaSpriteRef("objective_signal_beacon", "objective_sprite", true), p.x, p.y, 72);
     }
     for (const defense of state.battle.defenses) {
       const p = projectCell(defense.x, defense.y);
-      drawSprite(ctx, mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true), p.x, p.y, 66);
+      drawSprite(ctx, mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true), p.x, p.y, 66);
       drawGroundGlow(ctx, p.x, p.y, "#ffd37a", 0.16, 34);
     }
     for (const trap of state.battle.traps) {
@@ -2286,7 +2331,7 @@
       const p = projectCell(enemy.x, enemy.y);
       drawGroundGlow(ctx, p.x, p.y, enemy.slowUntil > battle.elapsedMs ? "#9edcff" : "#352044", 0.26, 30);
       const assetId = enemy.type === "shadow_tide_shade" ? "enemy_shadow_tide_shade" : "enemy_shadow_tide_runner";
-      drawSprite(ctx, mediaUrl(assetId, "unit_sprite", true), p.x, p.y, enemy.type === "shadow_tide_shade" ? 58 : 54, enemy.hitFlashUntil > battle.elapsedMs);
+      drawSprite(ctx, mediaSpriteRef(assetId, "unit_sprite", true), p.x, p.y, enemy.type === "shadow_tide_shade" ? 58 : 54, enemy.hitFlashUntil > battle.elapsedMs);
       drawHealth(ctx, p.x, p.y - 62, enemy.hp / enemy.maxHp);
     }
   }
@@ -2339,7 +2384,7 @@
     ctx.save();
     ctx.globalAlpha = battle.hoverCell ? 0.36 : 0.72;
     if (battle.draggingTool === "basic") {
-      drawSprite(ctx, mediaUrl("defense_basic_lantern_barricade", "defense_sprite", true), x, y + 28, 68);
+      drawSprite(ctx, mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true), x, y + 28, 68);
     } else if (battle.draggingTool === "sample") {
       drawGroundGlow(ctx, x, y, "#9edcff", 0.42, 42);
       ctx.strokeStyle = "#9edcff";
@@ -2380,19 +2425,27 @@
     ctx.restore();
   }
 
-  function drawSprite(ctx, url, x, y, size, flash = false) {
-    const img = getImage(url);
+  function drawSprite(ctx, spriteRef, x, y, size, flash = false) {
+    const ref = typeof spriteRef === "string" ? { url: spriteRef, source: null } : spriteRef || {};
+    const img = getImage(ref.url);
+    const source = ref.source || null;
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,.32)";
     ctx.beginPath();
     ctx.ellipse(x, y + 4, size * 0.34, size * 0.13, 0, 0, Math.PI * 2);
     ctx.fill();
     if (img && img.complete && img.naturalWidth) {
-      const ratio = img.naturalWidth / img.naturalHeight;
+      const sourceWidth = source ? source.width : img.naturalWidth;
+      const sourceHeight = source ? source.height : img.naturalHeight;
+      const ratio = sourceWidth / sourceHeight;
       const w = ratio >= 1 ? size : size * ratio;
       const h = ratio >= 1 ? size / ratio : size;
       ctx.globalAlpha = flash ? 0.62 : 1;
-      ctx.drawImage(img, x - w / 2, y - h, w, h);
+      if (source) {
+        ctx.drawImage(img, source.x, source.y, source.width, source.height, x - w / 2, y - h, w, h);
+      } else {
+        ctx.drawImage(img, x - w / 2, y - h, w, h);
+      }
       if (flash) {
         ctx.globalCompositeOperation = "screen";
         ctx.fillStyle = "rgba(255,255,255,.42)";
