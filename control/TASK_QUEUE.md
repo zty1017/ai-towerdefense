@@ -50,6 +50,7 @@ P2：本阶段明确不做
 - 真实 LLM 世界状态变化烟测与语义门。
 - 媒体后处理 mock assets、processed PNG、animation seed manifest、spritesheet 兼容多帧 atlas manifest。
 - 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效。
+- 前端媒体 manifest、animation seed、atlas 和 runtime art kit 的后端加载入口已拆分到 `backend/app/services/frontend_media_service.py`。
 - MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
 - MapRuntimePackage 后端加载入口已拆分到 `backend/app/services/map_runtime_service.py`；`frontend_mock_service.py` 只在战斗配置和 runtime package 聚合响应中附带地图包。
 - 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。

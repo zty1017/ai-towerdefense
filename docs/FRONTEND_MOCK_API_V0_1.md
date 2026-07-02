@@ -21,6 +21,7 @@
 - 前端看到的是统一后端 API，不需要直接读仓库 JSON 文件。
 - 战斗运行时 mock 美术包是开发者预编译结果，不是玩家侧现场编译结果。
 - 当前动效资源已经接入 `MediaAtlasManifest v0.1` 的 `spritesheet` 模式：种子图已经生成，processed PNG 已派生为确定性多帧 atlas frame sequence，并打包为实体 spritesheet PNG；真实图生视频关键帧后续再替换。
+- 后端的媒体 manifest、animation seed、atlas 和 runtime art kit 加载由 `backend/app/services/frontend_media_service.py` 维护。
 - 塔防战斗地图优先消费 `MapRuntimePackage v0.1`。`battle_config` 仍保留为旧兼容和调试输入，但前端不应从地图图片反推路径、塔位、碰撞或目标。
 - 后端的地图运行时包加载由 `backend/app/services/map_runtime_service.py` 维护；`frontend_mock_service.py` 只在战斗配置和 runtime package 聚合响应中附带该包。
 

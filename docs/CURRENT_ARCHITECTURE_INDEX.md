@@ -175,7 +175,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - Agnes 生成的 22 张当前资产图片。
 - processed 透明 PNG 媒体包。
 - animation seed manifest。
-- 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest。
+- 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效与独立媒体 manifest；`backend/app/services/frontend_media_service.py` 是当前后端加载入口。
 - MapRuntimePackage v0.1：三张 MVP 战斗节点已有结构化运行时地图包，包含路径、塔位、目标、出生点和本地视觉层引用；`backend/app/services/map_runtime_service.py` 是当前后端加载入口。
 - MapCompilePackage v0.2：三个 MVP 战斗节点已有地图编译证据包，区分逻辑层、控制层、玩家可见渲染层、坐标回配和质量门。
 - 地图视觉层：玩家默认只消费 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图层；`agnes_02` 与 `battle_runtime_background.v0.2` 已降为失败/候选证据，控制图和参考图只用于 debug / evidence。

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import generation_scheduler_service, map_runtime_service
+from . import frontend_media_service, generation_scheduler_service, map_runtime_service
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -34,30 +34,6 @@ _FIRST_BATTLE_TRANSACTION = (
     / "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
 )
 _FRONTEND_MOCK_PACK = _REPO_ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json"
-_FRONTEND_RUNTIME_ART_KIT = (
-    _REPO_ROOT / "examples/frontend_mock/frontend_battle_mock_art_kit.v0.1.json"
-)
-_MEDIA_MANIFEST = (
-    _REPO_ROOT / "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json"
-)
-_ANIMATION_SEED_MANIFEST = (
-    _REPO_ROOT / "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json"
-)
-_MEDIA_ATLAS_MANIFEST = (
-    _REPO_ROOT / "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json"
-)
-_RUNTIME_ART_MEDIA_MANIFEST = (
-    _REPO_ROOT
-    / "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json"
-)
-_RUNTIME_ART_ANIMATION_SEED_MANIFEST = (
-    _REPO_ROOT
-    / "game_data/media/frontend_runtime_mock/frontend_runtime_art_animation_seed_manifest.v0.1.json"
-)
-_RUNTIME_ART_ATLAS_MANIFEST = (
-    _REPO_ROOT
-    / "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json"
-)
 _AUDIT_REPORT = _REPO_ROOT / "examples/review_packs/mvp_handoff_audit_report.v0.1.json"
 _REVIEW_DOSSIER = _REPO_ROOT / "examples/review_packs/mvp_compiler_review_dossier.v0.1.json"
 _CONTEXT_PACKAGE_EXAMPLE = (
@@ -99,34 +75,6 @@ def _load_frontend_pack() -> dict[str, Any]:
     return _load_json(_FRONTEND_MOCK_PACK)
 
 
-def _load_runtime_art_kit() -> dict[str, Any]:
-    return _load_json(_FRONTEND_RUNTIME_ART_KIT)
-
-
-def _load_media_manifest() -> dict[str, Any]:
-    return _load_json(_MEDIA_MANIFEST)
-
-
-def _load_animation_seed_manifest() -> dict[str, Any]:
-    return _load_json(_ANIMATION_SEED_MANIFEST)
-
-
-def _load_media_atlas_manifest() -> dict[str, Any]:
-    return _load_json(_MEDIA_ATLAS_MANIFEST)
-
-
-def _load_runtime_art_media_manifest() -> dict[str, Any]:
-    return _load_json(_RUNTIME_ART_MEDIA_MANIFEST)
-
-
-def _load_runtime_art_animation_seed_manifest() -> dict[str, Any]:
-    return _load_json(_RUNTIME_ART_ANIMATION_SEED_MANIFEST)
-
-
-def _load_runtime_art_atlas_manifest() -> dict[str, Any]:
-    return _load_json(_RUNTIME_ART_ATLAS_MANIFEST)
-
-
 def _rel(path: Path) -> str:
     return path.relative_to(_REPO_ROOT).as_posix()
 
@@ -148,18 +96,6 @@ def _load_ai_compile_core_artifacts() -> dict[str, Any]:
         "fact_entry": _load_json(_FACT_ENTRY_EXAMPLE),
         "compiled_game_object_package": _load_json(_CGOP_EXAMPLE),
         "world_delta_transaction": _load_json(_FIRST_BATTLE_TRANSACTION),
-    }
-
-
-def _runtime_art_payload() -> dict[str, Any]:
-    return {
-        "runtime_art_kit": _load_runtime_art_kit(),
-        "runtime_art_media_manifest": _load_runtime_art_media_manifest(),
-        "runtime_art_animation_seed_manifest": _load_runtime_art_animation_seed_manifest(),
-        "runtime_art_atlas_manifest": _load_runtime_art_atlas_manifest(),
-        "runtime_art_pipeline_status": (
-            "developer_compiled_virtual_atlas_ready_video_frames_not_generated"
-        ),
     }
 
 
@@ -333,11 +269,8 @@ def get_frontend_mock_pack(session_id: str) -> dict[str, Any]:
         "mode": "frontend_mock_fixture",
         "pack": _load_frontend_pack(),
         "ai_compile_core_artifacts": _load_ai_compile_core_artifacts(),
-        "media_manifest": _load_media_manifest(),
-        "animation_seed_manifest": _load_animation_seed_manifest(),
-        "media_atlas_manifest": _load_media_atlas_manifest(),
-        "animation_pipeline_status": "virtual_atlas_ready_video_frames_not_generated",
-        **_runtime_art_payload(),
+        **frontend_media_service.frontend_media_payload(),
+        **frontend_media_service.runtime_art_payload(),
     }
 
 
@@ -345,7 +278,7 @@ def get_runtime_art_kit(session_id: str) -> dict[str, Any]:
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
-        **_runtime_art_payload(),
+        **frontend_media_service.runtime_art_payload(),
     }
 
 
@@ -361,7 +294,7 @@ def get_animation_seeds(session_id: str) -> dict[str, Any]:
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
-        "animation_seed_manifest": _load_animation_seed_manifest(),
+        "animation_seed_manifest": frontend_media_service.load_animation_seed_manifest(),
         "animation_pipeline_status": "seed_images_ready_video_frames_not_generated",
     }
 
@@ -405,11 +338,8 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
         "map_runtime_package": map_runtime_package,
         "toolbar_assets": _battle_toolbar_assets(pack),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
-        "media_manifest": _load_media_manifest(),
-        "animation_seed_manifest": _load_animation_seed_manifest(),
-        "media_atlas_manifest": _load_media_atlas_manifest(),
-        "animation_pipeline_status": "virtual_atlas_ready_video_frames_not_generated",
-        **_runtime_art_payload(),
+        **frontend_media_service.frontend_media_payload(),
+        **frontend_media_service.runtime_art_payload(),
     }
 
 
@@ -425,11 +355,8 @@ def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
         "runtime_package": _load_json(path),
         "map_runtime_package": map_runtime_service.load_map_runtime_package_optional(node_id),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
-        "media_manifest": _load_media_manifest(),
-        "animation_seed_manifest": _load_animation_seed_manifest(),
-        "media_atlas_manifest": _load_media_atlas_manifest(),
-        "animation_pipeline_status": "virtual_atlas_ready_video_frames_not_generated",
-        **_runtime_art_payload(),
+        **frontend_media_service.frontend_media_payload(),
+        **frontend_media_service.runtime_art_payload(),
     }
 
 
