@@ -25,7 +25,13 @@ _INITIAL_RUN_STATE = _REPO_ROOT / "examples/run_world_states/demo_initial.run_wo
 _INITIAL_MAP = _REPO_ROOT / "game_data/demo/initial_map.json"
 _FIRST_CRISIS_NODE = _REPO_ROOT / "game_data/demo/first_crisis_node.json"
 _FIRST_BATTLE_CONFIG = _REPO_ROOT / "game_data/demo/first_battle_config.json"
-_FIRST_BATTLE_DELTA = _REPO_ROOT / "examples/world_deltas/first_battle_result.world_delta.json"
+_FIRST_BATTLE_DELTA = (
+    _REPO_ROOT / "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json"
+)
+_FIRST_BATTLE_TRANSACTION = (
+    _REPO_ROOT
+    / "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+)
 _FRONTEND_MOCK_PACK = _REPO_ROOT / "examples/frontend_mock/frontend_mock_pack.v0.1.json"
 _FRONTEND_RUNTIME_ART_KIT = (
     _REPO_ROOT / "examples/frontend_mock/frontend_battle_mock_art_kit.v0.1.json"
@@ -144,6 +150,7 @@ def _core_artifact_refs() -> dict[str, str]:
         "context_package": _rel(_CONTEXT_PACKAGE_EXAMPLE),
         "fact_entry": _rel(_FACT_ENTRY_EXAMPLE),
         "compiled_game_object_package": _rel(_CGOP_EXAMPLE),
+        "world_delta_transaction": _rel(_FIRST_BATTLE_TRANSACTION),
     }
 
 
@@ -154,6 +161,7 @@ def _load_ai_compile_core_artifacts() -> dict[str, Any]:
         "context_package": _load_json(_CONTEXT_PACKAGE_EXAMPLE),
         "fact_entry": _load_json(_FACT_ENTRY_EXAMPLE),
         "compiled_game_object_package": _load_json(_CGOP_EXAMPLE),
+        "world_delta_transaction": _load_json(_FIRST_BATTLE_TRANSACTION),
     }
 
 
@@ -471,6 +479,7 @@ def record_battle_result(
         raise FixtureNotFoundError(node_id)
     battle_config = _load_json(_FIRST_BATTLE_CONFIG)
     delta = _load_json(_FIRST_BATTLE_DELTA)
+    transaction = _load_json(_FIRST_BATTLE_TRANSACTION)
     previous_state = _load_campaign_state(session_id)
     next_state = _apply_delta_to_state(previous_state, delta)
     submitted = result if isinstance(result, dict) else {}
@@ -483,6 +492,7 @@ def record_battle_result(
         "sample_performance": "样品对高速敌潮有效，但稳定性偏低，适合进入后续正式研发。",
         "npc_feedback": "在场技师记录了样品迟滞效果，并建议保留战斗数据。",
         "world_delta": delta,
+        "world_delta_transaction": transaction,
         "core_artifact_refs": {
             **_core_artifact_refs(),
             "world_delta": _rel(_FIRST_BATTLE_DELTA),

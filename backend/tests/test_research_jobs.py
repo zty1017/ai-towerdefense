@@ -109,6 +109,9 @@ def test_create_proposal_happy_path(client):
     assert metadata["core_artifact_refs"]["compiled_game_object_package"].endswith(
         "mvp_light_snare.compiled_game_object_package.json"
     )
+    assert metadata["core_artifact_refs"]["world_delta_transaction"].endswith(
+        "first_battle_result.world_delta_transaction.json"
+    )
     # Player-facing text must stay in world language.
     _assert_no_forbidden_terms(
         body["display_name"],
