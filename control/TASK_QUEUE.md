@@ -1162,6 +1162,43 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-28 Provider artifact review 输出导入
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+允许开发期 / 外部工具先生成本地 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport 文件，再由后端 worker API 校验并导入 generation_artifact_ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-artifact-review-output`
+- 请求体支持 `staging_path` 与 `promotion_report_path`。
+- 只接受仓库内或 `/tmp` 下的本地 JSON 文件，禁止 `.env`。
+- 导入前检查敏感键：`raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等。
+- 导入前重新校验 `ProviderArtifactStagingManifest` 与 `ProviderArtifactPromotionReport`。
+- 导入前要求同一 session / latest run / schedule item 已存在匹配 `source_envelope_id` 的 `ProviderOutputEnvelope` ledger entry。
+- 导入前检查 promotion report 的 `source_staging_ref` 指向本次导入的 staging 文件。
+- 导入前检查 promotion report 的 `source_staging_id` 与 staging `manifest_id` 一致。
+- 导入前检查 `reviewed_artifacts[].staged_artifact_id` 均能在 staging `staged_artifacts[].artifact_id` 中找到。
+
+当前结论：
+
+- 这是外部 media gate / semantic gate / 人工审查产物的后端验收入账路径，不是真 provider 调用入口。
+- 导入本身不读取 `.env`、不调用 provider、不发布素材、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live provider smoke 可以先由工具层 runner 生成本地 receipt/envelope，再由外部工具生成 staging/promotion review 文件，最后通过该接口导入并等待显式 promotion / runtime package / world transaction builder。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_review_output_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_review_output_import python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

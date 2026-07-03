@@ -152,3 +152,11 @@ class GenerationScheduleQueueTransitionRequest(BaseModel):
         default=None,
         description="Optional local ProviderOutputEnvelope JSON path.",
     )
+    staging_path: Optional[str] = Field(
+        default=None,
+        description="Optional local ProviderArtifactStagingManifest JSON path.",
+    )
+    promotion_report_path: Optional[str] = Field(
+        default=None,
+        description="Optional local ProviderArtifactPromotionReport JSON path.",
+    )
