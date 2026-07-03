@@ -1434,6 +1434,43 @@ rg -n "provider_runner_handoff|runner handoff|fixture_roundtrip_covered|review_o
 git diff --check
 ```
 
+### P1-B-36 Generation Scheduler background executor tick
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 Generation Scheduler review-only background executor tick API，作为正式后台执行器 / daemon loop 前的稳定最小壳：默认按小预算复用现有 dispatcher drain，把 eligible queued provider-review 项推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，同时保持零 live provider 调用、零 staging、零 promotion、零队列完成、零世界写入、零 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-executor-tick`
+- 默认 `max_items = 2`，单次上限 8。
+- 内部复用 `run_review_only_dispatcher_drain`，不复制 guard、authorization、runner 或 ledger 校验逻辑。
+- 返回 `worker_step.worker_mode = review_only_background_executor_tick`、底层 `dispatcher_worker_step`、`dispatcher_steps`、queue、worker cache、artifact ledger 和 `generation_prefetch_cache`。
+- `background_executor_tick.safety` 明确记录不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.background_executor_tick` 摘要，并在 `summary.md` / `index.html` 展示 tick 状态、默认预算和安全边界。
+- `examples/worker_task_packs/p1b_scheduler_background_executor_tick.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是正式后台执行器 / daemon loop 前的 API 形状与吞吐预算壳，不是真 provider worker。
+- 后续可以把触发方式从手动 API 换成定时 / 事件驱动，但仍必须保留 ProviderOutputEnvelope、staging / promotion gate、runtime package gate 和 WorldStateDeltaTransaction gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_scheduler_background_executor_tick.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_tick python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_tick_tools python3 -m py_compile tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/scheduler_background_tick_evidence
+rg -n "background_executor_tick|review_only_tick_api_ready|run-review-only-background-executor-tick" /tmp/scheduler_background_tick_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

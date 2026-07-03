@@ -447,6 +447,25 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-disp
 
 drain 的边界与单步 dispatcher 相同：只登记 executor request、provider authorization、adapter receipt 和 ProviderOutputEnvelope；不调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。它是正式后台执行器的调度壳和吞吐量控制面雏形，不是 live provider worker。
 
+后端还提供更接近正式 daemon loop 的 review-only background executor tick：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-executor-tick
+```
+
+该入口是 `run-review-only-dispatcher-drain` 的稳定外壳。它默认 `max_items = 2`，单次上限 8，适合由 Studio、脚本或未来后台循环按小预算触发；内部仍复用 drain，不复制 guard、authorization、runner 或 ledger 校验逻辑。
+
+tick 返回 `worker_step.worker_mode = review_only_background_executor_tick`、底层 `dispatcher_worker_step`、`dispatcher_steps`、queue、worker cache、artifact ledger 和最新 `generation_prefetch_cache` 摘要。它明确声明以下安全边界：
+
+- 不读取 `.env`。
+- 不调用 provider。
+- 不 staging，不 promotion。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
+因此它是正式后台执行器 / daemon loop 前的 API 形状和吞吐预算壳，不是 live provider worker，也不是内容发布入口。后续真正后台执行器可以把触发方式从手动 API 换成定时 / 事件驱动，但仍必须保留同一授权链、ProviderOutputEnvelope、staging / promotion gate、runtime package gate 和 WorldStateDeltaTransaction gate。
+
 后端还提供只读预取缓存视图：
 
 ```text
