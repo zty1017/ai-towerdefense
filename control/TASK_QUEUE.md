@@ -1508,6 +1508,44 @@ rg -n "background_handoff_tick|review_only_handoff_tick_ready|run-review-only-ba
 git diff --check
 ```
 
+### P1-B-38 Provider adapter runner handoff outbox
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+把 background handoff tick 返回的 runner_handoffs 固化为可验证的 ProviderAdapterRunnerHandoffOutbox v0.1：新增 schema、validator、后端 outbox wrapper、测试和 evidence 摘要，使外部 runner / worker 可以消费一个机器可校验的批量交接单；不得调用 provider、不得读取 .env、不得运行 provider adapter、不得 staging/promotion、不得 complete queue item、不得写世界状态、不得激活 runtime。
+```
+
+已落地：
+
+- `shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json`
+- `tools/dev/validate_provider_adapter_runner_handoff_outbox.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick` 返回 `provider_adapter_runner_handoff_outbox`。
+- outbox 记录 `source`、`safety`、`runner_handoff_count`、`runner_handoffs[]` 和 `import_contract`。
+- validator 会递归拒绝 secret、API key、prompt 正文、provider response、raw JSON / trace、unreviewed content 等敏感内容，并检查 handoff source、授权 ref、建议 `/tmp` 路径、live 模板显式授权和 import 回灌合同。
+- `tools/demo/export_evidence.py` 新增 outbox schema / validator / task pack 摘要，并在 `summary.md` / `index.html` 展示 `provider_adapter_runner_handoff_outbox_v0_1_ready`。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- outbox 是外部 runner 的批量交接单，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。
+- live 模板可以存在，但必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径。
+- 外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_outbox_evidence
+rg -n "provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox" /tmp/provider_runner_handoff_outbox_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

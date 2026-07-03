@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json",
+  "title": "ProviderAdapterRunnerHandoffOutbox v0.1",
+  "description": "A review-only outbox containing redacted provider adapter runner handoffs exported by the Generation Scheduler. It is an external runner handoff artifact, not a provider execution result or runtime activation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "outbox_id",
+    "created_at",
+    "handoff_mode",
+    "review_only",
+    "source",
+    "safety",
+    "runner_handoff_count",
+    "runner_handoffs",
+    "import_contract"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "provider_adapter_runner_handoff_outbox.v0.1"
+    },
+    "outbox_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "handoff_mode": {
+      "type": "string",
+      "const": "external_runner_required"
+    },
+    "review_only": { "type": "boolean", "const": true },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "run_id",
+        "worker_mode",
+        "max_items",
+        "dispatched_count"
+      ],
+      "properties": {
+        "session_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "worker_mode": {
+          "type": "string",
+          "const": "review_only_background_handoff_tick"
+        },
+        "max_items": { "type": "integer", "minimum": 1 },
+        "dispatched_count": { "type": "integer", "minimum": 0 },
+        "stop_reason": { "type": ["string", "null"] }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "api_reads_env",
+        "api_calls_provider",
+        "api_runs_provider_adapter",
+        "api_stages_provider_artifacts",
+        "api_promotes_provider_artifacts",
+        "api_completes_queue_items",
+        "api_writes_world_state",
+        "api_activates_runtime",
+        "prompt_body_included",
+        "provider_response_body_included",
+        "live_templates_require_external_explicit_authorization"
+      ],
+      "properties": {
+        "api_reads_env": { "type": "boolean", "const": false },
+        "api_calls_provider": { "type": "boolean", "const": false },
+        "api_runs_provider_adapter": { "type": "boolean", "const": false },
+        "api_stages_provider_artifacts": { "type": "boolean", "const": false },
+        "api_promotes_provider_artifacts": { "type": "boolean", "const": false },
+        "api_completes_queue_items": { "type": "boolean", "const": false },
+        "api_writes_world_state": { "type": "boolean", "const": false },
+        "api_activates_runtime": { "type": "boolean", "const": false },
+        "prompt_body_included": { "type": "boolean", "const": false },
+        "provider_response_body_included": { "type": "boolean", "const": false },
+        "live_templates_require_external_explicit_authorization": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "runner_handoff_count": { "type": "integer", "minimum": 0 },
+    "runner_handoffs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/runner_handoff" }
+    },
+    "import_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint",
+        "method",
+        "required_body_fields",
+        "post_import_gate"
+      ],
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "const": "/api/sessions/{session_id}/generation-schedule/workers/import-provider-adapter-runner-output"
+        },
+        "method": { "type": "string", "const": "POST" },
+        "required_body_fields": {
+          "type": "array",
+          "minItems": 4,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "post_import_gate": {
+          "type": "string",
+          "const": "provider_artifact_staging_or_promotion_review_required"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "runner_handoff": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "schema_version",
+        "created_at",
+        "handoff_mode",
+        "review_only",
+        "source",
+        "runner_inputs",
+        "suggested_paths",
+        "command_templates",
+        "import_after_runner",
+        "safety"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "provider_adapter_runner_handoff.v0.1"
+        },
+        "created_at": { "type": "string", "minLength": 1 },
+        "handoff_mode": {
+          "type": "string",
+          "const": "external_runner_required"
+        },
+        "review_only": { "type": "boolean", "const": true },
+        "source": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "session_id",
+            "run_id",
+            "schedule_item_id",
+            "authorization_ref"
+          ],
+          "properties": {
+            "session_id": { "type": "string", "minLength": 1 },
+            "run_id": { "type": "string", "minLength": 1 },
+            "schedule_item_id": { "type": "string", "minLength": 1 },
+            "authorization_ref": { "type": "string", "minLength": 1 }
+          }
+        },
+        "runner_inputs": { "type": "object" },
+        "suggested_paths": { "type": "object" },
+        "command_templates": { "type": "object" },
+        "import_after_runner": { "type": "object" },
+        "safety": { "type": "object" }
+      }
+    }
+  }
+}

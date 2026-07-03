@@ -3501,6 +3501,55 @@ def run_review_only_background_handoff_tick(
         "promotion_performed": False,
         "queue_completed_count": base_step.get("queue_completed_count", 0),
     }
+    outbox_safety = {
+        "api_reads_env": False,
+        "api_calls_provider": False,
+        "api_runs_provider_adapter": False,
+        "api_stages_provider_artifacts": False,
+        "api_promotes_provider_artifacts": False,
+        "api_completes_queue_items": False,
+        "api_writes_world_state": False,
+        "api_activates_runtime": False,
+        "prompt_body_included": False,
+        "provider_response_body_included": False,
+        "live_templates_require_external_explicit_authorization": True,
+    }
+    outbox = {
+        "schema_version": "provider_adapter_runner_handoff_outbox.v0.1",
+        "outbox_id": _safe_runner_handoff_slug(
+            "provider_adapter_runner_handoff_outbox",
+            str(base_step.get("run_id") or "no_run"),
+            worker_id,
+        ),
+        "created_at": now_iso(),
+        "handoff_mode": "external_runner_required",
+        "review_only": True,
+        "source": {
+            "session_id": session_id,
+            "run_id": str(base_step.get("run_id") or ""),
+            "worker_mode": "review_only_background_handoff_tick",
+            "max_items": max_items,
+            "dispatched_count": int(base_step.get("dispatched_count", 0) or 0),
+            "stop_reason": base_step.get("stop_reason"),
+        },
+        "safety": outbox_safety,
+        "runner_handoff_count": len(runner_handoffs),
+        "runner_handoffs": runner_handoffs,
+        "import_contract": {
+            "endpoint": (
+                "/api/sessions/{session_id}/generation-schedule/workers/"
+                "import-provider-adapter-runner-output"
+            ),
+            "method": "POST",
+            "required_body_fields": [
+                "schedule_item_id",
+                "authorization_ref",
+                "receipt_path",
+                "envelope_path",
+            ],
+            "post_import_gate": "provider_artifact_staging_or_promotion_review_required",
+        },
+    }
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
@@ -3510,20 +3559,9 @@ def run_review_only_background_handoff_tick(
             "background_executor_tick": tick.get("background_executor_tick"),
             "runner_handoff_count": len(runner_handoffs),
             "handoff_mode": "external_runner_required",
-            "safety": {
-                "api_reads_env": False,
-                "api_calls_provider": False,
-                "api_runs_provider_adapter": False,
-                "api_stages_provider_artifacts": False,
-                "api_promotes_provider_artifacts": False,
-                "api_completes_queue_items": False,
-                "api_writes_world_state": False,
-                "api_activates_runtime": False,
-                "prompt_body_included": False,
-                "provider_response_body_included": False,
-                "live_templates_require_external_explicit_authorization": True,
-            },
+            "safety": outbox_safety,
         },
+        "provider_adapter_runner_handoff_outbox": outbox,
         "runner_handoffs": runner_handoffs,
         "dispatcher_steps": tick.get("dispatcher_steps", []),
         "generation_schedule_run": tick.get("generation_schedule_run"),
