@@ -30,7 +30,39 @@ _MAP_RENDER_PLAN_BY_NODE = {
             / "examples/semantic_visual_consistency_reports/"
             "mvp_first_battle.semantic_visual_consistency_report.json"
         ),
-    }
+    },
+    "lamp_wick_store": {
+        "map_style_pack": (
+            _REPO_ROOT
+            / "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json"
+        ),
+        "procedural_map_render_plan": (
+            _REPO_ROOT
+            / "examples/map_render_plans/"
+            "mvp_wick_store_pressure.procedural_map_render_plan.json"
+        ),
+        "semantic_visual_consistency_report": (
+            _REPO_ROOT
+            / "examples/semantic_visual_consistency_reports/"
+            "mvp_wick_store_pressure.semantic_visual_consistency_report.json"
+        ),
+    },
+    "old_signal_tower": {
+        "map_style_pack": (
+            _REPO_ROOT
+            / "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json"
+        ),
+        "procedural_map_render_plan": (
+            _REPO_ROOT
+            / "examples/map_render_plans/"
+            "mvp_old_signal_tower_pressure.procedural_map_render_plan.json"
+        ),
+        "semantic_visual_consistency_report": (
+            _REPO_ROOT
+            / "examples/semantic_visual_consistency_reports/"
+            "mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json"
+        ),
+    },
 }
 
 

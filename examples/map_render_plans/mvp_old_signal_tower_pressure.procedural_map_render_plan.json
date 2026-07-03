@@ -1,0 +1,788 @@
+{
+  "schema_version": "procedural_map_render_plan.v0.1",
+  "plan_id": "render_plan_old_signal_tower_v0_1",
+  "map_runtime_package_id": "map_pkg_old_signal_tower_v0_1",
+  "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "old_signal_tower",
+  "created_at": "2026-07-04T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "map_style_pack"
+  },
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "safe_area": {
+      "left": 32,
+      "top": 32,
+      "right": 32,
+      "bottom": 32
+    }
+  },
+  "coordinate_projection": {
+    "projection": "pseudo3d_oblique",
+    "grid": {
+      "width_cells": 18,
+      "height_cells": 10,
+      "cell_size": 64
+    },
+    "mapping": "map_runtime_cell_to_visual_plane"
+  },
+  "layers": [
+    {
+      "layer_id": "terrain_base",
+      "kind": "terrain_base",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "fill_grid_terrain",
+          "op_type": "fill_grid",
+          "semantic_ref": {
+            "kind": "grid",
+            "id": "grid"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "terrain_signal_tower_cold_ridge_stone"
+          },
+          "geometry": {
+            "grid": {
+              "projection": "pseudo3d_oblique",
+              "width_cells": 18,
+              "height_cells": 10,
+              "cell_size": 64
+            },
+            "palette_key": "terrain_base"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "road_band",
+      "kind": "road_band",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "road_band_path_old_signal_north_ridge",
+          "op_type": "draw_polyline_band",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_old_signal_north_ridge"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_signal_tower_ridge_line"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 2
+              },
+              {
+                "x": 14,
+                "y": 2
+              },
+              {
+                "x": 12,
+                "y": 4
+              },
+              {
+                "x": 8,
+                "y": 4
+              },
+              {
+                "x": 5,
+                "y": 5
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "width_cells": 0.85
+          }
+        },
+        {
+          "op_id": "road_band_path_old_signal_copper_trench",
+          "op_type": "draw_polyline_band",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_old_signal_copper_trench"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_signal_tower_ridge_line"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 16,
+                "y": 8
+              },
+              {
+                "x": 13,
+                "y": 7
+              },
+              {
+                "x": 10,
+                "y": 7
+              },
+              {
+                "x": 7,
+                "y": 6
+              },
+              {
+                "x": 3,
+                "y": 6
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "width_cells": 0.85
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "road_edge",
+      "kind": "road_edge",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "road_edge_path_old_signal_north_ridge",
+          "op_type": "draw_polyline_edge",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_old_signal_north_ridge"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_edge_copper_resonance_trace"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 2
+              },
+              {
+                "x": 14,
+                "y": 2
+              },
+              {
+                "x": 12,
+                "y": 4
+              },
+              {
+                "x": 8,
+                "y": 4
+              },
+              {
+                "x": 5,
+                "y": 5
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "edge_style": "stone_trim",
+            "shoulder_width_cells": 0.24
+          }
+        },
+        {
+          "op_id": "road_edge_path_old_signal_copper_trench",
+          "op_type": "draw_polyline_edge",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_old_signal_copper_trench"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_edge_copper_resonance_trace"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 16,
+                "y": 8
+              },
+              {
+                "x": 13,
+                "y": 7
+              },
+              {
+                "x": 10,
+                "y": 7
+              },
+              {
+                "x": 7,
+                "y": 6
+              },
+              {
+                "x": 3,
+                "y": 6
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "edge_style": "stone_trim",
+            "shoulder_width_cells": 0.24
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "build_slot_platform",
+      "kind": "build_slot_platform",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "platform_slot_01",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_01"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_02",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_02"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_03",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_03"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 16,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_04",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_04"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 16,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_05",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_05"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 14,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_06",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_06"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 14,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_07",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_07"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 13,
+              "y": 2
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_08",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_08"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 13,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_09",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_09"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 15,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_10",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_10"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 15,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_11",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_11"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 12,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_12",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_12"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_signal_tower_copper_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 12,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "objective_foundation",
+      "kind": "objective_foundation",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "objective_target_old_signal_tower_base",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_old_signal_tower_base"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_signal_tower_glass_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 1,
+              "y": 5
+            },
+            "durability": 12
+          }
+        },
+        {
+          "op_id": "objective_target_resonant_glass_fixture",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_resonant_glass_fixture"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_signal_tower_glass_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 4,
+              "y": 4
+            },
+            "durability": 5
+          }
+        },
+        {
+          "op_id": "objective_target_copper_grounding_pin",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_copper_grounding_pin"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_signal_tower_glass_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 6,
+              "y": 7
+            },
+            "durability": 4
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "spawn_atmosphere",
+      "kind": "spawn_atmosphere",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "spawn_spawn_path_old_signal_north_ridge",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "spawn_point",
+            "id": "spawn_path_old_signal_north_ridge"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "spawn_return_light_shadow_gate"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 2
+            },
+            "route_id": "path_old_signal_north_ridge"
+          }
+        },
+        {
+          "op_id": "spawn_spawn_path_old_signal_copper_trench",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "spawn_point",
+            "id": "spawn_path_old_signal_copper_trench"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "spawn_return_light_shadow_gate"
+          },
+          "geometry": {
+            "position": {
+              "x": 16,
+              "y": 8
+            },
+            "route_id": "path_old_signal_copper_trench"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "non_blocking_decoration",
+      "kind": "non_blocking_decoration",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "scatter_edge_decoration",
+          "op_type": "scatter_decoration",
+          "semantic_ref": {
+            "kind": "decoration_zone",
+            "id": "non_semantic_edges"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "decor_resonant_glass_shards"
+          },
+          "geometry": {
+            "allowed_zone": "map_edges_only",
+            "forbidden": [
+              "path_route",
+              "build_slot",
+              "objective"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "fog_light_weather",
+      "kind": "fog_light_weather",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "apply_atmosphere",
+          "op_type": "apply_overlay",
+          "semantic_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "style_ref": {
+            "kind": "atmosphere_layer",
+            "id": "return_light_edge_static"
+          },
+          "geometry": {
+            "placement_policy": "non_semantic_zones"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "runtime_interaction_overlay",
+      "kind": "runtime_interaction_overlay",
+      "authority": "runtime_overlay",
+      "player_default": true,
+      "source": "derived",
+      "operations": [
+        {
+          "op_id": "runtime_drag_overlay",
+          "op_type": "draw_runtime_overlay",
+          "semantic_ref": {
+            "kind": "runtime_overlay",
+            "id": "drag_deploy_and_path_preview"
+          },
+          "style_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "geometry": {
+            "drag_deploy_enabled": true,
+            "show_grid_policy": "hidden_until_drag",
+            "path_preview_policy": "subtle_highlight",
+            "target_marker_policy": "icon_overlay"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "debug_control_overlay",
+      "kind": "debug_control_overlay",
+      "authority": "debug_reference",
+      "player_default": false,
+      "source": "derived",
+      "operations": [
+        {
+          "op_id": "debug_grid_and_semantics",
+          "op_type": "draw_runtime_overlay",
+          "semantic_ref": {
+            "kind": "runtime_overlay",
+            "id": "debug_grid_and_semantics"
+          },
+          "style_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "geometry": {
+            "visible_in_player_default": false
+          }
+        }
+      ]
+    }
+  ],
+  "player_default_layer_ids": [
+    "terrain_base",
+    "road_band",
+    "road_edge",
+    "build_slot_platform",
+    "objective_foundation",
+    "spawn_atmosphere",
+    "non_blocking_decoration",
+    "fog_light_weather",
+    "runtime_interaction_overlay"
+  ],
+  "debug_layer_ids": [
+    "debug_control_overlay"
+  ],
+  "validation_report": {
+    "gate_status": "passed",
+    "runtime_truth_preserved": true,
+    "player_default_safe": true,
+    "gates": [
+      {
+        "gate_id": "runtime_truth_source",
+        "status": "passed",
+        "summary": "Strong semantic operations are derived from MapRuntimePackage."
+      },
+      {
+        "gate_id": "style_pack_is_visual_only",
+        "status": "passed",
+        "summary": "MapStylePack contributes materials, prefabs, atmosphere, and readability only."
+      },
+      {
+        "gate_id": "debug_layers_not_player_default",
+        "status": "passed",
+        "summary": "Debug/reference layers are excluded from player_default_layer_ids."
+      }
+    ]
+  }
+}
