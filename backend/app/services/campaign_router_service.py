@@ -14,6 +14,7 @@ from typing import Any
 
 from ..db import db_cursor
 from . import battle_content_service, generation_scheduler_service, map_runtime_service
+from .generation_scheduler_service import InvalidQueueTransitionError
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -268,5 +269,109 @@ def prefetch_next(session_id: str) -> dict[str, Any]:
         "worker_step": worker_step.get("worker_step"),
         "generation_schedule_queue_item": worker_step.get("generation_schedule_queue_item"),
         "generation_schedule_queue": worker_step.get("generation_schedule_queue"),
+        "campaign_router": after,
+    }
+
+
+def prefetch_next_dispatcher_drain(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    before = get_campaign_router(session_id)["campaign_router"]
+    target = before.get("next")
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    unsupported_keys = [
+        key
+        for key in (
+            "schedule_item_id",
+            "authorization_ref",
+            "artifact_profile",
+            "receipt_path",
+            "envelope_path",
+            "staging_path",
+            "promotion_report_path",
+        )
+        if safe_metadata.get(key) not in (None, "")
+    ]
+    if unsupported_keys:
+        raise InvalidQueueTransitionError(
+            "campaign router dispatcher prefetch does not accept targeted metadata: "
+            + ", ".join(unsupported_keys)
+        )
+    if not isinstance(target, dict):
+        return {
+            "session_id": session_id,
+            "mode": "frontend_mock_fixture",
+            "prefetch_request": {
+                "status": "idle_no_next_node",
+                "target_node_id": None,
+                "target_asset_handle": None,
+                "created_generation_schedule_run": False,
+                "provider_call_count": 0,
+                "world_mutation_count": 0,
+                "activation_allowed_count": 0,
+                "promotion_allowed_count": 0,
+                "prefetch_mode": "review_only_dispatcher_drain",
+            },
+            "worker_step": {
+                "status": "idle",
+                "worker_mode": "review_only_dispatcher_drain",
+                "provider_call_count": 0,
+                "world_mutation_count": 0,
+                "activation_allowed_count": 0,
+                "promotion_allowed_count": 0,
+            },
+            "dispatcher_steps": [],
+            "generation_schedule_run": None,
+            "generation_schedule_queue": None,
+            "generation_schedule_worker_cache": None,
+            "generation_artifact_ledger": None,
+            "campaign_router": before,
+        }
+    latest = generation_scheduler_service.get_latest_generation_schedule_run(session_id)
+    created_run = latest.get("generation_schedule_run") is None
+    drain_metadata = {
+        "worker_id": safe_metadata.get("worker_id")
+        or "campaign_router_dispatcher_prefetch",
+        "note": safe_metadata.get("note")
+        or "router lookahead review-only dispatcher drain",
+        "max_items": (
+            2 if safe_metadata.get("max_items") is None else safe_metadata.get("max_items")
+        ),
+    }
+    drain = generation_scheduler_service.run_review_only_dispatcher_drain(
+        session_id,
+        drain_metadata,
+    )
+    after = get_campaign_router(session_id)["campaign_router"]
+    worker_step = drain.get("worker_step", {})
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "prefetch_request": {
+            "status": "requested",
+            "target_node_id": target.get("node_id"),
+            "target_asset_handle": target.get("asset_handle"),
+            "created_generation_schedule_run": created_run,
+            "prefetch_mode": "review_only_dispatcher_drain",
+            "max_items": worker_step.get("max_items"),
+            "dispatched_count": worker_step.get("dispatched_count"),
+            "stop_reason": worker_step.get("stop_reason"),
+            "remaining_eligible_count": worker_step.get(
+                "remaining_eligible_count"
+            ),
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "promotion_allowed_count": 0,
+        },
+        "worker_step": worker_step,
+        "dispatcher_steps": drain.get("dispatcher_steps", []),
+        "generation_schedule_run": drain.get("generation_schedule_run"),
+        "generation_schedule_queue": drain.get("generation_schedule_queue"),
+        "generation_schedule_worker_cache": drain.get(
+            "generation_schedule_worker_cache"
+        ),
+        "generation_artifact_ledger": drain.get("generation_artifact_ledger"),
         "campaign_router": after,
     }

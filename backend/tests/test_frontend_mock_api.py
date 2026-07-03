@@ -1968,6 +1968,90 @@ def test_campaign_router_prefetches_next_node_without_provider_calls(client):
     assert after_router["next"]["node_id"] == "old_signal_tower"
 
 
+def test_campaign_router_dispatcher_prefetch_drains_review_only_items(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+
+    prefetch_payload = _payload(
+        client.post(
+            f"/api/sessions/{sid}/campaign-router/prefetch-next-dispatcher-drain",
+            json={"worker_id": "router-dispatcher-prefetch", "max_items": 2},
+        )
+    )
+    request = prefetch_payload["prefetch_request"]
+    assert request["status"] == "requested"
+    assert request["target_node_id"] == "lamp_wick_store"
+    assert request["created_generation_schedule_run"] is True
+    assert request["prefetch_mode"] == "review_only_dispatcher_drain"
+    assert request["max_items"] == 2
+    assert request["dispatched_count"] == 2
+    assert request["stop_reason"] == "budget_exhausted"
+    assert request["remaining_eligible_count"] == 2
+    assert request["provider_call_count"] == 0
+    assert request["world_mutation_count"] == 0
+    assert request["activation_allowed_count"] == 0
+    assert request["promotion_allowed_count"] == 0
+
+    worker_step = prefetch_payload["worker_step"]
+    assert worker_step["status"] == "drained_review_only"
+    assert worker_step["worker_mode"] == "review_only_dispatcher_drain"
+    assert worker_step["dispatched_count"] == 2
+    assert [step["schedule_item_id"] for step in prefetch_payload["dispatcher_steps"]] == [
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ]
+    queue_summary = prefetch_payload["generation_schedule_queue"]["summary"]
+    assert queue_summary["waiting_review_count"] == 2
+    assert queue_summary["claimable_count"] == 2
+    ledger_summary = prefetch_payload["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 8
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 2,
+        "provider_execution_authorization": 2,
+        "provider_adapter_execution_receipt": 2,
+        "provider_output_envelope": 2,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+    assert prefetch_payload["campaign_router"]["scheduler_signal"]["latest_run_id"]
+    assert "provider_artifact_staging" not in prefetch_payload
+    assert "provider_artifact_promotion_report" not in prefetch_payload
+
+
+def test_campaign_router_dispatcher_prefetch_rejects_targeted_metadata(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+
+    rejected = client.post(
+        f"/api/sessions/{sid}/campaign-router/prefetch-next-dispatcher-drain",
+        json={
+            "worker_id": "router-dispatcher-prefetch-targeted",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+    assert rejected.status_code == 409
+    assert "does not accept targeted metadata" in rejected.json()["detail"]
+
+
+def test_campaign_router_dispatcher_prefetch_rejects_invalid_budget(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/world-instance"))
+
+    too_small = client.post(
+        f"/api/sessions/{sid}/campaign-router/prefetch-next-dispatcher-drain",
+        json={"worker_id": "router-dispatcher-small", "max_items": 0},
+    )
+    assert too_small.status_code == 422
+
+    too_large = client.post(
+        f"/api/sessions/{sid}/campaign-router/prefetch-next-dispatcher-drain",
+        json={"worker_id": "router-dispatcher-large", "max_items": 17},
+    )
+    assert too_large.status_code == 422
+
+
 def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))

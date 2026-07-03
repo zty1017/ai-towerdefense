@@ -86,7 +86,7 @@ P2：本阶段明确不做
 - Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
 - Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
 - GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
-- Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API，并已被 no-build 前端消费：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，前端进入当前节点时会通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；它不调用 provider、不写世界状态、不创建新内容。
+- Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API，并已被 no-build 前端消费：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，前端进入当前节点时会通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；另有 `prefetch-next-dispatcher-drain` 可显式触发 review-only dispatcher drain 预取 tick，用于 Studio / evidence 和后台执行器前置胶水。它们都不调用 provider、不写世界状态、不创建新内容。
 - 多节点战斗结算桥已接入后端 mock API：`gray_lantern_station` 与 `lamp_wick_store` 使用真实 `battle_result` transaction 推进运行态；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，不得伪装成战斗结果。`tools/dev/validate_multinode_battle_settlement.py` 已接入 demo evidence。
 
 ## 3. 已完成的 P0 基线
@@ -1264,6 +1264,39 @@ git diff --check
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_dispatcher_drain.v0.1.json
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_dispatcher_drain python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-31 Campaign Router dispatcher prefetch
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+保留现有 Campaign Router `prefetch-next` dry-run 语义，同时新增显式 dispatcher drain 预取入口，让玩家进入当前节点时的后台预取证据可以推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain`
+- 旧 `POST /api/sessions/{session_id}/campaign-router/prefetch-next` 保持 dry-run worker step 语义不变。
+- 新入口默认 `max_items = 2`，调用 `run_review_only_dispatcher_drain`。
+- 返回 `prefetch_request`、`worker_step`、`dispatcher_steps`、queue、worker cache、artifact ledger 和更新后的 `campaign_router`。
+- 拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile` 和本地导入路径；Campaign Router 的 next node 只是触发上下文，不是 scheduler queue 定向过滤器。
+
+当前结论：
+
+- 这是运行时路由到 review-only dispatcher drain 的胶水，不是真 provider 调度器。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 前端现有 fire-and-forget 仍应使用旧 `prefetch-next`，新入口优先用于 Studio / evidence 或显式后台执行器实验。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_campaign_router_dispatcher_prefetch.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_campaign_router_dispatcher_prefetch python3 -m compileall backend
 uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```

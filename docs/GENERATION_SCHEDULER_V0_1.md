@@ -536,6 +536,7 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor
 ```http
 GET /api/sessions/{session_id}/campaign-router
 POST /api/sessions/{session_id}/campaign-router/prefetch-next
+POST /api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain
 ```
 
 `CampaignRouter` 不替代 Generation Scheduler，也不替代 `WorldStateDeltaTransaction`。它只根据当前 `RunWorldState.progress.phase`、已审战斗节点表和已审 runtime/map package 判断：
@@ -555,6 +556,10 @@ POST /api/sessions/{session_id}/campaign-router/prefetch-next
 - 不激活预取候选。
 
 这一步的意义是把“玩家进入当前节点时，系统提前检查下一节点资产 / fallback”的运行时胶水接上，而不是把 Scheduler 升级成正式后台执行器。
+
+`prefetch-next-dispatcher-drain` 保留旧入口，同时提供更强的 review-only 后台预取证据：它会调用 bounded dispatcher drain，默认 `max_items = 2`，把多个 queued provider-review 项推进到 receipt / envelope ledger 边界。下一节点只作为触发上下文，不作为 scheduler queue 的定向过滤器；drain 仍按 Generation Scheduler 的 eligible queue 顺序处理。
+
+该入口拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile` 和本地导入路径，避免路由层把授权或 provider artifact 错挂到多个调度项。它仍不读取 `.env`，不调用 provider，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
 
 边界保持不变：
 
