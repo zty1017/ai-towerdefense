@@ -24,6 +24,9 @@ from backend.app.services.generation_scheduler_handoff_builders import (  # noqa
     build_provider_adapter_runner_handoff_outbox,
     provider_runner_outbox_safety,
 )
+from backend.app.services.generation_scheduler_import_safety import (  # noqa: E402
+    resolve_import_path,
+)
 
 
 def _create_session(client) -> str:
@@ -60,6 +63,32 @@ def test_provider_runner_handoff_outbox_builder_keeps_safe_contract():
     assert outbox["import_contract"]["post_import_gate"] == (
         "provider_artifact_staging_or_promotion_review_required"
     )
+
+
+def test_generation_import_path_allows_envelope_suffix(tmp_path):
+    path = tmp_path / "candidate.envelope.json"
+    path.write_text("{}", encoding="utf-8")
+
+    resolved = resolve_import_path(
+        str(path),
+        label="envelope_path",
+        repo_root=_ROOT,
+    )
+
+    assert resolved == path.resolve()
+
+
+def test_generation_import_path_rejects_dotenv_path(tmp_path):
+    path = tmp_path / ".env" / "candidate.json"
+    path.parent.mkdir()
+    path.write_text("{}", encoding="utf-8")
+
+    try:
+        resolve_import_path(str(path), label="receipt_path", repo_root=_ROOT)
+    except ValueError as exc:
+        assert "must not reference .env" in str(exc)
+    else:
+        raise AssertionError("expected .env import path to be rejected")
 
 
 def _session_state_counts(raw_conn: sqlite3.Connection, sid: str) -> dict[str, int]:
