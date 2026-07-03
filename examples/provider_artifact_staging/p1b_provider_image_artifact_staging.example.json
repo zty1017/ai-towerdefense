@@ -1,0 +1,109 @@
+{
+  "schema_version": "provider_artifact_staging_manifest.v0.1",
+  "manifest_id": "pstaging_old_signal_tower_image_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source_envelope_ref": "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json",
+  "source_envelope_id": "pout_image_candidate_old_signal_tower_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required",
+    "local_refs_only": true,
+    "runtime_claim_policy": "forbidden_before_promotion"
+  },
+  "staging_status": "validation_failed",
+  "staged_artifacts": [
+    {
+      "artifact_id": "old_signal_tower_map_image_candidate_staged",
+      "source_artifact_id": "old_signal_tower_map_image_candidate",
+      "kind": "image_candidate",
+      "path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+      "sha256": "e94f88eec738a631992425fbd6c9e3fc6ed53013d634ef886101906c4f944f70",
+      "byte_size": 1709959,
+      "content_type": "image/png",
+      "media_layer": "candidate_ref",
+      "role": "map_visual_image_candidate",
+      "review_status": "needs_repair",
+      "runtime_visible": false,
+      "player_visible": false,
+      "notes": [
+        "The local image is preserved as a negative review candidate.",
+        "Media review found it unsuitable for player runtime use."
+      ]
+    }
+  ],
+  "validation_results": {
+    "source_envelope_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json",
+      "notes": [
+        "The referenced ProviderOutputEnvelope validates and contains the source image artifact id."
+      ]
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The staged image path exists and is local."
+      ]
+    },
+    "schema_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The staging manifest shape is valid."
+      ]
+    },
+    "media_gate": {
+      "status": "failed",
+      "required_before_promotion": true,
+      "report_ref": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
+      "notes": [
+        "The candidate is not clean enough for runtime map use.",
+        "Known issues include visible control-shape residue, insufficient natural map composition, and weak alignment with required tower/path semantics."
+      ]
+    },
+    "semantic_gate": {
+      "status": "failed",
+      "required_before_promotion": true,
+      "report_ref": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+      "notes": [
+        "The image candidate must not be promoted until it aligns with MapRuntimePackage path, tower slots, objectives, and spawn semantics."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Human review remains required after a repaired or regenerated candidate exists."
+      ]
+    }
+  },
+  "promotion_gate": {
+    "promotion_allowed": false,
+    "blocked_reason": "validation_failed",
+    "required_next_gates": [
+      "regenerate_or_paintover_from_control_sketch",
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ],
+    "notes": [
+      "This image candidate is deliberately blocked as review evidence.",
+      "No MapRuntimePackage, published visual layer, or world state may be updated from this manifest."
+    ]
+  }
+}

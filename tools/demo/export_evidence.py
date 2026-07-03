@@ -182,6 +182,12 @@ PATHS = {
     / "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
     "provider_artifact_promotion_report": ROOT
     / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+    "provider_image_artifact_staging_manifest": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
+    "provider_image_artifact_staging_source_envelope": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json",
+    "provider_image_artifact_promotion_report": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
     "core_artifact_alignment_report": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
 }
@@ -761,6 +767,30 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_provider_artifact_promotion_report.py",
             "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+        ],
+    },
+    {
+        "name": "provider_image_artifact_staging_source_envelope",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_output_envelope.py",
+            "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json",
+        ],
+    },
+    {
+        "name": "provider_image_artifact_staging_manifest",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_artifact_staging_manifest.py",
+            "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
+        ],
+    },
+    {
+        "name": "provider_image_artifact_promotion_report",
+        "command": [
+            "python3",
+            "tools/dev/validate_provider_artifact_promotion_report.py",
+            "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
         ],
     },
     {
@@ -2570,6 +2600,18 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["provider_artifact_promotion_report"],
         ),
         (
+            "provider_image_artifact_staging_manifest",
+            PATHS["provider_image_artifact_staging_manifest"],
+        ),
+        (
+            "provider_image_artifact_staging_source_envelope",
+            PATHS["provider_image_artifact_staging_source_envelope"],
+        ),
+        (
+            "provider_image_artifact_promotion_report",
+            PATHS["provider_image_artifact_promotion_report"],
+        ),
+        (
             "core_artifact_alignment_report",
             PATHS["core_artifact_alignment_report"],
         ),
@@ -2796,6 +2838,15 @@ def build_evidence() -> dict[str, Any]:
     provider_artifact_promotion_report = load_json(
         PATHS["provider_artifact_promotion_report"]
     )
+    provider_image_artifact_staging_manifest = load_json(
+        PATHS["provider_image_artifact_staging_manifest"]
+    )
+    provider_image_artifact_staging_source_envelope = load_json(
+        PATHS["provider_image_artifact_staging_source_envelope"]
+    )
+    provider_image_artifact_promotion_report = load_json(
+        PATHS["provider_image_artifact_promotion_report"]
+    )
     core_artifact_alignment_report = load_json(
         PATHS["core_artifact_alignment_report"]
     )
@@ -2863,6 +2914,13 @@ def build_evidence() -> dict[str, Any]:
         ),
         "provider_artifact_promotion_report": collect_provider_artifact_promotion_report(
             provider_artifact_promotion_report
+        ),
+        "provider_image_artifact_staging": collect_provider_artifact_staging(
+            provider_image_artifact_staging_manifest,
+            provider_image_artifact_staging_source_envelope,
+        ),
+        "provider_image_artifact_promotion_report": collect_provider_artifact_promotion_report(
+            provider_image_artifact_promotion_report
         ),
         "core_artifact_alignment_report": collect_core_artifact_alignment_report(
             core_artifact_alignment_report
@@ -3049,6 +3107,14 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
     provider_promotion_report = as_obj(evidence.get("provider_artifact_promotion_report"))
+    provider_image_staging = as_obj(evidence.get("provider_image_artifact_staging"))
+    provider_image_staging_source = as_obj(provider_image_staging.get("source"))
+    provider_image_staging_promotion = as_obj(
+        provider_image_staging.get("promotion_gate")
+    )
+    provider_image_promotion_report = as_obj(
+        evidence.get("provider_image_artifact_promotion_report")
+    )
     core_alignment = as_obj(evidence.get("core_artifact_alignment_report"))
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
@@ -3139,6 +3205,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for artifact in as_list(provider_staging.get("staged_artifacts"))
     ]
+    image_staged_artifact_rows = [
+        [
+            artifact.get("artifact_id"),
+            artifact.get("kind"),
+            artifact.get("media_layer"),
+            artifact.get("review_status"),
+            artifact.get("path"),
+        ]
+        for artifact in as_list(provider_image_staging.get("staged_artifacts"))
+    ]
     core_alignment_rows = [
         [
             target.get("target_id"),
@@ -3205,7 +3281,20 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- target：`{as_obj(provider_promotion_report.get('promotion_targets')).get('target_kind')}`，reviewed artifacts `{provider_promotion_report.get('reviewed_artifact_count')}`",
         f"- 报告自身 provider 调用：`{as_obj(provider_promotion_report.get('safety_summary')).get('provider_call_count_by_report')}`，世界修改：`{as_obj(provider_promotion_report.get('safety_summary')).get('world_mutation_count_by_report')}`，runtime 修改：`{as_obj(provider_promotion_report.get('safety_summary')).get('runtime_mutation_count_by_report')}`",
         "",
-        "## 2.3 核心对象对齐报告",
+        "## 2.3 Provider 图片候选失败门",
+        "",
+        f"- 图片暂存清单：`{provider_image_staging.get('manifest_id')}`，状态：`{provider_image_staging.get('staging_status')}`",
+        f"- source envelope：`{provider_image_staging.get('source_envelope_id')}`，provider 调用状态：`{provider_image_staging_source.get('provider_call_status')}`，已执行：`{provider_image_staging_source.get('provider_call_performed')}`",
+        f"- gate 状态：`{provider_image_staging.get('gate_statuses')}`",
+        f"- promotion：允许 `{provider_image_staging_promotion.get('promotion_allowed')}`，阻断：`{provider_image_staging_promotion.get('blocked_reason')}`，下一步：`{', '.join(str(gate) for gate in as_list(provider_image_staging_promotion.get('required_next_gates')))}`",
+        "",
+        md_table(["Artifact", "类型", "媒体层", "审查状态", "本地路径"], image_staged_artifact_rows),
+        "",
+        f"- 图片晋升报告：`{provider_image_promotion_report.get('report_id')}`，决策：`{provider_image_promotion_report.get('promotion_decision')}`，允许晋升：`{provider_image_promotion_report.get('promotion_allowed')}`，阻断：`{provider_image_promotion_report.get('blocked_reason')}`",
+        f"- 图片 gate 状态：`{provider_image_promotion_report.get('gate_statuses')}`",
+        f"- target：`{as_obj(provider_image_promotion_report.get('promotion_targets')).get('target_kind')}`，reviewed artifacts `{provider_image_promotion_report.get('reviewed_artifact_count')}`",
+        "",
+        "## 2.4 核心对象对齐报告",
         "",
         f"- 报告：`{core_alignment.get('report_id')}`，状态：`{core_alignment.get('overall_status')}`，目标 `{core_alignment.get('target_count')}` 个",
         f"- 原生快照 ready：`{core_alignment.get('native_snapshot_ready_count')}`；refs-only：`{core_alignment.get('refs_only_count')}`；待迁移：`{core_alignment.get('missing_core_alignment_count')}`；校验失败：`{core_alignment.get('validation_failed_count')}`",
@@ -3214,7 +3303,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         md_table(["目标", "类型", "状态", "已有核心对象", "下一步"], core_alignment_rows),
         "",
-        "## 2.4 世界状态事务",
+        "## 2.5 世界状态事务",
         "",
         f"- 事务：`{world_transaction.get('transaction_id')}`，状态：`{world_transaction.get('status')}`",
         f"- Delta：`{world_transaction.get('delta_id')}`，来源：`{world_transaction.get('source')}`，节点：`{', '.join(str(node) for node in as_list(world_transaction.get('node_ids')))}`",
@@ -3404,6 +3493,14 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
     provider_promotion_report = as_obj(evidence.get("provider_artifact_promotion_report"))
+    provider_image_staging = as_obj(evidence.get("provider_image_artifact_staging"))
+    provider_image_staging_source = as_obj(provider_image_staging.get("source"))
+    provider_image_staging_promotion = as_obj(
+        provider_image_staging.get("promotion_gate")
+    )
+    provider_image_promotion_report = as_obj(
+        evidence.get("provider_image_artifact_promotion_report")
+    )
     world_transaction = as_obj(evidence.get("world_delta_transaction"))
     world_transaction_report = as_obj(world_transaction.get("validation_report"))
     world_transaction_chain = as_obj(evidence.get("world_delta_transaction_chain"))
@@ -3816,6 +3913,13 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <p>报告：<code>{html_escape(provider_promotion_report.get("report_id"))}</code>；source staging：<code>{html_escape(provider_promotion_report.get("source_staging_id"))}</code></p>
       <p>决策：<code>{html_escape(provider_promotion_report.get("promotion_decision"))}</code>；允许晋升：<code>{html_escape(provider_promotion_report.get("promotion_allowed"))}</code>；target：<code>{html_escape(as_obj(provider_promotion_report.get("promotion_targets")).get("target_kind"))}</code></p>
       <p class="muted">当前报告阻断候选继续进入 runtime / world 构建，因为媒体、语义和人工审查尚未完成。</p>
+    </section>
+    <section>
+      <h2>Image Artifact Gate</h2>
+      <p>图片暂存：<code>{html_escape(provider_image_staging.get("manifest_id"))}</code>；source envelope：<code>{html_escape(provider_image_staging.get("source_envelope_id"))}</code></p>
+      <p>调用状态：<code>{html_escape(provider_image_staging_source.get("provider_call_status"))}</code>；暂存状态：<code>{html_escape(provider_image_staging.get("staging_status"))}</code>；阻断：<code>{html_escape(provider_image_staging_promotion.get("blocked_reason"))}</code></p>
+      <p>晋升报告：<code>{html_escape(provider_image_promotion_report.get("report_id"))}</code>；决策：<code>{html_escape(provider_image_promotion_report.get("promotion_decision"))}</code>；允许晋升：<code>{html_escape(provider_image_promotion_report.get("promotion_allowed"))}</code></p>
+      <p class="muted">真实图片候选可以进入本地 evidence，但质量门失败后必须保留为负样本，不能进入 MapRuntimePackage、published media 或玩家 runtime。</p>
     </section>
     <section>
       <h2>MapRuntimePackage 覆盖</h2>
