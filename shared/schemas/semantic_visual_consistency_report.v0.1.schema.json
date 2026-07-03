@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/semantic_visual_consistency_report.v0.1.schema.json",
+  "title": "SemanticVisualConsistencyReport v0.1",
+  "description": "Deterministic report proving that a procedural map render plan represents every strong gameplay semantic from MapRuntimePackage and keeps debug/reference layers out of the player default view.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "render_plan_id",
+    "map_runtime_package_id",
+    "style_pack_id",
+    "worldbook_id",
+    "node_id",
+    "created_at",
+    "source_refs",
+    "status",
+    "checks",
+    "summary",
+    "blocking_issues",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "semantic_visual_consistency_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "render_plan_id": { "type": "string", "minLength": 1 },
+    "map_runtime_package_id": { "type": "string", "minLength": 1 },
+    "style_pack_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "status": { "type": "string", "enum": ["passed", "warning", "failed"] },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/check" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed_count", "warning_count", "failed_count"],
+      "properties": {
+        "passed_count": { "type": "integer", "minimum": 0 },
+        "warning_count": { "type": "integer", "minimum": 0 },
+        "failed_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "blocking_issues": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map_runtime_package_path", "map_style_pack_path", "procedural_map_render_plan_path"],
+      "properties": {
+        "map_runtime_package_path": { "type": "string", "minLength": 1 },
+        "map_style_pack_path": { "type": "string", "minLength": 1 },
+        "procedural_map_render_plan_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "status", "summary", "refs"],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "warning", "failed"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

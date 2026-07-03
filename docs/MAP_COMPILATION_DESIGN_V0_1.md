@@ -329,3 +329,26 @@ AI 负责风格和组件，程序负责结构和对齐，Validator 负责可信�
 ```
 
 这条路线能吸收 AI 创造力，同时避免地图运行时语义被图像模型污染。
+
+## 7. v0.1 实现落点
+
+截至 2026-07-04，本文的 P1-MAP-B/C/D 已落地第一条最小链路：
+
+```text
+MapRuntimePackage
+  + MapStylePack
+  -> ProceduralMapRenderPlan
+  -> SemanticVisualConsistencyReport
+```
+
+已新增：
+
+- `shared/schemas/map_style_pack.v0.1.schema.json`
+- `shared/schemas/procedural_map_render_plan.v0.1.schema.json`
+- `shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`
+- `tools/asset_graph/build_procedural_map_render_plan.py`
+- `tools/asset_graph/validate_map_style_pack.py`
+- `tools/asset_graph/validate_procedural_map_render_plan.py`
+- `tools/asset_graph/validate_semantic_visual_consistency_report.py`
+
+当前实现仍不生成图片、不调用 provider、不替换前端渲染。它的意义是先把地图编译从“整图 prompt 尝试”推进到可验证的分层合同：路径、塔位、目标和出生点来自 `MapRuntimePackage`；材质、平台、氛围和可读性约束来自 `MapStylePack`；`SemanticVisualConsistencyReport` 负责阻断 debug/reference 层进入玩家默认视图。

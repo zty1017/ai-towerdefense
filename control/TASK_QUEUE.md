@@ -2580,6 +2580,50 @@ rg -n "MAP_COMPILATION_DESIGN|MapStylePack|ProceduralMapRenderPlan|SemanticVisua
 git diff --check
 ```
 
+#### P1-D-05 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport 最小链路
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+把地图编译从“AI 整图候选”推进到 MapRuntimePackage + MapStylePack -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport 的可验证最小链路。
+```
+
+已落地：
+
+- `shared/schemas/map_style_pack.v0.1.schema.json`：StylePack 字段事实源，只允许表现层风格、材质、prefab、氛围和可读性规则。
+- `shared/schemas/procedural_map_render_plan.v0.1.schema.json`：分层程序化渲染计划，强语义 layer 必须来自 MapRuntimePackage。
+- `shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`：语义视觉一致性报告，记录 route / slot / objective / spawn / debug-player 边界检查。
+- `tools/asset_graph/procedural_map_render_plan.py`：核心 builder / validator helper。
+- `tools/asset_graph/build_procedural_map_render_plan.py`：从 runtime package + style pack 生成 render plan 和 consistency report。
+- `tools/asset_graph/validate_map_style_pack.py`
+- `tools/asset_graph/validate_procedural_map_render_plan.py`
+- `tools/asset_graph/validate_semantic_visual_consistency_report.py`
+- `examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json`
+- `examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json`
+- `examples/worker_task_packs/p1d_map_style_render_plan.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片。
+- StylePack 不允许决定路线、塔位、目标、出生点或碰撞事实。
+- RenderPlan 的 player default 层不得包含 debug/reference layer。
+- Codex headless 已尝试委派，但当前执行环境拒绝外部 coding model 披露工作区数据，本轮使用 `local_codex_safe_fallback` 在隔离 task worktree 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_style_render_plan.v0.1.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json --style-pack examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json --output examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-style-render-plan python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/validate_map_style_pack.py tools/asset_graph/validate_procedural_map_render_plan.py tools/asset_graph/validate_semantic_visual_consistency_report.py
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
