@@ -104,6 +104,9 @@ from .generation_scheduler_provider_artifact_review_helpers import (  # noqa: E4
 from .generation_scheduler_prefetch_cache_builders import (  # noqa: E402
     build_generation_prefetch_cache_payload as _build_generation_prefetch_cache_payload,
 )
+from .generation_scheduler_activation_gate_builders import (  # noqa: E402
+    build_generation_activation_gate_payload as _build_generation_activation_gate_payload,
+)
 from .generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
     validate_provider_adapter_runner_import_contract as _validate_provider_adapter_runner_import_contract,
 )
@@ -1941,6 +1944,12 @@ def get_generation_prefetch_cache(session_id: str) -> dict[str, Any]:
         latest_run,
         queue_items,
         ledger_items,
+    )
+
+
+def get_generation_activation_gate(session_id: str) -> dict[str, Any]:
+    return _build_generation_activation_gate_payload(
+        get_generation_prefetch_cache(session_id)
     )
 
 

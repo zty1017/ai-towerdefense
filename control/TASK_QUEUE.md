@@ -2607,6 +2607,42 @@ rg -n "effects\\[\\]|operations\\[\\]|WorldStateDeltaTransaction|横切控制面
 git diff --check
 ```
 
+### P1-B Generation Scheduler activation gate read-model
+
+状态：已完成最小后端读模型。
+
+目标：
+
+```text
+把 latest run 的 prefetch-cache 进一步派生成只读 activation gate 视图，明确 review-only 候选为何仍不能进入玩家 runtime。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_activation_gate_builders.py`：新增纯 builder，从 `generation_prefetch_cache` 派生 `generation_activation_gate`。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_activation_gate()`，复用现有 prefetch cache read-model，不新增 DB 写入。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/generation-schedule/activation-gate`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、无 run 空视图、dispatcher drain 后 envelope 阻断、fixture executor chain 后 promotion 阻断，以及只读性。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 activation gate read-model 边界。
+- `examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 本接口不创建 run、不推进 worker、不写 ledger、不 staging、不 promotion、不 complete queue item。
+- 本接口不读取 `.env`、不调用 provider、不写世界状态、不激活 runtime。
+- 即使某个候选出现 `promotion_allowed_pending_activation`，也只能进入后续 runtime package / WorldStateDeltaTransaction 构建与复验；当前 read-model 仍返回 `activation_allowed_count = 0`。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_activation_gate_view python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "activation-gate|generation_activation_gate|build_generation_activation_gate_payload" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：
