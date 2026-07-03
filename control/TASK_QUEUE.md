@@ -1662,6 +1662,40 @@ python3 tools/frontend/validate_battle_visual_contract.py
 git diff --check
 ```
 
+#### P1-D-02 FrontendProceduralBattleBackdrop v0.3 分层底图 polish
+
+状态：已完成最小修补。
+
+目标：
+
+```text
+在不消费失败整图候选、不改写 MapRuntimePackage 事实源的前提下，把前端默认战斗底座继续打磨成更像真实塔防关卡的全屏画面。
+```
+
+已落地：
+
+- `frontend/app.js`：新增节点调色、地貌深度带、道路边缘世界小物和部署基座接驳痕迹。
+- `tools/frontend/validate_battle_visual_contract.py`：补充静态合约，要求保留道路边缘小物、基座接驳、节点调色 / 地貌深度层，并继续禁止默认整图候选、控制图、参考图、棋盘和虚线控制线。
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`：记录 v0.3 视觉审计结论和截图验收路径。
+- `examples/worker_task_packs/p1d_frontend_procedural_backdrop_v3.v0.1.json`：新增本任务 worker handoff 包。
+
+边界：
+
+- 运行时事实仍只来自 `MapRuntimePackage.grid/path_routes/build_slots/objectives/spawn_points`。
+- 路边小物、地貌深度带和接驳痕迹只是表现层，不改变寻路、放置合法性或目标耐久。
+- 不调用 provider、不读取 `.env`、不修改地图 runtime package、不晋升任何 AI 地图候选。
+- OpenCode headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_procedural_backdrop_v3.v0.1.json
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/map_procedural_backdrop_v3_after2
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
