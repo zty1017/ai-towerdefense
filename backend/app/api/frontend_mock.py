@@ -218,6 +218,19 @@ def get_generation_artifact_ledger(session_id: str) -> FrontendMockPayloadRespon
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/prefetch-cache",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_prefetch_cache(session_id: str) -> FrontendMockPayloadResponse:
+    """Return a read-only prefetch cache view derived from queue and ledger rows."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_prefetch_cache(session_id),
+    )
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

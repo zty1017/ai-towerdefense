@@ -1301,6 +1301,39 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-32 Generation Scheduler prefetch cache view
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增只读 prefetch cache API，从 latest generation schedule run 的 queue 与 generation_artifact_ledger 派生 schedule item 级预取状态视图，供前端 / Studio 读取后台预取证据，但不创建 run、不推进 dispatcher、不调用 provider、不写世界状态、不激活 runtime。
+```
+
+已落地：
+
+- `GET /api/sessions/{session_id}/generation-schedule/prefetch-cache`
+- 视图按 `schedule_item_id` 汇总 executor request、provider authorization、adapter receipt、ProviderOutputEnvelope、staging manifest 与 promotion report refs。
+- `cache_status` 区分 `queued`、`review_only_envelope_ready`、`staged_review_only`、`promotion_blocked`、`promotion_allowed_pending_activation` 等状态。
+- `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 固定为 0；历史 envelope 中记录过的 provider 调用只计入 `recorded_provider_call_count`。
+- GET 前后不改变 `generation_schedule_runs`、`generation_schedule_queue_items`、`generation_schedule_worker_cache`、`generation_artifact_ledger`、`provider_logs` 或 `world_instance`。
+
+当前结论：
+
+- 这是从 queue / ledger 派生的读模型，不是新的缓存表，不是真后台执行器，也不是正式预生成产物缓存。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续真实后台 executor 可以让该视图读到更多 reviewed refs，但仍必须经过 staging、promotion、runtime package、WorldStateDeltaTransaction 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_prefetch_cache_view.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_prefetch_cache_view python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
