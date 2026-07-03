@@ -1401,6 +1401,39 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-35 Provider runner handoff evidence summary
+
+状态：已完成最小证据接入。
+
+目标：
+
+```text
+把 provider runner handoff export / dry-run runner / import / prefetch-cache roundtrip 的能力纳入 demo evidence，让 evidence.json、summary.md 和 index.html 都能展示 handoff 状态、roundtrip cache 状态、安全边界和对应任务包。
+```
+
+已落地：
+
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.provider_runner_handoff` 摘要。
+- `summary.md` 和 `index.html` 的 Generation Scheduler 区块展示 `fixture_roundtrip_covered`、`review_only_envelope_ready` 和 runtime activation 阻断状态。
+- 摘要引用 P1-B-33 / P1-B-34 的任务包与验收命令，证明 handoff export 与 roundtrip smoke 已被覆盖。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json` 新增本轮证据接入任务包。
+
+边界：
+
+- 本任务不新增 provider 调用、不读取 `.env`、不写 ledger、不 staging、不 promotion、不写世界状态、不激活 runtime。
+- 它只导出演示证据摘要，不代表后端自动后台执行器已经完成。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_evidence python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_evidence
+rg -n "provider_runner_handoff|runner handoff|fixture_roundtrip_covered|review_only_envelope_ready" /tmp/provider_runner_handoff_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

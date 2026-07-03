@@ -119,6 +119,10 @@ PATHS = {
     / "examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json",
     "provider_adapter_image_runner_envelope": ROOT
     / "examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json",
+    "provider_runner_handoff_export_task_pack": ROOT
+    / "examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json",
+    "provider_runner_handoff_roundtrip_task_pack": ROOT
+    / "examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -1800,6 +1804,62 @@ def collect_ai_compilation_link(
     }
 
 
+def collect_provider_runner_handoff_summary() -> dict[str, Any]:
+    export_task = load_json(PATHS["provider_runner_handoff_export_task_pack"])
+    roundtrip_task = load_json(PATHS["provider_runner_handoff_roundtrip_task_pack"])
+    return {
+        "status": "fixture_roundtrip_covered",
+        "export_endpoint": (
+            "POST /api/sessions/{session_id}/generation-schedule/workers/"
+            "export-provider-adapter-runner-handoff"
+        ),
+        "import_endpoint": (
+            "POST /api/sessions/{session_id}/generation-schedule/workers/"
+            "import-provider-adapter-runner-output"
+        ),
+        "prefetch_cache_endpoint": (
+            "GET /api/sessions/{session_id}/generation-schedule/prefetch-cache"
+        ),
+        "runner_tool": "tools/provider_adapter/run_provider_adapter.py",
+        "handoff_outputs": [
+            "runner_inputs.executor_request",
+            "runner_inputs.provider_execution_authorization",
+            "suggested_paths",
+            "command_templates.dry_run_fixture",
+            "command_templates.live_llm_text",
+            "command_templates.live_image",
+            "import_after_runner.body",
+        ],
+        "roundtrip_evidence": {
+            "test_name": (
+                "test_provider_adapter_runner_handoff_roundtrip_import_updates_"
+                "prefetch_cache"
+            ),
+            "expected_cache_status": "review_only_envelope_ready",
+            "staging_performed": False,
+            "promotion_performed": False,
+            "runtime_activation_allowed": False,
+        },
+        "safety": {
+            "api_reads_env": False,
+            "api_calls_provider": False,
+            "prompt_body_stored": False,
+            "provider_body_stored": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+            "live_templates_require_external_authorization": True,
+        },
+        "task_packs": [
+            file_ref(PATHS["provider_runner_handoff_export_task_pack"], "worker_task_pack"),
+            file_ref(PATHS["provider_runner_handoff_roundtrip_task_pack"], "worker_task_pack"),
+        ],
+        "acceptance_commands": sorted(
+            set(as_list(export_task.get("acceptance_commands")))
+            | set(as_list(roundtrip_task.get("acceptance_commands")))
+        ),
+    }
+
+
 def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any]) -> dict[str, Any]:
     items = [item for item in as_list(plan.get("items")) if isinstance(item, dict)]
     provider_modes: Counter[str] = Counter()
@@ -1818,6 +1878,7 @@ def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any
             "provider_call_count": as_obj(run_report.get("summary")).get("provider_call_count"),
             "world_mutation_count": as_obj(run_report.get("summary")).get("world_mutation_count"),
         },
+        "provider_runner_handoff": collect_provider_runner_handoff_summary(),
         "control_plane_only": as_obj(plan.get("authority")).get("control_plane_only"),
         "calls_provider_during_build": as_obj(plan.get("authority")).get("schedule_builder_calls_provider"),
         "reads_env_during_build": as_obj(plan.get("authority")).get("schedule_builder_reads_env"),
@@ -3119,6 +3180,10 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    provider_runner_handoff = as_obj(scheduler.get("provider_runner_handoff"))
+    provider_runner_handoff_roundtrip = as_obj(
+        provider_runner_handoff.get("roundtrip_evidence")
+    )
     provider_staging = as_obj(evidence.get("provider_artifact_staging"))
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
@@ -3276,6 +3341,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- dry-run 动作分布：`{scheduler_run_summary.get('action_counts')}`",
         f"- dry-run provider 调用：`{scheduler_run.get('provider_call_count')}`，世界修改：`{scheduler_run.get('world_mutation_count')}`",
         f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
+        f"- runner handoff：`{provider_runner_handoff.get('status')}`，roundtrip cache：`{provider_runner_handoff_roundtrip.get('expected_cache_status')}`，runtime 激活：`{provider_runner_handoff_roundtrip.get('runtime_activation_allowed')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
         "",
@@ -3505,6 +3571,10 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
     scheduler_run_summary = as_obj(scheduler_run.get("summary"))
+    provider_runner_handoff = as_obj(scheduler.get("provider_runner_handoff"))
+    provider_runner_handoff_roundtrip = as_obj(
+        provider_runner_handoff.get("roundtrip_evidence")
+    )
     provider_staging = as_obj(evidence.get("provider_artifact_staging"))
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
@@ -3916,6 +3986,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <h2>Generation Scheduler</h2>
       <p>计划包：<code>{html_escape(scheduler.get("plan_id"))}</code>；延迟分布：<code>{html_escape(scheduler_summary.get("latency_class_counts"))}</code></p>
       <p>dry-run：<code>{html_escape(scheduler_run.get("report_id"))}</code>；动作分布：<code>{html_escape(scheduler_run_summary.get("action_counts"))}</code></p>
+      <p>runner handoff：<code>{html_escape(provider_runner_handoff.get("status"))}</code>；roundtrip cache：<code>{html_escape(provider_runner_handoff_roundtrip.get("expected_cache_status"))}</code>；runtime 激活：<code>{html_escape(provider_runner_handoff_roundtrip.get("runtime_activation_allowed"))}</code></p>
       <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>
     </section>
     <section>
