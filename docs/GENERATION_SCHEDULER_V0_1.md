@@ -417,6 +417,8 @@ POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adap
 
 因此该入口是正式后台执行器前的外部 worker 交接单，不是真 provider 调用入口。它不读取 `.env`，不调用 provider，不包含 prompt 正文，不包含 provider 响应正文，不 staging，不 promotion，不写世界状态，不激活 runtime。live 模板中的 `.env` 路径、prompt 文件和 artifact 输出仍必须由外部 worker 在显式授权下提供。
 
+当前测试已覆盖 fixture roundtrip：从 handoff 的 `runner_inputs` 生成 dry-run receipt / envelope，本地写入 `/tmp`，再通过 `import-provider-adapter-runner-output` 回灌 ledger，最后由 `prefetch-cache` 读到 `review_only_envelope_ready`。这证明 handoff 与 import 两端已对齐，但仍不代表 live provider、staging、promotion 或 runtime activation 已自动化。
+
 后端还提供 review-only dispatcher 薄编排入口：
 
 ```text

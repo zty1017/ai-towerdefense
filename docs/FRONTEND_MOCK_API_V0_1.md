@@ -304,6 +304,8 @@ POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adap
 
 该接口只导出 handoff，不创建 receipt/envelope，不调用 provider，不读取 `.env`，不写 ledger，不写世界状态，不激活 runtime。live 模板中的 prompt 文件、artifact 输出和 dotenv 路径必须由外部 worker 在显式授权下提供。
 
+MVP 当前已有 fixture roundtrip smoke：调用方可以消费 handoff 的 `runner_inputs`，用 provider adapter runner 的 dry-run builder 生成本地 receipt / envelope，再调用 `import-provider-adapter-runner-output` 回灌 ledger。回灌后 `prefetch-cache` 会把对应调度项显示为 `review_only_envelope_ready`，但 staging、promotion 和 runtime activation 仍需要后续显式步骤。
+
 ### 提交战斗结果
 
 ```http

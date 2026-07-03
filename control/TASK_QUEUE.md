@@ -1368,6 +1368,39 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-34 Provider adapter runner handoff roundtrip smoke
+
+状态：已完成最小烟测。
+
+目标：
+
+```text
+补一条 fixture roundtrip smoke，证明 export-provider-adapter-runner-handoff 返回的 runner_inputs 可以生成 dry-run ProviderAdapterExecutionReceipt / ProviderOutputEnvelope，本地文件可通过 import-provider-adapter-runner-output 回灌 ledger，并能被 prefetch-cache 读成 review_only_envelope_ready。
+```
+
+已落地：
+
+- 新增 `test_provider_adapter_runner_handoff_roundtrip_import_updates_prefetch_cache`。
+- 测试直接消费 handoff 的 `runner_inputs.executor_request` 与 `runner_inputs.provider_execution_authorization`。
+- 使用 `tools/provider_adapter/run_provider_adapter.py` 的 dry-run builder 生成 receipt / envelope，并写入 pytest `/tmp`。
+- 通过既有 `import-provider-adapter-runner-output` API 回灌 ledger。
+- 最后通过 `GET /generation-schedule/prefetch-cache` 验证 `sched_next_map_visual_prefetch` 为 `review_only_envelope_ready`，且 staging / promotion / activation 仍为空或阻断。
+
+当前结论：
+
+- 这是 handoff 与 import 边界的 fixture smoke，不是真 provider 调用。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_roundtrip python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
