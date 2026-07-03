@@ -1,0 +1,74 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-39-architecture-fact-source-freeze",
+  "title": "Architecture fact source freeze",
+  "task_type": "docs",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/architecture-fact-source-freeze",
+  "worktree": "/tmp/ai-td-task-architecture-fact-source-freeze",
+  "objective": "冻结 AI 编译系统 v0.1 的事实源层级和生命周期映射：CURRENT_ARCHITECTURE_INDEX 只做导航与事实源路由，AI_COMPILATION_SYSTEM 只做概念、边界、权限和生命周期事实源，字段、op 白名单、semantic gate、builder、validator 和运行命令以 shared/schemas、tools 和专题文档为准；补齐 ProviderAdapterRunnerHandoffOutbox、ProviderOutputEnvelope、staging、promotion、runtime package、媒体、地图 certified 与 CGOP 生命周期关系；不得改实现代码、不得调用 provider、不得读取 .env。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "shared/schemas/worker_task_pack.v0.1.schema.json"
+  ],
+  "allowed_paths": [
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json",
+    "rg -n \"v0.1 冻结断言|ProviderAdapterRunnerHandoffOutbox|CURRENT_ARCHITECTURE_INDEX.md|shared/schemas/ \\\\+ tools/ \\\\+ 专题文档\" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "rg -n \"Architecture fact source freeze|p1b_architecture_fact_source_freeze\" control/TASK_QUEUE.md examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_decisions",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务是事实源治理，不是 schema 迁移，也不是实现重构。",
+    "概念层可以提出下一轮 schema 修订，但不能让实现绕过当前 schema、semantic gate、media gate、promotion gate、runtime package gate 或 WorldStateDeltaTransaction gate。",
+    "OpenCode headless 调用在当前受控通道内被执行环境拒绝为外部数据披露风险；本任务采用 local_codex_safe_fallback。",
+    "main 允许受控滞后；派发实现任务时默认以 develop 的索引、AI_COMPILATION_SYSTEM、schema、tools 和专题文档为事实源。"
+  ]
+}

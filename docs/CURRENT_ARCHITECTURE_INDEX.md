@@ -19,6 +19,25 @@ Last updated: 2026-07-03
 - `WorldStateDeltaTransaction v0.1` 是现有 `WorldStateDelta v0.1` 的事务外壳，不替换当前 delta schema；字段级事实源是 `shared/schemas/world_state_delta_transaction.v0.1.schema.json` 和 `tools/world_state/validate_world_delta_transaction.py`。
 - `Generation Scheduler` 是跨管线调度控制面，不是内容校验器，也不是流水线末端产物。
 - 任何世界状态变化都必须经过当前 `operations[]` 白名单、结构校验和语义校验；不得用通用 `effects[]` 绕过。
+- `ProviderAdapterRunnerHandoffOutbox v0.1` 是外部 runner 批量交接单，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。
+- worker 不得从旧 task worktree、早期主聊天摘要或 `main` 的滞后文档推导当前字段事实；派发实现任务时以 `develop` 上的本索引、`AI_COMPILATION_SYSTEM_V0_1.md`、schema、tools 和专题文档为准。
+
+## 0. 冻结快照
+
+本索引当前冻结以下使用方式：
+
+```text
+CURRENT_ARCHITECTURE_INDEX.md
+  -> 找入口、读顺序、事实源优先级
+
+AI_COMPILATION_SYSTEM_V0_1.md
+  -> 概念、边界、权限、生命周期
+
+shared/schemas/ + tools/ + 专题文档
+  -> 字段、枚举、op 白名单、validator、builder、命令
+```
+
+概念层可以提出下一轮 schema 修订，但不能让实现跳过已有 gate。字段级冲突时先按 schema / tools 执行，再单独开任务更新概念文档或迁移旧产物。
 
 ## 1. 当前事实源
 
