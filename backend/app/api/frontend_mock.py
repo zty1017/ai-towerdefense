@@ -23,6 +23,7 @@ from ..services import (
     campaign_router_service,
     frontend_mock_service,
     generation_scheduler_service,
+    map_render_plan_service,
     map_runtime_service,
 )
 from ..services.generation_scheduler_service import (
@@ -30,6 +31,7 @@ from ..services.generation_scheduler_service import (
     InvalidQueueTransitionError,
 )
 from ..services.map_runtime_service import MapRuntimePackageNotFoundError
+from ..services.map_render_plan_service import MapRenderPlanNotFoundError
 from ..services.frontend_mock_service import (
     FixtureNotFoundError,
 )
@@ -75,6 +77,13 @@ def _map_runtime_fixture_404(exc: MapRuntimePackageNotFoundError) -> HTTPExcepti
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"map runtime package not found for: {exc}",
+    )
+
+
+def _map_render_plan_fixture_404(exc: MapRenderPlanNotFoundError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"map render plan not found for: {exc}",
     )
 
 
@@ -855,6 +864,20 @@ def get_map_runtime_package(session_id: str, node_id: str) -> FrontendMockPayloa
         data = map_runtime_service.get_map_runtime_package(session_id, node_id)
     except MapRuntimePackageNotFoundError as exc:
         raise _map_runtime_fixture_404(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.get(
+    "/api/sessions/{session_id}/battles/{node_id}/map-render-plan",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_map_render_plan(session_id: str, node_id: str) -> FrontendMockPayloadResponse:
+    """Return the reviewed procedural map render plan bundle for a battle node."""
+    _require_session(session_id)
+    try:
+        data = map_render_plan_service.get_map_render_plan_bundle(session_id, node_id)
+    except MapRenderPlanNotFoundError as exc:
+        raise _map_render_plan_fixture_404(exc) from exc
     return _payload(session_id, data)
 
 

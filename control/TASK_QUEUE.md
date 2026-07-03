@@ -2624,6 +2624,55 @@ PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-style-render-plan python3 -m py_compi
 git diff --check
 ```
 
+#### P1-D-06 MapRenderPlan 后端与前端 mock 数据层只读接入
+
+状态：已完成第一版接入。
+
+目标：
+
+```text
+让前端 mock API 和静态前端数据层能拿到 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport bundle，为后续前端真正消费分层地图渲染计划做接口准备。
+```
+
+已落地：
+
+- `backend/app/services/map_render_plan_service.py`：新增 node -> render plan bundle 的 fixture-backed 只读服务。
+- `backend/app/services/frontend_mock_service.py`：`get_battle_config()` 与 `get_runtime_package()` 可选返回 `map_render_plan_bundle`。
+- `backend/app/api/frontend_mock.py`：新增 `/api/sessions/{session_id}/battles/{node_id}/map-render-plan` endpoint。
+- `frontend/app.js`：API 模式和静态模式都能保存 `state.data.mapRenderPlanBundle`，但暂不改变战斗画面渲染。
+- `backend/tests/test_frontend_mock_api.py`：补充首战 bundle 和非首战 404 的测试断言。
+- `examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改变前端战斗绘制函数。
+- 当前只有 `gray_lantern_station` 有 RenderPlan bundle；其他节点返回 `null`，单独 endpoint 返回 404。
+- 完整 pytest 在当前受控环境中未能执行：系统 Python 无 pytest / FastAPI，`uv run` 需要访问用户缓存目录但升级权限被平台额度限制拒绝。已用服务层 smoke、`py_compile`、`node --check` 与 `git diff --check` 覆盖本轮核心风险。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api PYTHONPATH=/tmp/ai-td-task-map-render-plan-api/backend python3 - <<'PY'
+from app.services import frontend_mock_service, map_render_plan_service
+bundle = map_render_plan_service.load_map_render_plan_bundle('gray_lantern_station')
+assert bundle['procedural_map_render_plan']['schema_version'] == 'procedural_map_render_plan.v0.1'
+assert bundle['semantic_visual_consistency_report']['status'] == 'passed'
+assert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']
+payload = frontend_mock_service.get_battle_config('smoke_session', 'gray_lantern_station')
+assert payload['map_render_plan_bundle']['node_id'] == 'gray_lantern_station'
+assert frontend_mock_service.get_battle_config('smoke_session', 'lamp_wick_store')['map_render_plan_bundle'] is None
+try:
+    map_render_plan_service.load_map_render_plan_bundle('lamp_wick_store')
+except map_render_plan_service.MapRenderPlanNotFoundError:
+    pass
+else:
+    raise AssertionError('expected MapRenderPlanNotFoundError')
+PY
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 -m py_compile backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py
+node --check frontend/app.js
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
