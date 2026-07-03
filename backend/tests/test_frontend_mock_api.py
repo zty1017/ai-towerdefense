@@ -31,6 +31,15 @@ from backend.app.services.generation_scheduler_artifact_fixtures import (  # noq
 from backend.app.services.generation_scheduler_import_safety import (  # noqa: E402
     resolve_import_path,
 )
+from backend.app.services.generation_scheduler_run_queue_builders import (  # noqa: E402
+    build_generation_queue_items_from_run,
+    build_generation_schedule_buffer,
+    build_generation_schedule_run_payload,
+    build_worker_cache_payload,
+    compact_generation_queue,
+    compact_worker_cache,
+    safe_id_fragment,
+)
 
 
 def _create_session(client) -> str:
@@ -53,6 +62,110 @@ def _load_json(path: Path):
 
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
+
+
+def test_generation_scheduler_run_queue_builders_keep_queue_contract():
+    plan = {
+        "plan_id": "plan_test",
+        "authority": {"activation_requires_revalidation": True},
+        "items": [
+            {
+                "schedule_item_id": "sched/demo visual",
+                "object_kind": "map_visual",
+                "object_ref": "map:demo",
+                "latency_class": "background_prefetch",
+                "status": "planned",
+                "priority": 10,
+                "provider_policy": {"max_attempts": 2},
+                "player_visible": False,
+                "fallback_ref": "fallback:map",
+                "commit_policy": {
+                    "world_commit": "none",
+                    "revalidate_before_activation": True,
+                },
+            }
+        ],
+    }
+    run_report = {
+        "report_id": "report_test",
+        "summary": {
+            "scheduled_count": 1,
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+        },
+        "items": [
+            {
+                "schedule_item_id": "sched/demo visual",
+                "action": "queue_provider_review",
+                "result_status": "scheduled",
+                "provider_review_required": True,
+            }
+        ],
+    }
+
+    buffer = build_generation_schedule_buffer(plan, run_report)
+    assert buffer["status"] == "fixture_backed_scheduler_buffer_ready"
+    assert buffer["provider_review_required_count"] == 1
+    assert buffer["activation_requires_revalidation"] is True
+    assert buffer["items"][0]["dry_run_status"] == "scheduled"
+
+    run = build_generation_schedule_run_payload(
+        "session_test",
+        "gsrun_test",
+        "2026-07-03T00:00:00Z",
+        plan=plan,
+        run_report=run_report,
+        refs={"plan": "plan.json", "run_report": "report.json"},
+    )
+    queue_items = build_generation_queue_items_from_run(
+        run,
+        "2026-07-03T00:00:00Z",
+    )
+
+    assert len(queue_items) == 1
+    assert queue_items[0]["queue_item_id"] == "gq_gsrun_test_01"
+    assert queue_items[0]["status"] == "queued"
+    assert queue_items[0]["max_attempts"] == 2
+    assert queue_items[0]["provider_review_required"] is True
+    assert compact_generation_queue(queue_items)["summary"]["claimable_count"] == 1
+
+
+def test_generation_scheduler_worker_cache_builder_keeps_safety_contract():
+    payload = {
+        "run_id": "gsrun_test",
+        "session_id": "session_test",
+        "schedule_item_id": "sched/demo visual",
+        "object_kind": "map_visual",
+        "object_ref": "map:demo",
+        "latency_class": "background_prefetch",
+        "worker_id": "worker-test",
+        "attempt_count": 1,
+        "max_attempts": 2,
+        "status": "waiting_review",
+        "provider_review_required": True,
+        "revalidate_before_activation": True,
+    }
+
+    cache_payload = build_worker_cache_payload(payload, "2026-07-03T00:00:00Z")
+
+    assert cache_payload["cache_id"] == "gcache_gsrun_test_sched_demo_visual"
+    assert safe_id_fragment("sched/demo visual") == "sched_demo_visual"
+    assert cache_payload["provider_call_performed"] is False
+    assert cache_payload["world_mutation_performed"] is False
+    assert cache_payload["activation_allowed_now"] is False
+    assert cache_payload["activation_gate"]["blocked_reason"] == (
+        "review_required_before_activation"
+    )
+    assert cache_payload["safe_content_policy"] == {
+        "reads_env": False,
+        "calls_provider": False,
+        "writes_world_state": False,
+        "stores_raw_prompt": False,
+        "stores_provider_response": False,
+    }
+    compact = compact_worker_cache([cache_payload])
+    assert compact["summary"]["item_count"] == 1
+    assert compact["summary"]["review_required_count"] == 1
 
 
 def test_provider_artifact_fixture_catalog_resolves_default_profile():
