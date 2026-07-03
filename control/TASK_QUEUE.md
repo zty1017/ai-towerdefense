@@ -76,7 +76,7 @@ P2：本阶段明确不做
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
-- 前端战斗地图视觉底座已完成 P0-M / v0.2 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地和世界内废墟 / 补给 / 灯具地标；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
+- 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.4 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -1928,6 +1928,41 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_fr
 node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
 python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/map_procedural_backdrop_v3_after2
+git diff --check
+```
+
+#### P1-D-03 FrontendProceduralBattleBackdrop v0.4 战场关卡读法
+
+状态：已完成最小修补。
+
+目标：
+
+```text
+在不消费失败整图候选、不改写 MapRuntimePackage 事实源的前提下，把默认战斗画面从“漂亮道路底图”继续推进到更像完整塔防关卡：安全区缩放、可玩地块边界、部署台地、路线方向、目标防御区和多路线移动一致性。
+```
+
+已落地：
+
+- `frontend/app.js`：`computeBattleMetrics()` 改为按 `path_routes / build_slots / objectives / spawn_points` bounds 和 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段。
+- `frontend/app.js`：新增可玩地块边界、可部署台地、目标防御区和路线方向 cue，让入口、路线、放置点和核心关系更容易读。
+- `frontend/app.js`：地图内 sprite 尺寸随投影缩放并带下限，避免移动端地图缩小时目标/敌人/防御件过大。
+- `frontend/app.js`：敌人生成按 `spawn_points.route_id` / route 轮转绑定路线，多路线地图不再画两条路却只跑第一条。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 safe-area fit、关卡边界、路线方向 cue、部署台地、目标防御区和 route-bound enemy movement 的静态合约。
+- `examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json`：新增本轮 worker handoff 包。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改地图 runtime package、不晋升任何 AI 地图候选。
+- 可玩地块边界、台地、方向 cue 和防御区都是表现层；路径、塔位、目标、出生点和放置合法性仍只来自 `MapRuntimePackage`。
+- OpenCode headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/battlefield_depth_v4_scaled_smoke
 git diff --check
 ```
 

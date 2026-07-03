@@ -1,0 +1,83 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-03-frontend-battlefield-depth-v4",
+  "title": "FrontendProceduralBattleBackdrop v0.4 战场关卡读法",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/frontend-battlefield-depth-v4",
+  "worktree": "/tmp/ai-td-task-frontend-battlefield-depth-v4",
+  "objective": "在不发布失败整图候选、不改变 MapRuntimePackage 玩法真相的前提下，继续增强默认玩家战斗画面：按路径/塔位/目标/出生点 bounds 和 HUD safe area 做 contain fit，补可玩地块边界、可部署台地、路线方向 cue、目标防御区，并让敌人按 spawn/route 绑定多路线移动。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md",
+    "frontend/README.md",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tools/frontend/validate_battle_visual_contract.py",
+    "tools/frontend/capture_battle_visual_smoke.py",
+    "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+    "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+  ],
+  "allowed_paths": [
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tools/frontend/validate_battle_visual_contract.py",
+    "docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "shared/schemas/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json",
+    "node --check frontend/app.js",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/battlefield_depth_v4_scaled_smoke",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "screenshot_paths",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只增强 no-build 前端 canvas 程序化表现和静态合约，不调用图像 provider、不替换地图图片、不修改 MapRuntimePackage。",
+    "路线、塔位、目标、出生点仍来自 MapRuntimePackage；新增边界、台地、方向 cue 和防御区只是表现层。",
+    "OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 local_codex_safe_fallback 完成。",
+    "截图验收是必要证据；静态合约不能替代人眼判断。"
+  ]
+}
