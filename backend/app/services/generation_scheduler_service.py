@@ -25,29 +25,6 @@ _GENERATION_SCHEDULE_PLAN = (
 _GENERATION_SCHEDULE_RUN_REPORT = (
     _REPO_ROOT / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
 )
-_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE = (
-    _REPO_ROOT
-    / "examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json"
-)
-_PROVIDER_ARTIFACT_STAGING_EXAMPLE = (
-    _REPO_ROOT / "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json"
-)
-_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
-    _REPO_ROOT
-    / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json"
-)
-_PROVIDER_IMAGE_OUTPUT_ENVELOPE_EXAMPLE = (
-    _REPO_ROOT
-    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json"
-)
-_PROVIDER_IMAGE_ARTIFACT_STAGING_EXAMPLE = (
-    _REPO_ROOT
-    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json"
-)
-_PROVIDER_IMAGE_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
-    _REPO_ROOT
-    / "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json"
-)
 _MVP_CONTEXT_PACKAGE_EXAMPLE = (
     _REPO_ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
 )
@@ -80,6 +57,10 @@ from validate_provider_adapter_execution_receipt import (  # noqa: E402
 from run_provider_adapter import (  # noqa: E402
     build_dry_run_artifacts as build_provider_adapter_runner_dry_run_artifacts,
     validate_outputs as validate_provider_adapter_runner_outputs,
+)
+from .generation_scheduler_artifact_fixtures import (  # noqa: E402
+    provider_artifact_fixture_metadata,
+    provider_artifact_fixture_paths,
 )
 from .generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff,
@@ -124,46 +105,23 @@ def _load_runner_import_json(path: Path, *, label: str) -> dict[str, Any]:
 
 
 def _provider_artifact_fixture_paths(profile: str | None) -> tuple[Path, Path, Path, str]:
-    if profile in {None, "", "default", "summary"}:
-        return (
-            _PROVIDER_OUTPUT_ENVELOPE_EXAMPLE,
-            _PROVIDER_ARTIFACT_STAGING_EXAMPLE,
-            _PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE,
-            "default",
-        )
-    if profile in {"image_failure", "image"}:
-        return (
-            _PROVIDER_IMAGE_OUTPUT_ENVELOPE_EXAMPLE,
-            _PROVIDER_IMAGE_ARTIFACT_STAGING_EXAMPLE,
-            _PROVIDER_IMAGE_ARTIFACT_PROMOTION_REPORT_EXAMPLE,
-            "image_failure",
-        )
-    raise InvalidQueueTransitionError(f"unknown provider artifact profile: {profile}")
+    return provider_artifact_fixture_paths(
+        profile,
+        repo_root=_REPO_ROOT,
+        error_cls=InvalidQueueTransitionError,
+    )
 
 
 def _provider_artifact_fixture_metadata(
     profile: str | None,
 ) -> dict[str, str]:
-    envelope_path, _, _, normalized_profile = _provider_artifact_fixture_paths(profile)
-    envelope = _load_json(envelope_path)
-    source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
-    provider_call = (
-        envelope.get("provider_call", {})
-        if isinstance(envelope.get("provider_call"), dict)
-        else {}
+    return provider_artifact_fixture_metadata(
+        profile,
+        repo_root=_REPO_ROOT,
+        load_json=_load_json,
+        rel_path=_rel,
+        error_cls=InvalidQueueTransitionError,
     )
-    schedule_item_id = str(source.get("schedule_item_id") or "")
-    authorization_ref = str(provider_call.get("authorization_ref") or "")
-    if not schedule_item_id or not authorization_ref:
-        raise InvalidQueueTransitionError(
-            f"provider artifact fixture profile is missing source refs: {normalized_profile}"
-        )
-    return {
-        "artifact_profile": normalized_profile,
-        "schedule_item_id": schedule_item_id,
-        "authorization_ref": authorization_ref,
-        "provider_output_envelope": _rel(envelope_path),
-    }
 
 
 def _dump_payload(payload: dict[str, Any]) -> str:
