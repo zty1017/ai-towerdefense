@@ -1,0 +1,78 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-23-provider-artifact-promotion-validator-hardening",
+  "title": "ProviderArtifactPromotionReport 失败决策校验加严",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/promotion-report-validator-hardening",
+  "worktree": "/tmp/ai-td-task-promotion-report-validator-hardening",
+  "objective": "把 blocked_validation_failed 从文档约定升级为 validator 约束：只有至少一个 required gate 的 status=failed 时，ProviderArtifactPromotionReport 才能使用该决策；同时增加负例 fixture 和回归检查工具。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "shared/schemas/provider_artifact_promotion_report.v0.1.schema.json",
+    "tools/dev/validate_provider_artifact_promotion_report.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/validate_provider_artifact_promotion_report.py",
+    "tools/dev/check_provider_artifact_promotion_report_negative_fixture.py",
+    "tools/demo/export_evidence.py",
+    "examples/provider_artifact_staging/",
+    "examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json",
+    "python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+    "python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
+    "python3 tools/dev/check_provider_artifact_promotion_report_negative_fixture.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json --expected-error \"blocked_validation_failed requires at least one required gate failed\"",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_promo_validator_hardening python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/dev/check_provider_artifact_promotion_report_negative_fixture.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_validator_hardening_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不改变 schema，只收紧 validator 语义。",
+    "负例 fixture 必须保持 invalid；它可以作为内部 evidence 校验 ref，但不能进入玩家 runtime 或正式 promotion report 汇总。",
+    "不得调用 provider 或读取 .env。"
+  ]
+}

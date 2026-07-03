@@ -126,6 +126,8 @@ Last updated: 2026-07-03
   - ProviderArtifactStagingManifest 字段级事实源：把 ProviderOutputEnvelope 中的本地 refs 转入 review-only staging，仍不写世界状态、不激活 runtime、不绕过 media / semantic / human review / promotion gate。
 - `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
   - ProviderArtifactPromotionReport 字段级事实源：只表达显式晋升/阻断结论，不直接修改 runtime package、published media 或世界状态。
+- `tools/dev/validate_provider_artifact_promotion_report.py`
+  - ProviderArtifactPromotionReport 可执行语义事实源：批准类决策要求 required gates 全部通过；`blocked_review_required` 要求至少一个 required gate 未通过；`blocked_validation_failed` 要求至少一个 required gate 已失败。
 - `shared/schemas/core_artifact_alignment_report.v0.1.schema.json`
   - CoreArtifactAlignmentReport 字段级事实源：只做内部 evidence / 迁移审计，不激活 review-only 产物、不写世界状态、不替代任何 runtime package 或事务构建器。
 

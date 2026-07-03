@@ -227,6 +227,11 @@ def check_gate_logic(report: dict[str, Any], staging: dict[str, Any], errors: li
         for gate_name in required_gates
         if as_obj(gates.get(gate_name)).get("status") != "passed"
     ]
+    failed_required = [
+        gate_name
+        for gate_name in required_gates
+        if as_obj(gates.get(gate_name)).get("status") == "failed"
+    ]
 
     staging_promotion = as_obj(staging.get("promotion_gate"))
     if staging_promotion.get("promotion_allowed") is False and promotion_allowed is True:
@@ -248,6 +253,8 @@ def check_gate_logic(report: dict[str, Any], staging: dict[str, Any], errors: li
             errors.append("blocked or rejected promotion decisions require decision.blocked_reason")
         if promotion_decision == "blocked_review_required" and not not_passed_required:
             errors.append("blocked_review_required requires at least one required gate not passed")
+        if promotion_decision == "blocked_validation_failed" and not failed_required:
+            errors.append("blocked_validation_failed requires at least one required gate failed")
 
 
 def check_targets(report: dict[str, Any], errors: list[str]) -> None:

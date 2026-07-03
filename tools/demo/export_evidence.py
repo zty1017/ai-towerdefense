@@ -182,6 +182,8 @@ PATHS = {
     / "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
     "provider_artifact_promotion_report": ROOT
     / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+    "provider_artifact_promotion_negative_fixture": ROOT
+    / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json",
     "provider_image_artifact_staging_manifest": ROOT
     / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
     "provider_image_artifact_staging_source_envelope": ROOT
@@ -767,6 +769,16 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_provider_artifact_promotion_report.py",
             "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+        ],
+    },
+    {
+        "name": "provider_artifact_promotion_negative_fixture",
+        "command": [
+            "python3",
+            "tools/dev/check_provider_artifact_promotion_report_negative_fixture.py",
+            "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json",
+            "--expected-error",
+            "blocked_validation_failed requires at least one required gate failed",
         ],
     },
     {
@@ -2598,6 +2610,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         (
             "provider_artifact_promotion_report",
             PATHS["provider_artifact_promotion_report"],
+        ),
+        (
+            "provider_artifact_promotion_negative_fixture",
+            PATHS["provider_artifact_promotion_negative_fixture"],
         ),
         (
             "provider_image_artifact_staging_manifest",
