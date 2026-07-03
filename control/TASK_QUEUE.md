@@ -1027,6 +1027,39 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promot
 git diff --check
 ```
 
+### P1-B-24 Provider image artifact 失败门后端 ledger profile
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+扩展 fixture-backed stage-provider-artifacts worker，让它在默认行为不变的前提下支持 artifact_profile=image_failure，把 image ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport 登记到同一 generation_artifact_ledger。
+```
+
+已落地：
+
+- `backend/app/models.py`：`GenerationScheduleQueueTransitionRequest` 显式支持 `authorization_ref` 和 `artifact_profile`。
+- `backend/app/services/generation_scheduler_service.py`：`stage_provider_artifacts_fixture` 支持 `default` 与 `image_failure` 两个 fixture profile。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 image failure profile、未知 profile 409、默认 profile 兼容。
+- `examples/worker_task_packs/p1b_provider_image_artifact_ledger_profile.v0.1.json`
+- `docs/CURRENT_ARCHITECTURE_INDEX.md` 和 `docs/GENERATION_SCHEDULER_V0_1.md` 已同步该后端 ledger profile。
+
+当前结论：
+
+- 默认 stage worker 仍登记通用 `blocked_review_required` 示例。
+- `artifact_profile=image_failure` 会登记 `validation_failed` / `blocked_validation_failed` 图片候选负样本。
+- image failure profile 仍然是 Studio / evidence 用后端状态层：不调用 provider、不读取 `.env`、不写世界状态、不发布媒体、不激活 runtime。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_ledger_profile.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging_ledger python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

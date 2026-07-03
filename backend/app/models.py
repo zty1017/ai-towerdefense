@@ -136,6 +136,10 @@ class GenerationScheduleQueueTransitionRequest(BaseModel):
         default=None,
         description="Optional scheduler queue item to target for worker actions.",
     )
+    artifact_profile: Optional[str] = Field(
+        default=None,
+        description="Optional provider artifact fixture profile for staging workers.",
+    )
     authorization_ref: Optional[str] = Field(
         default=None,
         description="Optional explicit provider authorization reference.",
