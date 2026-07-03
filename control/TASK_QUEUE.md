@@ -1199,6 +1199,40 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-29 Generation Scheduler review-only dispatcher step
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 review-only dispatcher API，把一个 queued 调度项按既有 guard / request / authorization / runner fixture 链推进到 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope ledger 边界，但不进入 staging、promotion、队列完成或 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step`
+- 缺少最新 scheduler run 时自动创建 session 级 run。
+- 支持显式 `schedule_item_id`；未提供时处理下一个 `queued` 项。
+- 固定复用 `dry-run-step -> live-executor-guard -> prepare-executor-request -> grant-provider-authorization -> run-provider-adapter-runner-fixture`。
+- 返回统一 `worker_step`、各阶段 `steps`、queue item、worker cache、guard log、executor request、authorization、runner receipt、ProviderOutputEnvelope 和 ledger 摘要。
+- 队列项保持 `waiting_review`，ledger 只包含 executor request、authorization、adapter receipt、ProviderOutputEnvelope 四类。
+
+当前结论：
+
+- 这是正式后台 dispatcher / executor 前的 review-only 编排壳，不是真 provider 调度器。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续真实后台执行器可以替换 runner fixture 步骤，但必须保留同一授权链、redacted envelope、staging / promotion gate 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_dispatcher.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_dispatcher python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

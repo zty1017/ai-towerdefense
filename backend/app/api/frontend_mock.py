@@ -455,6 +455,29 @@ def run_provider_adapter_runner_fixture(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_schedule_review_only_dispatcher_step(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Dispatch one queued item through the review-only runner boundary."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.run_review_only_dispatcher_step(
+            session_id,
+            metadata,
+        )
+    except GenerationSchedulerFixtureNotFoundError as exc:
+        raise _scheduler_fixture_404(exc) from exc
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/import-provider-adapter-runner-output",
     response_model=FrontendMockPayloadResponse,
 )

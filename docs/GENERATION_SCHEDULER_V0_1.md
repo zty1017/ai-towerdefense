@@ -407,6 +407,24 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter
 
 该入口要求当前 session / latest run 已经存在匹配的 `GenerationExecutorRunRequest` 和 `ProviderExecutionAuthorization`，然后复用工具层 runner 的 dry-run artifact builder 生成 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`，并把二者登记到 `generation_artifact_ledger`。它不会自动 staging、promotion、complete queue item、写世界状态或激活 runtime；队列仍停在 review / promotion 前。
 
+后端还提供 review-only dispatcher 薄编排入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step
+```
+
+该入口会在缺少 run 时创建一条 session 级 scheduler run，并选择调用方指定的 `schedule_item_id` 或下一个 `queued` 项，按固定顺序串接：
+
+```text
+dry-run-step
+  -> live-executor-guard
+  -> prepare-executor-request
+  -> grant-provider-authorization
+  -> run-provider-adapter-runner-fixture
+```
+
+它只把一个待生成项推进到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` review-only 边界，并登记到 `generation_artifact_ledger`。它不调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，也不激活 runtime；队列项仍停在 `waiting_review`。因此它是正式后台执行器前的 dispatcher 骨架，不是完整 executor chain，也不是内容晋升入口。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text

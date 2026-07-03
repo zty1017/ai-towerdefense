@@ -1126,6 +1126,138 @@ def test_provider_adapter_runner_fixture_requires_authorization(client):
     assert "matching provider execution authorization" in runner.json()["detail"]
 
 
+def test_review_only_dispatcher_step_records_runner_envelope_without_staging(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    dispatched = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-step",
+            json={
+                "worker_id": "dispatcher-smoke",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "note": "dispatch one review-only provider runner step",
+            },
+        )
+    )
+
+    worker_step = dispatched["worker_step"]
+    assert worker_step["status"] == "dispatched_review_only"
+    assert worker_step["worker_mode"] == "review_only_dispatcher_step"
+    assert worker_step["created_generation_schedule_run"] is True
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["authorization_ref"] == (
+        "auth_sched_next_map_visual_prefetch_fixture_001"
+    )
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["promotion_allowed_count"] == 0
+    assert worker_step["staging_performed"] is False
+    assert worker_step["promotion_performed"] is False
+    assert worker_step["queue_completed"] is False
+    assert "provider_artifact_staging" not in dispatched
+    assert "provider_artifact_promotion_report" not in dispatched
+
+    assert dispatched["steps"]["dry_run_step"]["status"] == "processed"
+    assert dispatched["steps"]["live_executor_guard"]["status"] == "blocked"
+    assert dispatched["steps"]["generation_executor_run_request"]["status"] == (
+        "prepared"
+    )
+    assert dispatched["steps"]["provider_execution_authorization"]["status"] == (
+        "authorized"
+    )
+    assert dispatched["steps"]["provider_adapter_runner"]["status"] == (
+        "runner_recorded"
+    )
+    assert dispatched["generation_schedule_queue_item"]["status"] == "waiting_review"
+    assert dispatched["provider_adapter_execution_receipt"]["execution"][
+        "mode"
+    ] == "fixture_backed_no_provider_call"
+    assert dispatched["provider_adapter_execution_receipt"]["execution"][
+        "provider_call_performed_by_receipt_builder"
+    ] is False
+    assert dispatched["provider_output_envelope"]["provider_call"][
+        "performed"
+    ] is False
+    assert dispatched["provider_output_envelope"]["artifact_manifest"]["status"] == (
+        "not_created"
+    )
+    assert dispatched["provider_output_envelope"]["activation_gate"][
+        "activation_allowed"
+    ] is False
+    assert dispatched["provider_output_envelope"]["envelope_id"] == worker_step[
+        "envelope_id"
+    ]
+
+    ledger_summary = dispatched["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 4
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+        "provider_adapter_execution_receipt": 1,
+        "provider_output_envelope": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+    ledger_kinds = {
+        row["artifact_kind"]
+        for row in raw_conn.execute(
+            "SELECT artifact_kind FROM generation_artifact_ledger WHERE session_id = ?",
+            (sid,),
+        ).fetchall()
+    }
+    assert ledger_kinds == {
+        "generation_executor_run_request",
+        "provider_execution_authorization",
+        "provider_adapter_execution_receipt",
+        "provider_output_envelope",
+    }
+
+
+def test_review_only_dispatcher_step_can_use_next_queued_item(client):
+    sid = _create_session(client)
+    dispatched = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-step",
+            json={"worker_id": "dispatcher-next"},
+        )
+    )
+
+    worker_step = dispatched["worker_step"]
+    assert worker_step["status"] == "dispatched_review_only"
+    assert worker_step["schedule_item_id"] == "sched_stage05_worldline_prefetch"
+    assert dispatched["generation_schedule_queue_item"]["status"] == "waiting_review"
+    assert dispatched["generation_artifact_ledger"]["summary"]["item_count"] == 4
+
+
+def test_review_only_dispatcher_step_rejects_already_processed_item(client):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-step",
+            json={
+                "worker_id": "dispatcher-repeat",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+
+    repeated = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-step",
+        json={
+            "worker_id": "dispatcher-repeat",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+    assert repeated.status_code == 409
+    assert "must be queued" in repeated.json()["detail"]
+
+
 def test_provider_adapter_runner_output_import_records_local_files(client, tmp_path):
     sid = _create_session(client)
     chain = _prepare_provider_authorization_chain(client, sid, "runner-import")
