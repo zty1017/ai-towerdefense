@@ -38,6 +38,18 @@ from backend.app.services.generation_scheduler_artifact_fixtures import (  # noq
 from backend.app.services.generation_scheduler_import_safety import (  # noqa: E402
     resolve_import_path,
 )
+from backend.app.services.generation_scheduler_provider_execution_builders import (  # noqa: E402
+    build_generation_executor_run_request_payload,
+    build_live_executor_guard_payload,
+    build_provider_adapter_execution_receipt_payload,
+    build_provider_execution_authorization_payload,
+    compact_generation_executor_run_request,
+    compact_provider_adapter_execution_receipt,
+    compact_provider_execution_authorization,
+    provider_authorization_ref,
+    rehydrate_generation_executor_request_for_runner,
+    rehydrate_provider_authorization_for_runner,
+)
 from backend.app.services.generation_scheduler_run_queue_builders import (  # noqa: E402
     build_generation_queue_items_from_run,
     build_generation_schedule_buffer,
@@ -69,6 +81,162 @@ def _load_json(path: Path):
 
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
+
+
+def test_generation_provider_execution_builders_keep_guard_and_request_contract():
+    queue_payload = {
+        "run_id": "gsrun_test",
+        "session_id": "session_test",
+        "schedule_item_id": "sched/demo visual",
+        "object_kind": "map_visual_prefetch",
+        "object_ref": "map:demo",
+        "latency_class": "background_prefetch",
+        "provider_policy": {"mode": "manual_authorized_demo", "profile": "image"},
+        "attempt_count": 1,
+        "max_attempts": 3,
+        "fallback_ref": "fallback:map",
+    }
+    ts = "2026-07-03T00:00:00Z"
+
+    guard = build_live_executor_guard_payload(
+        queue_payload,
+        {"worker_id": "guard-worker", "note": "guard test"},
+        ts,
+    )
+    assert guard["guard_id"] == "pguard_gsrun_test_sched_demo_visual_01"
+    assert guard["status"] == "blocked_pending_explicit_authorization"
+    assert guard["provider_call_performed"] is False
+    assert guard["world_mutation_performed"] is False
+    assert guard["activation_allowed_now"] is False
+    assert guard["safe_content_policy"]["reads_env"] is False
+
+    request = build_generation_executor_run_request_payload(
+        queue_payload,
+        guard,
+        {"worker_id": "request-worker"},
+        ts,
+        input_refs=[{"ref_id": "plan", "kind": "schedule_plan", "path": "plan.json"}],
+        context_refs=[
+            {"ref_id": "context", "kind": "context_package", "path": "context.json"}
+        ],
+    )
+    assert request["request_id"] == "gexec_gsrun_test_sched_demo_visual_01"
+    assert request["provider_execution_intent"]["authorization_required"] is True
+    assert request["provider_execution_intent"][
+        "provider_call_performed_by_request_builder"
+    ] is False
+    assert request["request_builder_safety"]["calls_provider"] is False
+
+    compact = compact_generation_executor_run_request(request)
+    assert compact["input_ref_count"] == 1
+    assert compact["context_ref_count"] == 1
+    assert compact["requested_output"]["result_kind"] == "image_candidate"
+
+
+def test_generation_provider_execution_builders_keep_authorization_and_receipt_contract():
+    executor_entry = {
+        "session_id": "session_test",
+        "run_id": "gsrun_test",
+        "schedule_item_id": "sched/demo visual",
+        "source_id": "gexec_test",
+        "created_at": "2026-07-03T00:00:00Z",
+        "compact": {
+            "source": {
+                "run_id": "gsrun_test",
+                "schedule_item_id": "sched/demo visual",
+                "object_kind": "map_visual_prefetch",
+                "object_ref": "map:demo",
+                "guard_id": "pguard_test",
+                "provider_mode": "manual_authorized_demo",
+                "provider_profile": "image",
+            },
+            "provider_execution_intent": {
+                "provider_mode": "manual_authorized_demo",
+                "provider_profile": "image",
+            },
+            "execution_budget": {
+                "attempt_count": 1,
+                "max_attempts": 3,
+                "remaining_attempts": 2,
+            },
+            "request_builder_safety": {
+                "reads_env": False,
+                "calls_provider": False,
+                "stores_prompt_body": False,
+                "stores_provider_body": False,
+                "writes_world_state": False,
+                "activates_runtime": False,
+            },
+        },
+    }
+    ts = "2026-07-03T00:00:00Z"
+
+    authorization = build_provider_execution_authorization_payload(
+        executor_entry,
+        {"worker_id": "auth-worker"},
+        ts,
+    )
+    assert authorization["authorization_ref"] == provider_authorization_ref(
+        "sched/demo visual"
+    )
+    assert authorization["authority"]["provider_execution_authorized"] is True
+    assert authorization["authority"]["runtime_activation_allowed"] is False
+    assert authorization["authorization_builder_safety"]["calls_provider"] is False
+
+    auth_compact = compact_provider_execution_authorization(authorization)
+    assert auth_compact["authorization"]["granted"] is True
+    assert auth_compact["execution_constraints"]["required_next_gates"] == [
+        "provider_output_envelope",
+        "local_artifact_staging_manifest",
+        "media_gate",
+        "semantic_gate",
+        "human_review",
+        "promotion_report",
+    ]
+
+    auth_entry = {
+        "session_id": "session_test",
+        "run_id": "gsrun_test",
+        "schedule_item_id": "sched/demo visual",
+        "source_id": authorization["authorization_ref"],
+        "created_at": ts,
+        "compact": auth_compact,
+    }
+    receipt = build_provider_adapter_execution_receipt_payload(
+        auth_entry,
+        {"worker_id": "adapter-worker"},
+        ts,
+    )
+    assert receipt["execution_receipt_id"] == (
+        "padapter_sched_demo_visual_fixture_001"
+    )
+    assert receipt["execution"]["provider_call_performed_by_receipt_builder"] is False
+    assert receipt["adapter_safety"]["writes_world_state"] is False
+
+    receipt_compact = compact_provider_adapter_execution_receipt(receipt)
+    assert receipt_compact["execution"]["authorization_ref"] == (
+        authorization["authorization_ref"]
+    )
+    assert receipt_compact["output_contract"][
+        "must_write_provider_output_envelope"
+    ] is True
+
+    rehydrated_request = rehydrate_generation_executor_request_for_runner(
+        executor_entry,
+        created_at=ts,
+        schedule_plan_ref="plan.json",
+    )
+    assert rehydrated_request["input_refs"][0]["path"] == "plan.json"
+    assert rehydrated_request["request_builder_safety"]["calls_provider"] is False
+
+    rehydrated_authorization = rehydrate_provider_authorization_for_runner(
+        auth_entry,
+        created_at=ts,
+    )
+    assert rehydrated_authorization["authorization_ref"] == (
+        authorization["authorization_ref"]
+    )
+    assert rehydrated_authorization["authorization_builder_safety"]["reads_env"] is False
 
 
 def test_generation_artifact_ledger_builders_compact_provider_artifacts():

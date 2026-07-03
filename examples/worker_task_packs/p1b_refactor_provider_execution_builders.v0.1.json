@@ -1,0 +1,78 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-45-refactor-provider-execution-builders",
+  "title": "Refactor provider execution builders",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/refactor-provider-execution-builders",
+  "worktree": "/tmp/ai-td-task-refactor-provider-execution-builders",
+  "objective": "把 Generation Scheduler 中 provider guard id、executor request id、authorization ref、adapter receipt id、live executor guard payload、executor request payload / compact、provider authorization payload / compact、runner rehydrate、adapter receipt payload / compact 等纯构造函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "shared/schemas/generation_executor_run_request.v0.1.schema.json",
+    "shared/schemas/provider_execution_authorization.v0.1.schema.json",
+    "shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_provider_execution_builders.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_refactor_provider_execution_builders.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_execution_builders.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_execution_builders python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "rg -n \"generation_scheduler_provider_execution_builders|build_live_executor_guard_payload|build_generation_executor_run_request_payload|build_provider_execution_authorization_payload|build_provider_adapter_execution_receipt_payload|rehydrate_generation_executor_request_for_runner|rehydrate_provider_authorization_for_runner\" backend/app/services backend/tests/test_frontend_mock_api.py",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务是行为保持型重构，不新增 API，不改变 endpoint 返回合同。",
+    "provider execution builder 模块只处理纯 dict payload / compact / rehydrate，不读 fixture、不读 DB、不读 .env、不调用 provider、不写 ledger、不写世界状态。",
+    "run id 改为 token_hex 是为了避免 token_urlsafe 随机产生 sk- 片段并被 secret-fragment gate 误判。",
+    "OpenCode headless 调用在当前受控通道内被执行环境拒绝为外部数据披露风险；本任务采用 local_codex_safe_fallback。"
+  ]
+}
