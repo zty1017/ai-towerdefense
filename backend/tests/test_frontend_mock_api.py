@@ -67,6 +67,10 @@ from backend.app.services.generation_scheduler_prefetch_cache_builders import ( 
     ledger_entry_ref,
     prefetch_cache_status,
 )
+from backend.app.services.generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
+    provider_adapter_runner_import_alignment_checks,
+    validate_provider_adapter_runner_import_contract,
+)
 from app.services.generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items,
     insert_generation_schedule_run,
@@ -508,6 +512,90 @@ def test_generation_provider_execution_builders_keep_authorization_and_receipt_c
         authorization["authorization_ref"]
     )
     assert rehydrated_authorization["authorization_builder_safety"]["reads_env"] is False
+
+
+def test_provider_adapter_runner_import_helpers_validate_alignment_contract():
+    receipt = {
+        "source": {
+            "schedule_item_id": "sched_test",
+            "authorization_ref": "auth_test",
+            "executor_request_id": "gexec_test",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map:test",
+            "provider_profile": "image",
+            "provider_mode": "manual_authorized_demo",
+        },
+        "execution": {"provider_call_performed_by_receipt_builder": True},
+    }
+    envelope = {
+        "source": {
+            "schedule_item_id": "sched_test",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map:test",
+            "provider_profile": "image",
+            "provider_mode": "manual_authorized_demo",
+        },
+        "provider_call": {"performed": True, "authorization_ref": "auth_test"},
+    }
+
+    checks = provider_adapter_runner_import_alignment_checks(
+        receipt,
+        envelope,
+        schedule_item_id="sched_test",
+        authorization_ref="auth_test",
+        executor_request_id="gexec_test",
+    )
+    assert all(checks.values())
+    contract = validate_provider_adapter_runner_import_contract(
+        receipt,
+        envelope,
+        schedule_item_id="sched_test",
+        authorization_ref="auth_test",
+        executor_request_id="gexec_test",
+    )
+    assert contract["receipt_source"]["schedule_item_id"] == "sched_test"
+    assert contract["envelope_source"]["object_ref"] == "map:test"
+
+
+def test_provider_adapter_runner_import_helpers_report_failed_alignment_names():
+    receipt = {
+        "source": {
+            "schedule_item_id": "sched_test",
+            "authorization_ref": "auth_test",
+            "executor_request_id": "gexec_test",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map:test",
+            "provider_profile": "image",
+            "provider_mode": "manual_authorized_demo",
+        },
+        "execution": {"provider_call_performed_by_receipt_builder": True},
+    }
+    envelope = {
+        "source": {
+            "schedule_item_id": "sched_other",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map:other",
+            "provider_profile": "image",
+            "provider_mode": "manual_authorized_demo",
+        },
+        "provider_call": {"performed": True, "authorization_ref": "auth_other"},
+    }
+
+    try:
+        validate_provider_adapter_runner_import_contract(
+            receipt,
+            envelope,
+            schedule_item_id="sched_test",
+            authorization_ref="auth_test",
+            executor_request_id="gexec_test",
+        )
+    except ValueError as exc:
+        message = str(exc)
+        assert "envelope_schedule_item_id" in message
+        assert "envelope_object_ref" in message
+        assert "performed_authorization_ref" in message
+    else:
+        raise AssertionError("mismatched provider adapter import should fail")
 
 
 def test_generation_artifact_ledger_builders_compact_provider_artifacts():
