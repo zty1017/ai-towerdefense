@@ -3342,6 +3342,97 @@ def run_review_only_dispatcher_drain(
     }
 
 
+def run_review_only_background_executor_tick(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Run one bounded review-only background executor tick.
+
+    This is the stable API-shaped shell for a future daemon loop. The actual
+    work is still delegated to the existing dispatcher drain so the guard,
+    authorization, runner, and ledger boundaries stay in one place.
+    """
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    max_items = _requested_max_items(safe_metadata, default=2, maximum=8)
+    worker_id = str(
+        safe_metadata.get("worker_id") or "review_only_background_executor_tick"
+    )
+    note = safe_metadata.get("note") or "manual review-only background tick"
+    drain = run_review_only_dispatcher_drain(
+        session_id,
+        {
+            **safe_metadata,
+            "worker_id": worker_id,
+            "note": note,
+            "max_items": max_items,
+        },
+    )
+    drain_step = drain.get("worker_step", {})
+    prefetch_cache = get_generation_prefetch_cache(session_id)
+    prefetch_summary = (
+        prefetch_cache.get("generation_prefetch_cache", {}).get("summary", {})
+        if isinstance(prefetch_cache, dict)
+        else {}
+    )
+    status = (
+        "ticked_review_only"
+        if drain_step.get("status") == "drained_review_only"
+        else "idle"
+    )
+    tick_step = {
+        "status": status,
+        "worker_mode": "review_only_background_executor_tick",
+        "trigger": "manual_api_tick",
+        "created_generation_schedule_run": drain_step.get(
+            "created_generation_schedule_run"
+        ),
+        "run_id": drain_step.get("run_id"),
+        "max_items": max_items,
+        "dispatched_count": drain_step.get("dispatched_count", 0),
+        "idle_reached": drain_step.get("idle_reached"),
+        "stop_reason": drain_step.get("stop_reason"),
+        "remaining_eligible_count": drain_step.get("remaining_eligible_count"),
+        "provider_call_count": 0,
+        "world_mutation_count": 0,
+        "activation_allowed_count": 0,
+        "promotion_allowed_count": 0,
+        "staging_performed": False,
+        "promotion_performed": False,
+        "queue_completed_count": drain_step.get("queue_completed_count", 0),
+    }
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": tick_step,
+        "background_executor_tick": {
+            "tick_mode": "review_only_background_executor_tick",
+            "dispatcher_worker_step": drain_step,
+            "prefetch_cache_summary": prefetch_summary,
+            "safety": {
+                "api_reads_env": False,
+                "api_calls_provider": False,
+                "api_stages_provider_artifacts": False,
+                "api_promotes_provider_artifacts": False,
+                "api_completes_queue_items": False,
+                "api_writes_world_state": False,
+                "api_activates_runtime": False,
+                "prompt_body_stored": False,
+                "provider_response_body_stored": False,
+            },
+        },
+        "dispatcher_steps": drain.get("dispatcher_steps", []),
+        "generation_schedule_run": drain.get("generation_schedule_run"),
+        "generation_schedule_queue": drain.get("generation_schedule_queue"),
+        "generation_schedule_worker_cache": drain.get(
+            "generation_schedule_worker_cache"
+        ),
+        "generation_artifact_ledger": drain.get("generation_artifact_ledger"),
+        "generation_prefetch_cache": prefetch_cache.get(
+            "generation_prefetch_cache", {}
+        ),
+    }
+
+
 def _display_import_path(path: Path) -> str:
     try:
         return _rel(path)

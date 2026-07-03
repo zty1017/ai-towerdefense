@@ -544,9 +544,12 @@ POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard
 ```http
 POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step
 POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-executor-tick
 ```
 
 `run-review-only-dispatcher-step` 会把一个 `queued` 且需要 provider review 的调度项推进到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` ledger 边界。`run-review-only-dispatcher-drain` 会按 `max_items` 重复执行这个动作，默认最多 4 个，单次上限 16 个。
+
+`run-review-only-background-executor-tick` 是更接近后台 daemon 的稳定外壳：默认 `max_items = 2`，单次上限 8，内部仍复用 dispatcher drain，并额外返回 `background_executor_tick.safety` 与 `generation_prefetch_cache.summary`，方便 Studio / 脚本展示“后台预取 tick 已推进到 review-only envelope 边界”。
 
 drain 请求体只使用：
 
@@ -560,7 +563,7 @@ drain 请求体只使用：
 
 返回中的 `worker_step.stop_reason` 为 `budget_exhausted` 或 `no_eligible_items`，`remaining_eligible_count` 表示仍处于 `queued` 且需要 provider review 的剩余项数量。
 
-这两个入口都是 Studio / evidence 用内部接口，不是玩家默认体验，也不是真实 provider worker。它们不会调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
+这些入口都是 Studio / evidence 用内部接口，不是玩家默认体验，也不是真实 provider worker。它们不会调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
 
 ### 获取大地图
 

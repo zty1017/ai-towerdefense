@@ -1805,6 +1805,120 @@ def test_review_only_dispatcher_drain_rejects_invalid_budget(client):
     assert too_large.status_code == 422
 
 
+def test_review_only_background_executor_tick_wraps_dispatcher_drain(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    tick = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-executor-tick",
+            json={"worker_id": "background-tick", "note": "bounded tick"},
+        )
+    )
+
+    worker_step = tick["worker_step"]
+    assert worker_step["status"] == "ticked_review_only"
+    assert worker_step["worker_mode"] == "review_only_background_executor_tick"
+    assert worker_step["trigger"] == "manual_api_tick"
+    assert worker_step["created_generation_schedule_run"] is True
+    assert worker_step["max_items"] == 2
+    assert worker_step["dispatched_count"] == 2
+    assert worker_step["stop_reason"] == "budget_exhausted"
+    assert worker_step["remaining_eligible_count"] == 2
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["promotion_allowed_count"] == 0
+    assert worker_step["staging_performed"] is False
+    assert worker_step["promotion_performed"] is False
+    assert worker_step["queue_completed_count"] == 0
+    assert [step["schedule_item_id"] for step in tick["dispatcher_steps"]] == [
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ]
+
+    background_tick = tick["background_executor_tick"]
+    assert background_tick["tick_mode"] == "review_only_background_executor_tick"
+    assert background_tick["dispatcher_worker_step"]["worker_mode"] == (
+        "review_only_dispatcher_drain"
+    )
+    assert background_tick["safety"] == {
+        "api_reads_env": False,
+        "api_calls_provider": False,
+        "api_stages_provider_artifacts": False,
+        "api_promotes_provider_artifacts": False,
+        "api_completes_queue_items": False,
+        "api_writes_world_state": False,
+        "api_activates_runtime": False,
+        "prompt_body_stored": False,
+        "provider_response_body_stored": False,
+    }
+
+    prefetch_summary = tick["generation_prefetch_cache"]["summary"]
+    assert prefetch_summary["item_count"] == 8
+    assert prefetch_summary["review_only_envelope_ready_count"] == 2
+    assert prefetch_summary["staged_or_reviewed_count"] == 0
+    assert prefetch_summary["runtime_ready_count"] == 0
+    assert prefetch_summary["provider_call_count_by_this_request"] == 0
+    assert prefetch_summary["world_mutation_count_by_this_request"] == 0
+    assert prefetch_summary["activation_allowed_count"] == 0
+    assert prefetch_summary["promotion_allowed_count"] == 0
+    assert background_tick["prefetch_cache_summary"] == prefetch_summary
+
+    ledger_summary = tick["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 2,
+        "provider_execution_authorization": 2,
+        "provider_adapter_execution_receipt": 2,
+        "provider_output_envelope": 2,
+    }
+    assert "provider_artifact_staging" not in tick
+    assert "provider_artifact_promotion_report" not in tick
+
+    queue_statuses = {
+        item["schedule_item_id"]: item["status"]
+        for item in tick["generation_schedule_queue"]["items"]
+    }
+    assert queue_statuses["sched_stage05_worldline_prefetch"] == "waiting_review"
+    assert queue_statuses["sched_next_map_visual_prefetch"] == "waiting_review"
+    assert queue_statuses["sched_video_frame_background_compile"] == "queued"
+    assert queue_statuses["sched_frontend_mock_sprite_repair_lazy"] == "queued"
+    ledger_kinds = {
+        row["artifact_kind"]
+        for row in raw_conn.execute(
+            "SELECT artifact_kind FROM generation_artifact_ledger WHERE session_id = ?",
+            (sid,),
+        ).fetchall()
+    }
+    assert ledger_kinds == {
+        "generation_executor_run_request",
+        "provider_execution_authorization",
+        "provider_adapter_execution_receipt",
+        "provider_output_envelope",
+    }
+
+
+def test_review_only_background_executor_tick_rejects_unsafe_metadata(client):
+    sid = _create_session(client)
+    targeted = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-executor-tick",
+        json={
+            "worker_id": "background-tick-targeted",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+    assert targeted.status_code == 409
+    assert "does not accept targeted metadata" in targeted.json()["detail"]
+
+    too_large = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-executor-tick",
+        json={"worker_id": "background-tick-large", "max_items": 9},
+    )
+    assert too_large.status_code == 409
+    assert "max_items must be between 1 and 8" in too_large.json()["detail"]
+
+
 def test_provider_adapter_runner_output_import_records_local_files(client, tmp_path):
     sid = _create_session(client)
     chain = _prepare_provider_authorization_chain(client, sid, "runner-import")
