@@ -318,6 +318,36 @@ GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache
 
 它不是玩家 runtime 内容接口。前端玩家侧不应直接加载其中的记录；Studio 或演示脚本可以用它说明“后台预生成结果已经被脱敏索引，可供后续构建器复用”。
 
+### 获取当前 run 的共享缓存命中
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache/hits
+```
+
+该接口只读当前 session 最新 run 的 `prefetch-cache` 和全局 `generation_shared_prefetch_cache`，用 `object_kind + object_ref` 精确匹配 shared cache 记录。
+
+返回：
+
+- `generation_shared_prefetch_cache_hits.summary`
+- `generation_shared_prefetch_cache_hits.items`
+
+`hit_status` 当前只有：
+
+```text
+shared_candidate_available_pending_runtime_build
+no_shared_candidate
+```
+
+命中仍不代表 runtime-ready。它只是告诉 Studio / 演示脚本：当前调度项有一个跨 session 可复用的脱敏候选摘要，后续仍必须进入 runtime package / WorldStateDeltaTransaction 构建、校验和 activation gate。
+
+边界：
+
+- 不创建 run。
+- 不推进 worker。
+- 不调用 provider。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

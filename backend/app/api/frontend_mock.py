@@ -259,6 +259,23 @@ def get_generation_shared_prefetch_cache(
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/shared-prefetch-cache/hits",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_shared_prefetch_cache_hits(
+    session_id: str,
+) -> FrontendMockPayloadResponse:
+    """Return current-run hits against the shared prefetch cache."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_shared_prefetch_cache_hits(
+            session_id
+        ),
+    )
+
+
 @router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache",
     response_model=FrontendMockPayloadResponse,

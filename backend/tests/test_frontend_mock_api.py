@@ -74,6 +74,9 @@ from backend.app.services.generation_scheduler_shared_prefetch_cache_builders im
     build_shared_prefetch_cache_records,
     compact_shared_prefetch_cache,
 )
+from backend.app.services.generation_scheduler_shared_prefetch_cache_hit_builders import (  # noqa: E402
+    build_shared_prefetch_cache_hit_payload,
+)
 from backend.app.services.generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records,
@@ -3007,6 +3010,81 @@ def test_shared_prefetch_cache_repository_upserts_global_records(client):
     assert records[0]["source"]["source_session_id"] == "sess_shared_repo_second"
 
 
+def test_shared_prefetch_cache_hit_builder_matches_current_queue_items():
+    prefetch_payload = {
+        "session_id": "sess_hit",
+        "mode": "frontend_mock_fixture",
+        "generation_schedule_run": {"run_id": "gsrun_hit"},
+        "generation_prefetch_cache": {
+            "items": [
+                {
+                    "schedule_item_id": "sched_match",
+                    "object_kind": "map_visual_layer",
+                    "object_ref": "map.old_signal_tower",
+                    "latency_class": "background_prefetch",
+                    "queue_status": "queued",
+                    "cache_status": "queued",
+                },
+                {
+                    "schedule_item_id": "sched_miss",
+                    "object_kind": "story_node",
+                    "object_ref": "story.missing",
+                    "latency_class": "background",
+                    "queue_status": "queued",
+                    "cache_status": "queued",
+                },
+            ]
+        },
+    }
+    records = [
+        {
+            "cache_key": "gshared_hit",
+            "object_kind": "map_visual_layer",
+            "object_ref": "map.old_signal_tower",
+            "lifecycle_status": "promotion_allowed_pending_runtime_build",
+            "source": {
+                "source_session_id": "sess_source",
+                "source_run_id": "gsrun_source",
+                "source_schedule_item_id": "sched_source",
+            },
+            "required_next_gates": ["runtime_package_validation"],
+            "promotion_allowed": True,
+            "activation_allowed": False,
+            "runtime_ready": False,
+        },
+        {
+            "cache_key": "gshared_ignored",
+            "object_kind": "story_node",
+            "object_ref": "story.missing",
+            "lifecycle_status": "revoked",
+        },
+    ]
+
+    payload = build_shared_prefetch_cache_hit_payload(prefetch_payload, records)
+
+    hit_view = payload["generation_shared_prefetch_cache_hits"]
+    summary = hit_view["summary"]
+    assert summary["schedule_item_count"] == 2
+    assert summary["shared_record_count"] == 2
+    assert summary["hit_count"] == 1
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["hit_status_counts"] == {
+        "no_shared_candidate": 1,
+        "shared_candidate_available_pending_runtime_build": 1,
+    }
+    items = {item["schedule_item_id"]: item for item in hit_view["items"]}
+    assert items["sched_match"]["hit_count"] == 1
+    assert items["sched_match"]["hit_status"] == (
+        "shared_candidate_available_pending_runtime_build"
+    )
+    assert items["sched_match"]["hits"][0]["activation_allowed"] is False
+    assert items["sched_match"]["hits"][0]["runtime_ready"] is False
+    assert items["sched_miss"]["hit_status"] == "no_shared_candidate"
+    assert hit_view["safety"]["calls_provider"] is False
+    assert hit_view["safety"]["activates_runtime"] is False
+
+
 def test_generation_activation_gate_requires_session(client):
     missing = client.get(
         "/api/sessions/missing-session/generation-schedule/activation-gate"
@@ -3239,6 +3317,99 @@ def test_generation_shared_prefetch_cache_ignores_blocked_candidates(client):
 
     assert indexed["shared_prefetch_cache_index"]["indexed_count"] == 0
     assert indexed["generation_shared_prefetch_cache"]["summary"]["record_count"] == 0
+
+
+def test_generation_shared_prefetch_cache_hits_require_session(client):
+    missing = client.get(
+        "/api/sessions/missing-session/generation-schedule/shared-prefetch-cache/hits"
+    )
+    assert missing.status_code == 404
+
+
+def test_generation_shared_prefetch_cache_hits_match_current_run(
+    client,
+    raw_conn,
+):
+    source_sid = _create_session(client)
+    source_run = _payload(
+        client.post(f"/api/sessions/{source_sid}/generation-schedule/runs")
+    )
+    source_run_id = source_run["generation_schedule_run"]["run_id"]
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{source_sid}_provider_artifact_promotion_report_hit",
+            "run_id": source_run_id,
+            "session_id": source_sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_shared_cache_hit",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    indexed = _payload(
+        client.post(
+            f"/api/sessions/{source_sid}/generation-schedule/workers/index-shared-prefetch-cache"
+        )
+    )
+    assert indexed["shared_prefetch_cache_index"]["indexed_count"] == 1
+
+    target_sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{target_sid}/generation-schedule/runs"))
+    before_counts = _session_state_counts(raw_conn, target_sid)
+
+    hits = _payload(
+        client.get(
+            f"/api/sessions/{target_sid}/generation-schedule/shared-prefetch-cache/hits"
+        )
+    )
+
+    assert _session_state_counts(raw_conn, target_sid) == before_counts
+    hit_view = hits["generation_shared_prefetch_cache_hits"]
+    summary = hit_view["summary"]
+    assert summary["schedule_item_count"] == 8
+    assert summary["shared_record_count"] == 1
+    assert summary["hit_count"] == 1
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    items = {item["schedule_item_id"]: item for item in hit_view["items"]}
+    item = items["sched_next_map_visual_prefetch"]
+    assert item["hit_status"] == "shared_candidate_available_pending_runtime_build"
+    assert item["hit_count"] == 1
+    assert item["activation_allowed"] is False
+    assert item["runtime_ready"] is False
+    hit = item["hits"][0]
+    assert hit["source"]["source_session_id"] == source_sid
+    assert hit["source"]["source_run_id"] == source_run_id
+    assert hit["source"]["source_schedule_item_id"] == (
+        "sched_next_map_visual_prefetch"
+    )
+    assert hit["activation_allowed"] is False
+    assert hit["runtime_ready"] is False
+    assert item["object_ref"] == "map_compile_package:old_signal_tower_pressure"
+
+
+def test_generation_shared_prefetch_cache_hits_empty_without_run(client):
+    sid = _create_session(client)
+
+    hits = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/shared-prefetch-cache/hits")
+    )
+
+    summary = hits["generation_shared_prefetch_cache_hits"]["summary"]
+    assert summary["schedule_item_count"] == 0
+    assert summary["hit_count"] == 0
+    assert hits["generation_schedule_run"] is None
 
 
 def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):

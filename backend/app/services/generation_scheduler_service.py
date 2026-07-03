@@ -111,6 +111,9 @@ from .generation_scheduler_shared_prefetch_cache_builders import (  # noqa: E402
     build_shared_prefetch_cache_records as _build_shared_prefetch_cache_records,
     compact_shared_prefetch_cache as _compact_shared_prefetch_cache,
 )
+from .generation_scheduler_shared_prefetch_cache_hit_builders import (  # noqa: E402
+    build_shared_prefetch_cache_hit_payload as _build_shared_prefetch_cache_hit_payload,
+)
 from .generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records as _load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records as _upsert_shared_prefetch_cache_records,
@@ -1990,6 +1993,13 @@ def index_generation_shared_prefetch_cache(session_id: str) -> dict[str, Any]:
         },
         "generation_shared_prefetch_cache": shared_cache,
     }
+
+
+def get_generation_shared_prefetch_cache_hits(session_id: str) -> dict[str, Any]:
+    return _build_shared_prefetch_cache_hit_payload(
+        get_generation_prefetch_cache(session_id),
+        _load_shared_prefetch_cache_records(),
+    )
 
 
 def stage_provider_artifacts_fixture(
