@@ -24,6 +24,10 @@ from backend.app.services.generation_scheduler_handoff_builders import (  # noqa
     build_provider_adapter_runner_handoff_outbox,
     provider_runner_outbox_safety,
 )
+from backend.app.services.generation_scheduler_artifact_fixtures import (  # noqa: E402
+    provider_artifact_fixture_metadata,
+    provider_artifact_fixture_paths,
+)
 from backend.app.services.generation_scheduler_import_safety import (  # noqa: E402
     resolve_import_path,
 )
@@ -40,6 +44,92 @@ def _payload(resp):
     body = resp.json()
     assert body["mode"] == "frontend_mock_fixture"
     return body["payload"]
+
+
+def _load_json(path: Path):
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _rel(path: Path) -> str:
+    return path.relative_to(_ROOT).as_posix()
+
+
+def test_provider_artifact_fixture_catalog_resolves_default_profile():
+    envelope_path, staging_path, promotion_path, normalized = (
+        provider_artifact_fixture_paths("summary", repo_root=_ROOT)
+    )
+
+    assert normalized == "default"
+    assert _rel(envelope_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_staging.source_envelope.json"
+    )
+    assert _rel(staging_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_staging.example.json"
+    )
+    assert _rel(promotion_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_promotion_report.example.json"
+    )
+
+    metadata = provider_artifact_fixture_metadata(
+        None,
+        repo_root=_ROOT,
+        load_json=_load_json,
+        rel_path=_rel,
+    )
+    assert metadata == {
+        "artifact_profile": "default",
+        "schedule_item_id": "sched_next_map_visual_prefetch",
+        "authorization_ref": "auth_sched_next_map_visual_prefetch_fixture_001",
+        "provider_output_envelope": (
+            "examples/provider_artifact_staging/"
+            "p1b_provider_artifact_staging.source_envelope.json"
+        ),
+    }
+
+
+def test_provider_artifact_fixture_catalog_resolves_image_failure_profile():
+    envelope_path, staging_path, promotion_path, normalized = (
+        provider_artifact_fixture_paths("image", repo_root=_ROOT)
+    )
+
+    assert normalized == "image_failure"
+    assert _rel(envelope_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_image_artifact_staging.source_envelope.json"
+    )
+    assert _rel(staging_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_image_artifact_staging.example.json"
+    )
+    assert _rel(promotion_path) == (
+        "examples/provider_artifact_staging/"
+        "p1b_provider_image_artifact_promotion_report.example.json"
+    )
+
+    metadata = provider_artifact_fixture_metadata(
+        "image_failure",
+        repo_root=_ROOT,
+        load_json=_load_json,
+        rel_path=_rel,
+    )
+    assert metadata["artifact_profile"] == "image_failure"
+    assert metadata["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert metadata["authorization_ref"] == (
+        "auth_sched_next_map_visual_prefetch_image_fixture_001"
+    )
+
+
+def test_provider_artifact_fixture_catalog_rejects_unknown_profile():
+    try:
+        provider_artifact_fixture_paths("missing", repo_root=_ROOT)
+    except ValueError as exc:
+        assert "unknown provider artifact profile" in str(exc)
+    else:
+        raise AssertionError("unknown provider artifact profile should fail")
 
 
 def test_provider_runner_handoff_outbox_builder_keeps_safe_contract():
