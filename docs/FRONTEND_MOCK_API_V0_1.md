@@ -286,6 +286,28 @@ GET /api/sessions/{session_id}/generation-schedule/prefetch-cache
 
 `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 必须始终为 `0`。如果历史 `ProviderOutputEnvelope` 记录了真实 provider 调用摘要，只能计入 `recorded_provider_call_count`，不能把只读查询伪装成执行器。
 
+### 获取激活门视图
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/activation-gate
+```
+
+该接口只读 `prefetch-cache` 的派生结果，用于 Studio、演示脚本或调试面板解释后台候选为什么还不能进入玩家 runtime。它不创建 run，不推进 worker，不 staging，不 promotion，不 complete queue item，不调用 provider，不写世界状态，也不激活 runtime。
+
+返回：
+
+- `generation_schedule_run`：最近一次 run 摘要；如果尚未创建 run，则为 `null`。
+- `generation_activation_gate.summary`：item 数、activation status 计数、阻断数、非适用数、promotion allowed 数，以及本次 GET 的 provider / world mutation / activation 安全计数。
+- `generation_activation_gate.items`：每个调度项的 `cache_status`、`activation_status`、`blocked_reason`、`required_next_gates`、promotion / activation 安全布尔值和 `refs_present`。
+- `generation_activation_gate.safety`：明确该接口不读取 `.env`、不调用 provider、不晋升产物、不写世界状态、不激活 runtime。
+
+前端玩家侧不应把该接口作为可玩内容来源；它只是证明：
+
+```text
+有预取候选证据
+  != 可以加载到玩家 runtime
+```
+
 ### 导出外部 runner handoff
 
 ```http

@@ -67,6 +67,9 @@ from backend.app.services.generation_scheduler_prefetch_cache_builders import ( 
     ledger_entry_ref,
     prefetch_cache_status,
 )
+from backend.app.services.generation_scheduler_activation_gate_builders import (  # noqa: E402
+    build_generation_activation_gate_payload,
+)
 from backend.app.services.generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
     provider_adapter_runner_import_alignment_checks,
     validate_provider_adapter_runner_import_contract,
@@ -2804,6 +2807,206 @@ def test_generation_prefetch_cache_reflects_staging_review_report(
     assert item["promotion_gate"]["promotion_decision"] == "blocked_review_required"
     assert item["refs"]["provider_artifact_staging_manifest"] is not None
     assert item["refs"]["provider_artifact_promotion_report"] is not None
+
+
+def test_generation_activation_gate_builder_blocks_promotion_allowed_candidate():
+    payload = build_generation_activation_gate_payload(
+        {
+            "session_id": "sess_test",
+            "mode": "frontend_mock_fixture",
+            "generation_schedule_run": {"run_id": "gsrun_test"},
+            "generation_prefetch_cache": {
+                "summary": {
+                    "recorded_provider_call_count": 1,
+                    "provider_call_count_by_this_request": 0,
+                    "world_mutation_count_by_this_request": 0,
+                },
+                "items": [
+                    {
+                        "schedule_item_id": "sched_ready",
+                        "object_kind": "map_visual_layer",
+                        "object_ref": "map.old_signal_tower",
+                        "latency_class": "background_prefetch",
+                        "queue_status": "waiting_review",
+                        "cache_status": "promotion_allowed_pending_activation",
+                        "recorded_provider_call_count": 1,
+                        "promotion_gate": {"promotion_allowed": True},
+                        "activation_gate": {
+                            "activation_allowed": False,
+                            "blocked_reason": "runtime_package_required",
+                            "required_next_gates": ["activation_revalidation"],
+                        },
+                        "refs": {
+                            "provider_artifact_promotion_report": {"ledger_id": "ledg_1"}
+                        },
+                    },
+                    {
+                        "schedule_item_id": "sched_static",
+                        "object_kind": "runtime_package",
+                        "object_ref": "runtime.gray_lantern_station",
+                        "latency_class": "sync_blocking",
+                        "queue_status": "completed",
+                        "cache_status": "completed",
+                        "promotion_gate": {"promotion_allowed": False},
+                        "activation_gate": {"activation_allowed": False},
+                        "refs": {},
+                    },
+                ],
+            },
+        }
+    )
+
+    gate = payload["generation_activation_gate"]
+    summary = gate["summary"]
+    assert summary["item_count"] == 2
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["promotion_allowed_count"] == 1
+    assert summary["blocked_count"] == 1
+    assert summary["not_applicable_count"] == 1
+    assert summary["recorded_provider_call_count"] == 1
+    assert gate["safety"] == {
+        "reads_env": False,
+        "calls_provider": False,
+        "stages_artifacts": False,
+        "promotes_artifacts": False,
+        "completes_queue_items": False,
+        "writes_world_state": False,
+        "activates_runtime": False,
+        "source_read_model": "generation_prefetch_cache",
+    }
+    items_by_id = {item["schedule_item_id"]: item for item in gate["items"]}
+    assert items_by_id["sched_ready"]["activation_status"] == (
+        "blocked_runtime_package_or_world_delta_required"
+    )
+    assert items_by_id["sched_ready"]["activation_allowed"] is False
+    assert items_by_id["sched_ready"]["promotion_allowed"] is True
+    assert "activation_revalidation" in items_by_id["sched_ready"][
+        "required_next_gates"
+    ]
+    assert items_by_id["sched_static"]["activation_status"] == (
+        "not_applicable_locked_or_fallback_source"
+    )
+
+
+def test_generation_activation_gate_requires_session(client):
+    missing = client.get(
+        "/api/sessions/missing-session/generation-schedule/activation-gate"
+    )
+    assert missing.status_code == 404
+
+
+def test_generation_activation_gate_empty_without_run(client, raw_conn):
+    sid = _create_session(client)
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    gate = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/activation-gate")
+    )
+
+    assert gate["generation_schedule_run"] is None
+    activation_gate = gate["generation_activation_gate"]
+    summary = activation_gate["summary"]
+    assert summary["item_count"] == 0
+    assert summary["gate_status_counts"] == {}
+    assert summary["blocked_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert activation_gate["items"] == []
+    assert activation_gate["safety"]["source_read_model"] == "generation_prefetch_cache"
+    assert _session_state_counts(raw_conn, sid) == before_counts
+
+
+def test_generation_activation_gate_tracks_dispatcher_drain_outputs(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+            json={
+                "worker_id": "dispatcher-drain-for-activation-gate",
+                "max_items": 2,
+            },
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    gate = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/activation-gate")
+    )
+    second_gate = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/activation-gate")
+    )
+
+    assert second_gate == gate
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    summary = gate["generation_activation_gate"]["summary"]
+    assert summary["item_count"] == 8
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["gate_status_counts"][
+        "blocked_staging_or_promotion_required"
+    ] == 2
+
+    items_by_id = {
+        item["schedule_item_id"]: item
+        for item in gate["generation_activation_gate"]["items"]
+    }
+    for schedule_item_id in (
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ):
+        item = items_by_id[schedule_item_id]
+        assert item["cache_status"] == "review_only_envelope_ready"
+        assert item["activation_status"] == "blocked_staging_or_promotion_required"
+        assert item["activation_allowed"] is False
+        assert item["runtime_ready"] is False
+        assert item["refs_present"]["provider_output_envelope"] is True
+        assert "provider_artifact_staging_manifest" in item["required_next_gates"]
+        assert "provider_artifact_promotion_report" in item["required_next_gates"]
+
+
+def test_generation_activation_gate_reflects_staging_review_report(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+            json={"worker_id": "executor-chain-for-activation-gate"},
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    gate = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/activation-gate")
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    summary = gate["generation_activation_gate"]["summary"]
+    assert summary["item_count"] == 8
+    assert summary["activation_allowed_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+    assert summary["gate_status_counts"]["blocked_promotion_report"] == 1
+    item = {
+        gate_item["schedule_item_id"]: gate_item
+        for gate_item in gate["generation_activation_gate"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == "promotion_blocked"
+    assert item["activation_status"] == "blocked_promotion_report"
+    assert item["activation_allowed"] is False
+    assert item["promotion_allowed"] is False
+    assert item["blocked_reason"] == "media_semantic_and_human_review_not_complete"
+    assert item["refs_present"]["provider_artifact_staging_manifest"] is True
+    assert item["refs_present"]["provider_artifact_promotion_report"] is True
 
 
 def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):

@@ -504,6 +504,50 @@ GET /api/sessions/{session_id}/generation-schedule/prefetch-cache
 
 视图中的 `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 必须始终为 `0`。如果历史 ledger 中的 ProviderOutputEnvelope 记录过真实 provider 调用，只能进入 `recorded_provider_call_count`，不能证明本次 GET 调用了 provider。该视图也不能绕过 staging、promotion、runtime package、WorldStateDeltaTransaction 或 activation gate。
 
+后端还提供只读激活门视图：
+
+```text
+GET /api/sessions/{session_id}/generation-schedule/activation-gate
+```
+
+该视图直接从 `prefetch-cache` 派生，不创建 run、不推进 dispatcher、不写 ledger、不 staging、不 promotion、不 complete queue item、不调用 provider、不写世界状态，也不激活 runtime。它的目的不是展示“已经可用了什么”，而是明确每个后台候选为什么仍不能进入玩家 runtime。
+
+返回中的 `generation_activation_gate.summary` 至少包含：
+
+- `item_count`
+- `gate_status_counts`
+- `blocked_count`
+- `not_applicable_count`
+- `runtime_ready_count`
+- `activation_allowed_count`
+- `promotion_allowed_count`
+- `recorded_provider_call_count`
+- `provider_call_count_by_this_request`
+- `world_mutation_count_by_this_request`
+
+其中 `provider_call_count_by_this_request`、`world_mutation_count_by_this_request`、`runtime_ready_count` 和 `activation_allowed_count` 在当前 read-model 中必须保持为 `0`。即使某个候选已有 `promotion_allowed_pending_activation`，也只能说明它可以进入后续 runtime package / WorldStateDeltaTransaction 构建与复验，不代表本接口允许激活。
+
+典型状态：
+
+| `activation_status` | 含义 |
+|---|---|
+| `blocked_runtime_package_or_world_delta_required` | promotion 已允许下一步构建，但仍缺 runtime package / WorldStateDeltaTransaction 和最终 activation gate。 |
+| `blocked_promotion_report` | promotion report 明确阻断，需要修复失败门禁后重跑。 |
+| `blocked_promotion_required` | staging 已有 review-only 候选，但还缺 promotion report。 |
+| `blocked_staging_or_promotion_required` | ProviderOutputEnvelope 已入账，但还缺 staging / promotion。 |
+| `blocked_provider_output_envelope_required` | 只有 receipt 或 waiting review，尚未形成 ProviderOutputEnvelope。 |
+| `blocked_provider_adapter_required` | 只有 provider authorization，尚未执行 adapter。 |
+| `blocked_provider_authorization_required` | 只有 executor request，尚未显式授权 provider adapter。 |
+| `queued_or_not_ready` | 调度项还没有抵达可审查 artifact 边界。 |
+| `not_applicable_locked_or_fallback_source` | 同步复用或 fallback 内容不是本生成候选 activation gate 的对象。 |
+
+这让前端 / Studio / 演示脚本能清楚区分：
+
+```text
+后台有 review-only 候选证据
+  != 已经可以进入玩家 runtime
+```
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text
