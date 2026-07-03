@@ -1334,6 +1334,40 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-33 Provider adapter runner handoff 导出
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增外部 provider adapter runner handoff 导出 API，让后端能从 latest run 的 ledger 中导出已校验的 GenerationExecutorRunRequest / ProviderExecutionAuthorization、建议 /tmp 路径、runner argv 模板和 import 回灌请求体；该 API 不直接调用 provider，也不写 ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adapter-runner-handoff`
+- 要求同一 session / latest run / schedule item 下已有匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 从 ledger compact 还原并重新校验 runner 所需的 executor request 与 authorization。
+- 返回 dry-run、live text、live image 三类 `tools/provider_adapter/run_provider_adapter.py` argv 模板。
+- 返回外部 runner 完成后调用 `import-provider-adapter-runner-output` 的请求体。
+- 测试覆盖只读副作用：导出前后 generation schedule / worker cache / ledger / provider logs / world instance 行数不变。
+
+当前结论：
+
+- 这是正式后台执行器前的外部 worker 交接单，不是真 provider 调用入口。
+- 它不读取 `.env`、不调用 provider、不包含 prompt 正文、不包含 provider 响应正文、不生成 receipt/envelope、不 staging、不 promotion、不写世界状态、不激活 runtime。
+- live 模板中的 dotenv 路径、prompt 文件和 artifact 输出必须由外部 worker 在显式授权下提供；runner 输出仍必须通过 import API 回灌并继续走 staging / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_export python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

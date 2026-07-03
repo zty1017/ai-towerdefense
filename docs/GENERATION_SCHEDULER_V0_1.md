@@ -407,6 +407,16 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter
 
 该入口要求当前 session / latest run 已经存在匹配的 `GenerationExecutorRunRequest` 和 `ProviderExecutionAuthorization`，然后复用工具层 runner 的 dry-run artifact builder 生成 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`，并把二者登记到 `generation_artifact_ledger`。它不会自动 staging、promotion、complete queue item、写世界状态或激活 runtime；队列仍停在 review / promotion 前。
 
+后端也提供外部 runner handoff 导出：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adapter-runner-handoff
+```
+
+该入口同样要求已有匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`，但它不生成 receipt/envelope，也不写 ledger。它只从 ledger compact 还原经过 schema 校验的 executor request 与 authorization，返回建议写入 `/tmp` 的文件路径、`tools/provider_adapter/run_provider_adapter.py` 的 dry-run / live text / live image argv 模板，以及 runner 完成后应调用的 `import-provider-adapter-runner-output` 请求体。
+
+因此该入口是正式后台执行器前的外部 worker 交接单，不是真 provider 调用入口。它不读取 `.env`，不调用 provider，不包含 prompt 正文，不包含 provider 响应正文，不 staging，不 promotion，不写世界状态，不激活 runtime。live 模板中的 `.env` 路径、prompt 文件和 artifact 输出仍必须由外部 worker 在显式授权下提供。
+
 后端还提供 review-only dispatcher 薄编排入口：
 
 ```text

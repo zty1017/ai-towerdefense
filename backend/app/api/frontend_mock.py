@@ -468,6 +468,27 @@ def run_provider_adapter_runner_fixture(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/export-provider-adapter-runner-handoff",
+    response_model=FrontendMockPayloadResponse,
+)
+def export_provider_adapter_runner_handoff(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Export a read-only handoff bundle for an external provider adapter runner."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.export_provider_adapter_runner_handoff(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step",
     response_model=FrontendMockPayloadResponse,
 )
