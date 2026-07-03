@@ -27,6 +27,14 @@ from backend.app.services.generation_scheduler_artifact_ledger_builders import (
     compact_provider_artifact_staging,
     compact_provider_output_envelope,
 )
+from app.services.generation_scheduler_artifact_ledger_repository import (  # noqa: E402
+    latest_generation_executor_request_ledger_entry,
+    latest_provider_adapter_execution_ledger_entry,
+    latest_provider_authorization_ledger_entry,
+    latest_provider_output_envelope_ledger_entry,
+    load_generation_artifact_ledger_items,
+    upsert_generation_artifact_ledger,
+)
 from backend.app.services.generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff_outbox,
     provider_runner_outbox_safety,
@@ -81,6 +89,121 @@ def _load_json(path: Path):
 
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
+
+
+def test_generation_artifact_ledger_repository_upserts_and_filters(client):
+    sid = _create_session(client)
+    first = build_artifact_ledger_payload(
+        session_id=sid,
+        artifact_kind="generation_executor_run_request",
+        source_id="gexec_test",
+        status="prepared_pending_explicit_authorization",
+        compact={
+            "source": {"schedule_item_id": "sched_test"},
+            "provider_execution_intent": {},
+        },
+        ts="2026-07-03T00:00:00Z",
+        latest_run={"run_id": "gsrun_test"},
+        schedule_item_id="sched_test",
+        worker_id="worker-test",
+        note="first write",
+    )
+    upsert_generation_artifact_ledger(first)
+
+    second = {
+        **first,
+        "status": "prepared_pending_explicit_authorization",
+        "updated_at": "2026-07-03T00:05:00Z",
+        "note": "second write",
+    }
+    upsert_generation_artifact_ledger(second)
+
+    all_items = load_generation_artifact_ledger_items(sid)
+    run_items = load_generation_artifact_ledger_items(sid, "gsrun_test")
+    other_run_items = load_generation_artifact_ledger_items(sid, "gsrun_other")
+
+    assert len(all_items) == 1
+    assert len(run_items) == 1
+    assert other_run_items == []
+    assert run_items[0]["created_at"] == "2026-07-03T00:00:00Z"
+    assert run_items[0]["updated_at"] == "2026-07-03T00:05:00Z"
+    assert run_items[0]["note"] == "second write"
+
+    latest = latest_generation_executor_request_ledger_entry(
+        sid,
+        "gsrun_test",
+        "sched_test",
+    )
+    assert latest is not None
+    assert latest["source_id"] == "gexec_test"
+
+
+def test_generation_artifact_ledger_repository_finds_latest_provider_chain(client):
+    sid = _create_session(client)
+    ts = "2026-07-03T00:00:00Z"
+    authorization = build_artifact_ledger_payload(
+        session_id=sid,
+        artifact_kind="provider_execution_authorization",
+        source_id="auth_test",
+        status="granted_for_provider_adapter",
+        compact={"authorization_ref": "auth_test"},
+        ts=ts,
+        latest_run={"run_id": "gsrun_test"},
+        schedule_item_id="sched_test",
+        worker_id="worker-test",
+        note=None,
+    )
+    receipt = build_artifact_ledger_payload(
+        session_id=sid,
+        artifact_kind="provider_adapter_execution_receipt",
+        source_id="receipt_test",
+        status="fixture_output_ready_for_envelope",
+        compact={"execution": {"authorization_ref": "auth_test"}},
+        ts=ts,
+        latest_run={"run_id": "gsrun_test"},
+        schedule_item_id="sched_test",
+        worker_id="worker-test",
+        note=None,
+    )
+    envelope = build_artifact_ledger_payload(
+        session_id=sid,
+        artifact_kind="provider_output_envelope",
+        source_id="pout_test",
+        status="recorded_review_only",
+        compact={"envelope_id": "pout_test"},
+        ts=ts,
+        latest_run={"run_id": "gsrun_test"},
+        schedule_item_id="sched_test",
+        worker_id="worker-test",
+        note=None,
+    )
+    for item in (authorization, receipt, envelope):
+        upsert_generation_artifact_ledger(item)
+
+    assert latest_provider_authorization_ledger_entry(
+        sid,
+        "gsrun_test",
+        "sched_test",
+        "auth_test",
+    )["source_id"] == "auth_test"
+    assert latest_provider_adapter_execution_ledger_entry(
+        sid,
+        "gsrun_test",
+        "sched_test",
+        "auth_test",
+    )["source_id"] == "receipt_test"
+    assert latest_provider_output_envelope_ledger_entry(
+        sid,
+        "gsrun_test",
+        "sched_test",
+        "pout_test",
+    )["source_id"] == "pout_test"
+    assert latest_provider_adapter_execution_ledger_entry(
+        sid,
+        "gsrun_test",
+        "sched_test",
+        "wrong_auth",
+    ) is None
 
 
 def test_generation_provider_execution_builders_keep_guard_and_request_contract():
