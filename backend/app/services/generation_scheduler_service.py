@@ -91,9 +91,67 @@ class InvalidQueueTransitionError(ValueError):
     """Raised when a scheduler queue transition violates the current state."""
 
 
+_FORBIDDEN_IMPORT_KEYS = {
+    "api_key",
+    "secret",
+    "token",
+    "raw_prompt",
+    "full_trace",
+    "raw_json",
+    "provider_response",
+    "provider_body",
+    "prompt_body",
+}
+
+
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _resolve_import_path(value: Any, *, label: str) -> Path:
+    if not isinstance(value, str) or not value.strip():
+        raise InvalidQueueTransitionError(f"{label} is required")
+    path = Path(value.strip())
+    if not path.is_absolute():
+        path = _REPO_ROOT / path
+    resolved = path.resolve()
+    if ".env" in resolved.parts:
+        raise InvalidQueueTransitionError(f"{label} must not reference .env")
+    allowed_roots = (_REPO_ROOT.resolve(), Path("/tmp").resolve())
+    if not any(resolved == root or root in resolved.parents for root in allowed_roots):
+        raise InvalidQueueTransitionError(
+            f"{label} must be under repository root or /tmp"
+        )
+    if not resolved.is_file():
+        raise InvalidQueueTransitionError(f"{label} file not found: {value}")
+    return resolved
+
+
+def _find_forbidden_import_keys(value: Any, path: str = "$") -> list[str]:
+    found: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}"
+            if str(key).lower() in _FORBIDDEN_IMPORT_KEYS:
+                found.append(child_path)
+            found.extend(_find_forbidden_import_keys(child, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            found.extend(_find_forbidden_import_keys(child, f"{path}[{index}]"))
+    return found
+
+
+def _load_runner_import_json(path: Path, *, label: str) -> dict[str, Any]:
+    payload = _load_json(path)
+    if not isinstance(payload, dict):
+        raise InvalidQueueTransitionError(f"{label} must be a JSON object")
+    forbidden = _find_forbidden_import_keys(payload)
+    if forbidden:
+        raise InvalidQueueTransitionError(
+            f"{label} contains forbidden sensitive keys: {', '.join(forbidden[:5])}"
+        )
+    return payload
 
 
 def _provider_artifact_fixture_paths(profile: str | None) -> tuple[Path, Path, Path, str]:
@@ -2710,6 +2768,175 @@ def run_provider_adapter_runner_fixture(
             "upstream_request_id": executor_request_entry.get("source_id"),
             "execution_receipt_id": receipt_payload["execution_receipt_id"],
             "envelope_id": envelope_payload["envelope_id"],
+        },
+        "generation_executor_run_request": executor_request_entry.get("compact"),
+        "provider_execution_authorization": authorization_entry.get("compact"),
+        "provider_adapter_execution_receipt": receipt_entry["compact"],
+        "provider_output_envelope": envelope_entry["compact"],
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
+    }
+
+
+def _display_import_path(path: Path) -> str:
+    try:
+        return _rel(path)
+    except ValueError:
+        return path.as_posix()
+
+
+def import_provider_adapter_runner_outputs(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before importing provider adapter outputs"
+        )
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    run_id = str(latest_run.get("run_id"))
+    schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    authorization_ref = str(safe_metadata.get("authorization_ref") or "")
+    if not schedule_item_id or not authorization_ref:
+        raise InvalidQueueTransitionError(
+            "schedule_item_id and authorization_ref are required before importing provider adapter outputs"
+        )
+    receipt_path = _resolve_import_path(
+        safe_metadata.get("receipt_path"),
+        label="receipt_path",
+    )
+    envelope_path = _resolve_import_path(
+        safe_metadata.get("envelope_path"),
+        label="envelope_path",
+    )
+    receipt_payload = _load_runner_import_json(
+        receipt_path,
+        label="receipt_path",
+    )
+    envelope_payload = _load_runner_import_json(
+        envelope_path,
+        label="envelope_path",
+    )
+    validate_provider_adapter_runner_outputs(receipt_payload, envelope_payload)
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching generation executor request is required before importing provider adapter outputs"
+        )
+    authorization_entry = _latest_provider_authorization_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+        authorization_ref,
+    )
+    if authorization_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching provider execution authorization is required before importing provider adapter outputs"
+        )
+    receipt_source = (
+        receipt_payload.get("source", {})
+        if isinstance(receipt_payload.get("source"), dict)
+        else {}
+    )
+    envelope_source = (
+        envelope_payload.get("source", {})
+        if isinstance(envelope_payload.get("source"), dict)
+        else {}
+    )
+    provider_call = (
+        envelope_payload.get("provider_call", {})
+        if isinstance(envelope_payload.get("provider_call"), dict)
+        else {}
+    )
+    execution = (
+        receipt_payload.get("execution", {})
+        if isinstance(receipt_payload.get("execution"), dict)
+        else {}
+    )
+    alignment_checks = {
+        "receipt_schedule_item_id": receipt_source.get("schedule_item_id")
+        == schedule_item_id,
+        "receipt_authorization_ref": receipt_source.get("authorization_ref")
+        == authorization_ref,
+        "receipt_executor_request_id": receipt_source.get("executor_request_id")
+        == executor_request_entry.get("source_id"),
+        "envelope_schedule_item_id": envelope_source.get("schedule_item_id")
+        == schedule_item_id,
+        "envelope_object_kind": envelope_source.get("object_kind")
+        == receipt_source.get("object_kind"),
+        "envelope_object_ref": envelope_source.get("object_ref")
+        == receipt_source.get("object_ref"),
+        "envelope_provider_profile": envelope_source.get("provider_profile")
+        == receipt_source.get("provider_profile"),
+        "envelope_provider_mode": envelope_source.get("provider_mode")
+        == receipt_source.get("provider_mode"),
+        "provider_performed_matches_receipt": provider_call.get("performed")
+        == execution.get("provider_call_performed_by_receipt_builder"),
+    }
+    if provider_call.get("performed") is True:
+        alignment_checks["performed_authorization_ref"] = (
+            provider_call.get("authorization_ref") == authorization_ref
+        )
+    failed = [name for name, passed in alignment_checks.items() if not passed]
+    if failed:
+        raise InvalidQueueTransitionError(
+            "provider adapter runner outputs do not match ledger authorization chain: "
+            + ", ".join(failed)
+        )
+    ts = now_iso()
+    receipt_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_adapter_execution_receipt",
+        source_id=str(receipt_payload["execution_receipt_id"]),
+        status="imported_runner_output_ready_for_envelope",
+        compact=_compact_provider_adapter_execution_receipt(receipt_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=str(safe_metadata.get("worker_id") or receipt_source.get("worker_id")),
+        note=str(safe_metadata.get("note"))
+        if safe_metadata.get("note") is not None
+        else None,
+    )
+    envelope_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_output_envelope",
+        source_id=str(envelope_payload["envelope_id"]),
+        status="imported_runner_recorded_review_only",
+        compact=_compact_provider_output_envelope(envelope_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=str(safe_metadata.get("worker_id") or envelope_source.get("worker_id")),
+        note=str(safe_metadata.get("note"))
+        if safe_metadata.get("note") is not None
+        else None,
+    )
+    _upsert_generation_artifact_ledger(receipt_entry)
+    _upsert_generation_artifact_ledger(envelope_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "imported",
+            "worker_mode": "provider_adapter_runner_output_import",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "schedule_item_id": schedule_item_id,
+            "authorization_ref": authorization_ref,
+            "upstream_request_id": executor_request_entry.get("source_id"),
+            "execution_receipt_id": receipt_payload["execution_receipt_id"],
+            "envelope_id": envelope_payload["envelope_id"],
+            "import_refs": {
+                "receipt_path": _display_import_path(receipt_path),
+                "envelope_path": _display_import_path(envelope_path),
+            },
         },
         "generation_executor_run_request": executor_request_entry.get("compact"),
         "provider_execution_authorization": authorization_entry.get("compact"),
