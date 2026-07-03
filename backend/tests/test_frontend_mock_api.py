@@ -841,6 +841,103 @@ def test_provider_artifact_staging_rejects_unknown_profile(client):
     assert "unknown provider artifact profile" in stage.json()["detail"]
 
 
+def test_fixture_executor_chain_runs_default_profile_end_to_end(client):
+    sid = _create_session(client)
+    chain = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+            json={
+                "worker_id": "default-chain",
+                "artifact_profile": "default",
+                "note": "run default fixture chain",
+            },
+        )
+    )
+
+    executor_chain = chain["executor_chain"]
+    assert executor_chain["status"] == "completed_review_only_promotion_blocked"
+    assert executor_chain["created_generation_schedule_run"] is True
+    assert executor_chain["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert executor_chain["artifact_profile"] == "default"
+    assert executor_chain["authorization_ref"] == (
+        "auth_sched_next_map_visual_prefetch_fixture_001"
+    )
+    assert executor_chain["provider_call_count"] == 0
+    assert executor_chain["world_mutation_count"] == 0
+    assert executor_chain["activation_allowed_count"] == 0
+    assert executor_chain["promotion_allowed_count"] == 0
+    assert chain["steps"]["dry_run_step"]["status"] == "processed"
+    assert chain["steps"]["live_executor_guard"]["status"] == "blocked"
+    assert chain["steps"]["generation_executor_run_request"]["status"] == "prepared"
+    assert chain["steps"]["provider_execution_authorization"]["status"] == "authorized"
+    assert chain["steps"]["provider_adapter_execution_receipt"]["status"] == (
+        "adapter_recorded"
+    )
+    assert chain["steps"]["provider_artifact_staging"]["status"] == "staged"
+    assert chain["provider_output_envelope"]["envelope_id"] == (
+        "pout_performed_stage05_map_visual_001"
+    )
+    assert chain["provider_artifact_promotion_report"]["promotion_allowed"] is False
+
+    ledger_summary = chain["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 6
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_fixture_executor_chain_supports_image_failure_profile(client):
+    sid = _create_session(client)
+    chain = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+            json={
+                "worker_id": "image-failure-chain",
+                "artifact_profile": "image_failure",
+            },
+        )
+    )
+
+    executor_chain = chain["executor_chain"]
+    assert executor_chain["artifact_profile"] == "image_failure"
+    assert executor_chain["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert executor_chain["authorization_ref"] == (
+        "auth_sched_next_map_visual_prefetch_image_fixture_001"
+    )
+    assert chain["provider_output_envelope"]["envelope_id"] == (
+        "pout_image_candidate_old_signal_tower_001"
+    )
+    assert chain["provider_artifact_staging"]["staging_status"] == (
+        "validation_failed"
+    )
+    assert chain["provider_artifact_staging"]["gate_statuses"][
+        "media_gate"
+    ] == "failed"
+    assert chain["provider_artifact_promotion_report"]["promotion_decision"] == (
+        "blocked_validation_failed"
+    )
+    assert chain["provider_artifact_promotion_report"]["promotion_allowed"] is False
+    assert chain["generation_artifact_ledger"]["summary"]["item_count"] == 6
+
+
+def test_fixture_executor_chain_rejects_mismatched_schedule_item(client):
+    sid = _create_session(client)
+    stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+        json={
+            "worker_id": "mismatch-chain",
+            "artifact_profile": "image_failure",
+            "schedule_item_id": "sched_stage05_worldline_prefetch",
+        },
+    )
+    assert stage.status_code == 409
+    assert "does not match requested schedule_item_id" in stage.json()["detail"]
+
+    latest = _payload(client.get(f"/api/sessions/{sid}/generation-schedule/runs/latest"))
+    assert latest["generation_schedule_run"] is None
+
+
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/world-instance"))

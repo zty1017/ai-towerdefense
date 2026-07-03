@@ -1,6 +1,6 @@
 # 任务队列
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
 
@@ -1056,6 +1056,40 @@ git diff --check
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_ledger_profile.v0.1.json
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging_ledger python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-25 Generation Scheduler fixture executor chain
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 review-only 的 executor chain API，把现有 dry-run worker、live executor guard、executor request、provider authorization、fixture adapter receipt 和 provider artifact staging 串成一次可审计调用，为后续真实后台执行器提供稳定壳。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain`
+- 缺少最新 scheduler run 时自动创建 session 级 run。
+- 默认从所选 `artifact_profile` 的 ProviderOutputEnvelope fixture 反推 `schedule_item_id` 和 `authorization_ref`，避免 artifact ledger 挂到错误调度项下。
+- 支持 `artifact_profile=default` 与 `artifact_profile=image_failure`。
+- 显式传入不匹配的 `schedule_item_id` 或 `authorization_ref` 时返回 409。
+- 返回 `executor_chain`、各阶段 `worker_step`、executor request、authorization、adapter receipt、staging、promotion report 与 ledger 汇总。
+
+当前结论：
+
+- 这只是正式后台执行器的 fixture-backed 编排壳，不是真 provider 调度器。
+- 仍然不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不写世界状态、不激活 runtime。
+- 后续真实 executor 可以替换 provider adapter 步骤，但必须保留同一授权链、产物信封、staging、promotion 与 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_executor_chain.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_executor_chain python3 -m compileall backend
 uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
