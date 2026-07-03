@@ -610,6 +610,27 @@ def prefetch_next_campaign_node(session_id: str) -> FrontendMockPayloadResponse:
     return _payload(session_id, campaign_router_service.prefetch_next(session_id))
 
 
+@router.post(
+    "/api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain",
+    response_model=FrontendMockPayloadResponse,
+)
+def prefetch_next_campaign_node_dispatcher_drain(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Ask the scheduler dispatcher to drain bounded lookahead prefetch work."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = campaign_router_service.prefetch_next_dispatcher_drain(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 @router.get(
     "/api/sessions/{session_id}/map",
     response_model=FrontendMockPayloadResponse,

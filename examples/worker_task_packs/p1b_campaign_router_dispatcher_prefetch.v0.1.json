@@ -1,0 +1,80 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-31-campaign-router-dispatcher-prefetch",
+  "title": "Campaign Router dispatcher prefetch",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/campaign-router-dispatcher-prefetch",
+  "worktree": "/tmp/ai-td-task-campaign-router-dispatcher-prefetch",
+  "objective": "保留现有 Campaign Router prefetch-next dry-run 语义，同时新增显式 prefetch-next-dispatcher-drain 入口，让玩家进入当前节点时的后台预取证据可以推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，并继续保持零 live provider 调用、零 staging/promotion、零队列完成、零世界写入、零 runtime 激活。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/campaign_router_service.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py"
+  ],
+  "allowed_paths": [
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/campaign_router_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_campaign_router_dispatcher_prefetch.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_campaign_router_dispatcher_prefetch.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_campaign_router_dispatcher_prefetch python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "旧 /campaign-router/prefetch-next 必须保持 dry-run worker step 语义，不被替换。",
+    "新 /campaign-router/prefetch-next-dispatcher-drain 默认 max_items=2，并复用 Generation Scheduler dispatcher drain。",
+    "Campaign Router next node 只作为触发上下文，不作为 scheduler queue 的定向过滤器。",
+    "不得调用 run-fixture-executor-chain、stage-provider-artifacts、import-provider-artifact-review-output 或队列 complete。",
+    "OpenCode headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，因此使用 local_codex_safe_fallback。"
+  ]
+}

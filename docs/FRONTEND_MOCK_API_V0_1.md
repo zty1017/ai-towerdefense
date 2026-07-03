@@ -240,6 +240,36 @@ POST /api/sessions/{session_id}/campaign-router/prefetch-next
 
 它仍然不会调用外部模型，不会读取 `.env`，不会创建新内容，也不会写入世界状态。MVP 中它用于证明玩家进入当前节点时，系统已经可以把下一节点的预生成 / fallback 检查挂到同一条运行时链路上。
 
+### 请求下一节点 dispatcher 预取
+
+```http
+POST /api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain
+```
+
+该接口保留 Campaign Router 的“当前节点 -> 下一节点”语义，但把调度动作升级为 review-only dispatcher drain。默认 `max_items = 2`，用于模拟玩家进入当前节点时，后台预取 tick 可以连续推进多个 queued provider-review 项到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` ledger 边界。
+
+请求体可选：
+
+```json
+{
+  "worker_id": "router-dispatcher-prefetch",
+  "note": "lookahead dispatcher prefetch",
+  "max_items": 2
+}
+```
+
+返回：
+
+- `prefetch_request`: 目标下一节点、预取模式、预算、处理数量、停止原因和安全计数。
+- `worker_step`: 底层 dispatcher drain 的汇总。
+- `dispatcher_steps`: 每个被处理调度项的 receipt / envelope 摘要。
+- `generation_schedule_queue`
+- `generation_schedule_worker_cache`
+- `generation_artifact_ledger`
+- 更新后的 `campaign_router`
+
+该接口不按节点定向过滤 scheduler queue；下一节点只是触发上下文，drain 仍按 Generation Scheduler 的 eligible queue 顺序处理。因此它拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile` 和本地导入路径。它仍然不会调用外部模型，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
+
 ### 提交战斗结果
 
 ```http
