@@ -67,6 +67,12 @@ from app.services.generation_scheduler_run_queue_repository import (  # noqa: E4
     load_next_generation_item_row_by_status,
     update_generation_queue_item,
 )
+from app.services.generation_scheduler_worker_state_repository import (  # noqa: E402
+    insert_provider_guard_log,
+    load_provider_guard_logs,
+    load_worker_cache_items,
+    upsert_worker_cache_payload,
+)
 from backend.app.services.generation_scheduler_run_queue_builders import (  # noqa: E402
     build_generation_queue_items_from_run,
     build_generation_schedule_buffer,
@@ -156,6 +162,72 @@ def test_generation_run_queue_repository_inserts_loads_and_updates(client):
     assert updated is not None
     assert updated["status"] == "claimed"
     assert updated["payload"]["claimed_by"] == "repo-test"
+
+
+def test_generation_worker_state_repository_upserts_cache_and_filters_guard_logs(client):
+    sid = _create_session(client)
+    ts = "2026-07-03T00:00:00Z"
+    plan_path = _ROOT / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+    run_report_path = (
+        _ROOT / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
+    )
+    run_payload = build_generation_schedule_run_payload(
+        sid,
+        "gsrun_worker_state_test",
+        ts,
+        plan=_load_json(plan_path),
+        run_report=_load_json(run_report_path),
+        refs={"plan": _rel(plan_path), "run_report": _rel(run_report_path)},
+    )
+    queue_items = build_generation_queue_items_from_run(run_payload, ts)
+    insert_generation_schedule_run(run_payload, ts)
+    insert_generation_queue_items(queue_items)
+    queue_payload = next(
+        item for item in queue_items if item["status"] == "queued"
+    )
+
+    cache_payload = build_worker_cache_payload(queue_payload, ts)
+    upsert_worker_cache_payload(cache_payload, ts)
+    updated_cache = {
+        **cache_payload,
+        "status": "waiting_review",
+        "updated_at": "2026-07-03T00:05:00Z",
+    }
+    upsert_worker_cache_payload(updated_cache, "2026-07-03T00:05:00Z")
+
+    all_cache = load_worker_cache_items(sid)
+    run_cache = load_worker_cache_items(sid, "gsrun_worker_state_test")
+    other_run_cache = load_worker_cache_items(sid, "gsrun_other")
+
+    assert len(all_cache) == 1
+    assert len(run_cache) == 1
+    assert other_run_cache == []
+    assert run_cache[0]["created_at"] == ts
+    assert run_cache[0]["updated_at"] == "2026-07-03T00:05:00Z"
+    assert run_cache[0]["status"] == "waiting_review"
+
+    guard_payload = build_live_executor_guard_payload(
+        queue_payload,
+        {"worker_id": "guard-worker", "note": "guard log test"},
+        ts,
+    )
+    insert_provider_guard_log(guard_payload, ts)
+    insert_provider_guard_log(
+        {
+            "schema_version": "not_a_guard.v0.1",
+            "session_id": sid,
+            "run_id": "gsrun_worker_state_test",
+            "created_at": ts,
+        },
+        ts,
+    )
+
+    guard_logs = load_provider_guard_logs(sid, "gsrun_worker_state_test")
+    other_guard_logs = load_provider_guard_logs(sid, "gsrun_other")
+
+    assert len(guard_logs) == 1
+    assert guard_logs[0]["guard_id"] == guard_payload["guard_id"]
+    assert other_guard_logs == []
 
 
 def test_generation_artifact_ledger_repository_upserts_and_filters(client):
