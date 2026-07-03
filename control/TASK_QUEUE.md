@@ -1578,6 +1578,39 @@ rg -n "Architecture fact source freeze|p1b_architecture_fact_source_freeze" cont
 git diff --check
 ```
 
+### P1-B-40 Refactor scheduler handoff builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 provider adapter runner handoff 和 ProviderAdapterRunnerHandoffOutbox 的纯 payload 构造逻辑从 generation_scheduler_service.py 抽到独立 builder 模块；保持 API 返回兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_handoff_builders.py`。
+- `generation_scheduler_service.py` 继续负责 latest run、ledger 查询、schema 校验和 API 编排；handoff payload、runner 命令模板、outbox safety 与 import contract 改由纯 builder 构造。
+- `backend/tests/test_frontend_mock_api.py` 新增 builder 安全合同测试，并保留原 handoff / outbox API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_handoff_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是减少 `generation_scheduler_service.py` 继续膨胀。
+- 新 builder 是纯构造模块，不拥有调度状态、不读 DB、不调用 provider、不保存 prompt / provider response。
+- 后续可按同一方式继续拆分 scheduler service 的 ledger import、queue transition 和 prefetch cache view。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_handoff_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_handoff python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_handoff_builders|build_provider_adapter_runner_handoff_outbox|provider_runner_outbox_safety" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

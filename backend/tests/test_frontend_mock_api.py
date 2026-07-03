@@ -20,6 +20,10 @@ from run_provider_adapter import build_dry_run_artifacts  # noqa: E402
 from validate_provider_adapter_runner_handoff_outbox import (  # noqa: E402
     validate_provider_adapter_runner_handoff_outbox,
 )
+from backend.app.services.generation_scheduler_handoff_builders import (  # noqa: E402
+    build_provider_adapter_runner_handoff_outbox,
+    provider_runner_outbox_safety,
+)
 
 
 def _create_session(client) -> str:
@@ -33,6 +37,29 @@ def _payload(resp):
     body = resp.json()
     assert body["mode"] == "frontend_mock_fixture"
     return body["payload"]
+
+
+def test_provider_runner_handoff_outbox_builder_keeps_safe_contract():
+    outbox = build_provider_adapter_runner_handoff_outbox(
+        session_id="session_test",
+        run_id="gsrun_test",
+        worker_id="worker-test",
+        max_items=2,
+        dispatched_count=0,
+        stop_reason="no_eligible_items",
+        runner_handoffs=[],
+        created_at="2026-07-03T00:00:00Z",
+    )
+
+    assert validate_provider_adapter_runner_handoff_outbox(outbox) == []
+    assert outbox["safety"] == provider_runner_outbox_safety()
+    assert outbox["handoff_mode"] == "external_runner_required"
+    assert outbox["review_only"] is True
+    assert outbox["runner_handoff_count"] == 0
+    assert outbox["runner_handoffs"] == []
+    assert outbox["import_contract"]["post_import_gate"] == (
+        "provider_artifact_staging_or_promotion_review_required"
+    )
 
 
 def _session_state_counts(raw_conn: sqlite3.Connection, sid: str) -> dict[str, int]:

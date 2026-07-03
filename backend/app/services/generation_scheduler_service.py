@@ -81,6 +81,11 @@ from run_provider_adapter import (  # noqa: E402
     build_dry_run_artifacts as build_provider_adapter_runner_dry_run_artifacts,
     validate_outputs as validate_provider_adapter_runner_outputs,
 )
+from .generation_scheduler_handoff_builders import (  # noqa: E402
+    build_provider_adapter_runner_handoff,
+    build_provider_adapter_runner_handoff_outbox,
+    provider_runner_outbox_safety,
+)
 
 
 class GenerationSchedulerFixtureNotFoundError(LookupError):
@@ -2794,12 +2799,6 @@ def run_provider_adapter_runner_fixture(
     }
 
 
-def _safe_runner_handoff_slug(*parts: str) -> str:
-    raw = "_".join(part for part in parts if part)
-    slug = "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in raw)
-    return slug[:120] or "provider_runner_handoff"
-
-
 def export_provider_adapter_runner_handoff(
     session_id: str,
     metadata: dict[str, Any] | None = None,
@@ -2855,70 +2854,23 @@ def export_provider_adapter_runner_handoff(
             + "; ".join(authorization_errors)
         )
     ts = now_iso()
-    slug = _safe_runner_handoff_slug(schedule_item_id, authorization_ref)
-    paths = {
-        "executor_request_path": f"/tmp/{slug}.executor_request.json",
-        "authorization_path": f"/tmp/{slug}.authorization.json",
-        "receipt_output_path": f"/tmp/{slug}.receipt.json",
-        "envelope_output_path": f"/tmp/{slug}.envelope.json",
-        "llm_summary_artifact_path": f"/tmp/{slug}.redacted_text_summary.json",
-        "image_artifact_path": f"/tmp/{slug}.image_candidate.png",
-        "prompt_file_path": f"/tmp/{slug}.prompt.txt",
-    }
     provider_profile = str(
         authorization.get("source", {}).get("provider_profile") or "unknown"
     )
     safe_note = safe_metadata.get("note")
-    base_args = [
-        "python3",
-        "tools/provider_adapter/run_provider_adapter.py",
-        "--executor-request",
-        paths["executor_request_path"],
-        "--authorization",
-        paths["authorization_path"],
-        "--receipt-output",
-        paths["receipt_output_path"],
-        "--envelope-output",
-        paths["envelope_output_path"],
-        "--created-at",
-        ts,
-    ]
-    if safe_note:
-        base_args.extend(["--note", str(safe_note)])
-    dry_run_args = [*base_args, "--mode", "fixture"]
-    live_llm_args = [
-        *base_args,
-        "--mode",
-        "llm_text",
-        "--live",
-        "--llm-profile",
-        provider_profile if provider_profile != "unknown" else "<llm-profile>",
-        "--prompt-file",
-        paths["prompt_file_path"],
-        "--artifact-output",
-        paths["llm_summary_artifact_path"],
-        "--max-tokens",
-        "4096",
-        "--load-dotenv",
-        "<authorized-dotenv-path>",
-    ]
-    live_image_args = [
-        *base_args,
-        "--mode",
-        "image",
-        "--live",
-        "--image-profile",
-        provider_profile if provider_profile != "unknown" else "<image-profile>",
-        "--prompt-file",
-        paths["prompt_file_path"],
-        "--artifact-output",
-        paths["image_artifact_path"],
-        "--size",
-        "1024x1024",
-        "--load-dotenv",
-        "<authorized-dotenv-path>",
-    ]
     ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    handoff_payload = build_provider_adapter_runner_handoff(
+        session_id=session_id,
+        run_id=run_id,
+        schedule_item_id=schedule_item_id,
+        authorization_ref=authorization_ref,
+        executor_request_id=executor_request_entry.get("source_id"),
+        executor_request=executor_request,
+        authorization=authorization,
+        provider_profile=provider_profile,
+        created_at=ts,
+        note=safe_note,
+    )
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
@@ -2932,53 +2884,7 @@ def export_provider_adapter_runner_handoff(
             "authorization_ref": authorization_ref,
             "upstream_request_id": executor_request_entry.get("source_id"),
         },
-        "provider_adapter_runner_handoff": {
-            "schema_version": "provider_adapter_runner_handoff.v0.1",
-            "created_at": ts,
-            "handoff_mode": "external_runner_required",
-            "review_only": True,
-            "source": {
-                "session_id": session_id,
-                "run_id": run_id,
-                "schedule_item_id": schedule_item_id,
-                "authorization_ref": authorization_ref,
-                "executor_request_id": executor_request_entry.get("source_id"),
-                "provider_profile": provider_profile,
-            },
-            "runner_inputs": {
-                "executor_request": executor_request,
-                "provider_execution_authorization": authorization,
-            },
-            "suggested_paths": paths,
-            "command_templates": {
-                "dry_run_fixture": dry_run_args,
-                "live_llm_text": live_llm_args,
-                "live_image": live_image_args,
-            },
-            "import_after_runner": {
-                "endpoint": (
-                    f"/api/sessions/{session_id}/generation-schedule/workers/"
-                    "import-provider-adapter-runner-output"
-                ),
-                "method": "POST",
-                "body": {
-                    "worker_id": "provider-runner-output-import",
-                    "schedule_item_id": schedule_item_id,
-                    "authorization_ref": authorization_ref,
-                    "receipt_path": paths["receipt_output_path"],
-                    "envelope_path": paths["envelope_output_path"],
-                },
-            },
-            "safety": {
-                "api_reads_env": False,
-                "api_calls_provider": False,
-                "api_writes_world_state": False,
-                "api_activates_runtime": False,
-                "prompt_body_included": False,
-                "provider_response_body_included": False,
-                "live_templates_require_external_explicit_authorization": True,
-            },
-        },
+        "provider_adapter_runner_handoff": handoff_payload,
         "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
     }
 
@@ -3501,55 +3407,17 @@ def run_review_only_background_handoff_tick(
         "promotion_performed": False,
         "queue_completed_count": base_step.get("queue_completed_count", 0),
     }
-    outbox_safety = {
-        "api_reads_env": False,
-        "api_calls_provider": False,
-        "api_runs_provider_adapter": False,
-        "api_stages_provider_artifacts": False,
-        "api_promotes_provider_artifacts": False,
-        "api_completes_queue_items": False,
-        "api_writes_world_state": False,
-        "api_activates_runtime": False,
-        "prompt_body_included": False,
-        "provider_response_body_included": False,
-        "live_templates_require_external_explicit_authorization": True,
-    }
-    outbox = {
-        "schema_version": "provider_adapter_runner_handoff_outbox.v0.1",
-        "outbox_id": _safe_runner_handoff_slug(
-            "provider_adapter_runner_handoff_outbox",
-            str(base_step.get("run_id") or "no_run"),
-            worker_id,
-        ),
-        "created_at": now_iso(),
-        "handoff_mode": "external_runner_required",
-        "review_only": True,
-        "source": {
-            "session_id": session_id,
-            "run_id": str(base_step.get("run_id") or ""),
-            "worker_mode": "review_only_background_handoff_tick",
-            "max_items": max_items,
-            "dispatched_count": int(base_step.get("dispatched_count", 0) or 0),
-            "stop_reason": base_step.get("stop_reason"),
-        },
-        "safety": outbox_safety,
-        "runner_handoff_count": len(runner_handoffs),
-        "runner_handoffs": runner_handoffs,
-        "import_contract": {
-            "endpoint": (
-                "/api/sessions/{session_id}/generation-schedule/workers/"
-                "import-provider-adapter-runner-output"
-            ),
-            "method": "POST",
-            "required_body_fields": [
-                "schedule_item_id",
-                "authorization_ref",
-                "receipt_path",
-                "envelope_path",
-            ],
-            "post_import_gate": "provider_artifact_staging_or_promotion_review_required",
-        },
-    }
+    outbox_safety = provider_runner_outbox_safety()
+    outbox = build_provider_adapter_runner_handoff_outbox(
+        session_id=session_id,
+        run_id=str(base_step.get("run_id") or ""),
+        worker_id=worker_id,
+        max_items=max_items,
+        dispatched_count=int(base_step.get("dispatched_count", 0) or 0),
+        stop_reason=base_step.get("stop_reason"),
+        runner_handoffs=runner_handoffs,
+        created_at=now_iso(),
+    )
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
