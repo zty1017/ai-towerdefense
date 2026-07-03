@@ -4718,6 +4718,17 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     assert battle["battle_config"]["sample_asset"]["delivery_delay_ms"] == 30000
     assert battle["map_runtime_package"]["schema_version"] == "map_runtime_package.v0.1"
     assert battle["map_runtime_package"]["build_slots"]
+    render_bundle = battle["map_render_plan_bundle"]
+    assert render_bundle["procedural_map_render_plan"]["schema_version"] == (
+        "procedural_map_render_plan.v0.1"
+    )
+    assert render_bundle["semantic_visual_consistency_report"]["status"] == "passed"
+    assert "debug_control_overlay" in render_bundle["procedural_map_render_plan"][
+        "debug_layer_ids"
+    ]
+    assert "debug_control_overlay" not in render_bundle["procedural_map_render_plan"][
+        "player_default_layer_ids"
+    ]
     assert battle["toolbar_assets"]
     assert battle["sample_delivery_asset"]["stable_internal_id"] == "asset_mirror_lure_trap_001"
     assert battle["animation_pipeline_status"] == (
@@ -4730,6 +4741,9 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     )
     assert runtime["runtime_package"]["schema_version"] == "runtime_package.v0.1"
     assert runtime["map_runtime_package"]["node_id"] == "gray_lantern_station"
+    assert runtime["map_render_plan_bundle"]["refs"][
+        "procedural_map_render_plan"
+    ].endswith("mvp_first_battle.procedural_map_render_plan.json")
     assert runtime["sample_delivery_asset"]["media_refs"]["mode"] == "generated"
     assert runtime["runtime_art_media_manifest"]["summary"]["media_count"] == 18
 
@@ -4745,6 +4759,16 @@ def test_battle_runtime_settlement_and_evidence_flow(client):
     visual_resp = client.get(first_visual_url)
     assert visual_resp.status_code == 200
     assert visual_resp.headers["content-type"] == "image/png"
+
+    map_render_plan = _payload(
+        client.get(f"/api/sessions/{sid}/battles/gray_lantern_station/map-render-plan")
+    )
+    plan_bundle = map_render_plan["map_render_plan_bundle"]
+    assert plan_bundle["map_style_pack"]["schema_version"] == "map_style_pack.v0.1"
+    assert plan_bundle["procedural_map_render_plan"]["layers"]
+    assert plan_bundle["semantic_visual_consistency_report"]["summary"][
+        "failed_count"
+    ] == 0
 
     settlement = _payload(
         client.post(
@@ -4921,6 +4945,10 @@ def test_all_battle_nodes_expose_map_runtime_packages(client):
         assert battle["map_runtime_package"]["node_id"] == node_id
         assert battle["map_runtime_package"]["path_routes"]
         assert battle["map_runtime_package"]["build_slots"]
+        if node_id == "gray_lantern_station":
+            assert battle["map_render_plan_bundle"]["node_id"] == node_id
+        else:
+            assert battle["map_render_plan_bundle"] is None
 
         runtime = _payload(
             client.get(f"/api/sessions/{sid}/battles/{node_id}/map-runtime-package")
@@ -4930,6 +4958,12 @@ def test_all_battle_nodes_expose_map_runtime_packages(client):
         assert map_package["node_id"] == node_id
         roles = {layer["role"] for layer in map_package["visual_layers"]}
         assert "battle_runtime_background" in roles
+
+    missing_render_plan = client.get(
+        f"/api/sessions/{sid}/battles/lamp_wick_store/map-render-plan"
+    )
+    assert missing_render_plan.status_code == 404
+    assert "map render plan not found" in missing_render_plan.json()["detail"]
 
 
 def test_frontend_mock_endpoints_require_existing_session(client):

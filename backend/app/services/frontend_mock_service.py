@@ -18,6 +18,7 @@ from . import (
     battle_content_service,
     frontend_media_service,
     generation_scheduler_service,
+    map_render_plan_service,
     map_runtime_service,
 )
 
@@ -391,12 +392,16 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
         raise FixtureNotFoundError(node_id) from exc
     pack = _load_frontend_pack()
     map_runtime_package = map_runtime_service.load_map_runtime_package_optional(node_id)
+    map_render_plan_bundle = (
+        map_render_plan_service.load_map_render_plan_bundle_optional(node_id)
+    )
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
         "battle_config": config,
         "map_runtime_package": map_runtime_package,
+        "map_render_plan_bundle": map_render_plan_bundle,
         "toolbar_assets": _battle_toolbar_assets(pack),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         **frontend_media_service.frontend_media_payload(),
@@ -416,6 +421,9 @@ def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
         "node_id": node_id,
         "runtime_package": runtime_package,
         "map_runtime_package": map_runtime_service.load_map_runtime_package_optional(node_id),
+        "map_render_plan_bundle": (
+            map_render_plan_service.load_map_render_plan_bundle_optional(node_id)
+        ),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         **frontend_media_service.frontend_media_payload(),
         **frontend_media_service.runtime_art_payload(),

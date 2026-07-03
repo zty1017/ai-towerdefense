@@ -23,6 +23,12 @@
     battleConfig: "/game_data/demo/first_battle_config.json",
     mapRuntimePackage:
       "/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    mapStylePack:
+      "/examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    mapRenderPlan:
+      "/examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json",
+    mapSemanticVisualConsistencyReport:
+      "/examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json",
   };
 
   const STATIC_ASSET_PREFIXES = [
@@ -396,6 +402,7 @@
         Object.assign(state.data, {
           battleConfig: response.battle_config,
           mapRuntimePackage: response.map_runtime_package || null,
+          mapRenderPlanBundle: response.map_render_plan_bundle || null,
           toolbarAssets: response.toolbar_assets,
           sampleDeliveryAsset: response.sample_delivery_asset,
           mediaManifest: response.media_manifest,
@@ -414,6 +421,17 @@
             state.data.mapRuntimePackage = mapResponse.map_runtime_package;
           } catch {
             state.data.mapRuntimePackage = null;
+          }
+        }
+        if (!state.data.mapRenderPlanBundle) {
+          try {
+            const mapPlanResponse = await apiGet(
+              sessionApiPath(`/battles/${nodeId}/map-render-plan`),
+              3600,
+            );
+            state.data.mapRenderPlanBundle = mapPlanResponse.map_render_plan_bundle;
+          } catch {
+            state.data.mapRenderPlanBundle = null;
           }
         }
         return state.data.battleConfig;
@@ -438,6 +456,9 @@
           briefing,
           battleConfig,
           mapRuntimePackage,
+          mapStylePack,
+          mapRenderPlan,
+          mapSemanticVisualConsistencyReport,
         ] = await Promise.all([
           fetchStaticJson("pack"),
           fetchStaticJson("runtimeKit"),
@@ -452,7 +473,25 @@
           fetchStaticJson("briefing"),
           fetchStaticJson("battleConfig"),
           fetchOptionalStaticJson("mapRuntimePackage"),
+          fetchOptionalStaticJson("mapStylePack"),
+          fetchOptionalStaticJson("mapRenderPlan"),
+          fetchOptionalStaticJson("mapSemanticVisualConsistencyReport"),
         ]);
+        const mapRenderPlanBundle =
+          mapRenderPlan && mapStylePack && mapSemanticVisualConsistencyReport
+            ? {
+                node_id: NODE_ID,
+                refs: {
+                  map_style_pack: STATIC_PATHS.mapStylePack,
+                  procedural_map_render_plan: STATIC_PATHS.mapRenderPlan,
+                  semantic_visual_consistency_report:
+                    STATIC_PATHS.mapSemanticVisualConsistencyReport,
+                },
+                map_style_pack: mapStylePack,
+                procedural_map_render_plan: mapRenderPlan,
+                semantic_visual_consistency_report: mapSemanticVisualConsistencyReport,
+              }
+            : null;
         state.data = {
           pack,
           runtimeKit,
@@ -467,6 +506,7 @@
           briefing,
           battleConfig,
           mapRuntimePackage,
+          mapRenderPlanBundle,
         };
         await this.loadCampaignRoute();
       },
