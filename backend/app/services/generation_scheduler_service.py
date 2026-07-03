@@ -107,6 +107,11 @@ from .generation_scheduler_prefetch_cache_builders import (  # noqa: E402
 from .generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
     validate_provider_adapter_runner_import_contract as _validate_provider_adapter_runner_import_contract,
 )
+from .generation_scheduler_dispatcher_controls import (  # noqa: E402
+    dispatcher_step_metadata as _dispatcher_step_metadata,
+    reject_targeted_metadata as _reject_targeted_metadata,
+    requested_max_items as _requested_max_items_control,
+)
 from .generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items as _insert_generation_queue_items,
     insert_generation_schedule_run as _insert_generation_schedule_run,
@@ -1236,15 +1241,13 @@ def run_review_only_dispatcher_step(
         schedule_item_id: str | None = None,
         authorization_ref: str | None = None,
     ) -> dict[str, Any]:
-        step_metadata: dict[str, Any] = {
-            "worker_id": f"{worker_prefix}_{step_name}",
-            "note": note,
-        }
-        if schedule_item_id:
-            step_metadata["schedule_item_id"] = schedule_item_id
-        if authorization_ref:
-            step_metadata["authorization_ref"] = authorization_ref
-        return step_metadata
+        return _dispatcher_step_metadata(
+            worker_prefix=worker_prefix,
+            step_name=step_name,
+            note=note,
+            schedule_item_id=schedule_item_id,
+            authorization_ref=authorization_ref,
+        )
 
     dry_step = run_generation_schedule_dry_worker_step(
         session_id,
@@ -1355,50 +1358,23 @@ def run_review_only_dispatcher_step(
     }
 
 
-def _requested_max_items(
-    metadata: dict[str, Any] | None,
-    *,
-    default: int,
-    maximum: int,
-) -> int:
-    if not isinstance(metadata, dict) or metadata.get("max_items") is None:
-        return default
-    try:
-        value = int(metadata["max_items"])
-    except (TypeError, ValueError) as exc:
-        raise InvalidQueueTransitionError("max_items must be an integer") from exc
-    if value < 1 or value > maximum:
-        raise InvalidQueueTransitionError(
-            f"max_items must be between 1 and {maximum}"
-        )
-    return value
-
-
 def run_review_only_dispatcher_drain(
     session_id: str,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Dispatch several queued review-only items through the runner boundary."""
     safe_metadata = metadata if isinstance(metadata, dict) else {}
-    unsupported_keys = [
-        key
-        for key in (
-            "schedule_item_id",
-            "authorization_ref",
-            "artifact_profile",
-            "receipt_path",
-            "envelope_path",
-            "staging_path",
-            "promotion_report_path",
-        )
-        if safe_metadata.get(key) not in (None, "")
-    ]
-    if unsupported_keys:
-        raise InvalidQueueTransitionError(
-            "review-only dispatcher drain does not accept targeted metadata: "
-            + ", ".join(unsupported_keys)
-        )
-    max_items = _requested_max_items(safe_metadata, default=4, maximum=16)
+    _reject_targeted_metadata(
+        safe_metadata,
+        action_label="review-only dispatcher drain",
+        error_cls=InvalidQueueTransitionError,
+    )
+    max_items = _requested_max_items_control(
+        safe_metadata,
+        default=4,
+        maximum=16,
+        error_cls=InvalidQueueTransitionError,
+    )
     worker_prefix = str(
         safe_metadata.get("worker_id") or "review_only_dispatcher_drain"
     )
@@ -1508,7 +1484,12 @@ def run_review_only_background_executor_tick(
     authorization, runner, and ledger boundaries stay in one place.
     """
     safe_metadata = metadata if isinstance(metadata, dict) else {}
-    max_items = _requested_max_items(safe_metadata, default=2, maximum=8)
+    max_items = _requested_max_items_control(
+        safe_metadata,
+        default=2,
+        maximum=8,
+        error_cls=InvalidQueueTransitionError,
+    )
     worker_id = str(
         safe_metadata.get("worker_id") or "review_only_background_executor_tick"
     )
@@ -1599,7 +1580,12 @@ def run_review_only_background_handoff_tick(
     by an explicitly authorized external runner and imported back afterwards.
     """
     safe_metadata = metadata if isinstance(metadata, dict) else {}
-    max_items = _requested_max_items(safe_metadata, default=2, maximum=8)
+    max_items = _requested_max_items_control(
+        safe_metadata,
+        default=2,
+        maximum=8,
+        error_cls=InvalidQueueTransitionError,
+    )
     worker_id = str(
         safe_metadata.get("worker_id") or "review_only_background_handoff_tick"
     )

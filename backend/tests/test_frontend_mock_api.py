@@ -71,6 +71,12 @@ from backend.app.services.generation_scheduler_provider_adapter_import_helpers i
     provider_adapter_runner_import_alignment_checks,
     validate_provider_adapter_runner_import_contract,
 )
+from backend.app.services.generation_scheduler_dispatcher_controls import (  # noqa: E402
+    dispatcher_step_metadata,
+    reject_targeted_metadata,
+    requested_max_items,
+    targeted_metadata_keys,
+)
 from app.services.generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items,
     insert_generation_schedule_run,
@@ -777,6 +783,50 @@ def test_generation_scheduler_worker_cache_builder_keeps_safety_contract():
     compact = compact_worker_cache([cache_payload])
     assert compact["summary"]["item_count"] == 1
     assert compact["summary"]["review_required_count"] == 1
+
+
+def test_generation_dispatcher_controls_keep_metadata_contract():
+    assert requested_max_items({}, default=2, maximum=8) == 2
+    assert requested_max_items({"max_items": "3"}, default=2, maximum=8) == 3
+    try:
+        requested_max_items({"max_items": 9}, default=2, maximum=8)
+    except ValueError as exc:
+        assert "max_items must be between 1 and 8" in str(exc)
+    else:
+        raise AssertionError("oversized max_items should fail")
+
+    targeted = {
+        "schedule_item_id": "sched_test",
+        "authorization_ref": "",
+        "receipt_path": "/tmp/receipt.json",
+        "note": "safe note",
+    }
+    assert targeted_metadata_keys(targeted) == [
+        "schedule_item_id",
+        "receipt_path",
+    ]
+    try:
+        reject_targeted_metadata(targeted, action_label="review-only dispatcher drain")
+    except ValueError as exc:
+        message = str(exc)
+        assert "review-only dispatcher drain does not accept targeted metadata" in message
+        assert "schedule_item_id" in message
+        assert "receipt_path" in message
+    else:
+        raise AssertionError("targeted metadata should fail")
+
+    assert dispatcher_step_metadata(
+        worker_prefix="worker",
+        step_name="dry_run",
+        note=None,
+        schedule_item_id="sched_test",
+        authorization_ref="auth_test",
+    ) == {
+        "worker_id": "worker_dry_run",
+        "note": None,
+        "schedule_item_id": "sched_test",
+        "authorization_ref": "auth_test",
+    }
 
 
 def test_generation_prefetch_cache_builder_summarizes_queue_and_ledger_refs():
