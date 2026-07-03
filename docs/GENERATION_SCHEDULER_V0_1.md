@@ -552,6 +552,7 @@ GET /api/sessions/{session_id}/generation-schedule/activation-gate
 
 ```text
 GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache
+GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache/hits
 POST /api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache
 ```
 
@@ -586,6 +587,15 @@ promotion_allowed_pending_runtime_build
 - 不随单个 session reset 自动清除，因为它是跨请求 / 跨 session 的脱敏索引，而不是 session-scoped 状态。
 
 当前实现仍是最小索引层，还不包含正式 cache eviction、版本迁移、跨世界书兼容性检查或自动命中回填。后续正式后台执行器读取该索引时，仍必须重新检查 worldbook / run_world_version / ContextPackage hash / schema version / media gate / activation gate。
+
+`shared-prefetch-cache/hits` 是当前 run 的只读命中视图。它读取当前 latest run 的 prefetch-cache item，再用 `object_kind + object_ref` 精确匹配全局 shared cache 记录，并返回每个调度项是否命中：
+
+```text
+shared_candidate_available_pending_runtime_build
+no_shared_candidate
+```
+
+该视图不创建 run、不推进 worker、不调用 provider、不写世界状态、不激活 runtime。命中只说明“有可复用的脱敏候选摘要，可供后续构建器参考”，不代表可以跳过 runtime package build、WorldStateDeltaTransaction build、media / semantic gate 或 activation gate。
 
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 

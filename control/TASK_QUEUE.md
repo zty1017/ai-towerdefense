@@ -2681,6 +2681,41 @@ rg -n "shared-prefetch-cache|generation_shared_prefetch_cache|build_shared_prefe
 git diff --check
 ```
 
+### P1-B Generation Scheduler shared prefetch cache hits
+
+状态：已完成最小只读命中视图。
+
+目标：
+
+```text
+让当前 session/latest run 能发现哪些调度项命中了跨 session shared prefetch cache index，同时继续保持命中不等于 runtime-ready。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_hit_builders.py`：新增只读 hit read-model builder，用 `object_kind + object_ref` 精确匹配当前 prefetch item 与 shared cache record。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_shared_prefetch_cache_hits()`。
+- `backend/app/api/frontend_mock.py`：新增 `GET /generation-schedule/shared-prefetch-cache/hits`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、缺失 session、无 run 空结果、跨 session 命中、只读性和 runtime/activation 阻断。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 hit read-model 边界。
+- `examples/worker_task_packs/p1b_generation_shared_cache_hits.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- hits 视图不创建 run、不推进 worker、不写 shared cache、不调用 provider、不写世界状态、不激活 runtime。
+- 命中状态 `shared_candidate_available_pending_runtime_build` 只表示当前调度项有可复用脱敏候选摘要，后续仍必须过 runtime package / WorldStateDeltaTransaction build、media / semantic gate 和 activation gate。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_cache_hits.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_cache_hits python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "shared-prefetch-cache/hits|generation_shared_prefetch_cache_hits|build_shared_prefetch_cache_hit_payload" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：
