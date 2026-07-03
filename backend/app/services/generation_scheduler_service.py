@@ -3011,6 +3011,148 @@ def run_review_only_dispatcher_step(
     }
 
 
+def _requested_max_items(
+    metadata: dict[str, Any] | None,
+    *,
+    default: int,
+    maximum: int,
+) -> int:
+    if not isinstance(metadata, dict) or metadata.get("max_items") is None:
+        return default
+    try:
+        value = int(metadata["max_items"])
+    except (TypeError, ValueError) as exc:
+        raise InvalidQueueTransitionError("max_items must be an integer") from exc
+    if value < 1 or value > maximum:
+        raise InvalidQueueTransitionError(
+            f"max_items must be between 1 and {maximum}"
+        )
+    return value
+
+
+def run_review_only_dispatcher_drain(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Dispatch several queued review-only items through the runner boundary."""
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    unsupported_keys = [
+        key
+        for key in (
+            "schedule_item_id",
+            "authorization_ref",
+            "artifact_profile",
+            "receipt_path",
+            "envelope_path",
+            "staging_path",
+            "promotion_report_path",
+        )
+        if safe_metadata.get(key) not in (None, "")
+    ]
+    if unsupported_keys:
+        raise InvalidQueueTransitionError(
+            "review-only dispatcher drain does not accept targeted metadata: "
+            + ", ".join(unsupported_keys)
+        )
+    max_items = _requested_max_items(safe_metadata, default=4, maximum=16)
+    worker_prefix = str(
+        safe_metadata.get("worker_id") or "review_only_dispatcher_drain"
+    )
+    note = safe_metadata.get("note")
+    created_run = _load_latest_generation_schedule_run(session_id) is None
+    dispatches: list[dict[str, Any]] = []
+    idle_reached = False
+
+    for index in range(max_items):
+        dispatch = run_review_only_dispatcher_step(
+            session_id,
+            {
+                "worker_id": f"{worker_prefix}_{index + 1:02d}",
+                "note": note,
+            },
+        )
+        worker_step = dispatch.get("worker_step", {})
+        if worker_step.get("status") == "idle":
+            idle_reached = True
+            break
+        if worker_step.get("status") != "dispatched_review_only":
+            raise InvalidQueueTransitionError(
+                "review-only dispatcher drain received unexpected worker status: "
+                f"{worker_step.get('status')}"
+            )
+        dispatches.append(
+            {
+                "status": worker_step.get("status"),
+                "schedule_item_id": worker_step.get("schedule_item_id"),
+                "authorization_ref": worker_step.get("authorization_ref"),
+                "execution_receipt_id": worker_step.get("execution_receipt_id"),
+                "envelope_id": worker_step.get("envelope_id"),
+                "provider_call_count": worker_step.get("provider_call_count"),
+                "world_mutation_count": worker_step.get("world_mutation_count"),
+                "activation_allowed_count": worker_step.get(
+                    "activation_allowed_count"
+                ),
+                "promotion_allowed_count": worker_step.get(
+                    "promotion_allowed_count"
+                ),
+                "staging_performed": worker_step.get("staging_performed"),
+                "promotion_performed": worker_step.get("promotion_performed"),
+                "queue_completed": worker_step.get("queue_completed"),
+            }
+        )
+
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    queue_items = _load_generation_queue_items(session_id, run_id)
+    cache_items = _load_worker_cache_items(session_id, run_id) if run_id else []
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    dispatched_count = len(dispatches)
+    status = "drained_review_only" if dispatched_count else "idle"
+    remaining_eligible_count = sum(
+        1
+        for item in queue_items
+        if item.get("status") == "queued"
+        and item.get("provider_review_required") is True
+    )
+    stop_reason = (
+        "budget_exhausted"
+        if remaining_eligible_count > 0 and dispatched_count >= max_items
+        else "no_eligible_items"
+    )
+
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": status,
+            "worker_mode": "review_only_dispatcher_drain",
+            "created_generation_schedule_run": created_run,
+            "run_id": run_id,
+            "max_items": max_items,
+            "dispatched_count": dispatched_count,
+            "idle_reached": idle_reached,
+            "stop_reason": stop_reason,
+            "remaining_eligible_count": remaining_eligible_count,
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "promotion_allowed_count": 0,
+            "staging_performed": False,
+            "promotion_performed": False,
+            "queue_completed_count": sum(
+                1 for item in dispatches if item.get("queue_completed") is True
+            ),
+        },
+        "dispatcher_steps": dispatches,
+        "generation_schedule_run": _compact_generation_schedule_run(latest_run),
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(
+            ledger_items
+        ),
+    }
+
+
 def _display_import_path(path: Path) -> str:
     try:
         return _rel(path)

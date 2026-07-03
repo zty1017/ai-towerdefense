@@ -1258,6 +1258,164 @@ def test_review_only_dispatcher_step_rejects_already_processed_item(client):
     assert "must be queued" in repeated.json()["detail"]
 
 
+def test_review_only_dispatcher_drain_dispatches_multiple_without_staging(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    drained = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+            json={
+                "worker_id": "dispatcher-drain",
+                "max_items": 2,
+                "note": "drain two review-only items",
+            },
+        )
+    )
+
+    worker_step = drained["worker_step"]
+    assert worker_step["status"] == "drained_review_only"
+    assert worker_step["worker_mode"] == "review_only_dispatcher_drain"
+    assert worker_step["created_generation_schedule_run"] is True
+    assert worker_step["max_items"] == 2
+    assert worker_step["dispatched_count"] == 2
+    assert worker_step["idle_reached"] is False
+    assert worker_step["stop_reason"] == "budget_exhausted"
+    assert worker_step["remaining_eligible_count"] == 2
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["promotion_allowed_count"] == 0
+    assert worker_step["staging_performed"] is False
+    assert worker_step["promotion_performed"] is False
+    assert worker_step["queue_completed_count"] == 0
+    assert [step["schedule_item_id"] for step in drained["dispatcher_steps"]] == [
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ]
+    assert all(step["queue_completed"] is False for step in drained["dispatcher_steps"])
+    assert all(
+        step["provider_call_count"] == 0 for step in drained["dispatcher_steps"]
+    )
+    assert "provider_artifact_staging" not in drained
+    assert "provider_artifact_promotion_report" not in drained
+
+    queue_by_id = {
+        item["schedule_item_id"]: item
+        for item in drained["generation_schedule_queue"]["items"]
+    }
+    assert queue_by_id["sched_stage05_worldline_prefetch"]["status"] == (
+        "waiting_review"
+    )
+    assert queue_by_id["sched_next_map_visual_prefetch"]["status"] == (
+        "waiting_review"
+    )
+    assert queue_by_id["sched_video_frame_background_compile"]["status"] == "queued"
+    assert queue_by_id["sched_frontend_mock_sprite_repair_lazy"]["status"] == "queued"
+    queue_summary = drained["generation_schedule_queue"]["summary"]
+    assert queue_summary["waiting_review_count"] == 2
+    assert queue_summary["claimable_count"] == 2
+
+    ledger_summary = drained["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 8
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 2,
+        "provider_execution_authorization": 2,
+        "provider_adapter_execution_receipt": 2,
+        "provider_output_envelope": 2,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+    ledger_kinds = {
+        row["artifact_kind"]
+        for row in raw_conn.execute(
+            "SELECT artifact_kind FROM generation_artifact_ledger WHERE session_id = ?",
+            (sid,),
+        ).fetchall()
+    }
+    assert ledger_kinds == {
+        "generation_executor_run_request",
+        "provider_execution_authorization",
+        "provider_adapter_execution_receipt",
+        "provider_output_envelope",
+    }
+
+
+def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):
+    sid = _create_session(client)
+    drained = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+            json={"worker_id": "dispatcher-drain-all", "max_items": 10},
+        )
+    )
+
+    worker_step = drained["worker_step"]
+    assert worker_step["status"] == "drained_review_only"
+    assert worker_step["dispatched_count"] == 4
+    assert worker_step["idle_reached"] is True
+    assert worker_step["stop_reason"] == "no_eligible_items"
+    assert worker_step["remaining_eligible_count"] == 0
+    assert drained["generation_schedule_queue"]["summary"]["claimable_count"] == 0
+    assert drained["generation_schedule_queue"]["summary"]["waiting_review_count"] == 4
+    assert drained["generation_artifact_ledger"]["summary"]["item_count"] == 16
+
+    drained_again = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+            json={"worker_id": "dispatcher-drain-empty"},
+        )
+    )
+    assert drained_again["worker_step"]["status"] == "idle"
+    assert drained_again["worker_step"]["dispatched_count"] == 0
+    assert drained_again["worker_step"]["idle_reached"] is True
+    assert drained_again["worker_step"]["stop_reason"] == "no_eligible_items"
+    assert drained_again["worker_step"]["remaining_eligible_count"] == 0
+    assert drained_again["generation_artifact_ledger"]["summary"]["item_count"] == 16
+
+
+def test_review_only_dispatcher_drain_rejects_targeted_metadata(client):
+    sid = _create_session(client)
+    rejected = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+        json={
+            "worker_id": "dispatcher-drain-targeted",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+    assert rejected.status_code == 409
+    assert "does not accept targeted metadata" in rejected.json()["detail"]
+
+    rejected_auth = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+        json={
+            "worker_id": "dispatcher-drain-auth",
+            "authorization_ref": "auth_should_not_be_reused",
+        },
+    )
+    assert rejected_auth.status_code == 409
+    assert "authorization_ref" in rejected_auth.json()["detail"]
+
+
+def test_review_only_dispatcher_drain_rejects_invalid_budget(client):
+    sid = _create_session(client)
+    too_small = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+        json={"worker_id": "dispatcher-drain-small", "max_items": 0},
+    )
+    assert too_small.status_code == 422
+
+    too_large = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+        json={"worker_id": "dispatcher-drain-large", "max_items": 17},
+    )
+    assert too_large.status_code == 422
+
+
 def test_provider_adapter_runner_output_import_records_local_files(client, tmp_path):
     sid = _create_session(client)
     chain = _prepare_provider_authorization_chain(client, sid, "runner-import")

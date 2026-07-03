@@ -1233,6 +1233,41 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-30 Generation Scheduler review-only dispatcher drain
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 bounded review-only dispatcher drain API，模拟后台 worker 的一个受限 tick：按预算连续处理多个 queued 且 provider_review_required 的调度项，并把它们推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，但不进入 staging、promotion、队列完成或 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain`
+- 请求体复用 `worker_id`、`note` 和 `max_items`；`max_items` 默认 4，单次上限 16。
+- 拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile`、runner import path、staging / promotion path 等定向 metadata，避免一次 drain 错挂授权或产物路径。
+- 内部复用 `run-review-only-dispatcher-step`，不复制 guard、authorization 或 runner 校验逻辑。
+- 返回 `worker_step.stop_reason`：`budget_exhausted` 或 `no_eligible_items`，并返回 `remaining_eligible_count`。
+- 返回 `dispatcher_steps`、queue、worker cache 和 artifact ledger 汇总。
+- ledger 只包含 executor request、authorization、adapter receipt、ProviderOutputEnvelope 四类。
+
+当前结论：
+
+- 这是正式后台执行器前的吞吐量控制面雏形，不是真 provider worker。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 如果第 N 个 item 失败，前 N-1 个 item 的 review-only ledger 写入会保留；该行为是 fail-fast partial progress，不是事务性批处理。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_dispatcher_drain.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_dispatcher_drain python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
