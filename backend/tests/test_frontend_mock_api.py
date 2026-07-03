@@ -70,6 +70,14 @@ from backend.app.services.generation_scheduler_prefetch_cache_builders import ( 
 from backend.app.services.generation_scheduler_activation_gate_builders import (  # noqa: E402
     build_generation_activation_gate_payload,
 )
+from backend.app.services.generation_scheduler_shared_prefetch_cache_builders import (  # noqa: E402
+    build_shared_prefetch_cache_records,
+    compact_shared_prefetch_cache,
+)
+from backend.app.services.generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
+    load_shared_prefetch_cache_records,
+    upsert_shared_prefetch_cache_records,
+)
 from backend.app.services.generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
     provider_adapter_runner_import_alignment_checks,
     validate_provider_adapter_runner_import_contract,
@@ -2889,6 +2897,116 @@ def test_generation_activation_gate_builder_blocks_promotion_allowed_candidate()
     )
 
 
+def test_shared_prefetch_cache_builders_only_index_promotion_allowed_candidates():
+    activation_gate_payload = build_generation_activation_gate_payload(
+        {
+            "session_id": "sess_shared",
+            "mode": "frontend_mock_fixture",
+            "generation_schedule_run": {"run_id": "gsrun_shared"},
+            "generation_prefetch_cache": {
+                "summary": {"recorded_provider_call_count": 1},
+                "items": [
+                    {
+                        "schedule_item_id": "sched_ready",
+                        "object_kind": "map_visual_layer",
+                        "object_ref": "map.old_signal_tower",
+                        "latency_class": "background_prefetch",
+                        "queue_status": "waiting_review",
+                        "cache_status": "promotion_allowed_pending_activation",
+                        "recorded_provider_call_count": 1,
+                        "promotion_gate": {"promotion_allowed": True},
+                        "activation_gate": {
+                            "activation_allowed": False,
+                            "required_next_gates": ["activation_revalidation"],
+                        },
+                        "refs": {
+                            "provider_artifact_promotion_report": {"ledger_id": "ledg_1"}
+                        },
+                    },
+                    {
+                        "schedule_item_id": "sched_blocked",
+                        "object_kind": "map_visual_layer",
+                        "object_ref": "map.blocked",
+                        "latency_class": "background_prefetch",
+                        "queue_status": "waiting_review",
+                        "cache_status": "promotion_blocked",
+                        "promotion_gate": {"promotion_allowed": False},
+                        "activation_gate": {"activation_allowed": False},
+                        "refs": {},
+                    },
+                ],
+            },
+        }
+    )
+
+    records = build_shared_prefetch_cache_records(
+        activation_gate_payload, indexed_at="2026-07-03T00:00:00Z"
+    )
+
+    assert len(records) == 1
+    record = records[0]
+    assert record["schema_version"] == "generation_shared_prefetch_cache_record.v0.1"
+    assert record["cache_key"].startswith("gshared_")
+    assert record["source"] == {
+        "source_session_id": "sess_shared",
+        "source_run_id": "gsrun_shared",
+        "source_schedule_item_id": "sched_ready",
+    }
+    assert record["lifecycle_status"] == "promotion_allowed_pending_runtime_build"
+    assert record["promotion_allowed"] is True
+    assert record["activation_allowed"] is False
+    assert record["runtime_ready"] is False
+    assert record["safety"]["calls_provider"] is False
+    assert record["safety"]["writes_world_state"] is False
+    compact = compact_shared_prefetch_cache(records)
+    assert compact["summary"]["record_count"] == 1
+    assert compact["summary"]["activation_allowed_count"] == 0
+    assert compact["summary"]["runtime_ready_count"] == 0
+
+
+def test_shared_prefetch_cache_repository_upserts_global_records(client):
+    _create_session(client)
+    record = build_shared_prefetch_cache_records(
+        build_generation_activation_gate_payload(
+            {
+                "session_id": "sess_shared_repo",
+                "generation_schedule_run": {"run_id": "gsrun_shared_repo"},
+                "generation_prefetch_cache": {
+                    "items": [
+                        {
+                            "schedule_item_id": "sched_ready",
+                            "object_kind": "map_visual_layer",
+                            "object_ref": "map.old_signal_tower",
+                            "latency_class": "background_prefetch",
+                            "queue_status": "waiting_review",
+                            "cache_status": "promotion_allowed_pending_activation",
+                            "promotion_gate": {"promotion_allowed": True},
+                            "activation_gate": {"activation_allowed": False},
+                            "refs": {},
+                        }
+                    ]
+                },
+            }
+        ),
+        indexed_at="2026-07-03T00:00:00Z",
+    )[0]
+
+    upsert_shared_prefetch_cache_records([record])
+    updated = {**record, "updated_at": "2026-07-03T00:01:00Z"}
+    updated["source"] = {
+        **record["source"],
+        "source_session_id": "sess_shared_repo_second",
+    }
+    upsert_shared_prefetch_cache_records([updated])
+
+    records = load_shared_prefetch_cache_records()
+    assert len(records) == 1
+    assert records[0]["cache_key"] == record["cache_key"]
+    assert records[0]["created_at"] == "2026-07-03T00:00:00Z"
+    assert records[0]["updated_at"] == "2026-07-03T00:01:00Z"
+    assert records[0]["source"]["source_session_id"] == "sess_shared_repo_second"
+
+
 def test_generation_activation_gate_requires_session(client):
     missing = client.get(
         "/api/sessions/missing-session/generation-schedule/activation-gate"
@@ -3007,6 +3125,120 @@ def test_generation_activation_gate_reflects_staging_review_report(
     assert item["blocked_reason"] == "media_semantic_and_human_review_not_complete"
     assert item["refs_present"]["provider_artifact_staging_manifest"] is True
     assert item["refs_present"]["provider_artifact_promotion_report"] is True
+
+
+def test_generation_shared_prefetch_cache_requires_session(client):
+    missing = client.get(
+        "/api/sessions/missing-session/generation-schedule/shared-prefetch-cache"
+    )
+    assert missing.status_code == 404
+    missing_index = client.post(
+        "/api/sessions/missing-session/generation-schedule/workers/index-shared-prefetch-cache"
+    )
+    assert missing_index.status_code == 404
+
+
+def test_generation_shared_prefetch_cache_indexes_promotion_allowed_candidates(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    run_payload = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    run_id = run_payload["generation_schedule_run"]["run_id"]
+    ts = "2026-07-03T00:00:00Z"
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{sid}_provider_artifact_promotion_report_shared",
+            "run_id": run_id,
+            "session_id": sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_shared_cache",
+            "status": "promotion_allowed",
+            "created_at": ts,
+            "updated_at": ts,
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    indexed = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/index-shared-prefetch-cache"
+        )
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    index_summary = indexed["shared_prefetch_cache_index"]
+    assert index_summary == {
+        "indexed_count": 1,
+        "source_read_model": "generation_activation_gate",
+        "provider_call_count_by_this_request": 0,
+        "world_mutation_count_by_this_request": 0,
+        "activation_allowed_count": 0,
+        "runtime_ready_count": 0,
+    }
+    cache = indexed["generation_shared_prefetch_cache"]
+    assert cache["summary"]["record_count"] == 1
+    assert cache["summary"]["promotion_allowed_count"] == 1
+    assert cache["summary"]["activation_allowed_count"] == 0
+    assert cache["summary"]["runtime_ready_count"] == 0
+    record = cache["records"][0]
+    assert record["object_ref"] == "map_compile_package:old_signal_tower_pressure"
+    assert record["source"]["source_session_id"] == sid
+    assert record["source"]["source_run_id"] == run_id
+    assert record["source"]["source_schedule_item_id"] == (
+        "sched_next_map_visual_prefetch"
+    )
+    assert record["lifecycle_status"] == "promotion_allowed_pending_runtime_build"
+    assert record["activation_allowed"] is False
+    assert record["runtime_ready"] is False
+
+    other_sid = _create_session(client)
+    cross_session = _payload(
+        client.get(
+            f"/api/sessions/{other_sid}/generation-schedule/shared-prefetch-cache"
+        )
+    )
+    assert cross_session["generation_shared_prefetch_cache"]["summary"][
+        "record_count"
+    ] == 1
+
+    reset = client.post(f"/api/sessions/{sid}/reset")
+    assert reset.status_code == 200, reset.text
+    after_reset = _payload(
+        client.get(
+            f"/api/sessions/{other_sid}/generation-schedule/shared-prefetch-cache"
+        )
+    )
+    assert after_reset["generation_shared_prefetch_cache"]["summary"][
+        "record_count"
+    ] == 1
+
+
+def test_generation_shared_prefetch_cache_ignores_blocked_candidates(client):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+            json={"worker_id": "executor-chain-for-shared-cache"},
+        )
+    )
+
+    indexed = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/index-shared-prefetch-cache"
+        )
+    )
+
+    assert indexed["shared_prefetch_cache_index"]["indexed_count"] == 0
+    assert indexed["generation_shared_prefetch_cache"]["summary"]["record_count"] == 0
 
 
 def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):

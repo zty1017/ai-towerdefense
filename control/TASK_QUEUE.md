@@ -2643,6 +2643,44 @@ rg -n "activation-gate|generation_activation_gate|build_generation_activation_ga
 git diff --check
 ```
 
+### P1-B Generation Scheduler shared prefetch cache index
+
+状态：已完成最小后端索引层。
+
+目标：
+
+```text
+把 promotion 已允许、但仍等待 runtime package / WorldStateDeltaTransaction / activation gate 的候选，登记进跨 session 可复用的脱敏 shared prefetch cache index。
+```
+
+已落地：
+
+- `backend/app/db.py`：新增 `generation_shared_prefetch_cache` 全局 SQLite 表和索引。该表不随单个 session reset 级联清除。
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_builders.py`：新增 builder，只从 activation gate 中筛选 `promotion_allowed = true` 且 `activation_allowed = false` / `runtime_ready = false` 的候选。
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_repository.py`：新增 upsert / load repository。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_shared_prefetch_cache()` 与 `index_generation_shared_prefetch_cache()`。
+- `backend/app/api/frontend_mock.py`：新增 `GET /generation-schedule/shared-prefetch-cache` 与 `POST /generation-schedule/workers/index-shared-prefetch-cache`。
+- `backend/tests/test_frontend_mock_api.py` 与 `backend/tests/test_sessions.py`：覆盖 builder、repository、API、跨 session 可读、session reset 不清除 shared cache，以及 blocked 候选不会被索引。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充共享预取索引边界。
+- `examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- shared cache index 只保存脱敏摘要和 refs presence，不保存 prompt 正文或 provider response。
+- 它不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `promotion_allowed_pending_runtime_build` 只表示可进入后续 runtime package / WorldStateDeltaTransaction 构建与复验，不表示 runtime-ready。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_prefetch_cache python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "shared-prefetch-cache|generation_shared_prefetch_cache|build_shared_prefetch_cache_records" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：

@@ -98,6 +98,22 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
         "VALUES (?, ?, ?, ?, ?, ?, ?, '', '')",
         ("gsrun_test", sid, "sched_test", "background", "queued", "schedule_background", "{}"),
     )
+    raw_conn.execute(
+        "INSERT INTO generation_shared_prefetch_cache "
+        "(cache_key, source_session_id, source_run_id, source_schedule_item_id, "
+        "object_kind, object_ref, lifecycle_status, payload, created_at, updated_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', '')",
+        (
+            "gshared_reset_survives",
+            sid,
+            "gsrun_test",
+            "sched_test",
+            "map_visual_layer",
+            "map_compile_package:test",
+            "promotion_allowed_pending_runtime_build",
+            "{}",
+        ),
+    )
     raw_conn.commit()
 
     def count(table, session_id):
@@ -110,6 +126,14 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
     assert count("generation_schedule_runs", sid) == 1
     assert count("generation_schedule_queue_items", sid) == 1
     assert count("world_instance", other) == 1
+    assert (
+        raw_conn.execute(
+            "SELECT COUNT(*) FROM generation_shared_prefetch_cache "
+            "WHERE cache_key = ?",
+            ("gshared_reset_survives",),
+        ).fetchone()[0]
+        == 1
+    )
 
     resp = client.post(f"/api/sessions/{sid}/reset")
     assert resp.status_code == 200, resp.text
@@ -123,6 +147,14 @@ def test_reset_clears_session_scoped_data(client, raw_conn: sqlite3.Connection):
     assert count("generation_schedule_runs", sid) == 0
     assert count("generation_schedule_queue_items", sid) == 0
     assert count("world_instance", other) == 1
+    assert (
+        raw_conn.execute(
+            "SELECT COUNT(*) FROM generation_shared_prefetch_cache "
+            "WHERE cache_key = ?",
+            ("gshared_reset_survives",),
+        ).fetchone()[0]
+        == 1
+    )
 
 
 def test_reset_keeps_session_row_itself(client):

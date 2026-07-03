@@ -308,6 +308,47 @@ GET /api/sessions/{session_id}/generation-schedule/activation-gate
   != 可以加载到玩家 runtime
 ```
 
+### 获取共享预取缓存索引
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache
+```
+
+返回跨 session 的 `generation_shared_prefetch_cache` 索引。这个索引只包含已通过 promotion、但仍等待 runtime package / WorldStateDeltaTransaction 构建与激活前复验的候选摘要。
+
+它不是玩家 runtime 内容接口。前端玩家侧不应直接加载其中的记录；Studio 或演示脚本可以用它说明“后台预生成结果已经被脱敏索引，可供后续构建器复用”。
+
+### 索引当前 session 的共享预取候选
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache
+```
+
+该接口从当前 session 的 `activation-gate` 派生 eligible 候选并写入全局共享索引。它只接受：
+
+```text
+promotion_allowed = true
+activation_allowed = false
+runtime_ready = false
+activation_status = blocked_runtime_package_or_world_delta_required
+```
+
+返回：
+
+- `shared_prefetch_cache_index.indexed_count`
+- `generation_shared_prefetch_cache.summary`
+- `generation_shared_prefetch_cache.records`
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不 staging、不 promotion。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 导出外部 runner handoff
 
 ```http

@@ -548,6 +548,45 @@ GET /api/sessions/{session_id}/generation-schedule/activation-gate
   != 已经可以进入玩家 runtime
 ```
 
+后端还提供跨 session 的共享预取缓存索引：
+
+```text
+GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache
+POST /api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache
+```
+
+它用于把当前 session 中已经 `promotion_allowed`、但仍被 runtime package / WorldStateDeltaTransaction / activation gate 阻断的候选，登记为后续 session 或后台 worker 可复用的索引记录。该索引不是玩家 runtime 内容池，也不是 published media，不会绕过 activation gate。
+
+`index-shared-prefetch-cache` 只从 `generation_activation_gate` 派生记录，且只接受：
+
+```text
+promotion_allowed = true
+activation_allowed = false
+runtime_ready = false
+activation_status = blocked_runtime_package_or_world_delta_required
+```
+
+记录状态固定为：
+
+```text
+promotion_allowed_pending_runtime_build
+```
+
+这表示候选只允许进入后续 runtime package build、WorldStateDeltaTransaction build 和启用前复验。它不表示候选已经 runtime-ready。
+
+共享缓存索引的边界：
+
+- 不保存 prompt 正文。
+- 不保存 provider response 正文。
+- 不调用 provider。
+- 不写世界状态。
+- 不 staging、不 promotion。
+- 不 complete queue item。
+- 不激活 runtime。
+- 不随单个 session reset 自动清除，因为它是跨请求 / 跨 session 的脱敏索引，而不是 session-scoped 状态。
+
+当前实现仍是最小索引层，还不包含正式 cache eviction、版本迁移、跨世界书兼容性检查或自动命中回填。后续正式后台执行器读取该索引时，仍必须重新检查 worldbook / run_world_version / ContextPackage hash / schema version / media gate / activation gate。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text
