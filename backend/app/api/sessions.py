@@ -40,7 +40,7 @@ _SESSION_SCOPED_TABLES = (
 
 def _new_session_id() -> str:
     """Generate a fresh opaque session id using a cryptographically secure RNG."""
-    return secrets.token_urlsafe(32)
+    return secrets.token_hex(24)
 
 
 def _parse_iso(value: str) -> datetime:

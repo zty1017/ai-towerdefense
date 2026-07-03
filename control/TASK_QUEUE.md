@@ -1777,6 +1777,40 @@ rg -n "generation_scheduler_provider_execution_builders|build_live_executor_guar
 git diff --check
 ```
 
+### P1-B-46 Refactor artifact ledger repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_artifact_ledger 的 upsert、load、latest executor request / provider authorization / provider adapter receipt / provider output envelope 查询函数抽到独立 repository 模块；保持 API 行为兼容，不改变 queue / ledger payload / DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_artifact_ledger_repository.py`。
+- `generation_scheduler_service.py` 继续负责业务编排、payload 构造、validation 和 API 返回；ledger SQLite 读写与 latest 查询改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 repository upsert / run filter / latest provider chain 查询测试，并保留原 API 兼容测试。
+- `backend/app/api/sessions.py` 的 session id 生成从 URL-safe token 改为 hex token，避免随机出现 `sk-` 片段被 generation executor request 的 secret-fragment gate 误判。
+- `examples/worker_task_packs/p1b_refactor_artifact_ledger_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 artifact ledger 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_artifact_ledger` 表读写和 latest 查询，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 queue repository / worker cache repository，或转向 MapRuntimePackage / 前端 mock 体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_artifact_ledger_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_artifact_ledger_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_artifact_ledger_repository|upsert_generation_artifact_ledger|load_generation_artifact_ledger_items|latest_generation_executor_request_ledger_entry|latest_provider_authorization_ledger_entry|latest_provider_adapter_execution_ledger_entry|latest_provider_output_envelope_ledger_entry|token_hex" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

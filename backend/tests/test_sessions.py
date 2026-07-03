@@ -11,8 +11,9 @@ def test_create_session_returns_opaque_id(client):
     body = resp.json()
     assert "session_id" in body
     sid = body["session_id"]
-    # token_urlsafe(32) yields ~43 chars; just assert it is non-trivial.
+    # Hex ids stay opaque while avoiding secret-like fragments such as "sk-".
     assert isinstance(sid, str) and len(sid) >= 32
+    assert "-" not in sid
     info = body["session"]
     assert info["session_id"] == sid
     assert info["display_name"] is None
