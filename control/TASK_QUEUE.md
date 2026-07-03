@@ -1910,6 +1910,39 @@ rg -n "generation_scheduler_provider_artifact_review_helpers|validate_provider_a
 git diff --check
 ```
 
+### P1-B-50 Refactor prefetch cache read-model builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 GET prefetch-cache 的只读视图构造逻辑抽到独立 builder 模块；保持 API 行为兼容，不改变 queue / ledger 读写、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_prefetch_cache_builders.py`。
+- `generation_scheduler_service.py` 继续负责 latest run、queue items 和 artifact ledger items 的读取；preload / prefetch cache 的 refs 汇总、`cache_status` 推导、activation / promotion gate 摘要和 summary 计数改由 builder 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 builder 级读模型测试，覆盖 queue / ledger refs 汇总、`promotion_allowed_pending_activation`、queued fallback 状态、provider 调用历史计数和只读安全计数。
+- `examples/worker_task_packs/p1b_refactor_prefetch_cache_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把前端 / Studio 读取的 prefetch cache 派生视图从 scheduler service 中分离。
+- 新模块只从 queue items 与 artifact ledger items 派生只读 payload，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续真实后台 executor、跨请求缓存或 activation gate 接入时，应优先扩展该读模型 builder，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_prefetch_cache_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_prefetch_cache_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_prefetch_cache_builders|build_generation_prefetch_cache_payload|prefetch_cache_status|ledger_entry_ref" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

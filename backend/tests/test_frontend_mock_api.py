@@ -62,6 +62,11 @@ from backend.app.services.generation_scheduler_provider_execution_builders impor
     rehydrate_generation_executor_request_for_runner,
     rehydrate_provider_authorization_for_runner,
 )
+from backend.app.services.generation_scheduler_prefetch_cache_builders import (  # noqa: E402
+    build_generation_prefetch_cache_payload,
+    ledger_entry_ref,
+    prefetch_cache_status,
+)
 from app.services.generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items,
     insert_generation_schedule_run,
@@ -684,6 +689,109 @@ def test_generation_scheduler_worker_cache_builder_keeps_safety_contract():
     compact = compact_worker_cache([cache_payload])
     assert compact["summary"]["item_count"] == 1
     assert compact["summary"]["review_required_count"] == 1
+
+
+def test_generation_prefetch_cache_builder_summarizes_queue_and_ledger_refs():
+    latest_run = {
+        "run_id": "gsrun_test",
+        "session_id": "session_test",
+        "status": "completed",
+        "created_at": "2026-07-03T00:00:00Z",
+        "updated_at": "2026-07-03T00:00:00Z",
+        "generation_schedule": {},
+        "source_report_summary": {},
+    }
+    queue_items = [
+        {
+            "schedule_item_id": "sched_ready",
+            "object_kind": "map_visual",
+            "object_ref": "map:test",
+            "latency_class": "background_prefetch",
+            "status": "waiting_review",
+            "provider_review_required": True,
+            "attempt_count": 1,
+            "max_attempts": 2,
+            "fallback_ref": "fallback:map",
+            "revalidate_before_activation": True,
+        },
+        {
+            "schedule_item_id": "sched_queued",
+            "object_kind": "support_item",
+            "object_ref": "item:test",
+            "latency_class": "lazy",
+            "status": "queued",
+        },
+    ]
+    ledger_items = [
+        {
+            "ledger_id": "gled_envelope",
+            "artifact_kind": "provider_output_envelope",
+            "source_id": "pout_test",
+            "status": "recorded_review_only",
+            "updated_at": "2026-07-03T00:05:00Z",
+            "schedule_item_id": "sched_ready",
+            "compact": {
+                "provider_call": {"performed": True},
+                "activation_gate": {
+                    "activation_allowed": False,
+                    "blocked_reason": "promotion_required",
+                    "required_next_gates": ["promotion_report"],
+                },
+            },
+        },
+        {
+            "ledger_id": "gled_promotion",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_test",
+            "status": "promotion_allowed",
+            "updated_at": "2026-07-03T00:06:00Z",
+            "schedule_item_id": "sched_ready",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+            },
+        },
+    ]
+
+    payload = build_generation_prefetch_cache_payload(
+        "session_test",
+        latest_run,
+        queue_items,
+        ledger_items,
+    )
+
+    summary = payload["generation_prefetch_cache"]["summary"]
+    assert summary["item_count"] == 2
+    assert summary["cache_status_counts"] == {
+        "promotion_allowed_pending_activation": 1,
+        "queued": 1,
+    }
+    assert summary["recorded_provider_call_count"] == 1
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["promotion_allowed_count"] == 1
+    items_by_id = {
+        item["schedule_item_id"]: item
+        for item in payload["generation_prefetch_cache"]["items"]
+    }
+    assert items_by_id["sched_ready"]["cache_status"] == (
+        "promotion_allowed_pending_activation"
+    )
+    assert items_by_id["sched_ready"]["runtime_ready"] is False
+    assert items_by_id["sched_ready"]["review_only"] is True
+    assert items_by_id["sched_ready"]["promotion_gate"]["promotion_allowed"] is True
+    assert items_by_id["sched_ready"]["activation_gate"]["blocked_reason"] == (
+        "promotion_required"
+    )
+    assert items_by_id["sched_queued"]["cache_status"] == "queued"
+    assert ledger_entry_ref(ledger_items[0])["compact"]["provider_call"][
+        "performed"
+    ] is True
+    assert prefetch_cache_status(
+        {"queue_status": "waiting_review"},
+        {"provider_output_envelope": ledger_entry_ref(ledger_items[0])},
+    ) == "review_only_envelope_ready"
 
 
 def test_provider_artifact_fixture_catalog_resolves_default_profile():
