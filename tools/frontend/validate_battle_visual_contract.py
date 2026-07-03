@@ -72,21 +72,30 @@ def validate_app_contract(errors: list[str]) -> None:
     preload = js_section(app, "preloadBattleImages", "resizeBattleCanvas")
     backdrop = js_section(app, "drawBackdrop", "drawProceduralTerrain")
     path = js_section(app, "drawPath", "traceRoutePath")
+    metrics = js_section(app, "computeBattleMetrics", "battleCanvasSafeArea")
+    spawn = js_section(app, "spawnEnemies", "updateEnemies")
+    update_enemies = js_section(app, "updateEnemies", "updateDefenses")
     deploy = js_section(app, "drawDeployHints", "drawDeploymentBase")
-    spawn = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
+    spawn_markers = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
 
     for name in (
         "battleNodeVisualProfile",
         "terrainFeatureSet",
         "drawProceduralTerrain",
         "drawTerrainDepthBands",
+        "drawPlayableFieldBoundary",
         "drawDarkTidePools",
+        "drawBuildableTerraces",
+        "battleCanvasSafeArea",
+        "battleFitBounds",
         "drawRouteShoulders",
         "drawRoadPebbles",
         "drawRoadRuts",
+        "drawRouteFlowCues",
         "drawRouteEdgeProps",
         "drawSlotAccessTrails",
         "drawBattlefieldLandmarks",
+        "drawObjectiveDefensiveZone",
         "drawDeploymentBase",
         "drawTargetFoundation",
         "drawSpawnRift",
@@ -97,17 +106,25 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawProceduralTerrain(ctx, m)" in backdrop, "drawBackdrop must start from procedural terrain", errors)
     require("drawMapDebugOverlay(ctx, m)" in backdrop, "debug map overlay must be isolated behind its own helper", errors)
     require("playerBattleMapVisualUrl" not in backdrop, "drawBackdrop must not draw whole-map player images by default", errors)
+    require("drawPlayableFieldBoundary(ctx, m)" in app, "procedural terrain must render a playable field boundary", errors)
     require("drawDarkTidePools" in app, "procedural terrain must include world-space dark tide pools", errors)
+    require("drawBuildableTerraces(ctx)" in app, "battle view must render buildable terraces below deployment bases", errors)
+    require("battleFitBounds(baseTileW, baseTileH)" in metrics, "battle metrics must fit runtime map bounds, not only cover the viewport", errors)
+    require("battleCanvasSafeArea(width, height)" in metrics, "battle metrics must reserve HUD safe area", errors)
     require("drawRouteShoulders" in path, "drawPath must render terrain shoulders around roads", errors)
     require("drawRoadPebbles" in path, "drawPath must render textured world road details", errors)
     require("drawRoadRuts" in path, "drawPath must render road ruts or plank details", errors)
+    require("drawRouteFlowCues" in path, "drawPath must render subtle route direction cues", errors)
     require("drawRouteEdgeProps" in path, "drawPath must integrate world props along road edges", errors)
     require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
     require("drawSlotAccessTrails(ctx)" in app, "battle view must visually connect deployment bases to runtime roads", errors)
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
+    require("drawObjectiveDefensiveZone(ctx" in app, "battle view must ground objectives in a defense zone", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
-    require("drawSpawnRift" in spawn, "spawn markers must render ambient entry effects, not arrows", errors)
+    require("drawSpawnRift" in spawn_markers, "spawn markers must render ambient entry effects, not arrows", errors)
     require("function drawGrid" not in app and "function drawDiamond" not in app, "battle view must not keep checkerboard/grid drawing helpers", errors)
+    require("routeForSpawn(battle.spawned)" in spawn, "enemy spawn must bind to runtime route/spawn ids", errors)
+    require("enemyWaypoints(enemy)" in update_enemies, "enemy movement must use the enemy route, not only the first path", errors)
 
     debug = re.search(r"function\s+debugBattleMapVisualUrls\(\)\s*\{(?P<body>.*?)\n\s*\}", app, re.S)
     require(debug is not None, "missing debugBattleMapVisualUrls()", errors)

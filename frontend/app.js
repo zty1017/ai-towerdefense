@@ -1602,11 +1602,6 @@
     const grid = mapGrid();
     const baseWidth = 1280;
     const baseHeight = 720;
-    const scale = Math.max(width / baseWidth, height / baseHeight);
-    const imageWidth = baseWidth * scale;
-    const imageHeight = baseHeight * scale;
-    const imageOffsetX = (width - imageWidth) / 2;
-    const imageOffsetY = (height - imageHeight) / 2;
     const sum = grid.width_cells + grid.height_cells;
     const baseTileW = clamp(
       Math.min(((baseWidth - 80) * 2) / sum, ((baseHeight - 110) * 4) / sum),
@@ -1624,6 +1619,22 @@
     const maxX = Math.max(...raw.map((p) => p.x));
     const minY = Math.min(...raw.map((p) => p.y));
     const maxY = Math.max(...raw.map((p) => p.y));
+    const safe = battleCanvasSafeArea(width, height);
+    const fitBounds = battleFitBounds(baseTileW, baseTileH);
+    const availableWidth = Math.max(260, width - safe.left - safe.right);
+    const availableHeight = Math.max(220, height - safe.top - safe.bottom);
+    const fitScale = Math.min(
+      availableWidth / Math.max(1, fitBounds.width),
+      availableHeight / Math.max(1, fitBounds.height),
+    );
+    const coverScale = Math.max(width / baseWidth, height / baseHeight);
+    const scale = clamp(Math.min(coverScale, fitScale), 0.3, 1.22);
+    const imageWidth = baseWidth * scale;
+    const imageHeight = baseHeight * scale;
+    const safeCenterX = safe.left + availableWidth / 2;
+    const safeCenterY = safe.top + availableHeight / 2;
+    const designFitCenterX = fitBounds.centerX + (baseWidth - (maxX - minX)) / 2 - minX;
+    const designFitCenterY = fitBounds.centerY + (baseHeight - (maxY - minY)) / 2 - minY + 6;
     return {
       width,
       height,
@@ -1632,8 +1643,6 @@
       baseHeight,
       imageWidth,
       imageHeight,
-      imageOffsetX,
-      imageOffsetY,
       scale,
       tileW: baseTileW * scale,
       tileH: baseTileH * scale,
@@ -1641,7 +1650,71 @@
       baseTileH,
       baseOffsetX: (baseWidth - (maxX - minX)) / 2 - minX,
       baseOffsetY: (baseHeight - (maxY - minY)) / 2 - minY + 6,
+      imageOffsetX: safeCenterX - designFitCenterX * scale,
+      imageOffsetY: safeCenterY - designFitCenterY * scale,
+      safeArea: safe,
     };
+  }
+
+  function battleCanvasSafeArea(width, height) {
+    if (width <= 760) {
+      const top = Math.min(178, height * 0.24);
+      const bottom = Math.min(308, height * 0.37);
+      return { left: 12, right: 12, top, bottom };
+    }
+    if (width <= 1120) {
+      return { left: 212, right: 18, top: 98, bottom: 124 };
+    }
+    return { left: 218, right: 218, top: 92, bottom: 128 };
+  }
+
+  function battleFitBounds(tileW, tileH) {
+    const marginX = tileW * 0.92;
+    const marginY = tileH * 2.35;
+    const points = battleFitLogicalPoints().map((point) => rawProject(point.x, point.y, tileW, tileH));
+    const xs = points.map((point) => point.x);
+    const ys = points.map((point) => point.y);
+    const minX = Math.min(...xs) - marginX;
+    const maxX = Math.max(...xs) + marginX;
+    const minY = Math.min(...ys) - marginY;
+    const maxY = Math.max(...ys) + marginY;
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2,
+    };
+  }
+
+  function battleFitLogicalPoints() {
+    const grid = mapGrid();
+    const maxX = Math.max(0, grid.width_cells - 1);
+    const maxY = Math.max(0, grid.height_cells - 1);
+    const points = [
+      { x: -0.9, y: -0.9 },
+      { x: maxX + 0.9, y: -0.9 },
+      { x: -0.9, y: maxY + 0.9 },
+      { x: maxX + 0.9, y: maxY + 0.9 },
+    ];
+    for (const route of allPathRoutes()) {
+      points.push(...(route.waypoints || []));
+    }
+    for (const slot of buildSlots()) {
+      if (slot.position) points.push(slot.position);
+    }
+    const objectives = mapObjectives();
+    if ((objectives.core_target || {}).position) points.push(objectives.core_target.position);
+    for (const target of objectives.optional_targets || []) {
+      if (target.position) points.push(target.position);
+    }
+    for (const spawn of (mapRuntimePackage().spawn_points || [])) {
+      if (spawn.position) points.push(spawn.position);
+    }
+    return points;
   }
 
   function rawProject(x, y, tileW, tileH) {
@@ -1699,10 +1772,14 @@
     );
   }
 
-  function pathWaypoints() {
+  function pathWaypoints(routeId = null) {
     const routes = mapRuntimePackage().path_routes || [];
     const configPaths = battleConfig().paths || [];
-    const firstRoute = routes[0] || configPaths[0] || {};
+    const matchedRoute = routeId
+      ? routes.find((route) => route.route_id === routeId) ||
+        configPaths.find((route) => route.stable_internal_id === routeId)
+      : null;
+    const firstRoute = matchedRoute || routes[0] || configPaths[0] || {};
     return (firstRoute.waypoints || []).map((p) => ({ x: p.x, y: p.y }));
   }
 
@@ -1744,6 +1821,22 @@
     const cells = pathCells();
     if (!cells.length) return Infinity;
     return Math.min(...cells.map((pathCell) => Math.hypot(pathCell.x - cell.x, pathCell.y - cell.y)));
+  }
+
+  function routeForSpawn(spawnIndex) {
+    const routes = allPathRoutes();
+    const spawns = (mapRuntimePackage().spawn_points || []).filter((spawn) => spawn.position);
+    if (!routes.length) return null;
+    const spawn = spawns.length ? spawns[spawnIndex % spawns.length] : null;
+    if (spawn && spawn.route_id) {
+      const route = routes.find((item) => item.route_id === spawn.route_id);
+      if (route) return route;
+    }
+    return routes[spawnIndex % routes.length] || routes[0];
+  }
+
+  function enemyWaypoints(enemy) {
+    return pathWaypoints(enemy.routeId);
   }
 
   function onBattleCanvasClick(event) {
@@ -2026,12 +2119,17 @@
     ) {
       const entry = battle.spawnSchedule[battle.spawned];
       const wave = entry.wave;
-      const points = pathWaypoints();
+      const route = routeForSpawn(battle.spawned);
+      const points = (route && route.waypoints ? route.waypoints : pathWaypoints()).map((p) => ({
+        x: p.x,
+        y: p.y,
+      }));
       const first = points[0] || { x: 15, y: 4 };
       battle.enemies.push({
         id: `enemy_${battle.spawned}`,
         type: wave.enemy_archetype,
         waveIndex: wave.wave_index,
+        routeId: (route || {}).route_id || null,
         x: first.x,
         y: first.y,
         segment: 0,
@@ -2047,8 +2145,8 @@
 
   function updateEnemies(dt) {
     const battle = state.battle;
-    const points = pathWaypoints();
     for (const enemy of battle.enemies) {
+      const points = enemyWaypoints(enemy);
       if (enemy.hp <= 0) continue;
       const speed = enemy.speed * (enemy.slowUntil > battle.elapsedMs ? 0.42 : 1);
       let remaining = (dt / 1000) * speed;
@@ -2314,6 +2412,7 @@
     if (!ctx || !m) return;
     ctx.clearRect(0, 0, m.width, m.height);
     drawBackdrop(ctx, m);
+    drawBuildableTerraces(ctx);
     drawSlotAccessTrails(ctx);
     drawPath(ctx);
     drawDeployHints(ctx);
@@ -2606,6 +2705,7 @@
     ctx.fillRect(0, 0, m.width, m.height);
 
     drawTerrainDepthBands(ctx, m, features);
+    drawPlayableFieldBoundary(ctx, m);
 
     for (const patch of features.patches) {
       drawOrganicTerrainPatch(ctx, m, patch);
@@ -2633,6 +2733,77 @@
     ctx.restore();
 
     drawTerrainDebris(ctx, features);
+  }
+
+  function fieldPerimeterPoints(margin = 0.86) {
+    const grid = mapGrid();
+    const maxX = Math.max(0, grid.width_cells - 1);
+    const maxY = Math.max(0, grid.height_cells - 1);
+    const anchors = [
+      { x: -margin, y: -margin * 0.72 },
+      { x: maxX * 0.34, y: -margin * 1.18 },
+      { x: maxX + margin * 0.92, y: -margin * 0.64 },
+      { x: maxX + margin * 1.16, y: maxY * 0.48 },
+      { x: maxX + margin * 0.58, y: maxY + margin },
+      { x: maxX * 0.48, y: maxY + margin * 1.18 },
+      { x: -margin * 0.78, y: maxY + margin * 0.72 },
+      { x: -margin * 1.12, y: maxY * 0.42 },
+    ];
+    return anchors.map((point, index) => {
+      const jitter = Math.sin((runtimeMapSeed() % 97) + index * 1.73) * 0.1;
+      return projectCell(point.x + jitter, point.y - jitter * 0.45);
+    });
+  }
+
+  function traceOrganicClosedShape(ctx, points) {
+    if (!points.length) return;
+    const start = midpoint(points[points.length - 1], points[0]);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    points.forEach((point, index) => {
+      const next = points[(index + 1) % points.length];
+      const mid = midpoint(point, next);
+      ctx.quadraticCurveTo(point.x, point.y, mid.x, mid.y);
+    });
+    ctx.closePath();
+  }
+
+  function midpoint(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function drawPlayableFieldBoundary(ctx, m) {
+    const points = fieldPerimeterPoints();
+    const soil = terrainFeatureSet().profile.soil;
+    ctx.save();
+    ctx.translate(0, m.tileH * 0.52);
+    traceOrganicClosedShape(ctx, points);
+    ctx.fillStyle = "rgba(0,0,0,0.46)";
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    traceOrganicClosedShape(ctx, points);
+    const fill = ctx.createLinearGradient(0, m.imageOffsetY, m.width, m.imageOffsetY + m.imageHeight);
+    fill.addColorStop(0, alphaColor(soil[0], 0.9));
+    fill.addColorStop(0.44, alphaColor(soil[1], 0.86));
+    fill.addColorStop(1, alphaColor(soil[2], 0.92));
+    ctx.fillStyle = fill;
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(7,9,8,0.72)";
+    ctx.lineWidth = Math.max(12, m.tileW * 0.12);
+    traceOrganicClosedShape(ctx, points);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(95,96,64,0.5)";
+    ctx.lineWidth = Math.max(5, m.tileW * 0.046);
+    traceOrganicClosedShape(ctx, points);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(224,188,105,0.12)";
+    ctx.lineWidth = Math.max(2, m.tileW * 0.018);
+    traceOrganicClosedShape(ctx, points);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawTerrainDepthBands(ctx, m, features) {
@@ -2857,6 +3028,7 @@
       ctx.stroke();
       drawRoadPebbles(ctx, route, points, roadWidth);
       drawRoadRuts(ctx, route, points, roadWidth);
+      drawRouteFlowCues(ctx, route, points, roadWidth);
       drawRouteEdgeProps(ctx, route, roadWidth);
     }
     ctx.restore();
@@ -3072,6 +3244,45 @@
     ctx.restore();
   }
 
+  function drawRouteFlowCues(ctx, route, points, roadWidth) {
+    if (points.length < 2) return;
+    const phase = ((state.battle.elapsedMs || 0) / 1400) % 1;
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`flow:${route.route_id || ""}`));
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const ux = dx / len;
+      const uy = dy / len;
+      const nx = -uy;
+      const ny = ux;
+      const count = Math.max(1, Math.floor(len / 150));
+      for (let j = 0; j < count; j += 1) {
+        const t = ((j + 0.35 + phase * 0.42) / count) % 1;
+        const cx = a.x + dx * t;
+        const cy = a.y + dy * t;
+        const side = rng() < 0.5 ? -1 : 1;
+        const offset = side * roadWidth * (0.11 + rng() * 0.08);
+        const x = cx + nx * offset;
+        const y = cy + ny * offset;
+        const size = Math.max(5, roadWidth * 0.11);
+        ctx.strokeStyle = `rgba(255,213,126,${0.1 + 0.06 * Math.sin(phase * Math.PI)})`;
+        ctx.lineWidth = Math.max(1.5, roadWidth * 0.032);
+        ctx.beginPath();
+        ctx.moveTo(x - ux * size * 0.7 - nx * size * 0.25, y - uy * size * 0.7 - ny * size * 0.25);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x - ux * size * 0.7 + nx * size * 0.25, y - uy * size * 0.7 + ny * size * 0.25);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
   function drawSlotAccessTrails(ctx) {
     const m = state.battle.metrics;
     const trails = terrainFeatureSet().accessTrails || [];
@@ -3098,6 +3309,66 @@
       ctx.moveTo(from.x, from.y + m.tileH * 0.02);
       ctx.quadraticCurveTo(mid.x, mid.y, to.x, to.y);
       ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBuildableTerraces(ctx) {
+    const battle = state.battle;
+    const m = battle.metrics;
+    const slots = suggestedSockets();
+    ctx.save();
+    for (const slot of slots) {
+      const cell = slot.position || slot;
+      if (!isCellInGrid(cell)) continue;
+      const p = projectCell(cell.x, cell.y);
+      const active =
+        battle.hoverCell &&
+        battle.hoverCell.x === cell.x &&
+        battle.hoverCell.y === cell.y;
+      drawBuildableTerrace(ctx, p, m, slot, active);
+    }
+    ctx.restore();
+  }
+
+  function drawBuildableTerrace(ctx, p, m, slot, active) {
+    const id = slot.slot_id || `${(slot.position || slot).x},${(slot.position || slot).y}`;
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`terrace:${id}`));
+    const rx = m.tileW * (0.42 + rng() * 0.08);
+    const ry = m.tileH * (0.46 + rng() * 0.08);
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.24)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + m.tileH * 0.18, rx * 1.08, ry * 0.78, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const fill = ctx.createLinearGradient(p.x, p.y - ry, p.x, p.y + ry);
+    fill.addColorStop(0, active ? "rgba(115,104,68,0.54)" : "rgba(75,79,55,0.42)");
+    fill.addColorStop(1, "rgba(31,35,28,0.5)");
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + m.tileH * 0.03, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = active ? "rgba(255,225,161,0.48)" : "rgba(179,153,94,0.18)";
+    ctx.lineWidth = Math.max(1.3, m.tileW * 0.014);
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + m.tileH * 0.03, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(214,178,104,0.13)";
+    for (let i = 0; i < 4; i += 1) {
+      const angle = rng() * Math.PI * 2;
+      const dist = rx * (0.35 + rng() * 0.48);
+      ctx.beginPath();
+      ctx.ellipse(
+        p.x + Math.cos(angle) * dist,
+        p.y + Math.sin(angle) * ry * 0.55,
+        Math.max(2, m.tileW * (0.018 + rng() * 0.018)),
+        Math.max(1, m.tileH * (0.018 + rng() * 0.018)),
+        angle,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
     }
     ctx.restore();
   }
@@ -3133,7 +3404,7 @@
           mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true),
           p.x,
           p.y,
-          62,
+          mapSpriteSize(62, 36),
         );
       } else if (tool === "sample") {
         drawGroundGlow(ctx, p.x, p.y, "#9edcff", 0.3, 42);
@@ -3209,15 +3480,33 @@
     const core = objectives.core_target || { position: { x: 0, y: 6 } };
     const coreP = projectCell(core.position.x, core.position.y);
     drawTargetFoundation(ctx, coreP.x, coreP.y, "core");
-    drawSprite(ctx, mediaSpriteRef("objective_station_core", "objective_sprite", true), coreP.x, coreP.y, 92);
+    drawSprite(
+      ctx,
+      mediaSpriteRef("objective_station_core", "objective_sprite", true),
+      coreP.x,
+      coreP.y,
+      mapSpriteSize(92, 46),
+    );
     for (const target of objectives.optional_targets || []) {
       const p = projectCell(target.position.x, target.position.y);
       drawTargetFoundation(ctx, p.x, p.y, "beacon");
-      drawSprite(ctx, mediaSpriteRef("objective_signal_beacon", "objective_sprite", true), p.x, p.y, 72);
+      drawSprite(
+        ctx,
+        mediaSpriteRef("objective_signal_beacon", "objective_sprite", true),
+        p.x,
+        p.y,
+        mapSpriteSize(72, 38),
+      );
     }
     for (const defense of state.battle.defenses) {
       const p = projectCell(defense.x, defense.y);
-      drawSprite(ctx, mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true), p.x, p.y, 66);
+      drawSprite(
+        ctx,
+        mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true),
+        p.x,
+        p.y,
+        mapSpriteSize(66, 38),
+      );
       drawGroundGlow(ctx, p.x, p.y, "#ffd37a", 0.16, 34);
     }
     for (const trap of state.battle.traps) {
@@ -3327,6 +3616,7 @@
   function drawTargetFoundation(ctx, x, y, kind) {
     const m = state.battle.metrics;
     const gold = kind === "core" ? "#ffd37a" : "#9edcff";
+    drawObjectiveDefensiveZone(ctx, x, y, kind);
     drawGroundGlow(ctx, x, y, gold, kind === "core" ? 0.2 : 0.14, kind === "core" ? 72 : 52);
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.38)";
@@ -3345,6 +3635,35 @@
     ctx.beginPath();
     ctx.ellipse(x, y, m.tileW * 0.31, m.tileH * 0.3, 0, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawObjectiveDefensiveZone(ctx, x, y, kind) {
+    const m = state.battle.metrics;
+    const accent = kind === "core" ? "rgba(255,211,122," : "rgba(158,220,255,";
+    ctx.save();
+    ctx.fillStyle = kind === "core" ? "rgba(82,65,34,0.2)" : "rgba(34,61,70,0.16)";
+    ctx.strokeStyle = `${accent}0.2)`;
+    ctx.lineWidth = Math.max(2, m.tileW * 0.02);
+    ctx.beginPath();
+    ctx.ellipse(x, y + m.tileH * 0.06, m.tileW * 0.74, m.tileH * 0.56, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = `${accent}0.12)`;
+    ctx.lineWidth = Math.max(1, m.tileW * 0.012);
+    for (let i = 0; i < 4; i += 1) {
+      const angle = (i / 4) * Math.PI * 2 + 0.2;
+      ctx.beginPath();
+      ctx.moveTo(
+        x + Math.cos(angle) * m.tileW * 0.46,
+        y + Math.sin(angle) * m.tileH * 0.34,
+      );
+      ctx.lineTo(
+        x + Math.cos(angle) * m.tileW * 0.66,
+        y + Math.sin(angle) * m.tileH * 0.49,
+      );
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -3405,9 +3724,21 @@
       const p = projectCell(enemy.x, enemy.y);
       drawGroundGlow(ctx, p.x, p.y, enemy.slowUntil > battle.elapsedMs ? "#9edcff" : "#352044", 0.26, 30);
       const assetId = enemy.type === "shadow_tide_shade" ? "enemy_shadow_tide_shade" : "enemy_shadow_tide_runner";
-      drawSprite(ctx, mediaSpriteRef(assetId, "unit_sprite", true), p.x, p.y, enemy.type === "shadow_tide_shade" ? 58 : 54, enemy.hitFlashUntil > battle.elapsedMs);
+      drawSprite(
+        ctx,
+        mediaSpriteRef(assetId, "unit_sprite", true),
+        p.x,
+        p.y,
+        mapSpriteSize(enemy.type === "shadow_tide_shade" ? 58 : 54, 31),
+        enemy.hitFlashUntil > battle.elapsedMs,
+      );
       drawHealth(ctx, p.x, p.y - 62, enemy.hp / enemy.maxHp);
     }
+  }
+
+  function mapSpriteSize(base, minimum) {
+    const scale = ((state.battle || {}).metrics || {}).scale || 1;
+    return clamp(base * Math.max(0.62, scale), minimum, base);
   }
 
   function drawEffects(ctx) {
