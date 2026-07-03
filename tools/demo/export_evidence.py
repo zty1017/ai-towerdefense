@@ -127,6 +127,12 @@ PATHS = {
     / "examples/worker_task_packs/p1b_scheduler_background_executor_tick.v0.1.json",
     "scheduler_background_handoff_tick_task_pack": ROOT
     / "examples/worker_task_packs/p1b_scheduler_background_handoff_tick.v0.1.json",
+    "provider_runner_handoff_outbox_task_pack": ROOT
+    / "examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json",
+    "provider_runner_handoff_outbox_schema": ROOT
+    / "shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json",
+    "provider_runner_handoff_outbox_validator": ROOT
+    / "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -1898,8 +1904,10 @@ def collect_scheduler_background_tick_summary() -> dict[str, Any]:
 
 def collect_scheduler_background_handoff_tick_summary() -> dict[str, Any]:
     task = load_json(PATHS["scheduler_background_handoff_tick_task_pack"])
+    outbox_task = load_json(PATHS["provider_runner_handoff_outbox_task_pack"])
     return {
         "status": "review_only_handoff_tick_ready",
+        "outbox_status": "provider_adapter_runner_handoff_outbox_v0_1_ready",
         "endpoint": (
             "POST /api/sessions/{session_id}/generation-schedule/workers/"
             "run-review-only-background-handoff-tick"
@@ -1938,7 +1946,20 @@ def collect_scheduler_background_handoff_tick_summary() -> dict[str, Any]:
             PATHS["scheduler_background_handoff_tick_task_pack"],
             "worker_task_pack",
         ),
+        "outbox_schema": file_ref(
+            PATHS["provider_runner_handoff_outbox_schema"],
+            "schema",
+        ),
+        "outbox_validator": file_ref(
+            PATHS["provider_runner_handoff_outbox_validator"],
+            "validator",
+        ),
+        "outbox_task_pack": file_ref(
+            PATHS["provider_runner_handoff_outbox_task_pack"],
+            "worker_task_pack",
+        ),
         "acceptance_commands": as_list(task.get("acceptance_commands")),
+        "outbox_acceptance_commands": as_list(outbox_task.get("acceptance_commands")),
     }
 
 
@@ -3431,7 +3452,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
         f"- runner handoff：`{provider_runner_handoff.get('status')}`，roundtrip cache：`{provider_runner_handoff_roundtrip.get('expected_cache_status')}`，runtime 激活：`{provider_runner_handoff_roundtrip.get('runtime_activation_allowed')}`",
         f"- background tick：`{background_tick.get('status')}`，默认预算：`{background_tick.get('default_max_items')}`，provider 调用：`{background_tick_safety.get('api_calls_provider')}`，runtime 激活：`{background_tick_safety.get('api_activates_runtime')}`",
-        f"- background handoff tick：`{background_handoff_tick.get('status')}`，handoff 数：`{background_handoff_tick.get('expected_runner_handoff_count')}`，运行 adapter：`{background_handoff_safety.get('api_runs_provider_adapter')}`",
+        f"- background handoff tick：`{background_handoff_tick.get('status')}`，outbox：`{background_handoff_tick.get('outbox_status')}`，handoff 数：`{background_handoff_tick.get('expected_runner_handoff_count')}`，运行 adapter：`{background_handoff_safety.get('api_runs_provider_adapter')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
         "",
@@ -4082,7 +4103,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <p>dry-run：<code>{html_escape(scheduler_run.get("report_id"))}</code>；动作分布：<code>{html_escape(scheduler_run_summary.get("action_counts"))}</code></p>
       <p>runner handoff：<code>{html_escape(provider_runner_handoff.get("status"))}</code>；roundtrip cache：<code>{html_escape(provider_runner_handoff_roundtrip.get("expected_cache_status"))}</code>；runtime 激活：<code>{html_escape(provider_runner_handoff_roundtrip.get("runtime_activation_allowed"))}</code></p>
       <p>background tick：<code>{html_escape(background_tick.get("status"))}</code>；默认预算：<code>{html_escape(background_tick.get("default_max_items"))}</code>；provider 调用：<code>{html_escape(background_tick_safety.get("api_calls_provider"))}</code>；runtime 激活：<code>{html_escape(background_tick_safety.get("api_activates_runtime"))}</code></p>
-      <p>background handoff tick：<code>{html_escape(background_handoff_tick.get("status"))}</code>；handoff 数：<code>{html_escape(background_handoff_tick.get("expected_runner_handoff_count"))}</code>；运行 adapter：<code>{html_escape(background_handoff_safety.get("api_runs_provider_adapter"))}</code></p>
+      <p>background handoff tick：<code>{html_escape(background_handoff_tick.get("status"))}</code>；outbox：<code>{html_escape(background_handoff_tick.get("outbox_status"))}</code>；handoff 数：<code>{html_escape(background_handoff_tick.get("expected_runner_handoff_count"))}</code>；运行 adapter：<code>{html_escape(background_handoff_safety.get("api_runs_provider_adapter"))}</code></p>
       <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>
     </section>
     <section>

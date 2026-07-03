@@ -484,6 +484,16 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-back
 
 这相当于正式后台 provider worker 前的安全 outbox：后端 API 只导出脱敏 handoff，不运行 `tools/provider_adapter/run_provider_adapter.py`，不读取 `.env`，不调用 provider，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
 
+当前 handoff tick 还会返回机器可校验的 outbox wrapper：
+
+```text
+provider_adapter_runner_handoff_outbox
+shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json
+tools/dev/validate_provider_adapter_runner_handoff_outbox.py
+```
+
+`ProviderAdapterRunnerHandoffOutbox v0.1` 把本轮 `runner_handoffs[]` 固化为外部 runner 可消费的批量交接单。它只表达 review-only handoff、导入合同和安全边界，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。outbox 可以包含 live 命令模板，但这些模板必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径。
+
 后端还提供只读预取缓存视图：
 
 ```text

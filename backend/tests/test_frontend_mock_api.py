@@ -12,8 +12,14 @@ _ROOT = Path(__file__).resolve().parents[2]
 _PROVIDER_ADAPTER_DIR = _ROOT / "tools" / "provider_adapter"
 if str(_PROVIDER_ADAPTER_DIR) not in sys.path:
     sys.path.insert(0, str(_PROVIDER_ADAPTER_DIR))
+_TOOLS_DEV_DIR = _ROOT / "tools" / "dev"
+if str(_TOOLS_DEV_DIR) not in sys.path:
+    sys.path.insert(0, str(_TOOLS_DEV_DIR))
 
 from run_provider_adapter import build_dry_run_artifacts  # noqa: E402
+from validate_provider_adapter_runner_handoff_outbox import (  # noqa: E402
+    validate_provider_adapter_runner_handoff_outbox,
+)
 
 
 def _create_session(client) -> str:
@@ -1972,6 +1978,31 @@ def test_review_only_background_handoff_tick_exports_runner_outbox(
         "sched_stage05_worldline_prefetch",
         "sched_next_map_visual_prefetch",
     ]
+    outbox = handoff_tick["provider_adapter_runner_handoff_outbox"]
+    assert validate_provider_adapter_runner_handoff_outbox(outbox) == []
+    assert outbox["schema_version"] == "provider_adapter_runner_handoff_outbox.v0.1"
+    assert outbox["handoff_mode"] == "external_runner_required"
+    assert outbox["review_only"] is True
+    assert outbox["source"]["worker_mode"] == "review_only_background_handoff_tick"
+    assert outbox["source"]["run_id"] == worker_step["run_id"]
+    assert outbox["source"]["max_items"] == 2
+    assert outbox["source"]["dispatched_count"] == 2
+    assert outbox["runner_handoff_count"] == 2
+    assert outbox["runner_handoffs"] == handoffs
+    assert outbox["import_contract"] == {
+        "endpoint": (
+            "/api/sessions/{session_id}/generation-schedule/workers/"
+            "import-provider-adapter-runner-output"
+        ),
+        "method": "POST",
+        "required_body_fields": [
+            "schedule_item_id",
+            "authorization_ref",
+            "receipt_path",
+            "envelope_path",
+        ],
+        "post_import_gate": "provider_artifact_staging_or_promotion_review_required",
+    }
     assert all(handoff["schema_version"] == "provider_adapter_runner_handoff.v0.1" for handoff in handoffs)
     assert all(handoff["handoff_mode"] == "external_runner_required" for handoff in handoffs)
     assert all(handoff["review_only"] is True for handoff in handoffs)
