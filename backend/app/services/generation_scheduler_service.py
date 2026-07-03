@@ -36,6 +36,18 @@ _PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
     _REPO_ROOT
     / "examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json"
 )
+_PROVIDER_IMAGE_OUTPUT_ENVELOPE_EXAMPLE = (
+    _REPO_ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json"
+)
+_PROVIDER_IMAGE_ARTIFACT_STAGING_EXAMPLE = (
+    _REPO_ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json"
+)
+_PROVIDER_IMAGE_ARTIFACT_PROMOTION_REPORT_EXAMPLE = (
+    _REPO_ROOT
+    / "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json"
+)
 _MVP_CONTEXT_PACKAGE_EXAMPLE = (
     _REPO_ROOT / "examples/review_packs/mvp_first_battle.context_package.json"
 )
@@ -75,6 +87,24 @@ class InvalidQueueTransitionError(ValueError):
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _provider_artifact_fixture_paths(profile: str | None) -> tuple[Path, Path, Path, str]:
+    if profile in {None, "", "default", "summary"}:
+        return (
+            _PROVIDER_OUTPUT_ENVELOPE_EXAMPLE,
+            _PROVIDER_ARTIFACT_STAGING_EXAMPLE,
+            _PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE,
+            "default",
+        )
+    if profile in {"image_failure", "image"}:
+        return (
+            _PROVIDER_IMAGE_OUTPUT_ENVELOPE_EXAMPLE,
+            _PROVIDER_IMAGE_ARTIFACT_STAGING_EXAMPLE,
+            _PROVIDER_IMAGE_ARTIFACT_PROMOTION_REPORT_EXAMPLE,
+            "image_failure",
+        )
+    raise InvalidQueueTransitionError(f"unknown provider artifact profile: {profile}")
 
 
 def _dump_payload(payload: dict[str, Any]) -> str:
@@ -2341,15 +2371,19 @@ def stage_provider_artifacts_fixture(
     safe_metadata = metadata if isinstance(metadata, dict) else {}
     worker_id = safe_metadata.get("worker_id") or "provider_artifact_fixture_stager"
     note = safe_metadata.get("note")
+    profile = str(safe_metadata.get("artifact_profile") or "default")
     latest_run = _load_latest_generation_schedule_run(session_id)
     if latest_run is None:
         raise InvalidQueueTransitionError(
             "generation schedule run is required before staging provider artifacts"
         )
     run_id = str(latest_run.get("run_id"))
-    envelope = _load_json(_PROVIDER_OUTPUT_ENVELOPE_EXAMPLE)
-    staging = _load_json(_PROVIDER_ARTIFACT_STAGING_EXAMPLE)
-    promotion = _load_json(_PROVIDER_ARTIFACT_PROMOTION_REPORT_EXAMPLE)
+    envelope_path, staging_path, promotion_path, normalized_profile = (
+        _provider_artifact_fixture_paths(profile)
+    )
+    envelope = _load_json(envelope_path)
+    staging = _load_json(staging_path)
+    promotion = _load_json(promotion_path)
     envelope_errors = validate_provider_output_envelope(envelope)
     staging_errors = validate_provider_artifact_staging_manifest(staging)
     promotion_errors = validate_provider_artifact_promotion_report(promotion)
@@ -2450,6 +2484,12 @@ def stage_provider_artifacts_fixture(
             "activation_allowed_count": 0,
             "upstream_request_id": executor_request_entry.get("source_id"),
             "authorization_ref": authorization_ref,
+            "artifact_profile": normalized_profile,
+            "fixture_refs": {
+                "provider_output_envelope": _rel(envelope_path),
+                "provider_artifact_staging": _rel(staging_path),
+                "provider_artifact_promotion_report": _rel(promotion_path),
+            },
         },
         "generation_executor_run_request": executor_request_entry.get("compact"),
         "provider_execution_authorization": authorization_entry.get("compact"),

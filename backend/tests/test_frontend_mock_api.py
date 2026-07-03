@@ -18,6 +18,67 @@ def _payload(resp):
     return body["payload"]
 
 
+def _prepare_provider_artifact_staging_chain(
+    client,
+    sid: str,
+    worker_prefix: str,
+    authorization_ref: str | None = None,
+) -> dict:
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={
+                "worker_id": f"{worker_prefix}-dry-worker",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={
+                "worker_id": f"{worker_prefix}-live-guard",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    executor_request = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={
+                "worker_id": f"{worker_prefix}-executor-request",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )["generation_executor_run_request"]
+    authorization = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/grant-provider-authorization",
+            json={
+                "worker_id": f"{worker_prefix}-provider-auth",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": authorization_ref,
+            },
+        )
+    )["provider_execution_authorization"]
+    adapter_receipt = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-fixture",
+            json={
+                "worker_id": f"{worker_prefix}-provider-adapter",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": authorization_ref,
+            },
+        )
+    )["provider_adapter_execution_receipt"]
+    return {
+        "executor_request": executor_request,
+        "authorization": authorization,
+        "adapter_receipt": adapter_receipt,
+    }
+
+
 def test_frontend_mock_pack_exposes_generated_media_and_animation_seeds(client):
     sid = _create_session(client)
     payload = _payload(client.get(f"/api/sessions/{sid}/frontend-mock-pack"))
@@ -671,6 +732,113 @@ def test_provider_artifact_staging_requires_matching_executor_request(client):
     )
     assert stage.status_code == 409
     assert "matching generation executor request" in stage.json()["detail"]
+
+
+def test_provider_artifact_staging_supports_image_failure_profile(client):
+    sid = _create_session(client)
+    image_authorization_ref = "auth_sched_next_map_visual_prefetch_image_fixture_001"
+    chain = _prepare_provider_artifact_staging_chain(
+        client,
+        sid,
+        "image-failure-profile",
+        authorization_ref=image_authorization_ref,
+    )
+    artifact_stage = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+            json={
+                "worker_id": "image-failure-ledger",
+                "note": "stage image failure evidence",
+                "artifact_profile": "image_failure",
+            },
+        )
+    )
+
+    assert artifact_stage["worker_step"]["status"] == "staged"
+    assert artifact_stage["worker_step"]["artifact_profile"] == "image_failure"
+    assert artifact_stage["worker_step"]["authorization_ref"] == image_authorization_ref
+    assert artifact_stage["worker_step"]["provider_call_count"] == 0
+    assert artifact_stage["worker_step"]["world_mutation_count"] == 0
+    assert artifact_stage["worker_step"]["activation_allowed_count"] == 0
+    assert artifact_stage["worker_step"]["fixture_refs"] == {
+        "provider_output_envelope": (
+            "examples/provider_artifact_staging/"
+            "p1b_provider_image_artifact_staging.source_envelope.json"
+        ),
+        "provider_artifact_staging": (
+            "examples/provider_artifact_staging/"
+            "p1b_provider_image_artifact_staging.example.json"
+        ),
+        "provider_artifact_promotion_report": (
+            "examples/provider_artifact_staging/"
+            "p1b_provider_image_artifact_promotion_report.example.json"
+        ),
+    }
+    assert artifact_stage["generation_executor_run_request"]["request_id"] == (
+        chain["executor_request"]["request_id"]
+    )
+    assert artifact_stage["provider_execution_authorization"]["authorization_ref"] == (
+        image_authorization_ref
+    )
+    assert artifact_stage["provider_adapter_execution_receipt"][
+        "execution_receipt_id"
+    ] == chain["adapter_receipt"]["execution_receipt_id"]
+    assert artifact_stage["provider_output_envelope"]["envelope_id"] == (
+        "pout_image_candidate_old_signal_tower_001"
+    )
+    assert artifact_stage["provider_output_envelope"]["provider_call"][
+        "authorization_ref"
+    ] == image_authorization_ref
+    assert artifact_stage["provider_artifact_staging"]["manifest_id"] == (
+        "pstaging_old_signal_tower_image_001"
+    )
+    assert artifact_stage["provider_artifact_staging"]["staging_status"] == (
+        "validation_failed"
+    )
+    assert artifact_stage["provider_artifact_staging"]["gate_statuses"][
+        "media_gate"
+    ] == "failed"
+    assert artifact_stage["provider_artifact_staging"]["gate_statuses"][
+        "semantic_gate"
+    ] == "failed"
+    assert artifact_stage["provider_artifact_promotion_report"]["report_id"] == (
+        "ppromo_old_signal_tower_image_001"
+    )
+    assert artifact_stage["provider_artifact_promotion_report"][
+        "promotion_decision"
+    ] == "blocked_validation_failed"
+    assert artifact_stage["provider_artifact_promotion_report"][
+        "promotion_allowed"
+    ] is False
+
+    ledger_summary = artifact_stage["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 6
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+        "provider_adapter_execution_receipt": 1,
+        "provider_output_envelope": 1,
+        "provider_artifact_staging_manifest": 1,
+        "provider_artifact_promotion_report": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_artifact_staging_rejects_unknown_profile(client):
+    sid = _create_session(client)
+    _prepare_provider_artifact_staging_chain(client, sid, "unknown-profile")
+    stage = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/stage-provider-artifacts",
+        json={
+            "worker_id": "unknown-profile-ledger",
+            "artifact_profile": "not_a_profile",
+        },
+    )
+    assert stage.status_code == 409
+    assert "unknown provider artifact profile" in stage.json()["detail"]
 
 
 def test_campaign_router_prefetches_next_node_without_provider_calls(client):
