@@ -900,6 +900,64 @@
     return state.data.mapRenderPlanBundle || {};
   }
 
+  function mapRenderPlan() {
+    return mapRenderPlanBundle().procedural_map_render_plan || {};
+  }
+
+  function mapRenderPlanLayers() {
+    const layers = mapRenderPlan().layers;
+    return Array.isArray(layers) ? layers : [];
+  }
+
+  function mapRenderPlanLayer(kind) {
+    return mapRenderPlanLayers().find((layer) => layer && layer.kind === kind) || null;
+  }
+
+  function mapRenderPlanOperations(kind) {
+    const layer = mapRenderPlanLayer(kind);
+    return Array.isArray(layer && layer.operations) ? layer.operations : [];
+  }
+
+  function mapRenderPlanOperation(kind, semanticKind, semanticId) {
+    return (
+      mapRenderPlanOperations(kind).find((operation) => {
+        const ref = (operation && operation.semantic_ref) || {};
+        return ref.kind === semanticKind && ref.id === semanticId;
+      }) || null
+    );
+  }
+
+  function renderGeometryNumber(operation, key, fallback, min, max) {
+    const raw = operation && operation.geometry ? operation.geometry[key] : null;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return fallback;
+    return clamp(value, min, max);
+  }
+
+  function routeRoadWidthCells(route) {
+    const operation = mapRenderPlanOperation("road_band", "path_route", route.route_id || null);
+    return renderGeometryNumber(operation, "width_cells", 0.48, 0.42, 0.95);
+  }
+
+  function routeShoulderWidthScale(route) {
+    const operation = mapRenderPlanOperation("road_edge", "path_route", route.route_id || null);
+    const widthCells = renderGeometryNumber(operation, "shoulder_width_cells", 0.25, 0.12, 0.44);
+    return clamp(widthCells / 0.25, 0.72, 1.58);
+  }
+
+  function buildSlotPlatformOperation(slot) {
+    return mapRenderPlanOperation("build_slot_platform", "build_slot", slot.slot_id || null);
+  }
+
+  function slotFootprintScale(slot, axis) {
+    const operation = buildSlotPlatformOperation(slot);
+    const footprint = operation && operation.geometry ? operation.geometry.footprint : null;
+    const raw = footprint && footprint[axis === "height" ? "height_cells" : "width_cells"];
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return 1;
+    return clamp(value, 0.72, 1.45);
+  }
+
   function mapStylePack() {
     return mapRenderPlanBundle().map_style_pack || {};
   }
@@ -932,8 +990,7 @@
   }
 
   function mapRenderPlanHasLayer(kind) {
-    const plan = mapRenderPlanBundle().procedural_map_render_plan || {};
-    return (plan.layers || []).some((layer) => layer && layer.kind === kind);
+    return Boolean(mapRenderPlanLayer(kind));
   }
 
   function allowsDebugMapVisuals() {
@@ -3137,7 +3194,7 @@
     for (const route of allPathRoutes()) {
       const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
       if (points.length < 2) continue;
-      const roadWidth = Math.max(34, m.tileW * 0.48);
+      const roadWidth = Math.max(34, m.tileW * routeRoadWidthCells(route));
       drawRouteShoulders(ctx, route, points, roadWidth);
       ctx.strokeStyle = road.shadow || "rgba(18,13,10,0.54)";
       ctx.lineWidth = roadWidth * 1.18;
@@ -3259,17 +3316,18 @@
   function drawRouteShoulders(ctx, route, points, roadWidth) {
     const m = state.battle.metrics;
     const road = battleNodeVisualProfile().road || {};
+    const shoulderScale = routeShoulderWidthScale(route);
     ctx.save();
     ctx.strokeStyle = "rgba(6,7,6,0.42)";
-    ctx.lineWidth = roadWidth * 1.7;
+    ctx.lineWidth = roadWidth * (1.24 + shoulderScale * 0.46);
     traceRoutePath(ctx, points);
     ctx.stroke();
     ctx.strokeStyle = road.shoulderDark || "rgba(61,69,46,0.62)";
-    ctx.lineWidth = roadWidth * 1.44;
+    ctx.lineWidth = roadWidth * (1.08 + shoulderScale * 0.36);
     traceRoutePath(ctx, points);
     ctx.stroke();
     ctx.strokeStyle = road.shoulderSoft || "rgba(33,41,32,0.46)";
-    ctx.lineWidth = roadWidth * 1.28;
+    ctx.lineWidth = roadWidth * (0.98 + shoulderScale * 0.3);
     traceRoutePath(ctx, points);
     ctx.stroke();
 
@@ -3279,7 +3337,7 @@
       const p = points[i];
       for (let j = 0; j < 3; j += 1) {
         const angle = rng() * Math.PI * 2;
-        const dist = roadWidth * (0.65 + rng() * 0.28);
+        const dist = roadWidth * shoulderScale * (0.65 + rng() * 0.28);
         ctx.beginPath();
         ctx.ellipse(
           p.x + Math.cos(angle) * dist,
@@ -3467,8 +3525,10 @@
   function drawBuildableTerrace(ctx, p, m, slot, active) {
     const id = slot.slot_id || `${(slot.position || slot).x},${(slot.position || slot).y}`;
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`terrace:${id}`));
-    const rx = m.tileW * (0.42 + rng() * 0.08);
-    const ry = m.tileH * (0.46 + rng() * 0.08);
+    const footprintX = slotFootprintScale(slot, "width");
+    const footprintY = slotFootprintScale(slot, "height");
+    const rx = m.tileW * (0.42 + rng() * 0.08) * footprintX;
+    const ry = m.tileH * (0.46 + rng() * 0.08) * footprintY;
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.24)";
     ctx.beginPath();
@@ -3514,7 +3574,7 @@
     suggestedSockets().forEach((slot, index) => {
       const cell = slot.position || slot;
       const p = projectCell(cell.x, cell.y);
-      drawDeploymentBase(ctx, p, m, index, activeOverlay);
+      drawDeploymentBase(ctx, p, m, index, activeOverlay, slot);
     });
     const previewCell = battle.hoverCell;
     if (previewCell) {
@@ -3554,11 +3614,13 @@
     }
   }
 
-  function drawDeploymentBase(ctx, p, m, index, active) {
+  function drawDeploymentBase(ctx, p, m, index, active, slot = {}) {
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`slot:${index}`));
     const platform = battleNodeVisualProfile().platform || {};
-    const rx = m.tileW * (0.22 + rng() * 0.035);
-    const ry = m.tileH * (0.28 + rng() * 0.04);
+    const footprintX = slotFootprintScale(slot, "width");
+    const footprintY = slotFootprintScale(slot, "height");
+    const rx = m.tileW * (0.22 + rng() * 0.035) * footprintX;
+    const ry = m.tileH * (0.28 + rng() * 0.04) * footprintY;
     ctx.save();
     ctx.globalAlpha = active ? 0.95 : 0.58;
     ctx.fillStyle = "rgba(0,0,0,0.34)";
