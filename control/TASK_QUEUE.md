@@ -2541,6 +2541,45 @@ python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/battlefi
 git diff --check
 ```
 
+#### P1-D-04 MapCompilationDesign 地图编译设计采纳审查
+
+状态：已完成设计审查与项目化采纳。
+
+目标：
+
+```text
+审查外部 AI 提出的地图编译方案，采纳其 logic-first / StylePack / 程序化渲染方向，但不照搬完整 LevelBundle 或一组全新 schema。
+```
+
+已落地：
+
+- `docs/MAP_COMPILATION_DESIGN_V0_1.md`：新增审查采纳文档，明确 AI 不再负责整张运行时地图，AI 只负责风格、组件和参考，程序负责结构和对齐，Validator 负责可信。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：把该文档加入当前有效设计文档和实现事实。
+- `examples/worker_task_packs/p1d_map_compilation_design_review.v0.1.json`：新增本轮 worker handoff 包。
+
+采纳结论：
+
+- 保留 `MapRuntimePackage` 作为运行时地图事实源。
+- 保留 `MapCompilePackage` 作为编译证据源。
+- 后续新增 `MapStylePack`、`ProceduralMapRenderPlan`、`SemanticVisualConsistencyReport`，而不是继续 prompt-only 整图生成。
+- `LevelBundle` 暂时只作为未来聚合概念，不替代现有 schema。
+- Spline 思路采纳为 v0.2 方向，但短期保持 `path_routes.waypoints` 兼容。
+
+边界：
+
+- 本任务不改代码、不调用 provider、不读取 `.env`。
+- 外部文档仅作为参考，不作为字段级事实源。
+- Codex headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_compilation_design_review.v0.1.json
+python3 -m py_compile tools/dev/validate_worker_task_pack.py
+rg -n "MAP_COMPILATION_DESIGN|MapStylePack|ProceduralMapRenderPlan|SemanticVisualConsistencyReport|AI 负责风格和组件" docs control examples/worker_task_packs
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
