@@ -4931,24 +4931,36 @@ def test_generation_scheduler_retry_budget_and_fallback_flow(client):
     assert fallback["generation_schedule_queue"]["summary"]["fallback_ready_count"] == 2
 
 
-def test_all_battle_nodes_expose_map_runtime_packages(client):
+def test_all_battle_nodes_expose_map_runtime_and_render_plan_packages(client):
     sid = _create_session(client)
     expected = {
-        "gray_lantern_station": "map_pkg_gray_lantern_station_v0_1",
-        "lamp_wick_store": "map_pkg_lamp_wick_store_v0_1",
-        "old_signal_tower": "map_pkg_old_signal_tower_v0_1",
+        "gray_lantern_station": (
+            "map_pkg_gray_lantern_station_v0_1",
+            "render_plan_gray_lantern_station_v0_1",
+        ),
+        "lamp_wick_store": (
+            "map_pkg_lamp_wick_store_v0_1",
+            "render_plan_lamp_wick_store_v0_1",
+        ),
+        "old_signal_tower": (
+            "map_pkg_old_signal_tower_v0_1",
+            "render_plan_old_signal_tower_v0_1",
+        ),
     }
-    for node_id, package_id in expected.items():
+    for node_id, (package_id, render_plan_id) in expected.items():
         battle = _payload(client.get(f"/api/sessions/{sid}/battles/{node_id}/config"))
         assert battle["battle_config"]["node_id"] == node_id
         assert battle["map_runtime_package"]["package_id"] == package_id
         assert battle["map_runtime_package"]["node_id"] == node_id
         assert battle["map_runtime_package"]["path_routes"]
         assert battle["map_runtime_package"]["build_slots"]
-        if node_id == "gray_lantern_station":
-            assert battle["map_render_plan_bundle"]["node_id"] == node_id
-        else:
-            assert battle["map_render_plan_bundle"] is None
+        assert battle["map_render_plan_bundle"]["node_id"] == node_id
+        assert battle["map_render_plan_bundle"]["procedural_map_render_plan"][
+            "plan_id"
+        ] == render_plan_id
+        assert battle["map_render_plan_bundle"][
+            "semantic_visual_consistency_report"
+        ]["status"] == "passed"
 
         runtime = _payload(
             client.get(f"/api/sessions/{sid}/battles/{node_id}/map-runtime-package")
@@ -4959,11 +4971,17 @@ def test_all_battle_nodes_expose_map_runtime_packages(client):
         roles = {layer["role"] for layer in map_package["visual_layers"]}
         assert "battle_runtime_background" in roles
 
-    missing_render_plan = client.get(
-        f"/api/sessions/{sid}/battles/lamp_wick_store/map-render-plan"
-    )
-    assert missing_render_plan.status_code == 404
-    assert "map render plan not found" in missing_render_plan.json()["detail"]
+        render_plan = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-render-plan")
+        )
+        plan_bundle = render_plan["map_render_plan_bundle"]
+        assert plan_bundle["procedural_map_render_plan"]["plan_id"] == render_plan_id
+        assert plan_bundle["semantic_visual_consistency_report"]["summary"][
+            "failed_count"
+        ] == 0
+        assert "debug_control_overlay" not in plan_bundle[
+            "procedural_map_render_plan"
+        ]["player_default_layer_ids"]
 
 
 def test_frontend_mock_endpoints_require_existing_session(client):

@@ -2673,6 +2673,66 @@ node --check frontend/app.js
 git diff --check
 ```
 
+#### P1-D-07 MVP 三节点 MapRenderPlan bundle 补齐
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让 gray_lantern_station、lamp_wick_store、old_signal_tower 三个 MVP 战斗节点都具备 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport bundle，而不是只有首战节点可走地图编译最小链路。
+```
+
+已落地：
+
+- `examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json`
+- `examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json`
+- `examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json`
+- `examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json`
+- `examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json`
+- `backend/app/services/map_render_plan_service.py`：映射扩展为三节点。
+- `backend/tests/test_frontend_mock_api.py`：三节点均要求暴露 render plan bundle，单独 `/map-render-plan` endpoint 均应返回 `passed` report。
+- `examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片。
+- 新 StylePack 仍只描述表现层，不允许决定路线、塔位、目标或出生点。
+- RenderPlan 由已有 builder 从 MapRuntimePackage + StylePack 生成；SemanticVisualConsistencyReport 必须为 `passed`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --output examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --output examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes PYTHONPATH=/tmp/ai-td-task-map-render-plan-all-nodes/backend python3 - <<'PY'
+from app.services import frontend_mock_service, map_render_plan_service
+expected = {
+    'gray_lantern_station': 'render_plan_gray_lantern_station_v0_1',
+    'lamp_wick_store': 'render_plan_lamp_wick_store_v0_1',
+    'old_signal_tower': 'render_plan_old_signal_tower_v0_1',
+}
+assert map_render_plan_service.available_map_render_plan_node_ids() == sorted(expected)
+for node_id, plan_id in expected.items():
+    bundle = map_render_plan_service.load_map_render_plan_bundle(node_id)
+    assert bundle['procedural_map_render_plan']['plan_id'] == plan_id
+    assert bundle['semantic_visual_consistency_report']['status'] == 'passed'
+    assert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']
+    payload = frontend_mock_service.get_battle_config('smoke_session', node_id)
+    assert payload['map_render_plan_bundle']['procedural_map_render_plan']['plan_id'] == plan_id
+PY
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
