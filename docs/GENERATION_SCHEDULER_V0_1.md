@@ -463,6 +463,16 @@ live executor guard
 
 `stage-provider-artifacts` 的默认 fixture profile 仍登记通用 `blocked_review_required` 示例。传入 `artifact_profile=image_failure` 时，它会登记 image ProviderOutputEnvelope、image ProviderArtifactStagingManifest 和 image ProviderArtifactPromotionReport，并要求调用方先用匹配的 image `authorization_ref` 完成授权和 adapter receipt。该 profile 用于 Studio / evidence 证明差图在后端 ledger 中也会收束为 `validation_failed` / `blocked_validation_failed`，不进入玩家 runtime。
 
+后端还提供一个最小编排入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain
+```
+
+它会在缺少 run 时创建一条 session 级 scheduler run，然后按固定顺序串接 `dry-run-step -> live-executor-guard -> prepare-executor-request -> grant-provider-authorization -> run-provider-adapter-fixture -> stage-provider-artifacts`。该入口默认从所选 `artifact_profile` 的 ProviderOutputEnvelope fixture 反推 `schedule_item_id` 与 `authorization_ref`，避免把 provider artifact 挂到错误调度项下；如果调用方显式传入不匹配的 `schedule_item_id` 或 `authorization_ref`，接口返回 409。
+
+该入口只是 review-only 的执行器壳，用于证明正式后台执行器的状态顺序、授权链、adapter 边界、staging 和 promotion 阻断可以被一次性编排。它仍不读取 `.env`、不调用 provider、不保存 prompt / provider 正文、不写世界状态、不激活 runtime。
+
 `ProviderArtifactPromotionReport` 是 staging 之后的显式晋升/阻断报告。它可以允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，也可以阻断候选继续前进；但报告本身仍不修改 runtime、published media 或世界状态。
 
 图片候选的当前示例使用更严格的失败路径：provider adapter 下载出的本地 PNG 可以被登记为 image candidate，但如果 media gate / semantic gate 判断其不符合地图质量、路径、塔位、目标或世界观约束，staging 与 promotion report 会以 `validation_failed` / `blocked_validation_failed` 收束，作为负样本 evidence，而不是可发布素材。

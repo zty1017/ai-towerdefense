@@ -107,6 +107,31 @@ def _provider_artifact_fixture_paths(profile: str | None) -> tuple[Path, Path, P
     raise InvalidQueueTransitionError(f"unknown provider artifact profile: {profile}")
 
 
+def _provider_artifact_fixture_metadata(
+    profile: str | None,
+) -> dict[str, str]:
+    envelope_path, _, _, normalized_profile = _provider_artifact_fixture_paths(profile)
+    envelope = _load_json(envelope_path)
+    source = envelope.get("source", {}) if isinstance(envelope.get("source"), dict) else {}
+    provider_call = (
+        envelope.get("provider_call", {})
+        if isinstance(envelope.get("provider_call"), dict)
+        else {}
+    )
+    schedule_item_id = str(source.get("schedule_item_id") or "")
+    authorization_ref = str(provider_call.get("authorization_ref") or "")
+    if not schedule_item_id or not authorization_ref:
+        raise InvalidQueueTransitionError(
+            f"provider artifact fixture profile is missing source refs: {normalized_profile}"
+        )
+    return {
+        "artifact_profile": normalized_profile,
+        "schedule_item_id": schedule_item_id,
+        "authorization_ref": authorization_ref,
+        "provider_output_envelope": _rel(envelope_path),
+    }
+
+
 def _dump_payload(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)
 
@@ -2498,6 +2523,144 @@ def stage_provider_artifacts_fixture(
         "provider_artifact_staging": staging_entry["compact"],
         "provider_artifact_promotion_report": promotion_entry["compact"],
         "generation_artifact_ledger": _compact_generation_artifact_ledger(items),
+    }
+
+
+def run_fixture_executor_chain(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    requested_profile = str(safe_metadata.get("artifact_profile") or "default")
+    fixture_metadata = _provider_artifact_fixture_metadata(requested_profile)
+    requested_schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    schedule_item_id = fixture_metadata["schedule_item_id"]
+    if requested_schedule_item_id and requested_schedule_item_id != schedule_item_id:
+        raise InvalidQueueTransitionError(
+            "artifact_profile fixture schedule_item_id does not match requested "
+            f"schedule_item_id: {requested_schedule_item_id}"
+        )
+    authorization_ref = str(
+        safe_metadata.get("authorization_ref")
+        or fixture_metadata["authorization_ref"]
+    )
+    if authorization_ref != fixture_metadata["authorization_ref"]:
+        raise InvalidQueueTransitionError(
+            "authorization_ref does not match selected artifact_profile fixture"
+        )
+    worker_prefix = str(
+        safe_metadata.get("worker_id") or "fixture_executor_chain"
+    )
+    note = safe_metadata.get("note")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    created_run = latest_run is None
+    run_payload = (
+        create_generation_schedule_run(session_id)["generation_schedule_run"]
+        if created_run
+        else latest_run
+    )
+
+    def _step_metadata(step_name: str, include_authorization: bool = False) -> dict[str, Any]:
+        step_metadata: dict[str, Any] = {
+            "worker_id": f"{worker_prefix}_{step_name}",
+            "schedule_item_id": schedule_item_id,
+            "note": note,
+        }
+        if include_authorization:
+            step_metadata["authorization_ref"] = authorization_ref
+        return step_metadata
+
+    dry_step = run_generation_schedule_dry_worker_step(
+        session_id,
+        _step_metadata("dry_run"),
+    )
+    waiting_row = _load_generation_item_row_by_status(
+        session_id,
+        "waiting_review",
+        schedule_item_id,
+    )
+    if waiting_row is None:
+        raise InvalidQueueTransitionError(
+            "fixture executor chain requires the schedule item to reach waiting_review"
+        )
+    guard_step = run_generation_schedule_live_executor_guard(
+        session_id,
+        _step_metadata("live_guard"),
+    )
+    executor_request_step = prepare_generation_executor_run_request(
+        session_id,
+        _step_metadata("executor_request"),
+    )
+    authorization_step = grant_provider_execution_authorization(
+        session_id,
+        _step_metadata("provider_authorization", include_authorization=True),
+    )
+    adapter_step = run_provider_adapter_fixture(
+        session_id,
+        _step_metadata("provider_adapter", include_authorization=True),
+    )
+    staging_step = stage_provider_artifacts_fixture(
+        session_id,
+        {
+            "worker_id": f"{worker_prefix}_artifact_staging",
+            "schedule_item_id": schedule_item_id,
+            "artifact_profile": fixture_metadata["artifact_profile"],
+            "note": note,
+        },
+    )
+    ledger_summary = staging_step["generation_artifact_ledger"]["summary"]
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "executor_chain": {
+            "status": "completed_review_only_promotion_blocked",
+            "worker_mode": "fixture_backed_executor_chain",
+            "created_generation_schedule_run": created_run,
+            "run_id": run_payload.get("run_id"),
+            "schedule_item_id": schedule_item_id,
+            "artifact_profile": fixture_metadata["artifact_profile"],
+            "authorization_ref": authorization_ref,
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "promotion_allowed_count": int(
+                ledger_summary.get("promotion_allowed_count", 0)
+            ),
+            "fixture_refs": {
+                "provider_output_envelope": fixture_metadata[
+                    "provider_output_envelope"
+                ],
+                **staging_step["worker_step"]["fixture_refs"],
+            },
+        },
+        "steps": {
+            "dry_run_step": dry_step["worker_step"],
+            "live_executor_guard": guard_step["worker_step"],
+            "generation_executor_run_request": executor_request_step["worker_step"],
+            "provider_execution_authorization": authorization_step["worker_step"],
+            "provider_adapter_execution_receipt": adapter_step["worker_step"],
+            "provider_artifact_staging": staging_step["worker_step"],
+        },
+        "generation_schedule_run": _compact_generation_schedule_run(
+            _load_latest_generation_schedule_run(session_id)
+        ),
+        "generation_schedule_queue": staging_step.get("generation_schedule_queue")
+        or get_generation_schedule_queue(session_id)["generation_schedule_queue"],
+        "generation_executor_run_request": staging_step[
+            "generation_executor_run_request"
+        ],
+        "provider_execution_authorization": staging_step[
+            "provider_execution_authorization"
+        ],
+        "provider_adapter_execution_receipt": staging_step[
+            "provider_adapter_execution_receipt"
+        ],
+        "provider_output_envelope": staging_step["provider_output_envelope"],
+        "provider_artifact_staging": staging_step["provider_artifact_staging"],
+        "provider_artifact_promotion_report": staging_step[
+            "provider_artifact_promotion_report"
+        ],
+        "generation_artifact_ledger": staging_step["generation_artifact_ledger"],
     }
 
 

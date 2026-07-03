@@ -457,6 +457,30 @@ def stage_generation_schedule_provider_artifacts(
     return _payload(session_id, data)
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_schedule_fixture_executor_chain(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Run the guarded fixture executor chain without provider calls or activation."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.run_fixture_executor_chain(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    return _payload(session_id, data)
+
+
 @router.get(
     "/api/sessions/{session_id}/campaign-router",
     response_model=FrontendMockPayloadResponse,
