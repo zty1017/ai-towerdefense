@@ -554,6 +554,7 @@ GET /api/sessions/{session_id}/generation-schedule/activation-gate
 GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache
 GET /api/sessions/{session_id}/generation-schedule/shared-prefetch-cache/hits
 POST /api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache
+POST /api/sessions/{session_id}/generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate
 ```
 
 它用于把当前 session 中已经 `promotion_allowed`、但仍被 runtime package / WorldStateDeltaTransaction / activation gate 阻断的候选，登记为后续 session 或后台 worker 可复用的索引记录。该索引不是玩家 runtime 内容池，也不是 published media，不会绕过 activation gate。
@@ -596,6 +597,20 @@ no_shared_candidate
 ```
 
 该视图不创建 run、不推进 worker、不调用 provider、不写世界状态、不激活 runtime。命中只说明“有可复用的脱敏候选摘要，可供后续构建器参考”，不代表可以跳过 runtime package build、WorldStateDeltaTransaction build、media / semantic gate 或 activation gate。
+
+`record-shared-prefetch-cache-reuse-candidate` 会把当前 run 的一个 hit 写入 `generation_artifact_ledger`，artifact kind 为：
+
+```text
+shared_prefetch_cache_reuse_candidate
+```
+
+对应 `prefetch-cache` 状态为：
+
+```text
+shared_cache_reuse_pending_runtime_build
+```
+
+这个状态仍然是 review-only。它只说明当前 run 已经把跨 session 共享候选纳入统一 evidence chain；后续构建器仍必须补齐 runtime package / WorldStateDeltaTransaction build、校验、promotion/activation gate 和世界状态事务。该 worker 不调用 provider、不读取 `.env`、不写 shared cache、不 complete queue item、不写世界状态、不激活 runtime，并且同一 session / run / schedule item / cache key 会幂等更新同一条 ledger。
 
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 

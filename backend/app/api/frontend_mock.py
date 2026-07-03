@@ -291,6 +291,27 @@ def index_generation_shared_prefetch_cache(
     )
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate",
+    response_model=FrontendMockPayloadResponse,
+)
+def record_generation_shared_prefetch_cache_reuse_candidate(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record a current-run shared-cache hit as a review-only reuse candidate."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.record_shared_prefetch_cache_reuse_candidate(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

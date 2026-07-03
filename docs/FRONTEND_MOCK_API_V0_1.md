@@ -348,6 +348,48 @@ no_shared_candidate
 - 不写世界状态。
 - 不激活 runtime。
 
+### 记录共享缓存复用候选
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate
+```
+
+该接口把当前 run 的一个 shared cache hit 记录为 `generation_artifact_ledger` 中的 `shared_prefetch_cache_reuse_candidate`。它不是 runtime package，也不是 WorldStateDeltaTransaction；它只是把跨 session 命中挂入当前 run 的统一 evidence chain，供后续构建器读取。
+
+请求体可选：
+
+```json
+{
+  "worker_id": "studio-reuse-recorder",
+  "schedule_item_id": "sched_next_map_visual_prefetch"
+}
+```
+
+未提供 `schedule_item_id` 时，后端选择当前 hit 视图中的第一个命中项。返回包含：
+
+- `worker_step`
+- `shared_prefetch_cache_reuse_candidate`
+- `generation_prefetch_cache`
+- `generation_artifact_ledger`
+
+写入后，对应 prefetch item 的 `cache_status` 会变为：
+
+```text
+shared_cache_reuse_pending_runtime_build
+```
+
+该状态只表示“当前 run 已有一个可审查复用候选”，仍必须补齐 runtime package / WorldStateDeltaTransaction build、校验和 activation gate。
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不写 shared cache。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

@@ -2716,6 +2716,43 @@ rg -n "shared-prefetch-cache/hits|generation_shared_prefetch_cache_hits|build_sh
 git diff --check
 ```
 
+### P1-B Generation Scheduler shared cache reuse candidate ledger
+
+状态：已完成最小 review-only ledger 桥接层。
+
+目标：
+
+```text
+把当前 run 的 shared cache hit 显式记录为 generation_artifact_ledger 里的复用候选，使后续 runtime package / WorldStateDeltaTransaction builder 能消费统一 evidence chain。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_shared_cache_reuse_builders.py`：新增 shared cache reuse candidate builder 与 compact 摘要。
+- `backend/app/services/generation_scheduler_prefetch_cache_builders.py`：新增 `shared_prefetch_cache_reuse_candidate` ref kind 与 `shared_cache_reuse_pending_runtime_build` 状态。
+- `backend/app/services/generation_scheduler_service.py`：新增 `record_shared_prefetch_cache_reuse_candidate()`，从当前 hit view 选择一个命中并幂等写入 ledger。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、缺失 session / 无 run / 无 hit、写入 review-only ledger、prefetch-cache refs、幂等和安全计数。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 reuse candidate 边界。
+- `examples/worker_task_packs/p1b_generation_shared_cache_reuse_candidate.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- reuse candidate 不是 runtime package、不是 WorldStateDeltaTransaction、不是 provider 输出，也不是 published media。
+- 该 worker 不调用 provider、不读取 `.env`、不写 shared cache、不 complete queue item、不写世界状态、不激活 runtime。
+- `shared_cache_reuse_pending_runtime_build` 只表示当前 run 已把跨 session 候选挂入 evidence chain，后续仍必须过 runtime package / WorldStateDeltaTransaction build、media / semantic gate 和 activation gate。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_cache_reuse_candidate.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_cache_reuse_candidate python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "record-shared-prefetch-cache-reuse-candidate|shared_prefetch_cache_reuse_candidate|shared_cache_reuse_pending_runtime_build" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：
