@@ -1,6 +1,6 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
@@ -102,6 +102,8 @@ shared/schemas/ + tools/ + 专题文档
   - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。
 - `shared/schemas/map_style_pack.v0.1.schema.json`、`shared/schemas/procedural_map_render_plan.v0.1.schema.json`、`shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`
   - 地图编译最小链路字段事实源：StylePack 只管表现层，RenderPlan 把 MapRuntimePackage + StylePack 编成分层绘制操作，SemanticVisualConsistencyReport 证明路径、塔位、目标、出生点和 debug/player 边界一致。
+- `frontend/app.js` 与 `tools/frontend/validate_battle_visual_contract.py`
+  - 前端玩家战斗画面已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
 
 ### AI 编译器与 AssetGraph
 

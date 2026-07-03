@@ -72,6 +72,7 @@ def validate_app_contract(errors: list[str]) -> None:
     preload = js_section(app, "preloadBattleImages", "resizeBattleCanvas")
     backdrop = js_section(app, "drawBackdrop", "drawProceduralTerrain")
     path = js_section(app, "drawPath", "traceRoutePath")
+    profile = js_section(app, "battleNodeVisualProfile", "terrainFeatureSet")
     metrics = js_section(app, "computeBattleMetrics", "battleCanvasSafeArea")
     spawn = js_section(app, "spawnEnemies", "updateEnemies")
     update_enemies = js_section(app, "updateEnemies", "updateDefenses")
@@ -99,6 +100,12 @@ def validate_app_contract(errors: list[str]) -> None:
         "drawDeploymentBase",
         "drawTargetFoundation",
         "drawSpawnRift",
+        "mapRenderPlanBundle",
+        "mapStylePack",
+        "mapStylePalette",
+        "colorFromStyle",
+        "rgbaFromStyle",
+        "mapRenderPlanHasLayer",
     ):
         require(f"function {name}" in app, f"missing {name}() procedural battle layer", errors)
 
@@ -117,11 +124,22 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawRouteFlowCues" in path, "drawPath must render subtle route direction cues", errors)
     require("drawRouteEdgeProps" in path, "drawPath must integrate world props along road edges", errors)
     require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
+    require("const road = profile.road || {}" in path, "drawPath must consume map style road colors when available", errors)
+    require("road.base" in path and "road.crown" in path, "drawPath must map StylePack road colors onto player roads", errors)
     require("drawSlotAccessTrails(ctx)" in app, "battle view must visually connect deployment bases to runtime roads", errors)
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawObjectiveDefensiveZone(ctx" in app, "battle view must ground objectives in a defense zone", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
     require("drawSpawnRift" in spawn_markers, "spawn markers must render ambient entry effects, not arrows", errors)
+    require('schema_version !== "map_style_pack.v0.1"' in profile, "battle visual profile must gate StylePack schema version", errors)
+    require("renderPlanLayersReady" in profile, "battle visual profile must expose render plan layer readiness", errors)
+    require('mapRenderPlanHasLayer("road_band")' in profile, "battle visual profile must require road_band layer readiness", errors)
+    require('mapRenderPlanHasLayer("build_slot_platform")' in profile, "battle visual profile must require build_slot_platform layer readiness", errors)
+    require('mapRenderPlanHasLayer("objective_foundation")' in profile, "battle visual profile must require objective_foundation layer readiness", errors)
+    require('mapRenderPlanHasLayer("spawn_atmosphere")' in profile, "battle visual profile must require spawn_atmosphere layer readiness", errors)
+    require("battleNodeVisualProfile().platform" in app, "deployment bases must consume StylePack platform colors", errors)
+    require("battleNodeVisualProfile().objective" in app, "target foundations must consume StylePack objective colors", errors)
+    require("battleNodeVisualProfile().spawn" in app, "spawn effects must consume StylePack spawn colors", errors)
     require("function drawGrid" not in app and "function drawDiamond" not in app, "battle view must not keep checkerboard/grid drawing helpers", errors)
     require("routeForSpawn(battle.spawned)" in spawn, "enemy spawn must bind to runtime route/spawn ids", errors)
     require("enemyWaypoints(enemy)" in update_enemies, "enemy movement must use the enemy route, not only the first path", errors)
@@ -239,6 +257,7 @@ def main() -> int:
     print("OK battle visual contract")
     print(f"- map runtime packages: {len(MAP_RUNTIME_PACKAGES)}")
     print("- default battle backdrop: MapRuntimePackage-driven procedural terrain")
+    print("- map style: optional MapRenderPlan/StylePack colors, runtime semantics stay in MapRuntimePackage")
     return 0
 
 

@@ -22,6 +22,8 @@ API 模式下，前端会读取 `/api/sessions/{session_id}/campaign-router` 决
 
 战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
 
+如果后端返回 `map_render_plan_bundle`，前端会读取其中的 `MapStylePack` 调整地形、道路、部署基座、目标和出生点的玩家侧表现色。`ProceduralMapRenderPlan` 只作为分层绘制计划和就绪证据；路线、塔位、目标、出生点等玩法语义仍以 `MapRuntimePackage` 为准。
+
 玩家默认战斗视图使用 MapRuntimePackage 驱动的程序化大画面底座：canvas 会按包内路径、塔位、目标和出生点绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地和世界内废墟 / 补给 / 灯具地标。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；失败的整图候选只保留为审查证据，不进入默认战斗画面。
 
 媒体加载优先读取 atlas manifest：
@@ -95,6 +97,9 @@ http://127.0.0.1:5174/frontend/index.html
 - `game_data/media/frontend_mock/frontend_media_manifest.v0.1.json`
 - `game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json`
 - `examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json`
+- `examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json`
+- `examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json`
 - `game_data/demo/*.json`
 - `content/worldbooks/long_night_lanterns/*.json`
 

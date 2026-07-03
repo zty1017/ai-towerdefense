@@ -1,6 +1,6 @@
 # 任务队列
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
 
@@ -77,6 +77,7 @@ P2：本阶段明确不做
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
 - 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.4 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
+- 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，用于道路、部署基座、目标地基和出生点氛围；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -2730,6 +2731,40 @@ for node_id, plan_id in expected.items():
     assert payload['map_render_plan_bundle']['procedural_map_render_plan']['plan_id'] == plan_id
 PY
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+#### P1-D-08 前端消费 MapRenderPlan / StylePack 表现层
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让前端战斗画面在保持 MapRuntimePackage 为运行时语义事实源的前提下，消费 map_render_plan_bundle / MapStylePack 的表现层信息，驱动道路、塔基、目标和出生点的玩家可见样式。
+```
+
+已落地：
+
+- `frontend/app.js`：新增 `mapRenderPlanBundle()`、`mapStylePack()`、`mapStylePalette()`、`colorFromStyle()`、`rgbaFromStyle()`、`mapRenderPlanHasLayer()`。
+- `frontend/app.js`：`battleNodeVisualProfile()` 会在 `map_style_pack.v0.1` 可用时用 StylePack 调整地形、道路、部署基座、目标和出生点表现色。
+- `frontend/app.js`：道路、路肩、碎石、车辙、方向 cue、部署基座、目标地基和出生点氛围读取 StylePack 派生颜色，缺失时保留原本节点 fallback。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 MapRenderPlan / StylePack 前端消费契约，确保玩家默认画面仍不使用控制图或失败整图。
+- `frontend/README.md`：说明 `MapStylePack` 只管表现层，`MapRuntimePackage` 仍管运行时语义。
+- `examples/worker_task_packs/p1d_frontend_consume_map_render_plan.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片、不修改 schema。
+- StylePack 不允许决定路线、塔位、目标、出生点或碰撞事实。
+- ProceduralMapRenderPlan 只作为前端分层绘制就绪证据，不替代 MapRuntimePackage。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_consume_map_render_plan.v0.1.json
+node --check frontend/app.js
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-consume-map-render-plan python3 tools/frontend/validate_battle_visual_contract.py
 git diff --check
 ```
 

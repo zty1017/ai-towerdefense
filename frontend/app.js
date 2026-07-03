@@ -896,6 +896,46 @@
     return item ? assetUrl(item.url) : "";
   }
 
+  function mapRenderPlanBundle() {
+    return state.data.mapRenderPlanBundle || {};
+  }
+
+  function mapStylePack() {
+    return mapRenderPlanBundle().map_style_pack || {};
+  }
+
+  function mapStylePalette() {
+    return mapStylePack().palette || {};
+  }
+
+  function hexToRgb(hex) {
+    const value = String(hex || "").trim();
+    const match = /^#?([0-9a-fA-F]{6})$/.exec(value);
+    if (!match) return null;
+    const raw = match[1];
+    return {
+      r: parseInt(raw.slice(0, 2), 16),
+      g: parseInt(raw.slice(2, 4), 16),
+      b: parseInt(raw.slice(4, 6), 16),
+    };
+  }
+
+  function colorFromStyle(key, fallback) {
+    const value = mapStylePalette()[key];
+    return hexToRgb(value) ? value : fallback;
+  }
+
+  function rgbaFromStyle(key, alpha, fallback) {
+    const rgb = hexToRgb(mapStylePalette()[key]);
+    if (!rgb) return fallback;
+    return `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+  }
+
+  function mapRenderPlanHasLayer(kind) {
+    const plan = mapRenderPlanBundle().procedural_map_render_plan || {};
+    return (plan.layers || []).some((layer) => layer && layer.kind === kind);
+  }
+
   function allowsDebugMapVisuals() {
     const params = new URLSearchParams(window.location.search);
     return ["mapVisualDebug", "debugMapVisuals", "evidence"].some((key) =>
@@ -2526,7 +2566,54 @@
         glow: "rgba(158,220,255,0.13)",
       },
     };
-    return profiles[nodeId] || profiles.gray_lantern_station;
+    const fallback = profiles[nodeId] || profiles.gray_lantern_station;
+    const pack = mapStylePack();
+    if (!pack || pack.schema_version !== "map_style_pack.v0.1") return fallback;
+    return {
+      ...fallback,
+      soil: [
+        colorFromStyle("terrain_base", fallback.soil[0]),
+        colorFromStyle("terrain_detail", fallback.soil[1]),
+        colorFromStyle("road_base", fallback.soil[2]),
+        colorFromStyle("fog", fallback.soil[3]),
+      ],
+      patchPalette: [
+        rgbaFromStyle("terrain_detail", 0.2, fallback.patchPalette[0]),
+        rgbaFromStyle("road_base", 0.16, fallback.patchPalette[1]),
+        rgbaFromStyle("resource", 0.15, fallback.patchPalette[2]),
+        rgbaFromStyle("hazard", 0.13, fallback.patchPalette[3]),
+      ],
+      glow: rgbaFromStyle("accent", 0.18, fallback.glow),
+      road: {
+        shadow: rgbaFromStyle("hazard", 0.38, "rgba(18,13,10,0.54)"),
+        base: rgbaFromStyle("road_base", 0.86, "rgba(82,62,37,0.86)"),
+        crown: rgbaFromStyle("road_edge", 0.58, "rgba(143,112,64,0.64)"),
+        highlight: rgbaFromStyle("accent", 0.2, "rgba(201,169,103,0.18)"),
+        shoulderDark: rgbaFromStyle("terrain_base", 0.58, "rgba(61,69,46,0.62)"),
+        shoulderSoft: rgbaFromStyle("terrain_detail", 0.42, "rgba(33,41,32,0.46)"),
+        pebbleWarm: rgbaFromStyle("road_edge", 0.24, "rgba(196,164,102,0.24)"),
+        rut: rgbaFromStyle("road_base", 0.28, "rgba(62,45,27,0.24)"),
+        flow: rgbaFromStyle("accent", 0.14, "rgba(255,213,126,0.14)"),
+      },
+      platform: {
+        fillTop: rgbaFromStyle("build_slot", 0.48, "rgba(115,104,68,0.54)"),
+        stroke: rgbaFromStyle("build_slot", 0.34, "rgba(179,153,94,0.18)"),
+        active: rgbaFromStyle("accent", 0.68, "rgba(255,225,161,0.68)"),
+      },
+      objective: {
+        core: colorFromStyle("objective", "#ffd37a"),
+        optional: colorFromStyle("resource", "#9edcff"),
+      },
+      spawn: {
+        glow: colorFromStyle("spawn", "#8f7cff"),
+        stroke: rgbaFromStyle("spawn", 0.36, "rgba(187,166,255,0.36)"),
+      },
+      renderPlanLayersReady:
+        mapRenderPlanHasLayer("road_band") &&
+        mapRenderPlanHasLayer("build_slot_platform") &&
+        mapRenderPlanHasLayer("objective_foundation") &&
+        mapRenderPlanHasLayer("spawn_atmosphere"),
+    };
   }
 
   function terrainFeatureSet() {
@@ -3042,6 +3129,8 @@
 
   function drawPath(ctx) {
     const m = state.battle.metrics;
+    const profile = battleNodeVisualProfile();
+    const road = profile.road || {};
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -3050,19 +3139,19 @@
       if (points.length < 2) continue;
       const roadWidth = Math.max(34, m.tileW * 0.48);
       drawRouteShoulders(ctx, route, points, roadWidth);
-      ctx.strokeStyle = "rgba(18,13,10,0.54)";
+      ctx.strokeStyle = road.shadow || "rgba(18,13,10,0.54)";
       ctx.lineWidth = roadWidth * 1.18;
       traceRoutePath(ctx, points);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(82,62,37,0.86)";
+      ctx.strokeStyle = road.base || "rgba(82,62,37,0.86)";
       ctx.lineWidth = roadWidth;
       traceRoutePath(ctx, points);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(143,112,64,0.64)";
+      ctx.strokeStyle = road.crown || "rgba(143,112,64,0.64)";
       ctx.lineWidth = roadWidth * 0.68;
       traceRoutePath(ctx, points);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(201,169,103,0.18)";
+      ctx.strokeStyle = road.highlight || "rgba(201,169,103,0.18)";
       ctx.lineWidth = Math.max(5, roadWidth * 0.14);
       traceRoutePath(ctx, points);
       ctx.stroke();
@@ -3169,16 +3258,17 @@
 
   function drawRouteShoulders(ctx, route, points, roadWidth) {
     const m = state.battle.metrics;
+    const road = battleNodeVisualProfile().road || {};
     ctx.save();
     ctx.strokeStyle = "rgba(6,7,6,0.42)";
     ctx.lineWidth = roadWidth * 1.7;
     traceRoutePath(ctx, points);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(61,69,46,0.62)";
+    ctx.strokeStyle = road.shoulderDark || "rgba(61,69,46,0.62)";
     ctx.lineWidth = roadWidth * 1.44;
     traceRoutePath(ctx, points);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(33,41,32,0.46)";
+    ctx.strokeStyle = road.shoulderSoft || "rgba(33,41,32,0.46)";
     ctx.lineWidth = roadWidth * 1.28;
     traceRoutePath(ctx, points);
     ctx.stroke();
@@ -3208,6 +3298,7 @@
 
   function drawRoadPebbles(ctx, route, points, roadWidth) {
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`road:${route.route_id || ""}`));
+    const road = battleNodeVisualProfile().road || {};
     ctx.save();
     for (let i = 0; i < points.length - 1; i += 1) {
       const a = points[i];
@@ -3225,7 +3316,7 @@
         const x = a.x + dx * t + nx * offset;
         const y = a.y + dy * t + ny * offset;
         const size = 2.4 + rng() * Math.max(5, roadWidth * 0.1);
-        ctx.fillStyle = rng() > 0.4 ? "rgba(196,164,102,0.24)" : "rgba(53,47,36,0.28)";
+        ctx.fillStyle = rng() > 0.4 ? road.pebbleWarm || "rgba(196,164,102,0.24)" : "rgba(53,47,36,0.28)";
         ctx.beginPath();
         ctx.ellipse(x, y, size, size * 0.42, rng() * Math.PI, 0, Math.PI * 2);
         ctx.fill();
@@ -3236,9 +3327,10 @@
 
   function drawRoadRuts(ctx, route, points, roadWidth) {
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`ruts:${route.route_id || ""}`));
+    const road = battleNodeVisualProfile().road || {};
     ctx.save();
     ctx.lineCap = "round";
-    ctx.strokeStyle = "rgba(62,45,27,0.24)";
+    ctx.strokeStyle = road.rut || "rgba(62,45,27,0.24)";
     ctx.lineWidth = Math.max(2, roadWidth * 0.055);
     for (const offset of [-0.18, 0.16]) {
       ctx.beginPath();
@@ -3288,6 +3380,7 @@
     if (points.length < 2) return;
     const phase = ((state.battle.elapsedMs || 0) / 1400) % 1;
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`flow:${route.route_id || ""}`));
+    const road = battleNodeVisualProfile().road || {};
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -3311,7 +3404,7 @@
         const x = cx + nx * offset;
         const y = cy + ny * offset;
         const size = Math.max(5, roadWidth * 0.11);
-        ctx.strokeStyle = `rgba(255,213,126,${0.1 + 0.06 * Math.sin(phase * Math.PI)})`;
+        ctx.strokeStyle = road.flow || `rgba(255,213,126,${0.1 + 0.06 * Math.sin(phase * Math.PI)})`;
         ctx.lineWidth = Math.max(1.5, roadWidth * 0.032);
         ctx.beginPath();
         ctx.moveTo(x - ux * size * 0.7 - nx * size * 0.25, y - uy * size * 0.7 - ny * size * 0.25);
@@ -3382,13 +3475,14 @@
     ctx.ellipse(p.x, p.y + m.tileH * 0.18, rx * 1.08, ry * 0.78, 0, 0, Math.PI * 2);
     ctx.fill();
     const fill = ctx.createLinearGradient(p.x, p.y - ry, p.x, p.y + ry);
-    fill.addColorStop(0, active ? "rgba(115,104,68,0.54)" : "rgba(75,79,55,0.42)");
+    const platform = battleNodeVisualProfile().platform || {};
+    fill.addColorStop(0, active ? platform.fillTop || "rgba(115,104,68,0.54)" : "rgba(75,79,55,0.42)");
     fill.addColorStop(1, "rgba(31,35,28,0.5)");
     ctx.fillStyle = fill;
     ctx.beginPath();
     ctx.ellipse(p.x, p.y + m.tileH * 0.03, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = active ? "rgba(255,225,161,0.48)" : "rgba(179,153,94,0.18)";
+    ctx.strokeStyle = active ? platform.active || "rgba(255,225,161,0.48)" : platform.stroke || "rgba(179,153,94,0.18)";
     ctx.lineWidth = Math.max(1.3, m.tileW * 0.014);
     ctx.beginPath();
     ctx.ellipse(p.x, p.y + m.tileH * 0.03, rx, ry, 0, 0, Math.PI * 2);
@@ -3462,6 +3556,7 @@
 
   function drawDeploymentBase(ctx, p, m, index, active) {
     const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`slot:${index}`));
+    const platform = battleNodeVisualProfile().platform || {};
     const rx = m.tileW * (0.22 + rng() * 0.035);
     const ry = m.tileH * (0.28 + rng() * 0.04);
     ctx.save();
@@ -3472,7 +3567,7 @@
     ctx.fill();
 
     const base = ctx.createLinearGradient(p.x, p.y - ry, p.x, p.y + ry);
-    base.addColorStop(0, "rgba(126,111,78,0.72)");
+    base.addColorStop(0, platform.fillTop || "rgba(126,111,78,0.72)");
     base.addColorStop(0.54, "rgba(74,69,52,0.76)");
     base.addColorStop(1, "rgba(35,34,28,0.88)");
     ctx.fillStyle = base;
@@ -3480,7 +3575,7 @@
     ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = active ? "rgba(255,225,161,0.68)" : "rgba(213,184,118,0.28)";
+    ctx.strokeStyle = active ? platform.active || "rgba(255,225,161,0.68)" : platform.stroke || "rgba(213,184,118,0.28)";
     ctx.lineWidth = Math.max(1.4, m.tileW * 0.015);
     ctx.beginPath();
     ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
@@ -3655,7 +3750,8 @@
 
   function drawTargetFoundation(ctx, x, y, kind) {
     const m = state.battle.metrics;
-    const gold = kind === "core" ? "#ffd37a" : "#9edcff";
+    const objective = battleNodeVisualProfile().objective || {};
+    const gold = kind === "core" ? objective.core || "#ffd37a" : objective.optional || "#9edcff";
     drawObjectiveDefensiveZone(ctx, x, y, kind);
     drawGroundGlow(ctx, x, y, gold, kind === "core" ? 0.2 : 0.14, kind === "core" ? 72 : 52);
     ctx.save();
@@ -3721,14 +3817,15 @@
 
   function drawSpawnRift(ctx, x, y, index) {
     const m = state.battle.metrics;
+    const spawn = battleNodeVisualProfile().spawn || {};
     const phase = (state.battle.elapsedMs || 0) / 900 + index * 1.7;
-    drawGroundGlow(ctx, x, y, "#8f7cff", 0.16, Math.max(58, m.tileW * 0.58));
+    drawGroundGlow(ctx, x, y, spawn.glow || "#8f7cff", 0.16, Math.max(58, m.tileW * 0.58));
     ctx.save();
     ctx.fillStyle = "rgba(15,10,24,0.72)";
     ctx.beginPath();
     ctx.ellipse(x, y + m.tileH * 0.04, m.tileW * 0.28, m.tileH * 0.2, -0.08, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "rgba(187,166,255,0.36)";
+    ctx.strokeStyle = spawn.stroke || "rgba(187,166,255,0.36)";
     ctx.lineWidth = Math.max(1.4, m.tileW * 0.013);
     ctx.beginPath();
     ctx.ellipse(x, y, m.tileW * 0.31, m.tileH * 0.24, -0.08, 0, Math.PI * 2);
