@@ -22,7 +22,7 @@ API 模式下，前端会读取 `/api/sessions/{session_id}/campaign-router` 决
 
 战斗地图运行时优先消费后端返回的 `map_runtime_package`，用其中的路径、塔位、目标、出生点和视觉层引用来驱动画面；旧 `battle_config` 只作为兼容数据。
 
-如果后端返回 `map_render_plan_bundle`，前端会读取其中的 `MapStylePack` 调整地形、道路、部署基座、目标和出生点的玩家侧表现色。`ProceduralMapRenderPlan` 只作为分层绘制计划和就绪证据；路线、塔位、目标、出生点等玩法语义仍以 `MapRuntimePackage` 为准。
+如果后端返回 `map_render_plan_bundle`，前端会读取其中的 `MapStylePack` 调整地形、道路、部署基座、目标和出生点的玩家侧表现色，也会读取 `ProceduralMapRenderPlan` 中的表现层几何参数，例如道路宽度、路肩宽度和部署基座 footprint。路线、塔位、目标、出生点等玩法语义仍以 `MapRuntimePackage` 为准，前端不得从 RenderPlan 或图片反推这些事实。
 
 玩家默认战斗视图使用 MapRuntimePackage 驱动的程序化大画面底座：canvas 会按包内路径、塔位、目标和出生点绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地和世界内废墟 / 补给 / 灯具地标。`battle_control_sketch` 和 `battle_reference_board` 不得作为默认玩家底图；失败的整图候选只保留为审查证据，不进入默认战斗画面。
 
@@ -42,7 +42,7 @@ python3 tools/frontend/validate_battle_visual_contract.py
 python3 tools/frontend/validate_campaign_router_frontend_contract.py
 ```
 
-这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、失败整图被发布、程序化底座入口缺失、战斗画布被压成小面板，以及 API 模式退回固定首战节点。
+这些检查不会替代真实截图，但会阻止控制图进入玩家默认体验、失败整图被发布、程序化底座入口缺失、战斗画布被压成小面板、RenderPlan 表现参数接线丢失，以及 API 模式退回固定首战节点。
 
 浏览器视觉烟测在具备 Chromium 兼容浏览器的环境中运行：
 

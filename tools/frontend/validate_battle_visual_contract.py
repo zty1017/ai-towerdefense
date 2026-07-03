@@ -77,6 +77,8 @@ def validate_app_contract(errors: list[str]) -> None:
     spawn = js_section(app, "spawnEnemies", "updateEnemies")
     update_enemies = js_section(app, "updateEnemies", "updateDefenses")
     deploy = js_section(app, "drawDeployHints", "drawDeploymentBase")
+    build_terrace = js_section(app, "drawBuildableTerrace", "drawDeployHints")
+    deploy_base = js_section(app, "drawDeploymentBase", "suggestedSockets")
     spawn_markers = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
 
     for name in (
@@ -101,6 +103,14 @@ def validate_app_contract(errors: list[str]) -> None:
         "drawTargetFoundation",
         "drawSpawnRift",
         "mapRenderPlanBundle",
+        "mapRenderPlan",
+        "mapRenderPlanLayer",
+        "mapRenderPlanOperation",
+        "renderGeometryNumber",
+        "routeRoadWidthCells",
+        "routeShoulderWidthScale",
+        "buildSlotPlatformOperation",
+        "slotFootprintScale",
         "mapStylePack",
         "mapStylePalette",
         "colorFromStyle",
@@ -126,11 +136,18 @@ def validate_app_contract(errors: list[str]) -> None:
     require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
     require("const road = profile.road || {}" in path, "drawPath must consume map style road colors when available", errors)
     require("road.base" in path and "road.crown" in path, "drawPath must map StylePack road colors onto player roads", errors)
+    require("routeRoadWidthCells(route)" in path, "drawPath must consume RenderPlan road width geometry", errors)
+    require('"width_cells"' in app, "frontend must read road_band geometry.width_cells from RenderPlan", errors)
+    require("routeShoulderWidthScale(route)" in app, "route shoulders must consume RenderPlan road_edge shoulder geometry", errors)
+    require('"shoulder_width_cells"' in app, "frontend must read road_edge geometry.shoulder_width_cells from RenderPlan", errors)
     require("drawSlotAccessTrails(ctx)" in app, "battle view must visually connect deployment bases to runtime roads", errors)
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawObjectiveDefensiveZone(ctx" in app, "battle view must ground objectives in a defense zone", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
     require("drawSpawnRift" in spawn_markers, "spawn markers must render ambient entry effects, not arrows", errors)
+    require("slotFootprintScale(slot" in build_terrace, "buildable terraces must consume RenderPlan slot footprint", errors)
+    require("slotFootprintScale(slot" in deploy_base, "deployment bases must consume RenderPlan slot footprint", errors)
+    require("geometry.footprint" in app and '"width_cells"' in app and '"height_cells"' in app, "frontend must read build_slot_platform footprint geometry from RenderPlan", errors)
     require('schema_version !== "map_style_pack.v0.1"' in profile, "battle visual profile must gate StylePack schema version", errors)
     require("renderPlanLayersReady" in profile, "battle visual profile must expose render plan layer readiness", errors)
     require('mapRenderPlanHasLayer("road_band")' in profile, "battle visual profile must require road_band layer readiness", errors)
@@ -257,7 +274,7 @@ def main() -> int:
     print("OK battle visual contract")
     print(f"- map runtime packages: {len(MAP_RUNTIME_PACKAGES)}")
     print("- default battle backdrop: MapRuntimePackage-driven procedural terrain")
-    print("- map style: optional MapRenderPlan/StylePack colors, runtime semantics stay in MapRuntimePackage")
+    print("- map style: optional MapRenderPlan geometry and StylePack colors, runtime semantics stay in MapRuntimePackage")
     return 0
 
 

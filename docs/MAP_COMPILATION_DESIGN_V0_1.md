@@ -351,4 +351,4 @@ MapRuntimePackage
 - `tools/asset_graph/validate_procedural_map_render_plan.py`
 - `tools/asset_graph/validate_semantic_visual_consistency_report.py`
 
-当前实现仍不生成图片、不调用 provider、不替换前端渲染。它的意义是先把地图编译从“整图 prompt 尝试”推进到可验证的分层合同：路径、塔位、目标和出生点来自 `MapRuntimePackage`；材质、平台、氛围和可读性约束来自 `MapStylePack`；`SemanticVisualConsistencyReport` 负责阻断 debug/reference 层进入玩家默认视图。
+当前实现仍不生成图片、不调用 provider，也不让整图候选替换前端默认战场。前端已经开始消费这条分层合同：路径、塔位、目标和出生点来自 `MapRuntimePackage`；材质、平台、氛围和可读性约束来自 `MapStylePack`；道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数来自 `ProceduralMapRenderPlan`；`SemanticVisualConsistencyReport` 负责阻断 debug/reference 层进入玩家默认视图。

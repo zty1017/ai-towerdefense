@@ -77,7 +77,7 @@ P2：本阶段明确不做
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
 - 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.4 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
-- 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，用于道路、部署基座、目标地基和出生点氛围；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
+- 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -2765,6 +2765,40 @@ git diff --check
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_consume_map_render_plan.v0.1.json
 node --check frontend/app.js
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-consume-map-render-plan python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
+```
+
+#### P1-D-09 前端消费 RenderPlan 层几何参数
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让前端战斗画面不只读取 MapStylePack 颜色，也读取 ProceduralMapRenderPlan 的非语义表现层几何参数，例如 road_band.width_cells、road_edge.shoulder_width_cells 和 build_slot_platform.footprint。
+```
+
+已落地：
+
+- `frontend/app.js`：新增 `mapRenderPlan()`、`mapRenderPlanLayer()`、`mapRenderPlanOperation()`、`renderGeometryNumber()` 等 RenderPlan adapter。
+- `frontend/app.js`：道路宽度读取 `road_band.geometry.width_cells`，路肩厚度读取 `road_edge.geometry.shoulder_width_cells`。
+- `frontend/app.js`：部署台地和部署底座读取 `build_slot_platform.geometry.footprint.width_cells / height_cells`。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 RenderPlan geometry 前端消费契约，避免后续只保留 StylePack 调色。
+- `frontend/README.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`、`docs/MAP_COMPILATION_DESIGN_V0_1.md`：同步说明 RenderPlan 已进入玩家侧表现层，但不拥有玩法语义。
+- `examples/worker_task_packs/p1d_frontend_render_plan_layer_params.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片、不修改 schema。
+- RenderPlan 不提供路线、塔位、目标或出生点事实；这些事实仍只来自 `MapRuntimePackage`。
+- 前端只读取表现层 geometry，不从 RenderPlan 的重复 waypoints / position 反推 runtime 语义。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_render_plan_layer_params.v0.1.json
+node --check frontend/app.js
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-render-plan-layer-params python3 tools/frontend/validate_battle_visual_contract.py
 git diff --check
 ```
 
