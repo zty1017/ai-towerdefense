@@ -1,0 +1,85 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-21-provider-adapter-image-runner",
+  "title": "Provider adapter image runner 图片候选执行边界",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-adapter-image-runner",
+  "worktree": "/tmp/ai-td-task-provider-adapter-image-runner",
+  "objective": "为 provider adapter runner 增加显式 image live 模式：在 ProviderExecutionAuthorization 之后调用 image provider，下载成本地 review-only artifact ref，并只输出 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope；默认 fixture 模式必须保持不读 .env、不联网、不创建候选 artifact。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "tools/media/image_provider.py",
+    "shared/schemas/generation_executor_run_request.v0.1.schema.json",
+    "shared/schemas/provider_execution_authorization.v0.1.schema.json",
+    "shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json",
+    "shared/schemas/provider_output_envelope.v0.1.schema.json",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "tools/provider_adapter/run_provider_adapter.py",
+    "tools/demo/export_evidence.py",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/provider_adapter_runs/",
+    "examples/provider_authorizations/",
+    "examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/media/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json",
+    "python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json",
+    "python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json",
+    "python3 tools/provider_adapter/run_provider_adapter.py --executor-request examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json --authorization examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json --receipt-output /tmp/p1b_provider_adapter_image_runner.receipt.json --envelope-output /tmp/p1b_provider_adapter_image_runner.envelope.json --created-at 2026-07-03T00:00:00Z",
+    "python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json",
+    "python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_runner python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py tools/media/image_provider.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_image_runner_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "验收默认只跑 fixture dry-run，不调用真实 provider。",
+    "真实 image live smoke 只能在额外显式授权下运行，例如 --mode image --live --image-profile agnes_image_flash --prompt-file <sanitized_prompt> --artifact-output <local_png> --load-dotenv .env。",
+    "live image 结果仍是 review-only ProviderOutputEnvelope，本任务不做 staging / promotion 自动串接。"
+  ]
+}

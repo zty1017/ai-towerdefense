@@ -895,7 +895,7 @@ git diff --check
 - Provider adapter runner 是工具层执行入口，不是后端自动后台执行器。
 - 默认 `fixture` 模式是 deterministic dry-run：不读取 `.env`、不调用 provider、不创建候选 artifact，只输出可校验的 `ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。
 - 显式 `--mode llm_text --live` 才允许调用 `tools/llm/adapter.py` 中的 LLM profile；live 输出仍只能保存 digest、计数和 redacted summary refs，不保存 prompt 正文或 provider 响应正文。
-- 图片/视频 provider adapter、媒体下载、后处理和 media gate 不纳入本任务，应后续单独推进。
+- 图片 provider adapter 已由 P1-B-21 单独推进；视频 provider adapter、媒体后处理自动串接和 media gate 仍应后续单独推进。
 
 验收：
 
@@ -907,6 +907,48 @@ python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provid
 python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
 python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_runner_evidence
+git diff --check
+```
+
+### P1-B-21 Provider adapter image runner 图片候选执行边界
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+在 ProviderExecutionAuthorization 之后，为 image provider 增加显式 live 工具层边界：调用图像 provider、下载成本地 review-only artifact ref，并只输出 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope。
+```
+
+已落地：
+
+- `tools/provider_adapter/run_provider_adapter.py`：新增 `--mode image --live`、`--image-profile`、`--size`；默认 fixture 行为保持不联网、不读取 `.env`。
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json`
+- `examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json`
+- `examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 image runner request / authorization / dry-run / receipt / envelope 校验和 `provider_adapter_image_runner` evidence 摘要。
+
+当前结论：
+
+- 默认 `fixture` dry-run 仍不读取 `.env`、不调用 provider、不创建候选 artifact。
+- 显式 `--mode image --live` 才允许调用 `tools/media/image_provider.py` 中的 image profile。
+- live image 只允许保存 prompt digest、image digest、byte size、本地 artifact ref 和 redacted summary；不得保存 prompt 正文、provider 原始响应、临时 URL 或 secret。
+- image runner 产物仍是 review-only；后续必须进入 ProviderArtifactStagingManifest、media gate、semantic gate、human review 和 ProviderArtifactPromotionReport，不能直接进入 runtime package、published media 或世界状态。
+- 视频 provider adapter、图生视频帧、后处理自动串接、media gate 自动执行和后端自动后台 executor 仍未完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json
+python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json
+python3 tools/provider_adapter/run_provider_adapter.py --executor-request examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json --authorization examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json --receipt-output /tmp/p1b_provider_adapter_image_runner.receipt.json --envelope-output /tmp/p1b_provider_adapter_image_runner.envelope.json --created-at 2026-07-03T00:00:00Z
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_runner python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py tools/media/image_provider.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_image_runner_evidence
 git diff --check
 ```
 

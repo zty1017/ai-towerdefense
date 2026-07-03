@@ -20,10 +20,13 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS_DEV_DIR = ROOT / "tools" / "dev"
 LLM_DIR = ROOT / "tools" / "llm"
+MEDIA_DIR = ROOT / "tools" / "media"
 if str(TOOLS_DEV_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DEV_DIR))
 if str(LLM_DIR) not in sys.path:
     sys.path.insert(0, str(LLM_DIR))
+if str(MEDIA_DIR) not in sys.path:
+    sys.path.insert(0, str(MEDIA_DIR))
 
 from validate_generation_executor_run_request import (  # noqa: E402
     validate_generation_executor_run_request,
@@ -66,7 +69,11 @@ def sha256_file(path: Path) -> str:
 
 
 def repo_rel(path: Path) -> str:
-    return path.resolve().relative_to(ROOT).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
 
 
 def now_iso() -> str:
@@ -126,15 +133,35 @@ def result_kind_from_request(request: dict[str, Any]) -> str:
     return "mixed_candidate"
 
 
-def artifact_ref(path: Path, *, artifact_id: str, kind: str) -> dict[str, Any]:
+def content_type_for_path(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        return "application/json"
+    if suffix == ".png":
+        return "image/png"
+    if suffix in {".jpg", ".jpeg"}:
+        return "image/jpeg"
+    if suffix == ".webp":
+        return "image/webp"
+    return "application/octet-stream"
+
+
+def artifact_ref(
+    path: Path,
+    *,
+    artifact_id: str,
+    kind: str,
+    content_type: str | None = None,
+    media_layer: str = "processed_media",
+) -> dict[str, Any]:
     return {
         "artifact_id": artifact_id,
         "kind": kind,
         "path": repo_rel(path),
         "sha256": sha256_file(path),
         "byte_size": path.stat().st_size,
-        "content_type": "application/json",
-        "media_layer": "processed_media",
+        "content_type": content_type or content_type_for_path(path),
+        "media_layer": media_layer,
     }
 
 
@@ -525,6 +552,106 @@ def run_live_llm(
     return receipt, envelope
 
 
+def run_live_image(
+    request: dict[str, Any],
+    authorization: dict[str, Any],
+    *,
+    profile_name: str,
+    prompt_path: Path,
+    artifact_output: Path,
+    created_at: str,
+    size: str | None,
+    timeout: int,
+    load_dotenv_path: Path | None,
+    note: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    from image_provider import (  # noqa: WPS433
+        PROFILES,
+        download_image,
+        extract_image_url,
+        generate_image,
+        load_dotenv,
+        parse_size,
+    )
+
+    request_source, auth_source, auth_ref = require_input_alignment(request, authorization)
+    if profile_name not in PROFILES:
+        raise ValueError(f"unknown image profile: {profile_name}")
+    authorized_profile = str(auth_source.get("provider_profile") or "")
+    if authorized_profile != profile_name:
+        raise ValueError(
+            "image profile must match ProviderExecutionAuthorization.source.provider_profile"
+        )
+    if load_dotenv_path is not None:
+        load_dotenv(load_dotenv_path)
+    if size is not None:
+        parse_size(size)
+    prompt = prompt_path.read_text(encoding="utf-8")
+    request_digest = sha256_text(prompt)
+    try:
+        response = generate_image(
+            PROFILES[profile_name],
+            prompt,
+            size=size,
+            timeout=timeout,
+        )
+    except Exception as exc:  # noqa: BLE001 - sanitize provider errors at CLI boundary.
+        raise RuntimeError(
+            f"image provider call failed before local artifact creation: {type(exc).__name__}"
+        ) from None
+    try:
+        image_url = extract_image_url(response)
+        download_image(image_url, artifact_output, timeout=timeout)
+    except Exception as exc:  # noqa: BLE001 - do not expose temporary URLs or response bodies.
+        raise RuntimeError(
+            f"image provider artifact download failed before envelope creation: {type(exc).__name__}"
+        ) from None
+    result_digest = sha256_file(artifact_output)
+    output_ref = artifact_ref(
+        artifact_output,
+        artifact_id=f"image_candidate_{auth_ref}",
+        kind="image_candidate",
+        media_layer="processed_media",
+    )
+    receipt = build_receipt(
+        request_source=request_source,
+        auth_source=auth_source,
+        authorization_ref=auth_ref,
+        status="performed_redacted_live",
+        mode="live_redacted_provider_call",
+        performed=True,
+        created_at=created_at,
+        worker_id="provider_adapter_runner",
+        note=note,
+        request_digest=request_digest,
+        result_digest=result_digest,
+        finish_reason="downloaded_local_ref",
+        redacted_summary=(
+            "Live image provider call completed; only digest and a local image artifact ref were retained."
+        ),
+    )
+    envelope = build_envelope(
+        request=request,
+        request_source=request_source,
+        auth_source=auth_source,
+        authorization_ref=auth_ref,
+        created_at=created_at,
+        provider_call_status="performed_redacted",
+        provider_performed=True,
+        authorization_granted=True,
+        result_status="candidate_ready_for_validation",
+        result_summary=(
+            "Live image provider call completed and downloaded one local review-only image artifact."
+        ),
+        result_kind="image_candidate",
+        result_digest=result_digest,
+        finish_reason="downloaded_local_ref",
+        output_refs=[output_ref],
+        request_digest=request_digest,
+    )
+    return receipt, envelope
+
+
 def validate_outputs(receipt: dict[str, Any], envelope: dict[str, Any]) -> None:
     validate_or_raise(
         "ProviderAdapterExecutionReceipt",
@@ -547,13 +674,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--note", default=None)
     parser.add_argument(
         "--mode",
-        choices=("fixture", "llm_text"),
+        choices=("fixture", "llm_text", "image"),
         default="fixture",
-        help="fixture is offline dry-run; llm_text requires --live.",
+        help="fixture is offline dry-run; llm_text/image require --live.",
     )
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--llm-profile", default="ark_deepseek_v4_flash")
+    parser.add_argument("--image-profile", default="agnes_image_flash")
     parser.add_argument("--prompt-file", type=Path)
+    parser.add_argument("--size", default=None)
     parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument(
@@ -579,7 +708,7 @@ def main() -> int:
             created_at=created_at,
             note=args.note,
         )
-    else:
+    elif args.mode == "llm_text":
         if not args.live:
             raise ValueError("--mode llm_text requires explicit --live")
         if args.prompt_file is None:
@@ -594,6 +723,25 @@ def main() -> int:
             artifact_output=args.artifact_output,
             created_at=created_at,
             max_tokens=args.max_tokens,
+            timeout=args.timeout,
+            load_dotenv_path=args.load_dotenv,
+            note=args.note,
+        )
+    else:
+        if not args.live:
+            raise ValueError("--mode image requires explicit --live")
+        if args.prompt_file is None:
+            raise ValueError("--prompt-file is required for --mode image")
+        if args.artifact_output is None:
+            raise ValueError("--artifact-output is required for --mode image")
+        receipt, envelope = run_live_image(
+            request,
+            authorization,
+            profile_name=args.image_profile,
+            prompt_path=args.prompt_file,
+            artifact_output=args.artifact_output,
+            created_at=created_at,
+            size=args.size,
             timeout=args.timeout,
             load_dotenv_path=args.load_dotenv,
             note=args.note,
