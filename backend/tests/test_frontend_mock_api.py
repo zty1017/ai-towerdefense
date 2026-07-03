@@ -20,6 +20,13 @@ from run_provider_adapter import build_dry_run_artifacts  # noqa: E402
 from validate_provider_adapter_runner_handoff_outbox import (  # noqa: E402
     validate_provider_adapter_runner_handoff_outbox,
 )
+from backend.app.services.generation_scheduler_artifact_ledger_builders import (  # noqa: E402
+    build_artifact_ledger_payload,
+    compact_generation_artifact_ledger,
+    compact_provider_artifact_promotion_report,
+    compact_provider_artifact_staging,
+    compact_provider_output_envelope,
+)
 from backend.app.services.generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff_outbox,
     provider_runner_outbox_safety,
@@ -62,6 +69,83 @@ def _load_json(path: Path):
 
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
+
+
+def test_generation_artifact_ledger_builders_compact_provider_artifacts():
+    envelope = _load_json(
+        _ROOT
+        / "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_staging.source_envelope.json"
+    )
+    staging = _load_json(
+        _ROOT
+        / "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_staging.example.json"
+    )
+    promotion = _load_json(
+        _ROOT
+        / "examples/provider_artifact_staging/"
+        "p1b_provider_artifact_promotion_report.example.json"
+    )
+
+    envelope_compact = compact_provider_output_envelope(envelope)
+    assert envelope_compact["envelope_id"] == "pout_performed_stage05_map_visual_001"
+    assert envelope_compact["provider_call"]["performed"] is True
+    assert envelope_compact["artifact_manifest"]["output_ref_count"] == 1
+    assert envelope_compact["activation_gate"]["activation_allowed"] is False
+
+    staging_compact = compact_provider_artifact_staging(staging)
+    assert staging_compact["manifest_id"] == "pstaging_stage05_map_visual_001"
+    assert staging_compact["staged_artifact_count"] == 1
+    assert staging_compact["gate_statuses"]["schema_gate"] == "passed"
+    assert staging_compact["promotion_gate"]["promotion_allowed"] is False
+
+    promotion_compact = compact_provider_artifact_promotion_report(promotion)
+    assert promotion_compact["report_id"] == "ppromo_stage05_map_visual_001"
+    assert promotion_compact["promotion_decision"] == "blocked_review_required"
+    assert promotion_compact["promotion_allowed"] is False
+    assert promotion_compact["gate_statuses"]["media_gate"] == "not_run"
+    assert promotion_compact["safety_summary"]["stores_sensitive_value"] is False
+
+
+def test_generation_artifact_ledger_builders_keep_review_only_summary_contract():
+    compact = {
+        "provider_call": {"performed": True},
+        "activation_gate": {"activation_allowed": False},
+        "promotion_gate": {"promotion_allowed": False},
+    }
+    entry = build_artifact_ledger_payload(
+        session_id="session_test",
+        artifact_kind="provider_output_envelope",
+        source_id="pout_test",
+        status="recorded_review_only",
+        compact=compact,
+        ts="2026-07-03T00:00:00Z",
+        latest_run={"run_id": "gsrun_test"},
+        schedule_item_id="sched_test",
+        worker_id="worker-test",
+        note="ledger builder test",
+    )
+
+    assert entry["ledger_id"] == "gled_session_test_provider_output_envelope_pout_test"
+    assert entry["provider_call_performed_by_this_request"] is False
+    assert entry["world_mutation_performed_by_this_request"] is False
+    assert entry["activation_allowed_now"] is False
+    assert entry["ledger_write_policy"] == {
+        "mode": "fixture_backed_review_only",
+        "reads_env": False,
+        "calls_provider": False,
+        "stores_raw_prompt": False,
+        "stores_provider_response": False,
+        "writes_world_state": False,
+    }
+
+    ledger = compact_generation_artifact_ledger([entry])
+    assert ledger["summary"]["item_count"] == 1
+    assert ledger["summary"]["recorded_provider_call_count"] == 1
+    assert ledger["summary"]["provider_call_count_by_this_request"] == 0
+    assert ledger["summary"]["world_mutation_count_by_this_request"] == 0
+    assert ledger["summary"]["promotion_allowed_count"] == 0
 
 
 def test_generation_scheduler_run_queue_builders_keep_queue_contract():

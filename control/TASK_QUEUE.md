@@ -1710,6 +1710,39 @@ rg -n "generation_scheduler_run_queue_builders|build_generation_schedule_buffer|
 git diff --check
 ```
 
+### P1-B-44 Refactor artifact ledger builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 ProviderOutputEnvelope compact、ProviderArtifactStaging compact、ProviderArtifactPromotionReport compact、artifact ledger entry payload、artifact ledger summary 和 compact ledger view 等纯 dict 构造/摘要函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_artifact_ledger_builders.py`。
+- `generation_scheduler_service.py` 继续负责 DB、ledger 查询 / upsert、queue 状态和 API 编排；provider artifact compact 与 ledger entry / summary builder 改由独立模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 provider artifact compact 与 ledger summary 安全合同测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_artifact_ledger_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 artifact ledger 的无副作用摘要逻辑从 scheduler service 中分离。
+- 新模块只处理纯 dict compact、ledger entry payload 和 summary，不读 fixture、不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续可继续拆分 provider request / authorization / receipt payload builders，或 artifact ledger repository 读写层。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_artifact_ledger_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_artifact_ledger_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_artifact_ledger_builders|compact_provider_output_envelope|compact_provider_artifact_staging|compact_provider_artifact_promotion_report|build_artifact_ledger_payload|compact_generation_artifact_ledger" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
