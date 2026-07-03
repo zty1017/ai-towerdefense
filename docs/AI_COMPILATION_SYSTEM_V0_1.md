@@ -615,23 +615,30 @@ LLM 可以参与审查和建议修复，但最终 gate 应尽量由确定性 Sch
 
 ### 10.1 Latency Class
 
-冻结以下延迟等级：
+字段级事实源是 `shared/schemas/generation_schedule_plan.v0.1.schema.json`。当前 `GenerationSchedulePlan v0.1` 只允许以下 `latency_class`：
 
 ```text
 sync_blocking
-async_visible
 background_prefetch
-batch_offline
+background
+lazy
 fallback_static
 ```
 
 说明：
 
 - `sync_blocking`：必须立刻可用，否则玩家无法继续。应只读取 locked / cached / fallback。
-- `async_visible`：玩家知道它在生成，可以等待或做别的事。例如现场试作倒计时。
 - `background_prefetch`：玩家尚未到达，但系统预测可能会用，提前生成。
-- `batch_offline`：开发期或闲时生成，例如地图模板、美术包、视频帧、认证关卡池。
+- `background`：体验增强型生成或慢生成，不阻塞当前玩法。
+- `lazy`：低优先级修复或补美术，只在空闲窗口处理。
 - `fallback_static`：实时生成失败时使用的已锁定兜底内容。
+
+概念层可以讨论“玩家可见倒计时”或“开发期批处理”，但它们不是 v0.1 schema 的新枚举：
+
+| 概念口径 | v0.1 字段映射 |
+| --- | --- |
+| 玩家可见倒计时 / 现场试作 | 通常仍使用 `background_prefetch` 或 `background`，并由 gameplay / quest / delivery state 表达玩家可见进度。不得新增玩家可见型调度枚举绕过 schema。 |
+| 开发期批处理 / 离线素材生产 | 如果进入 `GenerationSchedulePlan`，使用 `background` 或 `lazy`；若只是开发者工具任务，则由 worker task pack / provider runner / evidence 记录，不伪装成运行时调度项。 |
 
 ### 10.2 CompileRequest 调度字段
 
@@ -809,7 +816,7 @@ MediaAtlasManifest v0.1 + entity spritesheet atlas
   -> ContextPackage
   -> 编译一个临时样品 CGOP
   -> 校验通过
-  -> 战斗中 async_visible 倒计时送达
+  -> 战斗中以玩家可见倒计时或剧情投送状态送达
   -> 战后生成 WorldStateDelta v0.1，并以 WorldStateDeltaTransaction 语义提交
   -> 提交 RunWorldState
   -> 返回大地图时看到世界状态变化
@@ -817,7 +824,7 @@ MediaAtlasManifest v0.1 + entity spritesheet atlas
 
 地图和视频等重资产：
 
-- 开发期 `batch_offline`。
+- 开发期或闲时批处理；若进入 `GenerationSchedulePlan v0.1`，字段仍使用 `background` / `lazy`。
 - 或章节开始时 `background_prefetch`。
 - 不在战斗点击瞬间阻塞生成。
 
@@ -854,7 +861,7 @@ v0.1 不做：
 
 1. `WorldStateDelta v0.1` 的事务 metadata / 映射说明已落到 `WorldStateDeltaTransaction v0.1`；当前已有首战样例和 stage01-stage07 事务链，不替换现有 delta schema。
 2. Research Job、battle settlement evidence 与 frontend mock pack 已先行携带 `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1` 原生快照；当前已纳入 `CoreArtifactAlignmentReport v0.1` 的 review pack 已完成核心对象边界收敛。下一步新增 review pack、真实 provider 产物或 runtime package 时，必须继续对齐到核心对象字段、core refs 或显式 not-applicable 边界，并统一机器可读 validation report。
-3. 实现 live campaign router 与 Generation Scheduler 后台执行器，让预生成、缓存和 fallback 真正进入游玩流程。
+3. 在已落地的 Campaign Router v0.1 dry-run 预取胶水之上，实现正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求缓存和 activation / promotion gate，让预生成、缓存和 fallback 真正进入游玩流程。
 4. 把当前确定性 frame sequence 替换为真实图生视频关键帧，并继续走已落地的实体 spritesheet atlas 与 LoopContinuityReport 门禁。
 5. 推进 AI 生成 painted map 的受控图像管线，但仍以 `MapRuntimePackage` 的路径、塔位、碰撞和目标为运行时事实源。
 
