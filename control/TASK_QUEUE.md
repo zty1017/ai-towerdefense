@@ -1844,6 +1844,39 @@ rg -n "generation_scheduler_run_queue_repository|insert_generation_schedule_run|
 git diff --check
 ```
 
+### P1-B-48 Refactor scheduler worker state repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_schedule_worker_cache 与 provider_logs 的 SQLite upsert、load、insert 和 guard log 过滤函数抽到独立 repository 模块；保持 API 行为兼容，不改变 run / queue / ledger payload、DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_worker_state_repository.py`。
+- `generation_scheduler_service.py` 继续负责 worker cache payload 构造、live executor guard payload 构造、状态转移和 API 编排；worker cache 与 provider guard log 的 SQLite 读写改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 worker cache upsert / run filter / created_at 保留，以及 provider guard log schema / run filter 测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_worker_state_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 worker cache 与 provider guard log 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_schedule_worker_cache` 与 `provider_logs` 两张表读写和过滤，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 provider review import / staging import repository，或转向正式后台 executor 与 MapRuntimePackage / 前端体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_worker_state_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_worker_state_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_worker_state_repository|upsert_worker_cache_payload|load_worker_cache_items|insert_provider_guard_log|load_provider_guard_logs" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

@@ -15,7 +15,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from ..db import db_cursor, now_iso
+from ..db import now_iso
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -108,6 +108,12 @@ from .generation_scheduler_run_queue_repository import (  # noqa: E402
     load_next_generation_item_row_by_status as _load_next_generation_item_row_by_status,
     update_generation_queue_item as _update_generation_queue_item,
 )
+from .generation_scheduler_worker_state_repository import (  # noqa: E402
+    insert_provider_guard_log as _insert_provider_guard_log_base,
+    load_provider_guard_logs as _load_provider_guard_logs_base,
+    load_worker_cache_items as _load_worker_cache_items_base,
+    upsert_worker_cache_payload as _upsert_worker_cache_payload,
+)
 from .generation_scheduler_run_queue_builders import (  # noqa: E402
     build_generation_queue_items_from_run as _build_generation_queue_items_from_run,
     build_generation_schedule_buffer as _build_generation_schedule_buffer,
@@ -172,10 +178,6 @@ def _provider_artifact_fixture_metadata(
     )
 
 
-def _dump_payload(payload: dict[str, Any]) -> str:
-    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
-
-
 def _rel(path: Path) -> str:
     return path.relative_to(_REPO_ROOT).as_posix()
 
@@ -235,36 +237,7 @@ def _load_generation_queue_item_row(
 
 def _upsert_worker_cache_from_queue_item(payload: dict[str, Any], ts: str) -> dict[str, Any]:
     cache_payload = _build_worker_cache_payload(payload, ts)
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT created_at FROM generation_schedule_worker_cache WHERE cache_id = ?",
-            (cache_payload["cache_id"],),
-        )
-        existing = cur.fetchone()
-        created_at = (
-            str(existing["created_at"])
-            if existing is not None and existing.get("created_at")
-            else ts
-        )
-        cache_payload["created_at"] = created_at
-        cur.execute(
-            "INSERT INTO generation_schedule_worker_cache "
-            "(cache_id, run_id, session_id, schedule_item_id, status, payload, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(cache_id) DO UPDATE SET "
-            "status = excluded.status, payload = excluded.payload, updated_at = excluded.updated_at",
-            (
-                cache_payload["cache_id"],
-                cache_payload["run_id"],
-                cache_payload["session_id"],
-                cache_payload["schedule_item_id"],
-                str(cache_payload["status"]),
-                _dump_payload(cache_payload),
-                cache_payload["created_at"],
-                cache_payload["updated_at"],
-            ),
-        )
-    return cache_payload
+    return _upsert_worker_cache_payload(cache_payload, ts)
 
 
 def _load_worker_cache_items(
@@ -275,19 +248,7 @@ def _load_worker_cache_items(
         if latest is None:
             return []
         run_id = str(latest.get("run_id", ""))
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT payload FROM generation_schedule_worker_cache "
-            "WHERE session_id = ? AND run_id = ? ORDER BY id ASC",
-            (session_id, run_id),
-        )
-        rows = cur.fetchall()
-    items: list[dict[str, Any]] = []
-    for row in rows:
-        payload = row.get("payload") if isinstance(row, dict) else None
-        if payload:
-            items.append(json.loads(payload))
-    return items
+    return _load_worker_cache_items_base(session_id, run_id)
 
 
 def _next_generation_queue_status(current_status: str, transition: str) -> str:
@@ -403,38 +364,16 @@ def _load_generation_item_row_by_status(
 
 
 def _insert_provider_guard_log(guard_payload: dict[str, Any]) -> None:
-    with db_cursor() as cur:
-        cur.execute(
-            "INSERT INTO provider_logs (session_id, payload, created_at) VALUES (?, ?, ?)",
-            (
-                str(guard_payload.get("session_id", "")),
-                _dump_payload(guard_payload),
-                str(guard_payload.get("created_at", now_iso())),
-            ),
-        )
+    _insert_provider_guard_log_base(
+        guard_payload,
+        str(guard_payload.get("created_at", now_iso())),
+    )
 
 
 def _load_provider_guard_logs(
     session_id: str, run_id: str | None = None
 ) -> list[dict[str, Any]]:
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT payload FROM provider_logs WHERE session_id = ? ORDER BY id ASC",
-            (session_id,),
-        )
-        rows = cur.fetchall()
-    logs: list[dict[str, Any]] = []
-    for row in rows:
-        payload_text = row.get("payload") if isinstance(row, dict) else None
-        if not payload_text:
-            continue
-        payload = json.loads(payload_text)
-        if payload.get("schema_version") != "generation_live_executor_guard.v0.1":
-            continue
-        if run_id is not None and str(payload.get("run_id")) != str(run_id):
-            continue
-        logs.append(payload)
-    return logs
+    return _load_provider_guard_logs_base(session_id, run_id)
 
 
 def _build_generation_executor_run_request_payload(
@@ -519,32 +458,8 @@ def _attach_live_executor_guard_to_cache(
         ),
         "blocked_reason": "explicit_provider_authorization_required",
     }
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT created_at FROM generation_schedule_worker_cache WHERE cache_id = ?",
-            (cache_payload["cache_id"],),
-        )
-        existing = cur.fetchone()
-        if existing is not None and existing.get("created_at"):
-            cache_payload["created_at"] = str(existing["created_at"])
-        cur.execute(
-            "INSERT INTO generation_schedule_worker_cache "
-            "(cache_id, run_id, session_id, schedule_item_id, status, payload, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(cache_id) DO UPDATE SET "
-            "status = excluded.status, payload = excluded.payload, updated_at = excluded.updated_at",
-            (
-                cache_payload["cache_id"],
-                cache_payload["run_id"],
-                cache_payload["session_id"],
-                cache_payload["schedule_item_id"],
-                str(cache_payload["status"]),
-                _dump_payload(cache_payload),
-                cache_payload["created_at"],
-                ts,
-            ),
-        )
-    return cache_payload
+    cache_payload["updated_at"] = ts
+    return _upsert_worker_cache_payload(cache_payload, ts)
 
 
 def _run_live_executor_guard(
