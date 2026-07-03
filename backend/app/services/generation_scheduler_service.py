@@ -3433,6 +3433,109 @@ def run_review_only_background_executor_tick(
     }
 
 
+def run_review_only_background_handoff_tick(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Run one review-only background tick and export runner handoffs.
+
+    This builds the safe outbox shape for future external provider workers.
+    It still does not run the provider adapter; each handoff must be consumed
+    by an explicitly authorized external runner and imported back afterwards.
+    """
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    max_items = _requested_max_items(safe_metadata, default=2, maximum=8)
+    worker_id = str(
+        safe_metadata.get("worker_id") or "review_only_background_handoff_tick"
+    )
+    note = safe_metadata.get("note") or "manual review-only background handoff tick"
+    tick = run_review_only_background_executor_tick(
+        session_id,
+        {
+            **safe_metadata,
+            "worker_id": worker_id,
+            "note": note,
+            "max_items": max_items,
+        },
+    )
+    runner_handoffs: list[dict[str, Any]] = []
+    for index, dispatched in enumerate(tick.get("dispatcher_steps", []), start=1):
+        if not isinstance(dispatched, dict):
+            continue
+        schedule_item_id = str(dispatched.get("schedule_item_id") or "")
+        authorization_ref = str(dispatched.get("authorization_ref") or "")
+        if not schedule_item_id or not authorization_ref:
+            continue
+        handoff = export_provider_adapter_runner_handoff(
+            session_id,
+            {
+                "worker_id": f"{worker_id}_handoff_{index:02d}",
+                "note": note,
+                "schedule_item_id": schedule_item_id,
+                "authorization_ref": authorization_ref,
+            },
+        )
+        runner_handoffs.append(handoff["provider_adapter_runner_handoff"])
+
+    base_step = tick.get("worker_step", {})
+    status = (
+        "handoff_tick_exported"
+        if runner_handoffs
+        else "idle"
+    )
+    handoff_step = {
+        "status": status,
+        "worker_mode": "review_only_background_handoff_tick",
+        "trigger": "manual_api_tick",
+        "run_id": base_step.get("run_id"),
+        "max_items": max_items,
+        "dispatched_count": base_step.get("dispatched_count", 0),
+        "runner_handoff_count": len(runner_handoffs),
+        "stop_reason": base_step.get("stop_reason"),
+        "remaining_eligible_count": base_step.get("remaining_eligible_count"),
+        "provider_call_count": 0,
+        "world_mutation_count": 0,
+        "activation_allowed_count": 0,
+        "promotion_allowed_count": 0,
+        "staging_performed": False,
+        "promotion_performed": False,
+        "queue_completed_count": base_step.get("queue_completed_count", 0),
+    }
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": handoff_step,
+        "background_handoff_tick": {
+            "tick_mode": "review_only_background_handoff_tick",
+            "background_executor_tick": tick.get("background_executor_tick"),
+            "runner_handoff_count": len(runner_handoffs),
+            "handoff_mode": "external_runner_required",
+            "safety": {
+                "api_reads_env": False,
+                "api_calls_provider": False,
+                "api_runs_provider_adapter": False,
+                "api_stages_provider_artifacts": False,
+                "api_promotes_provider_artifacts": False,
+                "api_completes_queue_items": False,
+                "api_writes_world_state": False,
+                "api_activates_runtime": False,
+                "prompt_body_included": False,
+                "provider_response_body_included": False,
+                "live_templates_require_external_explicit_authorization": True,
+            },
+        },
+        "runner_handoffs": runner_handoffs,
+        "dispatcher_steps": tick.get("dispatcher_steps", []),
+        "generation_schedule_run": tick.get("generation_schedule_run"),
+        "generation_schedule_queue": tick.get("generation_schedule_queue"),
+        "generation_schedule_worker_cache": tick.get(
+            "generation_schedule_worker_cache"
+        ),
+        "generation_artifact_ledger": tick.get("generation_artifact_ledger"),
+        "generation_prefetch_cache": tick.get("generation_prefetch_cache"),
+    }
+
+
 def _display_import_path(path: Path) -> str:
     try:
         return _rel(path)

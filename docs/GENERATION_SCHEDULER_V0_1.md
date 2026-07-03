@@ -466,6 +466,24 @@ tick 返回 `worker_step.worker_mode = review_only_background_executor_tick`、�
 
 因此它是正式后台执行器 / daemon loop 前的 API 形状和吞吐预算壳，不是 live provider worker，也不是内容发布入口。后续真正后台执行器可以把触发方式从手动 API 换成定时 / 事件驱动，但仍必须保留同一授权链、ProviderOutputEnvelope、staging / promotion gate、runtime package gate 和 WorldStateDeltaTransaction gate。
 
+后端还提供 background handoff tick，用于把本轮 tick 产出的执行请求和授权批量导出给外部 runner：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick
+```
+
+该入口先复用 `run-review-only-background-executor-tick`，再对本轮 `dispatcher_steps` 中的每个 `schedule_item_id / authorization_ref` 调用既有 `export-provider-adapter-runner-handoff`。返回的 `runner_handoffs[]` 包含：
+
+- `runner_inputs.executor_request`
+- `runner_inputs.provider_execution_authorization`
+- `suggested_paths`
+- `command_templates.dry_run_fixture`
+- `command_templates.live_llm_text`
+- `command_templates.live_image`
+- `import_after_runner.body`
+
+这相当于正式后台 provider worker 前的安全 outbox：后端 API 只导出脱敏 handoff，不运行 `tools/provider_adapter/run_provider_adapter.py`，不读取 `.env`，不调用 provider，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
+
 后端还提供只读预取缓存视图：
 
 ```text

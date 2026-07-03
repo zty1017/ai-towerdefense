@@ -1471,6 +1471,43 @@ rg -n "background_executor_tick|review_only_tick_api_ready|run-review-only-backg
 git diff --check
 ```
 
+### P1-B-37 Generation Scheduler background handoff tick
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+在现有 review-only background executor tick 基础上，新增 background handoff tick API：先按小预算推进 eligible queued provider-review 项到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，再为本轮 dispatched 项批量导出 provider adapter runner handoff bundle，形成外部 runner 可消费的安全 outbox；不得调用 provider、不得读取 .env、不得运行 provider adapter、不得 staging/promotion、不得 complete queue item、不得写世界状态、不得激活 runtime。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick`
+- 默认 `max_items = 2`，单次上限 8。
+- 内部复用 `run_review_only_background_executor_tick` 和 `export_provider_adapter_runner_handoff`。
+- 返回 `runner_handoffs[]`，每项包含脱敏 executor request、provider authorization、建议 `/tmp` 路径、dry-run / live text / live image 命令模板和 import 回灌请求体。
+- `background_handoff_tick.safety` 明确记录不读取 `.env`、不调用 provider、不运行 provider adapter、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.background_handoff_tick` 摘要，并在 `summary.md` / `index.html` 展示 handoff tick 状态、handoff 数和安全边界。
+- `examples/worker_task_packs/p1b_scheduler_background_handoff_tick.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是正式后台 provider worker 前的安全 outbox，不是真 provider worker。
+- 外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_scheduler_background_handoff_tick.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_handoff_tick python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_handoff_tick_tools python3 -m py_compile tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/scheduler_background_handoff_tick_evidence
+rg -n "background_handoff_tick|review_only_handoff_tick_ready|run-review-only-background-handoff-tick" /tmp/scheduler_background_handoff_tick_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

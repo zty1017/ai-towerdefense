@@ -545,11 +545,14 @@ POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard
 POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step
 POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain
 POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-executor-tick
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick
 ```
 
 `run-review-only-dispatcher-step` 会把一个 `queued` 且需要 provider review 的调度项推进到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` ledger 边界。`run-review-only-dispatcher-drain` 会按 `max_items` 重复执行这个动作，默认最多 4 个，单次上限 16 个。
 
 `run-review-only-background-executor-tick` 是更接近后台 daemon 的稳定外壳：默认 `max_items = 2`，单次上限 8，内部仍复用 dispatcher drain，并额外返回 `background_executor_tick.safety` 与 `generation_prefetch_cache.summary`，方便 Studio / 脚本展示“后台预取 tick 已推进到 review-only envelope 边界”。
+
+`run-review-only-background-handoff-tick` 在同一 tick 之后为本轮 dispatched 项导出 `runner_handoffs[]`。这些 handoff 是外部 runner outbox，包含脱敏 executor request、provider authorization、建议 `/tmp` 路径、dry-run / live text / live image 命令模板和 import 回灌请求体；接口本身不会运行 provider adapter。
 
 drain 请求体只使用：
 
