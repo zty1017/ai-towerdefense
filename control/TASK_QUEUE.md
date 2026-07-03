@@ -1546,6 +1546,38 @@ rg -n "provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_ou
 git diff --check
 ```
 
+### P1-B-39 Architecture fact source freeze
+
+状态：已完成文档治理。
+
+目标：
+
+```text
+冻结 AI 编译系统 v0.1 的事实源层级和生命周期映射：CURRENT_ARCHITECTURE_INDEX 只做导航与事实源路由，AI_COMPILATION_SYSTEM 只做概念 / 边界 / 权限 / 生命周期事实源，字段、op 白名单、semantic gate、builder、validator 和运行命令以 shared/schemas、tools 和专题文档为准；补齐 ProviderAdapterRunnerHandoffOutbox、ProviderOutputEnvelope、staging、promotion、runtime package、媒体、地图 certified 与 CGOP 生命周期关系；不得改实现代码、不得调用 provider、不得读取 .env。
+```
+
+已落地：
+
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md` 新增 `v0.1 冻结断言`，明确索引、概念文档、schema/tools、Scheduler、WorldStateDeltaTransaction、ProviderAdapterRunnerHandoffOutbox、MapRuntimePackage、媒体与 runtime 的边界。
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md` 生命周期映射补齐 ProviderOutputEnvelope、ProviderArtifactStagingManifest、ProviderArtifactPromotionReport 与 ProviderAdapterRunnerHandoffOutbox。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md` 新增冻结快照，明确当前 worker 应使用的事实源层级，并禁止从旧 task worktree、早期聊天摘要或滞后 main 文档推导字段事实。
+- `examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json` 记录本轮文档治理任务包，以及 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是事实源治理，不是 schema 迁移，也不是实现重构。
+- 概念层可以触发后续 schema 修订，但不能让实现绕过当前 gate。
+- `ProviderAdapterRunnerHandoffOutbox` 只能作为外部 runner 交接单，不得被任何 worker 解释为 provider 输出、runtime artifact 或世界事务。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json
+rg -n "v0.1 冻结断言|ProviderAdapterRunnerHandoffOutbox|CURRENT_ARCHITECTURE_INDEX.md|shared/schemas/ \\+ tools/ \\+ 专题文档" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md
+rg -n "Architecture fact source freeze|p1b_architecture_fact_source_freeze" control/TASK_QUEUE.md examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

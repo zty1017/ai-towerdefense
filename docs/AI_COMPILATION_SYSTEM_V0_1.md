@@ -41,6 +41,20 @@ shared/schemas/ + tools/ + 专题文档
 - `generated`、`reviewed`、`locked`、`published`、`active`、`certified` 等状态名称可以在不同对象线中使用，但必须能映射回本文第 6 节的生命周期，而不是各管线自行解释。
 - `main` 与早期文档可以保留讨论痕迹；真正派发实现任务时，默认以 `develop` 的本索引、本文、schema 和 tools 为事实源。
 
+### 0.2 v0.1 冻结断言
+
+截至 2026-07-03，v0.1 架构冻结以下断言，后续 task worktree、CodeBuddy / OpenCode / Codex worker、人工提交和文档同步都应默认遵守：
+
+- `CURRENT_ARCHITECTURE_INDEX.md` 只负责导航、阅读顺序和事实源路由；它不是字段规范，也不替代专题文档。
+- 本文负责 AI 编译系统的概念、边界、权限和生命周期；它不能直接让实现新增未落到 schema / tools 的运行时字段。
+- `shared/schemas/`、`tools/` 和专题文档负责字段级事实、白名单、validator、builder 和运行命令。
+- `Generation Scheduler` 是横切控制面。它可以创建 run、queue、cache、handoff、outbox 和 dispatcher evidence，但不能声明内容有效，也不能绕过 staging / promotion / runtime package / WorldStateDeltaTransaction gate。
+- `ProviderAdapterRunnerHandoffOutbox` 是外部 runner 批量交接单，不是 provider 输出、provider receipt、staging manifest、promotion report、runtime package 或世界状态事务。
+- `WorldStateDeltaTransaction` 是现有 `WorldStateDelta v0.1` 的事务外壳。事务可以解释 precondition、conflict、rollback 和 operation mapping，但不能新增自由 `effects[]` 写入路径。
+- `MapRuntimePackage` 的路径、塔位、目标、出生点和碰撞是战斗地图运行时事实源；painted map、control sketch、overlay、candidate image 和 provider output 只是表现候选或 evidence。
+- 媒体的 `generated` / `processed` / `reviewed` / `published_media` 只说明表现资产成熟度，不得反向决定 gameplay truth。
+- 真正进入浏览器 runtime 的对象必须是已锁定、已发布、已认证或当前 session 明确 active 的包；任何 raw LLM 输出、prompt、provider response、trace、review-only artifact、outbox 或候选图都不能直接加载为玩家侧事实。
+
 ## 1. 总定义
 
 AI 编译系统由四个协作层组成：
@@ -506,6 +520,10 @@ draft
 | GenerationExecutorRunRequest | `prepared_pending_explicit_authorization` -> provider adapter | guard 后、provider adapter 前的脱敏执行请求包；不是 provider 输出，也不是 runtime-ready。 |
 | ProviderExecutionAuthorization | `granted_for_provider_adapter` -> provider adapter | executor request 后、provider adapter 前的显式授权记录；只授权受约束 provider adapter 执行，不授权 runtime 激活或世界写入。 |
 | ProviderAdapterExecutionReceipt | `fixture_output_ready_for_envelope` / `performed_redacted_live` -> ProviderOutputEnvelope | provider adapter 边界回执；只允许后续写入脱敏 ProviderOutputEnvelope，不授权 runtime 激活或世界写入。 |
+| ProviderOutputEnvelope | `redacted_envelope_ready` -> staging candidate | provider 调用后允许保存的脱敏信封；只保存摘要、digest、本地 artifact refs、validation / activation gate 摘要，不保存 prompt 正文或 provider response。 |
+| ProviderArtifactStagingManifest | `review_only_staged` -> promotion decision | 把 envelope 中的本地 refs 登记为 review-only 暂存候选；仍不声明 runtime-ready。 |
+| ProviderArtifactPromotionReport | `blocked_review_required` / `blocked_validation_failed` / approved promotion state | 表达显式晋升或阻断结论；报告本身不修改 runtime、published media 或世界状态。 |
+| ProviderAdapterRunnerHandoffOutbox | `external_runner_required` -> imported receipt / envelope | Scheduler 导出的批量交接单；只能交给外部 runner 消费并通过 import API 回灌，不是 provider 输出或 runtime artifact。 |
 
 `certified` 只用于需要被重复调度或作为 fallback 的高风险模板，例如地图、关卡、遭遇组合和重资产内容。普通玩家临时样品不必进入 `certified`，通过 `validated` / `reviewed` / `locked` 即可进入受限 runtime。
 
