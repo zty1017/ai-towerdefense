@@ -407,6 +407,14 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter
 
 该入口要求当前 session / latest run 已经存在匹配的 `GenerationExecutorRunRequest` 和 `ProviderExecutionAuthorization`，然后复用工具层 runner 的 dry-run artifact builder 生成 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`，并把二者登记到 `generation_artifact_ledger`。它不会自动 staging、promotion、complete queue item、写世界状态或激活 runtime；队列仍停在 review / promotion 前。
 
+后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-adapter-runner-output
+```
+
+调用方必须提供 `schedule_item_id`、`authorization_ref`、`receipt_path` 和 `envelope_path`。后端只接受仓库内或 `/tmp` 下的 JSON 文件，并会拒绝包含 `raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等敏感键的导入内容。导入前必须已存在匹配的 executor request 与 provider authorization；导入时会重新校验 `ProviderAdapterExecutionReceipt`、`ProviderOutputEnvelope` 以及 receipt/envelope/source 与 ledger 授权链是否一致。导入本身不调用 provider，不 staging，不 promotion，不激活 runtime。
+
 当前工具层还提供显式 image live 边界：
 
 ```text

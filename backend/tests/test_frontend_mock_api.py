@@ -2,7 +2,18 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
+import sys
+from pathlib import Path
+
+
+_ROOT = Path(__file__).resolve().parents[2]
+_PROVIDER_ADAPTER_DIR = _ROOT / "tools" / "provider_adapter"
+if str(_PROVIDER_ADAPTER_DIR) not in sys.path:
+    sys.path.insert(0, str(_PROVIDER_ADAPTER_DIR))
+
+from run_provider_adapter import build_dry_run_artifacts  # noqa: E402
 
 
 def _create_session(client) -> str:
@@ -94,6 +105,31 @@ def _prepare_provider_artifact_staging_chain(
         "executor_request": chain["executor_request"],
         "authorization": chain["authorization"],
         "adapter_receipt": adapter_receipt,
+    }
+
+
+def _write_runner_outputs(tmp_path, executor_request: dict, authorization: dict) -> dict:
+    receipt, envelope = build_dry_run_artifacts(
+        executor_request,
+        authorization,
+        created_at="2026-07-03T00:00:00Z",
+        note="test runner output import",
+    )
+    receipt_path = tmp_path / "runner.receipt.json"
+    envelope_path = tmp_path / "runner.envelope.json"
+    receipt_path.write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    envelope_path.write_text(
+        json.dumps(envelope, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "receipt": receipt,
+        "envelope": envelope,
+        "receipt_path": receipt_path,
+        "envelope_path": envelope_path,
     }
 
 
@@ -847,6 +883,124 @@ def test_provider_adapter_runner_fixture_requires_authorization(client):
     )
     assert runner.status_code == 409
     assert "matching provider execution authorization" in runner.json()["detail"]
+
+
+def test_provider_adapter_runner_output_import_records_local_files(client, tmp_path):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-import")
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+    )
+
+    imported = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+            json={
+                "worker_id": "runner-output-import",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+                "receipt_path": str(outputs["receipt_path"]),
+                "envelope_path": str(outputs["envelope_path"]),
+            },
+        )
+    )
+
+    worker_step = imported["worker_step"]
+    assert worker_step["status"] == "imported"
+    assert worker_step["worker_mode"] == "provider_adapter_runner_output_import"
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["authorization_ref"] == chain["authorization"]["authorization_ref"]
+    assert worker_step["upstream_request_id"] == chain["executor_request"]["request_id"]
+    assert worker_step["execution_receipt_id"] == outputs["receipt"][
+        "execution_receipt_id"
+    ]
+    assert worker_step["envelope_id"] == outputs["envelope"]["envelope_id"]
+    assert worker_step["import_refs"]["receipt_path"] == str(outputs["receipt_path"])
+    assert worker_step["import_refs"]["envelope_path"] == str(outputs["envelope_path"])
+    assert imported["provider_adapter_execution_receipt"]["execution"]["mode"] == (
+        "fixture_backed_no_provider_call"
+    )
+    assert imported["provider_output_envelope"]["provider_call"]["performed"] is False
+    assert imported["provider_output_envelope"]["activation_gate"][
+        "activation_allowed"
+    ] is False
+
+    ledger_summary = imported["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 4
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+        "provider_adapter_execution_receipt": 1,
+        "provider_output_envelope": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_adapter_runner_output_import_rejects_mismatch(client, tmp_path):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-import-mismatch")
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+    )
+    envelope = outputs["envelope"].copy()
+    envelope["source"] = {**envelope["source"], "schedule_item_id": "wrong_item"}
+    bad_envelope_path = tmp_path / "runner.bad_envelope.json"
+    bad_envelope_path.write_text(
+        json.dumps(envelope, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    imported = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+        json={
+            "worker_id": "runner-output-import-mismatch",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "authorization_ref": chain["authorization"]["authorization_ref"],
+            "receipt_path": str(outputs["receipt_path"]),
+            "envelope_path": str(bad_envelope_path),
+        },
+    )
+    assert imported.status_code == 409
+    assert "do not match ledger authorization chain" in imported.json()["detail"]
+
+
+def test_provider_adapter_runner_output_import_rejects_sensitive_keys(client, tmp_path):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-import-sensitive")
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+    )
+    receipt = outputs["receipt"].copy()
+    receipt["raw_prompt"] = "must not be accepted"
+    bad_receipt_path = tmp_path / "runner.bad_receipt.json"
+    bad_receipt_path.write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    imported = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+        json={
+            "worker_id": "runner-output-import-sensitive",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "authorization_ref": chain["authorization"]["authorization_ref"],
+            "receipt_path": str(bad_receipt_path),
+            "envelope_path": str(outputs["envelope_path"]),
+        },
+    )
+    assert imported.status_code == 409
+    assert "forbidden sensitive keys" in imported.json()["detail"]
 
 
 def test_provider_artifact_staging_supports_image_failure_profile(client):

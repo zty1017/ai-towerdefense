@@ -144,3 +144,11 @@ class GenerationScheduleQueueTransitionRequest(BaseModel):
         default=None,
         description="Optional explicit provider authorization reference.",
     )
+    receipt_path: Optional[str] = Field(
+        default=None,
+        description="Optional local ProviderAdapterExecutionReceipt JSON path.",
+    )
+    envelope_path: Optional[str] = Field(
+        default=None,
+        description="Optional local ProviderOutputEnvelope JSON path.",
+    )

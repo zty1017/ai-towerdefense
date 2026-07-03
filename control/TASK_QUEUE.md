@@ -1127,6 +1127,41 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-27 Provider adapter runner 输出导入
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+允许开发期 / 外部工具先生成本地 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope 文件，再由后端 worker API 校验并导入 generation_artifact_ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-adapter-runner-output`
+- 请求体支持 `receipt_path` 与 `envelope_path`。
+- 只接受仓库内或 `/tmp` 下的本地 JSON 文件，禁止 `.env`。
+- 导入前检查敏感键：`raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等。
+- 导入前重新校验 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`。
+- 导入前要求已存在匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 导入前检查 receipt/envelope/source 与 ledger 授权链一致。
+
+当前结论：
+
+- 这是外部 runner / 人工生成产物的后端验收入账路径，不是真 provider 调用入口。
+- 导入本身不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live provider smoke 可以先由工具层 runner 生成本地 receipt/envelope，再通过该接口导入并继续走 staging / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner_output_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_adapter_output_import python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
