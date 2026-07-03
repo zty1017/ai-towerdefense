@@ -139,6 +139,19 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS generation_shared_prefetch_cache (
+                cache_key TEXT PRIMARY KEY,
+                source_session_id TEXT NOT NULL,
+                source_run_id TEXT,
+                source_schedule_item_id TEXT,
+                object_kind TEXT,
+                object_ref TEXT,
+                lifecycle_status TEXT NOT NULL,
+                payload TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -221,6 +234,10 @@ def init_db(path: str | None = None) -> None:
                 ON generation_artifact_ledger(run_id);
             CREATE INDEX IF NOT EXISTS idx_generation_artifact_ledger_status
                 ON generation_artifact_ledger(status);
+            CREATE INDEX IF NOT EXISTS idx_generation_shared_prefetch_cache_object
+                ON generation_shared_prefetch_cache(object_kind, object_ref);
+            CREATE INDEX IF NOT EXISTS idx_generation_shared_prefetch_cache_status
+                ON generation_shared_prefetch_cache(lifecycle_status);
             CREATE INDEX IF NOT EXISTS idx_battle_results_session
                 ON battle_results(session_id);
             CREATE INDEX IF NOT EXISTS idx_provider_logs_session

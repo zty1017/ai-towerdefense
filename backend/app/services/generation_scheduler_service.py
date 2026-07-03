@@ -107,6 +107,14 @@ from .generation_scheduler_prefetch_cache_builders import (  # noqa: E402
 from .generation_scheduler_activation_gate_builders import (  # noqa: E402
     build_generation_activation_gate_payload as _build_generation_activation_gate_payload,
 )
+from .generation_scheduler_shared_prefetch_cache_builders import (  # noqa: E402
+    build_shared_prefetch_cache_records as _build_shared_prefetch_cache_records,
+    compact_shared_prefetch_cache as _compact_shared_prefetch_cache,
+)
+from .generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
+    load_shared_prefetch_cache_records as _load_shared_prefetch_cache_records,
+    upsert_shared_prefetch_cache_records as _upsert_shared_prefetch_cache_records,
+)
 from .generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
     validate_provider_adapter_runner_import_contract as _validate_provider_adapter_runner_import_contract,
 )
@@ -1951,6 +1959,37 @@ def get_generation_activation_gate(session_id: str) -> dict[str, Any]:
     return _build_generation_activation_gate_payload(
         get_generation_prefetch_cache(session_id)
     )
+
+
+def get_generation_shared_prefetch_cache(session_id: str) -> dict[str, Any]:
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "generation_shared_prefetch_cache": _compact_shared_prefetch_cache(
+            _load_shared_prefetch_cache_records()
+        ),
+    }
+
+
+def index_generation_shared_prefetch_cache(session_id: str) -> dict[str, Any]:
+    ts = now_iso()
+    activation_gate = get_generation_activation_gate(session_id)
+    records = _build_shared_prefetch_cache_records(activation_gate, indexed_at=ts)
+    _upsert_shared_prefetch_cache_records(records)
+    shared_cache = _compact_shared_prefetch_cache(_load_shared_prefetch_cache_records())
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "shared_prefetch_cache_index": {
+            "indexed_count": len(records),
+            "source_read_model": "generation_activation_gate",
+            "provider_call_count_by_this_request": 0,
+            "world_mutation_count_by_this_request": 0,
+            "activation_allowed_count": 0,
+            "runtime_ready_count": 0,
+        },
+        "generation_shared_prefetch_cache": shared_cache,
+    }
 
 
 def stage_provider_artifacts_fixture(

@@ -244,6 +244,36 @@ def get_generation_activation_gate(session_id: str) -> FrontendMockPayloadRespon
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/generation-schedule/shared-prefetch-cache",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_shared_prefetch_cache(
+    session_id: str,
+) -> FrontendMockPayloadResponse:
+    """Return the cross-session shared prefetch cache index."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_shared_prefetch_cache(session_id),
+    )
+
+
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache",
+    response_model=FrontendMockPayloadResponse,
+)
+def index_generation_shared_prefetch_cache(
+    session_id: str,
+) -> FrontendMockPayloadResponse:
+    """Index promotion-allowed candidates into the shared prefetch cache."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.index_generation_shared_prefetch_cache(session_id),
+    )
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

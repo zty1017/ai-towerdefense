@@ -1,0 +1,87 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-54-generation-shared-prefetch-cache",
+  "title": "Generation Scheduler shared prefetch cache index",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/generation-shared-prefetch-cache",
+  "worktree": "/tmp/ai-td-task-generation-shared-prefetch-cache",
+  "objective": "新增 Generation Scheduler 跨 session 共享预取缓存索引，只登记 promotion_allowed 但仍等待 runtime package / WorldStateDeltaTransaction / activation gate 的脱敏候选摘要；不得把候选激活为玩家 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/db.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_activation_gate_builders.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "backend/tests/test_sessions.py"
+  ],
+  "allowed_paths": [
+    "backend/app/db.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_shared_prefetch_cache_builders.py",
+    "backend/app/services/generation_scheduler_shared_prefetch_cache_repository.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "backend/tests/test_sessions.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_prefetch_cache python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+    "rg -n \"shared-prefetch-cache|generation_shared_prefetch_cache|build_shared_prefetch_cache_records\" backend/app backend/tests docs control/TASK_QUEUE.md",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务先尝试 OpenCode headless；当前受控通道仍被执行环境拒绝为外部数据披露风险，因此采用 local_codex_safe_fallback。",
+    "shared prefetch cache index 是跨 session 的脱敏索引，不是 runtime package、published media、WorldStateDeltaTransaction 或 activation gate。",
+    "只允许索引 activation gate 中 promotion_allowed=true、activation_allowed=false、runtime_ready=false、activation_status=blocked_runtime_package_or_world_delta_required 的候选。",
+    "索引记录状态 promotion_allowed_pending_runtime_build 不得解释为玩家 runtime 可加载。"
+  ]
+}
