@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_style_pack.v0.1.schema.json",
+  "title": "MapStylePack v0.1",
+  "description": "Compile-time visual style contract for logic-first tower defense maps. It may guide procedural rendering and component generation, but it never defines gameplay routes, build slots, objectives, spawn points, or collision truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "style_pack_id",
+    "worldbook_id",
+    "node_id",
+    "created_at",
+    "source_refs",
+    "node_theme_tags",
+    "palette",
+    "lighting",
+    "terrain_materials",
+    "road_materials",
+    "road_edge_rules",
+    "build_slot_platforms",
+    "objective_prefabs",
+    "spawn_prefabs",
+    "resource_prefabs",
+    "hazard_prefabs",
+    "blocking_props",
+    "non_blocking_props",
+    "decorative_props",
+    "atmosphere_layers",
+    "postprocess",
+    "readability_rules",
+    "validation_report"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_style_pack.v0.1" },
+    "style_pack_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "node_theme_tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "palette": { "$ref": "#/$defs/palette" },
+    "lighting": { "$ref": "#/$defs/lighting" },
+    "terrain_materials": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/material" }
+    },
+    "road_materials": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/material" }
+    },
+    "road_edge_rules": { "$ref": "#/$defs/road_edge_rules" },
+    "build_slot_platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "objective_prefabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "spawn_prefabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "resource_prefabs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "hazard_prefabs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "blocking_props": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "non_blocking_props": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "decorative_props": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prefab" }
+    },
+    "atmosphere_layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/atmosphere_layer" }
+    },
+    "postprocess": { "$ref": "#/$defs/postprocess" },
+    "readability_rules": { "$ref": "#/$defs/readability_rules" },
+    "validation_report": { "$ref": "#/$defs/validation_report" }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map_runtime_package_path", "logic_authority"],
+      "properties": {
+        "map_runtime_package_path": { "type": "string", "minLength": 1 },
+        "worldbook_path": { "type": "string", "minLength": 1 },
+        "logic_authority": { "type": "string", "const": "map_runtime_package" },
+        "style_authority": {
+          "type": "string",
+          "enum": ["developer_fixture", "reviewed_ai_proposal", "human_reviewed"]
+        }
+      }
+    },
+    "hex_color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terrain_base",
+        "terrain_detail",
+        "road_base",
+        "road_edge",
+        "build_slot",
+        "objective",
+        "spawn",
+        "fog",
+        "accent"
+      ],
+      "properties": {
+        "terrain_base": { "$ref": "#/$defs/hex_color" },
+        "terrain_detail": { "$ref": "#/$defs/hex_color" },
+        "road_base": { "$ref": "#/$defs/hex_color" },
+        "road_edge": { "$ref": "#/$defs/hex_color" },
+        "build_slot": { "$ref": "#/$defs/hex_color" },
+        "objective": { "$ref": "#/$defs/hex_color" },
+        "spawn": { "$ref": "#/$defs/hex_color" },
+        "resource": { "$ref": "#/$defs/hex_color" },
+        "hazard": { "$ref": "#/$defs/hex_color" },
+        "fog": { "$ref": "#/$defs/hex_color" },
+        "accent": { "$ref": "#/$defs/hex_color" }
+      }
+    },
+    "lighting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time_of_day", "contrast_policy", "shadow_policy", "intensity"],
+      "properties": {
+        "time_of_day": {
+          "type": "string",
+          "enum": ["dawn", "day", "dusk", "night", "storm"]
+        },
+        "contrast_policy": {
+          "type": "string",
+          "enum": ["high_path_readability", "balanced", "cinematic_low_contrast"]
+        },
+        "shadow_policy": {
+          "type": "string",
+          "enum": ["soft_blob", "directional", "none"]
+        },
+        "intensity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["material_id", "role", "base_color", "texture_policy"],
+      "properties": {
+        "material_id": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "terrain_base",
+            "terrain_detail",
+            "road_band",
+            "road_edge",
+            "build_slot_platform",
+            "objective_foundation",
+            "spawn_atmosphere",
+            "resource_marker",
+            "hazard_marker",
+            "blocking_prop",
+            "non_blocking_decoration",
+            "fog_light_weather"
+          ]
+        },
+        "base_color": { "$ref": "#/$defs/hex_color" },
+        "texture_policy": {
+          "type": "string",
+          "enum": ["procedural_only", "reviewed_component_optional", "reviewed_component_required"]
+        },
+        "component_ref": { "type": ["string", "null"] }
+      }
+    },
+    "road_edge_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_style", "shoulder_width_cells", "direction_cue_policy"],
+      "properties": {
+        "edge_style": {
+          "type": "string",
+          "enum": ["soft_embedded", "stone_trim", "glow_rim", "broken_planks"]
+        },
+        "shoulder_width_cells": { "type": "number", "minimum": 0 },
+        "direction_cue_policy": {
+          "type": "string",
+          "enum": ["subtle_particles", "embedded_marks", "none"]
+        }
+      }
+    },
+    "prefab": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prefab_id", "role", "anchor_policy", "placement_policy", "visual_ref"],
+      "properties": {
+        "prefab_id": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "build_slot_platform",
+            "objective_foundation",
+            "spawn_marker",
+            "resource_marker",
+            "hazard_marker",
+            "blocking_prop",
+            "non_blocking_decoration"
+          ]
+        },
+        "anchor_policy": {
+          "type": "string",
+          "enum": ["center", "bottom_center", "center_bottom", "semantic_anchor"]
+        },
+        "placement_policy": {
+          "type": "string",
+          "enum": ["semantic_anchor_only", "allowed_zone_only", "edge_decoration_only"]
+        },
+        "visual_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["procedural_shape", "reviewed_component_ref", "none"]
+            },
+            "value": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "atmosphere_layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer_id", "role", "opacity", "placement_policy"],
+      "properties": {
+        "layer_id": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": ["fog", "light_rays", "ash", "rain", "ambient_particles"]
+        },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "placement_policy": {
+          "type": "string",
+          "enum": ["whole_canvas", "map_edges_only", "non_semantic_zones"]
+        }
+      }
+    },
+    "postprocess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contrast_boost", "saturation", "vignette"],
+      "properties": {
+        "contrast_boost": { "type": "number", "minimum": 0, "maximum": 1 },
+        "saturation": { "type": "number", "minimum": 0, "maximum": 2 },
+        "vignette": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "readability_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_path_contrast",
+        "build_slot_marker_policy",
+        "objective_marker_policy",
+        "spawn_marker_policy",
+        "no_baked_ui_text",
+        "no_baked_enemy_or_tower",
+        "debug_layers_player_default_allowed"
+      ],
+      "properties": {
+        "minimum_path_contrast": { "type": "number", "minimum": 0, "maximum": 1 },
+        "build_slot_marker_policy": {
+          "type": "string",
+          "enum": ["diegetic_platform", "subtle_ring", "debug_only"]
+        },
+        "objective_marker_policy": {
+          "type": "string",
+          "enum": ["diegetic_foundation", "icon_overlay", "debug_only"]
+        },
+        "spawn_marker_policy": {
+          "type": "string",
+          "enum": ["diegetic_portal", "edge_marker", "debug_only"]
+        },
+        "no_baked_ui_text": { "type": "boolean", "const": true },
+        "no_baked_enemy_or_tower": { "type": "boolean", "const": true },
+        "debug_layers_player_default_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_status", "style_only", "gates"],
+      "properties": {
+        "gate_status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+        "style_only": { "type": "boolean", "const": true },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "summary"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
