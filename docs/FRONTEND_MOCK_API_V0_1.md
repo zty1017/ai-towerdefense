@@ -270,6 +270,22 @@ POST /api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain
 
 该接口不按节点定向过滤 scheduler queue；下一节点只是触发上下文，drain 仍按 Generation Scheduler 的 eligible queue 顺序处理。因此它拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile` 和本地导入路径。它仍然不会调用外部模型，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
 
+### 获取预取缓存视图
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/prefetch-cache
+```
+
+该接口只读取最近一次 `generation_schedule_run` 的队列项和 `generation_artifact_ledger`，按 `schedule_item_id` 汇总当前预取链路走到哪一步。它不创建 run，不推进 dispatcher，不 staging，不 promotion，不 complete queue item，不调用 provider，不写世界状态，也不激活 runtime。
+
+返回：
+
+- `generation_schedule_run`：最近一次 run 摘要；如果尚未创建 run，则为 `null`。
+- `generation_prefetch_cache.summary`：item 数、cache status 计数、历史 ledger 中记录过的 provider 调用数，以及本次 GET 的 provider / world mutation / activation / promotion 安全计数。
+- `generation_prefetch_cache.items`：每个调度项的 `queue_status`、`cache_status`、executor request / authorization / receipt / envelope / staging / promotion refs、activation gate 与 promotion gate 摘要。
+
+`provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 必须始终为 `0`。如果历史 `ProviderOutputEnvelope` 记录了真实 provider 调用摘要，只能计入 `recorded_provider_call_count`，不能把只读查询伪装成执行器。
+
 ### 提交战斗结果
 
 ```http

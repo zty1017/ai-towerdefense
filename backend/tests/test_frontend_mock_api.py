@@ -29,6 +29,24 @@ def _payload(resp):
     return body["payload"]
 
 
+def _session_state_counts(raw_conn: sqlite3.Connection, sid: str) -> dict[str, int]:
+    tables = [
+        "generation_schedule_runs",
+        "generation_schedule_queue_items",
+        "generation_schedule_worker_cache",
+        "generation_artifact_ledger",
+        "provider_logs",
+        "world_instance",
+    ]
+    return {
+        table: raw_conn.execute(
+            f"SELECT COUNT(*) FROM {table} WHERE session_id = ?",
+            (sid,),
+        ).fetchone()[0]
+        for table in tables
+    }
+
+
 def _prepare_provider_authorization_chain(
     client,
     sid: str,
@@ -1343,6 +1361,142 @@ def test_review_only_dispatcher_drain_dispatches_multiple_without_staging(
         "provider_adapter_execution_receipt",
         "provider_output_envelope",
     }
+
+
+def test_generation_prefetch_cache_requires_session(client):
+    missing = client.get(
+        "/api/sessions/missing-session/generation-schedule/prefetch-cache"
+    )
+    assert missing.status_code == 404
+
+
+def test_generation_prefetch_cache_empty_without_run(client, raw_conn):
+    sid = _create_session(client)
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/prefetch-cache")
+    )
+
+    assert cache["generation_schedule_run"] is None
+    summary = cache["generation_prefetch_cache"]["summary"]
+    assert summary["item_count"] == 0
+    assert summary["cache_status_counts"] == {}
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+    assert cache["generation_prefetch_cache"]["items"] == []
+    assert _session_state_counts(raw_conn, sid) == before_counts
+
+
+def test_generation_prefetch_cache_tracks_dispatcher_drain_outputs(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-dispatcher-drain",
+            json={
+                "worker_id": "dispatcher-drain-for-cache",
+                "max_items": 2,
+            },
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/prefetch-cache")
+    )
+    second_cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/prefetch-cache")
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    assert second_cache == cache
+    summary = cache["generation_prefetch_cache"]["summary"]
+    assert summary["item_count"] == 8
+    assert summary["review_only_envelope_ready_count"] == 2
+    assert summary["staged_or_reviewed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    assert summary["recorded_provider_call_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+
+    items_by_id = {
+        item["schedule_item_id"]: item
+        for item in cache["generation_prefetch_cache"]["items"]
+    }
+    assert set(items_by_id) == {
+        "sched_session_frontend_mock_bootstrap",
+        "sched_first_battle_map_runtime_package",
+        "sched_runtime_art_atlas_ready",
+        "sched_static_fallback_runtime_route",
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+        "sched_video_frame_background_compile",
+        "sched_frontend_mock_sprite_repair_lazy",
+    }
+    for schedule_item_id in (
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ):
+        item = items_by_id[schedule_item_id]
+        assert item["cache_status"] == "review_only_envelope_ready"
+        assert item["queue_status"] == "waiting_review"
+        assert item["runtime_ready"] is False
+        assert item["review_only"] is True
+        assert item["recorded_provider_call_count"] == 0
+        assert item["provider_call_count_by_this_request"] == 0
+        assert item["world_mutation_count_by_this_request"] == 0
+        assert item["activation_gate"]["activation_allowed"] is False
+        assert item["promotion_gate"]["promotion_allowed"] is False
+        assert item["refs"]["generation_executor_run_request"] is not None
+        assert item["refs"]["provider_execution_authorization"] is not None
+        assert item["refs"]["provider_adapter_execution_receipt"] is not None
+        assert item["refs"]["provider_output_envelope"] is not None
+        assert item["refs"]["provider_artifact_staging_manifest"] is None
+        assert item["refs"]["provider_artifact_promotion_report"] is None
+
+
+def test_generation_prefetch_cache_reflects_staging_review_report(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-fixture-executor-chain",
+            json={"worker_id": "executor-chain-for-cache"},
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/prefetch-cache")
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    summary = cache["generation_prefetch_cache"]["summary"]
+    assert summary["item_count"] == 8
+    assert summary["staged_or_reviewed_count"] == 1
+    assert summary["activation_allowed_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+    item = {
+        cache_item["schedule_item_id"]: cache_item
+        for cache_item in cache["generation_prefetch_cache"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == "promotion_blocked"
+    assert item["queue_status"] == "waiting_review"
+    assert item["runtime_ready"] is False
+    assert item["activation_gate"]["activation_allowed"] is False
+    assert item["promotion_gate"]["promotion_allowed"] is False
+    assert item["promotion_gate"]["promotion_decision"] == "blocked_review_required"
+    assert item["refs"]["provider_artifact_staging_manifest"] is not None
+    assert item["refs"]["provider_artifact_promotion_report"] is not None
 
 
 def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):

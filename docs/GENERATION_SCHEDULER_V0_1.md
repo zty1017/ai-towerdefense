@@ -435,6 +435,16 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-disp
 
 drain 的边界与单步 dispatcher 相同：只登记 executor request、provider authorization、adapter receipt 和 ProviderOutputEnvelope；不调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。它是正式后台执行器的调度壳和吞吐量控制面雏形，不是 live provider worker。
 
+后端还提供只读预取缓存视图：
+
+```text
+GET /api/sessions/{session_id}/generation-schedule/prefetch-cache
+```
+
+该视图不创建新的 run，也不推进任何 worker。它只读取最近一次 `generation_schedule_run` 的 `generation_schedule_queue_items` 与 `generation_artifact_ledger`，按 `schedule_item_id` 汇总 executor request、provider authorization、adapter receipt、ProviderOutputEnvelope、staging manifest 和 promotion report refs，并派生 `cache_status`。因此它是前端 / Studio 读取后台预取证据的视图，不是新的缓存表，也不是正式后台执行器。
+
+视图中的 `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 必须始终为 `0`。如果历史 ledger 中的 ProviderOutputEnvelope 记录过真实 provider 调用，只能进入 `recorded_provider_call_count`，不能证明本次 GET 调用了 provider。该视图也不能绕过 staging、promotion、runtime package、WorldStateDeltaTransaction 或 activation gate。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text
