@@ -1,0 +1,75 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-35-provider-runner-handoff-evidence",
+  "title": "Provider runner handoff evidence summary",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-handoff-evidence",
+  "worktree": "/tmp/ai-td-task-provider-runner-handoff-evidence",
+  "objective": "把 provider runner handoff export / dry-run runner / import / prefetch-cache roundtrip 的能力纳入 demo evidence：evidence.json、summary.md 和 index.html 应能展示 handoff 状态、roundtrip cache 状态、安全边界和对应任务包；不得调用 provider、读取 .env、写 ledger、staging、promotion、写世界状态或激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "tools/demo/export_evidence.py",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/media/",
+    "shared/schemas/",
+    "tools/provider_adapter/",
+    "tools/llm/",
+    "tools/media/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_evidence python3 -m py_compile tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_evidence",
+    "rg -n \"provider_runner_handoff|runner handoff|fixture_roundtrip_covered|review_only_envelope_ready\" /tmp/provider_runner_handoff_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "evidence_fields_added",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只把既有 handoff 和 roundtrip 事实接入 demo evidence，不新增 provider runner 行为。",
+    "OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 local_codex_safe_fallback 完成。",
+    "导出摘要中的 live argv 只是外部授权运行模板，不代表 evidence export 会调用 provider。"
+  ]
+}
