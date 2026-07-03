@@ -1,0 +1,84 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-22-provider-image-artifact-staging-gate",
+  "title": "Provider image artifact staging 与失败晋升门",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-image-staging-gate",
+  "worktree": "/tmp/ai-td-task-provider-image-staging-gate",
+  "objective": "把 image ProviderOutputEnvelope 接到 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport 示例，证明真实下载到本地的图片候选仍会因 media / semantic gate 失败而被阻断，不能直接进入 MapRuntimePackage、published media、runtime package 或世界状态。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "shared/schemas/provider_output_envelope.v0.1.schema.json",
+    "shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json",
+    "shared/schemas/provider_artifact_promotion_report.v0.1.schema.json",
+    "tools/dev/validate_provider_output_envelope.py",
+    "tools/dev/validate_provider_artifact_staging_manifest.py",
+    "tools/dev/validate_provider_artifact_promotion_report.py",
+    "tools/demo/export_evidence.py",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "examples/provider_artifact_staging/",
+    "examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "shared/schemas/",
+    "game_data/media/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json",
+    "python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json",
+    "python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
+    "python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging python3 -m py_compile tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_image_artifact_staging_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不生成新图片，只引用已经存在的本地 review-only candidate，避免把低质量探索图误发布为 runtime 素材。",
+    "image staging 示例必须以 validation_failed / blocked_validation_failed 收束，作为负样本证据。",
+    "后续真正改善地图质量应走 MapRuntimePackage 驱动的控制图、reference-image provider 或 paintover，再重新过 media / semantic / human review / promotion gates。"
+  ]
+}

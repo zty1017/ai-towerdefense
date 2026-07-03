@@ -952,6 +952,44 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_image_r
 git diff --check
 ```
 
+### P1-B-22 Provider image artifact staging 失败闸门
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+把 image ProviderOutputEnvelope 接到 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport，证明已经下载到本地的图片候选仍会因 media / semantic gate 失败而被阻断，不能直接进入 MapRuntimePackage、published media、runtime package 或世界状态。
+```
+
+已落地：
+
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json`
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json`
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json`
+- `examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 image staging / image promotion report 校验与 evidence 摘要。
+- `docs/PROVIDER_ARTIFACT_STAGING_V0_1.md`、`docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md`、`docs/GENERATION_SCHEDULER_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md` 已同步该失败门语义。
+
+当前结论：
+
+- source envelope 和 local PNG ref 可以合法保存为 review-only evidence。
+- 该图片候选被明确标记为 `validation_failed` / `blocked_validation_failed`。
+- 差图、控制图残留图、路径 / 塔位 / 目标语义不一致的生成图只能作为负样本和下一轮重生 / paintover 输入。
+- 后续仍需要 MapRuntimePackage 驱动的控制图、reference-image provider、局部清理或人工 paintover，再重新走 media / semantic / human review / promotion gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_image_artifact_staging_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

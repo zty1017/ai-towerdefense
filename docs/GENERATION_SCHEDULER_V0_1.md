@@ -413,7 +413,9 @@ tools/provider_adapter/run_provider_adapter.py --mode image --live
 - `llm_text --live`：显式 live 文本候选，只写 redacted summary ref。
 - `image --live`：显式 live 图片候选，只写本地 review-only image ref。
 
-视频 adapter、图片后处理、media gate、staging / promotion 自动串接和后端自动后台执行器仍是后续任务。
+图片 runner 的自动串接仍未实现，但当前已存在手工 evidence 闭环：image ProviderOutputEnvelope 可以进入 `ProviderArtifactStagingManifest`，再由 `ProviderArtifactPromotionReport` 显式阻断。该闭环目前用于证明低质量图片候选不会直接进入 runtime、published media 或世界状态。
+
+视频 adapter、图片后处理、media gate 自动执行、staging / promotion 自动串接和后端自动后台执行器仍是后续任务。
 
 ## ProviderOutputEnvelope
 
@@ -460,6 +462,8 @@ live executor guard
 后端 `stage-provider-artifacts` fixture worker 也必须先看到当前 session / latest run 已登记与 `ProviderOutputEnvelope.source.schedule_item_id` 相同的 `generation_executor_run_request`，已登记与 `ProviderOutputEnvelope.provider_call.authorization_ref` 相同的 `ProviderExecutionAuthorization`，并且已有同 `schedule_item_id` / `authorization_ref` 的 `ProviderAdapterExecutionReceipt`。如果缺少匹配请求包、匹配授权记录或匹配 adapter 回执，接口返回 409，避免 ProviderOutputEnvelope / staging / promotion report 绕过 dry-run worker、live executor guard、执行请求边界、显式授权边界和 adapter 边界，或挂到错误的调度项下。
 
 `ProviderArtifactPromotionReport` 是 staging 之后的显式晋升/阻断报告。它可以允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，也可以阻断候选继续前进；但报告本身仍不修改 runtime、published media 或世界状态。
+
+图片候选的当前示例使用更严格的失败路径：provider adapter 下载出的本地 PNG 可以被登记为 image candidate，但如果 media gate / semantic gate 判断其不符合地图质量、路径、塔位、目标或世界观约束，staging 与 promotion report 会以 `validation_failed` / `blocked_validation_failed` 收束，作为负样本 evidence，而不是可发布素材。
 
 ## Campaign Router 接入
 

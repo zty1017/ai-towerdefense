@@ -11,6 +11,7 @@
 - Schema: `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
 - Validator: `tools/dev/validate_provider_artifact_promotion_report.py`
 - Example: `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json`
+- Image failure example: `examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json`
 
 ## 在编译链路中的位置
 
@@ -51,11 +52,14 @@ authority.direct_world_mutation_allowed = false
 
 即使未来报告给出 approved decision，也只是允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction。真正写入 runtime / world state 的动作必须由对应构建器和独立 validator 完成。
 
+图片候选可以给出更强的阻断决策。`p1b_provider_image_artifact_promotion_report.example.json` 使用 `blocked_validation_failed`，表达 source staging / local ref 已合法，但 media gate 与 semantic gate 已失败；这类报告必须保持 `promotion_targets.target_kind = none`，并把下一步收敛到控制图重生、paintover、media gate、semantic gate 和 human review。
+
 ## 验收命令
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json
 python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/demo/export_evidence.py
 python3 -m json.tool shared/schemas/provider_artifact_promotion_report.v0.1.schema.json >/tmp/provider_artifact_promotion_report.schema.pretty.json
 git diff --check
