@@ -86,6 +86,11 @@ from .generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff_outbox,
     provider_runner_outbox_safety,
 )
+from .generation_scheduler_import_safety import (  # noqa: E402
+    display_import_path,
+    load_safe_import_json,
+    resolve_import_path,
+)
 
 
 class GenerationSchedulerFixtureNotFoundError(LookupError):
@@ -96,67 +101,26 @@ class InvalidQueueTransitionError(ValueError):
     """Raised when a scheduler queue transition violates the current state."""
 
 
-_FORBIDDEN_IMPORT_KEYS = {
-    "api_key",
-    "secret",
-    "token",
-    "raw_prompt",
-    "full_trace",
-    "raw_json",
-    "provider_response",
-    "provider_body",
-    "prompt_body",
-}
-
-
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
 def _resolve_import_path(value: Any, *, label: str) -> Path:
-    if not isinstance(value, str) or not value.strip():
-        raise InvalidQueueTransitionError(f"{label} is required")
-    path = Path(value.strip())
-    if not path.is_absolute():
-        path = _REPO_ROOT / path
-    resolved = path.resolve()
-    if ".env" in resolved.parts:
-        raise InvalidQueueTransitionError(f"{label} must not reference .env")
-    allowed_roots = (_REPO_ROOT.resolve(), Path("/tmp").resolve())
-    if not any(resolved == root or root in resolved.parents for root in allowed_roots):
-        raise InvalidQueueTransitionError(
-            f"{label} must be under repository root or /tmp"
-        )
-    if not resolved.is_file():
-        raise InvalidQueueTransitionError(f"{label} file not found: {value}")
-    return resolved
-
-
-def _find_forbidden_import_keys(value: Any, path: str = "$") -> list[str]:
-    found: list[str] = []
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = f"{path}.{key}"
-            if str(key).lower() in _FORBIDDEN_IMPORT_KEYS:
-                found.append(child_path)
-            found.extend(_find_forbidden_import_keys(child, child_path))
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            found.extend(_find_forbidden_import_keys(child, f"{path}[{index}]"))
-    return found
+    return resolve_import_path(
+        value,
+        label=label,
+        repo_root=_REPO_ROOT,
+        error_cls=InvalidQueueTransitionError,
+    )
 
 
 def _load_runner_import_json(path: Path, *, label: str) -> dict[str, Any]:
-    payload = _load_json(path)
-    if not isinstance(payload, dict):
-        raise InvalidQueueTransitionError(f"{label} must be a JSON object")
-    forbidden = _find_forbidden_import_keys(payload)
-    if forbidden:
-        raise InvalidQueueTransitionError(
-            f"{label} contains forbidden sensitive keys: {', '.join(forbidden[:5])}"
-        )
-    return payload
+    return load_safe_import_json(
+        path,
+        label=label,
+        error_cls=InvalidQueueTransitionError,
+    )
 
 
 def _provider_artifact_fixture_paths(profile: str | None) -> tuple[Path, Path, Path, str]:
@@ -3443,10 +3407,7 @@ def run_review_only_background_handoff_tick(
 
 
 def _display_import_path(path: Path) -> str:
-    try:
-        return _rel(path)
-    except ValueError:
-        return path.as_posix()
+    return display_import_path(path, repo_root=_REPO_ROOT)
 
 
 def import_provider_adapter_runner_outputs(
