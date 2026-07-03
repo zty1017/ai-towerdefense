@@ -1919,6 +1919,141 @@ def test_review_only_background_executor_tick_rejects_unsafe_metadata(client):
     assert "max_items must be between 1 and 8" in too_large.json()["detail"]
 
 
+def test_review_only_background_handoff_tick_exports_runner_outbox(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    handoff_tick = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-handoff-tick",
+            json={"worker_id": "background-handoff-tick", "note": "export outbox"},
+        )
+    )
+
+    worker_step = handoff_tick["worker_step"]
+    assert worker_step["status"] == "handoff_tick_exported"
+    assert worker_step["worker_mode"] == "review_only_background_handoff_tick"
+    assert worker_step["max_items"] == 2
+    assert worker_step["dispatched_count"] == 2
+    assert worker_step["runner_handoff_count"] == 2
+    assert worker_step["stop_reason"] == "budget_exhausted"
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["promotion_allowed_count"] == 0
+    assert worker_step["staging_performed"] is False
+    assert worker_step["promotion_performed"] is False
+    assert worker_step["queue_completed_count"] == 0
+
+    background_handoff = handoff_tick["background_handoff_tick"]
+    assert background_handoff["tick_mode"] == "review_only_background_handoff_tick"
+    assert background_handoff["handoff_mode"] == "external_runner_required"
+    assert background_handoff["runner_handoff_count"] == 2
+    assert background_handoff["background_executor_tick"]["tick_mode"] == (
+        "review_only_background_executor_tick"
+    )
+    assert background_handoff["safety"] == {
+        "api_reads_env": False,
+        "api_calls_provider": False,
+        "api_runs_provider_adapter": False,
+        "api_stages_provider_artifacts": False,
+        "api_promotes_provider_artifacts": False,
+        "api_completes_queue_items": False,
+        "api_writes_world_state": False,
+        "api_activates_runtime": False,
+        "prompt_body_included": False,
+        "provider_response_body_included": False,
+        "live_templates_require_external_explicit_authorization": True,
+    }
+
+    handoffs = handoff_tick["runner_handoffs"]
+    assert [handoff["source"]["schedule_item_id"] for handoff in handoffs] == [
+        "sched_stage05_worldline_prefetch",
+        "sched_next_map_visual_prefetch",
+    ]
+    assert all(handoff["schema_version"] == "provider_adapter_runner_handoff.v0.1" for handoff in handoffs)
+    assert all(handoff["handoff_mode"] == "external_runner_required" for handoff in handoffs)
+    assert all(handoff["review_only"] is True for handoff in handoffs)
+    assert all(
+        handoff["runner_inputs"]["executor_request"]["source"][
+            "schedule_item_id"
+        ]
+        == handoff["source"]["schedule_item_id"]
+        for handoff in handoffs
+    )
+    assert all(
+        handoff["runner_inputs"]["provider_execution_authorization"][
+            "authorization_ref"
+        ]
+        == handoff["source"]["authorization_ref"]
+        for handoff in handoffs
+    )
+    assert all(
+        handoff["import_after_runner"]["body"]["schedule_item_id"]
+        == handoff["source"]["schedule_item_id"]
+        for handoff in handoffs
+    )
+    assert all(
+        handoff["import_after_runner"]["body"]["authorization_ref"]
+        == handoff["source"]["authorization_ref"]
+        for handoff in handoffs
+    )
+    assert all(
+        handoff["suggested_paths"]["executor_request_path"].startswith("/tmp/")
+        for handoff in handoffs
+    )
+    assert all(
+        "--live" in handoff["command_templates"]["live_llm_text"]
+        and "--live" in handoff["command_templates"]["live_image"]
+        for handoff in handoffs
+    )
+    forbidden_keys = {"raw_prompt", "provider_response", "provider_body", "api_key", "secret"}
+    assert not (set(_walk_keys(handoff_tick)) & forbidden_keys)
+
+    ledger_summary = handoff_tick["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 8
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 2,
+        "provider_execution_authorization": 2,
+        "provider_adapter_execution_receipt": 2,
+        "provider_output_envelope": 2,
+    }
+    ledger_kinds = {
+        row["artifact_kind"]
+        for row in raw_conn.execute(
+            "SELECT artifact_kind FROM generation_artifact_ledger WHERE session_id = ?",
+            (sid,),
+        ).fetchall()
+    }
+    assert ledger_kinds == {
+        "generation_executor_run_request",
+        "provider_execution_authorization",
+        "provider_adapter_execution_receipt",
+        "provider_output_envelope",
+    }
+
+
+def test_review_only_background_handoff_tick_rejects_unsafe_metadata(client):
+    sid = _create_session(client)
+    targeted = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-handoff-tick",
+        json={
+            "worker_id": "background-handoff-targeted",
+            "authorization_ref": "auth_should_not_be_reused",
+        },
+    )
+    assert targeted.status_code == 409
+    assert "does not accept targeted metadata" in targeted.json()["detail"]
+
+    too_large = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-review-only-background-handoff-tick",
+        json={"worker_id": "background-handoff-large", "max_items": 9},
+    )
+    assert too_large.status_code == 409
+    assert "max_items must be between 1 and 8" in too_large.json()["detail"]
+
+
 def test_provider_adapter_runner_output_import_records_local_files(client, tmp_path):
     sid = _create_session(client)
     chain = _prepare_provider_authorization_chain(client, sid, "runner-import")
