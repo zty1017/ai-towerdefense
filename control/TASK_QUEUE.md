@@ -1811,6 +1811,39 @@ rg -n "generation_scheduler_artifact_ledger_repository|upsert_generation_artifac
 git diff --check
 ```
 
+### P1-B-47 Refactor scheduler run queue repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_schedule_runs 与 generation_schedule_queue_items 的 SQLite 插入、读取、按状态查找和更新函数抽到独立 repository 模块；保持 API 行为兼容，不改变 queue payload、worker cache、provider guard、ledger、DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_run_queue_repository.py`。
+- `generation_scheduler_service.py` 继续负责状态转移规则、attempt / retry / fallback 预算、业务异常和 API 编排；run / queue 两张表的 SQLite 访问改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 repository run / queue insert、load latest、run filter、按状态取下一项、定向 row lookup 和 update 测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 scheduler run / queue 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_schedule_runs` 与 `generation_schedule_queue_items` 表读写，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 worker cache repository / provider guard log repository，或转向正式后台 executor 与 MapRuntimePackage / 前端体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_run_queue_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_run_queue_repository|insert_generation_schedule_run|insert_generation_queue_items|load_latest_generation_schedule_run|load_generation_queue_items|load_generation_queue_item_row|load_next_generation_item_row_by_status|update_generation_queue_item" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

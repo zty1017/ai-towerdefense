@@ -99,6 +99,15 @@ from .generation_scheduler_provider_execution_builders import (  # noqa: E402
     rehydrate_generation_executor_request_for_runner as _rehydrate_generation_executor_request_for_runner_base,
     rehydrate_provider_authorization_for_runner as _rehydrate_provider_authorization_for_runner_base,
 )
+from .generation_scheduler_run_queue_repository import (  # noqa: E402
+    insert_generation_queue_items as _insert_generation_queue_items,
+    insert_generation_schedule_run as _insert_generation_schedule_run,
+    load_generation_queue_item_row as _load_generation_queue_item_row_base,
+    load_generation_queue_items as _load_generation_queue_items,
+    load_latest_generation_schedule_run as _load_latest_generation_schedule_run,
+    load_next_generation_item_row_by_status as _load_next_generation_item_row_by_status,
+    update_generation_queue_item as _update_generation_queue_item,
+)
 from .generation_scheduler_run_queue_builders import (  # noqa: E402
     build_generation_queue_items_from_run as _build_generation_queue_items_from_run,
     build_generation_schedule_buffer as _build_generation_schedule_buffer,
@@ -215,89 +224,13 @@ def _build_generation_schedule_run_payload(
     )
 
 
-def _insert_generation_queue_items(items: list[dict[str, Any]]) -> None:
-    with db_cursor() as cur:
-        for item in items:
-            cur.execute(
-                "INSERT INTO generation_schedule_queue_items "
-                "(run_id, session_id, schedule_item_id, latency_class, status, action, "
-                "payload, created_at, updated_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    item["run_id"],
-                    item["session_id"],
-                    item["schedule_item_id"],
-                    item["latency_class"],
-                    item["status"],
-                    item.get("action"),
-                    _dump_payload(item),
-                    item["created_at"],
-                    item["updated_at"],
-                ),
-            )
-
-
-def _load_latest_generation_schedule_run(session_id: str) -> dict[str, Any] | None:
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT payload FROM generation_schedule_runs WHERE session_id = ? "
-            "ORDER BY updated_at DESC LIMIT 1",
-            (session_id,),
-        )
-        row = cur.fetchone()
-    if row is None or not row.get("payload"):
-        return None
-    return json.loads(row["payload"])
-
-
-def _load_generation_queue_items(
-    session_id: str, run_id: str | None = None
-) -> list[dict[str, Any]]:
-    if run_id is None:
-        latest = _load_latest_generation_schedule_run(session_id)
-        if latest is None:
-            return []
-        run_id = str(latest.get("run_id", ""))
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT payload FROM generation_schedule_queue_items "
-            "WHERE session_id = ? AND run_id = ? ORDER BY id ASC",
-            (session_id, run_id),
-        )
-        rows = cur.fetchall()
-    items = []
-    for row in rows:
-        payload = row.get("payload") if isinstance(row, dict) else None
-        if payload:
-            items.append(json.loads(payload))
-    return items
-
-
 def _load_generation_queue_item_row(
     session_id: str, schedule_item_id: str
 ) -> dict[str, Any]:
-    latest = _load_latest_generation_schedule_run(session_id)
-    if latest is None:
-        raise GenerationSchedulerFixtureNotFoundError("generation_schedule_queue")
-    run_id = str(latest.get("run_id", ""))
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT id, run_id, schedule_item_id, status, payload FROM "
-            "generation_schedule_queue_items "
-            "WHERE session_id = ? AND run_id = ? AND schedule_item_id = ?",
-            (session_id, run_id, schedule_item_id),
-        )
-        row = cur.fetchone()
-    if row is None or not row.get("payload"):
+    row = _load_generation_queue_item_row_base(session_id, schedule_item_id)
+    if row is None:
         raise GenerationSchedulerFixtureNotFoundError(schedule_item_id)
-    payload = json.loads(row["payload"])
-    return {
-        "id": row["id"],
-        "run_id": row["run_id"],
-        "schedule_item_id": row["schedule_item_id"],
-        "status": row["status"],
-        "payload": payload,
-    }
+    return row
 
 
 def _upsert_worker_cache_from_queue_item(payload: dict[str, Any], ts: str) -> dict[str, Any]:
@@ -436,12 +369,7 @@ def _transition_generation_queue_item(
         payload["retried_at"] = ts
     elif transition == "fallback":
         payload["fallback_selected_at"] = ts
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE generation_schedule_queue_items "
-            "SET status = ?, payload = ?, updated_at = ? WHERE id = ?",
-            (next_status, _dump_payload(payload), ts, row["id"]),
-        )
+    _update_generation_queue_item(int(row["id"]), next_status, payload, ts)
     return payload
 
 
@@ -457,33 +385,6 @@ def _requested_schedule_item_id(metadata: dict[str, Any] | None) -> str | None:
         return None
     text = str(value).strip()
     return text or None
-
-
-def _load_next_generation_item_row_by_status(
-    session_id: str, status: str
-) -> dict[str, Any] | None:
-    latest = _load_latest_generation_schedule_run(session_id)
-    if latest is None:
-        return None
-    run_id = str(latest.get("run_id", ""))
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT id, run_id, schedule_item_id, status, payload FROM "
-            "generation_schedule_queue_items "
-            "WHERE session_id = ? AND run_id = ? AND status = ? "
-            "ORDER BY id ASC LIMIT 1",
-            (session_id, run_id, status),
-        )
-        row = cur.fetchone()
-    if row is None or not row.get("payload"):
-        return None
-    return {
-        "id": row["id"],
-        "run_id": row["run_id"],
-        "schedule_item_id": row["schedule_item_id"],
-        "status": row["status"],
-        "payload": json.loads(row["payload"]),
-    }
 
 
 def _load_generation_item_row_by_status(
@@ -679,12 +580,7 @@ def _run_live_executor_guard(
         "created_at": ts,
     }
     payload["updated_at"] = ts
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE generation_schedule_queue_items "
-            "SET payload = ?, updated_at = ? WHERE id = ?",
-            (_dump_payload(payload), ts, row["id"]),
-        )
+    _update_generation_queue_item(int(row["id"]), str(row["status"]), payload, ts)
     _insert_provider_guard_log(guard_payload)
     _attach_live_executor_guard_to_cache(payload, guard_payload, ts)
     return guard_payload
@@ -756,12 +652,7 @@ def _prepare_generation_executor_run_request(
         "created_at": ts,
     }
     payload["updated_at"] = ts
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE generation_schedule_queue_items "
-            "SET payload = ?, updated_at = ? WHERE id = ?",
-            (_dump_payload(payload), ts, row["id"]),
-        )
+    _update_generation_queue_item(int(row["id"]), str(row["status"]), payload, ts)
     latest_run = _load_latest_generation_schedule_run(session_id)
     ledger_entry = _build_artifact_ledger_payload(
         session_id=session_id,
@@ -825,12 +716,7 @@ def _run_generation_dry_worker_step(
         payload["review_reason"] = "provider_or_manual_review_required_before_activation"
     else:
         payload["completed_at"] = ts
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE generation_schedule_queue_items "
-            "SET status = ?, payload = ?, updated_at = ? WHERE id = ?",
-            (next_status, _dump_payload(payload), ts, row["id"]),
-        )
+    _update_generation_queue_item(int(row["id"]), next_status, payload, ts)
     _upsert_worker_cache_from_queue_item(payload, ts)
     return payload
 
@@ -850,21 +736,7 @@ def create_generation_schedule_run(session_id: str) -> dict[str, Any]:
     run_id = _new_generation_schedule_run_id()
     ts = now_iso()
     payload = _build_generation_schedule_run_payload(session_id, run_id, ts)
-    with db_cursor() as cur:
-        cur.execute(
-            "INSERT INTO generation_schedule_runs "
-            "(run_id, session_id, status, payload, created_at, updated_at, completed_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                run_id,
-                session_id,
-                payload["status"],
-                _dump_payload(payload),
-                ts,
-                ts,
-                ts,
-            ),
-        )
+    _insert_generation_schedule_run(payload, ts)
     queue_items = _build_generation_queue_items_from_run(payload, ts)
     _insert_generation_queue_items(queue_items)
     return {

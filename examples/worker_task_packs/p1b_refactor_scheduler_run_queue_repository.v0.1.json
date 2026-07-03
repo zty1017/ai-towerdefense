@@ -1,0 +1,76 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-47-refactor-scheduler-run-queue-repository",
+  "title": "Refactor scheduler run queue repository",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/refactor-scheduler-run-queue-repository",
+  "worktree": "/tmp/ai-td-task-refactor-scheduler-run-queue-repository",
+  "objective": "把 Generation Scheduler 中 generation_schedule_runs 与 generation_schedule_queue_items 的 SQLite 插入、读取、按状态查找和更新函数抽到独立 repository 模块；保持 API 行为兼容，不改变 queue payload、worker cache、provider guard、ledger、DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_run_queue_builders.py",
+    "backend/tests/test_frontend_mock_api.py"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_run_queue_repository.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_run_queue_repository python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+    "rg -n \"generation_scheduler_run_queue_repository|insert_generation_schedule_run|insert_generation_queue_items|load_latest_generation_schedule_run|load_generation_queue_items|load_generation_queue_item_row|load_next_generation_item_row_by_status|update_generation_queue_item\" backend/app backend/tests",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务是行为保持型重构，不新增 API，不改变 endpoint 返回合同。",
+    "run queue repository 模块只处理 generation_schedule_runs 与 generation_schedule_queue_items 两张表的插入、读取、按状态查找和更新，不读 fixture、不读 .env、不调用 provider、不写 worker cache、不写 ledger、不写世界状态。",
+    "generation_scheduler_service.py 继续拥有状态转移规则、attempt / retry / fallback 预算、业务异常和 API 编排。",
+    "OpenCode headless 调用在当前受控通道内被执行环境拒绝为外部数据披露风险；本任务采用 local_codex_safe_fallback。"
+  ]
+}
