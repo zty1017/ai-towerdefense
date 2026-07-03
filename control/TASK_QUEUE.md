@@ -1877,6 +1877,39 @@ rg -n "generation_scheduler_worker_state_repository|upsert_worker_cache_payload|
 git diff --check
 ```
 
+### P1-B-49 Refactor provider artifact review helpers
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport 之间的纯 review contract 校验、staging / reviewed artifact 引用匹配和 promotion_allowed 判断抽到独立 helper 模块；保持 API 行为兼容，不改变 ledger payload、DB schema、fixture 路径、安全门或 runtime activation 边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_provider_artifact_review_helpers.py`。
+- `generation_scheduler_service.py` 继续负责路径解析、schema validator 调用、latest run / ledger 查询、ledger upsert 和 API 编排；staging / promotion report 的跨文件 contract 判断改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖正常引用、`promotion_allowed` 判断和未 staged 的 reviewed artifact 阻断。
+- `examples/worker_task_packs/p1b_refactor_provider_artifact_review_helpers.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 provider artifact review 的纯判断从 scheduler service 中分离。
+- 新模块只处理 staging / promotion report 的跨文件 review contract，不读 fixture、不读 `.env`、不调用 provider、不写 ledger、不写世界状态、不激活 runtime。
+- 后续可继续拆分 provider artifact review import / staging import 编排，或转向正式后台 executor、真实 provider 调度与 activation / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_artifact_review_helpers.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_artifact_review_helpers python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_provider_artifact_review_helpers|validate_provider_artifact_review_contract|provider_artifact_promotion_allowed|missing_reviewed_staged_artifact_ids" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

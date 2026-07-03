@@ -46,6 +46,10 @@ from backend.app.services.generation_scheduler_artifact_fixtures import (  # noq
 from backend.app.services.generation_scheduler_import_safety import (  # noqa: E402
     resolve_import_path,
 )
+from backend.app.services.generation_scheduler_provider_artifact_review_helpers import (  # noqa: E402
+    provider_artifact_promotion_allowed,
+    validate_provider_artifact_review_contract,
+)
 from backend.app.services.generation_scheduler_provider_execution_builders import (  # noqa: E402
     build_generation_executor_run_request_payload,
     build_live_executor_guard_payload,
@@ -757,6 +761,49 @@ def test_provider_artifact_fixture_catalog_rejects_unknown_profile():
         assert "unknown provider artifact profile" in str(exc)
     else:
         raise AssertionError("unknown provider artifact profile should fail")
+
+
+def test_provider_artifact_review_helpers_validate_cross_file_contract():
+    staging = {
+        "manifest_id": "pstaging_test",
+        "staged_artifacts": [{"artifact_id": "artifact_test"}],
+    }
+    promotion = {
+        "report_id": "ppromo_test",
+        "source_staging_id": "pstaging_test",
+        "reviewed_artifacts": [{"staged_artifact_id": "artifact_test"}],
+        "decision": {"promotion_allowed": True},
+    }
+
+    contract = validate_provider_artifact_review_contract(staging, promotion)
+
+    assert contract["staging_manifest_id"] == "pstaging_test"
+    assert contract["promotion_report_id"] == "ppromo_test"
+    assert contract["staged_artifact_ids"] == ["artifact_test"]
+    assert contract["reviewed_staged_artifact_ids"] == ["artifact_test"]
+    assert contract["promotion_allowed"] is True
+    assert provider_artifact_promotion_allowed(promotion) is True
+
+
+def test_provider_artifact_review_helpers_reject_unstaged_review_refs():
+    staging = {
+        "manifest_id": "pstaging_test",
+        "staged_artifacts": [{"artifact_id": "artifact_test"}],
+    }
+    promotion = {
+        "report_id": "ppromo_test",
+        "source_staging_id": "pstaging_test",
+        "reviewed_artifacts": [{"staged_artifact_id": "artifact_missing"}],
+        "decision": {"promotion_allowed": False},
+    }
+
+    try:
+        validate_provider_artifact_review_contract(staging, promotion)
+    except ValueError as exc:
+        assert "reviewed_artifacts must reference staged_artifacts" in str(exc)
+        assert "artifact_missing" in str(exc)
+    else:
+        raise AssertionError("unstaged reviewed artifact ref should fail")
 
 
 def test_provider_runner_handoff_outbox_builder_keeps_safe_contract():
