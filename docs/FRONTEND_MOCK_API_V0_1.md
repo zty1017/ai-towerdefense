@@ -473,6 +473,29 @@ POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard
 
 这仍然不是正式后台执行器。它只证明真实 provider 调用前的授权门、产物 manifest 门、校验门和晋升门已经有后端状态落点。没有 `waiting_review` 项时，接口返回 `worker_step.status = idle`。
 
+### 调度 review-only dispatcher
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain
+```
+
+`run-review-only-dispatcher-step` 会把一个 `queued` 且需要 provider review 的调度项推进到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` ledger 边界。`run-review-only-dispatcher-drain` 会按 `max_items` 重复执行这个动作，默认最多 4 个，单次上限 16 个。
+
+drain 请求体只使用：
+
+```json
+{
+  "worker_id": "local-dispatcher-drain",
+  "note": "bounded review-only background tick",
+  "max_items": 4
+}
+```
+
+返回中的 `worker_step.stop_reason` 为 `budget_exhausted` 或 `no_eligible_items`，`remaining_eligible_count` 表示仍处于 `queued` 且需要 provider review 的剩余项数量。
+
+这两个入口都是 Studio / evidence 用内部接口，不是玩家默认体验，也不是真实 provider worker。它们不会调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。
+
 ### 获取大地图
 
 ```http

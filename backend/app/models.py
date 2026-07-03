@@ -136,6 +136,12 @@ class GenerationScheduleQueueTransitionRequest(BaseModel):
         default=None,
         description="Optional scheduler queue item to target for worker actions.",
     )
+    max_items: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=16,
+        description="Optional maximum number of queue items for bounded worker drains.",
+    )
     artifact_profile: Optional[str] = Field(
         default=None,
         description="Optional provider artifact fixture profile for staging workers.",

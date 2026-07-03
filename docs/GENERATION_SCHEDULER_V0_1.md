@@ -425,6 +425,16 @@ dry-run-step
 
 它只把一个待生成项推进到 `ProviderAdapterExecutionReceipt` / `ProviderOutputEnvelope` review-only 边界，并登记到 `generation_artifact_ledger`。它不调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，也不激活 runtime；队列项仍停在 `waiting_review`。因此它是正式后台执行器前的 dispatcher 骨架，不是完整 executor chain，也不是内容晋升入口。
 
+后端同时提供 bounded drain 入口，用于模拟后台 worker 的一个受限 tick：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain
+```
+
+该入口只接受 `worker_id`、`note` 和 `max_items`，默认最多处理 4 个、单次上限 16 个。它会重复调用同一 review-only dispatcher step，直到达到预算或没有剩余 `queued` 且 `provider_review_required` 的项。返回的 `worker_step.stop_reason` 为 `budget_exhausted` 或 `no_eligible_items`，并携带 `remaining_eligible_count`，用于区分“本轮预算耗尽”和“队列已清空”。它拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile`、导入路径等定向 metadata，避免一次 drain 把同一个授权 ref 或产物路径错挂到多个调度项。
+
+drain 的边界与单步 dispatcher 相同：只登记 executor request、provider authorization、adapter receipt 和 ProviderOutputEnvelope；不调用 provider，不读取 `.env`，不 staging，不 promotion，不 complete queue item，不写世界状态，不激活 runtime。它是正式后台执行器的调度壳和吞吐量控制面雏形，不是 live provider worker。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text
