@@ -286,6 +286,24 @@ GET /api/sessions/{session_id}/generation-schedule/prefetch-cache
 
 `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 必须始终为 `0`。如果历史 `ProviderOutputEnvelope` 记录了真实 provider 调用摘要，只能计入 `recorded_provider_call_count`，不能把只读查询伪装成执行器。
 
+### 导出外部 runner handoff
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adapter-runner-handoff
+```
+
+该接口用于 Studio / 开发期 worker，不属于玩家默认流程。调用方必须提供 `schedule_item_id` 和 `authorization_ref`，且同一 session / latest run 中必须已经存在匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+
+它返回：
+
+- `provider_adapter_runner_handoff.runner_inputs.executor_request`
+- `provider_adapter_runner_handoff.runner_inputs.provider_execution_authorization`
+- 建议写入 `/tmp` 的 request / authorization / receipt / envelope / artifact / prompt 路径
+- `tools/provider_adapter/run_provider_adapter.py` 的 dry-run、live text、live image argv 模板
+- runner 完成后调用 `import-provider-adapter-runner-output` 的请求体
+
+该接口只导出 handoff，不创建 receipt/envelope，不调用 provider，不读取 `.env`，不写 ledger，不写世界状态，不激活 runtime。live 模板中的 prompt 文件、artifact 输出和 dotenv 路径必须由外部 worker 在显式授权下提供。
+
 ### 提交战斗结果
 
 ```http

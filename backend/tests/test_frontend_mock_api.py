@@ -47,6 +47,16 @@ def _session_state_counts(raw_conn: sqlite3.Connection, sid: str) -> dict[str, i
     }
 
 
+def _walk_keys(value):
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            yield key
+            yield from _walk_keys(nested)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _walk_keys(item)
+
+
 def _prepare_provider_authorization_chain(
     client,
     sid: str,
@@ -1101,6 +1111,133 @@ def test_provider_adapter_runner_fixture_records_receipt_and_envelope(client):
     assert ledger_summary["world_mutation_count_by_this_request"] == 0
     assert ledger_summary["activation_allowed_count"] == 0
     assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_adapter_runner_handoff_exports_read_only_bundle(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-handoff")
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    handoff = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/export-provider-adapter-runner-handoff",
+            json={
+                "worker_id": "runner-handoff",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+                "note": "export external runner handoff",
+            },
+        )
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    worker_step = handoff["worker_step"]
+    assert worker_step["status"] == "handoff_exported"
+    assert worker_step["worker_mode"] == "provider_adapter_runner_handoff_export"
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["authorization_ref"] == chain["authorization"]["authorization_ref"]
+    assert worker_step["upstream_request_id"] == chain["executor_request"]["request_id"]
+
+    bundle = handoff["provider_adapter_runner_handoff"]
+    assert bundle["schema_version"] == "provider_adapter_runner_handoff.v0.1"
+    assert bundle["handoff_mode"] == "external_runner_required"
+    assert bundle["review_only"] is True
+    assert bundle["runner_inputs"]["executor_request"]["request_id"] == (
+        chain["executor_request"]["request_id"]
+    )
+    assert bundle["runner_inputs"]["provider_execution_authorization"][
+        "authorization_ref"
+    ] == chain["authorization"]["authorization_ref"]
+    assert bundle["suggested_paths"]["executor_request_path"].startswith("/tmp/")
+    assert bundle["suggested_paths"]["authorization_path"].startswith("/tmp/")
+    assert bundle["command_templates"]["dry_run_fixture"][:2] == [
+        "python3",
+        "tools/provider_adapter/run_provider_adapter.py",
+    ]
+    assert "--mode" in bundle["command_templates"]["dry_run_fixture"]
+    assert "fixture" in bundle["command_templates"]["dry_run_fixture"]
+    assert "--live" in bundle["command_templates"]["live_llm_text"]
+    assert "--live" in bundle["command_templates"]["live_image"]
+    assert "<authorized-dotenv-path>" in bundle["command_templates"]["live_llm_text"]
+    assert "<authorized-dotenv-path>" in bundle["command_templates"]["live_image"]
+    assert bundle["import_after_runner"]["body"] == {
+        "worker_id": "provider-runner-output-import",
+        "schedule_item_id": "sched_next_map_visual_prefetch",
+        "authorization_ref": chain["authorization"]["authorization_ref"],
+        "receipt_path": bundle["suggested_paths"]["receipt_output_path"],
+        "envelope_path": bundle["suggested_paths"]["envelope_output_path"],
+    }
+    assert bundle["safety"] == {
+        "api_reads_env": False,
+        "api_calls_provider": False,
+        "api_writes_world_state": False,
+        "api_activates_runtime": False,
+        "prompt_body_included": False,
+        "provider_response_body_included": False,
+        "live_templates_require_external_explicit_authorization": True,
+    }
+    forbidden_keys = {"raw_prompt", "provider_response", "provider_body", "api_key", "secret"}
+    assert not (set(_walk_keys(bundle)) & forbidden_keys)
+
+    ledger_summary = handoff["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 2
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_adapter_runner_handoff_requires_authorization(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={
+                "worker_id": "runner-handoff-no-auth-dry",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={
+                "worker_id": "runner-handoff-no-auth-guard",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={
+                "worker_id": "runner-handoff-no-auth-request",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+
+    handoff = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/export-provider-adapter-runner-handoff",
+        json={
+            "worker_id": "runner-handoff-no-auth",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+
+    assert handoff.status_code == 409
+    assert "matching provider execution authorization" in handoff.json()["detail"]
 
 
 def test_provider_adapter_runner_fixture_requires_authorization(client):

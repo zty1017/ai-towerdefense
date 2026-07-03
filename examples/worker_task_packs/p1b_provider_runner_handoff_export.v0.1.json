@@ -1,0 +1,81 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-33-provider-runner-handoff-export",
+  "title": "Provider adapter runner handoff 导出",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-handoff-export",
+  "worktree": "/tmp/ai-td-task-provider-runner-handoff-export",
+  "objective": "新增外部 provider adapter runner handoff 导出 API，从 latest run 的 ledger 中只读导出已校验的 GenerationExecutorRunRequest / ProviderExecutionAuthorization、建议 /tmp 路径、runner argv 模板和 import 回灌请求体；不得直接调用 provider、读取 .env、生成 receipt/envelope、写 ledger、写世界状态或激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "shared/schemas/",
+    "tools/provider_adapter/",
+    "tools/llm/",
+    "tools/media/",
+    "frontend/",
+    "game_data/media/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_export python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "api_added",
+    "read_only_side_effect_evidence",
+    "handoff_shape",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "该 API 只能导出 handoff，不得运行 tools/provider_adapter/run_provider_adapter.py。",
+    "handoff 可以包含 live argv 模板，但模板中的 prompt 文件、artifact 输出和 dotenv 路径必须由外部 worker 在额外显式授权下提供。",
+    "OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此本任务使用 local_codex_safe_fallback 完成。"
+  ]
+}

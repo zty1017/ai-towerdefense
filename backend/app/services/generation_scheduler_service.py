@@ -2794,6 +2794,195 @@ def run_provider_adapter_runner_fixture(
     }
 
 
+def _safe_runner_handoff_slug(*parts: str) -> str:
+    raw = "_".join(part for part in parts if part)
+    slug = "".join(ch if ch.isalnum() or ch in {"_", "-"} else "_" for ch in raw)
+    return slug[:120] or "provider_runner_handoff"
+
+
+def export_provider_adapter_runner_handoff(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before exporting provider adapter runner handoff"
+        )
+    run_id = str(latest_run.get("run_id"))
+    schedule_item_id = _requested_schedule_item_id(metadata)
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    authorization_ref = str(safe_metadata.get("authorization_ref") or "")
+    if not authorization_ref and schedule_item_id:
+        authorization_ref = _provider_authorization_ref(schedule_item_id)
+    if not schedule_item_id or not authorization_ref:
+        raise InvalidQueueTransitionError(
+            "schedule_item_id and authorization_ref are required before exporting provider adapter runner handoff"
+        )
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching generation executor request is required before exporting provider adapter runner handoff"
+        )
+    authorization_entry = _latest_provider_authorization_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+        authorization_ref,
+    )
+    if authorization_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching provider execution authorization is required before exporting provider adapter runner handoff"
+        )
+    executor_request = _rehydrate_generation_executor_request_for_runner(
+        executor_request_entry
+    )
+    authorization = _rehydrate_provider_authorization_for_runner(authorization_entry)
+    validate_or_raise_errors = validate_generation_executor_run_request(executor_request)
+    if validate_or_raise_errors:
+        raise ValueError(
+            "generation executor handoff request failed validation: "
+            + "; ".join(validate_or_raise_errors)
+        )
+    authorization_errors = validate_provider_execution_authorization(authorization)
+    if authorization_errors:
+        raise ValueError(
+            "provider execution handoff authorization failed validation: "
+            + "; ".join(authorization_errors)
+        )
+    ts = now_iso()
+    slug = _safe_runner_handoff_slug(schedule_item_id, authorization_ref)
+    paths = {
+        "executor_request_path": f"/tmp/{slug}.executor_request.json",
+        "authorization_path": f"/tmp/{slug}.authorization.json",
+        "receipt_output_path": f"/tmp/{slug}.receipt.json",
+        "envelope_output_path": f"/tmp/{slug}.envelope.json",
+        "llm_summary_artifact_path": f"/tmp/{slug}.redacted_text_summary.json",
+        "image_artifact_path": f"/tmp/{slug}.image_candidate.png",
+        "prompt_file_path": f"/tmp/{slug}.prompt.txt",
+    }
+    provider_profile = str(
+        authorization.get("source", {}).get("provider_profile") or "unknown"
+    )
+    safe_note = safe_metadata.get("note")
+    base_args = [
+        "python3",
+        "tools/provider_adapter/run_provider_adapter.py",
+        "--executor-request",
+        paths["executor_request_path"],
+        "--authorization",
+        paths["authorization_path"],
+        "--receipt-output",
+        paths["receipt_output_path"],
+        "--envelope-output",
+        paths["envelope_output_path"],
+        "--created-at",
+        ts,
+    ]
+    if safe_note:
+        base_args.extend(["--note", str(safe_note)])
+    dry_run_args = [*base_args, "--mode", "fixture"]
+    live_llm_args = [
+        *base_args,
+        "--mode",
+        "llm_text",
+        "--live",
+        "--llm-profile",
+        provider_profile if provider_profile != "unknown" else "<llm-profile>",
+        "--prompt-file",
+        paths["prompt_file_path"],
+        "--artifact-output",
+        paths["llm_summary_artifact_path"],
+        "--max-tokens",
+        "4096",
+        "--load-dotenv",
+        "<authorized-dotenv-path>",
+    ]
+    live_image_args = [
+        *base_args,
+        "--mode",
+        "image",
+        "--live",
+        "--image-profile",
+        provider_profile if provider_profile != "unknown" else "<image-profile>",
+        "--prompt-file",
+        paths["prompt_file_path"],
+        "--artifact-output",
+        paths["image_artifact_path"],
+        "--size",
+        "1024x1024",
+        "--load-dotenv",
+        "<authorized-dotenv-path>",
+    ]
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "handoff_exported",
+            "worker_mode": "provider_adapter_runner_handoff_export",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "schedule_item_id": schedule_item_id,
+            "authorization_ref": authorization_ref,
+            "upstream_request_id": executor_request_entry.get("source_id"),
+        },
+        "provider_adapter_runner_handoff": {
+            "schema_version": "provider_adapter_runner_handoff.v0.1",
+            "created_at": ts,
+            "handoff_mode": "external_runner_required",
+            "review_only": True,
+            "source": {
+                "session_id": session_id,
+                "run_id": run_id,
+                "schedule_item_id": schedule_item_id,
+                "authorization_ref": authorization_ref,
+                "executor_request_id": executor_request_entry.get("source_id"),
+                "provider_profile": provider_profile,
+            },
+            "runner_inputs": {
+                "executor_request": executor_request,
+                "provider_execution_authorization": authorization,
+            },
+            "suggested_paths": paths,
+            "command_templates": {
+                "dry_run_fixture": dry_run_args,
+                "live_llm_text": live_llm_args,
+                "live_image": live_image_args,
+            },
+            "import_after_runner": {
+                "endpoint": (
+                    f"/api/sessions/{session_id}/generation-schedule/workers/"
+                    "import-provider-adapter-runner-output"
+                ),
+                "method": "POST",
+                "body": {
+                    "worker_id": "provider-runner-output-import",
+                    "schedule_item_id": schedule_item_id,
+                    "authorization_ref": authorization_ref,
+                    "receipt_path": paths["receipt_output_path"],
+                    "envelope_path": paths["envelope_output_path"],
+                },
+            },
+            "safety": {
+                "api_reads_env": False,
+                "api_calls_provider": False,
+                "api_writes_world_state": False,
+                "api_activates_runtime": False,
+                "prompt_body_included": False,
+                "provider_response_body_included": False,
+                "live_templates_require_external_explicit_authorization": True,
+            },
+        },
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
+    }
+
+
 def run_review_only_dispatcher_step(
     session_id: str,
     metadata: dict[str, Any] | None = None,
