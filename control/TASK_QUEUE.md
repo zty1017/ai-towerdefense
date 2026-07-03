@@ -1976,6 +1976,39 @@ rg -n "generation_scheduler_provider_adapter_import_helpers|validate_provider_ad
 git diff --check
 ```
 
+### P1-B-52 Refactor scheduler dispatcher controls
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 review-only dispatcher drain / background tick 的 max_items 解析、targeted metadata 拒绝和 dispatcher step metadata 构造等纯控制面规则抽到独立 helper 模块；保持 API 行为兼容，不改变 dispatcher 编排、queue / ledger 读写、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_dispatcher_controls.py`。
+- `generation_scheduler_service.py` 继续负责 dispatcher drain、background executor tick 和 background handoff tick 的实际编排；`max_items` 解析、targeted metadata 拒绝和 dispatcher step metadata 构造改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖默认 / 字符串 `max_items`、越界错误、targeted metadata 列表、拒绝错误文案和 step metadata 输出。
+- `examples/worker_task_packs/p1b_refactor_scheduler_dispatcher_controls.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 dispatcher / tick 的控制面规则从 scheduler service 中分离。
+- 新模块只处理控制面规则，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续正式后台 executor、daemon loop 或多 worker 调度接入时，应复用该 helper，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_dispatcher_controls.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_dispatcher_controls python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_dispatcher_controls|requested_max_items|reject_targeted_metadata|dispatcher_step_metadata|targeted_metadata_keys" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
