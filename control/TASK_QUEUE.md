@@ -1943,6 +1943,39 @@ rg -n "generation_scheduler_prefetch_cache_builders|build_generation_prefetch_ca
 git diff --check
 ```
 
+### P1-B-51 Refactor provider adapter runner import helpers
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 import-provider-adapter-runner-output 的纯 receipt / envelope / ledger authorization chain alignment 检查抽到独立 helper 模块；保持 API 行为兼容，不改变 runner output validator、ledger payload、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_provider_adapter_import_helpers.py`。
+- `generation_scheduler_service.py` 继续负责路径解析、runner output validator、latest run / ledger 查询、ledger upsert 和 API 编排；receipt / envelope / executor request / authorization 的 alignment checks 改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖全部 alignment 通过和失败名称回报。
+- `examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把外部 runner 回灌的授权链对齐规则从 scheduler service 中分离。
+- 新模块只检查 receipt / envelope / ledger authorization chain alignment，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续 live provider runner、视频 adapter 或多 provider import 扩展时，应复用该 helper，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_adapter_runner_import_helpers python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_provider_adapter_import_helpers|validate_provider_adapter_runner_import_contract|provider_adapter_runner_import_alignment_checks" backend/app backend/tests
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

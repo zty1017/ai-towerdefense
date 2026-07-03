@@ -1,0 +1,76 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-51-refactor-provider-adapter-runner-import-helpers",
+  "title": "Refactor provider adapter runner import helpers",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/refactor-provider-adapter-runner-import-helpers",
+  "worktree": "/tmp/ai-td-task-refactor-provider-adapter-runner-import-helpers",
+  "objective": "把 Generation Scheduler 中 import-provider-adapter-runner-output 的纯 receipt / envelope / ledger authorization chain alignment 检查抽到独立 helper 模块；保持 API 行为兼容，不改变 runner output validator、ledger payload、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_provider_adapter_import_helpers.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_adapter_runner_import_helpers python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+    "rg -n \"generation_scheduler_provider_adapter_import_helpers|validate_provider_adapter_runner_import_contract|provider_adapter_runner_import_alignment_checks\" backend/app backend/tests",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务是行为保持型重构，不新增 API，不改变 endpoint 返回合同。",
+    "新 helper 模块只检查 receipt / envelope / ledger authorization chain alignment，不读 .env、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。",
+    "generation_scheduler_service.py 继续拥有路径解析、runner output validator、latest run / ledger 查询、ledger upsert 和 API 编排。",
+    "OpenCode headless 调用在当前受控通道内被执行环境拒绝为外部数据披露风险；本任务采用 local_codex_safe_fallback。"
+  ]
+}

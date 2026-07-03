@@ -104,6 +104,9 @@ from .generation_scheduler_provider_artifact_review_helpers import (  # noqa: E4
 from .generation_scheduler_prefetch_cache_builders import (  # noqa: E402
     build_generation_prefetch_cache_payload as _build_generation_prefetch_cache_payload,
 )
+from .generation_scheduler_provider_adapter_import_helpers import (  # noqa: E402
+    validate_provider_adapter_runner_import_contract as _validate_provider_adapter_runner_import_contract,
+)
 from .generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items as _insert_generation_queue_items,
     insert_generation_schedule_run as _insert_generation_schedule_run,
@@ -1745,56 +1748,16 @@ def import_provider_adapter_runner_outputs(
         raise InvalidQueueTransitionError(
             "matching provider execution authorization is required before importing provider adapter outputs"
         )
-    receipt_source = (
-        receipt_payload.get("source", {})
-        if isinstance(receipt_payload.get("source"), dict)
-        else {}
+    import_contract = _validate_provider_adapter_runner_import_contract(
+        receipt_payload,
+        envelope_payload,
+        schedule_item_id=schedule_item_id,
+        authorization_ref=authorization_ref,
+        executor_request_id=str(executor_request_entry.get("source_id") or ""),
+        error_cls=InvalidQueueTransitionError,
     )
-    envelope_source = (
-        envelope_payload.get("source", {})
-        if isinstance(envelope_payload.get("source"), dict)
-        else {}
-    )
-    provider_call = (
-        envelope_payload.get("provider_call", {})
-        if isinstance(envelope_payload.get("provider_call"), dict)
-        else {}
-    )
-    execution = (
-        receipt_payload.get("execution", {})
-        if isinstance(receipt_payload.get("execution"), dict)
-        else {}
-    )
-    alignment_checks = {
-        "receipt_schedule_item_id": receipt_source.get("schedule_item_id")
-        == schedule_item_id,
-        "receipt_authorization_ref": receipt_source.get("authorization_ref")
-        == authorization_ref,
-        "receipt_executor_request_id": receipt_source.get("executor_request_id")
-        == executor_request_entry.get("source_id"),
-        "envelope_schedule_item_id": envelope_source.get("schedule_item_id")
-        == schedule_item_id,
-        "envelope_object_kind": envelope_source.get("object_kind")
-        == receipt_source.get("object_kind"),
-        "envelope_object_ref": envelope_source.get("object_ref")
-        == receipt_source.get("object_ref"),
-        "envelope_provider_profile": envelope_source.get("provider_profile")
-        == receipt_source.get("provider_profile"),
-        "envelope_provider_mode": envelope_source.get("provider_mode")
-        == receipt_source.get("provider_mode"),
-        "provider_performed_matches_receipt": provider_call.get("performed")
-        == execution.get("provider_call_performed_by_receipt_builder"),
-    }
-    if provider_call.get("performed") is True:
-        alignment_checks["performed_authorization_ref"] = (
-            provider_call.get("authorization_ref") == authorization_ref
-        )
-    failed = [name for name, passed in alignment_checks.items() if not passed]
-    if failed:
-        raise InvalidQueueTransitionError(
-            "provider adapter runner outputs do not match ledger authorization chain: "
-            + ", ".join(failed)
-        )
+    receipt_source = import_contract["receipt_source"]
+    envelope_source = import_contract["envelope_source"]
     ts = now_iso()
     receipt_entry = _build_artifact_ledger_payload(
         session_id=session_id,
