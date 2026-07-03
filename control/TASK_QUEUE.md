@@ -1094,6 +1094,39 @@ uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
 git diff --check
 ```
 
+### P1-B-26 Provider adapter runner 后端 bridge
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+在后端 worker API 中复用工具层 provider adapter runner 的 dry-run artifact builder，把 runner 形态的 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope 登记到 generation_artifact_ledger，为后续 live provider bridge 做安全落点。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-runner-fixture`
+- 该入口要求已有匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 后端从 ledger compact 还原 runner 校验所需的最小安全 payload，不保存 prompt / provider 正文。
+- 复用 `tools/provider_adapter/run_provider_adapter.py` 的 dry-run artifact builder，生成并校验 runner 形态 receipt/envelope。
+- receipt 与 envelope 均登记到 `generation_artifact_ledger`。
+
+当前结论：
+
+- 这是 runner bridge 的 dry-run 后端落账，不是真 live provider 调度。
+- 不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live bridge 可以替换 runner 模式，但必须保留 executor request、authorization、redacted envelope、staging、promotion 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner_bridge.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_adapter_runner_bridge python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

@@ -399,6 +399,14 @@ examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
 
 runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片 provider adapter 已在工具层以显式 `--mode image --live` 形式接入；视频、媒体后处理和 media gate 不属于 runner 当前自动能力。
 
+后端已提供 runner dry-run bridge：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-runner-fixture
+```
+
+该入口要求当前 session / latest run 已经存在匹配的 `GenerationExecutorRunRequest` 和 `ProviderExecutionAuthorization`，然后复用工具层 runner 的 dry-run artifact builder 生成 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`，并把二者登记到 `generation_artifact_ledger`。它不会自动 staging、promotion、complete queue item、写世界状态或激活 runtime；队列仍停在 review / promotion 前。
+
 当前工具层还提供显式 image live 边界：
 
 ```text

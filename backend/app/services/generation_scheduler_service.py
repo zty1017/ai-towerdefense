@@ -55,8 +55,11 @@ _MVP_CGOP_EXAMPLE = (
     _REPO_ROOT / "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
 )
 _TOOLS_DEV_DIR = _REPO_ROOT / "tools" / "dev"
+_TOOLS_PROVIDER_ADAPTER_DIR = _REPO_ROOT / "tools" / "provider_adapter"
 if str(_TOOLS_DEV_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DEV_DIR))
+if str(_TOOLS_PROVIDER_ADAPTER_DIR) not in sys.path:
+    sys.path.insert(0, str(_TOOLS_PROVIDER_ADAPTER_DIR))
 
 from validate_provider_artifact_staging_manifest import (  # noqa: E402
     validate_provider_artifact_staging_manifest,
@@ -73,6 +76,10 @@ from validate_provider_execution_authorization import (  # noqa: E402
 )
 from validate_provider_adapter_execution_receipt import (  # noqa: E402
     validate_provider_adapter_execution_receipt,
+)
+from run_provider_adapter import (  # noqa: E402
+    build_dry_run_artifacts as build_provider_adapter_runner_dry_run_artifacts,
+    validate_outputs as validate_provider_adapter_runner_outputs,
 )
 
 
@@ -1333,6 +1340,236 @@ def _compact_provider_execution_authorization(record: dict[str, Any]) -> dict[st
     }
 
 
+def _rehydrate_generation_executor_request_for_runner(
+    entry: dict[str, Any],
+) -> dict[str, Any]:
+    compact = entry.get("compact") if isinstance(entry.get("compact"), dict) else {}
+    source = compact.get("source") if isinstance(compact.get("source"), dict) else {}
+    intent = (
+        compact.get("provider_execution_intent")
+        if isinstance(compact.get("provider_execution_intent"), dict)
+        else {}
+    )
+    budget = (
+        compact.get("execution_budget")
+        if isinstance(compact.get("execution_budget"), dict)
+        else {}
+    )
+    output = (
+        compact.get("requested_output")
+        if isinstance(compact.get("requested_output"), dict)
+        else {}
+    )
+    latency_class = str(source.get("latency_class") or "background_prefetch")
+    return {
+        "schema_version": "generation_executor_run_request.v0.1",
+        "request_id": str(entry.get("source_id") or compact.get("request_id") or ""),
+        "created_at": str(entry.get("created_at") or entry.get("updated_at") or now_iso()),
+        "source": {
+            "session_id": str(entry.get("session_id") or ""),
+            "run_id": str(entry.get("run_id") or source.get("run_id") or ""),
+            "schedule_item_id": str(
+                entry.get("schedule_item_id")
+                or source.get("schedule_item_id")
+                or ""
+            ),
+            "object_kind": str(source.get("object_kind") or ""),
+            "object_ref": str(source.get("object_ref") or ""),
+            "latency_class": latency_class,
+            "guard_id": str(source.get("guard_id") or ""),
+            "worker_id": str(source.get("worker_id") or "generation_executor_request"),
+        },
+        "authority": compact.get("authority")
+        if isinstance(compact.get("authority"), dict)
+        else {
+            "visibility": "internal_evidence",
+            "review_only": True,
+            "provider_call_allowed_by_request_builder": False,
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "provider_execution_intent": {
+            "status": str(
+                intent.get("status") or "prepared_pending_explicit_authorization"
+            ),
+            "provider_mode": str(intent.get("provider_mode") or "manual_authorized_demo"),
+            "provider_profile": str(intent.get("provider_profile") or "unknown"),
+            "authorization_required": True,
+            "authorization_granted": False,
+            "authorization_ref": None,
+            "provider_call_performed_by_request_builder": False,
+        },
+        "execution_budget": {
+            "attempt_count": int(budget.get("attempt_count", 0)),
+            "max_attempts": int(budget.get("max_attempts", 0)),
+            "remaining_attempts": int(budget.get("remaining_attempts", 0)),
+            "latency_class": latency_class,
+            "fallback_ref": budget.get("fallback_ref"),
+        },
+        "input_refs": [
+            {
+                "ref_id": "generation_schedule_plan",
+                "kind": "schedule_plan",
+                "path": _rel(_GENERATION_SCHEDULE_PLAN),
+                "notes": [
+                    "Rehydrated from ledger compact for provider adapter runner dry-run; no prompt body is stored."
+                ],
+            }
+        ],
+        "context_refs": [],
+        "requested_output": {
+            "intent_class": str(
+                output.get("intent_class") or "provider_adapter_runner_dry_run"
+            ),
+            "result_kind": str(output.get("result_kind") or "mixed_candidate"),
+            "artifact_policy": "review_only_local_refs_required",
+            "activation_policy": "promotion_required_before_runtime_or_world_state",
+            "notes": [
+                "Provider adapter runner must emit ProviderOutputEnvelope before staging."
+            ],
+        },
+        "required_gates": {
+            "before_provider_execution": [
+                "explicit_user_authorization",
+                "provider_adapter_selected",
+                "sanitized_prompt_or_request_materialized_outside_request_record",
+            ],
+            "after_provider_execution": [
+                "provider_output_envelope",
+                "local_artifact_staging_manifest",
+                "schema_or_media_validation",
+            ],
+            "before_activation": [
+                "semantic_gate",
+                "human_review",
+                "promotion_report",
+                "runtime_package_or_world_delta_transaction_builder",
+            ],
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "download_then_local_ref_only",
+            "executor_result_storage": "provider_output_envelope_redacted_only",
+        },
+        "request_builder_safety": compact.get("request_builder_safety")
+        if isinstance(compact.get("request_builder_safety"), dict)
+        else {
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+        },
+    }
+
+
+def _rehydrate_provider_authorization_for_runner(
+    entry: dict[str, Any],
+) -> dict[str, Any]:
+    compact = entry.get("compact") if isinstance(entry.get("compact"), dict) else {}
+    source = compact.get("source") if isinstance(compact.get("source"), dict) else {}
+    authorization = (
+        compact.get("authorization")
+        if isinstance(compact.get("authorization"), dict)
+        else {}
+    )
+    constraints = (
+        compact.get("execution_constraints")
+        if isinstance(compact.get("execution_constraints"), dict)
+        else {}
+    )
+    return {
+        "schema_version": "provider_execution_authorization.v0.1",
+        "authorization_ref": str(
+            entry.get("source_id")
+            or compact.get("authorization_ref")
+            or source.get("authorization_ref")
+            or ""
+        ),
+        "created_at": str(entry.get("created_at") or entry.get("updated_at") or now_iso()),
+        "source": {
+            "session_id": str(entry.get("session_id") or ""),
+            "run_id": str(entry.get("run_id") or source.get("run_id") or ""),
+            "schedule_item_id": str(
+                entry.get("schedule_item_id")
+                or source.get("schedule_item_id")
+                or ""
+            ),
+            "object_kind": str(source.get("object_kind") or ""),
+            "object_ref": str(source.get("object_ref") or ""),
+            "executor_request_id": str(source.get("executor_request_id") or ""),
+            "guard_id": str(source.get("guard_id") or ""),
+            "provider_mode": str(source.get("provider_mode") or "manual_authorized_demo"),
+            "provider_profile": str(source.get("provider_profile") or "unknown"),
+            "worker_id": str(source.get("worker_id") or "provider_authorization_grant"),
+        },
+        "authority": compact.get("authority")
+        if isinstance(compact.get("authority"), dict)
+        else {
+            "visibility": "internal_evidence",
+            "review_only": True,
+            "provider_execution_authorized": True,
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "authorization": {
+            "status": str(authorization.get("status") or "granted_for_provider_adapter"),
+            "granted": True,
+            "scope": "provider_adapter_execution_only",
+            "requires_provider_output_envelope": True,
+            "expires_at": None,
+            "reason": "Rehydrated authorization for provider adapter runner dry-run.",
+        },
+        "execution_constraints": {
+            "attempt_count": int(constraints.get("attempt_count", 0)),
+            "max_attempts": int(constraints.get("max_attempts", 0)),
+            "remaining_attempts": int(constraints.get("remaining_attempts", 0)),
+            "allowed_provider_mode": str(
+                constraints.get("allowed_provider_mode")
+                or source.get("provider_mode")
+                or "manual_authorized_demo"
+            ),
+            "allowed_provider_profile": str(
+                constraints.get("allowed_provider_profile")
+                or source.get("provider_profile")
+                or "unknown"
+            ),
+            "required_next_gates": constraints.get("required_next_gates")
+            if isinstance(constraints.get("required_next_gates"), list)
+            else [
+                "provider_output_envelope",
+                "local_artifact_staging_manifest",
+                "media_gate",
+                "semantic_gate",
+                "human_review",
+                "promotion_report",
+            ],
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "download_then_local_ref_only",
+            "executor_result_storage": "provider_output_envelope_redacted_only",
+        },
+        "authorization_builder_safety": compact.get("authorization_builder_safety")
+        if isinstance(compact.get("authorization_builder_safety"), dict)
+        else {
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "writes_world_state": False,
+            "activates_runtime": False,
+        },
+    }
+
+
 def _build_provider_adapter_execution_receipt_payload(
     authorization_entry: dict[str, Any],
     metadata: dict[str, Any] | None,
@@ -2372,6 +2609,112 @@ def run_provider_adapter_fixture(
         },
         "provider_execution_authorization": authorization_entry.get("compact"),
         "provider_adapter_execution_receipt": receipt_payload,
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
+    }
+
+
+def run_provider_adapter_runner_fixture(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before provider adapter runner"
+        )
+    run_id = str(latest_run.get("run_id"))
+    schedule_item_id = _requested_schedule_item_id(metadata)
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    authorization_ref = str(safe_metadata.get("authorization_ref") or "")
+    if not authorization_ref and schedule_item_id:
+        authorization_ref = _provider_authorization_ref(schedule_item_id)
+    if not schedule_item_id or not authorization_ref:
+        raise InvalidQueueTransitionError(
+            "schedule_item_id and authorization_ref are required before provider adapter runner"
+        )
+    executor_request_entry = _latest_generation_executor_request_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+    )
+    if executor_request_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching generation executor request is required before provider adapter runner"
+        )
+    authorization_entry = _latest_provider_authorization_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+        authorization_ref,
+    )
+    if authorization_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching provider execution authorization is required before provider adapter runner"
+        )
+    ts = now_iso()
+    executor_request = _rehydrate_generation_executor_request_for_runner(
+        executor_request_entry
+    )
+    authorization = _rehydrate_provider_authorization_for_runner(authorization_entry)
+    receipt_payload, envelope_payload = build_provider_adapter_runner_dry_run_artifacts(
+        executor_request,
+        authorization,
+        created_at=ts,
+        note=safe_metadata.get("note"),
+    )
+    validate_provider_adapter_runner_outputs(receipt_payload, envelope_payload)
+    receipt_source = receipt_payload["source"]
+    envelope_source = envelope_payload["source"]
+    receipt_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_adapter_execution_receipt",
+        source_id=str(receipt_payload["execution_receipt_id"]),
+        status="runner_fixture_output_ready_for_envelope",
+        compact=_compact_provider_adapter_execution_receipt(receipt_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(receipt_source["schedule_item_id"]),
+        worker_id=str(receipt_source["worker_id"]),
+        note=str(receipt_source.get("note"))
+        if receipt_source.get("note") is not None
+        else None,
+    )
+    envelope_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_output_envelope",
+        source_id=str(envelope_payload["envelope_id"]),
+        status="runner_recorded_review_only",
+        compact=_compact_provider_output_envelope(envelope_payload),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=str(envelope_source["schedule_item_id"]),
+        worker_id=str(envelope_source["worker_id"]),
+        note=str(safe_metadata.get("note"))
+        if safe_metadata.get("note") is not None
+        else None,
+    )
+    _upsert_generation_artifact_ledger(receipt_entry)
+    _upsert_generation_artifact_ledger(envelope_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "runner_recorded",
+            "worker_mode": "provider_adapter_runner_fixture",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "schedule_item_id": schedule_item_id,
+            "authorization_ref": authorization_ref,
+            "upstream_request_id": executor_request_entry.get("source_id"),
+            "execution_receipt_id": receipt_payload["execution_receipt_id"],
+            "envelope_id": envelope_payload["envelope_id"],
+        },
+        "generation_executor_run_request": executor_request_entry.get("compact"),
+        "provider_execution_authorization": authorization_entry.get("compact"),
+        "provider_adapter_execution_receipt": receipt_entry["compact"],
+        "provider_output_envelope": envelope_entry["compact"],
         "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
     }
 

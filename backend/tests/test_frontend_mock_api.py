@@ -18,7 +18,7 @@ def _payload(resp):
     return body["payload"]
 
 
-def _prepare_provider_artifact_staging_chain(
+def _prepare_provider_authorization_chain(
     client,
     sid: str,
     worker_prefix: str,
@@ -62,6 +62,24 @@ def _prepare_provider_artifact_staging_chain(
             },
         )
     )["provider_execution_authorization"]
+    return {
+        "executor_request": executor_request,
+        "authorization": authorization,
+    }
+
+
+def _prepare_provider_artifact_staging_chain(
+    client,
+    sid: str,
+    worker_prefix: str,
+    authorization_ref: str | None = None,
+) -> dict:
+    chain = _prepare_provider_authorization_chain(
+        client,
+        sid,
+        worker_prefix,
+        authorization_ref=authorization_ref,
+    )
     adapter_receipt = _payload(
         client.post(
             f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-fixture",
@@ -73,8 +91,8 @@ def _prepare_provider_artifact_staging_chain(
         )
     )["provider_adapter_execution_receipt"]
     return {
-        "executor_request": executor_request,
-        "authorization": authorization,
+        "executor_request": chain["executor_request"],
+        "authorization": chain["authorization"],
         "adapter_receipt": adapter_receipt,
     }
 
@@ -732,6 +750,103 @@ def test_provider_artifact_staging_requires_matching_executor_request(client):
     )
     assert stage.status_code == 409
     assert "matching generation executor request" in stage.json()["detail"]
+
+
+def test_provider_adapter_runner_fixture_records_receipt_and_envelope(client):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-bridge")
+    runner = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-runner-fixture",
+            json={
+                "worker_id": "runner-bridge",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+                "note": "record runner dry-run output",
+            },
+        )
+    )
+
+    worker_step = runner["worker_step"]
+    assert worker_step["status"] == "runner_recorded"
+    assert worker_step["worker_mode"] == "provider_adapter_runner_fixture"
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["authorization_ref"] == chain["authorization"]["authorization_ref"]
+    assert worker_step["upstream_request_id"] == chain["executor_request"]["request_id"]
+    assert runner["provider_adapter_execution_receipt"]["execution_receipt_id"] == (
+        worker_step["execution_receipt_id"]
+    )
+    assert runner["provider_adapter_execution_receipt"]["execution"]["mode"] == (
+        "fixture_backed_no_provider_call"
+    )
+    assert runner["provider_adapter_execution_receipt"]["execution"][
+        "provider_call_performed_by_receipt_builder"
+    ] is False
+    assert runner["provider_output_envelope"]["envelope_id"] == worker_step["envelope_id"]
+    assert runner["provider_output_envelope"]["provider_call"]["performed"] is False
+    assert runner["provider_output_envelope"]["provider_call"]["authorization_ref"] is None
+    assert runner["provider_output_envelope"]["activation_gate"][
+        "activation_allowed"
+    ] is False
+    assert runner["provider_output_envelope"]["artifact_manifest"]["status"] == (
+        "not_created"
+    )
+
+    ledger_summary = runner["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 4
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+        "provider_adapter_execution_receipt": 1,
+        "provider_output_envelope": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_adapter_runner_fixture_requires_authorization(client):
+    sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/dry-run-step",
+            json={
+                "worker_id": "runner-no-auth-dry",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/live-executor-guard",
+            json={
+                "worker_id": "runner-no-auth-guard",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/prepare-executor-request",
+            json={
+                "worker_id": "runner-no-auth-request",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+    runner = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/run-provider-adapter-runner-fixture",
+        json={
+            "worker_id": "runner-no-auth",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+        },
+    )
+    assert runner.status_code == 409
+    assert "matching provider execution authorization" in runner.json()["detail"]
 
 
 def test_provider_artifact_staging_supports_image_failure_profile(client):
