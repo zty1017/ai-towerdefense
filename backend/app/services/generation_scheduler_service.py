@@ -2794,6 +2794,223 @@ def run_provider_adapter_runner_fixture(
     }
 
 
+def run_review_only_dispatcher_step(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Dispatch one queued item through the review-only provider runner boundary."""
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    requested_schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    worker_prefix = str(
+        safe_metadata.get("worker_id") or "review_only_dispatcher"
+    )
+    note = safe_metadata.get("note")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    created_run = latest_run is None
+    run_payload = (
+        create_generation_schedule_run(session_id)["generation_schedule_run"]
+        if created_run
+        else latest_run
+    )
+    run_id = str(run_payload.get("run_id") or "") if run_payload else ""
+
+    def _idle_response(
+        schedule_item_id: str | None,
+        steps: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        latest_run_for_idle = _load_latest_generation_schedule_run(session_id)
+        idle_run_id = (
+            str(latest_run_for_idle.get("run_id"))
+            if latest_run_for_idle is not None
+            else run_id
+        )
+        queue_items = _load_generation_queue_items(session_id, idle_run_id)
+        cache_items = (
+            _load_worker_cache_items(session_id, idle_run_id)
+            if idle_run_id
+            else []
+        )
+        ledger_items = _load_generation_artifact_ledger_items(
+            session_id,
+            idle_run_id,
+        )
+        return {
+            "session_id": session_id,
+            "mode": "frontend_mock_fixture",
+            "worker_step": {
+                "status": "idle",
+                "worker_mode": "review_only_dispatcher_step",
+                "created_generation_schedule_run": created_run,
+                "run_id": run_payload.get("run_id") if run_payload else None,
+                "schedule_item_id": schedule_item_id,
+                "provider_call_count": 0,
+                "world_mutation_count": 0,
+                "activation_allowed_count": 0,
+                "promotion_allowed_count": 0,
+                "staging_performed": False,
+                "promotion_performed": False,
+                "queue_completed": False,
+            },
+            "steps": steps or {},
+            "generation_schedule_run": _compact_generation_schedule_run(
+                latest_run_for_idle
+            ),
+            "generation_schedule_queue": _compact_generation_queue(queue_items),
+            "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
+            "generation_artifact_ledger": _compact_generation_artifact_ledger(
+                ledger_items
+            ),
+        }
+
+    if requested_schedule_item_id:
+        requested_row = _load_generation_queue_item_row(
+            session_id,
+            requested_schedule_item_id,
+        )
+        if (
+            requested_row["status"] == "queued"
+            and requested_row["payload"].get("provider_review_required") is not True
+        ):
+            raise InvalidQueueTransitionError(
+                "review-only dispatcher requires a provider-review queue item"
+            )
+    else:
+        for candidate in _load_generation_queue_items(session_id, run_id):
+            if (
+                candidate.get("status") == "queued"
+                and candidate.get("provider_review_required") is True
+            ):
+                requested_schedule_item_id = str(
+                    candidate.get("schedule_item_id") or ""
+                )
+                break
+    if not requested_schedule_item_id:
+        return _idle_response(None)
+
+    def _step_metadata(
+        step_name: str,
+        schedule_item_id: str | None = None,
+        authorization_ref: str | None = None,
+    ) -> dict[str, Any]:
+        step_metadata: dict[str, Any] = {
+            "worker_id": f"{worker_prefix}_{step_name}",
+            "note": note,
+        }
+        if schedule_item_id:
+            step_metadata["schedule_item_id"] = schedule_item_id
+        if authorization_ref:
+            step_metadata["authorization_ref"] = authorization_ref
+        return step_metadata
+
+    dry_step = run_generation_schedule_dry_worker_step(
+        session_id,
+        _step_metadata("dry_run", requested_schedule_item_id),
+    )
+    queue_item = dry_step.get("generation_schedule_queue_item")
+    if queue_item is None:
+        return _idle_response(
+            requested_schedule_item_id,
+            {"dry_run_step": dry_step["worker_step"]},
+        )
+
+    schedule_item_id = str(queue_item.get("schedule_item_id") or "")
+    if not schedule_item_id:
+        raise InvalidQueueTransitionError(
+            "review-only dispatcher requires a concrete schedule_item_id"
+        )
+    if queue_item.get("status") != "waiting_review":
+        raise InvalidQueueTransitionError(
+            "review-only dispatcher requires a provider-review queue item"
+        )
+    authorization_ref = str(
+        safe_metadata.get("authorization_ref")
+        or _provider_authorization_ref(schedule_item_id)
+    )
+
+    guard_step = run_generation_schedule_live_executor_guard(
+        session_id,
+        _step_metadata("live_guard", schedule_item_id),
+    )
+    executor_request_step = prepare_generation_executor_run_request(
+        session_id,
+        _step_metadata("executor_request", schedule_item_id),
+    )
+    authorization_step = grant_provider_execution_authorization(
+        session_id,
+        _step_metadata("provider_authorization", schedule_item_id, authorization_ref),
+    )
+    authorization_ref = str(
+        authorization_step["worker_step"].get("authorization_ref")
+        or authorization_ref
+    )
+    runner_step = run_provider_adapter_runner_fixture(
+        session_id,
+        _step_metadata("provider_runner", schedule_item_id, authorization_ref),
+    )
+    latest_after_dispatch = _load_latest_generation_schedule_run(session_id)
+    run_id = (
+        str(latest_after_dispatch.get("run_id"))
+        if latest_after_dispatch is not None
+        else None
+    )
+    queue_items = _load_generation_queue_items(session_id, run_id)
+    cache_items = _load_worker_cache_items(session_id, run_id) if run_id else []
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    queue_row = _load_generation_queue_item_row(session_id, schedule_item_id)
+
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "dispatched_review_only",
+            "worker_mode": "review_only_dispatcher_step",
+            "created_generation_schedule_run": created_run,
+            "run_id": run_payload.get("run_id") if run_payload else None,
+            "schedule_item_id": schedule_item_id,
+            "authorization_ref": authorization_ref,
+            "execution_receipt_id": runner_step["worker_step"][
+                "execution_receipt_id"
+            ],
+            "envelope_id": runner_step["worker_step"]["envelope_id"],
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "promotion_allowed_count": 0,
+            "staging_performed": False,
+            "promotion_performed": False,
+            "queue_completed": queue_row["status"] == "completed",
+        },
+        "steps": {
+            "dry_run_step": dry_step["worker_step"],
+            "live_executor_guard": guard_step["worker_step"],
+            "generation_executor_run_request": executor_request_step["worker_step"],
+            "provider_execution_authorization": authorization_step["worker_step"],
+            "provider_adapter_runner": runner_step["worker_step"],
+        },
+        "generation_schedule_run": _compact_generation_schedule_run(
+            latest_after_dispatch
+        ),
+        "generation_schedule_queue_item": queue_row["payload"],
+        "generation_schedule_queue": _compact_generation_queue(queue_items),
+        "generation_schedule_worker_cache": _compact_worker_cache(cache_items),
+        "provider_guard_logs": guard_step["provider_guard_logs"],
+        "live_executor_guard": guard_step["live_executor_guard"],
+        "generation_executor_run_request": executor_request_step[
+            "generation_executor_run_request"
+        ],
+        "provider_execution_authorization": authorization_step[
+            "provider_execution_authorization"
+        ],
+        "provider_adapter_execution_receipt": runner_step[
+            "provider_adapter_execution_receipt"
+        ],
+        "provider_output_envelope": runner_step["provider_output_envelope"],
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(
+            ledger_items
+        ),
+    }
+
+
 def _display_import_path(path: Path) -> str:
     try:
         return _rel(path)
