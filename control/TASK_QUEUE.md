@@ -1677,6 +1677,39 @@ rg -n "generation_scheduler_artifact_fixtures|provider_artifact_fixture_paths|pr
 git diff --check
 ```
 
+### P1-B-43 Refactor scheduler run and queue builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation schedule buffer、run payload、queue item payload、queue summary、worker cache summary、provider guard log summary、safe id / cache id 等纯 payload 构造与摘要函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_run_queue_builders.py`。
+- `generation_scheduler_service.py` 继续负责 fixture 加载、DB、queue transition、ledger 和 API 编排；纯 run / queue / cache / guard summary builder 改由独立模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 run / queue builder 与 worker cache builder 安全合同测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_run_queue_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是让 scheduler service 继续从巨型状态机文件收缩为编排层。
+- 新模块只处理纯 dict 构造和摘要，不读 fixture、不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续可继续拆分 provider request / authorization / receipt payload builders，或 artifact ledger 读写层。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_run_queue_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_run_queue_builders|build_generation_schedule_buffer|build_worker_cache_payload|compact_generation_queue|safe_id_fragment" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。
