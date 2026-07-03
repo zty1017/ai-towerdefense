@@ -99,6 +99,9 @@ from .generation_scheduler_provider_execution_builders import (  # noqa: E402
     rehydrate_generation_executor_request_for_runner as _rehydrate_generation_executor_request_for_runner_base,
     rehydrate_provider_authorization_for_runner as _rehydrate_provider_authorization_for_runner_base,
 )
+from .generation_scheduler_provider_artifact_review_helpers import (  # noqa: E402
+    validate_provider_artifact_review_contract as _validate_provider_artifact_review_contract,
+)
 from .generation_scheduler_run_queue_repository import (  # noqa: E402
     insert_generation_queue_items as _insert_generation_queue_items,
     insert_generation_schedule_run as _insert_generation_schedule_run,
@@ -1890,10 +1893,13 @@ def import_provider_artifact_review_outputs(
         source_staging_ref,
         label="promotion_report.source_staging_ref",
     )
-    if source_staging_path != staging_path:
-        raise InvalidQueueTransitionError(
-            "promotion_report.source_staging_ref must reference staging_path"
-        )
+    review_contract = _validate_provider_artifact_review_contract(
+        staging,
+        promotion,
+        staging_path=staging_path,
+        source_staging_path=source_staging_path,
+        error_cls=InvalidQueueTransitionError,
+    )
     source_envelope_id = str(staging.get("source_envelope_id") or "")
     envelope_entry = _latest_provider_output_envelope_ledger_entry(
         session_id,
@@ -1904,26 +1910,6 @@ def import_provider_artifact_review_outputs(
     if envelope_entry is None:
         raise InvalidQueueTransitionError(
             "matching provider output envelope is required before importing provider artifact review outputs"
-        )
-    if str(promotion.get("source_staging_id") or "") != str(staging.get("manifest_id") or ""):
-        raise InvalidQueueTransitionError(
-            "promotion_report.source_staging_id must match staging manifest_id"
-        )
-    staged_ids = {
-        artifact.get("artifact_id")
-        for artifact in staging.get("staged_artifacts", [])
-        if isinstance(artifact, dict)
-    }
-    reviewed_ids = {
-        artifact.get("staged_artifact_id")
-        for artifact in promotion.get("reviewed_artifacts", [])
-        if isinstance(artifact, dict)
-    }
-    missing_review_refs = sorted(str(item) for item in reviewed_ids - staged_ids)
-    if missing_review_refs:
-        raise InvalidQueueTransitionError(
-            "promotion reviewed_artifacts must reference staged_artifacts: "
-            + ", ".join(missing_review_refs)
         )
     ts = now_iso()
     worker_id = str(safe_metadata.get("worker_id") or "provider_artifact_review_import")
@@ -1940,10 +1926,7 @@ def import_provider_artifact_review_outputs(
         worker_id=worker_id,
         note=note,
     )
-    decision = promotion.get("decision", {})
-    if not isinstance(decision, dict):
-        decision = {}
-    promotion_allowed = decision.get("promotion_allowed") is True
+    promotion_allowed = review_contract["promotion_allowed"]
     promotion_entry = _build_artifact_ledger_payload(
         session_id=session_id,
         artifact_kind="provider_artifact_promotion_report",
@@ -2252,6 +2235,11 @@ def stage_provider_artifacts_fixture(
         raise InvalidQueueTransitionError(
             "matching provider adapter execution receipt is required before staging provider artifacts"
         )
+    review_contract = _validate_provider_artifact_review_contract(
+        staging,
+        promotion,
+        error_cls=InvalidQueueTransitionError,
+    )
     envelope_entry = _build_artifact_ledger_payload(
         session_id=session_id,
         artifact_kind="provider_output_envelope",
@@ -2276,11 +2264,7 @@ def stage_provider_artifacts_fixture(
         worker_id=str(worker_id),
         note=str(note) if note is not None else None,
     )
-    promotion_decision = promotion.get("decision", {})
-    promotion_allowed = (
-        isinstance(promotion_decision, dict)
-        and promotion_decision.get("promotion_allowed") is True
-    )
+    promotion_allowed = review_contract["promotion_allowed"]
     promotion_entry = _build_artifact_ledger_payload(
         session_id=session_id,
         artifact_kind="provider_artifact_promotion_report",
