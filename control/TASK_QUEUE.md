@@ -990,6 +990,43 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_image_artifact_
 git diff --check
 ```
 
+### P1-B-23 ProviderArtifactPromotionReport 失败决策校验加严
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+把 blocked_validation_failed 从文档约定升级为 validator 约束：只有至少一个 required gate 的 status=failed 时，ProviderArtifactPromotionReport 才能使用该决策。
+```
+
+已落地：
+
+- `tools/dev/validate_provider_artifact_promotion_report.py`：新增 `blocked_validation_failed` 必须对应至少一个 failed required gate 的校验。
+- `tools/dev/check_provider_artifact_promotion_report_negative_fixture.py`
+- `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json`
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json`
+- `tools/demo/export_evidence.py` 已把负例检查纳入静态校验。
+- `docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md` 和 `docs/CURRENT_ARCHITECTURE_INDEX.md` 已同步该规则。
+
+当前结论：
+
+- `blocked_review_required` 用于“还没通过 / 还没审查”的阻断。
+- `blocked_validation_failed` 用于“至少一个 required gate 已明确失败”的阻断。
+- 这防止 report 在没有 failed gate 的情况下伪装成验证失败，也让 image candidate 负样本闭环成为可执行约束。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
+python3 tools/dev/check_provider_artifact_promotion_report_negative_fixture.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json --expected-error "blocked_validation_failed requires at least one required gate failed"
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_promo_validator_hardening python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/dev/check_provider_artifact_promotion_report_negative_fixture.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_validator_hardening_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

@@ -54,13 +54,19 @@ authority.direct_world_mutation_allowed = false
 
 图片候选可以给出更强的阻断决策。`p1b_provider_image_artifact_promotion_report.example.json` 使用 `blocked_validation_failed`，表达 source staging / local ref 已合法，但 media gate 与 semantic gate 已失败；这类报告必须保持 `promotion_targets.target_kind = none`，并把下一步收敛到控制图重生、paintover、media gate、semantic gate 和 human review。
 
+Validator 会区分“未完成审查”和“已失败审查”：
+
+- `blocked_review_required`：至少一个 required gate 未通过即可使用，例如 `not_run`。
+- `blocked_validation_failed`：必须至少有一个 required gate 的 `status = failed`，否则不能伪装成验证失败。若只是还没审查，应继续使用 `blocked_review_required`。
+
 ## 验收命令
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json
 python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
 python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/demo/export_evidence.py
+python3 tools/dev/check_provider_artifact_promotion_report_negative_fixture.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json --expected-error "blocked_validation_failed requires at least one required gate failed"
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/dev/check_provider_artifact_promotion_report_negative_fixture.py tools/demo/export_evidence.py
 python3 -m json.tool shared/schemas/provider_artifact_promotion_report.v0.1.schema.json >/tmp/provider_artifact_promotion_report.schema.pretty.json
 git diff --check
 ```
