@@ -108,13 +108,61 @@ def _prepare_provider_artifact_staging_chain(
     }
 
 
-def _write_runner_outputs(tmp_path, executor_request: dict, authorization: dict) -> dict:
+def _write_runner_outputs(
+    tmp_path,
+    executor_request: dict,
+    authorization: dict,
+    *,
+    with_artifact_output: bool = False,
+) -> dict:
     receipt, envelope = build_dry_run_artifacts(
         executor_request,
         authorization,
         created_at="2026-07-03T00:00:00Z",
         note="test runner output import",
     )
+    if with_artifact_output:
+        artifact_path = (
+            "examples/provider_artifact_staging/artifacts/"
+            "p1b_stage05_map_visual_candidate.summary.json"
+        )
+        receipt["execution"]["status"] = "performed_redacted_live"
+        receipt["execution"]["mode"] = "live_redacted_provider_call"
+        receipt["execution"]["provider_call_performed_by_receipt_builder"] = True
+        receipt["execution"]["finish_reason"] = "completed"
+        receipt["execution"][
+            "redacted_summary"
+        ] = "Live-like local fixture produced a redacted review artifact."
+        receipt["adapter_safety"]["reads_env"] = True
+        receipt["adapter_safety"]["calls_provider"] = True
+        envelope["provider_call"]["status"] = "performed_redacted"
+        envelope["provider_call"]["performed"] = True
+        envelope["provider_call"]["authorization_granted"] = True
+        envelope["provider_call"]["authorization_ref"] = authorization[
+            "authorization_ref"
+        ]
+        envelope["redacted_result_summary"][
+            "status"
+        ] = "candidate_ready_for_validation"
+        envelope["redacted_result_summary"][
+            "summary"
+        ] = "A local review candidate summary was saved for staging validation."
+        envelope["redacted_result_summary"]["result_kind"] = "json_candidate"
+        envelope["redacted_result_summary"]["finish_reason"] = "completed"
+        envelope["artifact_manifest"]["status"] = "review_only_artifacts_ready"
+        envelope["artifact_manifest"]["output_refs"] = [
+            {
+                "artifact_id": "runner_imported_candidate_summary",
+                "kind": "json_candidate",
+                "path": artifact_path,
+                "content_type": "application/json",
+                "media_layer": "processed_media",
+            }
+        ]
+        envelope["artifact_manifest"]["notes"] = [
+            "Artifacts remain internal evidence and require staging, validation, review, and promotion."
+        ]
+        envelope["activation_gate"]["blocked_reason"] = "promotion_required"
     receipt_path = tmp_path / "runner.receipt.json"
     envelope_path = tmp_path / "runner.envelope.json"
     receipt_path.write_text(
@@ -130,6 +178,199 @@ def _write_runner_outputs(tmp_path, executor_request: dict, authorization: dict)
         "envelope": envelope,
         "receipt_path": receipt_path,
         "envelope_path": envelope_path,
+    }
+
+
+def _write_artifact_review_outputs(
+    tmp_path,
+    envelope: dict,
+    envelope_path: Path,
+) -> dict:
+    staged_artifact_path = (
+        "examples/provider_artifact_staging/artifacts/"
+        "p1b_stage05_map_visual_candidate.summary.json"
+    )
+    envelope_id = str(envelope["envelope_id"])
+    staging = {
+        "schema_version": "provider_artifact_staging_manifest.v0.1",
+        "manifest_id": f"pstaging_import_{envelope_id}",
+        "created_at": "2026-07-03T00:00:00Z",
+        "source_envelope_ref": str(envelope_path),
+        "source_envelope_id": envelope_id,
+        "authority": {
+            "visibility": "internal_evidence",
+            "review_only": True,
+            "runtime_activation_allowed": False,
+            "world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "local_ref_required",
+            "local_refs_only": True,
+            "runtime_claim_policy": "forbidden_before_promotion",
+        },
+        "staging_status": "review_only_artifacts_staged",
+        "staged_artifacts": [
+            {
+                "artifact_id": "imported_review_artifact_001",
+                "source_artifact_id": "runner_imported_candidate_summary",
+                "kind": "json_candidate",
+                "path": staged_artifact_path,
+                "content_type": "application/json",
+                "media_layer": "staging_report",
+                "role": "runner_import_review_summary",
+                "review_status": "staged_for_review",
+                "runtime_visible": False,
+                "player_visible": False,
+            }
+        ],
+        "validation_results": {
+            "source_envelope_gate": {
+                "status": "passed",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "local_ref_gate": {
+                "status": "passed",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "schema_gate": {
+                "status": "passed",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "media_gate": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "semantic_gate": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "human_review": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+        },
+        "promotion_gate": {
+            "promotion_allowed": False,
+            "blocked_reason": "promotion_report_required",
+            "required_next_gates": [
+                "media_gate",
+                "semantic_gate",
+                "human_review",
+                "promotion_report",
+            ],
+        },
+    }
+    staging_path = tmp_path / "artifact.staging.json"
+    promotion = {
+        "schema_version": "provider_artifact_promotion_report.v0.1",
+        "report_id": f"ppromo_import_{envelope_id}",
+        "created_at": "2026-07-03T00:00:00Z",
+        "source_staging_ref": str(staging_path),
+        "source_staging_id": staging["manifest_id"],
+        "authority": {
+            "visibility": "internal_evidence",
+            "report_only": True,
+            "direct_runtime_mutation_allowed": False,
+            "direct_world_mutation_allowed": False,
+            "player_visible": False,
+        },
+        "retention_policy": {
+            "prompt_body_storage": "forbidden",
+            "provider_body_storage": "forbidden",
+            "secret_storage": "forbidden",
+            "temporary_url_policy": "local_ref_required",
+        },
+        "decision": {
+            "promotion_decision": "blocked_review_required",
+            "promotion_allowed": False,
+            "blocked_reason": "media_semantic_and_human_review_not_complete",
+            "required_next_actions": [
+                "run_media_gate",
+                "run_semantic_gate",
+                "complete_human_review",
+            ],
+        },
+        "reviewed_artifacts": [
+            {
+                "staged_artifact_id": "imported_review_artifact_001",
+                "source_artifact_id": "runner_imported_candidate_summary",
+                "kind": "json_candidate",
+                "path": staged_artifact_path,
+                "review_result": "blocked_pending_review",
+            }
+        ],
+        "gate_results": {
+            "source_staging_gate": {
+                "status": "passed",
+                "required_before_promotion": True,
+                "report_ref": str(staging_path),
+            },
+            "local_ref_gate": {
+                "status": "passed",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "media_gate": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "semantic_gate": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "human_review": {
+                "status": "not_run",
+                "required_before_promotion": True,
+                "report_ref": None,
+            },
+            "simulation_gate": {
+                "status": "not_applicable",
+                "required_before_promotion": False,
+                "report_ref": None,
+            },
+        },
+        "promotion_targets": {
+            "target_kind": "none",
+            "runtime_package_refs": [],
+            "world_transaction_refs": [],
+            "published_media_refs": [],
+        },
+        "safety_summary": {
+            "provider_call_count_by_report": 0,
+            "world_mutation_count_by_report": 0,
+            "runtime_mutation_count_by_report": 0,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "stores_secret": False,
+            "uses_temporary_url": False,
+        },
+    }
+    promotion_path = tmp_path / "artifact.promotion.json"
+    staging_path.write_text(
+        json.dumps(staging, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    promotion_path.write_text(
+        json.dumps(promotion, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "staging": staging,
+        "promotion": promotion,
+        "staging_path": staging_path,
+        "promotion_path": promotion_path,
     }
 
 
@@ -1001,6 +1242,197 @@ def test_provider_adapter_runner_output_import_rejects_sensitive_keys(client, tm
     )
     assert imported.status_code == 409
     assert "forbidden sensitive keys" in imported.json()["detail"]
+
+
+def test_provider_artifact_review_output_import_records_staging_and_promotion(
+    client,
+    tmp_path,
+):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(
+        client,
+        sid,
+        "artifact-review-import",
+    )
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+        with_artifact_output=True,
+    )
+    runner_import = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+            json={
+                "worker_id": "runner-output-before-review-import",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+                "receipt_path": str(outputs["receipt_path"]),
+                "envelope_path": str(outputs["envelope_path"]),
+            },
+        )
+    )
+    review_outputs = _write_artifact_review_outputs(
+        tmp_path,
+        outputs["envelope"],
+        outputs["envelope_path"],
+    )
+
+    imported = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/import-provider-artifact-review-output",
+            json={
+                "worker_id": "artifact-review-output-import",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "staging_path": str(review_outputs["staging_path"]),
+                "promotion_report_path": str(review_outputs["promotion_path"]),
+            },
+        )
+    )
+
+    worker_step = imported["worker_step"]
+    assert worker_step["status"] == "imported"
+    assert worker_step["worker_mode"] == "provider_artifact_review_output_import"
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["source_envelope_id"] == outputs["envelope"]["envelope_id"]
+    assert worker_step["staging_manifest_id"] == review_outputs["staging"][
+        "manifest_id"
+    ]
+    assert worker_step["promotion_report_id"] == review_outputs["promotion"][
+        "report_id"
+    ]
+    assert worker_step["promotion_allowed"] is False
+    assert worker_step["import_refs"]["staging_path"] == str(
+        review_outputs["staging_path"]
+    )
+    assert worker_step["import_refs"]["promotion_report_path"] == str(
+        review_outputs["promotion_path"]
+    )
+    assert imported["provider_output_envelope"]["envelope_id"] == (
+        outputs["envelope"]["envelope_id"]
+    )
+    assert imported["provider_artifact_staging"]["manifest_id"] == (
+        review_outputs["staging"]["manifest_id"]
+    )
+    assert imported["provider_artifact_staging"]["promotion_gate"][
+        "promotion_allowed"
+    ] is False
+    assert imported["provider_artifact_promotion_report"]["report_id"] == (
+        review_outputs["promotion"]["report_id"]
+    )
+    assert imported["provider_artifact_promotion_report"][
+        "promotion_decision"
+    ] == "blocked_review_required"
+    assert imported["provider_artifact_promotion_report"][
+        "promotion_allowed"
+    ] is False
+
+    ledger_summary = imported["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["item_count"] == 6
+    assert ledger_summary["artifact_kind_counts"] == {
+        "generation_executor_run_request": 1,
+        "provider_execution_authorization": 1,
+        "provider_adapter_execution_receipt": 1,
+        "provider_output_envelope": 1,
+        "provider_artifact_staging_manifest": 1,
+        "provider_artifact_promotion_report": 1,
+    }
+    assert ledger_summary["provider_call_count_by_this_request"] == 0
+    assert ledger_summary["world_mutation_count_by_this_request"] == 0
+    assert ledger_summary["activation_allowed_count"] == 0
+    assert ledger_summary["promotion_allowed_count"] == 0
+
+
+def test_provider_artifact_review_output_import_requires_matching_envelope(
+    client,
+    tmp_path,
+):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(
+        client,
+        sid,
+        "artifact-review-missing-envelope",
+    )
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+        with_artifact_output=True,
+    )
+    review_outputs = _write_artifact_review_outputs(
+        tmp_path,
+        outputs["envelope"],
+        outputs["envelope_path"],
+    )
+
+    imported = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/import-provider-artifact-review-output",
+        json={
+            "worker_id": "artifact-review-output-import",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "staging_path": str(review_outputs["staging_path"]),
+            "promotion_report_path": str(review_outputs["promotion_path"]),
+        },
+    )
+
+    assert imported.status_code == 409
+    assert "matching provider output envelope" in imported.json()["detail"]
+
+
+def test_provider_artifact_review_output_import_rejects_staging_ref_mismatch(
+    client,
+    tmp_path,
+):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(
+        client,
+        sid,
+        "artifact-review-staging-mismatch",
+    )
+    outputs = _write_runner_outputs(
+        tmp_path,
+        chain["executor_request"],
+        chain["authorization"],
+        with_artifact_output=True,
+    )
+    runner_import = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+            json={
+                "worker_id": "runner-output-before-review-mismatch",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+                "receipt_path": str(outputs["receipt_path"]),
+                "envelope_path": str(outputs["envelope_path"]),
+            },
+        )
+    )
+    review_outputs = _write_artifact_review_outputs(
+        tmp_path,
+        outputs["envelope"],
+        outputs["envelope_path"],
+    )
+    wrong_staging_path = tmp_path / "wrong-artifact.staging.json"
+    wrong_staging_path.write_text(
+        json.dumps(review_outputs["staging"], ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    imported = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/import-provider-artifact-review-output",
+        json={
+            "worker_id": "artifact-review-output-import",
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "staging_path": str(wrong_staging_path),
+            "promotion_report_path": str(review_outputs["promotion_path"]),
+        },
+    )
+
+    assert imported.status_code == 409
+    assert "source_staging_ref must reference staging_path" in imported.json()["detail"]
 
 
 def test_provider_artifact_staging_supports_image_failure_profile(client):

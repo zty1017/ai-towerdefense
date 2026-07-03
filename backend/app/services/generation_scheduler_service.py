@@ -2120,6 +2120,23 @@ def _latest_provider_adapter_execution_ledger_entry(
     return receipts[-1] if receipts else None
 
 
+def _latest_provider_output_envelope_ledger_entry(
+    session_id: str,
+    run_id: str,
+    schedule_item_id: str,
+    envelope_id: str,
+) -> dict[str, Any] | None:
+    items = _load_generation_artifact_ledger_items(session_id, run_id)
+    envelopes = [
+        item
+        for item in items
+        if item.get("artifact_kind") == "provider_output_envelope"
+        and str(item.get("schedule_item_id")) == str(schedule_item_id)
+        and str(item.get("source_id")) == str(envelope_id)
+    ]
+    return envelopes[-1] if envelopes else None
+
+
 def _attach_live_executor_guard_to_cache(
     queue_payload: dict[str, Any],
     guard_payload: dict[str, Any],
@@ -2942,6 +2959,142 @@ def import_provider_adapter_runner_outputs(
         "provider_execution_authorization": authorization_entry.get("compact"),
         "provider_adapter_execution_receipt": receipt_entry["compact"],
         "provider_output_envelope": envelope_entry["compact"],
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
+    }
+
+
+def import_provider_artifact_review_outputs(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before importing provider artifact review outputs"
+        )
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    run_id = str(latest_run.get("run_id"))
+    schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    if not schedule_item_id:
+        raise InvalidQueueTransitionError(
+            "schedule_item_id is required before importing provider artifact review outputs"
+        )
+    staging_path = _resolve_import_path(
+        safe_metadata.get("staging_path"),
+        label="staging_path",
+    )
+    promotion_path = _resolve_import_path(
+        safe_metadata.get("promotion_report_path"),
+        label="promotion_report_path",
+    )
+    staging = _load_runner_import_json(staging_path, label="staging_path")
+    promotion = _load_runner_import_json(
+        promotion_path,
+        label="promotion_report_path",
+    )
+    staging_errors = validate_provider_artifact_staging_manifest(staging)
+    promotion_errors = validate_provider_artifact_promotion_report(promotion)
+    if staging_errors or promotion_errors:
+        raise ValueError(
+            "provider artifact review outputs failed validation: "
+            f"staging={staging_errors}; promotion={promotion_errors}"
+        )
+    source_staging_ref = promotion.get("source_staging_ref")
+    source_staging_path = _resolve_import_path(
+        source_staging_ref,
+        label="promotion_report.source_staging_ref",
+    )
+    if source_staging_path != staging_path:
+        raise InvalidQueueTransitionError(
+            "promotion_report.source_staging_ref must reference staging_path"
+        )
+    source_envelope_id = str(staging.get("source_envelope_id") or "")
+    envelope_entry = _latest_provider_output_envelope_ledger_entry(
+        session_id,
+        run_id,
+        schedule_item_id,
+        source_envelope_id,
+    )
+    if envelope_entry is None:
+        raise InvalidQueueTransitionError(
+            "matching provider output envelope is required before importing provider artifact review outputs"
+        )
+    if str(promotion.get("source_staging_id") or "") != str(staging.get("manifest_id") or ""):
+        raise InvalidQueueTransitionError(
+            "promotion_report.source_staging_id must match staging manifest_id"
+        )
+    staged_ids = {
+        artifact.get("artifact_id")
+        for artifact in staging.get("staged_artifacts", [])
+        if isinstance(artifact, dict)
+    }
+    reviewed_ids = {
+        artifact.get("staged_artifact_id")
+        for artifact in promotion.get("reviewed_artifacts", [])
+        if isinstance(artifact, dict)
+    }
+    missing_review_refs = sorted(str(item) for item in reviewed_ids - staged_ids)
+    if missing_review_refs:
+        raise InvalidQueueTransitionError(
+            "promotion reviewed_artifacts must reference staged_artifacts: "
+            + ", ".join(missing_review_refs)
+        )
+    ts = now_iso()
+    worker_id = str(safe_metadata.get("worker_id") or "provider_artifact_review_import")
+    note = str(safe_metadata.get("note")) if safe_metadata.get("note") is not None else None
+    staging_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_artifact_staging_manifest",
+        source_id=str(staging["manifest_id"]),
+        status="imported_staged_review_only",
+        compact=_compact_provider_artifact_staging(staging),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=worker_id,
+        note=note,
+    )
+    decision = promotion.get("decision", {})
+    if not isinstance(decision, dict):
+        decision = {}
+    promotion_allowed = decision.get("promotion_allowed") is True
+    promotion_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind="provider_artifact_promotion_report",
+        source_id=str(promotion["report_id"]),
+        status="promotion_allowed" if promotion_allowed else "promotion_blocked",
+        compact=_compact_provider_artifact_promotion_report(promotion),
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=worker_id,
+        note=note,
+    )
+    _upsert_generation_artifact_ledger(staging_entry)
+    _upsert_generation_artifact_ledger(promotion_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "imported",
+            "worker_mode": "provider_artifact_review_output_import",
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "schedule_item_id": schedule_item_id,
+            "source_envelope_id": source_envelope_id,
+            "staging_manifest_id": staging["manifest_id"],
+            "promotion_report_id": promotion["report_id"],
+            "promotion_allowed": promotion_allowed,
+            "import_refs": {
+                "staging_path": _display_import_path(staging_path),
+                "promotion_report_path": _display_import_path(promotion_path),
+            },
+        },
+        "provider_output_envelope": envelope_entry.get("compact"),
+        "provider_artifact_staging": staging_entry["compact"],
+        "provider_artifact_promotion_report": promotion_entry["compact"],
         "generation_artifact_ledger": _compact_generation_artifact_ledger(ledger_items),
     }
 

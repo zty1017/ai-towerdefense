@@ -415,6 +415,14 @@ POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-adap
 
 调用方必须提供 `schedule_item_id`、`authorization_ref`、`receipt_path` 和 `envelope_path`。后端只接受仓库内或 `/tmp` 下的 JSON 文件，并会拒绝包含 `raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等敏感键的导入内容。导入前必须已存在匹配的 executor request 与 provider authorization；导入时会重新校验 `ProviderAdapterExecutionReceipt`、`ProviderOutputEnvelope` 以及 receipt/envelope/source 与 ledger 授权链是否一致。导入本身不调用 provider，不 staging，不 promotion，不激活 runtime。
 
+后端还允许导入外部工具已经生成并校验过的 staging / promotion review 文件：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-artifact-review-output
+```
+
+调用方必须提供 `schedule_item_id`、`staging_path` 和 `promotion_report_path`。后端只接受仓库内或 `/tmp` 下的本地 JSON 文件，并会拒绝 `.env`、prompt 正文、provider 正文、secret、API key 或 raw trace。导入前必须已经有同一 session / latest run / schedule item 下匹配 `source_envelope_id` 的 `ProviderOutputEnvelope` ledger entry；导入时会重新校验 `ProviderArtifactStagingManifest`、`ProviderArtifactPromotionReport`、promotion 指向的 staging 文件、staged artifact 引用和 source envelope 引用。导入本身不调用 provider，不写世界状态，不激活 runtime，也不把 promotion report 当作发布动作；它只是把外部审查产物安全登记进 `generation_artifact_ledger`。
+
 当前工具层还提供显式 image live 边界：
 
 ```text

@@ -476,6 +476,27 @@ def import_provider_adapter_runner_output(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/import-provider-artifact-review-output",
+    response_model=FrontendMockPayloadResponse,
+)
+def import_provider_artifact_review_output(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Validate and import local staging/promotion review files into the ledger."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.import_provider_artifact_review_outputs(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts",
     response_model=FrontendMockPayloadResponse,
 )
