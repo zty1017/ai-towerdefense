@@ -1197,6 +1197,104 @@ def test_provider_adapter_runner_handoff_exports_read_only_bundle(
     assert ledger_summary["promotion_allowed_count"] == 0
 
 
+def test_provider_adapter_runner_handoff_roundtrip_import_updates_prefetch_cache(
+    client,
+    raw_conn,
+    tmp_path,
+):
+    sid = _create_session(client)
+    chain = _prepare_provider_authorization_chain(client, sid, "runner-handoff-roundtrip")
+    handoff = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/export-provider-adapter-runner-handoff",
+            json={
+                "worker_id": "runner-handoff-roundtrip",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "authorization_ref": chain["authorization"]["authorization_ref"],
+            },
+        )
+    )["provider_adapter_runner_handoff"]
+    receipt, envelope = build_dry_run_artifacts(
+        handoff["runner_inputs"]["executor_request"],
+        handoff["runner_inputs"]["provider_execution_authorization"],
+        created_at="2026-07-03T00:00:00Z",
+        note="handoff roundtrip fixture",
+    )
+    suggested = handoff["suggested_paths"]
+    receipt_path = tmp_path / Path(suggested["receipt_output_path"]).name
+    envelope_path = tmp_path / Path(suggested["envelope_output_path"]).name
+    receipt_path.write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    envelope_path.write_text(
+        json.dumps(envelope, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    before_counts = _session_state_counts(raw_conn, sid)
+    import_body = dict(handoff["import_after_runner"]["body"])
+    import_body["receipt_path"] = str(receipt_path)
+    import_body["envelope_path"] = str(envelope_path)
+    imported = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/import-provider-adapter-runner-output",
+            json=import_body,
+        )
+    )
+
+    after_counts = _session_state_counts(raw_conn, sid)
+    assert after_counts["generation_artifact_ledger"] == (
+        before_counts["generation_artifact_ledger"] + 2
+    )
+    for table in (
+        "generation_schedule_runs",
+        "generation_schedule_queue_items",
+        "generation_schedule_worker_cache",
+        "provider_logs",
+        "world_instance",
+    ):
+        assert after_counts[table] == before_counts[table]
+    worker_step = imported["worker_step"]
+    assert worker_step["status"] == "imported"
+    assert worker_step["worker_mode"] == "provider_adapter_runner_output_import"
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["authorization_ref"] == chain["authorization"]["authorization_ref"]
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    assert imported["provider_adapter_execution_receipt"]["execution"]["mode"] == (
+        "fixture_backed_no_provider_call"
+    )
+    assert imported["provider_output_envelope"]["provider_call"]["performed"] is False
+
+    prefetch_cache = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/prefetch-cache")
+    )
+    cache_items = {
+        item["schedule_item_id"]: item
+        for item in prefetch_cache["generation_prefetch_cache"]["items"]
+    }
+    cache_item = cache_items["sched_next_map_visual_prefetch"]
+    assert cache_item["queue_status"] == "waiting_review"
+    assert cache_item["cache_status"] == "review_only_envelope_ready"
+    assert cache_item["refs"]["generation_executor_run_request"] is not None
+    assert cache_item["refs"]["provider_execution_authorization"] is not None
+    assert cache_item["refs"]["provider_adapter_execution_receipt"] is not None
+    assert cache_item["refs"]["provider_output_envelope"] is not None
+    assert cache_item["refs"]["provider_artifact_staging_manifest"] is None
+    assert cache_item["refs"]["provider_artifact_promotion_report"] is None
+    assert cache_item["provider_call_count_by_this_request"] == 0
+    assert cache_item["world_mutation_count_by_this_request"] == 0
+    assert cache_item["activation_gate"]["activation_allowed"] is False
+    summary = prefetch_cache["generation_prefetch_cache"]["summary"]
+    assert summary["review_only_envelope_ready_count"] == 1
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["promotion_allowed_count"] == 0
+
+
 def test_provider_adapter_runner_handoff_requires_authorization(client):
     sid = _create_session(client)
     _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))

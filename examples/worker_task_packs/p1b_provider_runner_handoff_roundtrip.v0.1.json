@@ -1,0 +1,74 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-34-provider-runner-handoff-roundtrip",
+  "title": "Provider adapter runner handoff roundtrip smoke",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-handoff-roundtrip",
+  "worktree": "/tmp/ai-td-task-provider-runner-handoff-roundtrip",
+  "objective": "补一条 fixture roundtrip smoke，证明 export-provider-adapter-runner-handoff 返回的 runner_inputs 可以生成 dry-run ProviderAdapterExecutionReceipt / ProviderOutputEnvelope，本地文件可通过 import-provider-adapter-runner-output 回灌 ledger，并能被 prefetch-cache 读成 review_only_envelope_ready；不得调用 provider、读取 .env、staging、promotion、写世界状态或激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/",
+    "shared/schemas/",
+    "tools/provider_adapter/",
+    "tools/llm/",
+    "tools/media/",
+    "frontend/",
+    "game_data/media/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_roundtrip python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "roundtrip_evidence",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只证明 fixture dry-run roundtrip，不运行 live provider。",
+    "OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 local_codex_safe_fallback 完成。"
+  ]
+}
