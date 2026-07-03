@@ -58,6 +58,15 @@ from backend.app.services.generation_scheduler_provider_execution_builders impor
     rehydrate_generation_executor_request_for_runner,
     rehydrate_provider_authorization_for_runner,
 )
+from app.services.generation_scheduler_run_queue_repository import (  # noqa: E402
+    insert_generation_queue_items,
+    insert_generation_schedule_run,
+    load_generation_queue_item_row,
+    load_generation_queue_items,
+    load_latest_generation_schedule_run,
+    load_next_generation_item_row_by_status,
+    update_generation_queue_item,
+)
 from backend.app.services.generation_scheduler_run_queue_builders import (  # noqa: E402
     build_generation_queue_items_from_run,
     build_generation_schedule_buffer,
@@ -89,6 +98,64 @@ def _load_json(path: Path):
 
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
+
+
+def test_generation_run_queue_repository_inserts_loads_and_updates(client):
+    sid = _create_session(client)
+    ts = "2026-07-03T00:00:00Z"
+    plan_path = _ROOT / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+    run_report_path = (
+        _ROOT / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
+    )
+    run_payload = build_generation_schedule_run_payload(
+        sid,
+        "gsrun_repo_test",
+        ts,
+        plan=_load_json(plan_path),
+        run_report=_load_json(run_report_path),
+        refs={"plan": _rel(plan_path), "run_report": _rel(run_report_path)},
+    )
+    queue_items = build_generation_queue_items_from_run(run_payload, ts)
+
+    insert_generation_schedule_run(run_payload, ts)
+    insert_generation_queue_items(queue_items)
+
+    latest = load_latest_generation_schedule_run(sid)
+    all_items = load_generation_queue_items(sid)
+    run_items = load_generation_queue_items(sid, "gsrun_repo_test")
+    other_run_items = load_generation_queue_items(sid, "gsrun_other")
+    next_queued = load_next_generation_item_row_by_status(sid, "queued")
+
+    assert latest is not None
+    assert latest["run_id"] == "gsrun_repo_test"
+    assert len(all_items) == len(queue_items)
+    assert len(run_items) == len(queue_items)
+    assert other_run_items == []
+    assert next_queued is not None
+    assert next_queued["status"] == "queued"
+
+    selected = load_generation_queue_item_row(
+        sid,
+        str(next_queued["schedule_item_id"]),
+    )
+    assert selected is not None
+    assert selected["id"] == next_queued["id"]
+
+    payload = selected["payload"]
+    payload["status"] = "claimed"
+    payload["updated_at"] = "2026-07-03T00:05:00Z"
+    payload["claimed_by"] = "repo-test"
+    update_generation_queue_item(
+        int(selected["id"]),
+        "claimed",
+        payload,
+        "2026-07-03T00:05:00Z",
+    )
+
+    updated = load_generation_queue_item_row(sid, str(selected["schedule_item_id"]))
+    assert updated is not None
+    assert updated["status"] == "claimed"
+    assert updated["payload"]["claimed_by"] == "repo-test"
 
 
 def test_generation_artifact_ledger_repository_upserts_and_filters(client):
