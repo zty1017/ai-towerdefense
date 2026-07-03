@@ -434,6 +434,27 @@ def run_provider_adapter_fixture(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-runner-fixture",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_provider_adapter_runner_fixture(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record provider adapter runner dry-run artifacts without live provider calls."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.run_provider_adapter_runner_fixture(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts",
     response_model=FrontendMockPayloadResponse,
 )
