@@ -2314,6 +2314,7 @@
     if (!ctx || !m) return;
     ctx.clearRect(0, 0, m.width, m.height);
     drawBackdrop(ctx, m);
+    drawSlotAccessTrails(ctx);
     drawPath(ctx);
     drawDeployHints(ctx);
     drawWorldObjects(ctx);
@@ -2349,6 +2350,46 @@
     };
   }
 
+  function battleNodeVisualProfile() {
+    const nodeId = String((mapRuntimePackage() || {}).node_id || currentNodeId() || NODE_ID);
+    const profiles = {
+      gray_lantern_station: {
+        soil: ["#23251a", "#18231e", "#111817", "#171118"],
+        patchPalette: [
+          "rgba(103,112,78,0.22)",
+          "rgba(118,97,58,0.18)",
+          "rgba(51,86,74,0.18)",
+          "rgba(92,78,56,0.20)",
+        ],
+        roadside: ["reed", "stone", "lamp_marker", "scrap"],
+        glow: "rgba(255,211,122,0.18)",
+      },
+      lamp_wick_store: {
+        soil: ["#252217", "#20251c", "#111918", "#18120f"],
+        patchPalette: [
+          "rgba(135,108,55,0.18)",
+          "rgba(95,118,74,0.17)",
+          "rgba(74,88,72,0.18)",
+          "rgba(118,77,47,0.14)",
+        ],
+        roadside: ["crate", "stone", "pipe", "lamp_marker"],
+        glow: "rgba(255,190,97,0.16)",
+      },
+      old_signal_tower: {
+        soil: ["#1d2221", "#1b2227", "#121617", "#18151b"],
+        patchPalette: [
+          "rgba(75,103,109,0.18)",
+          "rgba(100,88,67,0.17)",
+          "rgba(52,78,88,0.16)",
+          "rgba(96,72,93,0.13)",
+        ],
+        roadside: ["signal_stake", "stone", "scrap", "pipe"],
+        glow: "rgba(158,220,255,0.13)",
+      },
+    };
+    return profiles[nodeId] || profiles.gray_lantern_station;
+  }
+
   function terrainFeatureSet() {
     const battle = state.battle;
     const grid = mapGrid();
@@ -2360,12 +2401,15 @@
 
     const seed = runtimeMapSeed();
     const rng = makeSeededRandom(seed ^ hashString("procedural-battlefield"));
-    const palette = [
-      "rgba(103,112,78,0.22)",
-      "rgba(118,97,58,0.18)",
-      "rgba(51,86,74,0.18)",
-      "rgba(92,78,56,0.20)",
-    ];
+    const profile = battleNodeVisualProfile();
+    const palette = profile.patchPalette;
+    const bands = Array.from({ length: 8 }, (_, index) => ({
+      y: -0.08 + index * 0.155 + (rng() - 0.5) * 0.03,
+      height: 0.18 + rng() * 0.09,
+      lean: (rng() - 0.5) * 0.16,
+      alpha: 0.035 + rng() * 0.045,
+      warm: rng() > 0.48,
+    }));
     const patches = Array.from({ length: 13 }, () => ({
       x: rng(),
       y: rng(),
@@ -2446,9 +2490,94 @@
       width: 38 + rng() * 88,
       alpha: 0.035 + rng() * 0.045,
     }));
-    const features = { key, seed, patches, specks, debris, darkPools, landmarks, wisps };
+    const roadsideProps = buildRoadsideProps(rng, profile);
+    const accessTrails = buildSlotAccessTrails();
+    const features = {
+      key,
+      seed,
+      profile,
+      bands,
+      patches,
+      specks,
+      debris,
+      darkPools,
+      landmarks,
+      wisps,
+      roadsideProps,
+      accessTrails,
+    };
     if (battle) battle.terrainFeatureSet = features;
     return features;
+  }
+
+  function buildRoadsideProps(rng, profile) {
+    const props = [];
+    for (const route of allPathRoutes()) {
+      const waypoints = route.waypoints || [];
+      for (let i = 0; i < waypoints.length - 1; i += 1) {
+        const a = waypoints[i];
+        const b = waypoints[i + 1];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const len = Math.max(1, Math.hypot(dx, dy));
+        const nx = -dy / len;
+        const ny = dx / len;
+        const count = Math.max(2, Math.floor(len * 1.35));
+        for (let j = 0; j < count; j += 1) {
+          if (rng() < 0.18) continue;
+          const t = (j + 0.18 + rng() * 0.64) / count;
+          const side = rng() < 0.5 ? -1 : 1;
+          const kind = profile.roadside[Math.floor(rng() * profile.roadside.length)];
+          props.push({
+            routeId: route.route_id || "route",
+            x: a.x + dx * t + nx * side * (0.58 + rng() * 0.42),
+            y: a.y + dy * t + ny * side * (0.58 + rng() * 0.42),
+            kind,
+            scale: 0.68 + rng() * 0.52,
+            rotation: (rng() - 0.5) * 0.72,
+            warm: rng() > 0.45,
+          });
+        }
+      }
+    }
+    return props;
+  }
+
+  function buildSlotAccessTrails() {
+    const trails = [];
+    for (const slot of buildSlots()) {
+      const cell = slot.position || slot;
+      if (!isCellInGrid(cell)) continue;
+      const nearest = nearestPointOnRoutes(cell);
+      if (!nearest || nearest.distance > 1.65) continue;
+      trails.push({
+        slotId: slot.slot_id || `${cell.x},${cell.y}`,
+        from: { x: cell.x, y: cell.y },
+        to: { x: nearest.x, y: nearest.y },
+      });
+    }
+    return trails;
+  }
+
+  function nearestPointOnRoutes(cell) {
+    let best = null;
+    for (const route of allPathRoutes()) {
+      const points = route.waypoints || [];
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lenSq = dx * dx + dy * dy;
+        if (!lenSq) continue;
+        const t = clamp(((cell.x - a.x) * dx + (cell.y - a.y) * dy) / lenSq, 0, 1);
+        const x = a.x + dx * t;
+        const y = a.y + dy * t;
+        const distance = Math.hypot(cell.x - x, cell.y - y);
+        if (!best || distance < best.distance) best = { x, y, distance };
+      }
+    }
+    return best;
   }
 
   function objectiveAtCell(cell) {
@@ -2467,13 +2596,16 @@
 
   function drawProceduralTerrain(ctx, m) {
     const features = terrainFeatureSet();
+    const soil = features.profile.soil;
     const grd = ctx.createLinearGradient(0, 0, m.width, m.height);
-    grd.addColorStop(0, "#23251a");
-    grd.addColorStop(0.36, "#18231e");
-    grd.addColorStop(0.68, "#111817");
-    grd.addColorStop(1, "#171118");
+    grd.addColorStop(0, soil[0]);
+    grd.addColorStop(0.36, soil[1]);
+    grd.addColorStop(0.68, soil[2]);
+    grd.addColorStop(1, soil[3]);
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, m.width, m.height);
+
+    drawTerrainDepthBands(ctx, m, features);
 
     for (const patch of features.patches) {
       drawOrganicTerrainPatch(ctx, m, patch);
@@ -2501,6 +2633,40 @@
     ctx.restore();
 
     drawTerrainDebris(ctx, features);
+  }
+
+  function drawTerrainDepthBands(ctx, m, features) {
+    ctx.save();
+    for (const band of features.bands || []) {
+      const y = band.y * m.height;
+      const h = band.height * m.height;
+      const lean = band.lean * m.width;
+      ctx.fillStyle = band.warm
+        ? `rgba(193,160,91,${band.alpha})`
+        : `rgba(86,132,118,${band.alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(-80, y);
+      ctx.bezierCurveTo(
+        m.width * 0.25,
+        y + h * 0.3,
+        m.width * 0.55,
+        y - h * 0.24,
+        m.width + 80,
+        y + lean * 0.12,
+      );
+      ctx.lineTo(m.width + 80, y + h + lean * 0.1);
+      ctx.bezierCurveTo(
+        m.width * 0.6,
+        y + h * 1.22,
+        m.width * 0.25,
+        y + h * 0.76,
+        -80,
+        y + h * 0.98,
+      );
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawDarkTidePools(ctx, features) {
@@ -2691,8 +2857,76 @@
       ctx.stroke();
       drawRoadPebbles(ctx, route, points, roadWidth);
       drawRoadRuts(ctx, route, points, roadWidth);
+      drawRouteEdgeProps(ctx, route, roadWidth);
     }
     ctx.restore();
+  }
+
+  function drawRouteEdgeProps(ctx, route, roadWidth) {
+    const m = state.battle.metrics;
+    const props = (terrainFeatureSet().roadsideProps || []).filter(
+      (item) => item.routeId === (route.route_id || "route"),
+    );
+    ctx.save();
+    for (const item of props) {
+      const p = projectCell(item.x, item.y);
+      if (p.x < -80 || p.y < -80 || p.x > m.width + 80 || p.y > m.height + 80) continue;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(item.rotation);
+      const scale = item.scale * Math.max(0.72, m.scale) * Math.max(0.78, roadWidth / 56);
+      drawRoadsideProp(ctx, item.kind, scale, item.warm);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawRoadsideProp(ctx, kind, scale, warm) {
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(0, 5 * scale, 13 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (kind === "lamp_marker") {
+      ctx.strokeStyle = "rgba(118,109,78,0.55)";
+      ctx.lineWidth = Math.max(1, 1.2 * scale);
+      ctx.beginPath();
+      ctx.moveTo(0, 5 * scale);
+      ctx.lineTo(0, -17 * scale);
+      ctx.stroke();
+      ctx.fillStyle = warm ? "rgba(255,213,126,0.42)" : "rgba(158,220,255,0.32)";
+      ctx.beginPath();
+      ctx.ellipse(0, -20 * scale, 5 * scale, 7 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === "pipe") {
+      ctx.fillStyle = "rgba(85,88,76,0.54)";
+      ctx.strokeStyle = "rgba(190,168,111,0.12)";
+      ctx.lineWidth = Math.max(1, 0.9 * scale);
+      ctx.fillRect(-12 * scale, -3 * scale, 24 * scale, 6 * scale);
+      ctx.strokeRect(-12 * scale, -3 * scale, 24 * scale, 6 * scale);
+    } else if (kind === "crate") {
+      ctx.fillStyle = "rgba(119,87,49,0.58)";
+      ctx.strokeStyle = "rgba(230,193,111,0.16)";
+      ctx.lineWidth = Math.max(1, scale);
+      ctx.fillRect(-8 * scale, -8 * scale, 16 * scale, 15 * scale);
+      ctx.strokeRect(-8 * scale, -8 * scale, 16 * scale, 15 * scale);
+    } else if (kind === "signal_stake") {
+      ctx.strokeStyle = "rgba(121,137,130,0.46)";
+      ctx.lineWidth = Math.max(1, 1.2 * scale);
+      ctx.beginPath();
+      ctx.moveTo(-4 * scale, 5 * scale);
+      ctx.lineTo(2 * scale, -19 * scale);
+      ctx.moveTo(2 * scale, -15 * scale);
+      ctx.lineTo(13 * scale, -10 * scale);
+      ctx.stroke();
+    } else if (kind === "scrap") {
+      ctx.fillStyle = "rgba(121,111,82,0.48)";
+      ctx.fillRect(-10 * scale, -3 * scale, 20 * scale, 6 * scale);
+    } else {
+      ctx.fillStyle = "rgba(88,82,61,0.5)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 9 * scale, 5 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   function traceRoutePath(ctx, points) {
@@ -2834,6 +3068,36 @@
         ctx.lineTo(cx + nx * roadWidth * 0.28, cy + ny * roadWidth * 0.28);
         ctx.stroke();
       }
+    }
+    ctx.restore();
+  }
+
+  function drawSlotAccessTrails(ctx) {
+    const m = state.battle.metrics;
+    const trails = terrainFeatureSet().accessTrails || [];
+    if (!trails.length) return;
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const trail of trails) {
+      const from = projectCell(trail.from.x, trail.from.y);
+      const to = projectCell(trail.to.x, trail.to.y);
+      const mid = {
+        x: (from.x + to.x) / 2,
+        y: (from.y + to.y) / 2 - m.tileH * 0.08,
+      };
+      ctx.strokeStyle = "rgba(23,16,10,0.18)";
+      ctx.lineWidth = Math.max(6, m.tileW * 0.072);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y + m.tileH * 0.03);
+      ctx.quadraticCurveTo(mid.x, mid.y, to.x, to.y);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(167,134,73,0.13)";
+      ctx.lineWidth = Math.max(2, m.tileW * 0.026);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y + m.tileH * 0.02);
+      ctx.quadraticCurveTo(mid.x, mid.y, to.x, to.y);
+      ctx.stroke();
     }
     ctx.restore();
   }

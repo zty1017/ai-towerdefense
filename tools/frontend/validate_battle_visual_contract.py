@@ -76,12 +76,16 @@ def validate_app_contract(errors: list[str]) -> None:
     spawn = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
 
     for name in (
+        "battleNodeVisualProfile",
         "terrainFeatureSet",
         "drawProceduralTerrain",
+        "drawTerrainDepthBands",
         "drawDarkTidePools",
         "drawRouteShoulders",
         "drawRoadPebbles",
         "drawRoadRuts",
+        "drawRouteEdgeProps",
+        "drawSlotAccessTrails",
         "drawBattlefieldLandmarks",
         "drawDeploymentBase",
         "drawTargetFoundation",
@@ -97,7 +101,9 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawRouteShoulders" in path, "drawPath must render terrain shoulders around roads", errors)
     require("drawRoadPebbles" in path, "drawPath must render textured world road details", errors)
     require("drawRoadRuts" in path, "drawPath must render road ruts or plank details", errors)
+    require("drawRouteEdgeProps" in path, "drawPath must integrate world props along road edges", errors)
     require("setLineDash" not in path, "drawPath must not render dashed control lines", errors)
+    require("drawSlotAccessTrails(ctx)" in app, "battle view must visually connect deployment bases to runtime roads", errors)
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
     require("drawSpawnRift" in spawn, "spawn markers must render ambient entry effects, not arrows", errors)
