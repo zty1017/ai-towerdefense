@@ -1,0 +1,109 @@
+{
+  "schema_version": "generation_executor_run_request.v0.1",
+  "request_id": "gexec_gsrun_example_scheduler_aligned_sched_next_map_visual_image_01",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source": {
+    "session_id": "demo_session_redacted",
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_next_map_visual_prefetch",
+    "object_kind": "map_visual_prefetch",
+    "object_ref": "map_compile_package:old_signal_tower_pressure",
+    "latency_class": "background_prefetch",
+    "guard_id": "pguard_example_next_map_visual_prefetch_001",
+    "worker_id": "generation_executor_request_image_example",
+    "note": "review-only image runner example; not a provider call"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "provider_call_allowed_by_request_builder": false,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_execution_intent": {
+    "status": "prepared_pending_explicit_authorization",
+    "provider_mode": "manual_authorized_demo",
+    "provider_profile": "agnes_image_flash",
+    "authorization_required": true,
+    "authorization_granted": false,
+    "authorization_ref": null,
+    "provider_call_performed_by_request_builder": false
+  },
+  "execution_budget": {
+    "attempt_count": 1,
+    "max_attempts": 1,
+    "remaining_attempts": 0,
+    "latency_class": "background_prefetch",
+    "fallback_ref": "game_data/media/map_visual_reference/fallback/first_battle_map_runtime.png"
+  },
+  "input_refs": [
+    {
+      "ref_id": "generation_schedule_plan",
+      "kind": "schedule_plan",
+      "path": "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
+      "notes": [
+        "Use only structural scheduler item metadata; prompt body storage is forbidden."
+      ]
+    },
+    {
+      "ref_id": "controlled_map_regeneration_request_pack",
+      "kind": "review_pack",
+      "path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json"
+    }
+  ],
+  "context_refs": [
+    {
+      "ref_id": "context_package",
+      "kind": "context_package",
+      "path": "examples/review_packs/mvp_first_battle.context_package.json"
+    },
+    {
+      "ref_id": "target_cgop",
+      "kind": "compiled_game_object_package",
+      "path": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json"
+    }
+  ],
+  "requested_output": {
+    "intent_class": "map_visual_reference_generation",
+    "result_kind": "image_candidate",
+    "artifact_policy": "review_only_local_refs_required",
+    "activation_policy": "promotion_required_before_runtime_or_world_state",
+    "notes": [
+      "The provider adapter runner must download image output into a local artifact before writing ProviderOutputEnvelope."
+    ]
+  },
+  "required_gates": {
+    "before_provider_execution": [
+      "explicit_user_authorization",
+      "provider_adapter_selected",
+      "sanitized_prompt_or_request_materialized_outside_request_record"
+    ],
+    "after_provider_execution": [
+      "provider_output_envelope",
+      "local_artifact_staging_manifest",
+      "media_validation"
+    ],
+    "before_activation": [
+      "semantic_gate",
+      "human_review",
+      "promotion_report",
+      "runtime_package_or_world_delta_transaction_builder"
+    ]
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only",
+    "executor_result_storage": "provider_output_envelope_redacted_only"
+  },
+  "request_builder_safety": {
+    "reads_env": false,
+    "calls_provider": false,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "writes_world_state": false,
+    "activates_runtime": false
+  }
+}

@@ -397,7 +397,23 @@ examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json
 examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
 ```
 
-runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片、视频和媒体下载/后处理 adapter 不属于该 runner 的当前能力。
+runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片 provider adapter 已在工具层以显式 `--mode image --live` 形式接入；视频、媒体后处理和 media gate 不属于 runner 当前自动能力。
+
+当前工具层还提供显式 image live 边界：
+
+```text
+tools/provider_adapter/run_provider_adapter.py --mode image --live
+```
+
+该模式只能在显式授权、显式 `--live`、显式 prompt file 和显式 artifact output 同时存在时运行。它复用 `tools/media/image_provider.py` 的 image provider profile，下载 provider 返回的图片到本地 artifact path，并且只在 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope` 中保存 prompt digest、image digest、byte size、本地 artifact ref 和 redacted summary。它不得保存 prompt 正文、provider 原始响应、临时 URL 或 secret，也不得直接进入 staging、runtime package、published media 或世界状态。
+
+因此 runner 当前能力边界是：
+
+- `fixture`：默认 dry-run，不读 `.env`、不联网。
+- `llm_text --live`：显式 live 文本候选，只写 redacted summary ref。
+- `image --live`：显式 live 图片候选，只写本地 review-only image ref。
+
+视频 adapter、图片后处理、media gate、staging / promotion 自动串接和后端自动后台执行器仍是后续任务。
 
 ## ProviderOutputEnvelope
 
