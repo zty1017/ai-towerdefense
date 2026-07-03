@@ -15,6 +15,7 @@ PREFETCH_CACHE_REF_KINDS = (
     "provider_output_envelope",
     "provider_artifact_staging_manifest",
     "provider_artifact_promotion_report",
+    "shared_prefetch_cache_reuse_candidate",
 )
 
 
@@ -60,6 +61,8 @@ def prefetch_cache_status(
         return "authorized_pending_adapter"
     if refs.get("generation_executor_run_request") is not None:
         return "executor_request_prepared"
+    if refs.get("shared_prefetch_cache_reuse_candidate") is not None:
+        return "shared_cache_reuse_pending_runtime_build"
     queue_status = str(queue_item.get("queue_status") or queue_item.get("status") or "")
     if queue_status == "waiting_review":
         return "waiting_review_without_envelope"
@@ -160,6 +163,31 @@ def build_generation_prefetch_cache_payload(
             "required_next_actions": promotion_compact.get("required_next_actions", []),
             "gate_statuses": promotion_compact.get("gate_statuses", []),
         }
+        reuse_ref = refs.get("shared_prefetch_cache_reuse_candidate")
+        reuse_compact = (
+            reuse_ref.get("compact")
+            if isinstance(reuse_ref, dict)
+            and isinstance(reuse_ref.get("compact"), dict)
+            else {}
+        )
+        reuse_gate = (
+            reuse_compact.get("reuse_gate")
+            if isinstance(reuse_compact.get("reuse_gate"), dict)
+            else {}
+        )
+        item["shared_cache_reuse"] = {
+            "reuse_candidate_recorded": reuse_ref is not None,
+            "reuse_available": reuse_gate.get("reuse_available") is True,
+            "cache_key": (
+                reuse_compact.get("shared_cache_ref", {}).get("cache_key")
+                if isinstance(reuse_compact.get("shared_cache_ref"), dict)
+                else None
+            ),
+            "blocked_reason": reuse_gate.get("blocked_reason"),
+            "required_next_gates": reuse_gate.get("required_next_gates", []),
+            "runtime_ready": False,
+            "activation_allowed": False,
+        }
         item["activation_allowed"] = item["activation_gate"]["activation_allowed"]
         item["promotion_allowed"] = item["promotion_gate"]["promotion_allowed"]
         item["review_only"] = True
@@ -179,6 +207,7 @@ def build_generation_prefetch_cache_payload(
             "staged_review_only",
             "promotion_blocked",
             "promotion_allowed_pending_activation",
+            "shared_cache_reuse_pending_runtime_build",
         }
     )
     return {
@@ -203,6 +232,12 @@ def build_generation_prefetch_cache_payload(
                 ),
                 "promotion_allowed_count": sum(
                     1 for item in cache_items if item.get("promotion_allowed") is True
+                ),
+                "shared_cache_reuse_candidate_count": sum(
+                    1
+                    for item in cache_items
+                    if item.get("cache_status")
+                    == "shared_cache_reuse_pending_runtime_build"
                 ),
             },
             "items": cache_items,

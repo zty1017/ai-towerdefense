@@ -77,6 +77,13 @@ from backend.app.services.generation_scheduler_shared_prefetch_cache_builders im
 from backend.app.services.generation_scheduler_shared_prefetch_cache_hit_builders import (  # noqa: E402
     build_shared_prefetch_cache_hit_payload,
 )
+from backend.app.services.generation_scheduler_shared_cache_reuse_builders import (  # noqa: E402
+    REUSE_CANDIDATE_CACHE_STATUS,
+    REUSE_CANDIDATE_LEDGER_KIND,
+    REUSE_CANDIDATE_LEDGER_STATUS,
+    build_shared_cache_reuse_candidate,
+    compact_shared_cache_reuse_candidate,
+)
 from backend.app.services.generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records,
@@ -3085,6 +3092,55 @@ def test_shared_prefetch_cache_hit_builder_matches_current_queue_items():
     assert hit_view["safety"]["activates_runtime"] is False
 
 
+def test_shared_cache_reuse_candidate_builder_keeps_review_only_gate():
+    candidate = build_shared_cache_reuse_candidate(
+        session_id="sess_reuse_builder",
+        latest_run={"run_id": "gsrun_reuse_builder"},
+        queue_item={
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "object_kind": "map_visual_layer",
+            "object_ref": "map_compile_package:old_signal_tower_pressure",
+            "latency_class": "background_prefetch",
+        },
+        hit={
+            "cache_key": "gshared_reuse_builder",
+            "lifecycle_status": "promotion_allowed_pending_runtime_build",
+            "source": {
+                "source_session_id": "sess_source",
+                "source_run_id": "gsrun_source",
+                "source_schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+            "required_next_gates": ["runtime_package_validation"],
+            "promotion_allowed": True,
+        },
+        ts="2026-07-03T00:00:00Z",
+        worker_id="test_reuse_builder",
+        note="builder smoke",
+    )
+
+    compact = compact_shared_cache_reuse_candidate(candidate)
+
+    assert candidate["schema_version"] == (
+        "generation_shared_prefetch_cache_reuse_candidate.v0.1"
+    )
+    assert candidate["candidate_id"].startswith("gshared_reuse_")
+    assert compact["reuse_status"] == "review_only_reuse_candidate"
+    assert compact["shared_cache_ref"]["promotion_allowed"] is True
+    assert compact["shared_cache_ref"]["activation_allowed"] is False
+    assert compact["shared_cache_ref"]["runtime_ready"] is False
+    assert compact["reuse_gate"]["reuse_available"] is True
+    assert compact["reuse_gate"]["activation_allowed"] is False
+    assert compact["reuse_gate"]["runtime_ready"] is False
+    assert "runtime_package_validation" in compact["reuse_gate"]["required_next_gates"]
+    assert (
+        "world_state_delta_transaction_validation"
+        in compact["reuse_gate"]["required_next_gates"]
+    )
+    assert compact["safety"]["calls_provider"] is False
+    assert compact["safety"]["writes_world_state"] is False
+    assert compact["safety"]["activates_runtime"] is False
+
+
 def test_generation_activation_gate_requires_session(client):
     missing = client.get(
         "/api/sessions/missing-session/generation-schedule/activation-gate"
@@ -3410,6 +3466,137 @@ def test_generation_shared_prefetch_cache_hits_empty_without_run(client):
     assert summary["schedule_item_count"] == 0
     assert summary["hit_count"] == 0
     assert hits["generation_schedule_run"] is None
+
+
+def test_record_shared_prefetch_cache_reuse_candidate_requires_session_and_hit(client):
+    missing = client.post(
+        "/api/sessions/missing-session/generation-schedule/workers/"
+        "record-shared-prefetch-cache-reuse-candidate"
+    )
+    assert missing.status_code == 404
+
+    sid = _create_session(client)
+    no_run = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "record-shared-prefetch-cache-reuse-candidate"
+    )
+    assert no_run.status_code == 409
+    assert "generation schedule run is required" in no_run.text
+
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    no_hit = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "record-shared-prefetch-cache-reuse-candidate"
+    )
+    assert no_hit.status_code == 409
+    assert "no shared prefetch cache hit" in no_hit.text
+
+
+def test_record_shared_prefetch_cache_reuse_candidate_writes_review_only_ledger(
+    client,
+    raw_conn,
+):
+    source_sid = _create_session(client)
+    source_run = _payload(
+        client.post(f"/api/sessions/{source_sid}/generation-schedule/runs")
+    )
+    source_run_id = source_run["generation_schedule_run"]["run_id"]
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{source_sid}_provider_artifact_promotion_report_reuse",
+            "run_id": source_run_id,
+            "session_id": source_sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_shared_cache_reuse",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    indexed = _payload(
+        client.post(
+            f"/api/sessions/{source_sid}/generation-schedule/workers/"
+            "index-shared-prefetch-cache"
+        )
+    )
+    assert indexed["shared_prefetch_cache_index"]["indexed_count"] == 1
+
+    target_sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{target_sid}/generation-schedule/runs"))
+    before_counts = _session_state_counts(raw_conn, target_sid)
+
+    recorded = _payload(
+        client.post(
+            f"/api/sessions/{target_sid}/generation-schedule/workers/"
+            "record-shared-prefetch-cache-reuse-candidate",
+            json={
+                "worker_id": "reuse-recorder-test",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+
+    after_counts = _session_state_counts(raw_conn, target_sid)
+    assert after_counts == {
+        **before_counts,
+        "generation_artifact_ledger": before_counts["generation_artifact_ledger"] + 1,
+    }
+    worker_step = recorded["worker_step"]
+    assert worker_step["status"] == "recorded_review_only"
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["source_session_id"] == source_sid
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+    candidate = recorded["shared_prefetch_cache_reuse_candidate"]
+    assert candidate["reuse_status"] == "review_only_reuse_candidate"
+    assert candidate["shared_cache_ref"]["source"]["source_session_id"] == source_sid
+    assert candidate["reuse_gate"]["activation_allowed"] is False
+    assert candidate["reuse_gate"]["runtime_ready"] is False
+    ledger = recorded["generation_artifact_ledger"]
+    assert ledger["summary"]["artifact_kind_counts"][REUSE_CANDIDATE_LEDGER_KIND] == 1
+    assert ledger["summary"]["status_counts"][REUSE_CANDIDATE_LEDGER_STATUS] == 1
+    assert ledger["summary"]["activation_allowed_count"] == 0
+    assert ledger["summary"]["recorded_provider_call_count"] == 0
+
+    prefetch = recorded["generation_prefetch_cache"]
+    assert prefetch["summary"]["shared_cache_reuse_candidate_count"] == 1
+    items = {item["schedule_item_id"]: item for item in prefetch["items"]}
+    item = items["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == REUSE_CANDIDATE_CACHE_STATUS
+    assert item["activation_allowed"] is False
+    assert item["runtime_ready"] is False
+    assert item["promotion_allowed"] is False
+    assert (
+        item["refs"][REUSE_CANDIDATE_LEDGER_KIND]["artifact_kind"]
+        == REUSE_CANDIDATE_LEDGER_KIND
+    )
+    assert item["shared_cache_reuse"]["reuse_candidate_recorded"] is True
+    assert item["shared_cache_reuse"]["reuse_available"] is True
+    assert item["shared_cache_reuse"]["activation_allowed"] is False
+    assert item["shared_cache_reuse"]["runtime_ready"] is False
+    assert "runtime_package_validation" in item["shared_cache_reuse"][
+        "required_next_gates"
+    ]
+
+    recorded_again = _payload(
+        client.post(
+            f"/api/sessions/{target_sid}/generation-schedule/workers/"
+            "record-shared-prefetch-cache-reuse-candidate",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+
+    assert _session_state_counts(raw_conn, target_sid) == after_counts
+    assert recorded_again["generation_artifact_ledger"]["summary"]["item_count"] == 1
 
 
 def test_review_only_dispatcher_drain_stops_when_no_items_remain(client):

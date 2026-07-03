@@ -114,6 +114,12 @@ from .generation_scheduler_shared_prefetch_cache_builders import (  # noqa: E402
 from .generation_scheduler_shared_prefetch_cache_hit_builders import (  # noqa: E402
     build_shared_prefetch_cache_hit_payload as _build_shared_prefetch_cache_hit_payload,
 )
+from .generation_scheduler_shared_cache_reuse_builders import (  # noqa: E402
+    REUSE_CANDIDATE_LEDGER_KIND,
+    REUSE_CANDIDATE_LEDGER_STATUS,
+    build_shared_cache_reuse_candidate as _build_shared_cache_reuse_candidate,
+    compact_shared_cache_reuse_candidate as _compact_shared_cache_reuse_candidate,
+)
 from .generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records as _load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records as _upsert_shared_prefetch_cache_records,
@@ -2000,6 +2006,109 @@ def get_generation_shared_prefetch_cache_hits(session_id: str) -> dict[str, Any]
         get_generation_prefetch_cache(session_id),
         _load_shared_prefetch_cache_records(),
     )
+
+
+def record_shared_prefetch_cache_reuse_candidate(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ts = now_iso()
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    worker_id = str(
+        safe_metadata.get("worker_id") or "shared_prefetch_cache_reuse_recorder"
+    )
+    note = safe_metadata.get("note")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before recording shared cache reuse"
+        )
+    run_id = str(latest_run.get("run_id"))
+    hit_payload = get_generation_shared_prefetch_cache_hits(session_id)
+    hits_view = hit_payload.get("generation_shared_prefetch_cache_hits")
+    if not isinstance(hits_view, dict):
+        raise InvalidQueueTransitionError("shared prefetch cache hit view is unavailable")
+    hit_items = hits_view.get("items")
+    if not isinstance(hit_items, list):
+        hit_items = []
+    requested_schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    selected_item: dict[str, Any] | None = None
+    for item in hit_items:
+        if not isinstance(item, dict):
+            continue
+        schedule_item_id = str(item.get("schedule_item_id") or "")
+        if requested_schedule_item_id and schedule_item_id != requested_schedule_item_id:
+            continue
+        if int(item.get("hit_count") or 0) <= 0:
+            continue
+        selected_item = item
+        break
+    if selected_item is None:
+        if requested_schedule_item_id:
+            raise InvalidQueueTransitionError(
+                f"no shared prefetch cache hit for schedule item {requested_schedule_item_id}"
+            )
+        raise InvalidQueueTransitionError("no shared prefetch cache hit is available")
+    hits = selected_item.get("hits")
+    if not isinstance(hits, list) or not hits:
+        raise InvalidQueueTransitionError("selected shared cache hit has no reusable record")
+    hit = hits[0]
+    if not isinstance(hit, dict):
+        raise InvalidQueueTransitionError("selected shared cache hit is invalid")
+    schedule_item_id = str(selected_item.get("schedule_item_id") or "")
+    queue_row = _load_generation_queue_item_row(session_id, schedule_item_id)
+    queue_item = queue_row["payload"]
+    candidate = _build_shared_cache_reuse_candidate(
+        session_id=session_id,
+        latest_run=latest_run,
+        queue_item=queue_item,
+        hit=hit,
+        ts=ts,
+        worker_id=worker_id,
+        note=str(note) if note is not None else None,
+    )
+    compact = _compact_shared_cache_reuse_candidate(candidate)
+    ledger_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind=REUSE_CANDIDATE_LEDGER_KIND,
+        source_id=str(candidate.get("candidate_id")),
+        status=REUSE_CANDIDATE_LEDGER_STATUS,
+        compact=compact,
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=worker_id,
+        note=str(note) if note is not None else None,
+    )
+    _upsert_generation_artifact_ledger(ledger_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "recorded_review_only",
+            "worker_mode": "shared_prefetch_cache_reuse_recorder",
+            "schedule_item_id": schedule_item_id,
+            "cache_key": hit.get("cache_key"),
+            "source_session_id": hit.get("source", {}).get("source_session_id")
+            if isinstance(hit.get("source"), dict)
+            else None,
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "activation_allowed_count": 0,
+            "runtime_ready_count": 0,
+        },
+        "shared_prefetch_cache_reuse_candidate": compact,
+        "generation_shared_prefetch_cache_hits": hit_payload[
+            "generation_shared_prefetch_cache_hits"
+        ],
+        "generation_prefetch_cache": get_generation_prefetch_cache(session_id)[
+            "generation_prefetch_cache"
+        ],
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(
+            ledger_items
+        ),
+    }
 
 
 def stage_provider_artifacts_fixture(
