@@ -135,8 +135,20 @@ Last updated: 2026-07-03
   - 剧情 / 世界生长如何受控服务玩法。
 - `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
   - 叙事节点和玩法输出之间的合同。
+- `shared/schemas/world_state_delta.v0.1.schema.json`
+  - WorldStateDelta 字段级事实源：所有可提交世界状态变化必须落到当前 `operations[]` 白名单，不能使用通用 `effects[]`、自然语言 summary 或 raw JSON patch 绕过。
+- `tools/world_state/validate_world_delta.py`
+  - WorldStateDelta 结构校验入口：schema、op 白名单、禁止字段和玩家可见文本基础检查。
 - `docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md`
   - WorldStateDelta 语义门。
+- `tools/world_state/validate_world_delta_semantics.py`
+  - WorldStateDelta 语义校验入口：基于当前 RunWorldState、registry 和审查包边界确认引用、NPC、任务、随机事件、样品、研究等变化能否进入运行态。
+- `tools/world_state/apply_world_delta.py`
+  - WorldStateDelta 应用入口：只有结构校验和语义校验通过后的 delta 才能写入 `RunWorldState`。
+- `shared/schemas/world_state_delta_transaction.v0.1.schema.json`
+  - WorldStateDeltaTransaction 字段级事实源：包装现有 `WorldStateDelta v0.1` 的事务语义，不替换 delta schema，不新增可执行 effect DSL。
+- `tools/world_state/validate_world_delta_transaction.py`
+  - WorldStateDeltaTransaction 校验入口：检查事务外壳、delta 引用、preconditions、operation mapping、conflict policy、rollback policy 和 status。
 - `docs/MVP_WORLD_STATE_DELTA_REVIEW_PACK_V0_1.md`
   - MVP 世界状态变化审查包。
 

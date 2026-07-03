@@ -1,0 +1,73 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-F-01-architecture-fact-source-sync",
+  "title": "AI compilation architecture fact-source sync AI 编译架构事实源同步",
+  "task_type": "docs",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/architecture-fact-source-sync",
+  "worktree": "/tmp/ai-td-task-architecture-fact-source-sync",
+  "objective": "确认并修补 AI 编译系统总架构、当前架构索引、Generation Scheduler 文档和任务队列之间的边界事实源漂移：概念文档不替代 schema / semantic gate / tools；Generation Scheduler 是横切控制面；WorldStateDeltaTransaction 是现有 WorldStateDelta v0.1 的事务外壳；任何世界状态变化都不得用通用 effects[] 绕过 operations[] 白名单；生命周期状态必须能映射 generated / reviewed / locked、CGOP、媒体、runtime package 和地图 certified。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/WORLD_STATE_DELTA_SEMANTIC_GATE_V0_1.md",
+    "shared/schemas/generation_schedule_plan.v0.1.schema.json",
+    "shared/schemas/world_state_delta.v0.1.schema.json",
+    "shared/schemas/world_state_delta_transaction.v0.1.schema.json",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/media/",
+    "shared/schemas/",
+    "tools/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json",
+    "python3 -c \"from pathlib import Path; paths=[Path('docs/AI_COMPILATION_SYSTEM_V0_1.md'), Path('docs/CURRENT_ARCHITECTURE_INDEX.md'), Path('docs/GENERATION_SCHEDULER_V0_1.md'), Path('control/TASK_QUEUE.md')]; terms=('async'+'_visible','batch'+'_offline'); bad=[str(p) for p in paths if any(term in p.read_text(encoding='utf-8') for term in terms)]; raise SystemExit(('stale latency terms: '+', '.join(bad)) if bad else 0)\"",
+    "rg -n \"effects\\\\[\\\\]|operations\\\\[\\\\]|WorldStateDeltaTransaction|横切控制面|概念与边界事实源\" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md docs/GENERATION_SCHEDULER_V0_1.md control/TASK_QUEUE.md",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "fact_source_alignment_summary",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不修改 schema、工具脚本、后端或前端，只同步文档层级和事实源边界。",
+    "若概念文档与 schema 枚举冲突，按字段级事实源修正概念文档映射，而不是修改 schema。",
+    "OpenCode headless 在本受控通道内尝试失败时，应记录为外部数据披露拦截，并使用 local_codex_safe_fallback 完成。"
+  ]
+}

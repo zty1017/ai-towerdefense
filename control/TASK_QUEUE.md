@@ -387,7 +387,7 @@ P2：本阶段明确不做
 - dry-run 报告把 8 个调度项分为 `reuse_ready: 3`、`select_fallback: 1`、`schedule_prefetch: 2`、`schedule_background: 1`、`schedule_lazy: 1`，provider 调用数和世界修改数均为 0。
 - 同步项只读取已审 fixture / locked package / published manifest，不依赖实时 provider。
 - 预取和后台项只声明候选生成计划，启用前必须重新通过对应 validator、semantic gate 或 media gate。
-- 这不是后台执行器；后续仍需实现真正的队列、缓存、重试、状态持久化和 live campaign router。
+- 这不是正式后台执行器；item 级队列、session dry-run 持久化、worker cache、retry / fallback 和 Campaign Router dry-run 胶水已经有最小骨架，后续仍需实现真实 provider 调度、跨请求持久化缓存、自动后台 executor 和正式 activation / promotion 执行。
 
 ### P1-B-1 Generation Scheduler session API 缓冲层
 
@@ -404,7 +404,7 @@ P2：本阶段明确不做
 当前结论：
 
 - 该接口仍是 fixture-backed / review-only，不启动后台 worker，不调用真实 provider，不修改世界状态。
-- 它把“预生成缓冲”接到了后端 API 面，方便前端或演示读取；真实队列、缓存、重试、状态持久化和 provider 调度仍属后续 P1-B。
+- 它把“预生成缓冲”接到了后端 API 面，方便前端或演示读取；session 级队列、dry-run worker cache、retry / fallback 和 provider guard 已在后续 P1-B 子任务落地为骨架，真实 provider 调度、自动后台 executor、跨请求持久化缓存和正式激活仍属后续 P1-B。
 
 ### P1-B-2 Generation Scheduler session dry-run 持久化
 
@@ -422,7 +422,7 @@ P2：本阶段明确不做
 当前结论：
 
 - 该层仍不启动后台 worker，不调用 provider，不修改世界状态，不激活预取候选。
-- 它把 Generation Scheduler 从离线 evidence 推进到后端状态层，为下一步真实队列、缓存、重试和 provider 调度留出落点。
+- 它把 Generation Scheduler 从离线 evidence 推进到后端状态层；后续子任务已在 session 范围内补上 item 级队列、retry / fallback 和 dry-run worker cache，正式 provider 调度、自动后台 executor 和跨请求缓存仍未完成。
 
 ### P1-B-3 Generation Scheduler item 级队列视图
 
@@ -1407,6 +1407,38 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/worker_task_pack_evidenc
 git diff --check
 ```
 
+### P1-F AI 编译架构事实源同步
+
+状态：已完成最小修补。
+
+目标：
+
+```text
+把 AI 编译系统总架构、当前架构索引、Generation Scheduler 文档和任务队列之间的事实源边界对齐，避免后续 worker 用概念文档绕过字段级 schema、semantic gate 或 tools。
+```
+
+已落地：
+
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md`：把概念层 latency 口径改为 `GenerationSchedulePlan v0.1` 的实际字段枚举映射，避免使用未落地调度枚举。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 `WorldStateDelta v0.1` 本体的字段级事实源、结构 validator、semantic gate、applier、transaction schema 和 transaction validator 入口。
+- `control/TASK_QUEUE.md`：修正旧状态描述，明确 item 级队列、session dry-run 持久化、worker cache、retry / fallback、provider guard 和 Campaign Router dry-run 胶水已落地；正式后台 executor、真实 provider 调度、跨请求缓存和 activation / promotion gate 仍未完成。
+- `examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json`：新增架构事实源同步任务包。
+
+边界：
+
+- 本任务不修改 schema、工具脚本、后端、前端或媒体资源。
+- 本任务不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 在隔离 worktree 内完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json
+python3 -c "from pathlib import Path; paths=[Path('docs/AI_COMPILATION_SYSTEM_V0_1.md'), Path('docs/CURRENT_ARCHITECTURE_INDEX.md'), Path('docs/GENERATION_SCHEDULER_V0_1.md'), Path('control/TASK_QUEUE.md')]; terms=('async'+'_visible','batch'+'_offline'); bad=[str(p) for p in paths if any(term in p.read_text(encoding='utf-8') for term in terms)]; raise SystemExit(('stale latency terms: '+', '.join(bad)) if bad else 0)"
+rg -n "effects\\[\\]|operations\\[\\]|WorldStateDeltaTransaction|横切控制面|概念与边界事实源" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md docs/GENERATION_SCHEDULER_V0_1.md control/TASK_QUEUE.md
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：
@@ -1428,7 +1460,7 @@ git diff --check
 3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
 4. 扩展地图补丁后的 overlay / 视觉模型复核，并在新增战斗节点后复跑 `tools/frontend/capture_battle_visual_smoke.py`。
 5. `P1-A` 真实视频关键帧增强。
-6. `P1-B` Generation Scheduler 执行器 / live campaign router。
+6. `P1-B` Generation Scheduler 正式后台执行器、真实 provider 调度、跨请求缓存和 activation / promotion gate；Campaign Router v0.1 dry-run 预取胶水已落地，不应重复实现。
 
 若需要并行，优先组合：
 
