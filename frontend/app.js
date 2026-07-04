@@ -278,6 +278,10 @@
     return queryFlag("battleVisualSmoke");
   }
 
+  function flowVisualSmokeMode() {
+    return queryFlag("flowVisualSmoke") || battleVisualSmokeMode();
+  }
+
   function apiCandidates() {
     if (forceStaticDataMode()) return [];
     const params = new URLSearchParams(window.location.search);
@@ -1633,7 +1637,7 @@
     window.addEventListener("resize", resizeBattleCanvas);
     resizeBattleCanvas();
     preloadBattleImages();
-    if (!battleVisualSmokeMode()) {
+    if (!flowVisualSmokeMode()) {
       showDialogue(
         "灰灯驿站守灯人",
         "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
@@ -1658,7 +1662,7 @@
       config,
       mapPackage: mapRuntimePackage(),
       elapsedMs: 0,
-      speed: 1,
+      speed: flowVisualSmokeMode() ? 4 : 1,
       paused: false,
       enemies: [],
       defenses: [],
@@ -1678,7 +1682,9 @@
       sampleUses: 0,
       supportUses: 1,
       sampleDelivered: false,
-      sampleDeliveryMs: sample.delivery_delay_ms || 30000,
+      sampleDeliveryMs: flowVisualSmokeMode()
+        ? Math.min(1800, sample.delivery_delay_ms || 30000)
+        : sample.delivery_delay_ms || 30000,
       cooldowns: {
         basic: 0,
         sample: 0,
@@ -2224,11 +2230,13 @@
       battle.sampleUses = (battle.config.sample_asset || {}).uses_per_battle || 2;
       battle.selectedTool = "sample";
       setBattleToast("样品完成：折光绊索 x2");
-      showDialogue(
-        "临时工坊老师傅",
-        "绊索封装完成。把它压在转角，影潮会被那道折光拖住。",
-        "npc_workshop_mentor_portrait",
-      );
+      if (!flowVisualSmokeMode()) {
+        showDialogue(
+          "临时工坊老师傅",
+          "绊索封装完成。把它压在转角，影潮会被那道折光拖住。",
+          "npc_workshop_mentor_portrait",
+        );
+      }
     }
     spawnEnemies();
     updateEnemies(dt);
@@ -2244,6 +2252,9 @@
       battle.enemies.length === 0 &&
       battle.elapsedMs > 5000
     ) {
+      finishBattle(battle.coreHp > 0 ? "victory" : "defeat");
+    }
+    if (flowVisualSmokeMode() && !battle.finishing && battle.elapsedMs > 9000) {
       finishBattle(battle.coreHp > 0 ? "victory" : "defeat");
     }
   }
