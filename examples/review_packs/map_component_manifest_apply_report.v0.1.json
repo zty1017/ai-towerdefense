@@ -1,0 +1,52 @@
+{
+  "approval_id": "map_component_manifest_apply_approval_plan_v0_1_empty",
+  "created_at": "2026-07-05T00:00:00Z",
+  "manifest_sha": {
+    "replacement_manifest_content_sha256_after": "23930309185a5f59a10c606964d5ba0a2f5dfe88b70b672e08b7f79857c9a2e0",
+    "replacement_manifest_file_sha256_after": null,
+    "source_manifest_file_sha256_before": "793ea2cb2bbc83cef982866f6e8fa9787221219dc35fe224c201c01f618b4f83"
+  },
+  "output_manifest_path": null,
+  "patch_results": [],
+  "report_id": "map_component_manifest_apply_report_v0_1",
+  "runtime_effect": {
+    "candidate_file_copied": false,
+    "frontend_default_modified": false,
+    "manifest_replacement_written": false,
+    "render_plan_modified": false,
+    "runtime_map_truth_modified": false,
+    "style_pack_modified": false
+  },
+  "schema_version": "map_component_manifest_apply_report.v0.1",
+  "source_approval_plan_path": "examples/review_packs/map_component_manifest_apply_approval_plan.v0.1.json",
+  "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+  "source_patch_plan_path": "examples/review_packs/map_component_manifest_patch_plan.v0.1.json",
+  "status": "no_approved_patches",
+  "summary": {
+    "applied_patch_count": 0,
+    "approved_patch_count": 0,
+    "blocked_patch_count": 0,
+    "manifest_item_count": 36,
+    "ready_patch_count": 0,
+    "skipped_patch_count": 0,
+    "source_patch_count": 0
+  },
+  "usage_policy": [
+    "developer_explicit_manifest_apply_approval_only",
+    "svg_replacement_only",
+    "replacement_manifest_artifact_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "no_style_pack_or_render_plan_mutation",
+    "no_frontend_default_consumption",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url",
+    "no_secret_material"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_manifest_apply_report.py examples/review_packs/map_component_manifest_apply_report.v0.1.json"
+    ],
+    "validator": "tools/media/validate_map_component_manifest_apply_report.py"
+  }
+}
