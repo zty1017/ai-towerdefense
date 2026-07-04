@@ -78,6 +78,7 @@ P2：本阶段明确不做
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
 - 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.4 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
+- 地图 RenderPlan 已有离线 SVG 预览入口和 report 校验，三张 MVP 地图均可生成 `preview_ready_review_only` 的审查预览；该预览证明 RenderPlan 可执行，但不作为玩家 runtime 或 published visual layer。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -2799,6 +2800,44 @@ git diff --check
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_render_plan_layer_params.v0.1.json
 node --check frontend/app.js
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-render-plan-layer-params python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
+```
+
+#### P1-D-10 RenderPlan 离线 SVG 预览
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让 ProceduralMapRenderPlan 不只被前端运行时消费，也能在无浏览器、无 provider 的环境中生成 review-only SVG 预览和可校验 report，证明它是可执行表现计划。
+```
+
+已落地：
+
+- `tools/asset_graph/render_procedural_map_preview.py`：输入 MapRuntimePackage、MapStylePack、ProceduralMapRenderPlan，输出伪 3D SVG 预览和 `procedural_map_preview_report.v0.1`。
+- `tools/asset_graph/validate_procedural_map_preview_report.py`：校验 SVG 文件存在、sha256 匹配、usage policy、semantic source policy 和基本渲染统计。
+- `examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg`
+- `examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg`
+- `examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg`
+- 三份对应 `*.procedural_map_preview_report.json`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成位图、不修改前端/后端/schema。
+- 预览 SVG 是 review-only evidence，不是玩家 runtime 背景，不进入 media manifest。
+- 路线、塔位、目标、出生点坐标仍来自 `MapRuntimePackage`；RenderPlan 只提供 road width、shoulder width 和 slot footprint 等表现几何参数。
+
+验收：
+
+```bash
+python3 tools/asset_graph/render_procedural_map_preview.py --output examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py
 git diff --check
 ```
 
