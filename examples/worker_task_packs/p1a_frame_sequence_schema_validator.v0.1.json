@@ -1,0 +1,93 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-A-frame-sequence-schema-validator",
+  "title": "FrameSequence schema and validator gate",
+  "task_type": "implementation",
+  "handoff_mode": "codex_headless",
+  "base_branch": "develop",
+  "branch": "task/frame-sequence-schema-validator",
+  "worktree": "/tmp/ai-td-task-frame-sequence-schema-validator",
+  "objective": "为 frame_sequence.v0.1 建立正式字段级 schema 与本地语义 validator，并让 video keyframe atlas importer 复用同一套校验逻辑。该任务不调用 provider、不读取 .env、不生成真实视频、不修改默认 runtime atlas。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "tools/media/import_video_keyframe_sequence.py",
+    "shared/schemas/media_atlas_manifest.v0.1.schema.json",
+    "tools/media/validate_media_atlas_manifest.py",
+    "tools/media/validate_multiframe_atlas_contract.py",
+    "tools/media/validate_loop_continuity_report.py",
+    "examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json"
+  ],
+  "allowed_paths": [
+    "shared/schemas/frame_sequence.v0.1.schema.json",
+    "tools/media/validate_frame_sequence.py",
+    "tools/media/import_video_keyframe_sequence.py",
+    "examples/media_frame_sequences/",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/provider_adapter/",
+    "tools/media/image_provider.py",
+    "game_data/media/frontend_runtime_mock/generated/",
+    "game_data/media/frontend_runtime_mock/processed/",
+    "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+    "game_data/media/frontend_runtime_mock/atlas_sheets/",
+    "game_data/media/frontend_runtime_mock/atlas_frames/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_compile_packages/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json",
+    "python3 tools/media/validate_frame_sequence.py examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json",
+    "python3 - <<'PY'\nimport subprocess\ninvalids = [\n    'examples/media_frame_sequences/invalid_remote_url.v0.1.json',\n    'examples/media_frame_sequences/invalid_provider_metadata.v0.1.json',\n    'examples/media_frame_sequences/invalid_fixture_missing_review_only.v0.1.json',\n    'examples/media_frame_sequences/invalid_loop_false.v0.1.json',\n]\nfor path in invalids:\n    result = subprocess.run(['python3', 'tools/media/validate_frame_sequence.py', path], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\n    assert result.returncode != 0, f'{path} unexpectedly passed\\n{result.stdout}'\nprint('invalid frame_sequence fixtures rejected')\nPY",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frame-sequence-validator python3 -m py_compile tools/media/validate_frame_sequence.py tools/media/import_video_keyframe_sequence.py",
+    "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.frame_sequence_validator.json --spritesheet-output-dir /tmp/frontend_runtime_video_keyframe_atlas_sheets_validator --spritesheet-url-prefix /assets/frontend_runtime_mock/video_keyframe_atlas_sheets",
+    "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.frame_sequence_validator.json",
+    "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.frame_sequence_validator.json",
+    "python3 - <<'PY'\nimport subprocess\nfrom pathlib import Path\nout = Path('/tmp/frontend_runtime_art_atlas_manifest.frame_sequence_validator_invalid_loop.json')\nif out.exists():\n    out.unlink()\nresult = subprocess.run([\n    'python3', 'tools/media/import_video_keyframe_sequence.py',\n    '--source-atlas', 'game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json',\n    '--frame-sequence', 'examples/media_frame_sequences/invalid_loop_false.v0.1.json',\n    '--output-atlas', str(out),\n    '--spritesheet-output-dir', '/tmp/frontend_runtime_video_keyframe_atlas_sheets_validator_invalid',\n    '--spritesheet-url-prefix', '/assets/frontend_runtime_mock/video_keyframe_atlas_sheets',\n], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\nassert result.returncode != 0, result.stdout\nassert not out.exists(), 'invalid importer wrote output atlas'\nprint('invalid importer rejected without output')\nPY",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/frame_sequence_validator_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "validator_rules",
+    "negative_fixture_coverage",
+    "importer_validator_reuse",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "FrameSequence validator 是本地语义门，不读取 .env，不联网，不调用 provider。",
+    "Importer 只能在 frame_sequence validator 通过后写 output atlas；负例 importer 调用必须失败且不留下 output atlas。",
+    "真实图生视频调用、provider adapter、默认 runtime atlas 修改和前端/后端运行时代码修改都不属于本任务。"
+  ]
+}
