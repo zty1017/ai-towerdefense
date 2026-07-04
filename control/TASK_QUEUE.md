@@ -2841,6 +2841,49 @@ PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile
 git diff --check
 ```
 
+#### P1-D-11 RenderPlan 离线预览接入 demo evidence
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让 `examples/map_render_previews/*.procedural_map_preview_report.json` 被统一 demo evidence 自动纳入，使评审/录屏能直接看到 MapRuntimePackage + MapStylePack + ProceduralMapRenderPlan 的 review-only SVG 预览证据。
+```
+
+已落地：
+
+- `tools/demo/export_evidence.py`：新增动态发现 `examples/map_render_previews/*.procedural_map_preview_report.json`，并把预览 report 纳入 validation commands、source files、`assets_and_media.map_visual_reference.procedural_map_previews`、`summary.md` 和 `index.html`。
+- `examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json`：记录本任务的 worktree、边界、验收命令和 `local_codex_safe_fallback` 原因。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 demo evidence 已展示 RenderPlan 离线预览事实。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改前端/后端/schema。
+- 预览 report 只作为 review-only evidence，不修改 `MapRuntimePackage`、不晋升 published visual layer、不改变玩家 runtime 背景。
+- 新增地图节点后，只要补充 `*.procedural_map_preview_report.json`，统一 evidence 会动态纳入。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/render_preview_evidence_export
+python3 - <<'PY'
+import json
+from pathlib import Path
+root = Path('/tmp/render_preview_evidence_export')
+evidence = json.loads((root / 'evidence.json').read_text(encoding='utf-8'))
+previews = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews']
+assert previews['report_count'] == 3
+assert previews['ready_count'] == 3
+assert previews['runtime_activation_policy'] == 'review_only_not_player_runtime'
+summary = (root / 'summary.md').read_text(encoding='utf-8')
+assert '地图 RenderPlan 离线预览' in summary
+PY
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。
