@@ -965,6 +965,22 @@ def file_ref(path: Path, role: str) -> dict[str, Any]:
     }
 
 
+def external_file_ref(path: Path, role: str) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "role": role,
+            "exists": False,
+        }
+    return {
+        "path": str(path),
+        "role": role,
+        "exists": True,
+        "bytes": path.stat().st_size,
+        "sha256": sha256_file(path),
+    }
+
+
 def shorten(value: str, limit: int = MAX_VALIDATION_OUTPUT_CHARS) -> str:
     normalized = value.replace(str(ROOT), "$REPO_ROOT").strip()
     if len(normalized) <= limit:
@@ -2629,6 +2645,79 @@ def collect_mvp_demo_readiness_report(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def collect_frontend_flow_visual_smoke_report(
+    report: dict[str, Any],
+    report_path: Path,
+) -> dict[str, Any]:
+    screenshots = [
+        {
+            "viewport_id": item.get("viewport_id"),
+            "step_id": item.get("step_id"),
+            "label": item.get("label"),
+            "path": item.get("path"),
+            "width": item.get("width"),
+            "height": item.get("height"),
+            "file_size_bytes": item.get("file_size_bytes"),
+            "sha256": item.get("sha256"),
+            "title": item.get("title"),
+            "canvas_count": item.get("canvas_count"),
+            "button_count": item.get("button_count"),
+            "image_count": item.get("image_count"),
+        }
+        for item in as_list(report.get("screenshots"))
+        if isinstance(item, dict)
+    ]
+    viewport_results = as_list(report.get("viewport_results"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "task_id": report.get("task_id"),
+        "status": report.get("status"),
+        "report_ref": external_file_ref(report_path, "frontend_flow_visual_smoke_report"),
+        "browser_available": report.get("browser_available"),
+        "browser_executable": report.get("browser_executable"),
+        "viewport_count": report.get("viewport_count"),
+        "step_ids": as_list(report.get("step_ids")),
+        "expected_screenshot_count": report.get("expected_screenshot_count"),
+        "captured_screenshot_count": report.get("captured_screenshot_count"),
+        "viewport_status_counts": dict(
+            sorted(Counter(str(item.get("status")) for item in viewport_results if isinstance(item, dict)).items())
+        ),
+        "screenshots": screenshots,
+        "screenshot_matrix": [
+            f"{item.get('viewport_id')}:{item.get('step_id')}"
+            for item in screenshots
+        ],
+        "failure_count": len(as_list(report.get("failures"))),
+        "smoke_mode": as_obj(report.get("smoke_mode")),
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
+def collect_browser_visual_evidence(
+    frontend_flow_visual_smoke_report_path: Path | None,
+) -> dict[str, Any]:
+    if not frontend_flow_visual_smoke_report_path:
+        return {
+            "frontend_flow": {
+                "status": "not_provided",
+                "expected_command": (
+                    "python3 tools/frontend/capture_frontend_flow_visual_smoke.py "
+                    "--output-dir /tmp/frontend_flow_visual_smoke --timeout 45"
+                ),
+                "validation_command": (
+                    "python3 tools/frontend/validate_frontend_flow_visual_smoke_report.py "
+                    "/tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json"
+                ),
+            }
+        }
+    return {
+        "frontend_flow": collect_frontend_flow_visual_smoke_report(
+            load_json(frontend_flow_visual_smoke_report_path),
+            frontend_flow_visual_smoke_report_path,
+        )
+    }
+
+
 def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, Any]:
     delta_ref = as_obj(transaction.get("world_state_delta_ref"))
     report = as_obj(transaction.get("validation_report"))
@@ -3204,7 +3293,9 @@ def assert_no_forbidden_keys(value: Any, path: str = "") -> None:
             assert_no_forbidden_keys(child, f"{path}[{index}]")
 
 
-def build_evidence() -> dict[str, Any]:
+def build_evidence(
+    frontend_flow_visual_smoke_report_path: Path | None = None,
+) -> dict[str, Any]:
     frontend_pack = load_json(PATHS["frontend_mock_pack"])
     runtime_art_kit = load_json(PATHS["runtime_art_kit"])
     runtime_package = load_json(PATHS["runtime_package"])
@@ -3401,6 +3492,9 @@ def build_evidence() -> dict[str, Any]:
         "mvp_demo_readiness": collect_mvp_demo_readiness_report(
             mvp_demo_readiness_report
         ),
+        "browser_visual_evidence": collect_browser_visual_evidence(
+            frontend_flow_visual_smoke_report_path
+        ),
         "ai_compilation_link": collect_ai_compilation_link(
             frontend_pack, dossier, multistage_pack
         ),
@@ -3528,6 +3622,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     readiness = as_obj(evidence.get("mvp_demo_readiness"))
     readiness_summary = as_obj(readiness.get("summary"))
+    frontend_flow_visual = as_obj(
+        as_obj(evidence.get("browser_visual_evidence")).get("frontend_flow")
+    )
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     primary_flow_api = as_obj(
         as_obj(evidence.get("backend_api_evidence")).get("mvp_primary_flow")
@@ -3822,6 +3919,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MVP 演示 readiness：`{readiness.get('overall_status')}`",
         f"- 必需 gate：`{readiness_summary.get('required_gate_passed_or_expected_count')}` / `{readiness_summary.get('required_gate_count')}`；阻断 `{readiness_summary.get('blocking_gate_count')}`；warning `{readiness_summary.get('warning_gate_count')}`；预期阻断 `{readiness_summary.get('expected_block_count')}`",
         f"- readiness 报告自身 provider 调用：`{readiness_summary.get('provider_call_count_by_report')}`，世界修改：`{readiness_summary.get('world_mutation_count_by_report')}`，runtime 修改：`{readiness_summary.get('runtime_mutation_count_by_report')}`",
+        f"- 浏览器玩家链路截图：`{frontend_flow_visual.get('status')}`，截图 `{frontend_flow_visual.get('captured_screenshot_count')}` / `{frontend_flow_visual.get('expected_screenshot_count')}`，报告 `{as_obj(frontend_flow_visual.get('report_ref')).get('path') or 'not_provided'}`",
         "",
         md_table(["Gate", "状态", "MVP 必需", "摘要"], readiness_rows),
         "",
@@ -4073,6 +4171,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     readiness = as_obj(evidence.get("mvp_demo_readiness"))
     readiness_summary = as_obj(readiness.get("summary"))
+    frontend_flow_visual = as_obj(
+        as_obj(evidence.get("browser_visual_evidence")).get("frontend_flow")
+    )
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     primary_flow_api = as_obj(
@@ -4335,6 +4436,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">MVP Readiness</div>
           <div class="metric status-metric">{html_escape(readiness.get("overall_status"))}</div>
           <p class="muted">必需 gate {html_escape(readiness_summary.get("required_gate_passed_or_expected_count"))} / {html_escape(readiness_summary.get("required_gate_count"))}；阻断 {html_escape(readiness_summary.get("blocking_gate_count"))}；warning {html_escape(readiness_summary.get("warning_gate_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Browser Flow</div>
+          <div class="metric status-metric">{html_escape(frontend_flow_visual.get("status"))}</div>
+          <p class="muted">截图 {html_escape(frontend_flow_visual.get("captured_screenshot_count"))} / {html_escape(frontend_flow_visual.get("expected_screenshot_count"))}；视口 {html_escape(frontend_flow_visual.get("viewport_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">可玩资产</div>
@@ -4631,8 +4737,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     return html_doc
 
 
-def export_bundle(output_dir: Path) -> dict[str, Any]:
-    evidence = build_evidence()
+def export_bundle(
+    output_dir: Path,
+    frontend_flow_visual_smoke_report_path: Path | None = None,
+) -> dict[str, Any]:
+    evidence = build_evidence(frontend_flow_visual_smoke_report_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     write_json(output_dir / "evidence.json", evidence)
     write_text(output_dir / "summary.md", render_summary_markdown(evidence))
@@ -4649,13 +4758,23 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=str(DEFAULT_OUTPUT_DIR),
         help="输出目录，默认写入仓库内 demo_evidence/。",
     )
+    parser.add_argument(
+        "--frontend-flow-smoke-report",
+        type=Path,
+        help="可选：浏览器玩家链路截图 smoke report 路径；传入后纳入 evidence 摘要。",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     output_dir = Path(args.output_dir).expanduser()
-    evidence = export_bundle(output_dir)
+    frontend_flow_report = (
+        args.frontend_flow_smoke_report.expanduser()
+        if args.frontend_flow_smoke_report
+        else None
+    )
+    evidence = export_bundle(output_dir, frontend_flow_report)
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
     print("演示证据包已导出")
