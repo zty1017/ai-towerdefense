@@ -26,6 +26,7 @@ DEFAULT_OUTPUT_DIR = ROOT / "demo_evidence"
 MAX_VALIDATION_OUTPUT_CHARS = 1400
 MAX_SAMPLE_ITEMS = 12
 MAP_RUNTIME_PACKAGE_DIR = ROOT / "examples/map_runtime_packages"
+MAP_RUNTIME_PACKAGE_V02_DIR = ROOT / "examples/map_runtime_packages_v02"
 MAP_COMPILE_PACKAGE_DIR = ROOT / "examples/map_compile_packages"
 MAP_RENDER_PREVIEW_DIR = ROOT / "examples/map_render_previews"
 WORLD_DELTA_TRANSACTION_DIR = ROOT / "examples/world_delta_transactions"
@@ -969,6 +970,10 @@ def map_runtime_package_paths() -> list[Path]:
     return sorted(MAP_RUNTIME_PACKAGE_DIR.glob("*.map_runtime_package.json"))
 
 
+def map_runtime_package_v02_paths() -> list[Path]:
+    return sorted(MAP_RUNTIME_PACKAGE_V02_DIR.glob("*.map_runtime_package_v02.json"))
+
+
 def map_compile_package_paths() -> list[Path]:
     return sorted(MAP_COMPILE_PACKAGE_DIR.glob("*.map_compile_package.json"))
 
@@ -986,6 +991,17 @@ def validation_commands() -> list[dict[str, Any]]:
                 "command": [
                     "python3",
                     "tools/asset_graph/validate_map_runtime_package.py",
+                    rel(path),
+                ],
+            }
+        )
+    for path in map_runtime_package_v02_paths():
+        commands.append(
+            {
+                "name": f"map_runtime_package_v02_{path.stem.replace('.', '_')}",
+                "command": [
+                    "python3",
+                    "tools/asset_graph/validate_map_runtime_package_v02.py",
                     rel(path),
                 ],
             }
@@ -1721,6 +1737,10 @@ def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
         "spawn_point_count": len(as_list(map_package.get("spawn_points"))),
         "objective_count": 1
         + len(as_list(as_obj(map_package.get("objectives")).get("optional_targets"))),
+        "resource_node_count": len(as_list(map_package.get("resource_nodes"))),
+        "hazard_zone_count": len(as_list(map_package.get("hazard_zones"))),
+        "defense_anchor_count": len(as_list(map_package.get("defense_anchors"))),
+        "blocked_area_count": len(as_list(map_package.get("blocked_areas"))),
         "runtime_hints": as_obj(map_package.get("runtime_hints")),
         "visual_layer_count": len(visual_layers),
         "published_visual_layer_count": sum(
@@ -1755,6 +1775,10 @@ def collect_map_runtime_packages(map_packages: list[dict[str, Any]]) -> dict[str
         "total_path_route_count": sum(int(package.get("path_route_count") or 0) for package in packages),
         "total_build_slot_count": sum(int(package.get("build_slot_count") or 0) for package in packages),
         "total_spawn_point_count": sum(int(package.get("spawn_point_count") or 0) for package in packages),
+        "total_resource_node_count": sum(int(package.get("resource_node_count") or 0) for package in packages),
+        "total_hazard_zone_count": sum(int(package.get("hazard_zone_count") or 0) for package in packages),
+        "total_defense_anchor_count": sum(int(package.get("defense_anchor_count") or 0) for package in packages),
+        "total_blocked_area_count": sum(int(package.get("blocked_area_count") or 0) for package in packages),
         "published_visual_layer_count": sum(
             int(package.get("published_visual_layer_count") or 0) for package in packages
         ),
@@ -2944,6 +2968,9 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("map_runtime_package", path) for path in map_runtime_package_paths()
     )
     source_paths.extend(
+        ("map_runtime_package_v02", path) for path in map_runtime_package_v02_paths()
+    )
+    source_paths.extend(
         ("map_compile_package", path) for path in map_compile_package_paths()
     )
     source_paths.extend(
@@ -2973,6 +3000,11 @@ def build_evidence() -> dict[str, Any]:
     map_packages = [
         package
         for package in (load_json(path) for path in map_runtime_package_paths())
+        if isinstance(package, dict)
+    ]
+    map_packages_v02 = [
+        package
+        for package in (load_json(path) for path in map_runtime_package_v02_paths())
         if isinstance(package, dict)
     ]
     map_compile_packages = [
@@ -3191,6 +3223,7 @@ def build_evidence() -> dict[str, Any]:
             world_delta_transactions
         ),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
+        "map_runtime_packages_v02": collect_map_runtime_packages(map_packages_v02),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3260,6 +3293,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
+    map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
@@ -3596,6 +3630,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         f"- RuntimePackage：`{runtime_pkg.get('package_id')}`，战斗：{runtime_pkg.get('battle_display_name')}，资产数：`{runtime_pkg.get('asset_count')}`",
         f"- MapRuntimePackage 数：`{map_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_packages.get('node_ids')))}`",
+        f"- MapRuntimePackage v0.2 preview：`{map_packages_v02.get('package_count')}`，资源点 `{map_packages_v02.get('total_resource_node_count')}`，机关区 `{map_packages_v02.get('total_hazard_zone_count')}`，防守锚点 `{map_packages_v02.get('total_defense_anchor_count')}`，阻挡区 `{map_packages_v02.get('total_blocked_area_count')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -3763,6 +3798,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
+    map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
@@ -4037,6 +4073,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">MapRuntimePackage</div>
           <div class="metric">{html_escape(map_packages.get("package_count"))}</div>
           <p class="muted">地图包数量；包含路径、塔位、目标、出生点和视觉层。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapRuntime v0.2</div>
+          <div class="metric">{html_escape(map_packages_v02.get("package_count"))}</div>
+          <p class="muted">preview 旁路包；资源 {html_escape(map_packages_v02.get("total_resource_node_count"))}，机关 {html_escape(map_packages_v02.get("total_hazard_zone_count"))}，锚点 {html_escape(map_packages_v02.get("total_defense_anchor_count"))}，阻挡 {html_escape(map_packages_v02.get("total_blocked_area_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>
