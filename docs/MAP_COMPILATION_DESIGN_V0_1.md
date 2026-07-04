@@ -108,7 +108,8 @@ MapComponentMediaManifest deterministic SVG baseline
   -> MapComponentCandidateReviewReport
   -> MapComponentVisualQualityReport
   -> MapComponentPromotionGateReport
-  -> future MapComponentMediaManifest replacement build
+  -> MapComponentManifestPatchPlan
+  -> MapComponentManifestApplyReport / optional replacement manifest artifact
 ```
 
 `MapComponentGenerationRequestPack v0.1` 只从现有 manifest 派生每个组件的生成请求摘要：component_id、component_role、style_pack_id、node_id、baseline_local_path、target_size、prompt_profile_id、negative constraints、required gates 和 usage policy。它可以包含 redacted prompt summary / structured prompt tokens，但不得保存 provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 或外部临时 URL。
@@ -122,6 +123,8 @@ MapComponentMediaManifest deterministic SVG baseline
 `MapComponentPromotionGateReport v0.1` 是显式晋升门。它默认读取 `MapComponentVisualQualityReport v0.1`，顶层记录 `source_visual_quality_report_path`，并在每个 decision 中写入 visual quality report 状态、匹配 item 状态、是否已检查、是否必需和阻断原因；baseline fixture 不要求 visual item。当前 visual quality report 为 `awaiting_generated_candidates`，`promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。alternate 链路可以从 imported staging 继续派生 candidate-approved / visual-approved reports，使 promotion gate 对指定 generated candidate 给出 `allowed` 并让 `promotion_allowed_count > 0`；但 promotion gate 仍只写 report，runtime_effect 全 false，不执行 manifest replacement 或 runtime activation。未来 generated candidate 的 promotion 条件必须同时满足 candidate review 自身允许、visual report 中存在匹配 item、该 item 为 `passed`，并且 runtime readiness 仍由更后续发布机制决定；v0.1 不把 visual `runtime_ready` 放宽为晋升条件。
 
 `MapComponentManifestPatchPlan v0.1` 是 promotion gate 之后、正式 apply 之前的 review-only 计划层。它只把 `MapComponentPromotionGateReport` 中 `allowed` 的 generated candidate decision 映射成 manifest patch proposal，并回查 candidate review、visual quality 和当前 `MapComponentMediaManifest`：默认正式链路没有 allowed candidate，因此输出 `no_allowed_candidates`、`patch_count=0`；approved alternate SVG 链路可以得到 `ready_for_developer_apply` proposal，指向当前 processed SVG 的同名替换目标和 `/assets/map_components/processed/...svg` public URL，但仍不复制文件、不创建 processed 产物、不写正式 manifest、不改 StylePack / RenderPlan / frontend default / runtime map truth。由于 `MapComponentMediaManifest v0.1` 只接受 processed SVG，PNG/WebP generated candidate 即使通过前置 gate，也必须在 patch plan 中标记为 `blocked_manifest_schema_incompatible`，等待 manifest schema 扩展或新版本发布。
+
+`MapComponentManifestApplyReport v0.1` 是 patch plan 之后的 developer-approved replacement build 证据层。它读取 patch plan 和显式 approval plan，只接受 `patch_status == ready_for_developer_apply` 且 `replacement_source.file_type == svg` 的 patch，复核 candidate local path 存在、sha 匹配、proposed processed path / public URL 与当前 manifest item 一致，然后可按调用方传入的 `--output-manifest` 写出 replacement manifest artifact。默认正式 approval plan 为空，因此 report 为 `no_approved_patches`、`applied_patch_count=0`，不会复制 candidate、不会改正式 `MapComponentMediaManifest`；只有额外显式 `--copy-files` 才会把候选 SVG 复制到 processed 目标。无论是否写 replacement artifact，该层都明确 `style_pack_modified=false`、`render_plan_modified=false`、`frontend_default_modified=false`、`runtime_map_truth_modified=false`，并记录 source/output manifest path 与 before/after sha。
 
 该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。Manifest 与报告都不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
 
@@ -264,6 +267,8 @@ MapRuntimePackage
   -> MapComponentCandidateReviewReport
   -> MapComponentVisualQualityReport
   -> MapComponentPromotionGateReport
+  -> MapComponentManifestPatchPlan
+  -> MapComponentManifestApplyReport
   -> deterministic procedural render
   -> semantic visual consistency check
   -> published visual layer or runtime canvas style update
@@ -282,14 +287,15 @@ worldbook + node state + visual identity
   -> MapComponentCandidateReviewReport
   -> MapComponentVisualQualityReport
   -> MapComponentPromotionGateReport
-  -> reviewed component manifest / atlas
+  -> MapComponentManifestPatchPlan
+  -> MapComponentManifestApplyReport / reviewed component manifest artifact
   -> MapStyleComponentBindingReport
   -> procedural renderer consumes reviewed components
 ```
 
 在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
 
-`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再进入 artifact staging 的 36 个 awaiting slot；candidate review 会读取该 staging manifest，但因为 `imported_count=0`，仍只保留 baseline fixture evidence；visual quality report 因无 generated candidate 保持 `awaiting_generated_candidates`，promotion gate 会显式读取该 visual report 并继续阻断晋升，manifest patch plan 则保持 `no_allowed_candidates` / `patch_count=0`。approval tools 只能基于 alternate imported reports 派生 candidate-approved / visual-approved alternate evidence，让 promotion gate 证明受控链路可出现 `promotion_allowed_count > 0`，并让 patch plan 为 SVG candidate 形成 review-only `ready_for_developer_apply` proposal；默认 demo / 正式 examples 仍保持 0 imported / 0 promoted / 0 patch。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
+`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再进入 artifact staging 的 36 个 awaiting slot；candidate review 会读取该 staging manifest，但因为 `imported_count=0`，仍只保留 baseline fixture evidence；visual quality report 因无 generated candidate 保持 `awaiting_generated_candidates`，promotion gate 会显式读取该 visual report 并继续阻断晋升，manifest patch plan 则保持 `no_allowed_candidates` / `patch_count=0`，默认 manifest apply report 也保持 `no_approved_patches` / `applied_patch_count=0`。approval tools 只能基于 alternate imported reports 派生 candidate-approved / visual-approved alternate evidence，让 promotion gate 证明受控链路可出现 `promotion_allowed_count > 0`，并让 patch plan 为 SVG candidate 形成 review-only `ready_for_developer_apply` proposal；developer approval plan 再决定是否生成 replacement manifest artifact。默认 demo / 正式 examples 仍保持 0 imported / 0 promoted / 0 patch / 0 applied，且 apply report 不复制文件、不改正式 manifest、不改 StylePack / RenderPlan / frontend default / runtime map truth。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
 
 ### 3.2 前端视觉路线确认
 

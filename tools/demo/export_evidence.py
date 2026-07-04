@@ -172,6 +172,8 @@ PATHS = {
     / "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
     "map_component_manifest_patch_plan": ROOT
     / "examples/review_packs/map_component_manifest_patch_plan.v0.1.json",
+    "map_component_manifest_apply_report": ROOT
+    / "examples/review_packs/map_component_manifest_apply_report.v0.1.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -573,6 +575,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_component_manifest_patch_plan.py",
             "examples/review_packs/map_component_manifest_patch_plan.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_manifest_apply_report",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_manifest_apply_report.py",
+            "examples/review_packs/map_component_manifest_apply_report.v0.1.json",
         ],
     },
     {
@@ -2069,6 +2079,40 @@ def map_component_manifest_patch_plan_summary(plan: dict[str, Any]) -> dict[str,
             }
             for patch in patches[:MAX_SAMPLE_ITEMS]
         ],
+    }
+
+
+def map_component_manifest_apply_report_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    manifest_sha = as_obj(report.get("manifest_sha"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "approval_id": report.get("approval_id"),
+        "source_patch_plan_path": report.get("source_patch_plan_path"),
+        "source_manifest_path": report.get("source_manifest_path"),
+        "source_approval_plan_path": report.get("source_approval_plan_path"),
+        "output_manifest_path": report.get("output_manifest_path"),
+        "source_patch_count": summary.get("source_patch_count"),
+        "approved_patch_count": summary.get("approved_patch_count"),
+        "applied_patch_count": summary.get("applied_patch_count"),
+        "skipped_patch_count": summary.get("skipped_patch_count"),
+        "blocked_patch_count": summary.get("blocked_patch_count"),
+        "ready_patch_count": summary.get("ready_patch_count"),
+        "manifest_item_count": summary.get("manifest_item_count"),
+        "runtime_effect": as_obj(report.get("runtime_effect")),
+        "source_manifest_file_sha256_before": manifest_sha.get(
+            "source_manifest_file_sha256_before"
+        ),
+        "replacement_manifest_content_sha256_after": manifest_sha.get(
+            "replacement_manifest_content_sha256_after"
+        ),
+        "replacement_manifest_file_sha256_after": manifest_sha.get(
+            "replacement_manifest_file_sha256_after"
+        ),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
     }
 
 
@@ -3882,6 +3926,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_component_manifest_patch_plan",
             PATHS["map_component_manifest_patch_plan"],
         ),
+        (
+            "map_component_manifest_apply_report",
+            PATHS["map_component_manifest_apply_report"],
+        ),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
@@ -4103,6 +4151,9 @@ def build_evidence(
     map_component_manifest_patch_plan = load_json(
         PATHS["map_component_manifest_patch_plan"]
     )
+    map_component_manifest_apply_report = load_json(
+        PATHS["map_component_manifest_apply_report"]
+    )
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
@@ -4296,6 +4347,9 @@ def build_evidence(
             "manifest_patch_plan": map_component_manifest_patch_plan_summary(
                 map_component_manifest_patch_plan
             ),
+            "manifest_apply_report": map_component_manifest_apply_report_summary(
+                map_component_manifest_apply_report
+            ),
         },
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
@@ -4409,6 +4463,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_component_manifest_patch_plan = as_obj(
         map_component_generation_pipeline.get("manifest_patch_plan")
+    )
+    map_component_manifest_apply_report = as_obj(
+        map_component_generation_pipeline.get("manifest_apply_report")
     )
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
@@ -4810,6 +4867,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapComponent visual quality / cutout gate：`{map_component_visual_quality.get('status')}`，读取 candidate review `{map_component_visual_quality.get('source_candidate_review_report_path')}`，generated `{map_component_visual_quality.get('generated_candidate_count')}`，checked `{map_component_visual_quality.get('checked_candidate_count')}`，blocked `{map_component_visual_quality.get('blocked_pending_quality_gates_count')}`，runtime/manifest 写入 `{map_component_visual_quality.get('runtime_effect')}`，promotion effect `{map_component_visual_quality.get('promotion_effect')}`",
         f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，读取 visual quality `{map_component_promotion_gate.get('source_visual_quality_report_path')}` / `{map_component_promotion_gate.get('visual_quality_report_status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapComponent manifest patch plan：`{map_component_manifest_patch_plan.get('status')}`，读取 promotion gate `{map_component_manifest_patch_plan.get('source_promotion_gate_report_path')}`，allowed `{map_component_manifest_patch_plan.get('allowed_decision_count')}`，patches `{map_component_manifest_patch_plan.get('patch_count')}`，ready `{map_component_manifest_patch_plan.get('ready_patch_count')}`，runtime/manifest 写入 `{map_component_manifest_patch_plan.get('runtime_effect')}`",
+        f"- MapComponent manifest apply report：`{map_component_manifest_apply_report.get('status')}`，approval `{map_component_manifest_apply_report.get('approval_id')}`，applied `{map_component_manifest_apply_report.get('applied_patch_count')}`，blocked `{map_component_manifest_apply_report.get('blocked_patch_count')}`，output manifest `{map_component_manifest_apply_report.get('output_manifest_path')}`，runtime/manifest 写入 `{map_component_manifest_apply_report.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",

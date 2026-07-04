@@ -1,0 +1,12 @@
+{
+  "approval_id": "map_component_manifest_apply_approval_plan_v0_1_empty",
+  "approved_patches": [],
+  "schema_version": "map_component_manifest_apply_approval_plan.v0.1",
+  "usage_policy": [
+    "developer_explicit_manifest_apply_approval_only",
+    "svg_replacement_only",
+    "no_default_runtime_mutation",
+    "no_provider_or_prompt_payload",
+    "no_secret_material"
+  ]
+}
