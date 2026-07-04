@@ -75,6 +75,10 @@ def main() -> int:
     print(f"- hazard_zones: {len(package.get('hazard_zones', []))}")
     print(f"- defense_anchors: {len(package.get('defense_anchors', []))}")
     print(f"- blocked_areas: {len(package.get('blocked_areas', []))}")
+    warnings = mrp_v02.placement_review_warnings_v02(package)
+    print(f"- placement_geometry_warnings: {len(warnings)}")
+    for warning in warnings:
+        print(f"  - {warning}")
     return 0
 
 

@@ -72,6 +72,10 @@ def main() -> int:
     print(f"- schema_version: {package.get('schema_version')}")
     print(f"- package_id: {package.get('package_id')}")
     print(f"- build_slots: {len(package.get('build_slots', []))}")
+    warnings = mrp.placement_review_warnings(package)
+    print(f"- placement_geometry_warnings: {len(warnings)}")
+    for warning in warnings:
+        print(f"  - {warning}")
     return 0
 
 

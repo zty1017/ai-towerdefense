@@ -552,3 +552,33 @@ MapRuntimePackage v0.1 / v0.2 preview
 4. 所有 preview / generated media 默认 review-only，进入玩家默认视图必须有 promotion / activation evidence。
 5. 玩家侧仍不直接编译战斗地图拓扑；地图模板和关卡池属于开发者侧或系统侧受控编译。
 ```
+
+### 10.5 P1-MAP-F/G 最小实现落点
+
+截至 2026-07-05，P1-MAP-F/G 已落地第一条最小可验证闭环：
+
+```text
+MapRuntimePackage v0.1 / v0.2 preview
+  -> path_routes.waypoints
+  -> deterministic path geometry helper
+  -> placement validator warnings
+  -> review-only MapPathGeometryReport
+```
+
+已新增：
+
+- `tools/asset_graph/map_path_geometry.py`
+- `tools/asset_graph/build_map_path_geometry_report.py`
+- `tools/asset_graph/validate_map_path_geometry_report.py`
+- `shared/schemas/map_path_geometry_report.v0.1.schema.json`
+- `examples/review_packs/map_path_geometry_report.v0.1.json`
+
+该实现只从现有 `MapRuntimePackage` 的 `path_routes.waypoints` 派生 sampled centerline、route length、turn angle / near_turn hints、road band envelope 和塔位到 road band 的距离统计。它是 validator / evidence 的支撑模块，不是新的运行时地图事实源，也不写回 `MapRuntimePackage`、不替换 v0.1 玩家默认 runtime 包。
+
+当前 placement 升级采用非破坏性策略：
+
+- v0.1 / v0.2 validator 会输出 `placement_geometry_warnings`，但不会因派生 road band warning 改变已有 valid fixture 的 exit code。
+- 旧信号塔压力地图存在少量塔位与派生 road band 相交的历史 fixture 问题，因此先进入 review-only 报告，而不是在本轮改成 hard failure。
+- v0.2 的 resource / blocked / objective / spawn 与塔位、road band 的冲突同样通过 helper 进入 warning/report；后续如果模板和示例完成迁移，可再把明确重叠升级为硬失败。
+
+硬边界保持不变：不得从图片、SVG、preview 或 AI candidate 反推路线、塔位、资源点、机关或碰撞；StylePack / RenderPlan 仍只表现结构化地图事实。
