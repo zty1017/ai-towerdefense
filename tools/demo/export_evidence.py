@@ -156,6 +156,8 @@ PATHS = {
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
     "map_path_geometry_report": ROOT
     / "examples/review_packs/map_path_geometry_report.v0.1.json",
+    "map_style_component_binding_report": ROOT
+    / "examples/review_packs/map_style_component_binding_report.v0.1.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -486,6 +488,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_map_path_geometry_report.py",
             "examples/review_packs/map_path_geometry_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_style_component_binding_report",
+        "command": [
+            "python3",
+            "tools/asset_graph/validate_map_style_component_binding_report.py",
+            "examples/review_packs/map_style_component_binding_report.v0.1.json",
         ],
     },
     {
@@ -1623,6 +1633,52 @@ def map_path_geometry_summary(report: dict[str, Any]) -> dict[str, Any]:
             }
             for item in maps[:MAX_SAMPLE_ITEMS]
         ],
+    }
+
+
+def map_style_component_binding_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    bindings = [
+        binding
+        for binding in as_list(report.get("bindings"))
+        if isinstance(binding, dict)
+    ]
+    gaps = [
+        gap
+        for gap in as_list(report.get("coverage_gaps"))
+        if isinstance(gap, dict)
+    ]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "style_pack_count": summary.get("style_pack_count"),
+        "material_component_ref_count": summary.get("material_component_ref_count"),
+        "prefab_reviewed_component_ref_count": summary.get(
+            "prefab_reviewed_component_ref_count"
+        ),
+        "resolved_ref_count": summary.get("resolved_ref_count"),
+        "missing_ref_count": summary.get("missing_ref_count"),
+        "procedural_fallback_count": summary.get("procedural_fallback_count"),
+        "component_coverage_gap_count": summary.get("component_coverage_gap_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
+        "binding_samples": [
+            {
+                "style_pack_id": binding.get("style_pack_id"),
+                "node_id": binding.get("node_id"),
+                "binding_source": binding.get("binding_source"),
+                "owner_id": binding.get("owner_id"),
+                "role": binding.get("role"),
+                "ref_kind": binding.get("ref_kind"),
+                "resolution_status": binding.get("resolution_status"),
+                "resolved_asset_id": as_obj(binding.get("resolved_ref")).get("asset_id"),
+                "resolved_media_role": as_obj(binding.get("resolved_ref")).get("media_role"),
+            }
+            for binding in bindings[:MAX_SAMPLE_ITEMS]
+        ],
+        "coverage_gap_samples": gaps[:MAX_SAMPLE_ITEMS],
     }
 
 
@@ -3407,6 +3463,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_runtime_activation_gate_report"],
         ),
         ("map_path_geometry_report", PATHS["map_path_geometry_report"]),
+        (
+            "map_style_component_binding_report",
+            PATHS["map_style_component_binding_report"],
+        ),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
@@ -3606,6 +3666,9 @@ def build_evidence(
         PATHS["map_runtime_activation_gate_report"]
     )
     map_path_geometry_report = load_json(PATHS["map_path_geometry_report"])
+    map_style_component_binding_report = load_json(
+        PATHS["map_style_component_binding_report"]
+    )
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
@@ -3776,6 +3839,9 @@ def build_evidence(
             map_runtime_activation_gate_report
         ),
         "map_path_geometry": map_path_geometry_summary(map_path_geometry_report),
+        "map_style_component_bindings": map_style_component_binding_summary(
+            map_style_component_binding_report
+        ),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3864,6 +3930,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
+    map_style_component_bindings = as_obj(
+        evidence.get("map_style_component_bindings")
+    )
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "quality_audit"
@@ -4256,6 +4325,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
+        f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
