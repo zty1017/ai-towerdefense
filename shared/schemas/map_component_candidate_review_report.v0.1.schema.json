@@ -11,6 +11,7 @@
     "created_at",
     "source_request_pack_path",
     "source_manifest_path",
+    "source_artifact_staging_manifest_path",
     "status",
     "usage_policy",
     "summary",
@@ -23,6 +24,7 @@
     "created_at": { "type": "string", "format": "date-time" },
     "source_request_pack_path": { "type": "string", "minLength": 1 },
     "source_manifest_path": { "type": "string", "minLength": 1 },
+    "source_artifact_staging_manifest_path": { "type": "string", "minLength": 1 },
     "status": { "type": "string", "enum": ["warning", "blocked_from_promotion", "passed"] },
     "usage_policy": { "$ref": "#/$defs/string_list" },
     "summary": { "$ref": "#/$defs/summary" },
@@ -100,6 +102,43 @@
         "required_next_actions",
         "usage_policy"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "candidate_kind": { "const": "baseline_fixture_candidate" } },
+            "required": ["candidate_kind"]
+          },
+          "then": {
+            "properties": {
+              "review_status": { "const": "no_generated_candidate_yet" },
+              "promotion_recommendation": { "const": "do_not_promote" },
+              "promotion_allowed_now": { "const": false }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "candidate_kind": { "const": "generated_candidate" } },
+            "required": ["candidate_kind"]
+          },
+          "then": {
+            "required": [
+              "staging_slot_id",
+              "candidate_local_path",
+              "candidate_sha256",
+              "staging_import_status",
+              "artifact_review_status"
+            ],
+            "properties": {
+              "review_status": { "const": "blocked_from_promotion" },
+              "promotion_recommendation": { "const": "do_not_promote" },
+              "promotion_allowed_now": { "const": false },
+              "staging_import_status": { "const": "imported" },
+              "artifact_review_status": { "const": "staged_for_review" }
+            }
+          }
+        }
+      ],
       "properties": {
         "candidate_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
         "request_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
@@ -113,6 +152,15 @@
         "promotion_allowed_now": { "type": "boolean" },
         "baseline_local_path": { "type": "string", "pattern": "^game_data/media/map_components/processed/[A-Za-z0-9_.-]+\\.svg$" },
         "baseline_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "staging_slot_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "candidate_local_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(game_data/media/map_components/candidates/.+|/tmp/.+)\\.(png|svg|webp)$"
+        },
+        "candidate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "staging_import_status": { "type": "string", "enum": ["imported"] },
+        "artifact_review_status": { "type": "string", "enum": ["staged_for_review"] },
         "target_size": { "$ref": "#/$defs/target_size" },
         "findings": { "$ref": "#/$defs/string_list" },
         "required_next_actions": { "$ref": "#/$defs/string_list" },
