@@ -501,6 +501,13 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "map_component_frontend_contract",
+        "command": [
+            "python3",
+            "tools/frontend/validate_map_component_frontend_contract.py",
+        ],
+    },
+    {
         "name": "map_style_component_binding_report",
         "command": [
             "python3",
