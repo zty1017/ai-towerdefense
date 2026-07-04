@@ -1408,6 +1408,7 @@
   "created_at": "2026-07-05T00:00:00Z",
   "report_id": "map_component_candidate_review_report_v0_1",
   "schema_version": "map_component_candidate_review_report.v0.1",
+  "source_artifact_staging_manifest_path": "examples/review_packs/map_component_artifact_staging_manifest.v0.1.json",
   "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.1.json",
   "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
   "status": "blocked_from_promotion",

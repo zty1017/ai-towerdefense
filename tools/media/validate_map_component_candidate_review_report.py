@@ -35,6 +35,13 @@ REQUIRED_USAGE_POLICY = {
     "no_provider_or_prompt_payload",
     "no_external_temporary_url",
 }
+GENERATED_STAGING_FIELDS = (
+    "staging_slot_id",
+    "candidate_local_path",
+    "candidate_sha256",
+    "staging_import_status",
+    "artifact_review_status",
+)
 
 
 def load_json(path: Path) -> Any:
@@ -48,6 +55,11 @@ def as_obj(value: Any) -> dict[str, Any]:
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def resolve_repo_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
 
 
 def sha256_file(path: Path) -> str:
@@ -103,6 +115,100 @@ def validate_with_jsonschema(value: dict[str, Any], schema: dict[str, Any] | Non
     ]
 
 
+def load_artifact_staging_manifest(report: dict[str, Any], errors: list[str]) -> dict[str, Any]:
+    staging_path_value = report.get("source_artifact_staging_manifest_path")
+    if not isinstance(staging_path_value, str) or not staging_path_value.strip():
+        errors.append("source_artifact_staging_manifest_path must be a non-empty string")
+        return {}
+    staging_path = resolve_repo_path(staging_path_value)
+    if not staging_path.exists():
+        errors.append(f"source_artifact_staging_manifest_path does not exist: {staging_path_value}")
+        return {}
+    try:
+        staging_manifest = load_json(staging_path)
+    except json.JSONDecodeError as exc:
+        errors.append(f"source_artifact_staging_manifest_path is not valid JSON: {exc}")
+        return {}
+    if not isinstance(staging_manifest, dict):
+        errors.append("source artifact staging manifest root must be an object")
+        return {}
+    if staging_manifest.get("schema_version") != "map_component_artifact_staging_manifest.v0.1":
+        errors.append("source artifact staging manifest must be MapComponentArtifactStagingManifest v0.1")
+    if report.get("source_request_pack_path") != staging_manifest.get("source_request_pack_path"):
+        errors.append("source_request_pack_path must match artifact staging source_request_pack_path")
+    if report.get("source_manifest_path") != staging_manifest.get("source_manifest_path"):
+        errors.append("source_manifest_path must match artifact staging source_manifest_path")
+    return staging_manifest
+
+
+def validate_baseline_candidate(candidate: dict[str, Any], index: int, errors: list[str]) -> None:
+    if candidate.get("promotion_allowed_now") is not False:
+        errors.append(f"candidates[{index}] baseline fixture cannot allow promotion")
+    if candidate.get("review_status") != "no_generated_candidate_yet":
+        errors.append(f"candidates[{index}] baseline fixture status must be no_generated_candidate_yet")
+    if candidate.get("promotion_recommendation") != "do_not_promote":
+        errors.append(f"candidates[{index}] baseline fixture recommendation must be do_not_promote")
+    for field in GENERATED_STAGING_FIELDS:
+        if field in candidate:
+            errors.append(f"candidates[{index}] baseline fixture must not include {field}")
+
+
+def validate_generated_candidate(
+    candidate: dict[str, Any],
+    index: int,
+    slots_by_id: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
+    slot_id = candidate.get("staging_slot_id")
+    if not isinstance(slot_id, str) or not slot_id.strip():
+        errors.append(f"candidates[{index}].staging_slot_id must be a non-empty string")
+        return
+    slot = slots_by_id.get(slot_id)
+    if not slot:
+        errors.append(f"candidates[{index}] generated candidate has no matching artifact staging slot: {slot_id}")
+        return
+
+    if slot.get("import_status") != "imported" or slot.get("review_status") != "staged_for_review":
+        errors.append(
+            f"candidates[{index}] generated candidate must come from an imported + staged_for_review slot"
+        )
+    if not slot.get("candidate_local_path"):
+        errors.append(f"candidates[{index}] generated candidate staging slot has no candidate_local_path")
+
+    expected_pairs = {
+        "request_id": slot.get("request_id"),
+        "component_id": slot.get("component_id"),
+        "component_role": slot.get("component_role"),
+        "style_pack_id": slot.get("style_pack_id"),
+        "node_id": slot.get("node_id"),
+        "target_size": as_obj(slot.get("expected_size")),
+        "candidate_local_path": slot.get("candidate_local_path"),
+        "candidate_sha256": slot.get("candidate_sha256"),
+        "staging_import_status": slot.get("import_status"),
+        "artifact_review_status": slot.get("review_status"),
+    }
+    for key, expected in expected_pairs.items():
+        actual = as_obj(candidate.get(key)) if key == "target_size" else candidate.get(key)
+        if actual != expected:
+            errors.append(f"candidates[{index}].{key} must match artifact staging slot")
+
+    if candidate.get("promotion_allowed_now") is not False:
+        errors.append(f"candidates[{index}] generated candidate cannot allow promotion in v0.1 review")
+    if candidate.get("promotion_recommendation") != "do_not_promote":
+        errors.append(f"candidates[{index}] generated candidate recommendation must be do_not_promote")
+    if candidate.get("review_status") != "blocked_from_promotion":
+        errors.append(f"candidates[{index}] generated candidate status must be blocked_from_promotion")
+
+    candidate_path_value = candidate.get("candidate_local_path")
+    candidate_sha = candidate.get("candidate_sha256")
+    if isinstance(candidate_path_value, str) and isinstance(candidate_sha, str):
+        candidate_path = resolve_repo_path(candidate_path_value)
+        if not candidate_path.exists():
+            errors.append(f"candidates[{index}].candidate_local_path does not exist: {candidate_path_value}")
+        elif candidate_sha != sha256_file(candidate_path):
+            errors.append(f"candidates[{index}].candidate_sha256 does not match local file")
+
+
 def validate_report(report: dict[str, Any], schema: dict[str, Any] | None = None) -> list[str]:
     errors: list[str] = []
     errors.extend(validate_with_jsonschema(report, schema))
@@ -116,6 +222,13 @@ def validate_report(report: dict[str, Any], schema: dict[str, Any] | None = None
     missing_policy = sorted(REQUIRED_USAGE_POLICY - usage_policy)
     if missing_policy:
         errors.append(f"usage_policy missing required policies: {', '.join(missing_policy)}")
+
+    artifact_staging = load_artifact_staging_manifest(report, errors)
+    slots_by_id = {
+        str(slot.get("slot_id") or ""): slot
+        for slot in as_list(artifact_staging.get("staging_slots"))
+        if isinstance(slot, dict)
+    }
 
     candidates = [item for item in as_list(report.get("candidates")) if isinstance(item, dict)]
     candidate_ids: set[str] = set()
@@ -133,19 +246,19 @@ def validate_report(report: dict[str, Any], schema: dict[str, Any] | None = None
                 f"candidates[{index}].usage_policy missing required policies: {', '.join(missing_item_policy)}"
             )
 
-        if candidate.get("candidate_kind") == "baseline_fixture_candidate":
-            if candidate.get("promotion_allowed_now") is not False:
-                errors.append(f"candidates[{index}] baseline fixture cannot allow promotion")
-            if candidate.get("review_status") != "no_generated_candidate_yet":
-                errors.append(f"candidates[{index}] baseline fixture status must be no_generated_candidate_yet")
-            if candidate.get("promotion_recommendation") != "do_not_promote":
-                errors.append(f"candidates[{index}] baseline fixture recommendation must be do_not_promote")
+        candidate_kind = candidate.get("candidate_kind")
+        if candidate_kind == "baseline_fixture_candidate":
+            validate_baseline_candidate(candidate, index, errors)
+        elif candidate_kind == "generated_candidate":
+            validate_generated_candidate(candidate, index, slots_by_id, errors)
+        else:
+            errors.append(f"candidates[{index}].candidate_kind must be baseline_fixture_candidate or generated_candidate")
 
         local_path_value = candidate.get("baseline_local_path")
         if not isinstance(local_path_value, str):
             errors.append(f"candidates[{index}].baseline_local_path must be a string")
             continue
-        local_path = ROOT / local_path_value
+        local_path = resolve_repo_path(local_path_value)
         if not local_path.exists():
             errors.append(f"candidates[{index}].baseline_local_path does not exist: {local_path_value}")
         elif candidate.get("baseline_sha256") != sha256_file(local_path):
