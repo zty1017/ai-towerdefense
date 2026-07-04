@@ -211,6 +211,8 @@ shared/schemas/ + tools/ + 专题文档
   - 图片生成、后处理、审查、修复和运行时就绪门禁。
 - `docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md`
   - 图片种子 -> 图生视频 -> 关键帧 -> 循环连续性检查 -> 批量后处理 -> atlas 的路线。
+- `shared/schemas/frame_sequence.v0.1.schema.json` 与 `tools/media/validate_frame_sequence.py`
+  - FrameSequence v0.1 字段级事实源和语义门：结构由 schema 固化；validator 拒绝 remote URL、provider / raw prompt / secret 等敏感键，检查 fixture review-only 标记，并验证 runtime sprite import 所需的 loop、fps、帧数、唯一 frame_index、本地 PNG 尺寸 / sha / 统一画布和 `/assets/` URL 合同。
 
 当前状态：
 
@@ -221,6 +223,7 @@ frontend_runtime_mock 已作为战斗运行时美术包入口，覆盖敌人、�
 MapRuntimePackage v0.1 已作为三张 MVP 战斗节点运行时地图包入口，包含路径、塔位、目标、出生点和带质量状态的本地视觉层引用。
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 MediaAtlasManifest v0.1 已作为 spritesheet 多帧入口接入前端、后端 mock API 和 demo evidence；实体 atlas PNG 已由确定性 frame sequence 打包生成，并已标注 `frame_source_kind` / `loop_continuity_ref`。
+FrameSequence v0.1 已建立正式 schema 与 validator：`shared/schemas/frame_sequence.v0.1.schema.json` 负责字段结构，`tools/media/validate_frame_sequence.py` 负责本地路径、PNG/sha、fixture 标记、禁止 provider / remote URL payload 和 runtime sprite import 合同；`tools/media/import_video_keyframe_sequence.py` 复用同一 validator 后才允许写出候选 atlas。
 LoopContinuityReport v0.1 已接入 frontend mock 与 runtime art 两套 atlas：当前所有动画机械连续性通过，但均标记为 deterministic placeholder warning，说明它们可用于 MVP 循环播放，却还不是最终真实图生视频关键帧。
 真实图生视频关键帧仍未生成。
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。

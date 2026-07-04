@@ -12,9 +12,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-import hashlib
 import json
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -28,33 +26,16 @@ if str(MEDIA_DIR) not in sys.path:
 
 from build_loop_continuity_report import build_report  # noqa: E402
 from build_multiframe_atlas_manifest import pack_animation_spritesheet, rel, slug  # noqa: E402
-from png_pipeline import read_png  # noqa: E402
+from validate_frame_sequence import (  # noqa: E402
+    FRAME_SEQUENCE_VERSION,
+    load_validated_frame_sequences,
+    runtime_frame_records,
+    runtime_playback_settings,
+)
 from validate_multiframe_atlas_contract import validate_contract  # noqa: E402
 
 
 DEFAULT_CREATED_AT = "2026-07-04T00:00:00+08:00"
-FRAME_SEQUENCE_VERSION = "frame_sequence.v0.1"
-REMOTE_URL_RE = re.compile(r"https?://", re.IGNORECASE)
-FORBIDDEN_KEYS = {
-    "api_key",
-    "full_trace",
-    "model",
-    "prompt",
-    "prompt_text",
-    "provider",
-    "provider_body",
-    "provider_output",
-    "provider_response",
-    "provider_url",
-    "raw_json",
-    "raw_prompt",
-    "raw_provider_body",
-    "raw_video",
-    "raw_video_url",
-    "secret",
-    "temporary_public_url",
-    "unreviewed_content",
-}
 
 
 def load_json(path: Path) -> Any:
@@ -67,85 +48,9 @@ def write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def resolve_local_path(value: str) -> Path:
     path = Path(value)
     return path if path.is_absolute() else ROOT / path
-
-
-def scan_forbidden_payload(value: Any, path: str, errors: list[str]) -> None:
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = f"{path}.{key}" if path else key
-            if key.lower() in FORBIDDEN_KEYS:
-                errors.append(f"forbidden key in frame_sequence: {child_path}")
-            scan_forbidden_payload(child, child_path, errors)
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            scan_forbidden_payload(child, f"{path}[{index}]", errors)
-    elif isinstance(value, str) and REMOTE_URL_RE.search(value):
-        errors.append(f"remote URL is not allowed in frame_sequence: {path}")
-
-
-def parse_bool(value: Any, *, default: bool) -> bool:
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"true", "1", "yes"}:
-            return True
-        if lowered in {"false", "0", "no"}:
-            return False
-    raise ValueError(f"expected boolean value, got {value!r}")
-
-
-def sequence_entries(frame_sequence: dict[str, Any]) -> list[dict[str, Any]]:
-    if frame_sequence.get("metadata_version") == FRAME_SEQUENCE_VERSION:
-        return [frame_sequence]
-    sequences = frame_sequence.get("sequences")
-    if isinstance(sequences, list):
-        entries = [entry for entry in sequences if isinstance(entry, dict)]
-        if len(entries) != len(sequences):
-            raise ValueError("frame_sequence.sequences must contain only objects")
-        for entry in entries:
-            entry.setdefault("metadata_version", frame_sequence.get("metadata_version"))
-        return entries
-    raise ValueError(f"frame_sequence metadata_version must be {FRAME_SEQUENCE_VERSION}")
-
-
-def validate_fixture_markers(sequence: dict[str, Any]) -> None:
-    frames = sequence.get("frames") if isinstance(sequence.get("frames"), list) else []
-    source_kind = str(sequence.get("source_kind") or "")
-    is_fixture = "fixture" in source_kind.lower() or bool(sequence.get("fixture_only"))
-    is_fixture = is_fixture or any(
-        isinstance(frame, dict) and "fixture" in str(frame.get("source_kind") or "").lower() for frame in frames
-    )
-    if not is_fixture:
-        return
-    errors: list[str] = []
-    if sequence.get("review_only") is not True:
-        errors.append("fixture frame_sequence must set review_only=true")
-    if not isinstance(sequence.get("fixture_notice"), str) or not sequence.get("fixture_notice"):
-        errors.append("fixture frame_sequence must include fixture_notice")
-    for index, frame in enumerate(frames):
-        if isinstance(frame, dict) and frame.get("review_only") is not True:
-            errors.append(f"fixture frame_sequence frames[{index}] must set review_only=true")
-    if errors:
-        raise ValueError("; ".join(errors))
-
-
-def frame_sort_key(pair: tuple[int, dict[str, Any]]) -> tuple[int, int]:
-    original_index, frame = pair
-    value = frame.get("frame_index", frame.get("index", original_index))
-    try:
-        return int(value), original_index
-    except (TypeError, ValueError):
-        return original_index, original_index
 
 
 def normalize_sequence_frames(
@@ -159,56 +64,14 @@ def normalize_sequence_frames(
     frames_url_prefix: str,
     anchor: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    raw_frames = sequence.get("frames")
-    if not isinstance(raw_frames, list) or len(raw_frames) < 2:
-        raise ValueError("video keyframe sequence must contain at least two frames")
-
     normalized: list[dict[str, Any]] = []
-    seen_indices: set[int] = set()
-    expected_size: tuple[int, int] | None = None
     duration_ms = int(round(1000 / fps))
-    for normalized_index, frame in enumerate(
-        frame for _, frame in sorted(enumerate(raw_frames), key=frame_sort_key) if isinstance(frame, dict)
-    ):
-        source_index = frame.get("frame_index", frame.get("index", normalized_index))
-        try:
-            frame_index = int(source_index)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"frames[{normalized_index}].frame_index must be an integer") from exc
-        if frame_index in seen_indices:
-            raise ValueError(f"duplicate frame_index in sequence: {frame_index}")
-        seen_indices.add(frame_index)
-
-        local_value = str(frame.get("local_path") or "")
-        if not local_value:
-            raise ValueError(f"frames[{normalized_index}].local_path must be non-empty")
-        if REMOTE_URL_RE.search(local_value):
-            raise ValueError(f"frames[{normalized_index}].local_path must be local, not remote")
-        local_path = resolve_local_path(local_value)
-        if not local_path.exists():
-            raise FileNotFoundError(f"missing frame_sequence local_path: {local_path}")
-        image = read_png(local_path)
-        size = (image.width, image.height)
-        if expected_size is None:
-            expected_size = size
-        elif size != expected_size:
-            raise ValueError(
-                "video keyframe sequence frames must share one canvas size: "
-                f"expected {expected_size[0]}x{expected_size[1]}, got {image.width}x{image.height}"
-            )
-
-        for key, actual in (("width", image.width), ("height", image.height)):
-            declared = frame.get(key)
-            if declared is not None and int(declared) != actual:
-                raise ValueError(f"frames[{normalized_index}].{key} does not match PNG")
-        actual_sha = sha256_file(local_path)
-        declared_sha = frame.get("sha256")
-        if declared_sha is not None and str(declared_sha) != actual_sha:
-            raise ValueError(f"frames[{normalized_index}].sha256 does not match PNG")
-
+    records, record_errors = runtime_frame_records(sequence)
+    if record_errors:
+        raise ValueError("; ".join(record_errors))
+    for normalized_index, record in enumerate(records):
+        frame = record.frame
         source_url = str(frame.get("url") or "")
-        if source_url and not source_url.startswith("/assets/"):
-            raise ValueError(f"frames[{normalized_index}].url must start with /assets/ when provided")
         url = source_url or (
             f"{frames_url_prefix.rstrip('/')}/"
             f"{slug(asset_id)}__{slug(media_role)}__{slug(animation_state)}__frame_{normalized_index:03d}.png"
@@ -218,19 +81,17 @@ def normalize_sequence_frames(
                 "frame_id": str(frame.get("stable_internal_id") or f"{animation_id}.frame_{normalized_index:03d}"),
                 "index": normalized_index,
                 "url": url,
-                "local_path": rel(local_path),
+                "local_path": rel(record.local_path),
                 "x": 0,
                 "y": 0,
-                "width": image.width,
-                "height": image.height,
+                "width": record.width,
+                "height": record.height,
                 "duration_ms": int(frame.get("duration_ms") or duration_ms),
-                "sha256": actual_sha,
+                "sha256": record.sha256,
                 "anchor": dict(anchor),
             }
         )
 
-    if len(normalized) != len(raw_frames):
-        raise ValueError("frame_sequence.frames must contain only objects")
     if len({frame["url"] for frame in normalized}) != len(normalized):
         raise ValueError("imported frame URLs must be unique")
     return normalized
@@ -320,14 +181,10 @@ def apply_sequence_imports(
     for sequence in sequences:
         if sequence.get("metadata_version") != FRAME_SEQUENCE_VERSION:
             raise ValueError(f"frame_sequence entries must use metadata_version={FRAME_SEQUENCE_VERSION}")
-        validate_fixture_markers(sequence)
         target_index, target = find_target_item(atlas, sequence)
-        playback = sequence.get("playback") if isinstance(sequence.get("playback"), dict) else {}
-        summary = sequence.get("summary") if isinstance(sequence.get("summary"), dict) else {}
-        fps = int(sequence.get("fps") or playback.get("fps") or summary.get("fps") or 0)
-        if fps < 1:
-            raise ValueError("frame_sequence fps must be >= 1")
-        loop = parse_bool(sequence.get("loop", playback.get("loop", True)), default=True)
+        fps, loop, playback_errors = runtime_playback_settings(sequence)
+        if playback_errors or fps is None:
+            raise ValueError("; ".join(playback_errors))
         if loop is not True:
             raise ValueError("video keyframe atlas import requires loop=true for runtime sprite contract")
 
@@ -427,22 +284,11 @@ def main() -> int:
         failure_report_path = ROOT / failure_report_path
 
     atlas = load_json(source_atlas_path)
-    frame_sequence = load_json(frame_sequence_path)
     if not isinstance(atlas, dict):
         raise SystemExit("source atlas root must be an object")
-    if not isinstance(frame_sequence, dict):
-        raise SystemExit("frame_sequence root must be an object")
-
-    forbidden_errors: list[str] = []
-    scan_forbidden_payload(frame_sequence, "", forbidden_errors)
-    if forbidden_errors:
-        print("INVALID frame_sequence")
-        for error in forbidden_errors:
-            print(f"- {error}")
-        return 1
 
     try:
-        sequences = sequence_entries(frame_sequence)
+        sequences = load_validated_frame_sequences(frame_sequence_path)
         candidate = copy.deepcopy(atlas)
         candidate["atlas_id"] = args.atlas_id or f"{atlas.get('atlas_id', 'media_atlas')}_video_keyframe_import"
         candidate["created_at"] = args.created_at
