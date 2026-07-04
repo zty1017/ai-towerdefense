@@ -85,13 +85,16 @@ def validate_app_contract(errors: list[str]) -> None:
         "battleNodeVisualProfile",
         "terrainFeatureSet",
         "drawProceduralTerrain",
+        "drawScenicBackplate",
         "drawTerrainDepthBands",
         "drawPlayableFieldBoundary",
+        "drawFieldEdgeBreakup",
         "drawDarkTidePools",
         "drawBuildableTerraces",
         "battleCanvasSafeArea",
         "battleFitBounds",
         "drawRouteShoulders",
+        "drawRoadTerrainBlend",
         "drawRoadPebbles",
         "drawRoadRuts",
         "drawRouteFlowCues",
@@ -100,6 +103,7 @@ def validate_app_contract(errors: list[str]) -> None:
         "drawBattlefieldLandmarks",
         "drawObjectiveDefensiveZone",
         "drawDeploymentBase",
+        "drawPlatformGroundStitch",
         "drawTargetFoundation",
         "drawSpawnRift",
         "mapRenderPlanBundle",
@@ -123,12 +127,15 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawProceduralTerrain(ctx, m)" in backdrop, "drawBackdrop must start from procedural terrain", errors)
     require("drawMapDebugOverlay(ctx, m)" in backdrop, "debug map overlay must be isolated behind its own helper", errors)
     require("playerBattleMapVisualUrl" not in backdrop, "drawBackdrop must not draw whole-map player images by default", errors)
+    require("drawScenicBackplate(ctx, m, features)" in app, "procedural terrain must render scenic world backplate outside the playable field", errors)
     require("drawPlayableFieldBoundary(ctx, m)" in app, "procedural terrain must render a playable field boundary", errors)
+    require("drawFieldEdgeBreakup(ctx, m, features)" in app, "procedural terrain must break up the playable-field edge with diegetic props", errors)
     require("drawDarkTidePools" in app, "procedural terrain must include world-space dark tide pools", errors)
     require("drawBuildableTerraces(ctx)" in app, "battle view must render buildable terraces below deployment bases", errors)
     require("battleFitBounds(baseTileW, baseTileH)" in metrics, "battle metrics must fit runtime map bounds, not only cover the viewport", errors)
     require("battleCanvasSafeArea(width, height)" in metrics, "battle metrics must reserve HUD safe area", errors)
     require("drawRouteShoulders" in path, "drawPath must render terrain shoulders around roads", errors)
+    require("drawRoadTerrainBlend(ctx, route, points, roadWidth)" in path, "drawPath must blend roads into terrain before drawing the readable road band", errors)
     require("drawRoadPebbles" in path, "drawPath must render textured world road details", errors)
     require("drawRoadRuts" in path, "drawPath must render road ruts or plank details", errors)
     require("drawRouteFlowCues" in path, "drawPath must render subtle route direction cues", errors)
@@ -144,6 +151,7 @@ def validate_app_contract(errors: list[str]) -> None:
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawObjectiveDefensiveZone(ctx" in app, "battle view must ground objectives in a defense zone", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
+    require("drawPlatformGroundStitch" in build_terrace, "buildable terraces must stitch platforms into surrounding terrain", errors)
     require("drawSpawnRift" in spawn_markers, "spawn markers must render ambient entry effects, not arrows", errors)
     require("slotFootprintScale(slot" in build_terrace, "buildable terraces must consume RenderPlan slot footprint", errors)
     require("slotFootprintScale(slot" in deploy_base, "deployment bases must consume RenderPlan slot footprint", errors)
