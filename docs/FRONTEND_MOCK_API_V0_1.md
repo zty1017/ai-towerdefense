@@ -801,6 +801,8 @@ GET /api/sessions/{session_id}/battles/{node_id}/map-runtime-package
 
 ```text
 gray_lantern_station
+lamp_wick_store
+old_signal_tower
 ```
 
 `MapRuntimePackage v0.1` 的边界：
@@ -809,6 +811,31 @@ gray_lantern_station
 - `visual_layers` 只引用本地 `/assets/map_visual_reference/...` 视觉参考层。
 - 视觉参考层不是玩法真值，不决定碰撞、伤害、资源、部署或任务条件。
 - 后续 AI 生成 painted map 时，也必须重新对齐到同一个 map runtime package。
+
+### 获取 v0.2 地图审查预览包
+
+```http
+GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview
+```
+
+返回：
+
+- `preview_mode`：固定为 `review_only_map_v02`。
+- `review_only`：固定为 `true`。
+- `runtime_activation_allowed`：固定为 `false`。
+- `source_refs`：v0.2 runtime package、RenderPlan、语义一致性报告、预览报告和 SVG 预览引用。
+- `map_runtime_package_v02`：包含资源点、机关区、防守锚点和阻挡区的 `MapRuntimePackage v0.2 preview`。
+- `map_render_plan_bundle_v02`：对应 `MapStylePack`、`ProceduralMapRenderPlan`、语义一致性报告和预览报告。
+- `preview_report_v02`：离线 SVG preview 的审查报告。
+- `preview_svg_ref`：review-only SVG 预览文件引用。
+- `safety`：声明本接口不读取 `.env`、不调用 provider、不修改玩家默认 runtime。
+
+边界：
+
+- 该接口只服务开发审查、Studio 证据和演示录屏，不是玩家默认战斗地图接口。
+- 默认玩家战斗仍使用 `/map-runtime-package` 返回的 `MapRuntimePackage v0.1`。
+- v0.2 包和 SVG 预览不得被当作 `published_visual_layer`，也不得绕过地图视觉晋升门禁。
+- 返回的 `mode` 仍是 `frontend_mock_fixture`，便于前端 mock 客户端复用现有响应包装；review-only 语义在 payload 内表达。
 
 ### 获取 runtime package
 

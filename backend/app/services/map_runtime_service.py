@@ -28,6 +28,23 @@ _MAP_RUNTIME_PACKAGE_BY_NODE = {
     ),
 }
 
+_MAP_RUNTIME_PACKAGE_V02_BY_NODE = {
+    "gray_lantern_station": (
+        _REPO_ROOT
+        / "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json"
+    ),
+    "lamp_wick_store": (
+        _REPO_ROOT
+        / "examples/map_runtime_packages_v02/"
+        "mvp_wick_store_pressure.map_runtime_package_v02.json"
+    ),
+    "old_signal_tower": (
+        _REPO_ROOT
+        / "examples/map_runtime_packages_v02/"
+        "mvp_old_signal_tower_pressure.map_runtime_package_v02.json"
+    ),
+}
+
 
 class MapRuntimePackageNotFoundError(LookupError):
     """Raised when a node does not have a reviewed runtime map package."""
@@ -46,8 +63,19 @@ def map_runtime_package_paths() -> dict[str, Path]:
     return dict(_MAP_RUNTIME_PACKAGE_BY_NODE)
 
 
+def map_runtime_package_v02_paths() -> dict[str, Path]:
+    return dict(_MAP_RUNTIME_PACKAGE_V02_BY_NODE)
+
+
 def map_runtime_package_ref(node_id: str) -> str | None:
     path = _MAP_RUNTIME_PACKAGE_BY_NODE.get(node_id)
+    if path is None:
+        return None
+    return path.relative_to(_REPO_ROOT).as_posix()
+
+
+def map_runtime_package_v02_ref(node_id: str) -> str | None:
+    path = _MAP_RUNTIME_PACKAGE_V02_BY_NODE.get(node_id)
     if path is None:
         return None
     return path.relative_to(_REPO_ROOT).as_posix()
@@ -60,9 +88,23 @@ def load_map_runtime_package(node_id: str) -> dict[str, Any]:
     return _load_json(path)
 
 
+def load_map_runtime_package_v02(node_id: str) -> dict[str, Any]:
+    path = _MAP_RUNTIME_PACKAGE_V02_BY_NODE.get(node_id)
+    if path is None or not path.exists():
+        raise MapRuntimePackageNotFoundError(node_id)
+    return _load_json(path)
+
+
 def load_map_runtime_package_optional(node_id: str) -> dict[str, Any] | None:
     try:
         return load_map_runtime_package(node_id)
+    except MapRuntimePackageNotFoundError:
+        return None
+
+
+def load_map_runtime_package_v02_optional(node_id: str) -> dict[str, Any] | None:
+    try:
+        return load_map_runtime_package_v02(node_id)
     except MapRuntimePackageNotFoundError:
         return None
 
