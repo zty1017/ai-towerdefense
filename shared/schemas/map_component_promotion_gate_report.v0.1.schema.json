@@ -47,11 +47,11 @@
         "runtime_map_truth_modified"
       ],
       "properties": {
-        "manifest_replacement_written": { "type": "boolean" },
-        "style_pack_modified": { "type": "boolean" },
-        "render_plan_modified": { "type": "boolean" },
-        "frontend_default_modified": { "type": "boolean" },
-        "runtime_map_truth_modified": { "type": "boolean" }
+        "manifest_replacement_written": { "type": "boolean", "const": false },
+        "style_pack_modified": { "type": "boolean", "const": false },
+        "render_plan_modified": { "type": "boolean", "const": false },
+        "frontend_default_modified": { "type": "boolean", "const": false },
+        "runtime_map_truth_modified": { "type": "boolean", "const": false }
       }
     },
     "validation": { "$ref": "#/$defs/validation" }
@@ -83,7 +83,7 @@
         "baseline_preserved_count": { "type": "integer", "minimum": 0 },
         "visual_quality_report_status": {
           "type": "string",
-          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review", "passed"]
         },
         "decision_counts": {
           "type": "object",
@@ -127,11 +127,11 @@
         "reason": { "type": "string", "minLength": 1 },
         "visual_quality_status": {
           "type": "string",
-          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review", "passed"]
         },
         "visual_quality_item_status": {
           "type": ["string", "null"],
-          "enum": [null, "blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode"]
+          "enum": [null, "blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode", "passed"]
         },
         "visual_quality_checked": { "type": "boolean" },
         "visual_quality_required": { "type": "boolean" },

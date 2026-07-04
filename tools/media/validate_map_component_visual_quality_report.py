@@ -8,6 +8,7 @@ import hashlib
 import json
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ DEFAULT_CANDIDATE_SCHEMA = ROOT / "shared/schemas/map_component_candidate_review
 FORBIDDEN_KEY_FRAGMENTS = (
     "provider",
     "model",
+    "prompt",
     "raw_prompt",
     "full_prompt",
     "full_trace",
@@ -56,6 +58,15 @@ FALSE_EFFECT_FIELDS = {
     "promotion_gate_bypassed",
     "candidate_marked_runtime_ready",
 }
+APPROVAL_RECORD_FIELDS = {
+    "approval_status",
+    "approval_scope",
+    "approved_at",
+    "reviewer",
+    "rationale",
+    "source_approval_plan_path",
+}
+VISUAL_APPROVAL_SCOPES = {"visual_quality", "cutout_review"}
 
 
 def load_json(path: Path) -> Any:
@@ -84,6 +95,14 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def is_valid_datetime(value: str) -> bool:
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
+
+
 def scan_forbidden_key_fragments(value: Any, path: str, errors: list[str]) -> None:
     if isinstance(value, dict):
         for key, child in value.items():
@@ -108,6 +127,48 @@ def scan_external_urls(value: Any, path: str, errors: list[str]) -> None:
         lowered = value.lower()
         if any(marker in lowered for marker in EXTERNAL_URL_MARKERS):
             errors.append(f"{path} must not contain an external URL")
+
+
+def validate_approval_record(approval_record: Any, *, path: str, errors: list[str]) -> None:
+    if not isinstance(approval_record, dict):
+        errors.append(f"{path} must be an object")
+        return
+
+    unexpected_keys = sorted(set(approval_record) - APPROVAL_RECORD_FIELDS)
+    for key in unexpected_keys:
+        errors.append(f"{path} contains unsupported field: {key}")
+    missing_keys = sorted(APPROVAL_RECORD_FIELDS - set(approval_record))
+    for key in missing_keys:
+        errors.append(f"{path}.{key} is required")
+
+    if approval_record.get("approval_status") != "approved":
+        errors.append(f"{path}.approval_status must be approved")
+
+    scope_values = [str(scope) for scope in as_list(approval_record.get("approval_scope"))]
+    if not scope_values:
+        errors.append(f"{path}.approval_scope must not be empty")
+    if not VISUAL_APPROVAL_SCOPES.intersection(scope_values):
+        errors.append(
+            f"{path}.approval_scope must include one of "
+            f"{', '.join(sorted(VISUAL_APPROVAL_SCOPES))}"
+        )
+
+    approved_at = approval_record.get("approved_at")
+    if not isinstance(approved_at, str) or not approved_at.strip():
+        errors.append(f"{path}.approved_at must be a non-empty string")
+    elif not is_valid_datetime(approved_at):
+        errors.append(f"{path}.approved_at must be an ISO 8601 date-time")
+
+    for key in ("reviewer", "rationale", "source_approval_plan_path"):
+        value = approval_record.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{path}.{key} must be a non-empty string")
+
+    source_path = approval_record.get("source_approval_plan_path")
+    if isinstance(source_path, str) and source_path.strip():
+        resolved_source_path = resolve_repo_path(source_path)
+        if not resolved_source_path.exists():
+            errors.append(f"{path}.source_approval_plan_path does not exist: {source_path}")
 
 
 def validate_with_jsonschema(value: dict[str, Any], schema: dict[str, Any] | None) -> list[str]:
@@ -237,7 +298,22 @@ def validate_items_against_candidate_review(
         if item.get("runtime_ready") is not False:
             errors.append(f"items[{index}].runtime_ready must be false")
         if item.get("review_status") == "passed":
-            errors.append(f"items[{index}].review_status must not be passed in v0.1")
+            validate_approval_record(
+                item.get("approval_record"),
+                path=f"items[{index}].approval_record",
+                errors=errors,
+            )
+            if as_list(item.get("issues")):
+                errors.append(f"items[{index}] passed visual quality item must not have issues")
+            passed_file_checks = as_obj(item.get("file_checks"))
+            if passed_file_checks.get("local_file_exists") is not True:
+                errors.append(f"items[{index}] passed visual quality item must have a local file")
+            if passed_file_checks.get("sha256_matches_declared") is not True:
+                errors.append(f"items[{index}] passed visual quality item must match declared sha256")
+            if passed_file_checks.get("file_type_matches_extension") is False:
+                errors.append(f"items[{index}] passed visual quality item must not have file type mismatch")
+        elif "approval_record" in item:
+            errors.append(f"items[{index}] approval_record is only allowed for passed visual quality items")
 
         path_value = item.get("source_candidate_local_path")
         declared_sha = item.get("source_candidate_sha256")
@@ -285,6 +361,7 @@ def validate_summary_and_status(
         "source_candidate_count": len(source_candidates),
         "generated_candidate_count": len(generated),
         "checked_candidate_count": len(items),
+        "passed_count": status_counts.get("passed", 0),
         "blocked_pending_quality_gates_count": status_counts.get("blocked_pending_quality_gates", 0),
         "needs_review_count": status_counts.get("needs_review", 0),
         "unsupported_decode_count": status_counts.get("needs_review_unsupported_decode", 0),
@@ -303,6 +380,8 @@ def validate_summary_and_status(
         expected_status = "awaiting_generated_candidates"
     elif expected["blocked_pending_quality_gates_count"]:
         expected_status = "blocked_pending_quality_gates"
+    elif expected["passed_count"] == len(items):
+        expected_status = "passed"
     else:
         expected_status = "needs_review"
     if report.get("status") != expected_status:
