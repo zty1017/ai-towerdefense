@@ -209,6 +209,8 @@ PATHS = {
     / "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
     "core_artifact_alignment_report": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "map_v02_preview_api_smoke_report": ROOT
+    / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
 }
 
 STATIC_VALIDATION_COMMANDS = [
@@ -1802,6 +1804,50 @@ def collect_map_runtime_packages(map_packages: list[dict[str, Any]]) -> dict[str
     }
 
 
+def collect_map_v02_preview_api_smoke(report: dict[str, Any]) -> dict[str, Any]:
+    safety = as_obj(report.get("safety_summary"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "endpoint": report.get("endpoint"),
+        "response_wrapper_mode": report.get("response_wrapper_mode"),
+        "node_count": report.get("node_count"),
+        "node_ids": as_list(report.get("node_ids")),
+        "semantic_totals": as_obj(report.get("semantic_totals")),
+        "default_runtime_v01_preserved_count": report.get(
+            "default_runtime_v01_preserved_count"
+        ),
+        "unknown_node_status_code": report.get("unknown_node_status_code"),
+        "review_only": report.get("review_only"),
+        "runtime_activation_allowed": report.get("runtime_activation_allowed"),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count": safety.get("provider_call_count"),
+            "player_default_runtime_mutation_count": safety.get(
+                "player_default_runtime_mutation_count"
+            ),
+            "world_state_mutation_count": safety.get("world_state_mutation_count"),
+        },
+        "node_samples": [
+            {
+                "node_id": item.get("node_id"),
+                "v02_package_id": item.get("v02_package_id"),
+                "counts": as_obj(item.get("counts")),
+                "preview_svg_ref": item.get("preview_svg_ref"),
+                "default_runtime_schema_version": item.get(
+                    "default_runtime_schema_version"
+                ),
+                "default_runtime_v02_field_leak_count": item.get(
+                    "default_runtime_v02_field_leak_count"
+                ),
+            }
+            for item in as_list(report.get("nodes"))
+            if isinstance(item, dict)
+        ],
+    }
+
+
 def collect_map_compile_package(package: dict[str, Any]) -> dict[str, Any]:
     logical = as_obj(package.get("logical_map_layer"))
     control = as_obj(package.get("control_layer"))
@@ -2911,6 +2957,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "core_artifact_alignment_report",
             PATHS["core_artifact_alignment_report"],
         ),
+        (
+            "map_v02_preview_api_smoke_report",
+            PATHS["map_v02_preview_api_smoke_report"],
+        ),
         ("context_package_example", PATHS["context_package_example"]),
         ("fact_entry_example", PATHS["fact_entry_example"]),
         ("cgop_example", PATHS["cgop_example"]),
@@ -3172,6 +3222,9 @@ def build_evidence() -> dict[str, Any]:
     core_artifact_alignment_report = load_json(
         PATHS["core_artifact_alignment_report"]
     )
+    map_v02_preview_api_smoke_report = load_json(
+        PATHS["map_v02_preview_api_smoke_report"]
+    )
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -3253,6 +3306,11 @@ def build_evidence() -> dict[str, Any]:
         ),
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_runtime_packages_v02": collect_map_runtime_packages(map_packages_v02),
+        "backend_api_evidence": {
+            "map_v02_preview": collect_map_v02_preview_api_smoke(
+                map_v02_preview_api_smoke_report
+            ),
+        },
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3324,6 +3382,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
+    map_v02_api = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get("map_v02_preview")
+    )
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
@@ -3666,6 +3727,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- RuntimePackage：`{runtime_pkg.get('package_id')}`，战斗：{runtime_pkg.get('battle_display_name')}，资产数：`{runtime_pkg.get('asset_count')}`",
         f"- MapRuntimePackage 数：`{map_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_packages.get('node_ids')))}`",
         f"- MapRuntimePackage v0.2 preview：`{map_packages_v02.get('package_count')}`，资源点 `{map_packages_v02.get('total_resource_node_count')}`，机关区 `{map_packages_v02.get('total_hazard_zone_count')}`，防守锚点 `{map_packages_v02.get('total_defense_anchor_count')}`，阻挡区 `{map_packages_v02.get('total_blocked_area_count')}`",
+        f"- MapRuntimePackage v0.2 API smoke：`{map_v02_api.get('status')}`，节点 `{map_v02_api.get('node_count')}`，默认 v0.1 保留 `{map_v02_api.get('default_runtime_v01_preserved_count')}`，provider calls `{as_obj(map_v02_api.get('safety')).get('provider_call_count')}`，runtime 激活 `{map_v02_api.get('runtime_activation_allowed')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -3835,6 +3897,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
+    map_v02_api = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get("map_v02_preview")
+    )
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
@@ -4117,6 +4182,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">MapRuntime v0.2</div>
           <div class="metric">{html_escape(map_packages_v02.get("package_count"))}</div>
           <p class="muted">preview 旁路包；资源 {html_escape(map_packages_v02.get("total_resource_node_count"))}，机关 {html_escape(map_packages_v02.get("total_hazard_zone_count"))}，锚点 {html_escape(map_packages_v02.get("total_defense_anchor_count"))}，阻挡 {html_escape(map_packages_v02.get("total_blocked_area_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Map v0.2 API</div>
+          <div class="metric">{html_escape(map_v02_api.get("status"))}</div>
+          <p class="muted">节点 {html_escape(map_v02_api.get("node_count"))}；默认 v0.1 保留 {html_escape(map_v02_api.get("default_runtime_v01_preserved_count"))}；provider calls {html_escape(as_obj(map_v02_api.get("safety")).get("provider_call_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>
