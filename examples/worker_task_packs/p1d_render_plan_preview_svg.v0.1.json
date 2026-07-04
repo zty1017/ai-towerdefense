@@ -1,0 +1,89 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-10-render-plan-preview-svg",
+  "title": "RenderPlan offline SVG preview",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/render-plan-preview-svg",
+  "worktree": "/tmp/ai-td-task-render-plan-preview-svg",
+  "objective": "为 ProceduralMapRenderPlan 增加无浏览器、无 provider 的离线 SVG 预览生成和 report 校验，证明 RenderPlan 是可执行表现计划，同时保持 MapRuntimePackage 为玩法语义事实源。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "tools/asset_graph/render_procedural_map_preview.py",
+    "tools/asset_graph/validate_procedural_map_preview_report.py",
+    "shared/schemas/procedural_map_render_plan.v0.1.schema.json",
+    "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json"
+  ],
+  "allowed_paths": [
+    "tools/asset_graph/render_procedural_map_preview.py",
+    "tools/asset_graph/validate_procedural_map_preview_report.py",
+    "examples/map_render_previews/",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_render_plan_preview_svg.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "shared/schemas/",
+    "tools/media/",
+    "examples/map_runtime_packages/",
+    "examples/map_style_packs/",
+    "examples/map_render_plans/",
+    "examples/semantic_visual_consistency_reports/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_preview_svg.v0.1.json",
+    "python3 tools/asset_graph/render_procedural_map_preview.py --output examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider、不读取 .env、不生成位图。",
+    "SVG preview 是 review-only evidence，不进入 media manifest，不作为玩家 runtime 背景。",
+    "路线、塔位、目标、出生点坐标仍只来自 MapRuntimePackage；StylePack 提供颜色，RenderPlan 只提供表现层几何参数。",
+    "Codex/headless 早前已因外部数据披露策略被平台拒绝；本轮使用同一 worktree 的 local_codex_safe_fallback。"
+  ]
+}
