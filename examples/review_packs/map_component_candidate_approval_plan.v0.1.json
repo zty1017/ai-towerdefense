@@ -1,0 +1,15 @@
+{
+  "approvals": [
+    {
+      "approval_scope": [
+        "candidate_review"
+      ],
+      "approval_status": "approved",
+      "approved_at": "2026-07-05T00:00:00Z",
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.generated_candidate.map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request.artifact_staging",
+      "rationale": "Alternate-chain review fixture approves the imported local generated candidate for promotion gate evaluation only; it does not activate runtime or write a formal manifest.",
+      "reviewer": "map-component-local-review-fixture"
+    }
+  ],
+  "schema_version": "map_component_candidate_approval_plan.v0.1"
+}

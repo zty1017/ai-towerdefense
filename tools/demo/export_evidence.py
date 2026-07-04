@@ -1931,6 +1931,7 @@ def map_component_visual_quality_summary(report: dict[str, Any]) -> dict[str, An
         "source_candidate_count": summary.get("source_candidate_count"),
         "generated_candidate_count": summary.get("generated_candidate_count"),
         "checked_candidate_count": summary.get("checked_candidate_count"),
+        "passed_count": summary.get("passed_count"),
         "blocked_pending_quality_gates_count": summary.get(
             "blocked_pending_quality_gates_count"
         ),

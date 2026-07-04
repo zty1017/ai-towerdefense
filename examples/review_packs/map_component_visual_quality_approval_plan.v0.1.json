@@ -1,0 +1,16 @@
+{
+  "approvals": [
+    {
+      "approval_scope": [
+        "visual_quality",
+        "cutout_review"
+      ],
+      "approval_status": "approved",
+      "approved_at": "2026-07-05T00:00:00Z",
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.generated_candidate.map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request.artifact_staging",
+      "rationale": "Alternate-chain visual fixture approves the imported local file quality for promotion gate evaluation only; it keeps runtime_ready and promotion_allowed_now false.",
+      "reviewer": "map-component-local-review-fixture"
+    }
+  ],
+  "schema_version": "map_component_visual_quality_approval_plan.v0.1"
+}

@@ -25,7 +25,7 @@
     "source_candidate_review_report_path": { "type": "string", "minLength": 1 },
     "status": {
       "type": "string",
-      "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+      "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review", "passed"]
     },
     "usage_policy": { "$ref": "#/$defs/string_list" },
     "summary": { "$ref": "#/$defs/summary" },
@@ -65,6 +65,7 @@
         "source_candidate_count",
         "generated_candidate_count",
         "checked_candidate_count",
+        "passed_count",
         "blocked_pending_quality_gates_count",
         "needs_review_count",
         "unsupported_decode_count",
@@ -76,6 +77,7 @@
         "source_candidate_count": { "type": "integer", "minimum": 0 },
         "generated_candidate_count": { "type": "integer", "minimum": 0 },
         "checked_candidate_count": { "type": "integer", "minimum": 0 },
+        "passed_count": { "type": "integer", "minimum": 0 },
         "blocked_pending_quality_gates_count": { "type": "integer", "minimum": 0 },
         "needs_review_count": { "type": "integer", "minimum": 0 },
         "unsupported_decode_count": { "type": "integer", "minimum": 0 },
@@ -210,6 +212,37 @@
         "required_next_actions",
         "usage_policy"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "review_status": { "const": "passed" } },
+            "required": ["review_status"]
+          },
+          "then": {
+            "required": ["approval_record"],
+            "properties": {
+              "issues": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "review_status": {
+                "enum": [
+                  "blocked_pending_quality_gates",
+                  "needs_review",
+                  "needs_review_unsupported_decode"
+                ]
+              }
+            },
+            "required": ["review_status"]
+          },
+          "then": {
+            "not": { "required": ["approval_record"] }
+          }
+        }
+      ],
       "properties": {
         "candidate_id": { "type": "string", "minLength": 1 },
         "request_id": { "type": "string", "minLength": 1 },
@@ -227,7 +260,7 @@
         "target_size": { "$ref": "#/$defs/target_size" },
         "review_status": {
           "type": "string",
-          "enum": ["blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode"]
+          "enum": ["blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode", "passed"]
         },
         "promotion_allowed_now": { "type": "boolean", "const": false },
         "runtime_ready": { "type": "boolean", "const": false },
@@ -256,7 +289,28 @@
           "uniqueItems": true
         },
         "required_next_actions": { "$ref": "#/$defs/string_list" },
-        "usage_policy": { "$ref": "#/$defs/string_list" }
+        "usage_policy": { "$ref": "#/$defs/string_list" },
+        "approval_record": { "$ref": "#/$defs/approval_record" }
+      }
+    },
+    "approval_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_status",
+        "approval_scope",
+        "approved_at",
+        "reviewer",
+        "rationale",
+        "source_approval_plan_path"
+      ],
+      "properties": {
+        "approval_status": { "type": "string", "const": "approved" },
+        "approval_scope": { "$ref": "#/$defs/string_list" },
+        "approved_at": { "type": "string", "format": "date-time" },
+        "reviewer": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "source_approval_plan_path": { "type": "string", "minLength": 1 }
       }
     },
     "runtime_effect": {
