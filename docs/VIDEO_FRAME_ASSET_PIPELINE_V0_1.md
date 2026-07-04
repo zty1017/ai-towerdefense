@@ -136,6 +136,21 @@ schema 层只固化结构和基本类型；validator 层负责本地语义门：
 - `playback.fps` 和 `loop` 按动画状态设置。
 - 单张 PNG fallback 仍保留，避免视频链路失败影响 MVP。
 
+当前已补充 `RawVideoSequence v0.1` 字段级事实源和抽帧入口：
+
+```text
+shared/schemas/raw_video_sequence.v0.1.schema.json
+tools/media/validate_raw_video_sequence.py
+tools/media/extract_video_keyframes.py
+examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json
+```
+
+`raw_video_sequence.v0.1` 只记录本地视频 / 本地 review fixture metadata，不允许保存 provider 临时 URL、公网 URL、raw provider response、prompt、secret 或未审 payload。validator 会拒绝任何 `http://` / `https://` 字符串，拒绝 provider / model / raw prompt / raw JSON / full trace / secret / unreviewed content 等敏感键，并验证本地 `video_ref.local_path`、sha256、`extraction_plan.fps`、`max_frames` 与 `loop=true`。
+
+MVP 验收路径使用 review-only fixture：`source_kind` 含 `fixture` 或 `fixture_only=true` 时，顶层必须 `review_only=true` 且带 `fixture_notice`，`fixture_frames[]` 的每一帧也必须是本地 PNG、sha / 尺寸匹配、`review_only=true`。`tools/media/extract_video_keyframes.py` 在 fixture 模式下只复制这些已审 PNG 并生成 `frame_sequence.v0.1`，不会声称它们来自真实 provider 视频。
+
+真实本地视频路径仍保留为上游合同：非 fixture 输入必须引用存在的本地 video file，mime type 必须是 `video/*`，sha 必须匹配；extractor 只有在 `ffmpeg` 可用时才会解码并生成 PNG 关键帧。当前环境没有 `ffmpeg` 时，该路径必须以 `ffmpeg_not_available` 失败，不能 fallback 伪造 frame_sequence。
+
 ## 2. 标准路线
 
 ```text
@@ -192,6 +207,11 @@ MVP 可以拆成两条并行线：
 
 - `raw_video_sequence.v0.1`
 
+字段事实源：
+
+- `shared/schemas/raw_video_sequence.v0.1.schema.json`
+- `tools/media/validate_raw_video_sequence.py`
+
 约束：
 
 - 只允许 `live` mode。
@@ -213,6 +233,12 @@ MVP 可以拆成两条并行线：
 输出：
 
 - `frame_sequence.v0.1`
+
+当前工具入口：
+
+- `tools/media/extract_video_keyframes.py`
+- 输入必须先通过 `tools/media/validate_raw_video_sequence.py`
+- 输出必须通过 `tools/media/validate_frame_sequence.py`
 
 建议参数：
 
