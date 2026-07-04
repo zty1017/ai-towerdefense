@@ -1,0 +1,2 @@
+review-only raw video placeholder
+This is not a playable or provider-generated video. The fixture uses local PNG fixture_frames to exercise extraction without ffmpeg.

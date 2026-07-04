@@ -1,0 +1,94 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-A-raw-video-sequence-extraction",
+  "title": "RawVideoSequence schema, validator, and fixture keyframe extraction",
+  "task_type": "implementation",
+  "handoff_mode": "codex_headless",
+  "base_branch": "develop",
+  "branch": "task/raw-video-sequence-extraction",
+  "worktree": "/tmp/ai-td-task-raw-video-sequence-extraction",
+  "objective": "补上 frame_sequence.v0.1 上游 raw_video_sequence.v0.1 字段事实源，以及本地 raw video / review-only fixture 到 frame_sequence 的抽帧工具。本任务不调用 provider、不读取 .env、不声称真实 provider 视频已完成、不修改默认 runtime atlas。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "shared/asset_graph/node_registry.v0.1.json",
+    "shared/schemas/frame_sequence.v0.1.schema.json",
+    "tools/media/validate_frame_sequence.py",
+    "tools/media/import_video_keyframe_sequence.py",
+    "examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json"
+  ],
+  "allowed_paths": [
+    "shared/schemas/raw_video_sequence.v0.1.schema.json",
+    "tools/media/validate_raw_video_sequence.py",
+    "tools/media/extract_video_keyframes.py",
+    "examples/raw_video_sequences/",
+    "examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/provider_adapter/",
+    "tools/media/image_provider.py",
+    "game_data/media/frontend_runtime_mock/generated/",
+    "game_data/media/frontend_runtime_mock/processed/",
+    "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+    "game_data/media/frontend_runtime_mock/atlas_sheets/",
+    "game_data/media/frontend_runtime_mock/atlas_frames/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_compile_packages/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+    "python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json",
+    "python3 - <<'PY'\nimport subprocess\nfrom pathlib import Path\ninvalids = sorted(Path('examples/raw_video_sequences').glob('invalid_*.json'))\nassert invalids, 'no invalid raw video fixtures found'\nfor path in invalids:\n    result = subprocess.run(['python3', 'tools/media/validate_raw_video_sequence.py', path.as_posix()], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\n    assert result.returncode != 0, f'{path} unexpectedly passed\\n{result.stdout}'\nprint('invalid raw_video_sequence fixtures rejected')\nPY",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-raw-video-sequence python3 -m py_compile tools/media/validate_raw_video_sequence.py tools/media/extract_video_keyframes.py",
+    "python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json --output-frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --frames-output-dir /tmp/frontend_runtime_raw_video_extracted_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_extracted_frames",
+    "python3 tools/media/validate_frame_sequence.py /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json",
+    "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json --spritesheet-output-dir /tmp/frontend_runtime_raw_video_extraction_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/raw_video_extraction_atlas_sheets",
+    "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+    "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+    "python3 - <<'PY'\nimport subprocess\nfrom pathlib import Path\nout = Path('/tmp/raw_video_extractor_negative_frame_sequence.json')\nif out.exists():\n    out.unlink()\nresult = subprocess.run([\n    'python3', 'tools/media/extract_video_keyframes.py',\n    '--raw-video-sequence', 'examples/raw_video_sequences/invalid_missing_local_video.v0.1.json',\n    '--output-frame-sequence', str(out),\n    '--frames-output-dir', '/tmp/raw_video_extractor_negative_frames',\n    '--frames-url-prefix', '/assets/frontend_runtime_mock/raw_video_negative_frames',\n], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\nassert result.returncode != 0, result.stdout\nassert not out.exists(), 'negative extractor wrote output frame_sequence'\nprint('invalid raw video extraction rejected without output')\nPY",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/raw_video_sequence_extraction_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "schema_validator_rules",
+    "extractor_modes",
+    "fixture_review_only_boundary",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "真实 provider 图生视频调用、provider adapter 修改、默认 runtime atlas 修改、前端/后端修改都不属于本任务。",
+    "当前环境没有 ffmpeg；fixture 模式是验收路径，真实本地视频解码路径只实现边界和失败行为。",
+    "fixture raw video manifest 必须明确 review-only，并说明 fixture_frames 不是 provider 视频抽帧。"
+  ]
+}

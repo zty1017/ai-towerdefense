@@ -1,6 +1,6 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
@@ -213,6 +213,8 @@ shared/schemas/ + tools/ + 专题文档
   - 图片种子 -> 图生视频 -> 关键帧 -> 循环连续性检查 -> 批量后处理 -> atlas 的路线。
 - `shared/schemas/frame_sequence.v0.1.schema.json` 与 `tools/media/validate_frame_sequence.py`
   - FrameSequence v0.1 字段级事实源和语义门：结构由 schema 固化；validator 拒绝 remote URL、provider / raw prompt / secret 等敏感键，检查 fixture review-only 标记，并验证 runtime sprite import 所需的 loop、fps、帧数、唯一 frame_index、本地 PNG 尺寸 / sha / 统一画布和 `/assets/` URL 合同。
+- `shared/schemas/raw_video_sequence.v0.1.schema.json`、`tools/media/validate_raw_video_sequence.py` 与 `tools/media/extract_video_keyframes.py`
+  - RawVideoSequence v0.1 字段级事实源和抽帧入口：只允许本地 raw video / review-only fixture metadata，不保存 provider 临时 URL、公网 URL、raw response、prompt、secret 或未审 payload；validator 拒绝 remote URL 与 provider / model / raw prompt / raw JSON / full trace / secret / unreviewed content 等敏感键，验证本地 video_ref sha、extraction fps / max_frames / loop；extractor 在 fixture 模式下只从 review-only `fixture_frames[]` 生成 `frame_sequence.v0.1`，真实视频模式必须依赖本地 `ffmpeg`，缺失时明确失败而不伪造帧。
 
 当前状态：
 
@@ -224,6 +226,7 @@ MapRuntimePackage v0.1 已作为三张 MVP 战斗节点运行时地图包入口�
 循环动画策略已确认：优先首尾同图 / end frame 控制，否则通过 seamless loop prompt 与 LoopContinuityCheck 修复。
 MediaAtlasManifest v0.1 已作为 spritesheet 多帧入口接入前端、后端 mock API 和 demo evidence；实体 atlas PNG 已由确定性 frame sequence 打包生成，并已标注 `frame_source_kind` / `loop_continuity_ref`。
 FrameSequence v0.1 已建立正式 schema 与 validator：`shared/schemas/frame_sequence.v0.1.schema.json` 负责字段结构，`tools/media/validate_frame_sequence.py` 负责本地路径、PNG/sha、fixture 标记、禁止 provider / remote URL payload 和 runtime sprite import 合同；`tools/media/import_video_keyframe_sequence.py` 复用同一 validator 后才允许写出候选 atlas。
+RawVideoSequence v0.1 已建立正式 schema、validator 与 fixture 抽帧工具：`shared/schemas/raw_video_sequence.v0.1.schema.json` 负责字段结构，`tools/media/validate_raw_video_sequence.py` 负责 local-only、敏感键、fixture review-only、video_ref sha 和 extraction plan 语义门；`tools/media/extract_video_keyframes.py` 可把 review-only fixture_frames 转成 `frame_sequence.v0.1`，并为未来真实本地视频保留 ffmpeg 解码路径。当前验收只证明 fixture -> frame_sequence -> atlas import 链路，不声明真实 provider 视频已经完成。
 LoopContinuityReport v0.1 已接入 frontend mock 与 runtime art 两套 atlas：当前所有动画机械连续性通过，但均标记为 deterministic placeholder warning，说明它们可用于 MVP 循环播放，却还不是最终真实图生视频关键帧。
 真实图生视频关键帧仍未生成。
 Sprite cutout quality report 已接入 demo evidence，用于标记内部透明洞、主体碎裂和边缘接触等需复核素材；当前报告只排序修复工作，不阻断玩家侧 MVP。
