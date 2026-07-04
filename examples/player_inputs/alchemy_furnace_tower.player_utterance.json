@@ -1,0 +1,15 @@
+{
+  "schema_version": "player_utterance.v0.1",
+  "id": "player_utterance_alchemy_furnace_tower_001",
+  "session_id": "demo_session_001",
+  "run_id": "demo_run_001",
+  "locale": "zh-CN",
+  "intended_asset_type_hint": "tower_blueprint",
+  "text": "我想要一个像炼丹炉一样的塔，能把怪吸过来，再喷紫色火焰，杀怪后会越来越强。",
+  "source_context": {
+    "page": "field_workbench",
+    "current_node_id": "node_first_crisis",
+    "available_material_ids": ["ash_residue", "unstable_core", "scrap_metal"],
+    "nearby_npc_ids": ["npc_field_engineer", "npc_occult_researcher"]
+  }
+}

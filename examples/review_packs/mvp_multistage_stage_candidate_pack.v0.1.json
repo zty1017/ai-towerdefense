@@ -1,0 +1,521 @@
+{
+  "schema_version": "stage_candidate_pack.v0.1",
+  "pack_id": "mvp_multistage_stage_candidate_pack_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "pack_builder_reads_env": false,
+    "pack_builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "runtime_package_included": "referenced_only",
+    "llm_candidate_shape_supported": true
+  },
+  "source_refs": {
+    "review_pack": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+    "promotion_report": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
+    "final_run_state": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json",
+    "runtime_packages": [
+      "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
+    ]
+  },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "Multistage StageCandidatePack 是 review-only 多阶段候选容器；它聚合 Stage 05/06/07 的候选摘要、WorldStateDelta 引用、资产晋升状态和 runtime package 引用，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / WorldStateDeltaTransaction / runtime package，或针对具体 story asset review / promotion pack，而不是激活整个多阶段候选容器。"
+  },
+  "stage_candidates": [
+    {
+      "stage_order": 1,
+      "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+      "title": "旧信号塔回光压力",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+        "battle_config": "game_data/demo/old_signal_tower_pressure_battle_config.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "reward_player_choice",
+          "trigger_random_event"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "trigger_random_event"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 15,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_global_state": 3,
+          "adjust_resource": 1,
+          "append_event": 1,
+          "schedule_random_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 1,
+          "set_progress_phase": 1,
+          "set_random_event_status": 1,
+          "unlock_fact": 1,
+          "update_npc_relationship": 1,
+          "upsert_research_job": 1,
+          "upsert_task": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "old_signal_tower"
+        ],
+        "npcs": [
+          "npc_road_scout"
+        ],
+        "resources": [
+          "glow_crystal"
+        ],
+        "facts": [
+          "old_signal_tower_resonance_measured"
+        ],
+        "flags": [
+          "stage_05_old_signal_tower_pressure_planned"
+        ],
+        "tasks": [
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_events": [
+          "random_event_old_signal_tower_pressure",
+          "random_event_signal_backwash"
+        ],
+        "research_jobs": [
+          "research_echo_prism_relay_trial"
+        ],
+        "samples": [
+          "sample_resonant_glass_shard_trial"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_echo_prism_relay",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [
+        {
+          "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+          "package_id": "package_session_lampwright_old_signal_tower_001",
+          "node_id": "old_signal_tower",
+          "asset_count": 1
+        }
+      ],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "叙事包结构和玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "世界状态变化结构校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "叙事节点的玩法 hook 已落到本阶段世界状态变化和后续运行态。"
+        },
+        {
+          "gate": "world_delta_semantics",
+          "status": "passed",
+          "summary": "世界状态变化按上一阶段运行态串行通过语义门。"
+        },
+        {
+          "gate": "world_delta_apply",
+          "status": "passed",
+          "summary": "世界状态变化可以应用到下一运行态快照。"
+        },
+        {
+          "gate": "asset_candidate_validation",
+          "status": "passed",
+          "summary": "资产候选通过效果白名单和基础运行契约校验。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "warning",
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "passed",
+          "summary": "该阶段已有旧信号塔压力战 runtime package 引用；它是人工晋升后的运行时证据包，不代表 Stage 05 世界线自动解锁最终蓝图。"
+        }
+      ],
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    },
+    {
+      "stage_order": 2,
+      "stage_id": "act_1_stage_06_signal_resonance_trial",
+      "title": "旧塔回声测标",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_06_signal_resonance_trial.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_06_signal_resonance_trial.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "teach_mechanic",
+          "trigger_random_event"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "trigger_random_event"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 18,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_global_state": 3,
+          "adjust_resource": 1,
+          "append_event": 1,
+          "schedule_random_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 1,
+          "set_progress_phase": 1,
+          "set_random_event_status": 1,
+          "set_task_status": 1,
+          "unlock_blueprint": 1,
+          "unlock_fact": 1,
+          "update_npc_relationship": 1,
+          "upsert_research_job": 2,
+          "upsert_task": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "old_signal_tower"
+        ],
+        "npcs": [
+          "npc_road_scout"
+        ],
+        "resources": [
+          "lantern_ash"
+        ],
+        "facts": [
+          "signal_echo_marker_possible"
+        ],
+        "flags": [
+          "stage_06_signal_resonance_trial_completed"
+        ],
+        "tasks": [
+          "task_map_signal_backwash",
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_events": [
+          "random_event_signal_backwash",
+          "random_event_split_tide_pressure"
+        ],
+        "research_jobs": [
+          "research_echo_prism_relay_trial",
+          "research_signal_echo_marker_trial"
+        ],
+        "samples": [
+          "sample_signal_echo_marker_trial"
+        ],
+        "blueprints": [
+          "asset_echo_prism_relay"
+        ]
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_signal_echo_marker",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "叙事包结构和玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "世界状态变化结构校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "叙事节点的玩法 hook 已落到本阶段世界状态变化和后续运行态。"
+        },
+        {
+          "gate": "world_delta_semantics",
+          "status": "passed",
+          "summary": "世界状态变化按上一阶段运行态串行通过语义门。"
+        },
+        {
+          "gate": "world_delta_apply",
+          "status": "passed",
+          "summary": "世界状态变化可以应用到下一运行态快照。"
+        },
+        {
+          "gate": "asset_candidate_validation",
+          "status": "passed",
+          "summary": "资产候选通过效果白名单和基础运行契约校验。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "warning",
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "not_applicable",
+          "summary": "该阶段尚未生成战斗 runtime package。"
+        }
+      ],
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    },
+    {
+      "stage_order": 3,
+      "stage_id": "act_1_stage_07_split_tide_containment",
+      "title": "东侧分潮遏制",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_07_split_tide_containment.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_07_split_tide_containment.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "teach_mechanic",
+          "trigger_random_event",
+          "unlock_battle_node"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "offer_workshop_hook",
+          "trigger_random_event",
+          "unlock_battle_node"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 16,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_global_state": 3,
+          "adjust_resource": 1,
+          "append_event": 1,
+          "introduce_map_node": 1,
+          "schedule_random_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 1,
+          "set_progress_phase": 1,
+          "set_random_event_status": 1,
+          "unlock_fact": 1,
+          "update_npc_relationship": 1,
+          "upsert_research_job": 1,
+          "upsert_task": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "east_dark_ridge",
+          "northern_road_crossing"
+        ],
+        "npcs": [
+          "npc_wire_mender_003"
+        ],
+        "resources": [
+          "conductor_filament"
+        ],
+        "facts": [
+          "split_tide_needs_chain_control"
+        ],
+        "flags": [
+          "stage_07_split_tide_containment_planned"
+        ],
+        "tasks": [
+          "task_contain_split_tide"
+        ],
+        "random_events": [
+          "random_event_east_ridge_pressure",
+          "random_event_split_tide_pressure"
+        ],
+        "research_jobs": [
+          "research_overload_chain_breaker_trial"
+        ],
+        "samples": [
+          "sample_charged_copper_coil_trial"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_overload_chain_breaker",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "叙事包结构和玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "世界状态变化结构校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "叙事节点的玩法 hook 已落到本阶段世界状态变化和后续运行态。"
+        },
+        {
+          "gate": "world_delta_semantics",
+          "status": "passed",
+          "summary": "世界状态变化按上一阶段运行态串行通过语义门。"
+        },
+        {
+          "gate": "world_delta_apply",
+          "status": "passed",
+          "summary": "世界状态变化可以应用到下一运行态快照。"
+        },
+        {
+          "gate": "asset_candidate_validation",
+          "status": "passed",
+          "summary": "资产候选通过效果白名单和基础运行契约校验。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "warning",
+          "summary": "资产候选已完成验证、模拟、评分和晋级策略检查；当前仍需运行时资源边界审查。"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "not_applicable",
+          "summary": "该阶段尚未生成战斗 runtime package。"
+        }
+      ],
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    }
+  ],
+  "readiness_summary": {
+    "stage_count": 3,
+    "status_counts": {
+      "needs_review": 3
+    },
+    "validation_gate_counts": {
+      "not_applicable": 2,
+      "passed": 19,
+      "warning": 3
+    },
+    "playable_asset_reference_count": 3,
+    "runtime_package_reference_count": 1,
+    "contract_warnings": 0,
+    "review_recommendation": "needs_human_review"
+  },
+  "validation_commands": [
+    {
+      "purpose": "构建并校验多阶段内容生产包",
+      "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate"
+    },
+    {
+      "purpose": "校验多阶段阶段候选包",
+      "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+    },
+    {
+      "purpose": "校验 Stage 05 旧信号塔 runtime package",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
+    }
+  ]
+}

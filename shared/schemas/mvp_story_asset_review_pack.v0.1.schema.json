@@ -1,0 +1,511 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/mvp_story_asset_review_pack.v0.1.schema.json",
+  "title": "MVP Story Asset Review Pack v0.1",
+  "description": "A human-reviewable staged narrative and gameplay asset pack for MVP planning. It is not a front-end runtime package and must not carry provider payloads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pack_version",
+    "pack_id",
+    "worldbook_id",
+    "run_id",
+    "created_for",
+    "generation_boundary",
+    "pipeline_summary",
+    "canonical_boundaries",
+    "excluded_from_mvp_story_pack",
+    "stages",
+    "next_required_artifacts",
+    "commit_gate_checks"
+  ],
+  "properties": {
+    "pack_version": {
+      "type": "string",
+      "const": "mvp_story_asset_review_pack.v0.1"
+    },
+    "pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_for": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "real_service_calls",
+        "base_worldbook_mutation",
+        "commit_rule"
+      ],
+      "properties": {
+        "front_end_integration": {
+          "type": "string",
+          "const": "not_included"
+        },
+        "real_service_calls": {
+          "type": "boolean",
+          "const": false
+        },
+        "base_worldbook_mutation": {
+          "type": "boolean",
+          "const": false
+        },
+        "commit_rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "core_artifact_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alignment_state",
+        "reason",
+        "expected_core_artifacts",
+        "present_core_artifacts",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "next_action"
+      ],
+      "properties": {
+        "alignment_state": {
+          "type": "string",
+          "const": "review_only_not_applicable"
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "expected_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "present_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "runtime_activation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "world_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "pipeline_summary": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "canonical_boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_npcs",
+        "candidate_functional_npcs",
+        "compatibility_refs",
+        "canonical_materials",
+        "candidate_only_materials"
+      ],
+      "properties": {
+        "canonical_npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/canonical_npc_ref"
+          }
+        },
+        "candidate_functional_npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidate_npc_ref"
+          }
+        },
+        "compatibility_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/compatibility_ref"
+          }
+        },
+        "canonical_materials": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "candidate_only_materials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidate_material_ref"
+          }
+        }
+      }
+    },
+    "excluded_from_mvp_story_pack": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "reason"],
+        "properties": {
+          "ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
+    },
+    "next_required_artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact_note"
+      }
+    },
+    "commit_gate_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "string",
+      "enum": ["world_line", "player_line", "shared"]
+    },
+    "canonical_npc_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["npc_id", "display_name", "role", "source_file"],
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_file": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "candidate_npc_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "npc_id",
+        "display_name",
+        "review_status",
+        "intended_roles",
+        "first_hint_stage"
+      ],
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "review_status": {
+          "type": "string",
+          "pattern": "candidate|review"
+        },
+        "intended_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "first_hint_stage": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "compatibility_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_id", "status", "recommended_action"],
+      "properties": {
+        "ref_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommended_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "candidate_material_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["material_id", "reason"],
+      "properties": {
+        "material_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "stage_id",
+        "title",
+        "bundle_file",
+        "lane_coverage",
+        "map_nodes",
+        "battle_nodes",
+        "npcs",
+        "materials",
+        "assets",
+        "research_hooks",
+        "gameplay_service"
+      ],
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stage_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bundle_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lane_coverage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lane"
+          },
+          "uniqueItems": true
+        },
+        "map_nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/node_ref"
+          }
+        },
+        "battle_nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/battle_node_ref"
+          }
+        },
+        "npcs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonical", "candidate"],
+          "properties": {
+            "canonical": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "candidate": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "materials": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonical", "candidate_only"],
+          "properties": {
+            "canonical": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "candidate_only": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/asset_ref"
+          }
+        },
+        "research_hooks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "gameplay_service": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "node_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "status", "purpose"],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "battle_node_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "fixture", "purpose"],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "asset_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "asset_kind",
+        "source_file",
+        "review_status",
+        "gameplay_role"
+      ],
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "review_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gameplay_role": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "artifact_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact", "reason"],
+      "properties": {
+        "artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

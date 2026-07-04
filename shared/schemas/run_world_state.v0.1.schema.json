@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/run_world_state.v0.1.schema.json",
+  "title": "RunWorldState v0.1",
+  "description": "Per-run controlled world state. AI / AssetGraph only ever produces Delta objects; this state is the shared base that Delta operations are applied to.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "worldbook_id",
+    "progress",
+    "global_state",
+    "resources",
+    "map_nodes",
+    "npcs",
+    "unlocked_facts",
+    "event_log",
+    "research",
+    "flags"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "run_world_state.v0.1"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chapter", "turn", "phase"],
+      "properties": {
+        "chapter": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "global_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pressure", "hope", "visibility"],
+      "properties": {
+        "pressure": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "hope": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "visibility": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resource_id", "amount"],
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "map_nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "status",
+          "threat_level",
+          "visibility",
+          "available_actions"
+        ],
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "known",
+              "contested",
+              "secured",
+              "lost",
+              "locked"
+            ]
+          },
+          "threat_level": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["hidden", "known", "scouted", "visible"]
+          },
+          "available_actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "npc_id",
+          "location_node_id",
+          "narrative_roles",
+          "gameplay_roles",
+          "relationship",
+          "availability"
+        ],
+        "properties": {
+          "npc_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location_node_id": {
+            "type": ["string", "null"]
+          },
+          "narrative_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "gameplay_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "relationship": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["trust"],
+            "properties": {
+              "trust": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "availability": {
+            "type": "string",
+            "enum": ["present", "absent", "busy", "injured", "missing"]
+          }
+        }
+      }
+    },
+    "unlocked_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact_id", "source", "visibility"],
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "player_known",
+              "system_only",
+              "npc_known",
+              "hinted"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "event_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "turn", "kind", "summary"],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "turn": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "story",
+              "battle",
+              "research",
+              "resource",
+              "npc",
+              "system",
+              "world"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "research": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active_jobs", "known_blueprints", "temporary_samples"],
+      "properties": {
+        "active_jobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["job_id", "status"],
+            "properties": {
+              "job_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": ["queued", "running", "completed", "failed"]
+              },
+              "started_turn": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "source_task_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_sample_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expected_turns": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "expected_output": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "known_blueprints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["blueprint_id"],
+            "properties": {
+              "blueprint_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "unlocked_turn": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "temporary_samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sample_id", "display_name", "source_delta_id"],
+            "properties": {
+              "sample_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_delta_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "kind", "status", "title", "summary"],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "kind": {
+            "type": "string",
+            "enum": ["main", "side", "research", "scouting", "defense", "resource"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["available", "active", "completed", "failed", "expired"]
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "node_id": { "type": ["string", "null"] },
+          "npc_id": { "type": ["string", "null"] },
+          "objective_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "reward_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "random_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["random_event_id", "event_type", "status", "summary"],
+        "properties": {
+          "random_event_id": { "type": "string", "minLength": 1 },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "map_pressure",
+              "resource_shift",
+              "npc_visit",
+              "research_opportunity",
+              "threat_warning"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "available", "resolved", "expired"]
+          },
+          "summary": { "type": "string", "minLength": 1 },
+          "node_id": { "type": ["string", "null"] },
+          "trigger_turn": { "type": "integer", "minimum": 1 },
+          "related_task_id": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "flags": {
+      "type": "object",
+      "description": "Arbitrary run-scoped boolean / primitive flags. Values are restricted to primitives to prevent nested provider/trace payloads from being smuggled in.",
+      "additionalProperties": {
+        "type": ["boolean", "string", "number", "null"]
+      }
+    }
+  }
+}

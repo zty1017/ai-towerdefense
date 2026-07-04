@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/generation_executor_run_request.v0.1.schema.json",
+  "title": "GenerationExecutorRunRequest v0.1",
+  "description": "A redacted, review-only execution request prepared after the live executor guard. It is the future provider adapter input boundary, not a provider call result and not a runtime activation artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "created_at",
+    "source",
+    "authority",
+    "provider_execution_intent",
+    "execution_budget",
+    "input_refs",
+    "context_refs",
+    "requested_output",
+    "required_gates",
+    "retention_policy",
+    "request_builder_safety"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "generation_executor_run_request.v0.1" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "run_id",
+        "schedule_item_id",
+        "object_kind",
+        "object_ref",
+        "latency_class",
+        "guard_id",
+        "worker_id"
+      ],
+      "properties": {
+        "session_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "schedule_item_id": { "type": "string", "minLength": 1 },
+        "object_kind": { "type": "string", "minLength": 1 },
+        "object_ref": { "type": "string", "minLength": 1 },
+        "latency_class": { "type": "string", "minLength": 1 },
+        "guard_id": { "type": "string", "minLength": 1 },
+        "worker_id": { "type": "string", "minLength": 1 },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visibility",
+        "review_only",
+        "provider_call_allowed_by_request_builder",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "player_visible"
+      ],
+      "properties": {
+        "visibility": { "type": "string", "const": "internal_evidence" },
+        "review_only": { "type": "boolean", "const": true },
+        "provider_call_allowed_by_request_builder": { "type": "boolean", "const": false },
+        "runtime_activation_allowed": { "type": "boolean", "const": false },
+        "world_mutation_allowed": { "type": "boolean", "const": false },
+        "player_visible": { "type": "boolean", "const": false }
+      }
+    },
+    "provider_execution_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "provider_mode",
+        "provider_profile",
+        "authorization_required",
+        "authorization_granted",
+        "authorization_ref",
+        "provider_call_performed_by_request_builder"
+      ],
+      "properties": {
+        "status": { "type": "string", "const": "prepared_pending_explicit_authorization" },
+        "provider_mode": { "type": "string", "minLength": 1 },
+        "provider_profile": { "type": "string", "minLength": 1 },
+        "authorization_required": { "type": "boolean", "const": true },
+        "authorization_granted": { "type": "boolean", "const": false },
+        "authorization_ref": { "type": ["string", "null"] },
+        "provider_call_performed_by_request_builder": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_count",
+        "max_attempts",
+        "remaining_attempts",
+        "latency_class",
+        "fallback_ref"
+      ],
+      "properties": {
+        "attempt_count": { "type": "integer", "minimum": 0 },
+        "max_attempts": { "type": "integer", "minimum": 0 },
+        "remaining_attempts": { "type": "integer", "minimum": 0 },
+        "latency_class": { "type": "string", "minLength": 1 },
+        "fallback_ref": { "type": ["string", "null"] }
+      }
+    },
+    "input_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/local_ref" }
+    },
+    "context_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/local_ref" }
+    },
+    "requested_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intent_class",
+        "result_kind",
+        "artifact_policy",
+        "activation_policy"
+      ],
+      "properties": {
+        "intent_class": { "type": "string", "minLength": 1 },
+        "result_kind": {
+          "type": "string",
+          "enum": [
+            "text_candidate",
+            "json_candidate",
+            "image_candidate",
+            "video_candidate",
+            "audio_candidate",
+            "mixed_candidate"
+          ]
+        },
+        "artifact_policy": { "type": "string", "const": "review_only_local_refs_required" },
+        "activation_policy": { "type": "string", "const": "promotion_required_before_runtime_or_world_state" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "required_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_provider_execution",
+        "after_provider_execution",
+        "before_activation"
+      ],
+      "properties": {
+        "before_provider_execution": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "after_provider_execution": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "before_activation": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "retention_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_body_storage",
+        "provider_body_storage",
+        "secret_storage",
+        "temporary_url_policy",
+        "executor_result_storage"
+      ],
+      "properties": {
+        "prompt_body_storage": { "type": "string", "const": "forbidden" },
+        "provider_body_storage": { "type": "string", "const": "forbidden" },
+        "secret_storage": { "type": "string", "const": "forbidden" },
+        "temporary_url_policy": { "type": "string", "const": "download_then_local_ref_only" },
+        "executor_result_storage": { "type": "string", "const": "provider_output_envelope_redacted_only" }
+      }
+    },
+    "request_builder_safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reads_env",
+        "calls_provider",
+        "stores_prompt_body",
+        "stores_provider_body",
+        "writes_world_state",
+        "activates_runtime"
+      ],
+      "properties": {
+        "reads_env": { "type": "boolean", "const": false },
+        "calls_provider": { "type": "boolean", "const": false },
+        "stores_prompt_body": { "type": "boolean", "const": false },
+        "stores_provider_body": { "type": "boolean", "const": false },
+        "writes_world_state": { "type": "boolean", "const": false },
+        "activates_runtime": { "type": "boolean", "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "local_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_id", "kind", "path"],
+      "properties": {
+        "ref_id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

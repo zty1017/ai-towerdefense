@@ -1,0 +1,470 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/runtime_package.v0.1.schema.json",
+  "title": "RuntimePackage v0.1",
+  "description": "A runtime-safe, player-facing package derived from a locked manifest + battle config. Contains only data the battle runtime needs: display, gameplay_ref, published media_refs, visual_recipes, battle_availability, and battle_context. Must never carry provider/trace/raw media/source_layer information.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "session_id",
+    "worldbook_id",
+    "node_id",
+    "battle_display_name",
+    "created_at",
+    "source_refs",
+    "assets",
+    "battle_context"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "runtime_package.v0.1"
+    },
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "node_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "battle_display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_refs": {
+      "$ref": "#/$defs/source_refs"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/runtime_asset"
+      }
+    },
+    "battle_context": {
+      "$ref": "#/$defs/battle_context"
+    }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locked_manifest_id", "battle_config_version"],
+      "properties": {
+        "locked_manifest_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "battle_config_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "runtime_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "asset_kind",
+        "lifecycle_state",
+        "display",
+        "gameplay_ref",
+        "media_refs",
+        "visual_recipes",
+        "battle_availability"
+      ],
+      "properties": {
+        "stable_internal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle_state": {
+          "type": "string",
+          "enum": ["ephemeral", "session_blueprint", "stabilized_blueprint"]
+        },
+        "display": {
+          "$ref": "#/$defs/display"
+        },
+        "gameplay_ref": {
+          "$ref": "#/$defs/gameplay_ref"
+        },
+        "media_refs": {
+          "$ref": "#/$defs/media_refs"
+        },
+        "visual_recipes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/visual_recipe"
+          }
+        },
+        "battle_availability": {
+          "$ref": "#/$defs/battle_availability"
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "summary", "tags"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "gameplay_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "media_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": {
+          "$ref": "#/$defs/media_icon"
+        },
+        "sprite": {
+          "$ref": "#/$defs/media_sprite"
+        }
+      }
+    },
+    "media_icon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "width", "height", "sha256"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "media_sprite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["texture_key", "atlas", "image"],
+      "properties": {
+        "texture_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "atlas": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        },
+        "image": {
+          "type": "string",
+          "pattern": "^/assets/.+"
+        }
+      }
+    },
+    "visual_recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "kind"],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ring_pulse",
+            "beam",
+            "chain_arc",
+            "sprite_flash",
+            "particle_burst",
+            "aura_field",
+            "screen_shake",
+            "floating_text"
+          ]
+        },
+        "palette_token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "secondary_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "intensity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "radius_from_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "particle_density": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "blend_mode": {
+          "type": "string",
+          "enum": ["normal", "additive", "multiply"]
+        },
+        "max_links_from_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arc_style": {
+          "type": "string",
+          "enum": ["straight", "curved", "jagged"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "battle_availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surfaces",
+        "uses_per_battle",
+        "requires_delivery",
+        "delivery_state"
+      ],
+      "properties": {
+        "surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["battle_hotbar", "node_supply"]
+          }
+        },
+        "uses_per_battle": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requires_delivery": {
+          "type": "boolean"
+        },
+        "delivery_state": {
+          "type": "string",
+          "enum": [
+            "research_in_progress",
+            "sample_ready",
+            "sample_delivered",
+            "battle_used"
+          ]
+        }
+      }
+    },
+    "battle_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grid",
+        "paths",
+        "core_target",
+        "optional_targets",
+        "sample_delivery"
+      ],
+      "properties": {
+        "grid": {
+          "$ref": "#/$defs/grid"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        },
+        "core_target": {
+          "$ref": "#/$defs/target"
+        },
+        "optional_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/target"
+          }
+        },
+        "sample_delivery": {
+          "$ref": "#/$defs/sample_delivery"
+        }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection", "width_cells", "height_cells", "cell_size"],
+      "properties": {
+        "projection": {
+          "type": "string",
+          "minLength": 1
+        },
+        "width_cells": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height_cells": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cell_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stable_internal_id", "waypoints"],
+      "properties": {
+        "stable_internal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "waypoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "entry_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exit_label": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stable_internal_id", "display_name", "position", "durability"],
+      "properties": {
+        "stable_internal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "$ref": "#/$defs/point"
+        },
+        "durability": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "sample_delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delivery_delay_ms", "delivery_progress_messages"],
+      "properties": {
+        "delivery_delay_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "delivery_progress_messages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

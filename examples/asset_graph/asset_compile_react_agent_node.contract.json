@@ -1,0 +1,117 @@
+{
+  "schema_version": "agent_node_contract.v0.1",
+  "contract_id": "asset_compile_react_agent_node.mvp.v0.1",
+  "description": "玩家构想 -> 世界/玩法约束查询 -> 有界 ReAct 编译 -> CompiledAssetCandidate。外层 WorkflowGraph 仍保持 DAG；循环只封装在该节点内部。",
+  "agent_kind": "asset_compile",
+  "runtime_modes": ["studio", "live"],
+  "loop_policy": {
+    "style": "bounded_react",
+    "max_steps": 8,
+    "max_tool_calls": 12,
+    "max_seconds": 180,
+    "stop_conditions": [
+      "已产出可通过 schema 的 CompiledAssetCandidate",
+      "已确认没有足够材料/技术生成可用方案",
+      "达到预算上限并转入 failure_policy"
+    ]
+  },
+  "provider_policy": {
+    "allow_live_provider_call": true,
+    "primary_profiles": [
+      "ark_deepseek_v4_pro",
+      "ark_deepseek_v4_flash",
+      "ark_glm_5_2"
+    ],
+    "fallback_profiles": [
+      "deepseek_v4_pro",
+      "deepseek_v4_flash"
+    ],
+    "max_output_tokens": 8192,
+    "temperature": 0.6
+  },
+  "tool_policy": {
+    "allowed_tools": [
+      {
+        "tool_id": "artifact.read_world_state",
+        "access": "read_artifact",
+        "purpose": "读取当前 run world state、节点危机、材料、NPC 与已解锁技术"
+      },
+      {
+        "tool_id": "rules.query_runtime_capabilities",
+        "access": "read_artifact",
+        "purpose": "查询当前前端/战斗 runtime 支持的效果、visual recipe 与部署限制"
+      },
+      {
+        "tool_id": "asset.validate_candidate",
+        "access": "validator",
+        "purpose": "每次候选产出后执行结构化校验"
+      },
+      {
+        "tool_id": "asset.simulate_candidate",
+        "access": "simulator",
+        "purpose": "低成本 mock simulation，筛掉明显破坏战斗平衡的候选"
+      },
+      {
+        "tool_id": "artifact.write_candidate",
+        "access": "write_artifact",
+        "purpose": "只写入结构化候选 artifact，不写 runtime package"
+      }
+    ],
+    "forbidden_actions": [
+      "写入 runtime_public artifact",
+      "修改基础世界书模板",
+      "输出 provider、model、raw_prompt、full_trace、api_key、secret 到玩家侧 artifact",
+      "绕过 schema 或 simulation 直接锁定资产",
+      "直接修改源代码或节点注册表"
+    ]
+  },
+  "input_artifacts": [
+    {
+      "name": "proposal",
+      "kind": "proposal",
+      "required": true,
+      "schema_ref": "proposal.v0.1.schema.json"
+    },
+    {
+      "name": "run_world_state",
+      "kind": "run_world_state",
+      "required": true,
+      "schema_ref": "run_world_state.v0.1.schema.json"
+    },
+    {
+      "name": "runtime_capabilities",
+      "kind": "runtime_capabilities",
+      "required": true
+    }
+  ],
+  "output_artifact": {
+    "kind": "compiled_asset_candidate",
+    "schema_ref": "asset_compiler.v0.1.schema.json",
+    "runtime_public": false,
+    "post_validators": [
+      "asset.validate_candidate",
+      "asset.simulate_candidate",
+      "asset.score_candidate"
+    ]
+  },
+  "failure_policy": {
+    "on_budget_exhausted": "fallback_artifact",
+    "on_schema_invalid": "repair_then_fail",
+    "on_tool_error": "retry_then_fail",
+    "max_repair_attempts": 2
+  },
+  "trace_policy": {
+    "record_steps": true,
+    "record_tool_results": true,
+    "redact_fields": [
+      "api_key",
+      "secret",
+      "authorization",
+      "raw_prompt",
+      "full_trace",
+      "provider_request_body",
+      "provider_response_body"
+    ],
+    "runtime_public_trace": false
+  }
+}

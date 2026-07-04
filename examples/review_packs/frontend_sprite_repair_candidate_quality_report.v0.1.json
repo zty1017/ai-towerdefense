@@ -1,0 +1,99 @@
+{
+  "report_version": "sprite_cutout_quality_report.v0.1",
+  "schema_version": "sprite_repair_candidate_manifest.v0.1",
+  "media_pack_id": null,
+  "manifest_path": "examples/review_packs/frontend_sprite_repair_candidates.v0.1.json",
+  "status": "passed",
+  "sprite_item_count": 2,
+  "passed_count": 2,
+  "needs_review_count": 0,
+  "failed_count": 0,
+  "warning_counts": {},
+  "issue_counts": {},
+  "items": [
+    {
+      "asset_id": "asset_ash_burst_lantern",
+      "asset_name": "灯灰爆鸣塔",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/sprite_repair_candidates/frontend_mock/asset_ash_burst_lantern__tower_sprite__keep_largest_component.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 949,
+        "height": 949,
+        "alpha_visible_ratio": 0.2687,
+        "alpha_transparent_ratio": 0.7313,
+        "subject_bbox": {
+          "x": 220,
+          "y": 36,
+          "w": 520,
+          "h": 877
+        },
+        "subject_bbox_coverage": 0.5064,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 2,
+        "interior_transparent_hole_ratio": 0.0008,
+        "max_interior_transparent_hole_ratio": 0.0004,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    },
+    {
+      "asset_id": "asset_echo_prism_relay",
+      "asset_name": "回光棱镜中继塔资产",
+      "asset_type": "tower_blueprint",
+      "media_role": "tower_sprite",
+      "file": "game_data/media/sprite_repair_candidates/frontend_mock/asset_echo_prism_relay__tower_sprite__keep_largest_component.png",
+      "status": "passed",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "width": 979,
+        "height": 979,
+        "alpha_visible_ratio": 0.2468,
+        "alpha_transparent_ratio": 0.7532,
+        "subject_bbox": {
+          "x": 233,
+          "y": 36,
+          "w": 510,
+          "h": 907
+        },
+        "subject_bbox_coverage": 0.4826,
+        "visible_component_count": 1,
+        "largest_visible_component_ratio": 1.0,
+        "detached_visible_component_count": 0,
+        "detached_visible_ratio": 0.0,
+        "interior_transparent_component_count": 7,
+        "interior_transparent_hole_ratio": 0.0042,
+        "max_interior_transparent_hole_ratio": 0.0012,
+        "edge_visible_counts": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      }
+    }
+  ],
+  "thresholds": {
+    "alpha_threshold": 8,
+    "min_largest_component_ratio": 0.94,
+    "review_hole_ratio": 0.015,
+    "review_max_hole_ratio": 0.006,
+    "severe_hole_ratio": 0.05
+  },
+  "notes": [
+    "This report is deterministic and offline.",
+    "needs_review does not block the MVP; it orders assets for repair/regeneration.",
+    "Large transparent holes may be intentional for fences/windows, so this report flags them for review instead of failing by default."
+  ]
+}

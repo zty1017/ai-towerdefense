@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <image href="old_signal_tower.topology_control_sketch.png" x="0" y="0" width="1280" height="720"/>
+  <g id="developer-labels" font-family="monospace" font-size="18" fill="#0f172a" stroke="#f8fafc" stroke-width="4" paint-order="stroke">
+    <text x="920.0" y="160.0">path_old_signal_north_ridge</text>
+    <text x="920.0" y="592.0">path_old_signal_copper_trench</text>
+    <text x="134.7" y="404.0">target_old_signal_tower_base</text>
+    <text x="348.0" y="332.0">target_resonant_glass_fixture</text>
+    <text x="490.2" y="548.0">target_copper_grounding_pin</text>
+  </g>
+</svg>

@@ -36,6 +36,12 @@ class Provider:
     video_model: str | None = None
     video_status_path: str | None = None
     extra_payload: dict[str, Any] = field(default_factory=dict)
+    supports_json_object: bool = True
+    fallback_env_keys: tuple[str, ...] = ()
+
+    @property
+    def env_keys(self) -> tuple[str, ...]:
+        return (self.env_key, *self.fallback_env_keys)
 
 
 PROVIDERS: dict[str, Provider] = {
@@ -53,6 +59,7 @@ PROVIDERS: dict[str, Provider] = {
         video_path="/videos",
         video_model="agnes-video-v2.0",
         video_status_path=None,
+        fallback_env_keys=("AGNES_API_KEY_2", "AGNES_API_KEY_3"),
     ),
     "ark": Provider(
         name="ark",
@@ -61,6 +68,7 @@ PROVIDERS: dict[str, Provider] = {
         chat_path="/chat/completions",
         default_model="doubao-seed-2.0-code",
         models_path=None,
+        supports_json_object=False,
     ),
     "deepseek": Provider(
         name="deepseek",
@@ -101,6 +109,16 @@ PROVIDERS: dict[str, Provider] = {
         video_status_path="/async-result/{id}",
         extra_payload={"thinking": {"type": "disabled"}},
     ),
+    "longcat": Provider(
+        name="longcat",
+        env_key="LONGCAT_API_KEY",
+        base_url="https://api.longcat.chat/openai/v1",
+        chat_path="/chat/completions",
+        default_model="LongCat-2.0",
+        models_path="/models",
+        extra_payload={"thinking": {"type": "disabled"}},
+        supports_json_object=False,
+    ),
 }
 
 TOKEN_BUDGETS: dict[str, int] = {
@@ -110,6 +128,7 @@ TOKEN_BUDGETS: dict[str, int] = {
     "review": 16384,
     "world": 32768,
     "large": 65536,
+    "huge": 131072,
 }
 
 
@@ -137,11 +156,21 @@ def endpoint(provider: Provider, path: str) -> str:
     return provider.base_url.rstrip("/") + path
 
 
+def env_presence_summary(provider: Provider) -> tuple[str, str]:
+    parts: list[str] = []
+    any_present = False
+    for env_key in provider.env_keys:
+        present = bool(os.environ.get(env_key))
+        any_present = any_present or present
+        parts.append(f"{env_key}:{'yes' if present else 'no'}")
+    return "|".join(parts), "yes" if any_present else "no"
+
+
 def print_dry_run(names: list[str]) -> int:
     for name in names:
         provider = PROVIDERS[name]
-        key_present = "yes" if os.environ.get(provider.env_key) else "no"
-        print(f"[{name}] env={provider.env_key} present={key_present}")
+        env_summary, key_present = env_presence_summary(provider)
+        print(f"[{name}] env={env_summary} present={key_present}")
         print(f"[{name}] chat={endpoint(provider, provider.chat_path)}")
         print(f"[{name}] model={provider.default_model}")
         if provider.models_path:
@@ -178,10 +207,12 @@ def request_json(
 
 
 def require_key(provider: Provider) -> str:
-    key = os.environ.get(provider.env_key)
-    if not key:
-        raise RuntimeError(f"Missing environment variable: {provider.env_key}")
-    return key
+    for env_key in provider.env_keys:
+        key = os.environ.get(env_key)
+        if key and key.strip():
+            return key
+    env_names = " or ".join(provider.env_keys)
+    raise RuntimeError(f"Missing environment variable: {env_names}")
 
 
 def live_models(name: str, timeout: int) -> int:
@@ -227,10 +258,11 @@ def live_structured(name: str, prompt: str, max_tokens: int, model_override: str
             {"role": "system", "content": "你是塔防游戏资产编译器。只输出合法 JSON，不要 Markdown。"},
             {"role": "user", "content": prompt},
         ],
-        "response_format": {"type": "json_object"},
         "max_tokens": max_tokens,
         "stream": False,
     }
+    if provider.supports_json_object:
+        payload["response_format"] = {"type": "json_object"}
     payload.update(provider.extra_payload)
     data = request_json("POST", endpoint(provider, provider.chat_path), key, payload, timeout=timeout)
     print(json.dumps(data, ensure_ascii=False, indent=2))
@@ -338,7 +370,6 @@ def main() -> int:
     parser.add_argument("--request-timeout", type=int, default=60)
     args = parser.parse_args()
 
-    load_dotenv(ROOT / ".env")
     names = provider_names(args.provider)
     max_tokens = args.max_tokens if args.max_tokens is not None else TOKEN_BUDGETS[args.budget]
 
@@ -348,6 +379,7 @@ def main() -> int:
     if not args.live:
         print("Refusing to contact remote APIs without --live.", file=sys.stderr)
         return 2
+    load_dotenv(ROOT / ".env")
 
     if args.mode in {"chat", "structured"} and args.provider == "all":
         print(f"Refusing live {args.mode} against all providers. Pick one provider.", file=sys.stderr)

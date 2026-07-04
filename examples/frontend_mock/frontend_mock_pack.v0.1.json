@@ -1,0 +1,3689 @@
+{
+  "schema_version": "frontend_mock_pack.v0.1",
+  "pack_id": "frontend_mock_pack_long_night_lanterns_v0_1",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "worldbook_id": "long_night_lanterns",
+  "compiler_summary": {
+    "asset_count": 11,
+    "playable_count": 11,
+    "asset_count_by_type": {
+      "tower_blueprint": 4,
+      "intel_asset": 2,
+      "support_item": 3,
+      "temporary_mod": 2
+    },
+    "stage_count": 3,
+    "runtime_package_count": 3,
+    "promotion_states": {
+      "runtime_ready": 0,
+      "fallback_ready": 11,
+      "preview_only": 0,
+      "failed": 0
+    },
+    "pipeline": [
+      "compiled_asset",
+      "validate_candidate",
+      "simulate_candidate",
+      "score_candidate",
+      "evaluate_promotion_policy"
+    ],
+    "media_policy": "Generated media is optional for mock pack; fallback media tokens guarantee frontend renderability."
+  },
+  "frontend_contract": {
+    "first_screen": "local_profile_or_world_start",
+    "primary_flow": [
+      "opening",
+      "world_map",
+      "node_briefing",
+      "workshop",
+      "battle",
+      "settlement"
+    ],
+    "runtime_assumption": "Every asset with promotion.playable=true can be rendered with fallback media tokens and visual_recipes.",
+    "effect_catalog_id": "mvp_runtime_effect_catalog_v0_1",
+    "forbidden_player_terms": [
+      "AI",
+      "provider",
+      "schema",
+      "prompt",
+      "compiler",
+      "token",
+      "trace",
+      "mock",
+      "simulation"
+    ],
+    "stage_outline_surface": "Frontend may show stage_outline as review/demo navigation data, but it is not a live campaign router."
+  },
+  "content_sources": {
+    "review_packs": [
+      "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+      "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "examples/review_packs/mvp_first_battle.context_package.json",
+      "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+      "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+      "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+    ],
+    "runtime_packages": [
+      "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json"
+    ],
+    "source_boundary": {
+      "player_safe": true,
+      "reads_env": false,
+      "calls_external_service": false,
+      "contains_raw_external_payload": false
+    },
+    "multistage_pack_summary": {
+      "pack_id": "mvp_multistage_content_pack_001",
+      "stage_count": 3,
+      "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+    }
+  },
+  "core_artifacts": {
+    "status": "frontend_pack_review_only_core_artifacts_ready",
+    "refs": {
+      "context_package": "examples/review_packs/mvp_first_battle.context_package.json",
+      "fact_entry": "examples/review_packs/mvp_gray_lantern.fact_entry.json",
+      "compiled_game_object_package": "examples/review_packs/mvp_light_snare.compiled_game_object_package.json",
+      "world_delta_transaction": "examples/world_delta_transactions/first_battle_result.world_delta_transaction.json"
+    },
+    "context_package": {
+      "schema_version": "context_package.v0.1",
+      "context_package_id": "ctx_mvp_first_battle_asset_compile",
+      "run_id": "demo_run_001",
+      "worldbook_id": "long_night_lanterns",
+      "run_world_version": "turn_001_demo_snapshot",
+      "purpose": "asset_compile",
+      "scope": "node.gray_lantern_station",
+      "authority": {
+        "advisory_only": true,
+        "can_mutate_world": false,
+        "can_publish_runtime": false,
+        "requires_downstream_validation": true
+      },
+      "blocks": [
+        {
+          "block_id": "worldbook_boundary",
+          "block_kind": "worldbook",
+          "source_ref": "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+          "trust_level": "developer",
+          "visibility": "ai_visible",
+          "priority": 100,
+          "token_budget": 900,
+          "trim_policy": "summarize",
+          "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "summary": "长夜灯火是本局启动模板，所有生成内容必须服务塔防玩法与当前节点。"
+        },
+        {
+          "block_id": "current_battle_node",
+          "block_kind": "map_context",
+          "source_ref": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+          "trust_level": "system",
+          "visibility": "ai_visible",
+          "priority": 92,
+          "token_budget": 700,
+          "trim_policy": "keep_full",
+          "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "summary": "首战节点的路径、塔位、保护目标与出生点来自 MapRuntimePackage。"
+        },
+        {
+          "block_id": "player_workshop_intent",
+          "block_kind": "player_input",
+          "source_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+          "trust_level": "player_claim",
+          "visibility": "ai_visible",
+          "priority": 75,
+          "token_budget": 300,
+          "trim_policy": "keep_full",
+          "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "summary": "玩家正在现场试作一个能缓解首战压力的临时防御构想。"
+        }
+      ],
+      "policy_refs": [
+        {
+          "ref_id": "ai_compilation_boundary",
+          "ref_kind": "document",
+          "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+        },
+        {
+          "ref_id": "world_delta_schema",
+          "ref_kind": "schema",
+          "path": "shared/schemas/world_state_delta.v0.1.schema.json"
+        }
+      ],
+      "source_refs": [
+        {
+          "ref_id": "map_runtime_package",
+          "ref_kind": "map_package",
+          "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+        },
+        {
+          "ref_id": "run_state",
+          "ref_kind": "world_state",
+          "path": "examples/run_world_states/demo_initial.run_world_state.json"
+        }
+      ],
+      "token_budget": {
+        "max_tokens": 8192,
+        "reserved_response_tokens": 2048
+      },
+      "insertion_plan": [
+        {
+          "slot": "system_context",
+          "block_ids": [
+            "worldbook_boundary"
+          ]
+        },
+        {
+          "slot": "runtime_context",
+          "block_ids": [
+            "current_battle_node"
+          ]
+        },
+        {
+          "slot": "user_context",
+          "block_ids": [
+            "player_workshop_intent"
+          ]
+        }
+      ],
+      "redaction_report": {
+        "redacted_block_count": 0,
+        "dropped_block_count": 0,
+        "notes": [
+          "示例包只保留引用与摘要，不携带隐藏运行日志。"
+        ]
+      },
+      "created_at": "2026-07-02T00:00:00+08:00",
+      "hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "fact_entry": {
+      "schema_version": "fact_entry.v0.1",
+      "fact_id": "fact_gray_lantern_first_battle_pressure",
+      "fact_kind": "runtime_fact",
+      "scope": "node",
+      "subject": "gray_lantern_station",
+      "predicate": "is_under_first_tide_pressure",
+      "content": "灰灯驿站在首轮影潮中暴露出侧翼压力，后续研发和剧情推进应优先服务防线稳定。",
+      "source": "battle_result",
+      "confidence": "observed",
+      "visibility": "ai_visible",
+      "activation_rules": {
+        "active_when": [
+          "stage_01_gray_lantern_first_defense_complete"
+        ],
+        "deactivate_when": []
+      },
+      "commit_state": "candidate",
+      "submission_policy": {
+        "can_mutate_run_world_state": false,
+        "commit_requires_world_state_delta": true,
+        "allowed_context_use": "context_only_until_committed"
+      },
+      "expires_at": null,
+      "created_at": "2026-07-02T00:00:00+08:00",
+      "source_tx_id": null
+    },
+    "compiled_game_object_package": {
+      "schema_version": "compiled_game_object_package.v0.1",
+      "package_id": "cgop_mvp_light_snare_sample",
+      "object_type": "trap",
+      "content_version": "0.1.0",
+      "artifact_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "worldbook_id": "long_night_lanterns",
+      "run_world_version": "turn_001_demo_snapshot",
+      "lifecycle_state": "reviewed",
+      "authority": {
+        "compile_actor": "player",
+        "can_lock": false,
+        "can_publish": false,
+        "direct_world_mutation_allowed": false,
+        "runtime_activation_requires_review": true
+      },
+      "source_intent": {
+        "intent_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+        "summary": "玩家希望把临时材料转化成能延缓影潮的现场试作品。"
+      },
+      "context_package_id": "ctx_mvp_first_battle_asset_compile",
+      "source_refs": [
+        {
+          "ref_id": "context_package",
+          "ref_kind": "review_pack",
+          "path": "examples/review_packs/mvp_first_battle.context_package.json"
+        },
+        {
+          "ref_id": "locked_manifest",
+          "ref_kind": "locked_manifest",
+          "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+        }
+      ],
+      "policy_refs": [
+        {
+          "ref_id": "ai_compilation_boundary",
+          "ref_kind": "document",
+          "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+        }
+      ],
+      "execution_trace_ref": null,
+      "world_context": {
+        "scope": "node.gray_lantern_station",
+        "required_fact_ids": [
+          "fact_gray_lantern_first_battle_pressure"
+        ],
+        "forbidden_world_mutations": [
+          "base_worldbook_rewrite",
+          "direct_resource_change",
+          "unreviewed_npc_creation"
+        ]
+      },
+      "semantic_spec": {
+        "player_visible_name_hint": "临时缚光索",
+        "world_fit": "以余灯材料短时束缚影潮脚步，适合教学关中途送达。"
+      },
+      "gameplay_spec": {
+        "role": "temporary_trap_sample",
+        "allowed_effects": [
+          "slow",
+          "short_stun"
+        ],
+        "deployment_limit": 2
+      },
+      "runtime_contract": {
+        "runtime_loadable": false,
+        "load_surface": "review_only",
+        "manifest_refs": [
+          {
+            "ref_id": "locked_manifest",
+            "ref_kind": "locked_manifest",
+            "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+          }
+        ],
+        "world_delta_refs": [],
+        "state_instance_policy": "blueprint_only"
+      },
+      "media_presentation": {
+        "media_manifest_ref": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+        "atlas_manifest_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json"
+      },
+      "dependencies": [
+        "map_runtime_package:mvp_first_battle"
+      ],
+      "conflicts": [],
+      "required_capabilities": [
+        "battle_runtime.trap_deploy",
+        "effect_catalog.ring_pulse"
+      ],
+      "runtime_budget": {
+        "max_instances": 2,
+        "texture_budget_kb": 1024,
+        "particle_budget": 32,
+        "cpu_budget_hint": "low",
+        "browser_tier": "mvp"
+      },
+      "validation_report": {
+        "gate_status": "passed",
+        "runtime_loadable": false,
+        "gates": [
+          {
+            "gate_id": "schema",
+            "status": "passed",
+            "summary": "示例 CGOP 通过结构校验，但尚未进入运行时激活。"
+          },
+          {
+            "gate_id": "semantic_boundary",
+            "status": "passed",
+            "summary": "对象包不直接修改世界状态，也不携带完整世界资料。"
+          }
+        ],
+        "approved_scopes": [
+          "review_pack"
+        ],
+        "failed_rules": [],
+        "warnings": []
+      },
+      "lineage": {
+        "compiled_at": "2026-07-02T00:00:00+08:00",
+        "compiler_version": "ai_compile_core.v0.1",
+        "parent_package_ids": []
+      }
+    },
+    "world_delta_transaction": {
+      "schema_version": "world_state_delta_transaction.v0.1",
+      "transaction_id": "tx_first_battle_result_repaired_001",
+      "run_id": "run_demo_001",
+      "worldbook_id": "long_night_lanterns",
+      "actor": "system",
+      "source": "battle_result",
+      "created_turn": 2,
+      "created_at": "2026-07-02T00:00:00Z",
+      "base_world_version": "run_demo_001_turn_1",
+      "idempotency_key": "run_demo_001:first_battle_result:delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+      "scope": {
+        "kind": "battle_result_commit",
+        "node_ids": [
+          "gray_lantern_station"
+        ],
+        "object_refs": [
+          "battle:first_battle",
+          "sample:sample_trap_7f3a_repaired",
+          "fact:sample_trap_tested_in_battle_repaired"
+        ],
+        "state_fields": [
+          "progress_phase",
+          "map_nodes.gray_lantern_station",
+          "resources.lamp_oil",
+          "global_state.hope",
+          "global_state.pressure",
+          "facts.sample_trap_tested_in_battle_repaired",
+          "research.temporary_samples.sample_trap_7f3a_repaired",
+          "events.gray_lantern_first_defense_repaired_success",
+          "flags.tutorial_first_battle_completed"
+        ]
+      },
+      "source_refs": {
+        "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+        "battle_result_path": "examples/asset_graph/battle_result.sample.json",
+        "run_state_before_path": "examples/run_world_states/demo_initial.run_world_state.json"
+      },
+      "world_state_delta_ref": {
+        "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+        "schema_version": "world_state_delta.v0.1",
+        "delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+        "sha256": "82cbdd4dea51f417ece7d1f07ba22e6ee2ec49c1514bfb8735140243ecd03c16"
+      },
+      "preconditions": [
+        {
+          "kind": "run_state_version",
+          "ref": "run_demo_001_turn_1",
+          "summary": "提交前使用首战前的演示运行态。"
+        },
+        {
+          "kind": "node_state",
+          "ref": "map_nodes.gray_lantern_station",
+          "summary": "灰灯驿站仍是当前首战节点。"
+        },
+        {
+          "kind": "artifact_available",
+          "ref": "battle:first_battle",
+          "summary": "首战结算已经产生，可被世界状态提交消费。"
+        }
+      ],
+      "operation_effects_mapping": [
+        {
+          "operation_index": 0,
+          "op": "append_event",
+          "target_ref": "events.gray_lantern_first_defense_repaired_success",
+          "effect_kind": "event_append",
+          "summary": "追加首战结束事件。"
+        },
+        {
+          "operation_index": 1,
+          "op": "set_map_node_state",
+          "target_ref": "map_nodes.gray_lantern_station",
+          "effect_kind": "map_node_patch",
+          "summary": "灰灯驿站进入 secured 状态。"
+        },
+        {
+          "operation_index": 2,
+          "op": "adjust_resource",
+          "target_ref": "resources.lamp_oil",
+          "effect_kind": "resource_delta",
+          "summary": "扣除首战消耗的灯油。"
+        },
+        {
+          "operation_index": 3,
+          "op": "unlock_fact",
+          "target_ref": "facts.sample_trap_tested_in_battle_repaired",
+          "effect_kind": "fact_unlock",
+          "summary": "解锁折光绊索实战效果事实。"
+        },
+        {
+          "operation_index": 4,
+          "op": "add_temporary_sample",
+          "target_ref": "research.temporary_samples.sample_trap_7f3a_repaired",
+          "effect_kind": "sample_registration",
+          "summary": "登记战后回收的折光绊索样品。"
+        },
+        {
+          "operation_index": 5,
+          "op": "set_progress_phase",
+          "target_ref": "progress_phase",
+          "effect_kind": "phase_change",
+          "summary": "阶段推进到首防战后。"
+        },
+        {
+          "operation_index": 6,
+          "op": "set_flag",
+          "target_ref": "flags.tutorial_first_battle_completed",
+          "effect_kind": "flag_set",
+          "summary": "标记教学首战完成。"
+        },
+        {
+          "operation_index": 7,
+          "op": "adjust_global_state",
+          "target_ref": "global_state.hope",
+          "effect_kind": "global_state_delta",
+          "summary": "提升幸存者希望。"
+        },
+        {
+          "operation_index": 8,
+          "op": "adjust_global_state",
+          "target_ref": "global_state.pressure",
+          "effect_kind": "global_state_delta",
+          "summary": "降低短期压迫。"
+        }
+      ],
+      "conflict_policy": {
+        "mode": "reject_on_conflict",
+        "conflict_keys": [
+          "progress_phase",
+          "map_nodes.gray_lantern_station",
+          "resources.lamp_oil",
+          "global_state.hope",
+          "global_state.pressure",
+          "facts.sample_trap_tested_in_battle_repaired",
+          "research.temporary_samples.sample_trap_7f3a_repaired",
+          "events.gray_lantern_first_defense_repaired_success",
+          "flags.tutorial_first_battle_completed"
+        ]
+      },
+      "rollback_policy": {
+        "mode": "required_snapshot",
+        "inverse_operations_required": false,
+        "notes": "v0.1 事务壳只登记提交语义；回滚依赖提交前运行态快照，不生成通用逆向 DSL。"
+      },
+      "validation_report": {
+        "gate_status": "passed",
+        "world_delta_structure": "passed",
+        "world_delta_semantics": "passed",
+        "operation_mapping": "passed",
+        "runtime_apply_checked": true,
+        "warnings": []
+      },
+      "status": "committed"
+    },
+    "review_only": true
+  },
+  "effect_catalog": {
+    "schema_version": "effect_catalog.v0.1",
+    "catalog_id": "mvp_runtime_effect_catalog_v0_1",
+    "runtime_target": "browser_2d_pseudo3d_phaser_or_pixi",
+    "policy": {
+      "external_urls_allowed": false,
+      "runtime_remote_fetch_allowed": false,
+      "ai_may_select_only_catalog_entries": true,
+      "downloaded_assets_require_license_record": true,
+      "mvp_strategy": "Prefer programmatic runtime effects. Bundled local textures may be added later behind stable texture tokens."
+    },
+    "palettes": [
+      {
+        "id": "warm_gold",
+        "primary": "#f2c14e",
+        "secondary": "#fff2b8",
+        "usage": "灯火、护盾、治疗、诱饵"
+      },
+      {
+        "id": "cold_blue",
+        "primary": "#67d3ff",
+        "secondary": "#b8f1ff",
+        "usage": "减速、稳定场、情报扫描"
+      },
+      {
+        "id": "red_orange",
+        "primary": "#ff6b3d",
+        "secondary": "#ffc36b",
+        "usage": "爆裂、过载、范围伤害"
+      },
+      {
+        "id": "purple_black",
+        "primary": "#5b3a8e",
+        "secondary": "#1a1026",
+        "usage": "影潮、腐蚀、危险反馈"
+      },
+      {
+        "id": "green",
+        "primary": "#6fd08c",
+        "secondary": "#c8ffd6",
+        "usage": "修复、生长、毒素"
+      },
+      {
+        "id": "white",
+        "primary": "#f8f7ef",
+        "secondary": "#ffffff",
+        "usage": "净化、暴露、文本提示"
+      }
+    ],
+    "texture_tokens": [
+      {
+        "token": "vfx.procedural.soft_disc",
+        "role": "particle",
+        "source_type": "procedural",
+        "license": "project_owned_procedural",
+        "required": true,
+        "local_path": null,
+        "notes": "前端运行时生成的圆形柔光粒子。"
+      },
+      {
+        "token": "vfx.procedural.spark",
+        "role": "particle",
+        "source_type": "procedural",
+        "license": "project_owned_procedural",
+        "required": true,
+        "local_path": null,
+        "notes": "前端运行时生成的短线火花粒子。"
+      },
+      {
+        "token": "vfx.procedural.glyph_ring",
+        "role": "ring",
+        "source_type": "procedural",
+        "license": "project_owned_procedural",
+        "required": true,
+        "local_path": null,
+        "notes": "前端运行时绘制的地面灯纹圆环。"
+      },
+      {
+        "token": "vfx.procedural.beam_core",
+        "role": "beam",
+        "source_type": "procedural",
+        "license": "project_owned_procedural",
+        "required": true,
+        "local_path": null,
+        "notes": "前端运行时绘制的线性光束核心。"
+      },
+      {
+        "token": "vfx.procedural.chain_core",
+        "role": "chain",
+        "source_type": "procedural",
+        "license": "project_owned_procedural",
+        "required": true,
+        "local_path": null,
+        "notes": "前端运行时绘制的折线/贝塞尔连锁电弧。"
+      }
+    ],
+    "primitives": [
+      {
+        "type": "ring_pulse",
+        "render_family": "programmatic_shape",
+        "default_texture_token": "vfx.procedural.glyph_ring",
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "purple_black",
+          "green",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 650,
+          "radius_px": 64,
+          "stroke_px": 3,
+          "repeat": 1
+        },
+        "budget": {
+          "max_instances": 48,
+          "max_duration_ms": 1800,
+          "max_radius_px": 180
+        },
+        "frontend_hint": "从地面锚点扩散的圆环，适合陷阱、光环、区域提示。"
+      },
+      {
+        "type": "beam",
+        "render_family": "programmatic_line",
+        "default_texture_token": "vfx.procedural.beam_core",
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "red_orange",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 260,
+          "width_px": 5,
+          "glow_px": 12
+        },
+        "budget": {
+          "max_instances": 32,
+          "max_duration_ms": 900,
+          "max_width_px": 12
+        },
+        "frontend_hint": "塔到目标或目标到目标的短时射线。"
+      },
+      {
+        "type": "chain_arc",
+        "render_family": "programmatic_polyline",
+        "default_texture_token": "vfx.procedural.chain_core",
+        "allowed_palettes": [
+          "red_orange",
+          "cold_blue",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 360,
+          "width_px": 4,
+          "jitter_px": 8,
+          "max_links": 5
+        },
+        "budget": {
+          "max_instances": 24,
+          "max_duration_ms": 900,
+          "max_links": 7
+        },
+        "frontend_hint": "多个目标间跳转的连锁弧线。"
+      },
+      {
+        "type": "sprite_flash",
+        "render_family": "sprite_tint",
+        "default_texture_token": null,
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "red_orange",
+          "purple_black",
+          "green",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 160,
+          "alpha_peak": 0.85,
+          "repeat": 1
+        },
+        "budget": {
+          "max_instances": 80,
+          "max_duration_ms": 500
+        },
+        "frontend_hint": "对目标 sprite 做短暂染色、描边或透明度闪烁。"
+      },
+      {
+        "type": "particle_burst",
+        "render_family": "programmatic_particles",
+        "default_texture_token": "vfx.procedural.spark",
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "red_orange",
+          "purple_black",
+          "green",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 420,
+          "radius_px": 56,
+          "particle_count": 18,
+          "spread_degrees": 360
+        },
+        "budget": {
+          "max_instances": 32,
+          "max_duration_ms": 1200,
+          "max_particle_count": 48,
+          "max_radius_px": 160
+        },
+        "frontend_hint": "短促粒子爆发，适合范围伤害、爆裂、命中反馈。"
+      },
+      {
+        "type": "aura_field",
+        "render_family": "programmatic_area",
+        "default_texture_token": "vfx.procedural.soft_disc",
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "purple_black",
+          "green",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 1200,
+          "radius_px": 72,
+          "alpha": 0.28,
+          "pulse": true
+        },
+        "budget": {
+          "max_instances": 24,
+          "max_duration_ms": 6000,
+          "max_radius_px": 220
+        },
+        "frontend_hint": "持续范围场，用于减速、护盾、修复、光环。"
+      },
+      {
+        "type": "screen_shake",
+        "render_family": "camera",
+        "default_texture_token": null,
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "red_orange",
+          "purple_black",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 180,
+          "intensity_px": 4
+        },
+        "budget": {
+          "max_instances": 8,
+          "max_duration_ms": 450,
+          "max_intensity_px": 10
+        },
+        "frontend_hint": "轻量镜头震动，只用于强反馈，避免连续触发。"
+      },
+      {
+        "type": "floating_text",
+        "render_family": "ui_text",
+        "default_texture_token": null,
+        "allowed_palettes": [
+          "warm_gold",
+          "cold_blue",
+          "red_orange",
+          "green",
+          "white"
+        ],
+        "default_params": {
+          "duration_ms": 900,
+          "rise_px": 24,
+          "font_size_px": 14
+        },
+        "budget": {
+          "max_instances": 40,
+          "max_duration_ms": 1800,
+          "max_chars": 16
+        },
+        "frontend_hint": "短文字反馈，适合情报、修复、威胁变化提示。"
+      }
+    ]
+  },
+  "world": {
+    "display_name": "长夜灯火",
+    "summary": "长夜没有结束，灯塔一座接一座熄灭。余灯中枢是最后稳定的光源据点，影潮正在逼近。",
+    "tone_and_taboos": {
+      "voice": "克制、压抑、带着微光般的希望。NPC 用世界内语言称呼玩家，不出现现代技术词。",
+      "forbidden_terms_in_player_text": [
+        "AI",
+        "provider",
+        "schema",
+        "prompt",
+        "compiler",
+        "token",
+        "trace",
+        "mock",
+        "simulation"
+      ],
+      "naming_style": "灯火、光、影、潮、驿站、灯芯、导线、绊索等世界内意象。"
+    },
+    "visual_rules": {
+      "palette": {
+        "cold_blue": "减速、冻结、稳定场",
+        "warm_gold": "灯火、治疗、护盾",
+        "red_orange": "爆裂、过载、燃烧",
+        "purple_black": "腐蚀、影潮、诅咒",
+        "green": "修复、生长、毒素",
+        "white": "净化、眩光、暴露"
+      },
+      "style": "灯塬遗景·伪三维，斜视角，暗色主调，灯火为暖金高光。"
+    },
+    "run_world_state": {
+      "schema_version": "run_world_state.v0.1",
+      "run_id": "run_demo_001",
+      "worldbook_id": "long_night_lanterns",
+      "progress": {
+        "chapter": 1,
+        "turn": 1,
+        "phase": "first_defense"
+      },
+      "global_state": {
+        "pressure": 0.35,
+        "hope": 0.62,
+        "visibility": 0.28
+      },
+      "resources": [
+        {
+          "resource_id": "lamp_oil",
+          "amount": 12
+        },
+        {
+          "resource_id": "iron_scrap",
+          "amount": 5
+        },
+        {
+          "resource_id": "rationed_food",
+          "amount": 8
+        }
+      ],
+      "map_nodes": [
+        {
+          "node_id": "gray_lantern_station",
+          "status": "contested",
+          "threat_level": 2,
+          "visibility": "known",
+          "available_actions": [
+            "enter_battle",
+            "field_research"
+          ]
+        },
+        {
+          "node_id": "northern_road_crossing",
+          "status": "known",
+          "threat_level": 1,
+          "visibility": "scouted",
+          "available_actions": [
+            "scout",
+            "field_research"
+          ]
+        },
+        {
+          "node_id": "old_signal_tower",
+          "status": "unknown",
+          "threat_level": 0,
+          "visibility": "hidden",
+          "available_actions": []
+        }
+      ],
+      "npcs": [
+        {
+          "npc_id": "engineer_001",
+          "location_node_id": "gray_lantern_station",
+          "narrative_roles": [
+            "battle_feedback"
+          ],
+          "gameplay_roles": [
+            "field_engineer"
+          ],
+          "relationship": {
+            "trust": 0.45
+          },
+          "availability": "present"
+        },
+        {
+          "npc_id": "scout_002",
+          "location_node_id": "northern_road_crossing",
+          "narrative_roles": [
+            "world_observation"
+          ],
+          "gameplay_roles": [
+            "scout"
+          ],
+          "relationship": {
+            "trust": 0.3
+          },
+          "availability": "present"
+        }
+      ],
+      "unlocked_facts": [
+        {
+          "fact_id": "refraction_trap_observed",
+          "source": "first_battle",
+          "visibility": "player_known",
+          "summary": "灰灯驿站的折射陷阱在夜雾中第一次显形。"
+        }
+      ],
+      "event_log": [
+        {
+          "event_id": "intro_arrival",
+          "turn": 1,
+          "kind": "story",
+          "summary": "玩家抵达灰灯驿站，长夜尚未散去。"
+        }
+      ],
+      "research": {
+        "active_jobs": [],
+        "known_blueprints": [],
+        "temporary_samples": []
+      },
+      "flags": {
+        "tutorial_first_battle_started": false
+      }
+    }
+  },
+  "map": {
+    "initial_map": {
+      "map_version": "initial_map.v0.1",
+      "worldbook_id": "long_night_lanterns",
+      "display_name": "余灯中枢态势图",
+      "summary": "长夜未结束，灯火稀疏。余灯中枢是唯一稳定的光源据点，灰灯驿站正发出急报。",
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "projection": "pseudo3d_oblique"
+      },
+      "nodes": [
+        {
+          "stable_internal_id": "residual_lantern_hub",
+          "display_name": "余灯中枢",
+          "kind": "main_city",
+          "position": {
+            "x": 320,
+            "y": 360
+          },
+          "state": "controlled",
+          "summary": "主城与中枢设施所在，灯火仍亮，是补给线起点。",
+          "icons": [
+            "main_city",
+            "lantern_glow"
+          ]
+        },
+        {
+          "stable_internal_id": "gray_lantern_station",
+          "display_name": "灰灯驿站",
+          "kind": "battle_hotspot",
+          "position": {
+            "x": 880,
+            "y": 300
+          },
+          "state": "crisis_active",
+          "summary": "第一危机节点。高速影潮正在接近，驿站信标忽明忽暗。",
+          "icons": [
+            "battle_alert",
+            "crisis_pulse"
+          ]
+        },
+        {
+          "stable_internal_id": "temporary_workshop",
+          "display_name": "临时工坊",
+          "kind": "research_facility",
+          "position": {
+            "x": 460,
+            "y": 260
+          },
+          "state": "available",
+          "summary": "可在节点现场进行应急改造的小型设施。",
+          "icons": [
+            "workshop",
+            "craft_bench"
+          ]
+        },
+        {
+          "stable_internal_id": "lamp_wick_store",
+          "display_name": "灯芯仓",
+          "kind": "resource_storage",
+          "position": {
+            "x": 560,
+            "y": 440
+          },
+          "state": "controlled",
+          "summary": "储存灯芯碎片与备品，是当前最关键的资源存储设施。",
+          "icons": [
+            "resource_storage",
+            "lamp_ware"
+          ]
+        }
+      ],
+      "supply_lines": [
+        {
+          "stable_internal_id": "supply_line_hub_to_gray",
+          "display_name": "中枢至灰灯补给线",
+          "from_node_id": "residual_lantern_hub",
+          "to_node_id": "gray_lantern_station",
+          "state": "active",
+          "summary": "连接余灯中枢与灰灯驿站的主要补给通道。"
+        }
+      ],
+      "dark_regions": [
+        {
+          "stable_internal_id": "dark_unknown_east",
+          "display_name": "东侧未知黑暗",
+          "polygon": [
+            {
+              "x": 700,
+              "y": 500
+            },
+            {
+              "x": 1200,
+              "y": 500
+            },
+            {
+              "x": 1200,
+              "y": 700
+            },
+            {
+              "x": 700,
+              "y": 700
+            }
+          ],
+          "state": "hidden",
+          "summary": "尚未探明的黑暗区域，灯塔光芒无法抵达。"
+        },
+        {
+          "stable_internal_id": "dark_unknown_north",
+          "display_name": "北方深暗",
+          "polygon": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 1280,
+              "y": 0
+            },
+            {
+              "x": 1280,
+              "y": 180
+            },
+            {
+              "x": 0,
+              "y": 180
+            }
+          ],
+          "state": "hidden",
+          "summary": "北方深处灯火尽熄，传闻影潮由此滋生。"
+        }
+      ],
+      "threat_edges": [
+        {
+          "stable_internal_id": "shadow_tide_edge_southeast",
+          "display_name": "影潮移动边缘",
+          "position": {
+            "x": 1100,
+            "y": 600
+          },
+          "direction": "northwest",
+          "severity": "high",
+          "summary": "右下角高速影潮正在向中枢方向推进。"
+        }
+      ],
+      "floating_events": [
+        {
+          "stable_internal_id": "event_gray_lantern_distress",
+          "display_name": "灰灯驿站急报",
+          "kind": "distress_call",
+          "anchor_node_id": "gray_lantern_station",
+          "summary": "驿站守灯人发来急报，请求立即支援。"
+        },
+        {
+          "stable_internal_id": "event_npc_lampwright_request",
+          "display_name": "守灯技师请求",
+          "kind": "npc_request",
+          "anchor_node_id": "temporary_workshop",
+          "summary": "临时工坊的技师希望与你会面，讨论临时改造方案。"
+        },
+        {
+          "stable_internal_id": "event_main_quest_first_crisis",
+          "display_name": "当前任务：驰援灰灯驿站",
+          "kind": "main_quest",
+          "anchor_node_id": "gray_lantern_station",
+          "summary": "前往灰灯驿站，在影潮抵达前组织防线。"
+        }
+      ],
+      "legend_token_map": {
+        "main_city": "主城",
+        "battle_hotspot": "战斗热点",
+        "research_facility": "设施",
+        "resource_storage": "资源存储节点",
+        "supply_line": "补给线",
+        "dark_region": "黑暗未知区",
+        "threat_edge": "移动威胁边缘",
+        "floating_event": "悬浮事件"
+      }
+    },
+    "first_crisis_node": {
+      "node_briefing_version": "first_crisis_node.v0.1",
+      "worldbook_id": "long_night_lanterns",
+      "node_id": "gray_lantern_station",
+      "display_name": "灰灯驿站",
+      "summary": "灰灯驿站是余灯中枢东翼的前哨。影潮奔行者正在高速接近，驿站信标忽明忽暗。",
+      "threat": {
+        "enemy_archetypes": [
+          "shadow_tide_runner",
+          "shadow_tide_shade"
+        ],
+        "enemy_traits": "高速、低耐久，移动极快，基础手段难以留住。",
+        "approach_direction": "东南方向，影潮移动边缘正在逼近。",
+        "estimated_waves": 2
+      },
+      "protection_targets": [
+        {
+          "stable_internal_id": "target_node_core",
+          "display_name": "驿站核心",
+          "kind": "core",
+          "summary": "驿站的灯火核心，一旦被击穿，节点即失守。",
+          "must_protect": true
+        },
+        {
+          "stable_internal_id": "target_signal_beacon",
+          "display_name": "信标天线",
+          "kind": "facility",
+          "summary": "用于向中枢示警的小型信标天线，损坏后会降低后续支援效率。",
+          "must_protect": false
+        }
+      ],
+      "available_materials": [
+        {
+          "material_id": "lamp_shard",
+          "quantity": 4
+        },
+        {
+          "material_id": "conductor_filament",
+          "quantity": 2
+        }
+      ],
+      "npcs_present": [
+        "npc_gray_lantern_keeper"
+      ],
+      "facility_state": {
+        "temporary_workshop": "available",
+        "summary": "临时工坊可在节点现场进行一次应急改造。"
+      },
+      "constraints": {
+        "research_budget": "本节点只允许一次现场试作。",
+        "sample_delivery": "样品在战斗中途送达，非即时。"
+      },
+      "player_action_hint": "向临时工坊说明你的构想，生成一个试作方案。"
+    }
+  },
+  "npcs": [
+    {
+      "stable_internal_id": "npc_gray_lantern_keeper",
+      "display_name": "灰灯驿站守灯人",
+      "role": "field_npc",
+      "location_node_id": "gray_lantern_station",
+      "voice": "焦急、务实，习惯用灯塔术语描述战况。",
+      "default_address_by_origin": {
+        "lampwright_apprentice": "守灯技师",
+        "flow_engineer": "工程师",
+        "signal_dispatcher": "调度员"
+      },
+      "sample_lines": [
+        "影潮比预想快，驿站信标快撑不住了。",
+        "如果你能在路径转角放个临时装置，我们就能多拖一会儿。",
+        "样品还在封装？那就先用基础手段顶着。"
+      ],
+      "battle_role": "提供节点战况播报与样品送达提示"
+    },
+    {
+      "stable_internal_id": "npc_workshop_mentor",
+      "display_name": "临时工坊老师傅",
+      "role": "craft_mentor",
+      "location_node_id": "temporary_workshop",
+      "voice": "沉稳、保守，强调工艺稳定性，对实验性方案持保留态度。",
+      "default_address_by_origin": {
+        "lampwright_apprentice": "小技师",
+        "flow_engineer": "外乡工程师",
+        "signal_dispatcher": "年轻的调度员"
+      },
+      "sample_lines": [
+        "灯芯碎片够用，但别浪费在花哨想法上。",
+        "稳健的工艺更靠得住，实验性的东西我持保留意见。",
+        "折光绊索？嗯，思路不错，但稳定性需要现场验证。"
+      ],
+      "battle_role": "现场研发阶段提供 NPC 初步判断与材料建议"
+    }
+  ],
+  "materials": [
+    {
+      "stable_internal_id": "lamp_shard",
+      "display_name": "灯芯碎片",
+      "summary": "熄灭灯塔残留的灯芯碎段，是临时改造的基础材料。",
+      "rarity": "common",
+      "default_quantity": 4
+    },
+    {
+      "stable_internal_id": "conductor_filament",
+      "display_name": "导线",
+      "summary": "从废弃驿站拆下的金属导线，用于连接与传导。",
+      "rarity": "common",
+      "default_quantity": 2
+    },
+    {
+      "stable_internal_id": "lantern_ash",
+      "display_name": "灯灰",
+      "summary": "灯火燃尽后的灰烬，少量可用作稳定剂。",
+      "rarity": "uncommon",
+      "default_quantity": 1
+    },
+    {
+      "stable_internal_id": "glow_crystal",
+      "display_name": "微光晶",
+      "summary": "稀有的发光晶体，可作为临时光源核心。",
+      "rarity": "rare",
+      "default_quantity": 0
+    }
+  ],
+  "story": {
+    "opening": {
+      "opening_version": "opening.v0.1",
+      "worldbook_id": "long_night_lanterns",
+      "display_name": "长夜灯火·开场",
+      "total_duration_ms": 45000,
+      "skippable": true,
+      "replayable": true,
+      "segments": [
+        {
+          "stable_internal_id": "opening_segment_01_background",
+          "display_name": "黑屏白字·世界背景",
+          "kind": "black_screen_text",
+          "duration_ms": 12000,
+          "lines": [
+            "长夜没有结束。",
+            "灯塔一座接一座熄灭。",
+            "余灯中枢，是最后稳定的光。"
+          ],
+          "visual": {
+            "bg": "#000000",
+            "text_color": "#cccccc",
+            "fade_in_ms": 800
+          },
+          "audio": "ambient.wind_low"
+        },
+        {
+          "stable_internal_id": "opening_segment_02_distant_view",
+          "display_name": "动画卡一·远景",
+          "kind": "animated_card",
+          "duration_ms": 11000,
+          "narration": "暗色大地图缓缓浮现，灯火稀疏。东方的影潮边缘正在逼近。",
+          "visual": {
+            "scene": "distant_map",
+            "camera": "slow_zoom_in",
+            "particles": "ash_drift"
+          },
+          "audio": "ambient.distant_bell"
+        },
+        {
+          "stable_internal_id": "opening_segment_03_crisis",
+          "display_name": "动画卡二·危机",
+          "kind": "animated_card",
+          "duration_ms": 11000,
+          "narration": "灰灯驿站被标红。守灯人发来急报：高速影潮正在接近，请求立即支援。",
+          "visual": {
+            "scene": "crisis_alert",
+            "highlight_node": "gray_lantern_station",
+            "camera": "push_to_crisis",
+            "particles": "alert_pulse"
+          },
+          "audio": "sfx.alert_bell"
+        },
+        {
+          "stable_internal_id": "opening_segment_04_player_entry",
+          "display_name": "动画卡三·玩家介入",
+          "kind": "animated_card",
+          "duration_ms": 11000,
+          "narration": "你被唤醒为守灯技师。用有限材料临时改造防线，是你能做的事。",
+          "visual": {
+            "scene": "player_awakening",
+            "camera": "slow_pull_back",
+            "particles": "lantern_glow_rise"
+          },
+          "audio": "ambient.lantern_hum"
+        }
+      ],
+      "landing": {
+        "target_page": "world_map",
+        "target_node_id": "residual_lantern_hub",
+        "initial_quest": "前往灰灯驿站，在影潮抵达前组织防线。",
+        "hint": "点击灰灯驿站进入第一场战斗。"
+      }
+    },
+    "questline": [
+      {
+        "quest_id": "quest_first_crisis",
+        "display_name": "驰援灰灯驿站",
+        "state": "active",
+        "target_node_id": "gray_lantern_station",
+        "summary": "灰灯驿站是余灯中枢东翼的前哨。影潮奔行者正在高速接近，驿站信标忽明忽暗。",
+        "steps": [
+          "进入灰灯驿站",
+          "查看威胁与保护目标",
+          "提交一个现场试作构想",
+          "守住第一波影潮",
+          "查看战后反馈与世界状态变化"
+        ]
+      }
+    ],
+    "multistage_outline": [
+      {
+        "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+        "title": "旧信号塔回光压力",
+        "status": "needs_review",
+        "primary_asset_ids": [
+          "asset_echo_prism_relay"
+        ],
+        "task_ids": [
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_event_ids": [
+          "random_event_old_signal_tower_pressure",
+          "random_event_signal_backwash"
+        ],
+        "runtime_package_refs": [
+          {
+            "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+            "package_id": "package_session_lampwright_old_signal_tower_001",
+            "node_id": "old_signal_tower",
+            "asset_count": 1
+          }
+        ]
+      },
+      {
+        "stage_id": "act_1_stage_06_signal_resonance_trial",
+        "title": "旧塔回声测标",
+        "status": "needs_review",
+        "primary_asset_ids": [
+          "asset_signal_echo_marker"
+        ],
+        "task_ids": [
+          "task_map_signal_backwash",
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_event_ids": [
+          "random_event_signal_backwash",
+          "random_event_split_tide_pressure"
+        ],
+        "runtime_package_refs": []
+      },
+      {
+        "stage_id": "act_1_stage_07_split_tide_containment",
+        "title": "东侧分潮遏制",
+        "status": "needs_review",
+        "primary_asset_ids": [
+          "asset_overload_chain_breaker"
+        ],
+        "task_ids": [
+          "task_contain_split_tide"
+        ],
+        "random_event_ids": [
+          "random_event_east_ridge_pressure",
+          "random_event_split_tide_pressure"
+        ],
+        "runtime_package_refs": []
+      }
+    ],
+    "battle_dialogue_beats": [
+      {
+        "beat_id": "battle_intro",
+        "speaker_id": "npc_gray_lantern_keeper",
+        "line": "影潮已经靠近东南路口，信标还亮着，但撑不了太久。"
+      },
+      {
+        "beat_id": "research_delivery",
+        "speaker_id": "npc_workshop_mentor",
+        "line": "样品封装完了。别指望它漂亮，能拖住影潮才算数。"
+      },
+      {
+        "beat_id": "settlement",
+        "speaker_id": "npc_gray_lantern_keeper",
+        "line": "灰灯还亮着。我们有时间把这次试作记录下来。"
+      }
+    ]
+  },
+  "stage_outline": [
+    {
+      "stage_order": 1,
+      "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+      "title": "旧信号塔回光压力",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+        "battle_config": "game_data/demo/old_signal_tower_pressure_battle_config.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "reward_player_choice",
+          "trigger_random_event"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "trigger_random_event"
+        ]
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "old_signal_tower"
+        ],
+        "npcs": [
+          "npc_road_scout"
+        ],
+        "resources": [
+          "glow_crystal"
+        ],
+        "facts": [
+          "old_signal_tower_resonance_measured"
+        ],
+        "flags": [
+          "stage_05_old_signal_tower_pressure_planned"
+        ],
+        "tasks": [
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_events": [
+          "random_event_old_signal_tower_pressure",
+          "random_event_signal_backwash"
+        ],
+        "research_jobs": [
+          "research_echo_prism_relay_trial"
+        ],
+        "samples": [
+          "sample_resonant_glass_shard_trial"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_echo_prism_relay",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [
+        {
+          "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+          "package_id": "package_session_lampwright_old_signal_tower_001",
+          "node_id": "old_signal_tower",
+          "asset_count": 1
+        }
+      ],
+      "validation_gate_counts": {
+        "passed": 7,
+        "warning": 1
+      },
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    },
+    {
+      "stage_order": 2,
+      "stage_id": "act_1_stage_06_signal_resonance_trial",
+      "title": "旧塔回声测标",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_06_signal_resonance_trial.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_06_signal_resonance_trial.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "teach_mechanic",
+          "trigger_random_event"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "trigger_random_event"
+        ]
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "old_signal_tower"
+        ],
+        "npcs": [
+          "npc_road_scout"
+        ],
+        "resources": [
+          "lantern_ash"
+        ],
+        "facts": [
+          "signal_echo_marker_possible"
+        ],
+        "flags": [
+          "stage_06_signal_resonance_trial_completed"
+        ],
+        "tasks": [
+          "task_map_signal_backwash",
+          "task_stabilize_old_signal_tower"
+        ],
+        "random_events": [
+          "random_event_signal_backwash",
+          "random_event_split_tide_pressure"
+        ],
+        "research_jobs": [
+          "research_echo_prism_relay_trial",
+          "research_signal_echo_marker_trial"
+        ],
+        "samples": [
+          "sample_signal_echo_marker_trial"
+        ],
+        "blueprints": [
+          "asset_echo_prism_relay"
+        ]
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_signal_echo_marker",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gate_counts": {
+        "not_applicable": 1,
+        "passed": 6,
+        "warning": 1
+      },
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    },
+    {
+      "stage_order": 3,
+      "stage_id": "act_1_stage_07_split_tide_containment",
+      "title": "东侧分潮遏制",
+      "status": "needs_review",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_07_split_tide_containment.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_07_split_tide_containment.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "teach_mechanic",
+          "trigger_random_event",
+          "unlock_battle_node"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "offer_workshop_hook",
+          "trigger_random_event",
+          "unlock_battle_node"
+        ]
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "east_dark_ridge",
+          "northern_road_crossing"
+        ],
+        "npcs": [
+          "npc_wire_mender_003"
+        ],
+        "resources": [
+          "conductor_filament"
+        ],
+        "facts": [
+          "split_tide_needs_chain_control"
+        ],
+        "flags": [
+          "stage_07_split_tide_containment_planned"
+        ],
+        "tasks": [
+          "task_contain_split_tide"
+        ],
+        "random_events": [
+          "random_event_east_ridge_pressure",
+          "random_event_split_tide_pressure"
+        ],
+        "research_jobs": [
+          "research_overload_chain_breaker_trial"
+        ],
+        "samples": [
+          "sample_charged_copper_coil_trial"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_overload_chain_breaker",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gate_counts": {
+        "not_applicable": 1,
+        "passed": 6,
+        "warning": 1
+      },
+      "next_actions": [
+        "human_review_stage_content",
+        "decide_stage_candidate_promotion",
+        "build_runtime_package_after_promotion"
+      ]
+    }
+  ],
+  "runtime_packages": [
+    {
+      "package_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "package_id": "package_session_lampwright_7f3a_001",
+      "node_id": "gray_lantern_station",
+      "battle_display_name": "灰灯驿站·第一场战斗",
+      "asset_count": 1,
+      "assets": [
+        {
+          "stable_internal_id": "sample_trap_7f3a",
+          "asset_kind": "temporary_trap_sample",
+          "lifecycle_state": "ephemeral",
+          "display_name": "折光绊索",
+          "battle_surfaces": [
+            "battle_hotbar"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 16,
+        "height_cells": 9,
+        "path_count": 1,
+        "optional_target_count": 1,
+        "sample_delivery_delay_ms": 30000
+      }
+    },
+    {
+      "package_file": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "package_id": "package_session_lampwright_wick_store_001",
+      "node_id": "lamp_wick_store",
+      "battle_display_name": "灯芯仓·压力防守",
+      "asset_count": 3,
+      "assets": [
+        {
+          "stable_internal_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "信标灯芯诱饵",
+          "battle_surfaces": [
+            "battle_hotbar"
+          ]
+        },
+        {
+          "stable_internal_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "灯芯护幕桩",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ]
+        },
+        {
+          "stable_internal_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "灯灰爆鸣塔",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "path_count": 2,
+        "optional_target_count": 2,
+        "sample_delivery_delay_ms": 0
+      }
+    },
+    {
+      "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+      "package_id": "package_session_lampwright_old_signal_tower_001",
+      "node_id": "old_signal_tower",
+      "battle_display_name": "旧信号塔·回光压力",
+      "asset_count": 1,
+      "assets": [
+        {
+          "stable_internal_id": "asset_echo_prism_relay",
+          "asset_kind": "tower_blueprint",
+          "lifecycle_state": "session_blueprint",
+          "display_name": "回光棱镜中继塔",
+          "battle_surfaces": [
+            "battle_hotbar",
+            "node_supply"
+          ]
+        }
+      ],
+      "battle_context_summary": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "path_count": 2,
+        "optional_target_count": 2,
+        "sample_delivery_delay_ms": 0
+      }
+    }
+  ],
+  "assets": [
+    {
+      "stable_internal_id": "asset_ash_burst_lantern",
+      "asset_type": "tower_blueprint",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "灯灰爆鸣塔",
+        "summary": "将灯灰压入爆鸣腔，在敌人聚集时释放暖金色冲击波，造成范围伤害并短暂提供护盾，适合防守资源点入口。",
+        "tags": [
+          "tower_blueprint",
+          "compiled_asset",
+          "lantern_ash",
+          "burst"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "tower_blueprint",
+        "base_stats": {
+          "build_cost": 200,
+          "range": 120,
+          "cooldown": 3.5,
+          "targeting": "nearest"
+        },
+        "effect_blocks": [
+          {
+            "type": "area_damage",
+            "amount": 80,
+            "radius": 80
+          },
+          {
+            "type": "shield",
+            "shield_amount": 50
+          }
+        ],
+        "constraints": {
+          "max_instances": 3,
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "tower_slot": "standard",
+          "upgrade_from": null
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_area_damage_0",
+          "type": "particle_burst",
+          "palette": "red_orange",
+          "summary": "范围命中时爆开短促粒子。",
+          "texture_token": "vfx.procedural.spark",
+          "runtime_params": {
+            "duration_ms": 420,
+            "radius_px": 80,
+            "particle_count": 18,
+            "spread_degrees": 360
+          }
+        },
+        {
+          "recipe_id": "visual_shield_1",
+          "type": "aura_field",
+          "palette": "warm_gold",
+          "summary": "保护目标周围形成暖金色护幕。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 1200,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.tower_blueprint",
+        "sprite_token": "fallback_sprite.tower_blueprint",
+        "palette_hint": [
+          "tower_blueprint",
+          "compiled_asset",
+          "lantern_ash",
+          "burst"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_ash_burst_lantern_icon_5045e492",
+            "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_icon_5045e492.png",
+            "width": 899,
+            "height": 899
+          },
+          "tower_sprite": {
+            "media_id": "asset_ash_burst_lantern_tower_sprite_9263019f",
+            "url": "/assets/frontend_mock/processed/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+            "width": 949,
+            "height": 949
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_ash_burst_lantern_icon_5045e492",
+            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_icon_5045e492.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_ash_burst_lantern_tower_sprite_9263019f",
+            "url": "/assets/frontend_mock/generated/asset_ash_burst_lantern_tower_sprite_9263019f.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_ash_burst_lantern"
+        },
+        "simulation": {
+          "simulation_focus": "combat_output",
+          "estimated_dps": 50.29,
+          "utility_score": 0.26,
+          "cost_efficiency": 0.407,
+          "balance_flags": []
+        },
+        "score": {
+          "total_score": 78.4,
+          "recommendation": "generate_media",
+          "reasons": [
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "battle_preview",
+            "icon",
+            "tower_sprite"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "tower",
+        "battle_toolbar": true,
+        "deployment_surface": "tower_socket",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "intel_dark_echo_survey_001",
+      "asset_type": "intel_asset",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "东暗回声测记",
+        "summary": "通过回声与旧信标读数，揭示下一波影潮路径及可能弱点，仅对短期战斗有效。",
+        "tags": [
+          "intel_asset",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "intel_asset",
+        "base_stats": {
+          "action_cost": 1,
+          "valid_turns": 2,
+          "confidence": 0.6
+        },
+        "effect_blocks": [
+          {
+            "type": "scout_reveal",
+            "reveal_scope": "next_wave_path"
+          },
+          {
+            "type": "weakness_tag",
+            "tag_key": "dark_region_echo_weakness",
+            "confidence": 0.5
+          },
+          {
+            "type": "path_prediction",
+            "prediction_horizon": 2
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": false,
+          "max_instances": 1,
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "reveal_mode": "fog_of_war",
+          "applies_to": "enemy_wave",
+          "consumer_hint": "use_before_next_wave"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_intel_0",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "地图上浮现短暂情报标记。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        },
+        {
+          "recipe_id": "visual_weakness_1",
+          "type": "sprite_flash",
+          "palette": "white",
+          "summary": "目标弱点被短暂描边。",
+          "runtime_params": {
+            "duration_ms": 160,
+            "alpha_peak": 0.85,
+            "repeat": 1
+          }
+        },
+        {
+          "recipe_id": "visual_intel_2",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "地图上浮现短暂情报标记。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.intel_asset",
+        "sprite_token": "fallback_sprite.intel_asset",
+        "palette_hint": [
+          "intel_asset",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "intel_dark_echo_survey_001_icon_cec61ac8",
+            "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_icon_cec61ac8.png",
+            "width": 887,
+            "height": 887
+          },
+          "ui_card": {
+            "media_id": "intel_dark_echo_survey_001_ui_card_7219d045",
+            "url": "/assets/frontend_mock/processed/intel_dark_echo_survey_001_ui_card_7219d045.png",
+            "width": 823,
+            "height": 823
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "intel_dark_echo_survey_001_icon_cec61ac8",
+            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_icon_cec61ac8.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "intel_dark_echo_survey_001_ui_card_7219d045",
+            "url": "/assets/frontend_mock/generated/intel_dark_echo_survey_001_ui_card_7219d045.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "intel_dark_echo_survey_001"
+        },
+        "simulation": {
+          "simulation_focus": "intel_utility",
+          "estimated_dps": 0.0,
+          "utility_score": 0.52,
+          "cost_efficiency": 1.56,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "total_score": 86.1,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_cost_efficiency",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "intel",
+        "battle_toolbar": false,
+        "deployment_surface": "map_overlay",
+        "ui_pages": [
+          "world_map",
+          "workshop",
+          "battle"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_echo_prism_relay",
+      "asset_type": "tower_blueprint",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "回光棱镜中继塔资产",
+        "summary": "把辉晶压入临时棱镜底座，引导旧信号塔的回光扰动，使来敌短暂显形并减速。",
+        "tags": [
+          "tower_blueprint",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "tower_blueprint",
+        "base_stats": {
+          "build_cost": 160,
+          "range": 140,
+          "cooldown": 1.0,
+          "targeting": "nearest"
+        },
+        "effect_blocks": [
+          {
+            "type": "slow",
+            "slow_ratio": 0.35,
+            "duration": 1.8,
+            "stacking": "refresh"
+          },
+          {
+            "type": "aura_buff",
+            "radius": 110,
+            "target": "enemy",
+            "effect_ref": "slow"
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": false,
+          "max_instances": 2,
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "tower_slot": "standard",
+          "upgrade_from": "basic_tower"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_slow_0",
+          "type": "aura_field",
+          "palette": "cold_blue",
+          "summary": "冷蓝色减速光场，作用于范围内敌人。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 1800,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        },
+        {
+          "recipe_id": "visual_aura_1",
+          "type": "ring_pulse",
+          "palette": "cold_blue",
+          "summary": "从塔底向外扩散的环形灯纹。",
+          "texture_token": "vfx.procedural.glyph_ring",
+          "runtime_params": {
+            "duration_ms": 650,
+            "radius_px": 110,
+            "stroke_px": 3,
+            "repeat": 1
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.tower_blueprint",
+        "sprite_token": "fallback_sprite.tower_blueprint",
+        "palette_hint": [
+          "tower_blueprint",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_echo_prism_relay_icon_da5766a5",
+            "url": "/assets/frontend_mock/processed/asset_echo_prism_relay_icon_da5766a5.png",
+            "width": 896,
+            "height": 896
+          },
+          "tower_sprite": {
+            "media_id": "asset_echo_prism_relay_tower_sprite_4424527e",
+            "url": "/assets/frontend_mock/processed/asset_echo_prism_relay_tower_sprite_4424527e.png",
+            "width": 979,
+            "height": 979
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_echo_prism_relay_icon_da5766a5",
+            "url": "/assets/frontend_mock/generated/asset_echo_prism_relay_icon_da5766a5.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_echo_prism_relay_tower_sprite_4424527e",
+            "url": "/assets/frontend_mock/generated/asset_echo_prism_relay_tower_sprite_4424527e.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_echo_prism_relay"
+        },
+        "simulation": {
+          "simulation_focus": "combat_output",
+          "estimated_dps": 0.0,
+          "utility_score": 0.288,
+          "cost_efficiency": 0.507,
+          "balance_flags": [
+            "pure_control_requires_damage_partner",
+            "control_has_weak_cost"
+          ]
+        },
+        "score": {
+          "total_score": 75.5,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:pure_control_requires_damage_partner",
+            "simulation_flag:control_has_weak_cost",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "battle_preview",
+            "icon",
+            "tower_sprite"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "tower",
+        "battle_toolbar": true,
+        "deployment_surface": "tower_socket",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_light_slow_tower_001",
+      "asset_type": "tower_blueprint",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "聚光迟滞塔",
+        "summary": "用稳定灯幕拖慢敌人，但会持续消耗电力。",
+        "tags": [
+          "lantern",
+          "blue_light",
+          "control_tower"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "tower_blueprint",
+        "base_stats": {
+          "build_cost": 160,
+          "range": 140,
+          "cooldown": 1.0,
+          "targeting": "nearest"
+        },
+        "effect_blocks": [
+          {
+            "type": "slow",
+            "slow_ratio": 0.35,
+            "duration": 1.8,
+            "stacking": "refresh"
+          },
+          {
+            "type": "aura_buff",
+            "radius": 110,
+            "target": "enemy",
+            "effect_ref": "slow"
+          },
+          {
+            "type": "power_cost",
+            "power_per_second": 4,
+            "shutdown_behavior": "disable_effects"
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": true,
+          "max_instances": 2,
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "tower_slot": "standard",
+          "upgrade_from": "basic_light_tower"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_slow_0",
+          "type": "aura_field",
+          "palette": "cold_blue",
+          "summary": "冷蓝色减速光场，作用于范围内敌人。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 1800,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        },
+        {
+          "recipe_id": "visual_aura_1",
+          "type": "ring_pulse",
+          "palette": "cold_blue",
+          "summary": "从塔底向外扩散的环形灯纹。",
+          "texture_token": "vfx.procedural.glyph_ring",
+          "runtime_params": {
+            "duration_ms": 650,
+            "radius_px": 110,
+            "stroke_px": 3,
+            "repeat": 1
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.tower_blueprint",
+        "sprite_token": "fallback_sprite.tower_blueprint",
+        "palette_hint": [
+          "lantern",
+          "blue_light",
+          "control_tower"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_light_slow_tower_001_icon_1a0e42e9",
+            "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_icon_1a0e42e9.png",
+            "width": 890,
+            "height": 890
+          },
+          "tower_sprite": {
+            "media_id": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
+            "url": "/assets/frontend_mock/processed/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+            "width": 935,
+            "height": 935
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_light_slow_tower_001_icon_1a0e42e9",
+            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_icon_1a0e42e9.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_light_slow_tower_001_tower_sprite_5ef52d23",
+            "url": "/assets/frontend_mock/generated/asset_light_slow_tower_001_tower_sprite_5ef52d23.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_light_slow_tower_001"
+        },
+        "simulation": {
+          "simulation_focus": "combat_output",
+          "estimated_dps": 0.0,
+          "utility_score": 0.288,
+          "cost_efficiency": 0.384,
+          "balance_flags": [
+            "pure_control_requires_damage_partner"
+          ]
+        },
+        "score": {
+          "total_score": 76.3,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:pure_control_requires_damage_partner",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "battle_preview",
+            "icon",
+            "tower_sprite"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "tower",
+        "battle_toolbar": true,
+        "deployment_surface": "tower_socket",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_mirror_lure_trap_001",
+      "asset_type": "support_item",
+      "lifecycle": "session_blueprint",
+      "display": {
+        "name": "折光诱饵陷阱",
+        "summary": "用碎镜和灯芯灰做成一次性诱饵，短暂吸引并迟滞一小片区域内的敌人，为矿点撤离争取时间。",
+        "tags": [
+          "support_item",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "support_item",
+        "base_stats": {
+          "deploy_cost": 45,
+          "cooldown": 25.0,
+          "use_count": 1,
+          "cast_range": 120
+        },
+        "effect_blocks": [
+          {
+            "type": "trap_tile_effect",
+            "tile_radius": 2,
+            "duration": 6.0
+          },
+          {
+            "type": "slow",
+            "slow_ratio": 0.4,
+            "duration": 5.0
+          },
+          {
+            "type": "risk_modifier",
+            "risk_delta": -15
+          }
+        ],
+        "constraints": {
+          "max_instances": 3,
+          "allowed_phases": [
+            "battle",
+            "retreat"
+          ]
+        },
+        "type_specific": {
+          "item_slot": "consumable",
+          "delivery_method": "deploy_trap",
+          "target_rule": "ground_enemy"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_trap_0",
+          "type": "ring_pulse",
+          "palette": "warm_gold",
+          "summary": "地面陷阱触发时亮起灯纹。",
+          "texture_token": "vfx.procedural.glyph_ring",
+          "runtime_params": {
+            "duration_ms": 650,
+            "radius_px": 64,
+            "stroke_px": 3,
+            "repeat": 1
+          }
+        },
+        {
+          "recipe_id": "visual_slow_1",
+          "type": "aura_field",
+          "palette": "cold_blue",
+          "summary": "冷蓝色减速光场，作用于范围内敌人。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 5000,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        },
+        {
+          "recipe_id": "visual_risk_modifier_2",
+          "type": "screen_shake",
+          "palette": "cold_blue",
+          "summary": "威胁压力变化时触发轻量反馈。",
+          "runtime_params": {
+            "duration_ms": 180,
+            "intensity_px": 4
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.support_item",
+        "sprite_token": "fallback_sprite.support_item",
+        "palette_hint": [
+          "support_item",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+            "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+            "width": 775,
+            "height": 775
+          },
+          "ui_card": {
+            "media_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+            "url": "/assets/frontend_mock/processed/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+            "width": 835,
+            "height": 835
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_mirror_lure_trap_001_icon_a0e4455b",
+            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_icon_a0e4455b.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_mirror_lure_trap_001_ui_card_ffdb9a74",
+            "url": "/assets/frontend_mock/generated/asset_mirror_lure_trap_001_ui_card_ffdb9a74.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_mirror_lure_trap_001"
+        },
+        "simulation": {
+          "simulation_focus": "single_use_support",
+          "estimated_dps": 0.0,
+          "utility_score": 0.136,
+          "cost_efficiency": 0.612,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "total_score": 76.2,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_cost_efficiency",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "item",
+        "battle_toolbar": true,
+        "deployment_surface": "ground_tile",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_overload_chain_breaker",
+      "asset_type": "temporary_mod",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "过载连弧断潮改造资产",
+        "summary": "把短压铜线圈接入现有塔座，让下一段攻击短时跳向多个敌人，用来压住分散影潮。",
+        "tags": [
+          "temporary_mod",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "temporary_mod",
+        "base_stats": {
+          "activation_cost": 45,
+          "duration_seconds": 20,
+          "cooldown": 60
+        },
+        "effect_blocks": [
+          {
+            "type": "charge_burst",
+            "charge_seconds": 4,
+            "burst_multiplier": 1.8
+          },
+          {
+            "type": "risk_modifier",
+            "risk_delta": 10
+          }
+        ],
+        "constraints": {
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "attach_to": "tower",
+          "target_asset_type": "tower_blueprint",
+          "stacking": "replace_same_source",
+          "rollback_behavior": "expire_and_restore_base_tower"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_burst_0",
+          "type": "particle_burst",
+          "palette": "red_orange",
+          "summary": "短时蓄能后爆发火花。",
+          "texture_token": "vfx.procedural.spark",
+          "runtime_params": {
+            "duration_ms": 420,
+            "radius_px": 56,
+            "particle_count": 18,
+            "spread_degrees": 360
+          }
+        },
+        {
+          "recipe_id": "visual_risk_modifier_1",
+          "type": "screen_shake",
+          "palette": "cold_blue",
+          "summary": "威胁压力变化时触发轻量反馈。",
+          "runtime_params": {
+            "duration_ms": 180,
+            "intensity_px": 4
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.temporary_mod",
+        "sprite_token": "fallback_sprite.temporary_mod",
+        "palette_hint": [
+          "temporary_mod",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_overload_chain_breaker_icon_7234f228",
+            "url": "/assets/frontend_mock/processed/asset_overload_chain_breaker_icon_7234f228.png",
+            "width": 752,
+            "height": 752
+          },
+          "ui_card": {
+            "media_id": "asset_overload_chain_breaker_ui_card_cda4e2c7",
+            "url": "/assets/frontend_mock/processed/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+            "width": 790,
+            "height": 790
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_overload_chain_breaker_icon_7234f228",
+            "url": "/assets/frontend_mock/generated/asset_overload_chain_breaker_icon_7234f228.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_overload_chain_breaker_ui_card_cda4e2c7",
+            "url": "/assets/frontend_mock/generated/asset_overload_chain_breaker_ui_card_cda4e2c7.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_overload_chain_breaker"
+        },
+        "simulation": {
+          "simulation_focus": "modifier_risk_reward",
+          "estimated_dps": 8.1,
+          "utility_score": 0.034,
+          "cost_efficiency": 0.271,
+          "balance_flags": []
+        },
+        "score": {
+          "total_score": 73.2,
+          "recommendation": "generate_media",
+          "reasons": [
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "mod",
+        "battle_toolbar": true,
+        "deployment_surface": "existing_tower",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "mod_overload_chain_arc_001",
+      "asset_type": "temporary_mod",
+      "lifecycle": "session_blueprint",
+      "display": {
+        "name": "过载连弧改造",
+        "summary": "临时改造线圈使攻击连锁跳转，显著提升伤害但极度消耗电力并带来高风险。",
+        "tags": [
+          "temporary_mod",
+          "overload",
+          "chain_lightning",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "temporary_mod",
+        "base_stats": {
+          "activation_cost": 120,
+          "duration_seconds": 4.0,
+          "cooldown": 15.0
+        },
+        "effect_blocks": [
+          {
+            "type": "pierce_or_chain",
+            "max_targets": 4
+          },
+          {
+            "type": "damage",
+            "amount": 85
+          },
+          {
+            "type": "power_cost",
+            "power_per_second": 12.0
+          },
+          {
+            "type": "risk_modifier",
+            "risk_delta": 25
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": true,
+          "allowed_phases": [
+            "battle"
+          ],
+          "target_asset_type_filter": "tower_blueprint"
+        },
+        "type_specific": {
+          "target_asset_type": "tower_blueprint",
+          "stacking": "replace",
+          "rollback_behavior": "restore_with_cooldown_penalty"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_chain_0",
+          "type": "chain_arc",
+          "palette": "red_orange",
+          "summary": "过载能量在多个目标间跳转。",
+          "texture_token": "vfx.procedural.chain_core",
+          "runtime_params": {
+            "duration_ms": 360,
+            "width_px": 4,
+            "jitter_px": 8,
+            "max_links": 4
+          }
+        },
+        {
+          "recipe_id": "visual_damage_1",
+          "type": "sprite_flash",
+          "palette": "warm_gold",
+          "summary": "命中时短促闪光。",
+          "runtime_params": {
+            "duration_ms": 160,
+            "alpha_peak": 0.85,
+            "repeat": 1
+          }
+        },
+        {
+          "recipe_id": "visual_risk_modifier_3",
+          "type": "screen_shake",
+          "palette": "cold_blue",
+          "summary": "威胁压力变化时触发轻量反馈。",
+          "runtime_params": {
+            "duration_ms": 180,
+            "intensity_px": 4
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.temporary_mod",
+        "sprite_token": "fallback_sprite.temporary_mod",
+        "palette_hint": [
+          "temporary_mod",
+          "overload",
+          "chain_lightning",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "mod_overload_chain_arc_001_icon_6c776311",
+            "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_icon_6c776311.png",
+            "width": 771,
+            "height": 771
+          },
+          "ui_card": {
+            "media_id": "mod_overload_chain_arc_001_ui_card_6d142b71",
+            "url": "/assets/frontend_mock/processed/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+            "width": 790,
+            "height": 790
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "mod_overload_chain_arc_001_icon_6c776311",
+            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_icon_6c776311.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "mod_overload_chain_arc_001_ui_card_6d142b71",
+            "url": "/assets/frontend_mock/generated/mod_overload_chain_arc_001_ui_card_6d142b71.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "mod_overload_chain_arc_001"
+        },
+        "simulation": {
+          "simulation_focus": "modifier_risk_reward",
+          "estimated_dps": 5.67,
+          "utility_score": 0.099,
+          "cost_efficiency": 0.075,
+          "balance_flags": [
+            "high_power_demand"
+          ]
+        },
+        "score": {
+          "total_score": 68.5,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_power_demand",
+            "media_not_generated",
+            "high_power_demand"
+          ],
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "mod",
+        "battle_toolbar": true,
+        "deployment_surface": "existing_tower",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "intel_shadow_tide_survey",
+      "asset_type": "intel_asset",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "影潮测绘札记",
+        "summary": "整理哨兵观察、旧路标和灯火读数，揭示下一波敌潮路径与可利用弱点。不直接造成伤害。",
+        "tags": [
+          "intel_asset",
+          "compiled_asset",
+          "scouting"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "intel_asset",
+        "base_stats": {
+          "action_cost": 2,
+          "valid_turns": 3,
+          "confidence": 0.75
+        },
+        "effect_blocks": [
+          {
+            "type": "path_prediction",
+            "prediction_horizon": 2
+          },
+          {
+            "type": "weakness_tag",
+            "tag_key": "shadow_tide_fissure",
+            "confidence": 0.75
+          },
+          {
+            "type": "countermeasure_hint",
+            "hint_scope": "next_wave_vulnerability"
+          },
+          {
+            "type": "risk_modifier",
+            "risk_delta": -10
+          }
+        ],
+        "constraints": {
+          "requires_scout_present": true,
+          "allowed_phases": [
+            "preparation",
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "reveal_mode": "next_wave_path_and_weakness",
+          "applies_to": "enemy_routes",
+          "consumer_hint": "需要斥候在场才能更新；情报仅适用于短期战斗"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_intel_0",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "地图上浮现短暂情报标记。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        },
+        {
+          "recipe_id": "visual_weakness_1",
+          "type": "sprite_flash",
+          "palette": "white",
+          "summary": "目标弱点被短暂描边。",
+          "runtime_params": {
+            "duration_ms": 160,
+            "alpha_peak": 0.85,
+            "repeat": 1
+          }
+        },
+        {
+          "recipe_id": "visual_countermeasure_2",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "路径附近浮现短暂战术提示。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        },
+        {
+          "recipe_id": "visual_risk_modifier_3",
+          "type": "screen_shake",
+          "palette": "cold_blue",
+          "summary": "威胁压力变化时触发轻量反馈。",
+          "runtime_params": {
+            "duration_ms": 180,
+            "intensity_px": 4
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.intel_asset",
+        "sprite_token": "fallback_sprite.intel_asset",
+        "palette_hint": [
+          "intel_asset",
+          "compiled_asset",
+          "scouting"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "intel_shadow_tide_survey_icon_3ba77691",
+            "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_icon_3ba77691.png",
+            "width": 808,
+            "height": 808
+          },
+          "ui_card": {
+            "media_id": "intel_shadow_tide_survey_ui_card_192910c1",
+            "url": "/assets/frontend_mock/processed/intel_shadow_tide_survey_ui_card_192910c1.png",
+            "width": 810,
+            "height": 810
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "intel_shadow_tide_survey_icon_3ba77691",
+            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_icon_3ba77691.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "intel_shadow_tide_survey_ui_card_192910c1",
+            "url": "/assets/frontend_mock/generated/intel_shadow_tide_survey_ui_card_192910c1.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "intel_shadow_tide_survey"
+        },
+        "simulation": {
+          "simulation_focus": "intel_utility",
+          "estimated_dps": 0.0,
+          "utility_score": 0.585,
+          "cost_efficiency": 0.877,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "total_score": 87.0,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_cost_efficiency",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "intel",
+        "battle_toolbar": false,
+        "deployment_surface": "map_overlay",
+        "ui_pages": [
+          "world_map",
+          "workshop",
+          "battle"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_signal_echo_marker",
+      "asset_type": "support_item",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "回声测标短札资产",
+        "summary": "把旧信号塔回流压成一枚短札，在下一段黑路开始前标出敌群来向并给出克制提示。",
+        "tags": [
+          "support_item",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "support_item",
+        "base_stats": {
+          "deploy_cost": 35,
+          "use_count": 1,
+          "cooldown": 0
+        },
+        "effect_blocks": [
+          {
+            "type": "scout_reveal",
+            "reveal_scope": "next_wave"
+          },
+          {
+            "type": "countermeasure_hint",
+            "hint_scope": "current_node"
+          }
+        ],
+        "constraints": {
+          "allowed_phases": [
+            "preparation"
+          ]
+        },
+        "type_specific": {
+          "item_slot": "tactical",
+          "delivery_method": "pre_battle_consumable",
+          "target_rule": "current_node_or_next_wave"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_intel_0",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "地图上浮现短暂情报标记。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        },
+        {
+          "recipe_id": "visual_countermeasure_1",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "路径附近浮现短暂战术提示。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.support_item",
+        "sprite_token": "fallback_sprite.support_item",
+        "palette_hint": [
+          "support_item",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_signal_echo_marker_icon_e71e85ac",
+            "url": "/assets/frontend_mock/processed/asset_signal_echo_marker_icon_e71e85ac.png",
+            "width": 871,
+            "height": 871
+          },
+          "ui_card": {
+            "media_id": "asset_signal_echo_marker_ui_card_75f14373",
+            "url": "/assets/frontend_mock/processed/asset_signal_echo_marker_ui_card_75f14373.png",
+            "width": 920,
+            "height": 920
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_signal_echo_marker_icon_e71e85ac",
+            "url": "/assets/frontend_mock/generated/asset_signal_echo_marker_icon_e71e85ac.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_signal_echo_marker_ui_card_75f14373",
+            "url": "/assets/frontend_mock/generated/asset_signal_echo_marker_ui_card_75f14373.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_signal_echo_marker"
+        },
+        "simulation": {
+          "simulation_focus": "single_use_support",
+          "estimated_dps": 0.0,
+          "utility_score": 0.45,
+          "cost_efficiency": 1.543,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "total_score": 84.8,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_cost_efficiency",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "item",
+        "battle_toolbar": true,
+        "deployment_surface": "ground_tile",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_signal_wick_decoy",
+      "asset_type": "support_item",
+      "lifecycle": "session_blueprint",
+      "display": {
+        "name": "信标灯芯诱饵",
+        "summary": "投掷到路径附近的一次性信标诱饵，发出灯光信号迟滞并吸引影潮前锋，为防线争取喘息时间。",
+        "tags": [
+          "support_item",
+          "compiled_asset",
+          "decoy",
+          "light"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "support_item",
+        "base_stats": {
+          "deploy_cost": 75,
+          "cooldown": 14.0,
+          "use_count": 3,
+          "cast_range": 130
+        },
+        "effect_blocks": [
+          {
+            "type": "trap_tile_effect",
+            "tile_radius": 1,
+            "duration": 8.0,
+            "description": "在路径格上生成信标灯芯诱饵区域，持续吸引并干扰经过的敌人。"
+          },
+          {
+            "type": "slow",
+            "slow_ratio": 0.3,
+            "duration": 3.5,
+            "stacking": "refresh",
+            "description": "诱饵灯光信号迟滞范围内的敌人移动速度。"
+          },
+          {
+            "type": "risk_modifier",
+            "risk_delta": -12,
+            "description": "诱饵分散前锋注意力，临时降低防线威胁等级。"
+          },
+          {
+            "type": "countermeasure_hint",
+            "hint_scope": "path_adjacent",
+            "description": "诱饵部署后反馈附近路径上的敌人类型与密度，辅助补防决策。"
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": false,
+          "max_instances": 3,
+          "allowed_phases": [
+            "preparation",
+            "battle"
+          ],
+          "placement_rule": "path_adjacent",
+          "heavy_enemy_resistance": "reduced_attraction"
+        },
+        "type_specific": {
+          "item_slot": "throwable",
+          "delivery_method": "toss",
+          "target_rule": "path_tile"
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_trap_0",
+          "type": "ring_pulse",
+          "palette": "warm_gold",
+          "summary": "地面陷阱触发时亮起灯纹。",
+          "texture_token": "vfx.procedural.glyph_ring",
+          "runtime_params": {
+            "duration_ms": 650,
+            "radius_px": 64,
+            "stroke_px": 3,
+            "repeat": 1
+          }
+        },
+        {
+          "recipe_id": "visual_slow_1",
+          "type": "aura_field",
+          "palette": "cold_blue",
+          "summary": "冷蓝色减速光场，作用于范围内敌人。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 3500,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        },
+        {
+          "recipe_id": "visual_risk_modifier_2",
+          "type": "screen_shake",
+          "palette": "cold_blue",
+          "summary": "威胁压力变化时触发轻量反馈。",
+          "runtime_params": {
+            "duration_ms": 180,
+            "intensity_px": 4
+          }
+        },
+        {
+          "recipe_id": "visual_countermeasure_3",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "路径附近浮现短暂战术提示。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.support_item",
+        "sprite_token": "fallback_sprite.support_item",
+        "palette_hint": [
+          "support_item",
+          "compiled_asset",
+          "decoy",
+          "light"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_signal_wick_decoy_icon_9fac3cb5",
+            "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_icon_9fac3cb5.png",
+            "width": 852,
+            "height": 852
+          },
+          "ui_card": {
+            "media_id": "asset_signal_wick_decoy_ui_card_c0b43d8f",
+            "url": "/assets/frontend_mock/processed/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+            "width": 894,
+            "height": 894
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_signal_wick_decoy_icon_9fac3cb5",
+            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_icon_9fac3cb5.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "ui_card": {
+            "media_id": "asset_signal_wick_decoy_ui_card_c0b43d8f",
+            "url": "/assets/frontend_mock/generated/asset_signal_wick_decoy_ui_card_c0b43d8f.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_signal_wick_decoy"
+        },
+        "simulation": {
+          "simulation_focus": "single_use_support",
+          "estimated_dps": 0.0,
+          "utility_score": 0.308,
+          "cost_efficiency": 0.633,
+          "balance_flags": [
+            "high_cost_efficiency"
+          ]
+        },
+        "score": {
+          "total_score": 79.5,
+          "recommendation": "generate_media",
+          "reasons": [
+            "simulation_flag:high_cost_efficiency",
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "effect_preview",
+            "icon",
+            "ui_card"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "item",
+        "battle_toolbar": true,
+        "deployment_surface": "ground_tile",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    },
+    {
+      "stable_internal_id": "asset_wick_barrier_pylon",
+      "asset_type": "tower_blueprint",
+      "lifecycle": "ephemeral",
+      "display": {
+        "name": "灯芯护幕桩",
+        "summary": "短程护幕桩，用灯芯碎片和导线生成屏障，持续修复并保护附近友军。",
+        "tags": [
+          "tower_blueprint",
+          "compiled_asset"
+        ],
+        "rarity_hint": "prototype"
+      },
+      "gameplay": {
+        "asset_type": "tower_blueprint",
+        "base_stats": {
+          "build_cost": 180,
+          "range": 100,
+          "cooldown": 2.5,
+          "targeting": "nearest_ally"
+        },
+        "effect_blocks": [
+          {
+            "type": "shield",
+            "shield_amount": 120
+          },
+          {
+            "type": "repair",
+            "repair_amount": 15
+          },
+          {
+            "type": "aura_buff",
+            "radius": 80,
+            "target": "ally"
+          },
+          {
+            "type": "power_cost",
+            "power_per_second": 3.0
+          }
+        ],
+        "constraints": {
+          "requires_power_grid": false,
+          "max_instances": 3,
+          "allowed_phases": [
+            "battle"
+          ]
+        },
+        "type_specific": {
+          "tower_slot": "support",
+          "upgrade_from": null
+        }
+      },
+      "visual_recipes": [
+        {
+          "recipe_id": "visual_shield_0",
+          "type": "aura_field",
+          "palette": "warm_gold",
+          "summary": "保护目标周围形成暖金色护幕。",
+          "texture_token": "vfx.procedural.soft_disc",
+          "runtime_params": {
+            "duration_ms": 1200,
+            "radius_px": 72,
+            "alpha": 0.28,
+            "pulse": true
+          }
+        },
+        {
+          "recipe_id": "visual_repair_1",
+          "type": "floating_text",
+          "palette": "white",
+          "summary": "维修触发时显示短暂恢复反馈。",
+          "runtime_params": {
+            "duration_ms": 900,
+            "rise_px": 24,
+            "font_size_px": 14
+          }
+        },
+        {
+          "recipe_id": "visual_aura_2",
+          "type": "ring_pulse",
+          "palette": "cold_blue",
+          "summary": "从塔底向外扩散的环形灯纹。",
+          "texture_token": "vfx.procedural.glyph_ring",
+          "runtime_params": {
+            "duration_ms": 650,
+            "radius_px": 80,
+            "stroke_px": 3,
+            "repeat": 1
+          }
+        }
+      ],
+      "media_refs": {
+        "mode": "generated",
+        "icon_token": "fallback_icon.tower_blueprint",
+        "sprite_token": "fallback_sprite.tower_blueprint",
+        "palette_hint": [
+          "tower_blueprint",
+          "compiled_asset"
+        ],
+        "readiness": "fallback_ready",
+        "note": "前端优先使用 generated_roles 中的本地静态资源；缺失角色可回退到内置形状、色板和 visual_recipes。",
+        "generated_roles": {
+          "icon": {
+            "media_id": "asset_wick_barrier_pylon_icon_09e6177c",
+            "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_icon_09e6177c.png",
+            "width": 906,
+            "height": 906
+          },
+          "tower_sprite": {
+            "media_id": "asset_wick_barrier_pylon_tower_sprite_7472556d",
+            "url": "/assets/frontend_mock/processed/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+            "width": 946,
+            "height": 946
+          }
+        },
+        "animation_seed_roles": {
+          "icon": {
+            "media_id": "asset_wick_barrier_pylon_icon_09e6177c",
+            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_icon_09e6177c.png",
+            "width": 1024,
+            "height": 1024
+          },
+          "tower_sprite": {
+            "media_id": "asset_wick_barrier_pylon_tower_sprite_7472556d",
+            "url": "/assets/frontend_mock/generated/asset_wick_barrier_pylon_tower_sprite_7472556d.png",
+            "width": 1024,
+            "height": 1024
+          }
+        }
+      },
+      "promotion": {
+        "promotion_state": "fallback_ready",
+        "playable": true,
+        "uses_fallback_media": true,
+        "required_next_actions": [
+          "attach_deterministic_fallback_skin",
+          "continue_media_generation_or_repair_in_background"
+        ]
+      },
+      "compiler_reports": {
+        "validation": {
+          "status": "passed",
+          "errors": [],
+          "candidate_id": "asset_wick_barrier_pylon"
+        },
+        "simulation": {
+          "simulation_focus": "combat_output",
+          "estimated_dps": 0.0,
+          "utility_score": 0.272,
+          "cost_efficiency": 0.146,
+          "balance_flags": []
+        },
+        "score": {
+          "total_score": 75.2,
+          "recommendation": "generate_media",
+          "reasons": [
+            "media_not_generated"
+          ],
+          "expected_media_roles": [
+            "battle_preview",
+            "icon",
+            "tower_sprite"
+          ]
+        }
+      },
+      "frontend_usage": {
+        "workshop_slot": "tower",
+        "battle_toolbar": true,
+        "deployment_surface": "tower_socket",
+        "ui_pages": [
+          "workshop",
+          "battle",
+          "settlement"
+        ]
+      }
+    }
+  ]
+}

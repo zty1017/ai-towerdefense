@@ -1,0 +1,87 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-15-map-v02-api-evidence",
+  "title": "MapRuntimePackage v0.2 API smoke evidence",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/map-v02-api-evidence",
+  "worktree": "/tmp/ai-td-task-map-v02-api-evidence",
+  "objective": "把 review-only MapRuntimePackage v0.2 预览接口纳入可重复演示证据：不只证明静态 JSON 和 RenderPlan 存在，还证明后端 API 能在匿名 session 下读取三张节点的 v0.2 强语义预览，并且默认玩家地图 runtime 仍保持 v0.1。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/map_runtime_service.py",
+    "backend/app/services/map_render_plan_service.py",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/dev/check_map_v02_preview_api.py",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/map_runtime_service.py",
+    "backend/app/services/map_render_plan_service.py",
+    "frontend/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "game_data/media/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py",
+    "UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence uv run --extra dev python tools/dev/check_map_v02_preview_api.py --output /tmp/map_v02_preview_api_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_api_evidence",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nevidence = json.loads(Path('/tmp/map_v02_api_evidence/evidence.json').read_text(encoding='utf-8'))\napi = evidence['backend_api_evidence']['map_v02_preview']\nassert api['status'] == 'passed'\nassert api['node_count'] == 3\nassert api['default_runtime_v01_preserved_count'] == 3\nassert api['safety']['provider_call_count'] == 0\nassert api['runtime_activation_allowed'] is False\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider，smoke 工具只使用临时 SQLite 和 FastAPI TestClient。",
+    "工具会设置 APP_DB_PATH 到临时目录，但不读取 .env。",
+    "map-v02-preview 仍是 review-only API；默认 map-runtime-package 必须保持 v0.1。"
+  ]
+}

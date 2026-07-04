@@ -1,0 +1,285 @@
+# MVP 编译器审查交付包 v0.1
+
+本文档说明 `MVP Compiler Review Dossier v0.1` 的用途、内容边界和验收方式。
+
+这份交付包不是前端 runtime 包，也不是玩家侧数据。它是给项目负责人和评审者审查 AI 编译系统逻辑用的证据索引：把多阶段剧情、玩法对象、防御塔 / 道具 / 情报资产、材料、NPC、运行态变化和验证命令汇总到一个 JSON 文件。
+
+## 产出文件
+
+- `examples/review_packs/mvp_compiler_review_dossier.v0.1.json`
+- `examples/review_packs/mvp_compilable_object_catalog.v0.1.json`
+- `examples/review_packs/mvp_multistage_content_pack.v0.1.json`
+- `examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json`
+- `examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json`
+- `examples/review_packs/mvp_stage_candidate_pack.v0.1.json`
+- `shared/schemas/compilable_object_catalog.v0.1.schema.json`
+- `shared/schemas/compilable_object_plan.v0.1.schema.json`
+- `shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json`
+- `shared/schemas/stage_candidate_pack.v0.1.schema.json`
+- `tools/content_pipeline/build_compilable_object_catalog.py`
+- `tools/content_pipeline/build_compilable_object_plan.py`
+- `tools/content_pipeline/build_mvp_compiler_review_dossier.py`
+- `tools/content_pipeline/build_stage05_plan_realization.py`
+- `tools/content_pipeline/build_multistage_content_pack.py`
+- `tools/content_pipeline/build_frontend_mock_pack.py`
+- `tools/content_pipeline/run_mvp_handoff_audit.py`
+- `tools/content_pipeline/validate_compilable_object_catalog.py`
+- `tools/content_pipeline/validate_compilable_object_plan.py`
+- `tools/content_pipeline/validate_frontend_mock_pack.py`
+- `tools/content_pipeline/validate_mvp_handoff_audit_report.py`
+- `tools/content_pipeline/build_stage_candidate_pack.py`
+- `tools/content_pipeline/validate_stage_candidate_pack.py`
+- `tools/narrative/validate_narrative_gameplay_contract.py`
+- `tools/world_state/replay_mvp_delta_chain.py`
+- `docs/COMPILABLE_OBJECT_MODEL_V0_1.md`
+- `docs/COMPILABLE_OBJECT_PLAN_V0_1.md`
+- `docs/STAGE05_PLAN_REALIZATION_V0_1.md`
+- `docs/MULTISTAGE_CONTENT_PACK_V0_1.md`
+- `docs/FRONTEND_MOCK_PACK_V0_1.md`
+- `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+- `docs/STAGE_CANDIDATE_PACK_V0_1.md`
+- `docs/NARRATIVE_GAMEPLAY_CONTRACT_V0_1.md`
+- `game_data/demo/wick_store_pressure_battle_config.json`
+- `examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json`
+- `examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json`
+- `game_data/demo/old_signal_tower_pressure_battle_config.json`
+- `examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json`
+- `examples/runtime_packages/mvp_old_signal_tower.runtime_package.json`
+- `examples/frontend_mock/frontend_mock_pack.v0.1.json`
+- `examples/review_packs/mvp_handoff_audit_report.v0.1.json`
+
+默认构建命令：
+
+```bash
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+```
+
+首选一键审查命令：
+
+```bash
+python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate
+```
+
+## 边界
+
+交付包明确标记：
+
+- `visibility: review_only`
+- 不接入前端。
+- 构建器不读取 `.env`。
+- 构建器不调用任何 provider。
+- 构建器不修改基础世界书。
+- runtime package 只做引用，不内嵌为玩家加载包。
+- `core_artifact_alignment.alignment_state: review_only_not_applicable`：该 dossier 是总审查交付包，不应被强行迁移为 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。后续核心对象迁移应针对它引用的阶段候选包、多阶段内容包或具体运行时产物。
+
+注意：交付包会引用 live workflow 和 provider 调用相关文档，但它本身不执行 live workflow，也不保存原始 provider payload。
+
+## 汇总内容
+
+交付包包含：
+
+- `pipeline_overview`：从剧情节点、WorldStateDelta、资产编译、媒体管线到审查交付包的流水线说明。
+- `stage_reviews`：四个 MVP 阶段的世界线 / 玩家线覆盖、玩法目的、玩法 hook、Delta op 统计、关联资产、NPC、材料、地图节点。
+- `stage_candidate_pack_summary`：阶段候选包摘要，证明每个阶段的剧情、WorldStateDelta、玩法对象、资产和 runtime 引用已经被合并成可审查单元。
+- `compilable_object_catalog_summary`：可编译对象目录摘要，统计当前 MVP 已证明的表现、实体、行为、叙事、关卡、经济、成长和规则对象；当前目录已吸收 Stage 05 / 06 / 07 多阶段内容生产结果。
+- `compilable_object_plan_summary`：下一阶段对象化生成计划摘要，说明 Stage 05 需要生成哪些对象、哪些需要 LLM、媒体和人工审查。
+- `Stage 05 计划落地样例`：把下一阶段计划转成可审查叙事包、世界状态变化、下一运行态、资产提案和候选资产；后续多阶段包会把 Stage 05 / 06 / 07 统一导出为标准阶段候选包。
+- `多阶段内容生产包`：串行生产 Stage 05 / 06 / 07 的剧情线、任务、随机事件、临时样本和三类资产候选，并导出标准阶段候选包供人工审查。
+- `前端 Mock 内容包`：从当前编译产物、三阶段候选包和 runtime package 中抽取玩家安全数据，包含 11 个可玩资产、3 个阶段摘要和 3 个 runtime package 摘要，用于前端并行开发和演示，不代表正式前端已接入。
+- `MVP handoff audit`：实际执行核心构建和校验命令，并把命令结果、覆盖检查、交付入口和已知风险汇总成一份外层审查报告。
+- `NarrativeGameplayContract` 校验口径：证明 narrative hook 不是纯文本承诺，而是能落到 WorldStateDelta 和最终 RunWorldState。
+- `content_inventory`：唯一资产、NPC、材料、地图节点、任务、随机事件、研发任务、蓝图。
+- `runtime_package_summaries`：第一战、灯芯仓压力战和旧信号塔压力战 runtime package 的资产、战斗上下文和可部署状态摘要。灯芯仓压力战包含信标灯芯诱饵、灯芯护幕桩、灯灰爆鸣塔三件资产；旧信号塔压力战包含回光棱镜中继塔一件人工晋升后的运行时证据资产。
+- `runtime_state_summary`：Stage 07 后最终运行态的进度、全局状态和对象数量。
+- `readiness_summary`：当前是否足以支撑 MVP 审查。
+- `source_evidence`：被汇总的关键文件与 sha256。
+- `validation_commands`：建议复验命令。
+- `known_risks`：仍需处理的风险。
+
+## 当前审查结论
+
+当前交付包证明的范围：
+
+- 已有四阶段剧情演示链。
+- 每个阶段都能关联 `NarrativeEventBundle` 和受控 `WorldStateDelta`。
+- 每个阶段都能被整理为 `StageCandidatePack` 候选单元，后续真实 LLM 生成新阶段时也应提交同形态候选，而不是只提交剧情文本。
+- 当前内容能被整理为 `CompilableObjectCatalog`，证明 MVP 已覆盖塔 / 道具 / 样品、任务、随机事件、地图节点、素材、NPC、研发任务、蓝图、事实和 flag 等多类可编译对象；当前目录汇总 104 个对象。
+- 当前已有 `CompilableObjectPlan` 作为下一阶段生成前的施工图，避免 LLM 直接跳到松散剧情或越权对象。
+- 当前已有 Stage 05 计划落地样例，证明剧情、任务、随机事件、临时样本和防御塔候选可以从同一个计划进入受控验证链路。
+- 当前已有多阶段内容生产包，证明同一套流水线可以连续生产防御塔、支援道具和高风险临时改造候选，并串行推进世界线与玩家线。
+- 世界线和玩家线都不是纯文本，而是能通过 `validate_narrative_gameplay_contract.py` 落到任务、随机事件、研发任务、资源、NPC、地图节点和蓝图。
+- 当前资产清单包含运行时样品、塔、防御支援道具、情报资产和高风险候选改造。
+- 当前已有前端 mock 内容包，证明这些候选资产、阶段摘要和 runtime package 引用可以被抽取为玩家安全的统一数据包。
+- 当前已有 handoff audit 报告，证明核心离线流水线可以一键复验。
+- 灯芯仓压力战已有 runtime package 证据，能验证第二战地图、路径、保护目标和三件默认可用资产。
+- 旧信号塔压力战已有 runtime package 引用证据，能验证 Stage 05 候选资产可被封装进 locked manifest、battle config 和 runtime package；它仍不代表 Stage 05 世界线自动解锁最终蓝图。
+- 默认 MVP 可以按 `runtime_fixture` + `fallback_ready` 资产组织审查；候选 / 受阻资产不应默认进入战斗。
+
+当前仍不证明：
+
+- 前端已经接入这些数据。
+- 所有媒体资产都已具备最终 runtime readiness。
+- 所有 live provider workflow 都可以在任意环境稳定运行。
+- 基础世界书已经完成 canonical NPC / material 的长期治理。
+
+## 验收命令
+
+构建并校验交付包：
+
+```bash
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+```
+
+运行一键 handoff audit：
+
+```bash
+python3 tools/content_pipeline/run_mvp_handoff_audit.py --validate
+python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/review_packs/mvp_handoff_audit_report.v0.1.json
+```
+
+校验故事资产审查包：
+
+```bash
+python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+```
+
+校验剧情到玩法对象的跨文件契约：
+
+```bash
+python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+```
+
+构建并校验阶段候选包：
+
+```bash
+python3 tools/content_pipeline/build_stage_candidate_pack.py --validate
+```
+
+单独校验阶段候选包：
+
+```bash
+python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json
+```
+
+构建并校验可编译对象目录：
+
+```bash
+python3 tools/content_pipeline/build_compilable_object_catalog.py --validate
+```
+
+单独校验可编译对象目录：
+
+```bash
+python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json
+```
+
+构建并校验下一阶段可编译对象计划：
+
+```bash
+python3 tools/content_pipeline/build_compilable_object_plan.py --validate
+```
+
+单独校验下一阶段可编译对象计划：
+
+```bash
+python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json
+```
+
+构建并校验 Stage 05 计划落地样例：
+
+```bash
+python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
+```
+
+单独校验 Stage 05 的叙事包、世界状态变化和资产候选：
+
+```bash
+python3 tools/narrative/validate_narrative_bundle.py examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json
+python3 tools/world_state/validate_world_delta_semantics.py examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json --run-state examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json
+python3 tools/content_pipeline/validate_proposal.py examples/proposals/echo_prism_relay.proposal.json
+python3 tools/content_pipeline/validate_asset_candidate.py examples/compiled_assets/echo_prism_relay.compiled_asset.json
+```
+
+构建并校验多阶段内容生产包：
+
+```bash
+python3 tools/content_pipeline/build_multistage_content_pack.py --validate
+```
+
+单独校验多阶段内容生产包：
+
+```bash
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
+```
+
+单独校验多阶段标准阶段候选包：
+
+```bash
+python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json
+```
+
+构建并校验前端 mock 内容包：
+
+```bash
+python3 tools/content_pipeline/build_frontend_mock_pack.py
+python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json
+```
+
+校验最终运行态：
+
+```bash
+python3 tools/world_state/validate_run_world_state.py examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json
+```
+
+校验灯芯仓压力战 locked manifest 和 runtime package：
+
+```bash
+python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_wick_store_pressure.locked_manifest.json
+python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json
+```
+
+校验旧信号塔压力战 locked manifest 和 runtime package：
+
+```bash
+python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_old_signal_tower.locked_manifest.json
+python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_old_signal_tower.runtime_package.json
+```
+
+校验 WorldStateDelta 语义门示例：
+
+```bash
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_03_northern_road_scouting.world_delta.json
+python3 tools/world_state/validate_world_delta.py examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json
+```
+
+校验 WorldStateDelta 语义门 DAG 示例：
+
+```bash
+python3 tools/asset_graph/run_workflow.py examples/workflows/mvp_world_delta_semantic_gate_demo.workflow.json --output-dir /tmp/mvp_world_delta_semantic_gate_demo
+```
+
+重放完整世界状态链并对比最终快照：
+
+```bash
+python3 tools/world_state/replay_mvp_delta_chain.py --compare-final examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
+```
+
+校验所有 workflow：
+
+```bash
+for f in examples/workflows/*.json; do
+  python3 tools/asset_graph/validate_workflow.py "$f" || exit 1
+done
+```
+
+## 审查建议
+
+优先审查三个问题：
+
+1. `pipeline_overview` 的流水线逻辑是否符合项目定位：自然语言 / 世界书 / 玩家行为 -> 受控结构化对象 -> 可玩资产。
+2. `stage_reviews` 和 `NarrativeGameplayContract` 是否证明每一阶段真的服务玩法，而不是只写剧情。
+3. `known_risks` 是否覆盖了 MVP 前必须处理的风险，尤其是媒体 readiness 和旧 fixture NPC 迁移。

@@ -1,0 +1,1302 @@
+{
+  "report_version": "mvp_story_asset_promotion_report.v0.1",
+  "report_id": "mvp_story_asset_promotion_report_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "input_review_pack": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "real_service_calls": false,
+    "env_file_read": false,
+    "provider_calls": false,
+    "base_worldbook_mutation": false,
+    "runtime_package_build": false
+  },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "StoryAssetPromotionReport 是 review-only 资产晋升决策报告；它记录 fallback_ready、candidate_only、blocked 等晋升判断，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对被批准的具体 CGOP、runtime package、media manifest 或 WorldStateDeltaTransaction，而不是激活整个 promotion report。"
+  },
+  "promotion_pipeline": [
+    "load_mvp_story_asset_review_pack",
+    "for_each_stage_asset",
+    "runtime_fixture_probe_or_compiled_asset_load",
+    "validate_asset_candidate",
+    "simulate_asset_candidate",
+    "score_asset_candidate",
+    "asset_promotion_policy.evaluate_promotion",
+    "stage_governance_gate",
+    "emit_review_only_promotion_report"
+  ],
+  "governance_rules": [
+    "runtime package samples are marked usable_runtime_fixture only; they are not fake compiled promotions",
+    "candidate_only assets stay candidate-only even if the deterministic policy can make them fallback-playable",
+    "high-risk temporary mods stay out of default MVP battles until power-grid and risk context exists",
+    "unregistered materials or NPC refs block runtime package promotion",
+    "fallback_ready means playable for demo with deterministic media, not final generated-media readiness"
+  ],
+  "canonical_boundaries_snapshot": {
+    "canonical_npcs": [
+      "npc_gray_lantern_keeper",
+      "npc_workshop_mentor"
+    ],
+    "candidate_functional_npcs": [
+      "npc_road_scout",
+      "npc_wire_mender_003"
+    ],
+    "canonical_materials": [
+      "conductor_filament",
+      "glow_crystal",
+      "lamp_shard",
+      "lantern_ash"
+    ],
+    "candidate_only_materials": [
+      "charcoal_map",
+      "charged_copper_coil",
+      "cracked_insulator",
+      "signal_wick"
+    ]
+  },
+  "summary": {
+    "stage_count": 4,
+    "asset_reference_count": 9,
+    "unique_source_count": 7,
+    "unique_compiled_asset_source_count": 6,
+    "playable_reference_count": 7,
+    "fallback_ready_reference_count": 6,
+    "runtime_fixture_reference_count": 1,
+    "candidate_or_blocked_reference_count": 2,
+    "promotion_states": {
+      "candidate_only_high_risk": 1,
+      "candidate_only_needs_world_registration": 1,
+      "fallback_ready": 6,
+      "usable_runtime_fixture": 1
+    },
+    "source_kinds": {
+      "compiled_asset": 8,
+      "runtime_package_fixture": 1
+    }
+  },
+  "stages": [
+    {
+      "stage_order": 1,
+      "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+      "title": "灰灯驿站首防",
+      "bundle_file": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+      "assets": [
+        {
+          "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+          "stage_order": 1,
+          "asset_id": "sample_trap_7f3a",
+          "asset_kind": "runtime_sample_trap",
+          "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+          "source_kind": "runtime_package_fixture",
+          "source_exists": true,
+          "source_asset_found": true,
+          "package_id": "package_session_lampwright_7f3a_001",
+          "review_status": "usable_fixture",
+          "promotion_state": "usable_runtime_fixture",
+          "policy_promotion_state": null,
+          "playable": true,
+          "uses_fallback_media": false,
+          "blocking_reasons": [],
+          "warnings": [],
+          "required_next_actions": [
+            "keep_as_first_battle_mid_delivery_fixture",
+            "do_not_treat_as_compiled_asset_promotion"
+          ],
+          "gameplay_role": "Mid-battle temporary sample that slows fast enemies."
+        }
+      ]
+    },
+    {
+      "stage_order": 2,
+      "stage_id": "act_1_stage_02_dawn_review_supply_line",
+      "title": "黎明复盘与护线",
+      "bundle_file": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+      "assets": [
+        {
+          "stage_id": "act_1_stage_02_dawn_review_supply_line",
+          "stage_order": 2,
+          "asset_id": "asset_signal_wick_decoy",
+          "compiled_candidate_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready",
+            "review_simulation_flag:high_cost_efficiency"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Reusable decoy item for path-adjacent slow and pressure relief.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "material_ids": [
+              "lamp_shard",
+              "conductor_filament"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "asset_signal_wick_decoy"
+            },
+            "simulation": {
+              "simulation_focus": "single_use_support",
+              "estimated_dps": 0.0,
+              "utility_score": 0.308,
+              "cost_efficiency": 0.633,
+              "balance_flags": [
+                "high_cost_efficiency"
+              ]
+            },
+            "score": {
+              "total_score": 79.5,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 53.9,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "simulation_flag:high_cost_efficiency",
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "effect_preview",
+                "icon",
+                "ui_card"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "asset_signal_wick_decoy",
+              "asset_type": "support_item",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "review_simulation_flag:high_cost_efficiency",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [
+                  "high_cost_efficiency"
+                ],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        },
+        {
+          "stage_id": "act_1_stage_02_dawn_review_supply_line",
+          "stage_order": 2,
+          "asset_id": "asset_wick_barrier_pylon",
+          "compiled_candidate_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "candidate_score_simulation_low",
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Support tower that shields and repairs nearby defenses.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_gray_lantern_keeper",
+              "npc_workshop_mentor"
+            ],
+            "material_ids": [
+              "lamp_shard",
+              "conductor_filament"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "asset_wick_barrier_pylon"
+            },
+            "simulation": {
+              "simulation_focus": "combat_output",
+              "estimated_dps": 0.0,
+              "utility_score": 0.272,
+              "cost_efficiency": 0.146,
+              "balance_flags": []
+            },
+            "score": {
+              "total_score": 75.2,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 32.2,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "battle_preview",
+                "icon",
+                "tower_sprite"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "asset_wick_barrier_pylon",
+              "asset_type": "tower_blueprint",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "candidate_score_simulation_low",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage_order": 3,
+      "stage_id": "act_1_stage_03_northern_road_scouting",
+      "title": "北路侦测与路径预测",
+      "bundle_file": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+      "assets": [
+        {
+          "stage_id": "act_1_stage_03_northern_road_scouting",
+          "stage_order": 3,
+          "asset_id": "intel_dark_echo_survey_001",
+          "compiled_candidate_id": "intel_dark_echo_survey_001",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready",
+            "review_simulation_flag:high_cost_efficiency"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Short-term path reveal and weakness hint using canonical materials.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "material_ids": [
+              "lantern_ash",
+              "conductor_filament"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "intel_dark_echo_survey_001"
+            },
+            "simulation": {
+              "simulation_focus": "intel_utility",
+              "estimated_dps": 0.0,
+              "utility_score": 0.52,
+              "cost_efficiency": 1.56,
+              "balance_flags": [
+                "high_cost_efficiency"
+              ]
+            },
+            "score": {
+              "total_score": 86.1,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 86.7,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "simulation_flag:high_cost_efficiency",
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "icon",
+                "ui_card"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "intel_dark_echo_survey_001",
+              "asset_type": "intel_asset",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "review_simulation_flag:high_cost_efficiency",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [
+                  "high_cost_efficiency"
+                ],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        },
+        {
+          "stage_id": "act_1_stage_03_northern_road_scouting",
+          "stage_order": 3,
+          "asset_id": "intel_shadow_tide_survey",
+          "compiled_candidate_id": "intel_shadow_tide_survey",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "candidate_only_until_materials_and_npcs_registered",
+          "promotion_state": "candidate_only_needs_world_registration",
+          "policy_promotion_state": "fallback_ready",
+          "playable": false,
+          "uses_fallback_media": false,
+          "blocking_reasons": [
+            "review_pack_status:candidate_only_until_materials_and_npcs_registered",
+            "unregistered_materials:charcoal_map,signal_wick",
+            "unregistered_npcs:archivist_001,scout_001"
+          ],
+          "warnings": [
+            "missing_runtime_readiness_report",
+            "review_simulation_flag:high_cost_efficiency"
+          ],
+          "required_next_actions": [
+            "register_or_replace_materials:charcoal_map,signal_wick",
+            "register_or_replace_npc_refs:archivist_001,scout_001",
+            "resolve_review_pack_candidate_status_before_runtime_package"
+          ],
+          "gameplay_role": "Better scouting package, but it currently depends on unregistered materials and NPC refs.",
+          "world_registration": {
+            "npc_ids": [
+              "scout_001",
+              "archivist_001"
+            ],
+            "material_ids": [
+              "charcoal_map",
+              "signal_wick"
+            ],
+            "unregistered_npcs": [
+              "archivist_001",
+              "scout_001"
+            ],
+            "unregistered_materials": [
+              "charcoal_map",
+              "signal_wick"
+            ],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": [
+              "charcoal_map",
+              "signal_wick"
+            ]
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "intel_shadow_tide_survey"
+            },
+            "simulation": {
+              "simulation_focus": "intel_utility",
+              "estimated_dps": 0.0,
+              "utility_score": 0.585,
+              "cost_efficiency": 0.877,
+              "balance_flags": [
+                "high_cost_efficiency"
+              ]
+            },
+            "score": {
+              "total_score": 87.0,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 91.5,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "simulation_flag:high_cost_efficiency",
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "icon",
+                "ui_card"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "intel_shadow_tide_survey",
+              "asset_type": "intel_asset",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "review_simulation_flag:high_cost_efficiency",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [
+                  "high_cost_efficiency"
+                ],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage_order": 4,
+      "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+      "title": "第二节点压力战 / 灯芯仓防守",
+      "bundle_file": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+      "assets": [
+        {
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "stage_order": 4,
+          "asset_id": "asset_signal_wick_decoy",
+          "compiled_candidate_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready",
+            "review_simulation_flag:high_cost_efficiency"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Pulls fast enemies away from the storehouse entrance.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_gray_lantern_keeper"
+            ],
+            "material_ids": [
+              "lamp_shard",
+              "conductor_filament"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "asset_signal_wick_decoy"
+            },
+            "simulation": {
+              "simulation_focus": "single_use_support",
+              "estimated_dps": 0.0,
+              "utility_score": 0.308,
+              "cost_efficiency": 0.633,
+              "balance_flags": [
+                "high_cost_efficiency"
+              ]
+            },
+            "score": {
+              "total_score": 79.5,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 53.9,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "simulation_flag:high_cost_efficiency",
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "effect_preview",
+                "icon",
+                "ui_card"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "asset_signal_wick_decoy",
+              "asset_type": "support_item",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "review_simulation_flag:high_cost_efficiency",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [
+                  "high_cost_efficiency"
+                ],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        },
+        {
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "stage_order": 4,
+          "asset_id": "asset_wick_barrier_pylon",
+          "compiled_candidate_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "candidate_score_simulation_low",
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Protects resource targets and nearby defenses.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_gray_lantern_keeper",
+              "npc_workshop_mentor"
+            ],
+            "material_ids": [
+              "lamp_shard",
+              "conductor_filament"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "asset_wick_barrier_pylon"
+            },
+            "simulation": {
+              "simulation_focus": "combat_output",
+              "estimated_dps": 0.0,
+              "utility_score": 0.272,
+              "cost_efficiency": 0.146,
+              "balance_flags": []
+            },
+            "score": {
+              "total_score": 75.2,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 32.2,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "battle_preview",
+                "icon",
+                "tower_sprite"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "asset_wick_barrier_pylon",
+              "asset_type": "tower_blueprint",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "candidate_score_simulation_low",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        },
+        {
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "stage_order": 4,
+          "asset_id": "asset_ash_burst_lantern",
+          "compiled_candidate_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "promotion_state": "fallback_ready",
+          "policy_promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "blocking_reasons": [],
+          "warnings": [
+            "missing_runtime_readiness_report",
+            "real_media_not_generated_or_not_runtime_ready"
+          ],
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ],
+          "gameplay_role": "Handles clustered enemies at the resource node entrance.",
+          "world_registration": {
+            "npc_ids": [
+              "npc_workshop_mentor"
+            ],
+            "material_ids": [
+              "lantern_ash",
+              "lamp_shard"
+            ],
+            "unregistered_npcs": [],
+            "unregistered_materials": [],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": []
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "asset_ash_burst_lantern"
+            },
+            "simulation": {
+              "simulation_focus": "combat_output",
+              "estimated_dps": 50.29,
+              "utility_score": 0.26,
+              "cost_efficiency": 0.407,
+              "balance_flags": []
+            },
+            "score": {
+              "total_score": 78.4,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 48.0,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 85.0
+              },
+              "reasons": [
+                "media_not_generated"
+              ],
+              "expected_media_roles": [
+                "battle_preview",
+                "icon",
+                "tower_sprite"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "asset_ash_burst_lantern",
+              "asset_type": "tower_blueprint",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        },
+        {
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "stage_order": 4,
+          "asset_id": "mod_overload_chain_arc_001",
+          "compiled_candidate_id": "mod_overload_chain_arc_001",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+          "source_kind": "compiled_asset",
+          "source_exists": true,
+          "review_status": "candidate_only_high_risk",
+          "promotion_state": "candidate_only_high_risk",
+          "policy_promotion_state": "fallback_ready",
+          "playable": false,
+          "uses_fallback_media": false,
+          "blocking_reasons": [
+            "candidate_only_high_risk",
+            "unregistered_materials:charged_copper_coil,cracked_insulator",
+            "unregistered_npcs:engineer_001"
+          ],
+          "warnings": [
+            "candidate_score_simulation_low",
+            "missing_runtime_readiness_report",
+            "review_simulation_flag:high_power_demand"
+          ],
+          "required_next_actions": [
+            "defer_until_power_grid_and_risk_context_exists",
+            "keep_out_of_default_mvp_battle",
+            "register_or_replace_materials:charged_copper_coil,cracked_insulator",
+            "register_or_replace_npc_refs:engineer_001",
+            "run_deeper_balance_simulation_before_player_delivery"
+          ],
+          "gameplay_role": "Optional later risk tradeoff; not part of default MVP battle because it requires unregistered materials and a power-grid context.",
+          "world_registration": {
+            "npc_ids": [
+              "engineer_001"
+            ],
+            "material_ids": [
+              "charged_copper_coil",
+              "cracked_insulator"
+            ],
+            "unregistered_npcs": [
+              "engineer_001"
+            ],
+            "unregistered_materials": [
+              "charged_copper_coil",
+              "cracked_insulator"
+            ],
+            "candidate_only_npc_hits": [],
+            "candidate_only_material_hits": [
+              "charged_copper_coil",
+              "cracked_insulator"
+            ]
+          },
+          "policy_evidence": {
+            "validation": {
+              "status": "passed",
+              "errors": [],
+              "candidate_id": "mod_overload_chain_arc_001"
+            },
+            "simulation": {
+              "simulation_focus": "modifier_risk_reward",
+              "estimated_dps": 5.67,
+              "utility_score": 0.099,
+              "cost_efficiency": 0.075,
+              "balance_flags": [
+                "high_power_demand"
+              ]
+            },
+            "score": {
+              "total_score": 68.5,
+              "recommendation": "generate_media",
+              "dimension_scores": {
+                "validation": 100.0,
+                "gameplay_fit": 100.0,
+                "simulation": 0.8,
+                "world_fit": 100.0,
+                "media_readiness": 35.0,
+                "risk_control": 81.0
+              },
+              "reasons": [
+                "simulation_flag:high_power_demand",
+                "media_not_generated",
+                "high_power_demand"
+              ],
+              "expected_media_roles": [
+                "effect_preview",
+                "icon",
+                "ui_card"
+              ]
+            },
+            "promotion": {
+              "promotion_version": "asset_promotion_policy.v0.1",
+              "candidate_id": "mod_overload_chain_arc_001",
+              "asset_type": "temporary_mod",
+              "promotion_state": "fallback_ready",
+              "playable": true,
+              "uses_fallback_media": true,
+              "gameplay_core_state": "passed",
+              "media_state": "missing",
+              "blockers": [],
+              "warnings": [
+                "review_simulation_flag:high_power_demand",
+                "candidate_score_simulation_low",
+                "missing_runtime_readiness_report"
+              ],
+              "required_next_actions": [
+                "attach_deterministic_fallback_skin",
+                "continue_media_generation_or_repair_in_background"
+              ],
+              "fallback_media_strategy": {
+                "enabled": true,
+                "skin": "deterministic_shape_sprite",
+                "icon": "generated_or_template_icon",
+                "effects": "visual_recipe_only"
+              },
+              "source_summary": {
+                "validation_status": "passed",
+                "simulation_flags": [
+                  "high_power_demand"
+                ],
+                "candidate_score_recommendation": "generate_media",
+                "runtime_readiness_status": null,
+                "vision_review_status": null,
+                "media_consistency_status": null
+              }
+            },
+            "promotion_schema_check": {
+              "status": "passed_legacy_jsonschema",
+              "schema_path": "shared/schemas/asset_promotion_report.v0.1.schema.json",
+              "errors": []
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "asset_rollup": [
+    {
+      "asset_id": "asset_ash_burst_lantern",
+      "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 4,
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        }
+      ],
+      "overall_state": "fallback_ready",
+      "playable_anywhere": true,
+      "uses_fallback_media_anywhere": true,
+      "blocking_reasons": [],
+      "warnings": [
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ],
+      "required_next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package"
+      ]
+    },
+    {
+      "asset_id": "asset_signal_wick_decoy",
+      "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 2,
+          "stage_id": "act_1_stage_02_dawn_review_supply_line",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        },
+        {
+          "stage_order": 4,
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        }
+      ],
+      "overall_state": "fallback_ready",
+      "playable_anywhere": true,
+      "uses_fallback_media_anywhere": true,
+      "blocking_reasons": [],
+      "warnings": [
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ],
+      "required_next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package"
+      ]
+    },
+    {
+      "asset_id": "asset_wick_barrier_pylon",
+      "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 2,
+          "stage_id": "act_1_stage_02_dawn_review_supply_line",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        },
+        {
+          "stage_order": 4,
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        }
+      ],
+      "overall_state": "fallback_ready",
+      "playable_anywhere": true,
+      "uses_fallback_media_anywhere": true,
+      "blocking_reasons": [],
+      "warnings": [
+        "candidate_score_simulation_low",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ],
+      "required_next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package"
+      ]
+    },
+    {
+      "asset_id": "intel_dark_echo_survey_001",
+      "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 3,
+          "stage_id": "act_1_stage_03_northern_road_scouting",
+          "promotion_state": "fallback_ready",
+          "playable": true
+        }
+      ],
+      "overall_state": "fallback_ready",
+      "playable_anywhere": true,
+      "uses_fallback_media_anywhere": true,
+      "blocking_reasons": [],
+      "warnings": [
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ],
+      "required_next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package"
+      ]
+    },
+    {
+      "asset_id": "intel_shadow_tide_survey",
+      "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 3,
+          "stage_id": "act_1_stage_03_northern_road_scouting",
+          "promotion_state": "candidate_only_needs_world_registration",
+          "playable": false
+        }
+      ],
+      "overall_state": "candidate_only_needs_world_registration",
+      "playable_anywhere": false,
+      "uses_fallback_media_anywhere": false,
+      "blocking_reasons": [
+        "review_pack_status:candidate_only_until_materials_and_npcs_registered",
+        "unregistered_materials:charcoal_map,signal_wick",
+        "unregistered_npcs:archivist_001,scout_001"
+      ],
+      "warnings": [
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_cost_efficiency"
+      ],
+      "required_next_actions": [
+        "register_or_replace_materials:charcoal_map,signal_wick",
+        "register_or_replace_npc_refs:archivist_001,scout_001",
+        "resolve_review_pack_candidate_status_before_runtime_package"
+      ]
+    },
+    {
+      "asset_id": "mod_overload_chain_arc_001",
+      "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+      "source_kind": "compiled_asset",
+      "appears_in_stages": [
+        {
+          "stage_order": 4,
+          "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+          "promotion_state": "candidate_only_high_risk",
+          "playable": false
+        }
+      ],
+      "overall_state": "candidate_only_high_risk",
+      "playable_anywhere": false,
+      "uses_fallback_media_anywhere": false,
+      "blocking_reasons": [
+        "candidate_only_high_risk",
+        "unregistered_materials:charged_copper_coil,cracked_insulator",
+        "unregistered_npcs:engineer_001"
+      ],
+      "warnings": [
+        "candidate_score_simulation_low",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_power_demand"
+      ],
+      "required_next_actions": [
+        "defer_until_power_grid_and_risk_context_exists",
+        "keep_out_of_default_mvp_battle",
+        "register_or_replace_materials:charged_copper_coil,cracked_insulator",
+        "register_or_replace_npc_refs:engineer_001",
+        "run_deeper_balance_simulation_before_player_delivery"
+      ]
+    },
+    {
+      "asset_id": "sample_trap_7f3a",
+      "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "source_kind": "runtime_package_fixture",
+      "appears_in_stages": [
+        {
+          "stage_order": 1,
+          "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+          "promotion_state": "usable_runtime_fixture",
+          "playable": true
+        }
+      ],
+      "overall_state": "usable_runtime_fixture",
+      "playable_anywhere": true,
+      "uses_fallback_media_anywhere": false,
+      "blocking_reasons": [],
+      "warnings": [],
+      "required_next_actions": [
+        "do_not_treat_as_compiled_asset_promotion",
+        "keep_as_first_battle_mid_delivery_fixture"
+      ]
+    }
+  ],
+  "next_review_questions": [
+    "是否允许 fallback_ready 资产先进入 MVP 演示包，真实媒体继续后台生成？",
+    "是否把 npc_wire_mender_003 或 npc_road_scout 提升为 canonical 功能 NPC？",
+    "是否登记 shadow_tide_survey 依赖的材料，还是把它改写为现有 canonical 材料？",
+    "overload_chain_mod 是否推迟到高风险研发机制完成后再开放？"
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-20-frontend-battlefield-naturalization-v5",
+  "title": "FrontendProceduralBattleBackdrop v0.5 战场自然嵌入",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/frontend-battlefield-naturalization-v5",
+  "worktree": "/tmp/ai-td-task-frontend-battlefield-naturalization-v5",
+  "objective": "在保持 MapRuntimePackage 为路径、塔位、目标、出生点事实源的前提下，继续增强 no-build 前端战斗地图：补场外地貌背板、可玩区碎边、道路地形融合和塔位接地细节，让战斗画面更像完整塔防战场而不是一张孤立的几何岛。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tools/frontend/validate_battle_visual_contract.py",
+    "tools/frontend/capture_battle_visual_smoke.py",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json"
+  ],
+  "allowed_paths": [
+    "frontend/app.js",
+    "tools/frontend/validate_battle_visual_contract.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_frontend_battlefield_naturalization_v5.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "shared/schemas/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_style_packs/",
+    "examples/review_packs/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_battlefield_naturalization_v5.v0.1.json",
+    "node --check frontend/app.js",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battlefield-v5 python3 -m py_compile tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/battlefield_naturalization_v5_smoke",
+    "python3 tools/frontend/capture_frontend_flow_visual_smoke.py --output-dir /tmp/frontend_flow_battlefield_naturalization_v5 --timeout 45",
+    "python3 tools/frontend/validate_frontend_flow_visual_smoke_report.py /tmp/frontend_flow_battlefield_naturalization_v5/frontend_flow_visual_smoke_report.v0.1.json",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "screenshot_paths",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只增强前端 canvas 程序化表现，不调用 provider、不读取 .env、不生成或发布整图候选。",
+    "路线、塔位、目标、出生点仍只来自 MapRuntimePackage；StylePack 和 RenderPlan 只影响表现层颜色与几何参数。",
+    "新增场外地貌、碎边、路面融合和塔位接地都属于表现层，不得写回地图包。",
+    "截图验收必须包含 desktop/mobile battle 图；静态合约不能替代人眼判断。"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "asset_ash_burst_lantern",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "tower_blueprint",
+    "base_stats": {
+      "build_cost": 200,
+      "range": 120,
+      "cooldown": 3.5,
+      "targeting": "nearest"
+    },
+    "effect_blocks": [
+      {
+        "type": "area_damage",
+        "amount": 80,
+        "radius": 80
+      },
+      {
+        "type": "shield",
+        "shield_amount": 50
+      }
+    ],
+    "constraints": {
+      "max_instances": 3,
+      "allowed_phases": [
+        "battle"
+      ]
+    },
+    "type_specific": {
+      "tower_slot": "standard",
+      "upgrade_from": null
+    }
+  },
+  "presentation": {
+    "name": "灯灰爆鸣塔",
+    "short_description": "将灯灰压入爆鸣腔，在敌人聚集时释放暖金色冲击波，造成范围伤害并短暂提供护盾，适合防守资源点入口。",
+    "icon_prompt": "2D game icon, compact tower-defense turret with warm golden burst effect, lantern ash particles, readable silhouette, clean background",
+    "animation_card_prompt": "2D animation card for ash burst lantern tower, tower defense strategy game, warm golden shockwave expanding from a small lantern-like turret",
+    "visual_tags": [
+      "tower_blueprint",
+      "compiled_asset",
+      "lantern_ash",
+      "burst"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_ash_burst_lantern_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_deepseek_v4_flash",
+    "model": "deepseek-v4-flash",
+    "npc_ids": [
+      "npc_workshop_mentor"
+    ],
+    "material_ids": [
+      "lantern_ash",
+      "lamp_shard"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

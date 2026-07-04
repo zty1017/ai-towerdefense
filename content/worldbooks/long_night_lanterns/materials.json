@@ -1,0 +1,48 @@
+{
+  "materials_version": "materials.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "materials": [
+    {
+      "stable_internal_id": "lamp_shard",
+      "display_name": "灯芯碎片",
+      "summary": "熄灭灯塔残留的灯芯碎段，是临时改造的基础材料。",
+      "rarity": "common",
+      "default_quantity": 4
+    },
+    {
+      "stable_internal_id": "conductor_filament",
+      "display_name": "导线",
+      "summary": "从废弃驿站拆下的金属导线，用于连接与传导。",
+      "rarity": "common",
+      "default_quantity": 2
+    },
+    {
+      "stable_internal_id": "lantern_ash",
+      "display_name": "灯灰",
+      "summary": "灯火燃尽后的灰烬，少量可用作稳定剂。",
+      "rarity": "uncommon",
+      "default_quantity": 1
+    },
+    {
+      "stable_internal_id": "glow_crystal",
+      "display_name": "微光晶",
+      "summary": "稀有的发光晶体，可作为临时光源核心。",
+      "rarity": "rare",
+      "default_quantity": 0
+    }
+  ],
+  "origin_initial_materials": {
+    "lampwright_apprentice": [
+      { "material_id": "lamp_shard", "quantity": 5 },
+      { "material_id": "conductor_filament", "quantity": 2 }
+    ],
+    "flow_engineer": [
+      { "material_id": "conductor_filament", "quantity": 4 },
+      { "material_id": "lamp_shard", "quantity": 3 }
+    ],
+    "signal_dispatcher": [
+      { "material_id": "lamp_shard", "quantity": 3 },
+      { "material_id": "lantern_ash", "quantity": 2 }
+    ]
+  }
+}

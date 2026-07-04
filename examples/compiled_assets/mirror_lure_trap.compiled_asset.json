@@ -1,0 +1,56 @@
+{
+  "id": "asset_mirror_lure_trap_001",
+  "lifecycle": "session_blueprint",
+  "gameplay": {
+    "asset_type": "support_item",
+    "base_stats": {
+      "deploy_cost": 45,
+      "cooldown": 25.0,
+      "use_count": 1,
+      "cast_range": 120
+    },
+    "effect_blocks": [
+      {
+        "type": "trap_tile_effect",
+        "tile_radius": 2,
+        "duration": 6.0
+      },
+      {
+        "type": "slow",
+        "slow_ratio": 0.4,
+        "duration": 5.0
+      },
+      {
+        "type": "risk_modifier",
+        "risk_delta": -15
+      }
+    ],
+    "constraints": {
+      "max_instances": 3,
+      "allowed_phases": ["battle", "retreat"]
+    },
+    "type_specific": {
+      "item_slot": "consumable",
+      "delivery_method": "deploy_trap",
+      "target_rule": "ground_enemy"
+    }
+  },
+  "presentation": {
+    "name": "折光诱饵陷阱",
+    "short_description": "用碎镜和灯芯灰做成一次性诱饵，短暂吸引并迟滞一小片区域内的敌人，为矿点撤离争取时间。",
+    "icon_prompt": "2D game icon, small ground trap made of mirror shards and wick ash, faint glowing lure, clean background",
+    "animation_card_prompt": "2D animation card for mirror lure trap activation, brief light burst and slowing effect",
+    "visual_tags": ["support_item", "compiled_asset"]
+  },
+  "provenance": {
+    "proposal_id": "proposal_mirror_lure_trap_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_glm_5_2",
+    "model": "glm-5.2",
+    "npc_ids": ["scout_001"],
+    "material_ids": ["mirror_shard", "wick_ash"],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

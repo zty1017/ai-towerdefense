@@ -1,0 +1,85 @@
+{
+  "schema_version": "run_world_state.v0.1",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "progress": {
+    "chapter": 1,
+    "turn": 1,
+    "phase": "first_defense"
+  },
+  "global_state": {
+    "pressure": 0.35,
+    "hope": 0.62,
+    "visibility": 0.28
+  },
+  "resources": [
+    { "resource_id": "lamp_oil", "amount": 12 },
+    { "resource_id": "iron_scrap", "amount": 5 },
+    { "resource_id": "rationed_food", "amount": 8 }
+  ],
+  "map_nodes": [
+    {
+      "node_id": "gray_lantern_station",
+      "status": "contested",
+      "threat_level": 2,
+      "visibility": "known",
+      "available_actions": ["enter_battle", "field_research"]
+    },
+    {
+      "node_id": "northern_road_crossing",
+      "status": "known",
+      "threat_level": 1,
+      "visibility": "scouted",
+      "available_actions": ["scout", "field_research"]
+    },
+    {
+      "node_id": "old_signal_tower",
+      "status": "unknown",
+      "threat_level": 0,
+      "visibility": "hidden",
+      "available_actions": []
+    }
+  ],
+  "npcs": [
+    {
+      "npc_id": "engineer_001",
+      "location_node_id": "gray_lantern_station",
+      "narrative_roles": ["battle_feedback"],
+      "gameplay_roles": ["field_engineer"],
+      "relationship": { "trust": 0.45 },
+      "availability": "present"
+    },
+    {
+      "npc_id": "scout_002",
+      "location_node_id": "northern_road_crossing",
+      "narrative_roles": ["world_observation"],
+      "gameplay_roles": ["scout"],
+      "relationship": { "trust": 0.30 },
+      "availability": "present"
+    }
+  ],
+  "unlocked_facts": [
+    {
+      "fact_id": "refraction_trap_observed",
+      "source": "first_battle",
+      "visibility": "player_known",
+      "summary": "灰灯驿站的折射陷阱在夜雾中第一次显形。"
+    }
+  ],
+  "event_log": [
+    {
+      "event_id": "intro_arrival",
+      "turn": 1,
+      "kind": "story",
+      "summary": "玩家抵达灰灯驿站，长夜尚未散去。"
+    }
+  ],
+  "research": {
+    "active_jobs": [],
+    "known_blueprints": [],
+    "temporary_samples": []
+  },
+  "flags": {
+    "tutorial_first_battle_started": false
+  }
+}

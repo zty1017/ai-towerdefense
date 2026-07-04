@@ -1,0 +1,58 @@
+{
+  "id": "asset_signal_echo_marker",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "support_item",
+    "base_stats": {
+      "deploy_cost": 35,
+      "use_count": 1,
+      "cooldown": 0
+    },
+    "effect_blocks": [
+      {
+        "type": "scout_reveal",
+        "reveal_scope": "next_wave"
+      },
+      {
+        "type": "countermeasure_hint",
+        "hint_scope": "current_node"
+      }
+    ],
+    "constraints": {
+      "allowed_phases": [
+        "preparation"
+      ]
+    },
+    "type_specific": {
+      "item_slot": "tactical",
+      "delivery_method": "pre_battle_consumable",
+      "target_rule": "current_node_or_next_wave"
+    }
+  },
+  "presentation": {
+    "name": "回声测标短札资产",
+    "short_description": "把旧信号塔回流压成一枚短札，在下一段黑路开始前标出敌群来向并给出克制提示。",
+    "icon_prompt": "2D game icon, tactical support device, clean background",
+    "animation_card_prompt": "2D animation card for 回声测标短札方案, tower defense strategy game",
+    "visual_tags": [
+      "support_item",
+      "compiled_asset"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_signal_echo_marker",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "mock",
+    "model": "mock_compiler_v0.1",
+    "npc_ids": [
+      "npc_road_scout"
+    ],
+    "material_ids": [
+      "lamp_shard",
+      "lantern_ash"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

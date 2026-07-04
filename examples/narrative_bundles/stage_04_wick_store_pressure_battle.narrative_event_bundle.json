@@ -1,0 +1,235 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_04_wick_store_pressure_battle",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "world_tick",
+  "created_turn": 4,
+  "stage": "act_1_stage_04_wick_store_pressure_battle",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "stage_04_world_wick_store_pressure",
+      "stage": "act_1_stage_04_wick_store_pressure_battle",
+      "phase": "preparation",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "lamp_wick_store",
+        "summary": "影潮绕开灰灯驿站，压向灯芯仓。"
+      },
+      "prerequisites": [
+        "northern_route_hint_unlocked",
+        "lamp_wick_store_marked_important"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "灯芯仓告警",
+        "blocks": [
+          {
+            "text": "中枢西侧的灯芯仓忽然降温，仓门铁扣结出黑霜。影潮没有回头，它学会了绕路。"
+          },
+          {
+            "speaker_id": "npc_gray_lantern_keeper",
+            "speaker_name": "灰灯驿站守灯人",
+            "text": "它们不只冲火最亮的地方了。若灯芯仓失守，下一夜连试作材料都凑不齐。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "unlock_battle_node",
+        "increase_threat",
+        "modify_map_node_state"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "unlock_battle_node",
+          "target_ref": "lamp_wick_store",
+          "summary": "开放第二压力战节点，目标从前哨防守转为资源设施保护。"
+        },
+        {
+          "hook": "increase_threat",
+          "target_ref": "random_event_wick_store_pressure_hint",
+          "summary": "记录影潮开始绕行，提升地图层威胁。"
+        },
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "lamp_wick_store",
+          "summary": "把灯芯仓从受控资源点推进到受威胁战斗点。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_04_wick_store_pressure_battle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "set_random_event_status",
+          "append_event"
+        ],
+        "summary": "提交灯芯仓受威胁、绕行压力和第二战斗节点开启。"
+      }
+    },
+    {
+      "node_id": "stage_04_player_combined_defense_plan",
+      "stage": "act_1_stage_04_wick_store_pressure_battle",
+      "phase": "preparation",
+      "lane": "player_line",
+      "scope": "battle",
+      "trigger": {
+        "kind": "player_choice",
+        "ref": "lamp_wick_store",
+        "summary": "玩家准备组合使用诱饵、护幕和爆鸣塔。"
+      },
+      "prerequisites": [
+        "asset_signal_wick_decoy_available",
+        "asset_wick_barrier_pylon_available",
+        "asset_ash_burst_lantern_available"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "组合防线",
+        "blocks": [
+          {
+            "speaker_id": "npc_workshop_mentor",
+            "speaker_name": "临时工坊老师傅",
+            "text": "诱饵把前锋拉开，护幕守住仓门，爆鸣塔只放在聚集处。别贪多，灯灰经不起浪费。"
+          },
+          {
+            "text": "三件试作品被排在仓门前，灯火一层压着一层，像给黑夜钉下几枚楔子。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "teach_mechanic",
+        "reward_player_choice",
+        "create_research_need"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "teach_mechanic",
+          "target_ref": "combined_defense",
+          "summary": "教学诱饵、护幕和范围火力的组合使用。"
+        },
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "task_prepare_wick_store_defense",
+          "summary": "让前几阶段获得的资产进入同一场防守。"
+        },
+        {
+          "hook": "create_research_need",
+          "target_ref": "risk_tradeoff",
+          "summary": "引出高风险高收益改造只能作为后续候选，不默认进入本战。"
+        }
+      ],
+      "npc_refs": [
+        "npc_workshop_mentor",
+        "npc_gray_lantern_keeper"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_04_wick_store_pressure_battle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "unlock_fact",
+          "adjust_resource",
+          "set_flag",
+          "append_event"
+        ],
+        "summary": "提交组合防线计划、材料消耗、风险候选限制和战前布置事件。"
+      }
+    },
+    {
+      "node_id": "stage_04_shared_rare_light_after_defense",
+      "stage": "act_1_stage_04_wick_store_pressure_battle",
+      "phase": "resolution",
+      "lane": "shared",
+      "scope": "resource",
+      "trigger": {
+        "kind": "battle_result",
+        "ref": "lamp_wick_store",
+        "summary": "灯芯仓防守结束，仓底发现稀有微光。"
+      },
+      "prerequisites": [
+        "lamp_wick_store_defended"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "仓底微光",
+        "blocks": [
+          {
+            "text": "战后清点时，仓底灰尘下露出一枚微光晶。它很小，却把四周的黑霜逼退了一指宽。"
+          },
+          {
+            "speaker_id": "npc_workshop_mentor",
+            "speaker_name": "临时工坊老师傅",
+            "text": "这东西别急着用。等我们知道下一夜从哪来，再决定把它嵌进哪件试作品。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_material",
+        "reward_player_choice",
+        "create_quest_hook"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_material",
+          "target_ref": "glow_crystal",
+          "summary": "把稀有材料作为第二节点守成奖励，而非开局泛滥资源。"
+        },
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "stage_04_wick_store_defense_completed",
+          "summary": "奖励玩家保护资源设施的选择。"
+        },
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "random_event_old_signal_tower_pressure",
+          "summary": "把微光晶用途延后到下一阶段路线判断和正式研发。"
+        }
+      ],
+      "npc_refs": [
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [
+        {
+          "npc_id": "npc_wire_mender_003",
+          "npc_kind": "functional",
+          "display_name": "补线人",
+          "narrative_roles": [
+            "road_contact",
+            "field_repairer"
+          ],
+          "gameplay_roles": [
+            "route_repair",
+            "material_discount",
+            "research_review"
+          ],
+          "introduction_status": "hinted"
+        }
+      ],
+      "proposed_world_delta_ref": "delta_stage_04_wick_store_pressure_battle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "unlock_fact",
+          "update_npc_relationship",
+          "append_event"
+        ],
+        "summary": "提交微光晶奖励、下一夜路线钩子、补线人进一步线索和战后事件。"
+      }
+    }
+  ]
+}

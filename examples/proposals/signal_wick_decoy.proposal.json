@@ -1,0 +1,23 @@
+{
+  "id": "proposal_signal_wick_decoy_001",
+  "mode": "runtime_safe",
+  "title": "信标灯芯诱饵方案",
+  "summary": "一次性部署的小型信标诱饵，吸引并迟滞影潮前锋，为资源设施争取撤离时间。",
+  "intended_asset_type": "support_item",
+  "expected_effect": ["control", "support"],
+  "risk_level": "low",
+  "estimated_cost": "low",
+  "required_inputs": {
+    "npc_ids": ["npc_gray_lantern_keeper"],
+    "materials": ["lamp_shard", "conductor_filament"],
+    "facility": "temporary_workshop",
+    "knowledge_tags": ["decoy_signal", "field_deploy"]
+  },
+  "known_tradeoffs": [
+    "单场使用次数有限",
+    "对重型敌人吸引效果较弱",
+    "需要部署在路径附近"
+  ],
+  "player_prompt": "做一个可以扔到路上的灯芯诱饵，敌人会被它拖慢一点，让我有时间补防。",
+  "worldbook_id": "long_night_lanterns"
+}

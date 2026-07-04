@@ -1,0 +1,79 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-C-core-artifact-alignment-report",
+  "title": "AI 编译核心对象对齐报告",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/core-artifact-alignment-report",
+  "worktree": "/tmp/ai-td-task-core-artifact-alignment-report",
+  "objective": "新增一个离线、可验证的 CoreArtifactAlignmentReport v0.1，用于扫描前端 mock pack、review pack、provider staging/promotion 示例和 WorldStateDeltaTransaction 链，报告哪些产物已经携带 ContextPackage / FactEntry / CGOP / WorldStateDeltaTransaction 原生字段或 refs，哪些仍是 review-only、refs-only 或缺失迁移。该报告只作为 evidence 和迁移指引，不调用 provider、不读取 .env、不修改 runtime、不写世界状态。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/COMPILABLE_OBJECT_MODEL_V0_1.md",
+    "docs/FRONTEND_MOCK_PACK_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md"
+  ],
+  "allowed_paths": [
+    "shared/schemas/",
+    "tools/content_pipeline/",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/",
+    "examples/worker_task_packs/",
+    "docs/",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "backend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_core_artifact_alignment_report.v0.1.json",
+    "python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate",
+    "python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "python3 -m py_compile tools/content_pipeline/build_core_artifact_alignment_report.py tools/content_pipeline/validate_core_artifact_alignment_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/core_artifact_alignment_report_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只生成核心对象对齐证据和迁移指引，不要求把所有 review pack 一次性改成原生字段。",
+    "报告必须区分 native_snapshot_ready、refs_only、review_only_not_applicable、missing_core_alignment、validation_failed 等状态。",
+    "ProviderArtifactPromotionReport 即使将来 approved，也只是允许后续构建器生成 runtime package 或 WorldStateDeltaTransaction，本报告不得把它视为直接可运行产物。",
+    "如果 OpenCode headless 因外部数据披露策略被拒绝，允许主代理在同一 worktree 本地完成。"
+  ]
+}

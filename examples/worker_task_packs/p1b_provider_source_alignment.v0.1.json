@@ -1,0 +1,83 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-17-provider-source-alignment",
+  "title": "Provider fixture source 与 scheduler/executor request 精确对齐",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/p1b-provider-source-alignment",
+  "worktree": "/tmp/ai-td-task-p1b-provider-source-alignment",
+  "objective": "把 P1-B provider artifact fixture 从早期 stage05 手写 source ID 对齐到当前 GenerationSchedulePlan 的真实 schedule item，并让 dry-run worker、live executor guard、prepare executor request 支持可选 schedule_item_id 定向处理。stage-provider-artifacts 必须要求 latest run 中存在同 schedule_item_id 的 generation_executor_run_request，不能只要求任意 executor request。保持 review-only，不调用 provider、不读取 .env、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "examples/worker_task_packs/p1b_generation_executor_request.v0.1.json",
+    "examples/worker_task_packs/p1b_provider_staging_requires_executor_request.v0.1.json"
+  ],
+  "allowed_paths": [
+    "backend/app/models.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/provider_artifact_staging/",
+    "examples/worker_task_packs/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "tools/dev/",
+    "backend/app/db.py",
+    "backend/app/api/sessions.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_source_alignment.v0.1.json",
+    "python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json",
+    "python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+    "python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json",
+    "python3 -m compileall backend",
+    "pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_source_alignment_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "优先对齐到 GenerationSchedulePlan 中的 sched_next_map_visual_prefetch。",
+    "如果 worker request body 提供 schedule_item_id，dry-run worker 只能处理对应 queued item；live guard / prepare request 只能处理对应 waiting_review item。",
+    "stage-provider-artifacts 必须检查 generation_executor_run_request ledger entry 的 schedule_item_id 与 ProviderOutputEnvelope source.schedule_item_id 一致。"
+  ]
+}

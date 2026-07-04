@@ -1,0 +1,218 @@
+{
+  "schema_version": "mvp_primary_api_flow_smoke_report.v0.1",
+  "report_id": "mvp_primary_api_flow_smoke_report_v0_1",
+  "generated_at": "2026-07-04T00:00:00+00:00",
+  "status": "passed",
+  "flow_id": "anonymous_session_to_first_battle_settlement",
+  "transport": "local_uvicorn_http",
+  "step_count": 21,
+  "passed_step_count": 21,
+  "node_id": "gray_lantern_station",
+  "endpoint_steps": [
+    {
+      "step_id": "create_session",
+      "method": "POST",
+      "endpoint_template": "/api/sessions",
+      "status_code": 201,
+      "passed": true
+    },
+    {
+      "step_id": "get_session",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "create_world_instance",
+      "method": "POST",
+      "endpoint_template": "/api/sessions/{session_id}/world-instance",
+      "status_code": 201,
+      "passed": true
+    },
+    {
+      "step_id": "opening",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/opening",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "frontend_mock_pack",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/frontend-mock-pack",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "runtime_art_kit",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/runtime-art-kit",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "map",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/map",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "campaign_router",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/campaign-router",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "campaign_prefetch_next",
+      "method": "POST",
+      "endpoint_template": "/api/sessions/{session_id}/campaign-router/prefetch-next",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "briefing",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/nodes/gray_lantern_station/briefing",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "research_create_proposal",
+      "method": "POST",
+      "endpoint_template": "/api/sessions/{session_id}/research/proposals",
+      "status_code": 201,
+      "passed": true
+    },
+    {
+      "step_id": "research_confirm_proposal",
+      "method": "POST",
+      "endpoint_template": "/api/sessions/{session_id}/research/proposals/{proposal_id}/confirm",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "research_get_job",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/research/jobs/{job_id}",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "battle_config",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/config",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "runtime_package",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/runtime-package",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "map_runtime_package",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/map-runtime-package",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "map_render_plan",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/map-render-plan",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "map_v02_preview",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/map-v02-preview",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "submit_battle_result",
+      "method": "POST",
+      "endpoint_template": "/api/sessions/{session_id}/battles/gray_lantern_station/results",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "latest_settlement",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/settlement/latest",
+      "status_code": 200,
+      "passed": true
+    },
+    {
+      "step_id": "session_evidence",
+      "method": "GET",
+      "endpoint_template": "/api/sessions/{session_id}/evidence",
+      "status_code": 200,
+      "passed": true
+    }
+  ],
+  "summary": {
+    "session_created": true,
+    "world_phase": "first_defense",
+    "opening_card_count": 4,
+    "frontend_asset_count": 11,
+    "runtime_art_asset_count": 9,
+    "map_node_count": 4,
+    "campaign_current_node": "gray_lantern_station",
+    "campaign_next_node": "lamp_wick_store",
+    "prefetch_provider_call_count": 0,
+    "battle_enemy_wave_count": 2,
+    "battle_toolbar_asset_count": 9,
+    "runtime_package_id": "package_session_lampwright_7f3a_001",
+    "runtime_asset_count": 1,
+    "map_build_slot_count": 12,
+    "map_route_count": 1,
+    "map_v02_resource_node_count": 1,
+    "settlement_mode": "transaction",
+    "settlement_phase": "post_first_defense"
+  },
+  "research": {
+    "proposal_created": true,
+    "proposal_gate_status": null,
+    "job_id_present": true,
+    "job_status": "completed",
+    "job_fetch_status": "completed",
+    "job_trace_count": 2,
+    "runtime_package_exists": true,
+    "delivery_payload_exists": true,
+    "job_gate_status": "passed",
+    "player_text_safety": "passed"
+  },
+  "core_artifacts": {
+    "proposal_status": "native_snapshots_ready",
+    "job_status": "native_snapshots_compiled",
+    "settlement_status": "native_settlement_committed",
+    "world_delta_transaction_id": "tx_first_battle_result_repaired_001"
+  },
+  "checks": {
+    "world_instance_created": true,
+    "campaign_current_node_matches_briefing": true,
+    "research_job_completed": true,
+    "research_artifacts_exist": true,
+    "battle_runtime_ready": true,
+    "map_runtime_v01_ready": true,
+    "map_v02_preview_ready": true,
+    "render_plan_passed": true,
+    "settlement_committed": true,
+    "session_evidence_passed": true
+  },
+  "safety_summary": {
+    "reads_env_file": false,
+    "provider_call_count": 0,
+    "world_state_write_scope": "temporary_test_sqlite",
+    "player_input_body_stored": false,
+    "provider_raw_output_stored": false,
+    "runtime_activation_mutation_count": 0
+  }
+}

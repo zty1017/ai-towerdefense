@@ -1,0 +1,42 @@
+{
+  "schema_version": "asset_design_spec.v0.1",
+  "asset_kind": "tower_blueprint",
+  "theme": {
+    "archetype": "alchemy_furnace",
+    "world_tags": ["field_research", "night_fire"],
+    "tone": "dangerous_but_useful"
+  },
+  "visual": {
+    "view": "isometric_3_4",
+    "style_id": "compiler_td_v1",
+    "body_archetype": "furnace",
+    "materials": ["dark_metal", "ceramic_core"],
+    "core_element": "purple_fire",
+    "body_layers": ["base", "furnace_body", "core_window", "ornament"],
+    "vfx_layers": ["pull_ring", "flame_cone", "stack_glow"],
+    "constraints": {
+      "single_subject": true,
+      "clean_background": true,
+      "no_enemy_in_sprite": true,
+      "no_attack_effect_on_body_sprite": true
+    }
+  },
+  "gameplay": {
+    "attack_pattern": "cone_damage_over_time",
+    "control_effect": "pull_in",
+    "growth_mechanic": "gain_stack_on_kill",
+    "targeting": "dense_area",
+    "intended_role": ["area_damage", "soft_control"]
+  },
+  "balance": {
+    "risk_tier": "high",
+    "cost_band": "expensive",
+    "control_strength_cap": "medium",
+    "growth_cap": "limited"
+  },
+  "world_fit": {
+    "source_materials": ["unstable_core", "ash_residue"],
+    "npc_disciplines": ["field_engineer", "occult_researcher"],
+    "facility_requirement": "field_workbench"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/fact_entry.v0.1.schema.json",
+  "title": "FactEntry v0.1",
+  "description": "A scoped world, memory, NPC, region, or quest fact. Candidate facts are context material until committed through WorldStateDelta.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fact_id",
+    "fact_kind",
+    "scope",
+    "subject",
+    "predicate",
+    "content",
+    "source",
+    "confidence",
+    "visibility",
+    "activation_rules",
+    "commit_state",
+    "submission_policy",
+    "expires_at",
+    "created_at",
+    "source_tx_id"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "fact_entry.v0.1" },
+    "fact_id": { "type": "string", "minLength": 1 },
+    "fact_kind": {
+      "type": "string",
+      "enum": ["worldbook", "memory", "runtime_fact", "npc_state", "region_state", "quest_state", "system_observation"]
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["run", "region", "node", "npc", "quest", "global"]
+    },
+    "subject": { "type": "string", "minLength": 1 },
+    "predicate": { "type": "string", "minLength": 1 },
+    "content": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "string",
+      "enum": ["developer", "system_observation", "ai_inferred", "player_claim", "battle_result", "world_state_delta"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["canonical", "observed", "inferred", "rumor", "player_claim"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["player_visible", "ai_visible", "system_private", "spoiler"]
+    },
+    "activation_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active_when", "deactivate_when"],
+      "properties": {
+        "active_when": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "deactivate_when": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "commit_state": {
+      "type": "string",
+      "enum": ["candidate", "committed", "deprecated", "revoked"]
+    },
+    "submission_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_mutate_run_world_state",
+        "commit_requires_world_state_delta",
+        "allowed_context_use"
+      ],
+      "properties": {
+        "can_mutate_run_world_state": { "type": "boolean", "const": false },
+        "commit_requires_world_state_delta": { "type": "boolean", "const": true },
+        "allowed_context_use": {
+          "type": "string",
+          "enum": ["context_only_until_committed", "committed_world_fact"]
+        }
+      }
+    },
+    "expires_at": {
+      "anyOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "created_at": { "type": "string", "minLength": 1 },
+    "source_tx_id": {
+      "anyOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    }
+  }
+}

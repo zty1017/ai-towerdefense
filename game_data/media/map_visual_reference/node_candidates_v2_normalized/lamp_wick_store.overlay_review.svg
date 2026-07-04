@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <image href="lamp_wick_store.normalized_1280x720.png" x="0" y="0" width="1280" height="720"/>
+  <rect x="0" y="0" width="1280" height="720" fill="none" stroke="#f8fafc" stroke-width="3" opacity="0.8"/>
+  <g id="runtime-paths" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="1244.4,324.0 960.0,324.0 960.0,180.0 604.4,180.0 604.4,468.0 248.9,468.0 106.7,396.0" stroke="#facc15" stroke-width="13" opacity="0.62"><title>path_wick_store_main_pipe</title></polyline>
+    <polyline points="1244.4,324.0 960.0,324.0 960.0,180.0 604.4,180.0 604.4,468.0 248.9,468.0 106.7,396.0" stroke="#111827" stroke-width="4" opacity="0.75"/>
+    <polyline points="1244.4,612.0 888.9,612.0 746.7,540.0 462.2,540.0 177.8,396.0" stroke="#facc15" stroke-width="13" opacity="0.62"><title>path_wick_store_service_lane</title></polyline>
+    <polyline points="1244.4,612.0 888.9,612.0 746.7,540.0 462.2,540.0 177.8,396.0" stroke="#111827" stroke-width="4" opacity="0.75"/>
+  </g>
+  <g id="build-slots" fill="rgba(34,211,238,0.16)" stroke="#22d3ee" stroke-width="4">
+    <circle cx="1244.4" cy="252.0" r="20"><title>slot_01</title></circle>
+    <circle cx="1244.4" cy="396.0" r="20"><title>slot_02</title></circle>
+    <circle cx="1173.3" cy="252.0" r="20"><title>slot_03</title></circle>
+    <circle cx="1173.3" cy="396.0" r="20"><title>slot_04</title></circle>
+    <circle cx="960.0" cy="396.0" r="20"><title>slot_05</title></circle>
+    <circle cx="888.9" cy="324.0" r="20"><title>slot_06</title></circle>
+    <circle cx="888.9" cy="252.0" r="20"><title>slot_07</title></circle>
+    <circle cx="1031.1" cy="252.0" r="20"><title>slot_08</title></circle>
+    <circle cx="888.9" cy="396.0" r="20"><title>slot_09</title></circle>
+    <circle cx="1031.1" cy="396.0" r="20"><title>slot_10</title></circle>
+    <circle cx="960.0" cy="108.0" r="20"><title>slot_11</title></circle>
+    <circle cx="1031.1" cy="180.0" r="20"><title>slot_12</title></circle>
+  </g>
+  <g id="spawn-points" fill="#a78bfa" stroke="#1f1147" stroke-width="3">
+    <polygon points="1244.4,300.0 1222.4,342.0 1266.4,342.0"><title>spawn_path_wick_store_main_pipe</title></polygon>
+    <polygon points="1244.4,588.0 1222.4,630.0 1266.4,630.0"><title>spawn_path_wick_store_service_lane</title></polygon>
+  </g>
+  <g id="objectives" fill="#fb7185" stroke="#7f1d1d" stroke-width="4">
+    <rect x="13.6" y="374.0" width="44" height="44" transform="rotate(45 35.6 396.0)"><title>target_wick_store_core</title></rect>
+    <rect x="155.8" y="518.0" width="44" height="44" transform="rotate(45 177.8 540.0)"><title>target_supply_line_coupler</title></rect>
+    <rect x="298.0" y="230.0" width="44" height="44" transform="rotate(45 320.0 252.0)"><title>target_lamp_oil_shelf</title></rect>
+  </g>
+  <text x="16" y="30" font-family="monospace" font-size="18" fill="#f8fafc" stroke="#0f172a" stroke-width="4" paint-order="stroke">review overlay: path / build slot / spawn / objective</text>
+</svg>

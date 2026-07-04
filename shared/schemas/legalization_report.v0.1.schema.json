@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/legalization_report.v0.1.schema.json",
+  "title": "LegalizationReport v0.1",
+  "description": "Report produced by the deterministic legalization gate. Documents conflicts detected, dimension reductions, missing-field completions, budget clamps, world-fit checks, media constraints applied, and fallback decisions. Must not contain provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "legalization_mode",
+    "passed",
+    "issues",
+    "applied_fixes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "legalization_report.v0.1"
+    },
+    "legalization_mode": {
+      "type": "string",
+      "enum": ["runtime_safe", "runtime_experimental", "studio_mode"]
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "severity", "message"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["conflict", "unknown_mechanism", "missing_field", "budget_clamp", "world_fit_mismatch", "media_constraint", "fallback_mapping", "degraded"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "info"]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_path": {
+            "type": "string"
+          },
+          "original_value": {},
+          "resolved_value": {}
+        }
+      }
+    },
+    "applied_fixes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "description"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["conflict_resolution", "dimension_reduction", "field_completion", "budget_clamp", "world_fit_adjustment", "media_constraint_enforcement", "fallback_mapping", "degradation"]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_path": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fallback_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unmapped_mechanics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "degraded_to_proposal": {
+          "type": "boolean"
+        },
+        "stable_enough_for_compile": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

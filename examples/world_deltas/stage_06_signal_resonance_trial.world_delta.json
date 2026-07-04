@@ -1,0 +1,162 @@
+{
+  "schema_version": "world_state_delta.v0.1",
+  "delta_id": "delta_stage_06_signal_resonance_trial",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "research_job",
+  "created_turn": 7,
+  "summary": "旧信号塔试作完成，回光中继塔蓝图暂时可用，并出现可记录的回流。",
+  "operations": [
+    {
+      "op": "set_progress_phase",
+      "phase": "signal_resonance_trial"
+    },
+    {
+      "op": "set_task_status",
+      "task_id": "task_stabilize_old_signal_tower",
+      "status": "completed"
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_echo_prism_relay_trial",
+        "status": "completed",
+        "started_turn": 6,
+        "source_task_id": "task_stabilize_old_signal_tower",
+        "source_sample_id": "sample_resonant_glass_shard_trial",
+        "expected_turns": 1,
+        "expected_output": "回光棱镜中继塔试作"
+      }
+    },
+    {
+      "op": "unlock_blueprint",
+      "blueprint": {
+        "blueprint_id": "asset_echo_prism_relay",
+        "unlocked_turn": 7,
+        "source": "research_echo_prism_relay_trial"
+      }
+    },
+    {
+      "op": "set_map_node_state",
+      "node_id": "old_signal_tower",
+      "patch": {
+        "status": "secured",
+        "threat_level": 1,
+        "visibility": "visible",
+        "available_actions": [
+          "collect_signal_echo",
+          "field_research",
+          "prepare_next_route"
+        ]
+      }
+    },
+    {
+      "op": "set_random_event_status",
+      "random_event_id": "random_event_signal_backwash",
+      "status": "available"
+    },
+    {
+      "op": "update_npc_relationship",
+      "npc_id": "npc_road_scout",
+      "relationship_delta": {
+        "trust": 0.05
+      }
+    },
+    {
+      "op": "adjust_resource",
+      "resource_id": "lantern_ash",
+      "amount_delta": 1
+    },
+    {
+      "op": "add_temporary_sample",
+      "sample": {
+        "sample_id": "sample_signal_echo_marker_trial",
+        "display_name": "回声测标短札",
+        "source_delta_id": "delta_stage_06_signal_resonance_trial",
+        "summary": "旧信号塔回流被记录成短札，可在下一段黑路开始前标出敌群来向。"
+      }
+    },
+    {
+      "op": "upsert_task",
+      "task": {
+        "task_id": "task_map_signal_backwash",
+        "kind": "scouting",
+        "status": "active",
+        "title": "记录旧塔回流方向",
+        "summary": "旧信号塔试作完成后出现一次可记录的回流，需要在回流散尽前做成测标短札。",
+        "node_id": "old_signal_tower",
+        "npc_id": "npc_road_scout",
+        "objective_refs": [
+          "random_event_signal_backwash",
+          "sample_signal_echo_marker_trial"
+        ],
+        "reward_refs": [
+          "asset_signal_echo_marker",
+          "random_event_split_tide_pressure"
+        ]
+      }
+    },
+    {
+      "op": "upsert_research_job",
+      "job": {
+        "job_id": "research_signal_echo_marker_trial",
+        "status": "queued",
+        "started_turn": 7,
+        "source_task_id": "task_map_signal_backwash",
+        "source_sample_id": "sample_signal_echo_marker_trial",
+        "expected_turns": 1,
+        "expected_output": "回声测标短札试作"
+      }
+    },
+    {
+      "op": "unlock_fact",
+      "fact": {
+        "fact_id": "signal_echo_marker_possible",
+        "source": "signal_resonance_trial",
+        "visibility": "player_known",
+        "summary": "旧信号塔回流可以被记录成短札，用于提前判断下一段敌潮方向。"
+      }
+    },
+    {
+      "op": "schedule_random_event",
+      "random_event": {
+        "random_event_id": "random_event_split_tide_pressure",
+        "event_type": "threat_warning",
+        "status": "pending",
+        "summary": "旧塔回流照出一条新的分潮线，北路外缘可能出现更强的分散冲击。",
+        "node_id": "old_signal_tower",
+        "trigger_turn": 7,
+        "related_task_id": "task_map_signal_backwash"
+      }
+    },
+    {
+      "op": "append_event",
+      "event": {
+        "event_id": "signal_resonance_trial_completed",
+        "turn": 7,
+        "kind": "research",
+        "summary": "回光棱镜中继塔试作完成，旧信号塔短暂稳定，回声测标任务开启。"
+      }
+    },
+    {
+      "op": "set_flag",
+      "flag": "stage_06_signal_resonance_trial_completed",
+      "value": true
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "pressure",
+      "amount_delta": -0.03
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "hope",
+      "amount_delta": 0.04
+    },
+    {
+      "op": "adjust_global_state",
+      "field": "visibility",
+      "amount_delta": 0.08
+    }
+  ]
+}

@@ -1,0 +1,687 @@
+{
+  "schema_version": "stage_candidate_pack.v0.1",
+  "pack_id": "mvp_stage_candidate_pack_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "pack_builder_reads_env": false,
+    "pack_builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "runtime_package_included": "referenced_only",
+    "llm_candidate_shape_supported": true
+  },
+  "source_refs": {
+    "review_pack": "examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+    "promotion_report": "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
+    "final_run_state": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json",
+    "runtime_packages": [
+      "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json"
+    ]
+  },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "StageCandidatePack 是 review-only 阶段候选容器；它聚合 narrative bundle、WorldStateDelta、玩法对象摘要和 runtime package 引用，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / WorldStateDeltaTransaction / runtime package，而不是激活整个 review pack。"
+  },
+  "stage_candidates": [
+    {
+      "stage_order": 1,
+      "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+      "title": "灰灯驿站首防",
+      "status": "reviewed_fixture",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
+        "battle_config": "game_data/demo/first_battle_config.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_research_need",
+          "explain_battle_result",
+          "offer_workshop_hook",
+          "reward_player_choice",
+          "teach_mechanic",
+          "unlock_battle_node"
+        ],
+        "gameplay_hooks": [
+          "advance_main_pressure",
+          "create_research_need",
+          "explain_battle_result",
+          "offer_workshop_hook",
+          "reward_player_choice",
+          "teach_mechanic",
+          "unlock_battle_node"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 9,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_global_state": 2,
+          "adjust_resource": 1,
+          "append_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 1,
+          "set_progress_phase": 1,
+          "unlock_fact": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "gray_lantern_station"
+        ],
+        "npcs": [],
+        "resources": [
+          "lamp_oil"
+        ],
+        "facts": [
+          "sample_trap_tested_in_battle"
+        ],
+        "flags": [
+          "tutorial_first_battle_completed"
+        ],
+        "tasks": [],
+        "random_events": [],
+        "research_jobs": [],
+        "samples": [
+          "sample_trap_7f3a_repaired"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "sample_trap_7f3a",
+          "asset_kind": "runtime_sample_trap",
+          "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+          "promotion_state": "usable_runtime_fixture",
+          "playable": true,
+          "uses_fallback_media": false,
+          "required_next_actions": [
+            "do_not_treat_as_compiled_asset_promotion",
+            "keep_as_first_battle_mid_delivery_fixture"
+          ]
+        }
+      ],
+      "runtime_package_refs": [
+        {
+          "package_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+          "package_id": "package_session_lampwright_7f3a_001",
+          "node_id": "gray_lantern_station",
+          "asset_count": 1
+        }
+      ],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "NarrativeEventBundle 结构与玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "WorldStateDelta 结构与基础规则校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "剧情 hook、WorldStateDelta 与最终运行态玩法对象闭环通过。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "passed",
+          "summary": "阶段资产均可作为 runtime fixture 或 fallback-ready 候选审查。"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "passed",
+          "summary": "该阶段已引用 1 个 runtime package。"
+        }
+      ],
+      "next_actions": [
+        "do_not_treat_as_compiled_asset_promotion",
+        "keep_as_first_battle_mid_delivery_fixture"
+      ]
+    },
+    {
+      "stage_order": 2,
+      "stage_id": "act_1_stage_02_dawn_review_supply_line",
+      "title": "黎明复盘与护线",
+      "status": "reviewed_fixture",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "create_quest_hook",
+          "explain_battle_result",
+          "increase_threat",
+          "introduce_functional_npc",
+          "introduce_material",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "open_resource_route"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "explain_battle_result",
+          "increase_threat",
+          "introduce_functional_npc",
+          "introduce_material",
+          "modify_map_node_state",
+          "offer_workshop_hook",
+          "open_resource_route"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 15,
+        "operation_counts": {
+          "adjust_resource": 3,
+          "append_event": 1,
+          "introduce_map_node": 2,
+          "introduce_npc": 1,
+          "schedule_random_event": 1,
+          "set_flag": 1,
+          "set_progress_phase": 1,
+          "unlock_fact": 2,
+          "upsert_research_job": 1,
+          "upsert_task": 2
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "lamp_wick_store",
+          "supply_line_hub_to_gray"
+        ],
+        "npcs": [
+          "npc_wire_mender_003"
+        ],
+        "resources": [
+          "conductor_filament",
+          "lamp_shard",
+          "lantern_ash"
+        ],
+        "facts": [
+          "refraction_snare_consumes_too_fast",
+          "wire_mender_candidate_seen"
+        ],
+        "flags": [
+          "stage_02_supply_line_review_completed"
+        ],
+        "tasks": [
+          "task_prepare_wick_store_defense",
+          "task_repair_supply_line_hub"
+        ],
+        "random_events": [
+          "random_event_wick_store_pressure_hint"
+        ],
+        "research_jobs": [
+          "research_signal_wick_decoy_trial"
+        ],
+        "samples": [],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "NarrativeEventBundle 结构与玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "WorldStateDelta 结构与基础规则校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "剧情 hook、WorldStateDelta 与最终运行态玩法对象闭环通过。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "passed",
+          "summary": "阶段资产均可作为 runtime fixture 或 fallback-ready 候选审查。"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "not_applicable",
+          "summary": "该阶段不是战斗 runtime package 阶段。"
+        }
+      ],
+      "next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package"
+      ]
+    },
+    {
+      "stage_order": 3,
+      "stage_id": "act_1_stage_03_northern_road_scouting",
+      "title": "北路侦测与路径预测",
+      "status": "reviewed_fixture",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_functional_npc",
+          "modify_map_node_state",
+          "open_resource_route",
+          "reward_player_choice",
+          "teach_mechanic"
+        ],
+        "gameplay_hooks": [
+          "advance_main_pressure",
+          "create_quest_hook",
+          "create_research_need",
+          "introduce_functional_npc",
+          "modify_map_node_state",
+          "open_resource_route",
+          "reward_player_choice",
+          "teach_mechanic"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 17,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_resource": 2,
+          "append_event": 1,
+          "introduce_npc": 1,
+          "schedule_random_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 2,
+          "set_progress_phase": 1,
+          "set_random_event_status": 1,
+          "set_task_status": 1,
+          "unlock_fact": 2,
+          "upsert_research_job": 2,
+          "upsert_task": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "northern_road_crossing",
+          "old_signal_tower"
+        ],
+        "npcs": [
+          "npc_road_scout"
+        ],
+        "resources": [
+          "conductor_filament",
+          "lantern_ash"
+        ],
+        "facts": [
+          "east_dark_echo_survey_ready",
+          "old_signal_tower_pressure_hint"
+        ],
+        "flags": [
+          "stage_03_northern_scouting_completed"
+        ],
+        "tasks": [
+          "task_scout_northern_road"
+        ],
+        "random_events": [
+          "random_event_old_signal_tower_pressure",
+          "random_event_wick_store_pressure_hint"
+        ],
+        "research_jobs": [
+          "research_dark_echo_survey",
+          "research_signal_wick_decoy_trial"
+        ],
+        "samples": [
+          "intel_dark_echo_survey_001"
+        ],
+        "blueprints": []
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "intel_dark_echo_survey_001",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        },
+        {
+          "asset_id": "intel_shadow_tide_survey",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+          "promotion_state": "candidate_only_needs_world_registration",
+          "playable": false,
+          "uses_fallback_media": false,
+          "required_next_actions": [
+            "register_or_replace_materials:charcoal_map,signal_wick",
+            "register_or_replace_npc_refs:archivist_001,scout_001",
+            "resolve_review_pack_candidate_status_before_runtime_package"
+          ]
+        }
+      ],
+      "runtime_package_refs": [],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "NarrativeEventBundle 结构与玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "WorldStateDelta 结构与基础规则校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "剧情 hook、WorldStateDelta 与最终运行态玩法对象闭环通过。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "warning",
+          "summary": "存在候选或受阻资产，不能默认进入 runtime: intel_shadow_tide_survey"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "not_applicable",
+          "summary": "该阶段不是战斗 runtime package 阶段。"
+        }
+      ],
+      "next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_or_promote_real_media_before_final_runtime_package",
+        "register_or_replace_materials:charcoal_map,signal_wick",
+        "register_or_replace_npc_refs:archivist_001,scout_001",
+        "resolve_review_pack_candidate_status_before_runtime_package"
+      ]
+    },
+    {
+      "stage_order": 4,
+      "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+      "title": "第二节点压力战 / 灯芯仓防守",
+      "status": "reviewed_fixture",
+      "source_files": {
+        "narrative_bundle": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+        "world_delta": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+        "battle_config": "game_data/demo/wick_store_pressure_battle_config.json"
+      },
+      "lane_coverage": [
+        "player_line",
+        "shared",
+        "world_line"
+      ],
+      "narrative_summary": {
+        "node_count": 3,
+        "gameplay_purposes": [
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "teach_mechanic",
+          "unlock_battle_node"
+        ],
+        "gameplay_hooks": [
+          "create_quest_hook",
+          "create_research_need",
+          "increase_threat",
+          "introduce_material",
+          "modify_map_node_state",
+          "reward_player_choice",
+          "teach_mechanic",
+          "unlock_battle_node"
+        ]
+      },
+      "delta_summary": {
+        "operation_count": 17,
+        "operation_counts": {
+          "add_temporary_sample": 1,
+          "adjust_resource": 2,
+          "append_event": 1,
+          "set_flag": 1,
+          "set_map_node_state": 2,
+          "set_progress_phase": 1,
+          "set_random_event_status": 1,
+          "set_task_status": 2,
+          "unlock_blueprint": 1,
+          "unlock_fact": 2,
+          "update_npc_relationship": 1,
+          "upsert_research_job": 1,
+          "upsert_task": 1
+        }
+      },
+      "gameplay_outputs": {
+        "map_nodes": [
+          "lamp_wick_store",
+          "supply_line_hub_to_gray"
+        ],
+        "npcs": [
+          "npc_wire_mender_003"
+        ],
+        "resources": [
+          "glow_crystal",
+          "lantern_ash"
+        ],
+        "facts": [
+          "glow_crystal_discovered",
+          "wick_store_defense_combo_validated"
+        ],
+        "flags": [
+          "stage_04_wick_store_defense_completed"
+        ],
+        "tasks": [
+          "task_formalize_ash_burst_lantern",
+          "task_prepare_wick_store_defense",
+          "task_repair_supply_line_hub"
+        ],
+        "random_events": [
+          "random_event_wick_store_pressure_hint"
+        ],
+        "research_jobs": [
+          "research_ash_burst_lantern_blueprint"
+        ],
+        "samples": [
+          "asset_ash_burst_lantern_trial"
+        ],
+        "blueprints": [
+          "asset_ash_burst_lantern"
+        ]
+      },
+      "asset_outputs": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        },
+        {
+          "asset_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+          "promotion_state": "fallback_ready",
+          "playable": true,
+          "uses_fallback_media": true,
+          "required_next_actions": [
+            "attach_deterministic_fallback_skin",
+            "continue_media_generation_or_repair_in_background",
+            "generate_or_promote_real_media_before_final_runtime_package"
+          ]
+        },
+        {
+          "asset_id": "mod_overload_chain_arc_001",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+          "promotion_state": "candidate_only_high_risk",
+          "playable": false,
+          "uses_fallback_media": false,
+          "required_next_actions": [
+            "defer_until_power_grid_and_risk_context_exists",
+            "keep_out_of_default_mvp_battle",
+            "register_or_replace_materials:charged_copper_coil,cracked_insulator",
+            "register_or_replace_npc_refs:engineer_001",
+            "run_deeper_balance_simulation_before_player_delivery"
+          ]
+        }
+      ],
+      "runtime_package_refs": [
+        {
+          "package_file": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+          "package_id": "package_session_lampwright_wick_store_001",
+          "node_id": "lamp_wick_store",
+          "asset_count": 3
+        }
+      ],
+      "validation_gates": [
+        {
+          "gate": "narrative_bundle",
+          "status": "passed",
+          "summary": "NarrativeEventBundle 结构与玩法 hook 校验通过。"
+        },
+        {
+          "gate": "world_delta_structure",
+          "status": "passed",
+          "summary": "WorldStateDelta 结构与基础规则校验通过。"
+        },
+        {
+          "gate": "narrative_gameplay_contract",
+          "status": "passed",
+          "summary": "剧情 hook、WorldStateDelta 与最终运行态玩法对象闭环通过。"
+        },
+        {
+          "gate": "asset_promotion_policy",
+          "status": "warning",
+          "summary": "存在候选或受阻资产，不能默认进入 runtime: mod_overload_chain_arc_001"
+        },
+        {
+          "gate": "runtime_package_ref",
+          "status": "passed",
+          "summary": "该阶段已引用 1 个 runtime package。"
+        }
+      ],
+      "next_actions": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "defer_until_power_grid_and_risk_context_exists",
+        "generate_or_promote_real_media_before_final_runtime_package",
+        "keep_out_of_default_mvp_battle",
+        "register_or_replace_materials:charged_copper_coil,cracked_insulator",
+        "register_or_replace_npc_refs:engineer_001",
+        "run_deeper_balance_simulation_before_player_delivery"
+      ]
+    }
+  ],
+  "readiness_summary": {
+    "stage_count": 4,
+    "status_counts": {
+      "reviewed_fixture": 4
+    },
+    "validation_gate_counts": {
+      "not_applicable": 2,
+      "passed": 16,
+      "warning": 2
+    },
+    "playable_asset_reference_count": 7,
+    "runtime_package_reference_count": 2,
+    "contract_warnings": 0,
+    "review_recommendation": "needs_human_review"
+  },
+  "validation_commands": [
+    {
+      "purpose": "构建并校验阶段候选包",
+      "command": "python3 tools/content_pipeline/build_stage_candidate_pack.py --validate"
+    },
+    {
+      "purpose": "单独校验阶段候选包",
+      "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_stage_candidate_pack.v0.1.json"
+    },
+    {
+      "purpose": "校验剧情到玩法对象的跨文件契约",
+      "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --warnings-as-errors"
+    }
+  ]
+}

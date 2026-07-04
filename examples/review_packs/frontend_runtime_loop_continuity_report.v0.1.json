@@ -1,0 +1,603 @@
+{
+  "report_version": "loop_continuity_report.v0.1",
+  "report_id": "frontend_runtime_loop_continuity_report_v0_1",
+  "created_at": "2026-07-03T00:00:00+08:00",
+  "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+  "source_atlas_id": "frontend_runtime_art_atlas_v0_1",
+  "status": "passed_with_warnings",
+  "summary": {
+    "animation_count": 18,
+    "checked_count": 7,
+    "passed_count": 0,
+    "passed_with_warnings_count": 7,
+    "failed_count": 0,
+    "skipped_static_count": 11,
+    "frame_source_counts": {
+      "deterministic_frame_sequence": 7,
+      "single_frame_static": 11
+    }
+  },
+  "thresholds": {
+    "alpha_threshold": 8,
+    "max_bbox_delta_ratio": 0.08,
+    "max_anchor_delta": 0.03,
+    "max_alpha_coverage_delta": 0.08,
+    "max_mean_rgba_delta": 0.2
+  },
+  "items": [
+    {
+      "animation_id": "enemy_shadow_tide_runner.icon.static",
+      "asset_id": "enemy_shadow_tide_runner",
+      "asset_name": "影潮奔行者",
+      "asset_type": "enemy_archetype",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_runner.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "enemy_shadow_tide_runner.unit_sprite.idle",
+      "asset_id": "enemy_shadow_tide_runner",
+      "asset_name": "影潮奔行者",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_runner.unit_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_runner_unit_sprite_cdd10059.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_runner__unit_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 836,
+          "first_height": 836,
+          "last_width": 836,
+          "last_height": 836
+        },
+        "first_alpha_bbox": {
+          "x": 187,
+          "y": 36,
+          "w": 462,
+          "h": 764
+        },
+        "last_alpha_bbox": {
+          "x": 186,
+          "y": 34,
+          "w": 462,
+          "h": 764
+        },
+        "bbox_delta_ratio": 0.002392,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.232328,
+        "last_alpha_coverage": 0.232328,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.020146
+      }
+    },
+    {
+      "animation_id": "enemy_shadow_tide_shade.icon.static",
+      "asset_id": "enemy_shadow_tide_shade",
+      "asset_name": "影潮残影",
+      "asset_type": "enemy_archetype",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_shade.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "enemy_shadow_tide_shade.unit_sprite.idle",
+      "asset_id": "enemy_shadow_tide_shade",
+      "asset_name": "影潮残影",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_shade.unit_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_shade_unit_sprite_e994eb94.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_shade__unit_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 889,
+          "first_height": 889,
+          "last_width": 889,
+          "last_height": 889
+        },
+        "first_alpha_bbox": {
+          "x": 240,
+          "y": 36,
+          "w": 408,
+          "h": 817
+        },
+        "last_alpha_bbox": {
+          "x": 239,
+          "y": 34,
+          "w": 408,
+          "h": 817
+        },
+        "bbox_delta_ratio": 0.00225,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.231969,
+        "last_alpha_coverage": 0.231969,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.018139
+      }
+    },
+    {
+      "animation_id": "enemy_shadow_tide_cluster.icon.static",
+      "asset_id": "enemy_shadow_tide_cluster",
+      "asset_name": "影潮聚团",
+      "asset_type": "enemy_archetype",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_cluster.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "enemy_shadow_tide_cluster.unit_sprite.idle",
+      "asset_id": "enemy_shadow_tide_cluster",
+      "asset_name": "影潮聚团",
+      "asset_type": "enemy_archetype",
+      "media_role": "unit_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#enemy_shadow_tide_cluster.unit_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/enemy_shadow_tide_cluster_unit_sprite_93ea896a.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/enemy_shadow_tide_cluster__unit_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 809,
+          "first_height": 809,
+          "last_width": 809,
+          "last_height": 809
+        },
+        "first_alpha_bbox": {
+          "x": 103,
+          "y": 36,
+          "w": 603,
+          "h": 737
+        },
+        "last_alpha_bbox": {
+          "x": 102,
+          "y": 34,
+          "w": 603,
+          "h": 737
+        },
+        "bbox_delta_ratio": 0.002472,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.400076,
+        "last_alpha_coverage": 0.400076,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.023396
+      }
+    },
+    {
+      "animation_id": "objective_station_core.icon.static",
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_station_core.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "objective_station_core.objective_sprite.idle",
+      "asset_id": "objective_station_core",
+      "asset_name": "驿站核心",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_station_core.objective_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/objective_station_core_objective_sprite_17dba5dd.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/objective_station_core__objective_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 858,
+          "first_height": 858,
+          "last_width": 858,
+          "last_height": 858
+        },
+        "first_alpha_bbox": {
+          "x": 221,
+          "y": 40,
+          "w": 416,
+          "h": 778
+        },
+        "last_alpha_bbox": {
+          "x": 221,
+          "y": 39,
+          "w": 416,
+          "h": 778
+        },
+        "bbox_delta_ratio": 0.001166,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.328283,
+        "last_alpha_coverage": 0.328283,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.012227
+      }
+    },
+    {
+      "animation_id": "objective_signal_beacon.icon.static",
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "asset_type": "protection_target",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_signal_beacon.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "objective_signal_beacon.objective_sprite.idle",
+      "asset_id": "objective_signal_beacon",
+      "asset_name": "信标天线",
+      "asset_type": "protection_target",
+      "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_signal_beacon.objective_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/objective_signal_beacon_objective_sprite_f43b6e33.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/objective_signal_beacon__objective_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 878,
+          "first_height": 878,
+          "last_width": 878,
+          "last_height": 878
+        },
+        "first_alpha_bbox": {
+          "x": 274,
+          "y": 40,
+          "w": 330,
+          "h": 798
+        },
+        "last_alpha_bbox": {
+          "x": 274,
+          "y": 39,
+          "w": 330,
+          "h": 798
+        },
+        "bbox_delta_ratio": 0.001139,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.119534,
+        "last_alpha_coverage": 0.119534,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.005265
+      }
+    },
+    {
+      "animation_id": "objective_lamp_wick_cache.icon.static",
+      "asset_id": "objective_lamp_wick_cache",
+      "asset_name": "灯芯物资箱",
+      "asset_type": "resource_target",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_lamp_wick_cache.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "objective_lamp_wick_cache.objective_sprite.idle",
+      "asset_id": "objective_lamp_wick_cache",
+      "asset_name": "灯芯物资箱",
+      "asset_type": "resource_target",
+      "media_role": "objective_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#objective_lamp_wick_cache.objective_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/objective_lamp_wick_cache_objective_sprite_14249ddf.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/objective_lamp_wick_cache__objective_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 846,
+          "first_height": 846,
+          "last_width": 846,
+          "last_height": 846
+        },
+        "first_alpha_bbox": {
+          "x": 90,
+          "y": 36,
+          "w": 666,
+          "h": 774
+        },
+        "last_alpha_bbox": {
+          "x": 90,
+          "y": 35,
+          "w": 666,
+          "h": 774
+        },
+        "bbox_delta_ratio": 0.001182,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.496923,
+        "last_alpha_coverage": 0.496923,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.020907
+      }
+    },
+    {
+      "animation_id": "defense_basic_lantern_barricade.icon.static",
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "asset_type": "basic_defense",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#defense_basic_lantern_barricade.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "defense_basic_lantern_barricade.defense_sprite.idle",
+      "asset_id": "defense_basic_lantern_barricade",
+      "asset_name": "基础灯栏",
+      "asset_type": "basic_defense",
+      "media_role": "defense_sprite",
+      "frame_source_kind": "deterministic_frame_sequence",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#defense_basic_lantern_barricade.defense_sprite.idle",
+      "frame_count": 4,
+      "playback": {
+        "state": "idle",
+        "fps": 6,
+        "loop": true
+      },
+      "status": "passed_with_warnings",
+      "issues": [],
+      "warnings": [
+        "endpoint_frame_sha_differs",
+        "deterministic_placeholder_not_real_video_keyframes"
+      ],
+      "metrics": {
+        "first_frame": "game_data/media/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png",
+        "last_frame": "game_data/media/frontend_runtime_mock/atlas_frames/defense_basic_lantern_barricade__defense_sprite__frame_003.png",
+        "canvas": {
+          "first_width": 645,
+          "first_height": 645,
+          "last_width": 645,
+          "last_height": 645
+        },
+        "first_alpha_bbox": {
+          "x": 100,
+          "y": 40,
+          "w": 445,
+          "h": 565
+        },
+        "last_alpha_bbox": {
+          "x": 100,
+          "y": 39,
+          "w": 445,
+          "h": 565
+        },
+        "bbox_delta_ratio": 0.00155,
+        "anchor_delta": 0.0,
+        "first_alpha_coverage": 0.336525,
+        "last_alpha_coverage": 0.336525,
+        "alpha_coverage_delta": 0.0,
+        "mean_rgba_delta": 0.013459
+      }
+    },
+    {
+      "animation_id": "npc_gray_lantern_keeper_portrait.icon.static",
+      "asset_id": "npc_gray_lantern_keeper_portrait",
+      "asset_name": "灰灯驿站守灯人",
+      "asset_type": "npc_portrait",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#npc_gray_lantern_keeper_portrait.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "npc_gray_lantern_keeper_portrait.portrait.static",
+      "asset_id": "npc_gray_lantern_keeper_portrait",
+      "asset_name": "灰灯驿站守灯人",
+      "asset_type": "npc_portrait",
+      "media_role": "portrait",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#npc_gray_lantern_keeper_portrait.portrait.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "npc_workshop_mentor_portrait.icon.static",
+      "asset_id": "npc_workshop_mentor_portrait",
+      "asset_name": "临时工坊老师傅",
+      "asset_type": "npc_portrait",
+      "media_role": "icon",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#npc_workshop_mentor_portrait.icon.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    },
+    {
+      "animation_id": "npc_workshop_mentor_portrait.portrait.static",
+      "asset_id": "npc_workshop_mentor_portrait",
+      "asset_name": "临时工坊老师傅",
+      "asset_type": "npc_portrait",
+      "media_role": "portrait",
+      "frame_source_kind": "single_frame_static",
+      "atlas_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json#npc_workshop_mentor_portrait.portrait.static",
+      "frame_count": 1,
+      "playback": {
+        "state": "static",
+        "fps": 1,
+        "loop": false
+      },
+      "status": "skipped_static",
+      "issues": [],
+      "warnings": [],
+      "metrics": {
+        "reason": "not_looping_animation"
+      }
+    }
+  ]
+}

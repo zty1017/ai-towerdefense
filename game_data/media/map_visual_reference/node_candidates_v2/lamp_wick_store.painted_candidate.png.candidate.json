@@ -1,0 +1,24 @@
+{
+  "schema_version": "node_map_painted_candidate.v0.1",
+  "candidate_id": "lamp_wick_store.painted_candidate",
+  "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/lamp_wick_store.painted_candidate.png",
+  "battle_config": "game_data/demo/wick_store_pressure_battle_config.json",
+  "node_id": "lamp_wick_store",
+  "display_name": "灯芯仓·压力防守",
+  "provider_profile": "agnes_image_flash",
+  "model": "agnes-image-2.1-flash",
+  "size": "1280x720",
+  "prompt_profile": "clean_scene_v2",
+  "prompt_sha256": "c50fc36412302b6c838b419401aa6cbdfa64cb6642d938ab0c9a3dd75e23e2d1",
+  "image_exists": true,
+  "image_size_bytes": 1890470,
+  "provider_called_this_run": false,
+  "generation_status": "existing_image_sidecar_refreshed",
+  "prompt_summary": [
+    "node-specific pseudo-isometric tower-defense map",
+    "no UI, text, grid, enemies, towers, characters, watermark, or logo",
+    "empty tower foundations and roads remain clear for runtime overlays"
+  ],
+  "review_status": "candidate_needs_alignment_and_visual_review",
+  "promotion_policy": "must not update runtime package without explicit review"
+}

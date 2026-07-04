@@ -1,0 +1,96 @@
+{
+  "battle_config_version": "first_battle.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "display_name": "灰灯驿站·第一场战斗",
+  "grid": {
+    "projection": "pseudo3d_oblique",
+    "width_cells": 16,
+    "height_cells": 9,
+    "cell_size": 64
+  },
+  "paths": [
+    {
+      "stable_internal_id": "path_main_road",
+      "display_name": "主路径",
+      "waypoints": [
+        { "x": 15, "y": 4 },
+        { "x": 10, "y": 4 },
+        { "x": 10, "y": 2 },
+        { "x": 5, "y": 2 },
+        { "x": 5, "y": 6 },
+        { "x": 1, "y": 6 }
+      ],
+      "entry_label": "影潮涌入方向",
+      "exit_label": "驿站核心方向"
+    }
+  ],
+  "core_target": {
+    "stable_internal_id": "target_node_core",
+    "display_name": "驿站核心",
+    "position": { "x": 0, "y": 6 },
+    "durability": 10
+  },
+  "optional_targets": [
+    {
+      "stable_internal_id": "target_signal_beacon",
+      "display_name": "信标天线",
+      "position": { "x": 3, "y": 2 },
+      "durability": 4
+    }
+  ],
+  "waves": [
+    {
+      "wave_index": 1,
+      "display_name": "第一波·前锋",
+      "enemy_archetype": "shadow_tide_runner",
+      "count": 6,
+      "spawn_interval_ms": 1200,
+      "speed_cells_per_sec": 1.8,
+      "durability": 2,
+      "delay_before_wave_ms": 3000
+    },
+    {
+      "wave_index": 2,
+      "display_name": "第二波·残影",
+      "enemy_archetype": "shadow_tide_shade",
+      "count": 4,
+      "spawn_interval_ms": 1800,
+      "speed_cells_per_sec": 1.1,
+      "durability": 4,
+      "delay_before_wave_ms": 8000
+    }
+  ],
+  "basic_defense": {
+    "stable_internal_id": "basic_lantern_barricade",
+    "display_name": "基础灯栏",
+    "summary": "可用基础手段搭建的临时灯栏，能少量拖延敌人，无减速效果。",
+    "uses_per_battle": 3,
+    "duration_ms": 4000
+  },
+  "sample_asset": {
+    "stable_internal_id": "sample_trap_7f3a",
+    "asset_kind": "temporary_trap_sample",
+    "template_id": "temporary_trap_sample",
+    "lifecycle_state": "ephemeral",
+    "display_name": "折光绊索",
+    "uses_per_battle": 2,
+    "requires_delivery": true,
+    "delivery_state": "research_in_progress",
+    "delivery_delay_ms": 30000,
+    "delivery_progress_messages": [
+      "现场试作中。",
+      "材料校准中。",
+      "样品封装中。",
+      "正在送达战场。"
+    ],
+    "effect_summary": "范围内敌人短暂减速。",
+    "visual_recipes": ["ring_pulse", "aura_field", "sprite_flash"]
+  },
+  "victory_condition": "守住驿站核心至所有波次结束。",
+  "failure_condition": "驿站核心耐久归零。",
+  "post_battle": {
+    "on_victory": "节点守住，但信标天线可能受损。暴露样品缺陷并获得正式研发线索。",
+    "on_failure": "节点失守，但仍记录样品实战表现，世界状态恶化但不终结体验。"
+  }
+}

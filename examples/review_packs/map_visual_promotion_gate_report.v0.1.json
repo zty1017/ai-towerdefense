@@ -1,0 +1,382 @@
+{
+  "blocked_candidates": [
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:needs_regeneration",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/gray_lantern_station.painted_candidate.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:needs_regeneration",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/lamp_wick_store.painted_candidate.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/old_signal_tower.painted_candidate.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:needs_regeneration",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/gray_lantern_station.controlled_text_fallback_candidate.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:needs_regeneration",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/lamp_wick_store.controlled_text_fallback_candidate.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:needs_regeneration",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/old_signal_tower.controlled_text_fallback_candidate.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:awaiting_provider_or_paintover_output",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:awaiting_provider_or_paintover_output",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/lamp_wick_store.controlled_reference_candidate.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "review_status:awaiting_provider_or_paintover_output",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/old_signal_tower.controlled_reference_candidate.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/controlled_map_candidate_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_prompt_iteration"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_topology_v1_normalized/old_signal_tower.normalized_1280x720.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_prompt_iteration"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_topology_v1_normalized/old_signal_tower.overlay_review.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/gray_lantern_station.painted_candidate.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.2.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/lamp_wick_store.painted_candidate.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.2.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "blocking_findings_present",
+        "runtime_promotion:blocked_until_explicit_review"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/node_map_painted_candidate_review.v0.2.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_layout_reconciliation",
+        "promotion_allowed_now:false"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.normalized_1280x720.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+        "examples/review_packs/map_patch_overlay_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_layout_reconciliation"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.overlay_review.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_path_reprojection",
+        "promotion_allowed_now:false"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.normalized_1280x720.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+        "examples/review_packs/map_patch_overlay_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_path_reprojection"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.overlay_review.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_layout_reconciliation"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.normalized_1280x720.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_recommendation:do_not_promote",
+        "status:needs_layout_reconciliation"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/old_signal_tower.overlay_review.png",
+      "node_ids": [
+        "old_signal_tower"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_allowed_now:false"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/gray_lantern_station.patched_overlay_review.png",
+      "node_ids": [
+        "gray_lantern_station"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_patch_overlay_review.v0.1.json"
+      ]
+    },
+    {
+      "blocking_reasons": [
+        "promotion_allowed_now:false"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/lamp_wick_store.patched_overlay_review.png",
+      "node_ids": [
+        "lamp_wick_store"
+      ],
+      "source_reports": [
+        "examples/review_packs/map_patch_overlay_review.v0.1.json"
+      ]
+    }
+  ],
+  "inputs": {
+    "manifest_path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
+    "package_dir": "examples/map_runtime_packages",
+    "review_pack_paths": [
+      "examples/review_packs/node_map_painted_candidate_review.v0.1.json",
+      "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
+      "examples/review_packs/controlled_map_candidate_review.v0.1.json",
+      "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
+      "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+      "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json",
+      "examples/review_packs/map_layout_reconciliation_plan.v0.1.json",
+      "examples/review_packs/map_patch_overlay_review.v0.1.json"
+    ]
+  },
+  "next_required_gate": "explicit_map_visual_promotion_report",
+  "policy": [
+    "Review-only, rejected, blocked, or still-awaiting map candidates cannot become player-facing published visual layers.",
+    "MapRuntimePackage remains gameplay truth; painted maps are presentation layers that require explicit promotion.",
+    "This deterministic gate does not replace human or vision-model visual quality review."
+  ],
+  "published_player_layers": [
+    {
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
+      "node_id": "manifest",
+      "review_status": "passed_player_visual_quality",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "source": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
+    },
+    {
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
+      "node_id": "gray_lantern_station",
+      "review_status": "passed_player_visual_quality",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "source": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
+    },
+    {
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
+      "node_id": "old_signal_tower",
+      "review_status": "passed_player_visual_quality",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "source": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
+    },
+    {
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
+      "node_id": "lamp_wick_store",
+      "review_status": "passed_player_visual_quality",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "source": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
+    }
+  ],
+  "report_id": "mvp_map_visual_promotion_gate",
+  "schema_version": "map_visual_promotion_gate_report.v0.1",
+  "status": "passed",
+  "summary": {
+    "blocked_candidate_count": 22,
+    "blocking_reason_counts": {
+      "blocking_findings_present": 12,
+      "promotion_allowed_now:false": 4,
+      "promotion_recommendation:do_not_promote": 8,
+      "review_status:awaiting_provider_or_paintover_output": 3,
+      "review_status:needs_regeneration": 5,
+      "runtime_promotion:blocked_until_explicit_review": 12,
+      "status:needs_layout_reconciliation": 4,
+      "status:needs_path_reprojection": 2,
+      "status:needs_prompt_iteration": 2
+    },
+    "published_player_layer_count": 4,
+    "violation_count": 0
+  },
+  "violations": []
+}

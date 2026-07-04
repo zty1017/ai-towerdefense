@@ -212,6 +212,8 @@ OpenCode headless 是第二优先实现通道，适合可自动化、边界清�
 - headless 模式只允许调用指定模型。
 - OpenCode headless 中优先使用 `volcengine-plan/*`。
 - 其他免费或官方 API 模型作为候选 / fallback。
+- 在当前 Codex 受控执行通道内，`opencode run --dir <private-project-worktree>` 会被平台视为可能向外部模型披露私有仓库上下文，即使用户允许也可能被拒绝。不得通过复制仓库、改目录、压缩上下文等方式绕过。
+- 因此，本通道内 OpenCode 只适合无项目上下文的公开任务建议、模型能力探针或用户明确在自己 IDE/CLI 环境中执行的 worker。需要读取私有仓库并修改代码时，优先使用本地 task worktree、CodeBuddy IDE 主代理或 Codex worker。
 
 允许模型白名单：
 
@@ -407,6 +409,8 @@ codex exec \
 
 ### 3.2 CodeBuddy 任务包模板
 
+当前可验证任务包格式以 `docs/WORKER_TASK_PACK_V0_1.md`、`shared/schemas/worker_task_pack.v0.1.schema.json` 和 `tools/dev/validate_worker_task_pack.py` 为准。下面的文本模板只保留为人工粘贴时的可读结构；正式交付给 worker 前，应优先生成并校验 `WorkerTaskPack v0.1` JSON。
+
 ```text
 任务目标：
 
@@ -572,12 +576,28 @@ local/worktrees/
 - 任务分支不能直接进入 `main`。
 - 子代理和 CodeBuddy 优先在 `task/*` 或独立 worktree 中工作。
 - 主代理负责把结果整合到 `develop`。
-- 演示前从 `develop` 合并或挑选到 `main`。
+- `main` 不作为实时施工事实源；它只在阶段性冻结窗口从 `develop` 受控同步。
+- 演示前或阶段冻结后，从 `develop` 合并或挑选到 `main`。
 - 高风险实验放入 `experiment/*`。
 - CodeBuddy IDE 可以打开 `develop` worktree 作为主交互目录。
 - CodeBuddy 主代理可以在 `develop` 阅读上下文、拆分任务和汇总结果，但普通实现改动应交给 `task/*` worktree 中的子代理 / worker 完成。
 
-### 5.1 分支命名
+### 5.1 main 同步窗口
+
+`develop` 是快速集成事实源，允许承载最新架构、设计、实现和审查结果。`main` 是稳定决策 / 展示基线，只有在一组关键决策已经阶段性冻结、验收通过，并且需要给评审、队友或发布环境提供稳定入口时才同步。
+
+同步 `main` 前必须先做以下检查：
+
+- 确认 `develop` 已通过本轮必需验收。
+- 确认 `main` 当前工作区没有未识别的用户改动。
+- 如果 `main` 有手动改动，先判断它是用户草稿、待合并决策，还是应由 `develop` 版本覆盖；不得直接回滚。
+- 列出本次要同步的文档、代码和资产范围。
+- 对 `CURRENT_ARCHITECTURE_INDEX.md`、README、关键治理文档做一次事实源一致性检查。
+- 同步完成后记录 commit 摘要和剩余差异。
+
+`main` 落后于讨论或 `develop` 是允许的，但这种落后必须是“受控滞后”。如果 `main` 中的旧说法会误导新代理、CodeBuddy、OpenCode、队友或评委，应安排一次同步窗口，而不是继续让旧说法长期存在。
+
+### 5.2 分支命名
 
 建议格式：
 
@@ -598,7 +618,7 @@ experiment/candidate-ir
 docs/mvp-scope
 ```
 
-### 5.2 worktree 边界
+### 5.3 worktree 边界
 
 每个 worker / CodeBuddy 任务优先使用独立 worktree。
 
@@ -613,7 +633,7 @@ docs/mvp-scope
 - 不在 worker worktree 中直接处理跨任务冲突。
 - worker 完成后必须提供 diff 摘要、测试结果和风险说明。
 
-### 5.3 正式任务与探索任务
+### 5.4 正式任务与探索任务
 
 正式任务：
 
@@ -639,7 +659,7 @@ experiment/*
 
 只有当主会话确认其价值后，才转成正式任务迁入仓库。
 
-### 5.4 回收与集成
+### 5.5 回收与集成
 
 worker 完成后，主会话需要做：
 

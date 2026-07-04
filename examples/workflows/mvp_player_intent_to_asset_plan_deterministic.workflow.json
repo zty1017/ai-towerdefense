@@ -1,0 +1,37 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_player_intent_to_asset_plan_deterministic",
+  "mode": "deterministic",
+  "description": "DETERMINISTIC hidden compiler front-end: load fixture AssetDesignSpec -> deterministic legalization -> AssetPlan -> player-visible Proposal. No LLM calls. Bypasses intent.parse_player_utterance_guarded, asset.build_design_spec_guarded, and graph.select_compile_template_guarded.",
+  "nodes": [
+    {
+      "id": "load_design_spec",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/intent_specs/alchemy_furnace_tower.asset_design_spec.json" }
+    },
+    {
+      "id": "legalize_design_spec",
+      "node_type": "asset.legalize_design_spec"
+    },
+    {
+      "id": "build_asset_plan",
+      "node_type": "asset.build_asset_plan"
+    },
+    {
+      "id": "build_proposal",
+      "node_type": "proposal.build_from_legalized_spec"
+    },
+    {
+      "id": "validate_proposal",
+      "node_type": "proposal.validate"
+    }
+  ],
+  "edges": [
+    { "source": "load_design_spec", "target": "legalize_design_spec", "target_input": "design_spec" },
+    { "source": "legalize_design_spec", "target": "build_asset_plan", "target_input": "legalized_design_spec" },
+    { "source": "legalize_design_spec", "source_output": "report", "target": "build_asset_plan", "target_input": "legalization_report" },
+    { "source": "legalize_design_spec", "target": "build_proposal", "target_input": "legalized_design_spec" },
+    { "source": "build_asset_plan", "target": "build_proposal", "target_input": "asset_plan" },
+    { "source": "build_proposal", "target": "validate_proposal", "target_input": "proposal" }
+  ]
+}

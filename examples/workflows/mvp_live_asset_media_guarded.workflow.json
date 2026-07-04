@@ -1,0 +1,63 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_live_asset_media_guarded",
+  "mode": "live",
+  "description": "LIVE guarded asset media generation: load compiled candidate -> generate images with image provider -> remove_background_stub -> crop_and_pad_stub -> normalize_canvas_stub -> assign_anchor_stub -> pack_sprite_sheet_stub -> build_atlas_json_stub (runtime_public) -> check_runtime_readiness. WARNING: this workflow calls a real image provider and must be explicitly executed by a human. The generated raw media flows through the processing chain; only the final published manifest is runtime_public.",
+  "nodes": [
+    {
+      "id": "load_candidate",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/compiled_assets/light_slow_tower.compiled_asset.json" }
+    },
+    {
+      "id": "generate_images",
+      "node_type": "media.generate_asset_images_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "image_profile": "agnes_image_flash",
+        "size": "1024x1024",
+        "roles": ["icon", "tower_sprite"],
+        "request_timeout": 180
+      }
+    },
+    {
+      "id": "remove_bg",
+      "node_type": "media.remove_background_stub"
+    },
+    {
+      "id": "crop_pad",
+      "node_type": "media.crop_and_pad_stub"
+    },
+    {
+      "id": "normalize",
+      "node_type": "media.normalize_canvas_stub"
+    },
+    {
+      "id": "assign_anchor",
+      "node_type": "media.assign_anchor_stub"
+    },
+    {
+      "id": "pack_sheet",
+      "node_type": "media.pack_sprite_sheet_stub"
+    },
+    {
+      "id": "build_atlas",
+      "node_type": "media.build_atlas_json_stub",
+      "runtime_public": true
+    },
+    {
+      "id": "runtime_readiness",
+      "node_type": "media.check_runtime_readiness"
+    }
+  ],
+  "edges": [
+    { "source": "load_candidate", "target": "generate_images", "target_input": "candidate" },
+    { "source": "generate_images", "target": "remove_bg", "target_input": "media_metadata" },
+    { "source": "remove_bg", "target": "crop_pad", "target_input": "media_metadata" },
+    { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },
+    { "source": "normalize", "target": "assign_anchor", "target_input": "media_metadata" },
+    { "source": "assign_anchor", "target": "pack_sheet", "target_input": "media_metadata" },
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" },
+    { "source": "build_atlas", "target": "runtime_readiness", "target_input": "published_media" }
+  ]
+}

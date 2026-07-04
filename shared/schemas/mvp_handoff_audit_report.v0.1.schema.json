@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/mvp_handoff_audit_report.v0.1.schema.json",
+  "title": "MVP Handoff Audit Report v0.1",
+  "description": "Offline execution report for the MVP AI compiler handoff. It records core validation command results, artifact coverage, pipeline logic, and residual risks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "visibility",
+    "created_at",
+    "overall_status",
+    "generation_boundary",
+    "pipeline_logic",
+    "review_entrypoints",
+    "command_results",
+    "artifact_summary",
+    "coverage_checks",
+    "known_risks"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "mvp_handoff_audit_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "visibility": { "type": "string", "const": "review_only" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "overall_status": { "type": "string", "enum": ["passed", "failed"] },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "audit_reads_env",
+        "audit_calls_external_service",
+        "base_worldbook_mutation",
+        "report_contains_raw_external_payload"
+      ],
+      "properties": {
+        "front_end_integration": { "type": "string", "const": "not_included" },
+        "audit_reads_env": { "type": "boolean", "const": false },
+        "audit_calls_external_service": { "type": "boolean", "const": false },
+        "base_worldbook_mutation": { "type": "boolean", "const": false },
+        "report_contains_raw_external_payload": { "type": "boolean", "const": false }
+      }
+    },
+    "pipeline_logic": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "review_entrypoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "purpose"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "command_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command", "return_code", "status", "stdout_tail", "stderr_tail"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "command": { "type": "string", "minLength": 1 },
+          "return_code": { "type": "integer" },
+          "status": { "type": "string", "enum": ["passed", "failed"] },
+          "stdout_tail": { "type": "string" },
+          "stderr_tail": { "type": "string" }
+        }
+      }
+    },
+    "artifact_summary": { "type": "object" },
+    "coverage_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["check_id", "status", "summary", "evidence"],
+        "properties": {
+          "check_id": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+          "summary": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "object" }
+        }
+      }
+    },
+    "known_risks": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  }
+}

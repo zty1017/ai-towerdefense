@@ -1,0 +1,192 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_05_old_signal_tower_pressure",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "world_tick",
+  "created_turn": 6,
+  "stage": "act_1_stage_05_old_signal_tower_pressure",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "node_stage05_world_pressure_visible",
+      "stage": "act_1_stage_05_old_signal_tower_pressure",
+      "phase": "old_signal_tower_pressure_planned",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "random_event_old_signal_tower_pressure",
+        "summary": "旧信号塔附近的回光扰动增强，可能暴露新的路径压力或捷径。"
+      },
+      "prerequisites": [
+        "old_signal_tower_pressure_hint",
+        "stage_04_wick_store_defense_completed"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "旧信号塔的回光抬升",
+        "blocks": [
+          {
+            "text": "北路尽头的旧信号塔被一圈冷白余光托起，塔脚下的影潮像被折回的潮线，开始沿旧路聚集。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "advance_main_pressure",
+        "modify_map_node_state",
+        "trigger_random_event"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "old_signal_tower",
+          "summary": "旧信号塔从已侦察节点升级为受压节点。"
+        },
+        {
+          "hook": "trigger_random_event",
+          "target_ref": "random_event_old_signal_tower_pressure",
+          "summary": "旧信号塔压力事件由等待转为可处理。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_05_old_signal_tower_pressure",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "set_random_event_status",
+          "adjust_global_state"
+        ],
+        "summary": "推动旧信号塔地图节点和压力事件进入可审查状态。"
+      }
+    },
+    {
+      "node_id": "node_stage05_player_stabilize_task",
+      "stage": "act_1_stage_05_old_signal_tower_pressure",
+      "phase": "old_signal_tower_pressure_planned",
+      "lane": "player_line",
+      "scope": "quest",
+      "trigger": {
+        "kind": "map_entered",
+        "ref": "old_signal_tower",
+        "summary": "玩家可通过侦察、稳定任务和辉晶材料尝试研发折射/回声类防御方案。"
+      },
+      "prerequisites": [
+        "npc_road_scout",
+        "glow_crystal_discovered"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "斥候的短旗",
+        "blocks": [
+          {
+            "speaker_id": "npc_road_scout",
+            "speaker_name": "北路斥候",
+            "text": "旧塔的回光会把影子拖出原路。若把辉晶压进临时棱座，也许能让来敌先显形，再慢下来。"
+          },
+          {
+            "text": "新的稳定任务被记入路牌，样品会先在现场小规模试作。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_quest_hook",
+        "create_research_need",
+        "offer_workshop_hook"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "task_stabilize_old_signal_tower",
+          "summary": "创建稳定旧信号塔的玩家线任务。"
+        },
+        {
+          "hook": "create_research_need",
+          "target_ref": "research_echo_prism_relay_trial",
+          "summary": "把现场样品接入一次可回滚研发任务。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_05_old_signal_tower_pressure",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "upsert_task",
+          "upsert_research_job",
+          "update_npc_relationship"
+        ],
+        "summary": "生成可完成任务，并把后续试作挂到当前运行态。"
+      }
+    },
+    {
+      "node_id": "node_stage05_resonant_sample_and_asset",
+      "stage": "act_1_stage_05_old_signal_tower_pressure",
+      "phase": "old_signal_tower_pressure_planned",
+      "lane": "shared",
+      "scope": "workshop",
+      "trigger": {
+        "kind": "player_choice",
+        "ref": "task_stabilize_old_signal_tower",
+        "summary": "玩家选择把辉晶用于旧塔现场试作。"
+      },
+      "prerequisites": [
+        "glow_crystal",
+        "old_signal_tower_pressure_hint"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "workshop_notice",
+        "title": "回光玻片样本",
+        "blocks": [
+          {
+            "text": "一枚辉晶被磨成薄片后贴上旧塔铜槽，表面浮出断续的回声纹。它还不是稳定材料，只能先当试作样本。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_material",
+        "create_research_need",
+        "reward_player_choice"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_material",
+          "target_ref": "sample_resonant_glass_shard_trial",
+          "summary": "用临时样本承载候选材料，不直接注册为正式库存资源。"
+        },
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "asset_echo_prism_relay",
+          "summary": "为下一次试作防御塔方案提供候选资产。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_05_old_signal_tower_pressure",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "add_temporary_sample",
+          "unlock_fact",
+          "schedule_random_event"
+        ],
+        "summary": "消耗现有辉晶，生成临时样本和后续回流风险事件。"
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "candidate_id": "gray_lantern_station.reference_image.controlled_map_candidate",
+  "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png",
+  "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.png",
+  "control_sketch_png_sha256": "af250812793f5a8e973d49691ed42a339460a0bcfe4b69df0b705715143f3592",
+  "control_sketch_public_url": null,
+  "generation_status": "reference_image_handoff_ready",
+  "image_exists": false,
+  "image_sha256": null,
+  "image_size_bytes": 0,
+  "model": null,
+  "node_id": "gray_lantern_station",
+  "promotion_allowed_now": false,
+  "promotion_policy": "must pass candidate, alignment, overlay, visual, and explicit promotion gates before runtime use",
+  "prompt_sha256": "df91a5eca41f845b27b7b86bdfc6cdaeb338e275229bd76d68dd473fe9202827",
+  "provider_called_this_run": false,
+  "provider_mode": "reference-image",
+  "provider_profile": null,
+  "provider_reference_contract": {
+    "fallback_expected_quality": "lower_than_reference_image_mode",
+    "fallback_mode": "text_only_topology_brief",
+    "preferred_mode": "image_reference_plus_text",
+    "public_url_required_by_some_providers": true,
+    "reference_image_must_not_be_copied_as_final_style": true,
+    "reference_image_role": "topology_control_sketch",
+    "safe_to_send": "topology_only_no_secret_no_player_private_text"
+  },
+  "request_id": "gray_lantern_station.controlled_map_regeneration_request",
+  "request_pack_path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+  "required_review_gates": [
+    "candidate_review",
+    "alignment_review",
+    "overlay_review",
+    "overlay_visual_review",
+    "explicit_promotion_report"
+  ],
+  "review_status": "awaiting_provider_or_paintover_output",
+  "runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+  "safe_to_send": "topology_prompt_and_control_image_only_no_secret_no_raw_trace",
+  "schema_version": "controlled_map_candidate.v0.1",
+  "sidecar_kind": "controlled_map_candidate",
+  "size": "1280x720",
+  "source_control_sketch_pack": "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
+  "source_prompt_pack": "examples/review_packs/topology_constrained_map_prompt_pack.v0.2.json",
+  "target_candidate": {
+    "candidate_role": "review_only_controlled_map_candidate",
+    "promotion_allowed_now": false,
+    "promotion_policy": "must pass explicit review and promotion report before runtime or player use",
+    "recommended_output_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1"
+  }
+}

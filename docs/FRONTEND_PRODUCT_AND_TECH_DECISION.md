@@ -590,6 +590,24 @@ AssetGraph trace 在 MVP 证据报告中使用文本列表即可：
 - 使用 y-depth sorting、椭圆阴影、光环、粒子、遮挡和视差制造空间感。
 - Phaser 负责表现，纯 TypeScript `game/core` 负责确定性战斗规则。
 
+### 6.2.1 地图视觉质量边界
+
+玩家默认战斗视图必须优先使用发布级地图视觉层：
+
+```text
+painted_visual_layer
+  -> battle_runtime_background
+  -> 程序化大画面背景
+```
+
+当前 MVP 已登记通过质量门的 `painted_visual_layer` 作为默认玩家底图；Agnes 旧候选与 `battle_runtime_background.v0.2` 已降为失败/候选证据，不能作为默认玩家画面宣传。
+
+`battle_control_sketch` 和 `battle_reference_board` 只能用于 debug / evidence，不得作为玩家默认体验的底图，也不得在发布底图缺失时自动顶上。
+
+塔位、路径、目标、出生点仍以 MapRuntimePackage 的结构化数据为准。前端可以在发布底图上绘制轻量路径高光、部署提示、目标和敌人，但不能让控制图、参考图、棋盘图或小面板式几何块成为玩家看到的主画面。
+
+部署交互优先保留拖拽到战场释放；点击放置只作为 fallback 和辅助输入。
+
 ### 6.3 左侧任务事件栏
 
 左侧不放资产栏。

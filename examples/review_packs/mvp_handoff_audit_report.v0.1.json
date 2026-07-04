@@ -1,0 +1,457 @@
+{
+  "schema_version": "mvp_handoff_audit_report.v0.1",
+  "report_id": "mvp_handoff_audit_report_001",
+  "visibility": "review_only",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "overall_status": "passed",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "audit_reads_env": false,
+    "audit_calls_external_service": false,
+    "base_worldbook_mutation": false,
+    "report_contains_raw_external_payload": false
+  },
+  "pipeline_logic": [
+    "对象计划定义下一阶段需要生成的任务、事件、样品、资产和状态变化边界。",
+    "叙事包生成世界线、玩家线和共享节点，但不能直接修改运行态。",
+    "WorldStateDelta 把叙事承诺落到可校验的任务、随机事件、素材、NPC、地图节点和研究状态。",
+    "语义门在应用 Delta 前检查引用、前置条件和运行态一致性。",
+    "资产提案进入候选资产，再经过效果白名单、模拟、评分和晋级策略。",
+    "通过审查的候选可以进入 locked manifest 与 runtime package；未晋级内容只保留为审查或 fallback 证据。",
+    "前端 mock 内容包只抽取玩家安全字段，用于并行开发和演示，不代表正式前端接入。",
+    "总审查交付包索引所有关键证据、验证命令和已知风险。"
+  ],
+  "review_entrypoints": [
+    {
+      "path": "examples/review_packs/mvp_handoff_audit_report.v0.1.json",
+      "purpose": "本文件，一键审查执行报告。"
+    },
+    {
+      "path": "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
+      "purpose": "总审查交付包，索引流水线、产物、验证命令和风险。"
+    },
+    {
+      "path": "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+      "purpose": "三阶段内容生产链详细证据。"
+    },
+    {
+      "path": "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "purpose": "三阶段标准候选包，便于逐阶段审查。"
+    },
+    {
+      "path": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "purpose": "玩家安全 mock 数据包，包含资产、阶段摘要和运行时包摘要。"
+    }
+  ],
+  "command_results": [
+    {
+      "name": "build_multistage_content_pack",
+      "command": "python3 tools/content_pipeline/build_multistage_content_pack.py --validate",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_multistage_content_pack.v0.1.json\n- stages: 3\n- asset_type_counts: {'support_item': 1, 'temporary_mod': 1, 'tower_blueprint': 1}\n- final_state_file: examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json\n- validation: passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_multistage_stage_candidate_pack",
+      "command": "python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK StageCandidatePack\n- pack_id: mvp_multistage_stage_candidate_pack_001\n- stages: 3\n- recommendation: needs_human_review\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "build_compilable_object_catalog",
+      "command": "python3 tools/content_pipeline/build_compilable_object_catalog.py --validate",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_compilable_object_catalog.v0.1.json\n- schema_version: compilable_object_catalog.v0.1\n- objects: 104\n- layers: {'behavior': 2, 'economy': 7, 'entity': 14, 'level': 6, 'narrative': 34, 'progression': 8, 'rule': 8, 'visual': 25}\n- validation: passed\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "build_frontend_mock_pack",
+      "command": "python3 tools/content_pipeline/build_frontend_mock_pack.py",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "Wrote $REPO_ROOT/examples/frontend_mock/frontend_mock_pack.v0.1.json\n- assets: 11\n- playable: 11\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_frontend_mock_pack",
+      "command": "python3 tools/content_pipeline/validate_frontend_mock_pack.py examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK FrontendMockPack\n- pack: examples/frontend_mock/frontend_mock_pack.v0.1.json\n- assets: 11\n- npcs: 2\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_runtime_package_first_battle",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_demo.runtime_package.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: examples/runtime_packages/mvp_demo.runtime_package.json\n- schema_version: runtime_package.v0.1\n- package_id: package_session_lampwright_7f3a_001\n- assets: 1\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_runtime_package_wick_store",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json\n- schema_version: runtime_package.v0.1\n- package_id: package_session_lampwright_wick_store_001\n- assets: 3\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_runtime_package_old_signal_tower",
+      "command": "python3 tools/asset_graph/validate_runtime_package.py examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: examples/runtime_packages/mvp_old_signal_tower.runtime_package.json\n- schema_version: runtime_package.v0.1\n- package_id: package_session_lampwright_old_signal_tower_001\n- assets: 1\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_story_asset_review_pack",
+      "command": "python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK MVPStoryAssetReviewPack\n- pack_id: mvp_story_asset_review_pack_001\n- stages: 4\n- worldbook_id: long_night_lanterns\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "validate_narrative_gameplay_contract",
+      "command": "python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK NarrativeGameplayContract\n- stages: 4\n- narrative_nodes: 12\n- referenced_world_deltas: 4\n- validated_world_deltas: 4\n- gameplay_object_ops: 49\n- warnings: 0\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "build_mvp_compiler_review_dossier",
+      "command": "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate",
+      "return_code": 0,
+      "status": "passed",
+      "stdout_tail": "OK: $REPO_ROOT/examples/review_packs/mvp_compiler_review_dossier.v0.1.json\n- schema_version: mvp_compiler_review_dossier.v0.1\n- stages: 4\n- assets: 7\n- tasks: 7\n- random_events: 5\n- source_evidence: 106\n- validation: passed\n",
+      "stderr_tail": ""
+    }
+  ],
+  "artifact_summary": {
+    "multistage_content_pack": {
+      "pack_id": "mvp_multistage_content_pack_001",
+      "stage_count": 3,
+      "asset_type_counts": {
+        "support_item": 1,
+        "temporary_mod": 1,
+        "tower_blueprint": 1
+      },
+      "final_state_file": "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+    },
+    "multistage_stage_candidate_pack": {
+      "pack_id": "mvp_multistage_stage_candidate_pack_001",
+      "stage_count": 3,
+      "readiness_summary": {
+        "stage_count": 3,
+        "status_counts": {
+          "needs_review": 3
+        },
+        "validation_gate_counts": {
+          "not_applicable": 2,
+          "passed": 19,
+          "warning": 3
+        },
+        "playable_asset_reference_count": 3,
+        "runtime_package_reference_count": 1,
+        "contract_warnings": 0,
+        "review_recommendation": "needs_human_review"
+      },
+      "stage_titles": [
+        "旧信号塔回光压力",
+        "旧塔回声测标",
+        "东侧分潮遏制"
+      ],
+      "stages": [
+        {
+          "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+          "title": "旧信号塔回光压力",
+          "lane_coverage": [
+            "player_line",
+            "shared",
+            "world_line"
+          ],
+          "asset_ids": [
+            "asset_echo_prism_relay"
+          ],
+          "runtime_package_refs": [
+            {
+              "package_file": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+              "package_id": "package_session_lampwright_old_signal_tower_001",
+              "node_id": "old_signal_tower",
+              "asset_count": 1
+            }
+          ]
+        },
+        {
+          "stage_id": "act_1_stage_06_signal_resonance_trial",
+          "title": "旧塔回声测标",
+          "lane_coverage": [
+            "player_line",
+            "shared",
+            "world_line"
+          ],
+          "asset_ids": [
+            "asset_signal_echo_marker"
+          ],
+          "runtime_package_refs": []
+        },
+        {
+          "stage_id": "act_1_stage_07_split_tide_containment",
+          "title": "东侧分潮遏制",
+          "lane_coverage": [
+            "player_line",
+            "shared",
+            "world_line"
+          ],
+          "asset_ids": [
+            "asset_overload_chain_breaker"
+          ],
+          "runtime_package_refs": []
+        }
+      ]
+    },
+    "compilable_object_catalog": {
+      "total_objects": 104,
+      "layer_counts": {
+        "behavior": 2,
+        "economy": 7,
+        "entity": 14,
+        "level": 6,
+        "narrative": 34,
+        "progression": 8,
+        "rule": 8,
+        "visual": 25
+      },
+      "runtime_export_counts": {
+        "candidate_only": 7,
+        "fallback_ready": 27,
+        "review_only": 7,
+        "runtime_ready": 63
+      },
+      "review_required_count": 14
+    },
+    "frontend_mock_pack": {
+      "asset_count": 11,
+      "playable_count": 11,
+      "asset_count_by_type": {
+        "tower_blueprint": 4,
+        "intel_asset": 2,
+        "support_item": 3,
+        "temporary_mod": 2
+      },
+      "stage_count": 3,
+      "runtime_package_count": 3,
+      "promotion_states": {
+        "runtime_ready": 0,
+        "fallback_ready": 11,
+        "preview_only": 0,
+        "failed": 0
+      }
+    },
+    "runtime_packages": [
+      {
+        "package_id": "package_session_lampwright_7f3a_001",
+        "node_id": "gray_lantern_station",
+        "asset_count": 1
+      },
+      {
+        "package_id": "package_session_lampwright_wick_store_001",
+        "node_id": "lamp_wick_store",
+        "asset_count": 3
+      },
+      {
+        "package_id": "package_session_lampwright_old_signal_tower_001",
+        "node_id": "old_signal_tower",
+        "asset_count": 1
+      }
+    ],
+    "dossier": {
+      "dossier_id": "mvp_compiler_review_dossier_001",
+      "source_evidence_count": 106,
+      "validation_command_count": 31,
+      "readiness_summary": {
+        "stage_count": 4,
+        "playable_asset_references": 7,
+        "fallback_ready_asset_references": 6,
+        "runtime_fixture_asset_references": 1,
+        "candidate_or_blocked_asset_references": 2,
+        "task_count": 7,
+        "random_event_count": 5,
+        "research_job_count": 6,
+        "blueprint_count": 2,
+        "mvp_support_level": "reviewable_vertical_slice"
+      }
+    }
+  },
+  "coverage_checks": [
+    {
+      "check_id": "core_commands_passed",
+      "status": "passed",
+      "summary": "核心离线构建和校验命令全部通过。",
+      "evidence": {
+        "failed_commands": []
+      }
+    },
+    {
+      "check_id": "multistage_content_present",
+      "status": "passed",
+      "summary": "已生成至少三个连续阶段的内容候选。",
+      "evidence": {
+        "stage_count": 3,
+        "stage_titles": [
+          "旧信号塔回光压力",
+          "旧塔回声测标",
+          "东侧分潮遏制"
+        ]
+      }
+    },
+    {
+      "check_id": "world_and_player_lane_coverage",
+      "status": "passed",
+      "summary": "三阶段候选包均覆盖世界线、玩家线和共享节点。",
+      "evidence": {
+        "stage_count": 3,
+        "lanes": [
+          {
+            "stage_id": "act_1_stage_05_old_signal_tower_pressure",
+            "lane_coverage": [
+              "player_line",
+              "shared",
+              "world_line"
+            ]
+          },
+          {
+            "stage_id": "act_1_stage_06_signal_resonance_trial",
+            "lane_coverage": [
+              "player_line",
+              "shared",
+              "world_line"
+            ]
+          },
+          {
+            "stage_id": "act_1_stage_07_split_tide_containment",
+            "lane_coverage": [
+              "player_line",
+              "shared",
+              "world_line"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "check_id": "per_stage_playable_asset_reference",
+      "status": "passed",
+      "summary": "每个新增阶段至少有一个可玩资产候选引用。",
+      "evidence": {
+        "playable_asset_reference_count": 3
+      }
+    },
+    {
+      "check_id": "frontend_mock_player_safe_bundle",
+      "status": "passed",
+      "summary": "前端 mock 包只暴露可玩资产，并包含当前多阶段新增资产。",
+      "evidence": {
+        "asset_count": 11,
+        "playable_count": 11,
+        "asset_count_by_type": {
+          "tower_blueprint": 4,
+          "intel_asset": 2,
+          "support_item": 3,
+          "temporary_mod": 2
+        },
+        "stage_count": 3,
+        "runtime_package_count": 3,
+        "promotion_states": {
+          "runtime_ready": 0,
+          "fallback_ready": 11,
+          "preview_only": 0,
+          "failed": 0
+        }
+      }
+    },
+    {
+      "check_id": "runtime_package_evidence",
+      "status": "passed",
+      "summary": "已有三个 runtime package 证据包，覆盖第一战、灯芯仓压力战和旧信号塔压力战。",
+      "evidence": {
+        "runtime_packages": [
+          {
+            "package_id": "package_session_lampwright_7f3a_001",
+            "node_id": "gray_lantern_station",
+            "asset_count": 1
+          },
+          {
+            "package_id": "package_session_lampwright_wick_store_001",
+            "node_id": "lamp_wick_store",
+            "asset_count": 3
+          },
+          {
+            "package_id": "package_session_lampwright_old_signal_tower_001",
+            "node_id": "old_signal_tower",
+            "asset_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "check_id": "object_catalog_coverage",
+      "status": "passed",
+      "summary": "可编译对象目录覆盖实体、叙事、关卡、经济、成长、规则和表现层。",
+      "evidence": {
+        "total_objects": 104,
+        "layer_counts": {
+          "behavior": 2,
+          "economy": 7,
+          "entity": 14,
+          "level": 6,
+          "narrative": 34,
+          "progression": 8,
+          "rule": 8,
+          "visual": 25
+        },
+        "runtime_export_counts": {
+          "candidate_only": 7,
+          "fallback_ready": 27,
+          "review_only": 7,
+          "runtime_ready": 63
+        },
+        "review_required_count": 14
+      }
+    },
+    {
+      "check_id": "no_formal_frontend_integration",
+      "status": "passed",
+      "summary": "当前交付仍是不接入正式前端的审查与 mock 数据包。",
+      "evidence": {
+        "front_end_integration": "not_included"
+      }
+    }
+  ],
+  "known_risks": [
+    {
+      "risk_id": "legacy_initial_npcs",
+      "severity": "medium",
+      "summary": "初始 demo run state 仍保留早期兼容 NPC ID；语义门已阻止新 delta 继续引用它们。",
+      "next_action": "后续单独迁移 demo_initial 到 canonical / candidate NPC 体系。"
+    },
+    {
+      "risk_id": "fallback_media",
+      "severity": "medium",
+      "summary": "多数可玩资产目前依赖 fallback media 或已生成但未全部晋升到正式 runtime media manifest。",
+      "next_action": "继续迭代图像/视频帧/抠图/一致性审查管线，优先处理 MVP 默认资产。"
+    },
+    {
+      "risk_id": "candidate_or_blocked_assets",
+      "severity": "medium",
+      "summary": "审查包仍有 2 个候选或受阻资产引用，不能默认进入 MVP 战斗。",
+      "next_action": "保留为支线或高风险研发候选，默认教学关只用 fallback_ready / runtime fixture 资产。"
+    }
+  ]
+}

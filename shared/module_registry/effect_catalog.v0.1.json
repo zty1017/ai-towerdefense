@@ -1,0 +1,238 @@
+{
+  "schema_version": "effect_catalog.v0.1",
+  "catalog_id": "mvp_runtime_effect_catalog_v0_1",
+  "runtime_target": "browser_2d_pseudo3d_phaser_or_pixi",
+  "policy": {
+    "external_urls_allowed": false,
+    "runtime_remote_fetch_allowed": false,
+    "ai_may_select_only_catalog_entries": true,
+    "downloaded_assets_require_license_record": true,
+    "mvp_strategy": "Prefer programmatic runtime effects. Bundled local textures may be added later behind stable texture tokens."
+  },
+  "palettes": [
+    {
+      "id": "warm_gold",
+      "primary": "#f2c14e",
+      "secondary": "#fff2b8",
+      "usage": "灯火、护盾、治疗、诱饵"
+    },
+    {
+      "id": "cold_blue",
+      "primary": "#67d3ff",
+      "secondary": "#b8f1ff",
+      "usage": "减速、稳定场、情报扫描"
+    },
+    {
+      "id": "red_orange",
+      "primary": "#ff6b3d",
+      "secondary": "#ffc36b",
+      "usage": "爆裂、过载、范围伤害"
+    },
+    {
+      "id": "purple_black",
+      "primary": "#5b3a8e",
+      "secondary": "#1a1026",
+      "usage": "影潮、腐蚀、危险反馈"
+    },
+    {
+      "id": "green",
+      "primary": "#6fd08c",
+      "secondary": "#c8ffd6",
+      "usage": "修复、生长、毒素"
+    },
+    {
+      "id": "white",
+      "primary": "#f8f7ef",
+      "secondary": "#ffffff",
+      "usage": "净化、暴露、文本提示"
+    }
+  ],
+  "texture_tokens": [
+    {
+      "token": "vfx.procedural.soft_disc",
+      "role": "particle",
+      "source_type": "procedural",
+      "license": "project_owned_procedural",
+      "required": true,
+      "local_path": null,
+      "notes": "前端运行时生成的圆形柔光粒子。"
+    },
+    {
+      "token": "vfx.procedural.spark",
+      "role": "particle",
+      "source_type": "procedural",
+      "license": "project_owned_procedural",
+      "required": true,
+      "local_path": null,
+      "notes": "前端运行时生成的短线火花粒子。"
+    },
+    {
+      "token": "vfx.procedural.glyph_ring",
+      "role": "ring",
+      "source_type": "procedural",
+      "license": "project_owned_procedural",
+      "required": true,
+      "local_path": null,
+      "notes": "前端运行时绘制的地面灯纹圆环。"
+    },
+    {
+      "token": "vfx.procedural.beam_core",
+      "role": "beam",
+      "source_type": "procedural",
+      "license": "project_owned_procedural",
+      "required": true,
+      "local_path": null,
+      "notes": "前端运行时绘制的线性光束核心。"
+    },
+    {
+      "token": "vfx.procedural.chain_core",
+      "role": "chain",
+      "source_type": "procedural",
+      "license": "project_owned_procedural",
+      "required": true,
+      "local_path": null,
+      "notes": "前端运行时绘制的折线/贝塞尔连锁电弧。"
+    }
+  ],
+  "primitives": [
+    {
+      "type": "ring_pulse",
+      "render_family": "programmatic_shape",
+      "default_texture_token": "vfx.procedural.glyph_ring",
+      "allowed_palettes": ["warm_gold", "cold_blue", "purple_black", "green", "white"],
+      "default_params": {
+        "duration_ms": 650,
+        "radius_px": 64,
+        "stroke_px": 3,
+        "repeat": 1
+      },
+      "budget": {
+        "max_instances": 48,
+        "max_duration_ms": 1800,
+        "max_radius_px": 180
+      },
+      "frontend_hint": "从地面锚点扩散的圆环，适合陷阱、光环、区域提示。"
+    },
+    {
+      "type": "beam",
+      "render_family": "programmatic_line",
+      "default_texture_token": "vfx.procedural.beam_core",
+      "allowed_palettes": ["warm_gold", "cold_blue", "red_orange", "white"],
+      "default_params": {
+        "duration_ms": 260,
+        "width_px": 5,
+        "glow_px": 12
+      },
+      "budget": {
+        "max_instances": 32,
+        "max_duration_ms": 900,
+        "max_width_px": 12
+      },
+      "frontend_hint": "塔到目标或目标到目标的短时射线。"
+    },
+    {
+      "type": "chain_arc",
+      "render_family": "programmatic_polyline",
+      "default_texture_token": "vfx.procedural.chain_core",
+      "allowed_palettes": ["red_orange", "cold_blue", "white"],
+      "default_params": {
+        "duration_ms": 360,
+        "width_px": 4,
+        "jitter_px": 8,
+        "max_links": 5
+      },
+      "budget": {
+        "max_instances": 24,
+        "max_duration_ms": 900,
+        "max_links": 7
+      },
+      "frontend_hint": "多个目标间跳转的连锁弧线。"
+    },
+    {
+      "type": "sprite_flash",
+      "render_family": "sprite_tint",
+      "default_texture_token": null,
+      "allowed_palettes": ["warm_gold", "cold_blue", "red_orange", "purple_black", "green", "white"],
+      "default_params": {
+        "duration_ms": 160,
+        "alpha_peak": 0.85,
+        "repeat": 1
+      },
+      "budget": {
+        "max_instances": 80,
+        "max_duration_ms": 500
+      },
+      "frontend_hint": "对目标 sprite 做短暂染色、描边或透明度闪烁。"
+    },
+    {
+      "type": "particle_burst",
+      "render_family": "programmatic_particles",
+      "default_texture_token": "vfx.procedural.spark",
+      "allowed_palettes": ["warm_gold", "cold_blue", "red_orange", "purple_black", "green", "white"],
+      "default_params": {
+        "duration_ms": 420,
+        "radius_px": 56,
+        "particle_count": 18,
+        "spread_degrees": 360
+      },
+      "budget": {
+        "max_instances": 32,
+        "max_duration_ms": 1200,
+        "max_particle_count": 48,
+        "max_radius_px": 160
+      },
+      "frontend_hint": "短促粒子爆发，适合范围伤害、爆裂、命中反馈。"
+    },
+    {
+      "type": "aura_field",
+      "render_family": "programmatic_area",
+      "default_texture_token": "vfx.procedural.soft_disc",
+      "allowed_palettes": ["warm_gold", "cold_blue", "purple_black", "green", "white"],
+      "default_params": {
+        "duration_ms": 1200,
+        "radius_px": 72,
+        "alpha": 0.28,
+        "pulse": true
+      },
+      "budget": {
+        "max_instances": 24,
+        "max_duration_ms": 6000,
+        "max_radius_px": 220
+      },
+      "frontend_hint": "持续范围场，用于减速、护盾、修复、光环。"
+    },
+    {
+      "type": "screen_shake",
+      "render_family": "camera",
+      "default_texture_token": null,
+      "allowed_palettes": ["warm_gold", "cold_blue", "red_orange", "purple_black", "white"],
+      "default_params": {
+        "duration_ms": 180,
+        "intensity_px": 4
+      },
+      "budget": {
+        "max_instances": 8,
+        "max_duration_ms": 450,
+        "max_intensity_px": 10
+      },
+      "frontend_hint": "轻量镜头震动，只用于强反馈，避免连续触发。"
+    },
+    {
+      "type": "floating_text",
+      "render_family": "ui_text",
+      "default_texture_token": null,
+      "allowed_palettes": ["warm_gold", "cold_blue", "red_orange", "green", "white"],
+      "default_params": {
+        "duration_ms": 900,
+        "rise_px": 24,
+        "font_size_px": 14
+      },
+      "budget": {
+        "max_instances": 40,
+        "max_duration_ms": 1800,
+        "max_chars": 16
+      },
+      "frontend_hint": "短文字反馈，适合情报、修复、威胁变化提示。"
+    }
+  ]
+}

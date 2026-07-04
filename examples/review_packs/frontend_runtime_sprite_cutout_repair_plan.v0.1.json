@@ -1,0 +1,16 @@
+{
+  "schema_version": "sprite_cutout_repair_plan.v0.1",
+  "plan_id": "frontend_runtime_art_media_pack_v0_1_sprite_cutout_repair_plan_v0_1",
+  "source_report": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
+  "source_report_status": "passed",
+  "status": "empty",
+  "task_count": 0,
+  "priority_counts": {},
+  "action_counts": {},
+  "tasks": [],
+  "notes": [
+    "This plan is deterministic and offline; it does not call providers.",
+    "P1 tasks should be fixed before using these sprites as final visual evidence.",
+    "If gameplay is already functional, these tasks should not block fallback-ready MVP flow."
+  ]
+}

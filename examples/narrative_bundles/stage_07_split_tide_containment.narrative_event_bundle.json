@@ -1,0 +1,192 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_07_split_tide_containment",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "world_tick",
+  "created_turn": 8,
+  "stage": "act_1_stage_07_split_tide_containment",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "node_stage07_world_split_tide_visible",
+      "stage": "act_1_stage_07_split_tide_containment",
+      "phase": "split_tide_containment_planned",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "random_event_split_tide_pressure",
+        "summary": "旧塔回流照出东侧分潮线。"
+      },
+      "prerequisites": [
+        "signal_echo_marker_possible",
+        "task_map_signal_backwash"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "分潮线露出",
+        "blocks": [
+          {
+            "text": "回声测标在黑路上亮了一息，东侧暗脊被标出，分散影潮正绕开旧塔。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "unlock_battle_node",
+        "modify_map_node_state",
+        "increase_threat"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "unlock_battle_node",
+          "target_ref": "east_dark_ridge",
+          "summary": "打开下一段可审查压力节点。"
+        },
+        {
+          "hook": "increase_threat",
+          "target_ref": "random_event_split_tide_pressure",
+          "summary": "把分潮压力转为可处理威胁。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout",
+        "npc_wire_mender_003"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_07_split_tide_containment",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "introduce_map_node",
+          "set_map_node_state",
+          "set_random_event_status"
+        ],
+        "summary": "打开东侧暗脊节点，并让北路压力进入分潮阶段。"
+      }
+    },
+    {
+      "node_id": "node_stage07_player_high_risk_mod",
+      "stage": "act_1_stage_07_split_tide_containment",
+      "phase": "split_tide_containment_planned",
+      "lane": "player_line",
+      "scope": "workshop",
+      "trigger": {
+        "kind": "player_choice",
+        "ref": "east_dark_ridge",
+        "summary": "玩家选择用高风险临时改造遏制分潮。"
+      },
+      "prerequisites": [
+        "npc_wire_mender_003",
+        "conductor_filament"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "补线人的险招",
+        "blocks": [
+          {
+            "speaker_id": "npc_wire_mender_003",
+            "speaker_name": "补线人",
+            "text": "分潮太散，慢慢拦会漏。可以把导线短压成连弧，让一座塔在片刻内追着影线跳。代价是容易停摆。"
+          },
+          {
+            "text": "高风险试作被加入研发队列，只适合下一场短时使用。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_research_need",
+        "offer_workshop_hook",
+        "teach_mechanic"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_research_need",
+          "target_ref": "research_overload_chain_breaker_trial",
+          "summary": "开启高风险临时改造试作。"
+        },
+        {
+          "hook": "offer_workshop_hook",
+          "target_ref": "asset_overload_chain_breaker",
+          "summary": "提供临时改造候选资产。"
+        }
+      ],
+      "npc_refs": [
+        "npc_wire_mender_003"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_07_split_tide_containment",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "adjust_resource",
+          "add_temporary_sample",
+          "upsert_research_job"
+        ],
+        "summary": "消耗导线并生成高风险连弧改造样本。"
+      }
+    },
+    {
+      "node_id": "node_stage07_shared_next_pressure",
+      "stage": "act_1_stage_07_split_tide_containment",
+      "phase": "split_tide_containment_planned",
+      "lane": "shared",
+      "scope": "quest",
+      "trigger": {
+        "kind": "map_entered",
+        "ref": "east_dark_ridge",
+        "summary": "玩家线和世界线汇合到东侧暗脊防守准备。"
+      },
+      "prerequisites": [
+        "random_event_split_tide_pressure"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "workshop_notice",
+        "title": "断潮任务",
+        "blocks": [
+          {
+            "text": "东侧暗脊成为下一段防线。分潮不再只考验火力，而是考验预警、短时改造和节点保护。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_quest_hook",
+        "advance_main_pressure",
+        "trigger_random_event"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "task_contain_split_tide",
+          "summary": "创建分潮遏制任务。"
+        },
+        {
+          "hook": "trigger_random_event",
+          "target_ref": "random_event_east_ridge_pressure",
+          "summary": "为下一段战斗压力保留入口。"
+        }
+      ],
+      "npc_refs": [
+        "npc_road_scout",
+        "npc_wire_mender_003"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_07_split_tide_containment",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "upsert_task",
+          "schedule_random_event",
+          "adjust_global_state"
+        ],
+        "summary": "生成下一战准备任务和后续压力事件。"
+      }
+    }
+  ]
+}

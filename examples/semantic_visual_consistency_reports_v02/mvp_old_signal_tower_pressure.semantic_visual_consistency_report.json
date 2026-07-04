@@ -1,0 +1,120 @@
+{
+  "schema_version": "semantic_visual_consistency_report.v0.1",
+  "report_id": "semantic_visual_old_signal_tower_v0_1",
+  "render_plan_id": "render_plan_old_signal_tower_v0_1",
+  "map_runtime_package_id": "map_pkg_old_signal_tower_v0_2",
+  "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "old_signal_tower",
+  "created_at": "2026-07-04T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
+    "procedural_map_render_plan_path": "examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json"
+  },
+  "status": "passed",
+  "checks": [
+    {
+      "check_id": "route_road_band_coverage",
+      "status": "passed",
+      "summary": "Every route has a road_band render operation.",
+      "refs": [
+        "path_route:path_old_signal_copper_trench",
+        "path_route:path_old_signal_north_ridge"
+      ]
+    },
+    {
+      "check_id": "build_slot_platform_coverage",
+      "status": "passed",
+      "summary": "Every build slot has a platform render operation.",
+      "refs": [
+        "build_slot:slot_01",
+        "build_slot:slot_02",
+        "build_slot:slot_03",
+        "build_slot:slot_04",
+        "build_slot:slot_05",
+        "build_slot:slot_06",
+        "build_slot:slot_07",
+        "build_slot:slot_08",
+        "build_slot:slot_09",
+        "build_slot:slot_10",
+        "build_slot:slot_11",
+        "build_slot:slot_12"
+      ]
+    },
+    {
+      "check_id": "objective_marker_coverage",
+      "status": "passed",
+      "summary": "Every objective has a foundation/marker render operation.",
+      "refs": [
+        "objective:target_copper_grounding_pin",
+        "objective:target_old_signal_tower_base",
+        "objective:target_resonant_glass_fixture"
+      ]
+    },
+    {
+      "check_id": "spawn_marker_coverage",
+      "status": "passed",
+      "summary": "Every spawn point has a marker/atmosphere render operation.",
+      "refs": [
+        "spawn_point:spawn_path_old_signal_copper_trench",
+        "spawn_point:spawn_path_old_signal_north_ridge"
+      ]
+    },
+    {
+      "check_id": "resource_marker_coverage",
+      "status": "passed",
+      "summary": "Every resource node has a visible runtime-semantic render operation.",
+      "refs": [
+        "resource_node:resource_old_signal_tower_primary"
+      ]
+    },
+    {
+      "check_id": "hazard_zone_coverage",
+      "status": "passed",
+      "summary": "Every hazard zone has a visible runtime-semantic render operation.",
+      "refs": [
+        "hazard_zone:hazard_old_signal_tower_road_pressure"
+      ]
+    },
+    {
+      "check_id": "defense_anchor_marker_coverage",
+      "status": "passed",
+      "summary": "Every defense anchor has a player-default marker operation.",
+      "refs": [
+        "defense_anchor:anchor_old_signal_tower_mid_choke"
+      ]
+    },
+    {
+      "check_id": "blocked_area_visual_coverage",
+      "status": "passed",
+      "summary": "Every blocked area has a visible blocking_prop render operation.",
+      "refs": [
+        "blocked_area:blocked_old_signal_tower_edge_ruin"
+      ]
+    },
+    {
+      "check_id": "debug_reference_excluded_from_player_default",
+      "status": "passed",
+      "summary": "Debug/reference layers are excluded from player default layers.",
+      "refs": [
+        "debug_layer:debug_control_overlay"
+      ]
+    },
+    {
+      "check_id": "style_readability_contract",
+      "status": "passed",
+      "summary": "StylePack forbids baked UI/text/enemies/towers and debug player-default leakage.",
+      "refs": [
+        "map_style_pack:readability_rules"
+      ]
+    }
+  ],
+  "summary": {
+    "passed_count": 10,
+    "warning_count": 0,
+    "failed_count": 0
+  },
+  "blocking_issues": [],
+  "warnings": []
+}

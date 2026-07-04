@@ -1,0 +1,64 @@
+{
+  "id": "asset_echo_prism_relay",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "tower_blueprint",
+    "base_stats": {
+      "build_cost": 160,
+      "range": 140,
+      "cooldown": 1.0,
+      "targeting": "nearest"
+    },
+    "effect_blocks": [
+      {
+        "type": "slow",
+        "slow_ratio": 0.35,
+        "duration": 1.8,
+        "stacking": "refresh"
+      },
+      {
+        "type": "aura_buff",
+        "radius": 110,
+        "target": "enemy",
+        "effect_ref": "slow"
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": false,
+      "max_instances": 2,
+      "allowed_phases": [
+        "battle"
+      ]
+    },
+    "type_specific": {
+      "tower_slot": "standard",
+      "upgrade_from": "basic_tower"
+    }
+  },
+  "presentation": {
+    "name": "回光棱镜中继塔资产",
+    "short_description": "把辉晶压入临时棱镜底座，引导旧信号塔的回光扰动，使来敌短暂显形并减速。",
+    "icon_prompt": "2D game icon, compact tower-defense turret, readable silhouette, clean background",
+    "animation_card_prompt": "2D animation card for 回光棱镜中继塔方案, tower defense strategy game",
+    "visual_tags": [
+      "tower_blueprint",
+      "compiled_asset"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_echo_prism_relay",
+    "mode": "runtime_experimental",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "mock",
+    "model": "mock_compiler_v0.1",
+    "npc_ids": [
+      "npc_road_scout"
+    ],
+    "material_ids": [
+      "glow_crystal",
+      "conductor_filament"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

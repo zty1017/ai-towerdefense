@@ -1,529 +1,3367 @@
 # 任务队列
 
-Last updated: 2026-06-29
+Last updated: 2026-07-04
+
+本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
+
+若本文与早期任务文档冲突，以本文为准。字段级事实源仍以 `shared/schemas/`、`tools/`、`examples/` 和对应专题文档为准。
 
 ## 1. 使用规则
-
-本文是主会话生成给 CodeBuddy / OpenCode / Codex worker / 人类队友的任务来源。
 
 优先级：
 
 ```text
-P0：MVP 必须完成
-P1：时间允许
-P2：暂不做
+P0：MVP 当前闭环必须完成
+P1：时间允许时推进
+P2：本阶段明确不做
 ```
 
-执行规则：
+协作规则：
 
-- 每个任务优先在独立 `task/*` 分支或 worktree 中完成。
-- CodeBuddy 可以使用自身子代理，但必须遵守任务包的允许修改范围。
-- worker 不得修改 `.env`。
+- `main` 是稳定决策 / 发布基线，只在阶段性冻结窗口从 `develop` 受控同步。
+- `develop` 是当前集成事实源。
+- 具体实现优先在从 `develop` 派生的 `task/*` worktree 中完成。
 - worker 不得直接合并到 `main` 或 `develop`。
-- worker 完成后必须汇报修改文件、测试命令、结果和风险。
-- 主会话负责最终审查、合并和发布判断。
+- worker 不得修改 `.env`，不得打印 API key、secret、token。
+- worker 完成后必须汇报修改文件、验证命令、结果、风险和未解决问题。
+- 玩家侧页面、接口文案、演示文本不得出现 provider、prompt、schema、raw trace、API key 等技术词。
+- 内部证据、校验日志和演示导出可以保留技术信息，但必须过滤 secret 和原始未审内容。
 
-## 2. 推荐分支 / worktree
+外部 agent 调用说明：
 
-```text
-develop
-task/backend-session-and-runs
-task/backend-research-job
-task/frontend-shell
-task/frontend-battle-runtime
-task/content-demo-fixtures
-task/locked-manifest
-task/demo-evidence-export
-docs/mvp-control-docs
-```
+- CodeBuddy / OpenCode / Codex headless 可以在用户授权的 IDE / CLI 环境中作为 worker 使用。
+- 本 Codex 受控执行通道已验证 `opencode run` 的无项目上下文调用可用。
+- 本 Codex 受控执行通道不能依赖“把仓库或项目上下文直接发送给外部模型”的调用方式；这会被环境策略拦截为外部数据披露风险。
+- 因此，在本通道内需要使用外部 agent 时，应优先使用不包含仓库内容的公开任务指令；需要仓库上下文的任务由用户侧 CodeBuddy/OpenCode 工作区或本地 task worktree 执行。
 
-## 3. P0 任务
+## 2. 当前已完成基线
 
-### P0-001 后端基础与匿名 session
+当前有效基线位于 `develop`。
 
-任务类型：实现
+已落地内容：
 
-推荐执行：CodeBuddy
+- FastAPI + SQLite 后端。
+- 匿名 session，不做真实注册登录。
+- Research proposal / job API。
+- Frontend mock API。
+- 内容 fixture 与 MVP 世界实例。
+- locked manifest / runtime package 基础合同与校验。
+- AssetGraph DAG / 有界 ReAct / 节点注册 / runtime package 构建与校验。
+- 真实 LLM 世界状态变化烟测与语义门。
+- 媒体后处理 mock assets、processed PNG、animation seed manifest、spritesheet 兼容多帧 atlas manifest。
+- 前端运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token、程序化特效。
+- 前端媒体 manifest、animation seed、atlas 和 runtime art kit 的后端加载入口已拆分到 `backend/app/services/frontend_media_service.py`。
+- 战斗配置和 reviewed runtime package 的后端加载入口已拆分到 `backend/app/services/battle_content_service.py`。
+- MapRuntimePackage v0.1：首战节点已有路径、塔位、目标、出生点和本地视觉层引用。
+- MapRuntimePackage 后端加载入口已拆分到 `backend/app/services/map_runtime_service.py`；`frontend_mock_service.py` 只在战斗配置和 runtime package 聚合响应中附带地图包。
+- AI 编译核心对象示例、refs、Research Job 原生快照与 battle settlement 原生快照构造入口已拆分到 `backend/app/services/ai_core_artifact_service.py`。
+- 前端已优先消费 MapRuntimePackage，旧 battle config 只作为兼容 fallback。
+- 当前前端是 no-build MVP shell，不再以早期 React/Vite/Phaser 骨架任务为事实源。
 
-允许 CodeBuddy 子代理：是
+当前缺口：
 
-目标：
+- 地图已经有 3 个 `MapRuntimePackage`、3 个 `MapCompilePackage v0.2`，并登记了带质量状态的视觉层；玩家侧只允许使用 `authority=published_visual_layer` 且 `player_visible_quality=passed` 的图，`agnes_02` 与 `battle_runtime_background.v0.2` 当前只作为失败/候选证据保留。后续缺口是更强的图像模型自动验图、像素级坐标回配和多节点差异化发布底图。
+- `MapVisualQualityReport v0.1` 已接入 evidence，用于标记三节点复用同一玩家底图、发布底图需要 overlay correction、视觉审查证据偏弱等问题；当前状态为 `passed_with_warnings`，不阻断 MVP，但作为下一轮地图重生 / 差异化发布底图任务的输入。
+- `NodeMapPaintedCandidateReview v0.2` 已接入 evidence，用于记录节点专属真实 Agnes 地图候选的审查结果；`clean_scene_v2` 当前三张候选均已清除主要箭头、单位和战斗特效问题，但仍需坐标对齐、战斗可读性复核和显式晋升。该报告证明地图生成管线已能迭代产出更干净的候选，也证明发布门禁不会把未对齐图误放给前端。
+- `MapCandidateAlignmentReview v0.1` 已接入 evidence，用于把三张 `clean_scene_v2` 候选与 MapRuntimePackage 的路径、塔位、目标和出生点做结构前置审查；当前状态为 `ready_for_overlay_review_with_transform_required`，说明三张图都能进入 overlay review，但必须先做尺寸标准化，不能直接发布。
+- `MapCandidateOverlayReview v0.1` 已接入 evidence，用于把三张 `clean_scene_v2` 候选标准化为 `1280x720` 并生成路径、塔位、出生点、目标的 SVG overlay 审查图；当前状态为 `overlay_artifacts_ready_review_required`，但仍是 review-only，不会自动进入前端 runtime，且 artifact ready 不等于视觉对齐已批准。
+- `MapCandidateOverlayVisualReview v0.1` 已接入 evidence，用 raster overlay PNG 记录人工视觉复核结论；当前三张候选均 `do_not_promote`，主要问题是 runtime 路径/目标/塔位与视觉道路、核心物和建造点未完全一致。下一轮应优先做 runtime 坐标重投影或拓扑约束重生，而不是直接晋升。
+- `MapLayoutReconciliationPlan v0.1` 已接入 evidence，把三张地图候选拆成 P0 后续动作：灰灯驿站混合重投影后复核，灯芯仓优先 runtime 路径重投影，旧信号塔优先拓扑约束重生或先做核心位置决策。该计划仍不修改 runtime 包，不晋升视觉层。
+- `RuntimeMapPatchCandidates v0.1`、`MapPatchOverlayReview v0.1` 与 `TopologyConstrainedMapPromptPack v0.1` 已接入 evidence。前者为灰灯驿站、灯芯仓产出 review-only 坐标/路径/塔位补丁候选；中者把补丁应用到内存 MapRuntimePackage 快照并生成补丁后 overlay PNG/SVG 与 review-only runtime 快照，当前两张补丁后包结构校验通过但仍不能晋升；后者为旧信号塔产出拓扑约束重生 prompt，并为另外两张图保留 fallback prompt。三者都不自动修改 runtime，不发布视觉层。
+- `TopologyConstrainedMapCandidateReview v0.1`、`TopologyConstrainedMapAlignmentReview v0.1`、`TopologyConstrainedMapOverlayReview v0.1` 与 `TopologyConstrainedMapOverlayVisualReview v0.1` 已接入 evidence。旧信号塔已通过 Agnes 生成一张真实拓扑约束候选并完成标准化、overlay 和视觉复核；当前可晋升数为 0，主要问题是塔体仍偏大、存在小人/杂物感噪声，后续应迭代 prompt 或做清理重生。
+- `TopologyConstrainedMapPromptPack v0.2` 已把 visual review 失败原因转成 prompt repair，并调用 Agnes 生成 v2 候选；该候选被审查为 `review_only_not_runtime_ready`。这证明旧信号塔下一步不应继续盲目 prompt-only 生成。
+- `MapTopologyControlSketchPack v0.1` 已把三张 MapRuntimePackage 确定性转成无文字、无 UI、无敌人、无塔的控制构图 PNG，以及带开发者标签的 SVG 审查图；该包只用于 compile-time reference / evidence，不进入玩家 runtime。下一步应基于控制图做受控图像重生、局部清理或视觉模型审查，再重新走 candidate / alignment / overlay / visual / promotion gates。
+- `MapControlledRegenerationRequestPack v0.1` 已把控制构图 PNG、v0.2 prompt repair、负面约束、目标候选目录和 review gates 编译成三张地图的 reference-image request。下一步真实 provider 调用、人工 paintover 或局部清理应消费该 request pack，避免继续从散落 prompt 或截图临时拼输入。
+- `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider，但最新真实调用已证明纯文本整图不适合作为地图发布候选路线。下一步应接支持参考图的 provider adapter、人工 paintover，或实现 `MapRuntimePackage` 驱动的分层程序化底图。
+- `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
+- `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
+- `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
+- 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.5 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、场外地貌背板、可玩区碎边、道路地形融合、平滑土路、路肩、车辙、部署基座、塔位接地线、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
+- 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
+- 地图 RenderPlan 已有离线 SVG 预览入口和 report 校验，三张 MVP 地图均可生成 `preview_ready_review_only` 的审查预览；该预览证明 RenderPlan 可执行，但不作为玩家 runtime 或 published visual layer。
+- MapRuntimePackage v0.2 的强语义 preview 已接入 RenderPlan 旁路预览：`examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/` 和 `examples/map_render_previews_v02/` 会用结构化资源点、机关区、防守锚点和阻挡区生成 review-only evidence；统一 demo evidence 会展示 `procedural_map_previews_v02`，但前端/后端默认 runtime 仍使用 v0.1。
+- 后端已提供 review-only v0.2 地图预览接口：`GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview` 会聚合 `MapRuntimePackage v0.2 preview`、v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref；该接口仅供审查 / Studio / 录屏证据使用，不替换默认 `/map-runtime-package` 的 v0.1 玩家运行时包。
+- 后端 v0.2 地图预览 API 已有 TestClient smoke 证据：`tools/dev/check_map_v02_preview_api.py` 会创建匿名 session 并请求三张节点的 `/map-v02-preview`，生成 `examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json`；统一 demo evidence 会展示该接口 smoke 摘要。
+- MapPublishedVisualLayerAlignment v0.1 已把确定性逻辑对齐的 `battle_runtime_background.v0.2` 晋升为玩家可用 `published_visual_layer` fallback，旧 `painted_visual_layer` 保留为 `candidate_visual_layer` / `superseded_requires_overlay_correction` 证据。当前 map visual quality 不再报告 overlay correction blocker，只保留共享底图和非节点专属图层 warning。
+- MapRuntimePromotionReadinessReport v0.1 已作为地图 runtime 晋升读模型接入 demo evidence：三张节点均为 `promotion_candidate_activation_required`，说明 v0.2 强语义、RenderPlan 和语义一致性已经具备候选条件，但 activation allowed 仍为 0，且 review-only/拒绝候选隔离仍是 blocker。后续若要切换玩家默认地图语义，必须另开独立 activation / API / 前端 / 截图验收任务，不能直接从 readiness report 修改 runtime。
+- MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0，阻断项包括显式开发者激活批准缺失、review-only/拒绝候选隔离、API/frontend 合同更新和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
+- MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
+- MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量和失败地图候选隔离均满足 MVP 演示门禁；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。
+- 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
+- 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
+- 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
+- `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
+- `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
+- Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
+- Sprite cutout repair plan 已接入 evidence，用于把 `needs_review` 转成重抠图、重生成或人工复核任务。
+- Sprite repair candidate pack 已接入 evidence，用于验证确定性修复候选；候选仍是 review-only，不替换正式 runtime。
+- Sprite live regeneration candidate pack 已接入 evidence，用于对 runtime P1 问题素材调用真实图像 provider 生成 review-only 候选；候选仍不替换正式 runtime。
+- Sprite regeneration promotion report 已接入 evidence，用于证明通过审查的 runtime P1 候选经过显式晋升后才替换 published runtime media，并已重建 atlas。
+- GenerationSchedulePlan v0.1 与 GenerationScheduleRunReport v0.1 已接入 evidence 和后端 session mock API，并已支持 session 级 dry-run 运行记录持久化、item 级队列视图、claim / complete / fail / retry / fallback 状态流转、attempt 预算和 dry-run worker step；真实后台执行器、长期存档还未形成稳定实现。
+- Campaign Router v0.1 已作为最薄运行时游标接入后端 mock API，并已被 no-build 前端消费：可返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，前端进入当前节点时会通过 `prefetch-next` 触发一次 fixture-backed dry-run 预取步；另有 `prefetch-next-dispatcher-drain` 可显式触发 review-only dispatcher drain 预取 tick，用于 Studio / evidence 和后台执行器前置胶水。它们都不调用 provider、不写世界状态、不创建新内容。
+- 多节点战斗结算桥已接入后端 mock API：`gray_lantern_station` 与 `lamp_wick_store` 使用真实 `battle_result` transaction 推进运行态；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，不得伪装成战斗结果。`tools/dev/validate_multinode_battle_settlement.py` 已接入 demo evidence。
 
-```text
-建立 FastAPI + SQLite 后端骨架，实现匿名 session 创建、读取、重置。
-```
+## 3. 已完成的 P0 基线
 
-允许修改：
+以下任务已经合入 `develop`，后续 worker 不应重复实现；如需修改，应另开精确修补任务。
 
-- `backend/`
-- `pyproject.toml`
-- `requirements.txt`
-- `README.md`
-- `control/TASK_QUEUE.md`
+### P0-A 前端战斗画面与大地图视觉初版
 
-禁止修改：
+状态：已完成。
 
-- `.env`
-- `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
-- `docs/AI_ASSET_COMPILER_V0_1.md`
-- `docs/ASSET_GRAPH_COMPILER_V0_1.md`
+已落地：
 
-接口建议：
+- 战斗主画面默认使用通过质量门的 `painted_visual_layer`；`battle_runtime_background` 必须同样通过质量门才可作为玩家 fallback，否则只能进入 debug/evidence。
+- `battle_control_sketch` 与 `battle_reference_board` 被降级为控制 / 参考层，不应进入默认玩家体验。
+- 前端根据 `MapRuntimePackage` 叠加路径、塔位、目标、出生点和拖拽部署预览。
+- `tools/frontend/validate_battle_visual_contract.py` 已用于无浏览器环境的静态视觉合约校验。
 
-```text
-POST /api/sessions
-GET /api/sessions/{session_id}
-POST /api/sessions/{session_id}/reset
-```
+### P0-B 演示证据导出脚本
 
-验收命令：
+状态：已完成。
+
+已落地：
+
+- `tools/demo/export_evidence.py`
+- 可导出 `summary.md`、`evidence.json`、`index.html`。
+- 覆盖 frontend mock pack、runtime package、全部 map runtime package、media manifest、审查包和验证命令。
+
+### P0-C 继续补齐 MapRuntimePackage 节点覆盖
+
+状态：已完成。
+
+已落地：
+
+- `mvp_first_battle`
+- `lamp_wick_store`
+- `old_signal_tower`
+
+### P0-D 研发 / 编译接口与 CGOP 元数据对齐
+
+状态：已完成。
+
+已落地：
+
+- Research proposal / job 返回内部 `compiler_metadata`。
+- 玩家侧仍使用世界内研发 / 试作 / 样品语言。
+- 内部证据可表达 compiled object、context package、validation、runtime refs 和失败分类。
+- `ContextPackage / FactEntry / CGOP` 的字段级 schema 已作为 P1 前置事实源落地。
+
+### P0-E 测试依赖与本地验证环境整理
+
+状态：已完成。
+
+已落地：
+
+- `tools/dev/check_test_env.py`
+- README 与 handoff 文档区分无依赖检查和完整测试检查。
+
+### P0-F 前端 API / 静态 fallback 适配层整理
+
+状态：已完成。
+
+已落地：
+
+- 前端加载逻辑集中到数据适配层。
+- API 优先，静态 fixture 作为本地 fallback。
+- `MapRuntimePackage` 是战斗地图运行时事实源。
+
+### P0-G MapCompilePackage v0.2
+
+状态：已完成。
+
+已落地：
+
+- `shared/schemas/map_compile_package.v0.2.schema.json`
+- `tools/asset_graph/map_compile_package.py`
+- `tools/asset_graph/build_map_compile_package.py`
+- `tools/asset_graph/validate_map_compile_package.py`
+- `examples/map_compile_packages/mvp_first_battle.map_compile_package.json`
+- 地图编译包明确区分逻辑层、控制层、玩家可见渲染层、坐标回配、质量门和最终 `MapRuntimePackage` 导出引用。
+
+### P0-H 前端地图表现质量防线
+
+状态：已完成。
+
+已落地：
+
+- 前端默认玩家视图只优先使用通过 `player_visible_quality=passed` 的 `painted_visual_layer` / `battle_runtime_background`。
+- `battle_control_sketch` 与 `battle_reference_board` 只允许在 debug / evidence 模式作为辅助素材。
+- 发布底图缺失时使用程序化大画面背景承托结构化叠层，不再自动回退到控制图或参考图。
+- 拖拽部署保留，点击放置保留为 fallback。
+
+### P0-J MapCompilePackage 证据导出接入
+
+状态：已完成。
+
+已落地：
+
+- `tools/demo/export_evidence.py` 会收集 `examples/map_compile_packages/*.map_compile_package.json`。
+- 演示证据包会展示地图编译包数量、发布图状态、对齐状态、质量门和玩法真相保留状态。
+- 导出校验命令纳入 `tools/asset_graph/validate_map_compile_package.py`。
+
+### P0-K MapCompilePackage 覆盖更多战斗节点
+
+状态：已完成。
+
+已落地：
+
+- `examples/map_compile_packages/mvp_wick_store_pressure.map_compile_package.json`
+- `examples/map_compile_packages/mvp_old_signal_tower_pressure.map_compile_package.json`
+- 三个 MVP 战斗节点均有地图编译证据包，demo evidence 会自动收集三份。
+
+### P0-L 前端视觉运行态截图验收
+
+状态：已完成替代验收。
+
+已落地：
+
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
+- 已验证前端语法、默认玩家底图代码路径、发布底图资源、首战 `MapRuntimePackage` 视觉层 authority、本地 HTTP 静态读取。
+- 已新增 `tools/frontend/capture_battle_visual_smoke.py` 作为可复跑浏览器烟测入口；本轮通过临时 Playwright Chromium 捕获桌面 / 移动截图，输出目录为 `/tmp/p0m_browser_visual_smoke`。
+
+### P0-I main 文档受控同步准备
+
+状态：已完成。
+
+已落地：
+
+- `docs/MAIN_SYNC_PLAN_2026_07_02.md`
+- 明确 `main` 当前存在用户草稿 `docs/ASSET_GRAPH_COMPILER_V0_1.md`，不得直接覆盖。
+- 给出 develop 晋级 main 前的验证清单、同步策略、禁止操作和人工确认项。
+
+### P1-A-0 MediaAtlasManifest virtual atlas 接入
+
+状态：已完成。
+
+已落地：
+
+- `shared/schemas/media_atlas_manifest.v0.1.schema.json`
+- `tools/media/build_media_atlas_manifest.py`
+- `tools/media/validate_media_atlas_manifest.py`
+- `game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json`
+- 前端优先通过 atlas 第一帧查找媒体，缺失时回退旧 media manifest。
+- 后端 mock API 和 demo evidence 已返回 / 展示 atlas manifest。
+
+### P1-A-1 MediaAtlasManifest 多帧 frame sequence 接入
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_multiframe_atlas_manifest.py`
+- `tools/media/validate_multiframe_atlas_contract.py`
+- `game_data/media/frontend_mock/atlas_frames/`
+- `game_data/media/frontend_mock/atlas_sheets/`
+- `game_data/media/frontend_runtime_mock/atlas_frames/`
+- `game_data/media/frontend_runtime_mock/atlas_sheets/`
+- 前端 `mediaUrl()` 保持旧接口，战斗绘制优先按 battle elapsed time 从实体 spritesheet 裁剪当前帧。
+- sprite 类角色生成 4 帧循环，静态图标 / 头像 / UI 卡保持 1 帧。
+
+### P1-A-2 Sprite cutout quality gate
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/audit_sprite_cutout_quality.py`
+- `examples/review_packs/frontend_sprite_cutout_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 cutout quality 摘要和验证命令。
+
+当前结论：
+
+- frontend mock sprite：`needs_review`，2 / 4 个需复核。
+- runtime battle sprite：`passed`，7 / 7 个通过。
+- 无硬失败；frontend mock 报告仍用于后续重生素材、重抠图和真实视频关键帧替换排序，runtime 当前已达到 MVP 几何质量门。
+
+### P1-A-3 Sprite cutout repair plan
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_sprite_cutout_repair_plan.py`
+- `examples/review_packs/frontend_sprite_cutout_repair_plan.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 repair plan 摘要和验证命令。
+
+当前结论：
+
+- frontend mock repair plan：2 个任务，优先级分布 `P1: 1, P2: 1`。
+- runtime repair plan：0 个任务，已随 runtime sprite 晋升与复核清空。
+- 这些任务是下一轮素材重生 / 重抠图 / 视频关键帧替换的输入，不直接改动玩家侧资产。
+
+### P1-A-4 Sprite repair candidates
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/build_sprite_repair_candidates.py`
+- `examples/review_packs/frontend_sprite_repair_candidates.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_repair_candidates.v0.1.json`
+- `examples/review_packs/frontend_sprite_repair_candidate_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_repair_candidate_quality_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入候选包摘要和验证命令。
+
+当前结论：
+
+- frontend repair candidates：2 个候选，几何质量门 `passed`，未晋升 runtime。
+- runtime repair candidates：0 个候选；旧的 `fill_interior_holes` 驿站核心候选已删除，runtime 改走真实重生成与显式晋升。
+- 抽查显示 `fill_interior_holes` 会把部分开放结构填实，因此这类确定性候选只能作为审查证据；后续应优先走真实重生成 / 更强分割 / 人工确认。
+
+### P1-A-5 Runtime sprite live regeneration candidates
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/generate_sprite_regeneration_candidates.py`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_candidates.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_candidate_quality_report.v0.1.json`
+- `game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/raw/`
+- `game_data/media/sprite_regeneration_candidates/frontend_runtime_mock/processed/`
+- `tools/demo/export_evidence.py` 已纳入 live regeneration 候选摘要和离线验证命令。
+
+当前结论：
+
+- 使用 Agnes 真实生成 runtime 信标、基础灯栏与驿站核心候选，各 1 个，几何质量门 `passed`。
+- 基础灯栏经过多轮提示词收紧，从围栏 enclosure 收敛为单段便携路障；这说明重生成 DAG 需要支持单素材迭代、复用 raw 后处理和人工/视觉复核。
+- 驿站核心经过 provider 对比和提示词收紧后选择 Agnes 候选；一次 GLM free 尝试返回非 PNG / 带水印图像，后续 provider adapter 需要补格式转换与水印门禁。
+- 候选包仍是 `review_candidate_media`，不会自动替换正式 runtime 素材；晋升需要下一步人工/视觉审查和显式 promotion。
+
+### P1-A-6 Runtime sprite regeneration promotion
+
+状态：已完成。
+
+已落地：
+
+- `tools/media/promote_sprite_regeneration_candidates.py`
+- `examples/review_packs/frontend_runtime_sprite_regeneration_promotion_report.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json`
+- `game_data/media/frontend_runtime_mock/atlas_frames/`
+- `examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_sprite_cutout_repair_plan.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 promotion report 摘要和 dry-run 验证命令。
+
+当前结论：
+
+- 信标、基础灯栏与驿站核心候选已显式晋升到 published runtime media，并重建 runtime atlas。
+- runtime sprite cutout quality 从 `needs_review 3 / 7` 推进到 `passed 7 / 7`。
+- runtime sprite repair plan 已清空；后续新增问题仍走同一套重生成和 promotion 流程。
+- 晋升工具默认 dry-run，必须显式 `--apply` 才能替换 runtime PNG 和 manifest。
+
+### P1-A-7 LoopContinuityReport 与视频帧门禁骨架
+
+状态：已完成。
+
+已落地：
+
+- `shared/schemas/loop_continuity_report.v0.1.schema.json`
+- `tools/media/build_loop_continuity_report.py`
+- `tools/media/validate_loop_continuity_report.py`
+- `tools/media/build_multiframe_atlas_manifest.py`：atlas item 已标注 `frame_source_kind` 与 `loop_continuity_ref`。
+- `shared/schemas/media_atlas_manifest.v0.1.schema.json`：补充受限 `frame_source_kind` / `loop_continuity_ref` 字段。
+- `examples/review_packs/frontend_loop_continuity_report.v0.1.json`
+- `examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入两份 loop continuity 摘要和验证命令。
+
+当前结论：
+
+- frontend mock：4 个动画序列已检查，`passed_with_warnings 4 / 4`，无 failed。
+- runtime art：7 个动画序列已检查，`passed_with_warnings 7 / 7`，无 failed。
+- warning 主要是 `deterministic_placeholder_not_real_video_keyframes` 和首尾帧 sha 不同；这说明现有帧序列适合 MVP 循环播放，但仍不是最终图生视频关键帧。
+- 下一步真实图生视频帧接入必须复用该门禁：`video_keyframe_sequence` 进入 atlas 前必须重新跑 LoopContinuityReport、atlas contract 和前端视觉烟测。
+
+### P1-B-0 Generation Scheduler review-only 计划包
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/generation_schedule_plan.v0.1.schema.json`
+- `tools/scheduler/build_generation_schedule_plan.py`
+- `tools/scheduler/validate_generation_schedule_plan.py`
+- `examples/review_packs/mvp_generation_schedule_plan.v0.1.json`
+- `shared/schemas/generation_schedule_run_report.v0.1.schema.json`
+- `tools/scheduler/run_generation_schedule_plan.py`
+- `tools/scheduler/validate_generation_schedule_run_report.py`
+- `examples/review_packs/mvp_generation_schedule_run_report.v0.1.json`
+- `docs/GENERATION_SCHEDULER_V0_1.md`
+- `tools/demo/export_evidence.py` 已纳入 schedule plan 摘要和验证命令。
+
+当前结论：
+
+- 计划包包含 8 个调度项，覆盖 `sync_blocking`、`background_prefetch`、`background`、`lazy`、`fallback_static`。
+- dry-run 报告把 8 个调度项分为 `reuse_ready: 3`、`select_fallback: 1`、`schedule_prefetch: 2`、`schedule_background: 1`、`schedule_lazy: 1`，provider 调用数和世界修改数均为 0。
+- 同步项只读取已审 fixture / locked package / published manifest，不依赖实时 provider。
+- 预取和后台项只声明候选生成计划，启用前必须重新通过对应 validator、semantic gate 或 media gate。
+- 这不是正式后台执行器；item 级队列、session dry-run 持久化、worker cache、retry / fallback 和 Campaign Router dry-run 胶水已经有最小骨架，后续仍需实现真实 provider 调度、跨请求持久化缓存、自动后台 executor 和正式 activation / promotion 执行。
+
+### P1-B-1 Generation Scheduler session API 缓冲层
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `GET /api/sessions/{session_id}/generation-schedule`
+- `backend/app/services/generation_scheduler_service.py` 已加载 `GenerationSchedulePlan v0.1` 与 `GenerationScheduleRunReport v0.1`，并维护 session dry-run 与队列状态。
+- `generation_schedule.buffer` 提供 session 可见的紧凑摘要，包括 latency class、dry-run action、fallback、复验要求、provider 调用数和世界修改数。
+- `/api/sessions/{session_id}/evidence` 已带 `generation_scheduler` 摘要，便于 Studio / 录屏证明调度器存在。
+- `docs/FRONTEND_MOCK_API_V0_1.md` 已记录接口边界。
+
+当前结论：
+
+- 该接口仍是 fixture-backed / review-only，不启动后台 worker，不调用真实 provider，不修改世界状态。
+- 它把“预生成缓冲”接到了后端 API 面，方便前端或演示读取；session 级队列、dry-run worker cache、retry / fallback 和 provider guard 已在后续 P1-B 子任务落地为骨架，真实 provider 调度、自动后台 executor、跨请求持久化缓存和正式激活仍属后续 P1-B。
+
+### P1-B-2 Generation Scheduler session dry-run 持久化
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_runs` SQLite 表。
+- `POST /api/sessions/{session_id}/generation-schedule/runs`
+- `GET /api/sessions/{session_id}/generation-schedule/runs/latest`
+- session reset 会清除对应调度运行记录。
+- `/api/sessions/{session_id}/generation-schedule` 会返回最近一次持久化 dry-run。
+- `/api/sessions/{session_id}/evidence` 会返回最近一次调度运行摘要。
+
+当前结论：
+
+- 该层仍不启动后台 worker，不调用 provider，不修改世界状态，不激活预取候选。
+- 它把 Generation Scheduler 从离线 evidence 推进到后端状态层；后续子任务已在 session 范围内补上 item 级队列、retry / fallback 和 dry-run worker cache，正式 provider 调度、自动后台 executor 和跨请求缓存仍未完成。
+
+### P1-B-3 Generation Scheduler item 级队列视图
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_queue_items` SQLite 表。
+- `GET /api/sessions/{session_id}/generation-schedule/queue`
+- 每次 dry-run 会把 8 个 schedule items 派生为队列记录。
+- `completed` 表示已审同步内容复用完成。
+- `fallback_ready` 表示静态兜底可用。
+- `queued` 表示预取、后台或懒加载候选等待后续 worker 处理。
+- session reset 会清除对应队列项。
+- `/api/sessions/{session_id}/evidence` 会返回最近一次队列摘要。
+
+当前结论：
+
+- 该队列仍不自动调用 provider，不领取真实任务，不修改世界状态。
+- 它为后续后台 worker、缓存、重试、provider 调度和启用前复验提供最小可查询状态面。
+
+### P1-B-4 Generation Scheduler 队列项状态流转
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/claim`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/complete`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fail`
+- 队列 payload 会记录 transition log、worker_id、note 和时间戳。
+- 非法状态流转返回 `409`，缺失队列项返回 `404`。
+
+当前结论：
+
+- 当前只支持本地 dry-run 队列状态流转，不调用 provider，不生成新内容，不写世界状态。
+- 这为后续真实后台 worker 提供最小领取和回写接口。
+
+### P1-B-5 Generation Scheduler dry-run worker step
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/dry-run-step`
+- 每次处理最近一次 run 中的一个 `queued` 项。
+- 需要 provider 或人工复核的项进入 `waiting_review`。
+- 不需要额外复核的项可进入 `completed`。
+- 无可处理项时返回 `idle`。
+- `waiting_review` 项允许后续通过 `complete` 或 `fail` 人工 / 系统复核收束。
+
+当前结论：
+
+- dry-run worker step 不调用 provider，不生成新内容，不写世界状态，不激活预取候选。
+- 它只把后续后台 worker 的领取、处理、等待复核状态面跑通。
+
+### P1-B-6 Generation Scheduler retry / fallback 守门
+
+状态：已完成最小骨架。
+
+已落地：
+
+- 队列项从 `GenerationSchedulePlan.provider_policy.max_attempts` 继承 `max_attempts`。
+- dry-run worker step 每处理一次 `queued` 项会递增 `attempt_count`。
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/retry`
+- `POST /api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback`
+- `retry` 只允许 `failed -> queued`，且 `attempt_count < max_attempts`。
+- `fallback` 允许 `failed|waiting_review -> fallback_ready`，且必须存在 `fallback_ref`。
+
+当前结论：
+
+- 该层仍不调用 provider，不生成新内容，不写世界状态。
+- 它为后续真实 provider 调度建立最小 attempt 预算、重试上限和降级路径。
+
+### P1-B-7 Generation Scheduler worker cache skeleton
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_schedule_worker_cache` SQLite 表。
+- `GET /api/sessions/{session_id}/generation-schedule/worker-cache`
+- dry-run worker step 处理 `queued` 项后写入一条 review-only cache payload。
+- cache summary 统计 item、status、object kind、provider call、world mutation、activation allowed 和 review required。
+- session reset 会清除对应 worker cache 记录。
+- `/api/sessions/{session_id}/generation-schedule/queue` 会返回 worker cache summary。
+- `/api/sessions/{session_id}/generation-schedule/runs/latest` 与 `/api/sessions/{session_id}/evidence` 会返回最近 worker cache 摘要。
+
+当前结论：
+
+- 该层仍不调用 provider，不读取 `.env`，不保存 raw prompt 或 provider response，不生成新内容，不写世界状态。
+- 该层只证明 dry-run worker 已经具备“处理队列项 -> 停在复核门 -> 禁止激活”的 session 级执行记录形态。
+- 它不是正式后台生成缓存；后续真实 worker 必须继续补 provider 调用记录、产物 manifest、校验结果和显式 activation / promotion gate。
+
+### P1-B-8 Generation Scheduler live executor guard
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/live-executor-guard`
+- 只处理最近一次 run 中的 `waiting_review` 队列项。
+- 写入 `generation_live_executor_guard.v0.1` provider guard log 到 `provider_logs`。
+- 更新 worker cache 的 `executor_guard` 和 `activation_gate.blocked_reason = explicit_provider_authorization_required`。
+- `/api/sessions/{session_id}/evidence` 会返回最近 provider guard log 摘要。
+- session reset 会清除 provider guard log。
+
+当前结论：
+
+- 该层仍不读取 `.env`，不调用 provider，不保存 raw prompt 或 provider response，不生成新内容，不写世界状态，不激活 review-only 产物。
+- 它只把真实 provider 执行器前置的授权门、artifact manifest 门、校验门、人工/语义复核门和 activation / promotion gate 接入后端状态层。
+- 下一步真实执行器必须基于该 guard 继续补显式授权、provider adapter、产物 manifest、validator 结果和 promotion report，不能直接把 provider 输出写入 runtime。
+
+### P1-B-9 ProviderOutputEnvelope 安全产物信封
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_output_envelope.v0.1.schema.json`
+- `examples/provider_output_envelopes/p1b_provider_output_envelope.example.json`
+- `tools/dev/validate_provider_output_envelope.py`
+- `docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_output_envelope.v0.1.json`
+
+当前结论：
+
+- 该层不调用真实 provider，只定义真实调用后允许保存的脱敏 envelope。
+- Envelope 可以保存 provider profile、source refs、redacted request / result summary、本地 artifact refs、validation 状态和 activation gate。
+- Envelope 禁止保存 prompt 正文、provider 响应正文、secret、token、full trace、raw JSON 或 runtime-ready 声明。
+- 后续真实 executor 必须先生成并校验 ProviderOutputEnvelope，再进入 media / semantic gate 和 promotion report。
+
+验收：
 
 ```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_output_envelope.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_output_envelopes/p1b_provider_output_envelope.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_envelope python3 -m py_compile tools/dev/validate_provider_output_envelope.py
+python3 -m json.tool shared/schemas/provider_output_envelope.v0.1.schema.json >/tmp/provider_output_envelope.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_output_envelope_evidence
+git diff --check
+```
+
+### P1-B-10 ProviderArtifactStagingManifest 审查暂存清单
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json`
+- `examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json`
+- `tools/dev/validate_provider_artifact_staging_manifest.py`
+- `docs/PROVIDER_ARTIFACT_STAGING_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_artifact_staging.v0.1.json`
+
+当前结论：
+
+- 该层不调用 provider，只登记 ProviderOutputEnvelope 之后的本地候选 artifact refs。
+- staging manifest 必须保持 review-only、internal evidence、非玩家可见、非 runtime 激活、非世界状态修改。
+- staged artifact 必须是本地路径，不能是 provider 临时 URL、data URI 或 runtime package。
+- 后续真实 executor 必须先生成并校验 ProviderOutputEnvelope，再写 ProviderArtifactStagingManifest，然后进入 media / semantic / human review 和 promotion report。
+- demo evidence exporter 已能展示 staging manifest、source envelope、暂存 artifact 数量、gate 状态和 promotion 阻断摘要。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging.v0.1.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_staging python3 -m py_compile tools/dev/validate_provider_artifact_staging_manifest.py
+python3 -m json.tool shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json >/tmp/provider_artifact_staging.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence
+git diff --check
+```
+
+### P1-B-11 ProviderArtifactStaging demo evidence 接线
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/demo/export_evidence.py` 已增加 ProviderArtifactStagingManifest 的 PATHS、source file 指纹、validation command、机器可读摘要、summary.md 摘要和 index.html 快速展示。
+- `examples/worker_task_packs/p1b_provider_artifact_staging_evidence.v0.1.json`
+
+当前结论：
+
+- evidence 只展示 staging 摘要、计数、路径、gate 状态和 promotion 阻断。
+- evidence 不输出 prompt 正文、provider 响应正文、secret、token、临时 URL 或 runtime-ready 声明。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging_evidence.v0.1.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence_connected
+git diff --check
+```
+
+### P1-B-12 Provider artifact ledger 后端状态层
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `generation_artifact_ledger` SQLite 表，所有记录按 `session_id` 隔离，session reset 会清理。
+- `GET /api/sessions/{session_id}/generation-schedule/artifact-ledger`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts`
+- `backend/app/services/generation_scheduler_service.py` 中的 fixture-backed envelope / staging / promotion report 校验、摘要、upsert 和 evidence 聚合。
+- `examples/worker_task_packs/p1b_provider_artifact_ledger_backend.v0.1.json`
+
+当前结论：
+
+- 该层只把已校验的 ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport 摘要登记到 session 台账。
+- worker API 自身不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+- 台账会记录 source 中“已发生过的 provider 调用摘要”，但 `provider_call_count_by_this_request` 始终为 0，避免把台账写入伪装成真实执行器。
+- `/api/sessions/{session_id}/evidence` 会返回 `generation_scheduler.latest_artifact_ledger`，供 Studio / evidence 页面使用。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_ledger_backend.v0.1.json
 python3 -m compileall backend
-pytest backend/tests
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_ledger_backend_evidence
+git diff --check
 ```
 
-完成标准：
+### P1-B-13 ProviderArtifactPromotionReport 显式晋升报告
 
-- SQLite 表带 `session_id`。
-- 不做真实登录。
-- 不读取或打印 `.env`。
+状态：已完成最小骨架。
 
-### P0-002 内容 fixture 与世界实例配置
+已落地：
 
-任务类型：实现 / 内容
+- `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
+- `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json`
+- `tools/dev/validate_provider_artifact_promotion_report.py`
+- `docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md`
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json`
 
-推荐执行：CodeBuddy + 内容队友
+当前结论：
 
-允许 CodeBuddy 子代理：是
+- 该层只表达 staging 之后的显式晋升/阻断结论，不执行 provider、不读取 `.env`、不修改 runtime package、published media 或世界状态。
+- 当前示例会因 `media_gate`、`semantic_gate`、`human_review` 仍为 `not_run` 而阻断晋升。
+- 后续如果报告批准候选继续前进，也只是允许后续构建器生成 runtime package / WorldStateDeltaTransaction；真正写入仍必须由对应构建器和 validator 完成。
 
-目标：
-
-```text
-创建 MVP 默认世界实例 fixture，包括世界书模板、开局配置、第一张大地图、第一危机节点、初始材料和 NPC 占位。
-```
-
-允许修改：
-
-- `content/`
-- `game_data/`
-- `shared/`
-- `examples/`
-
-验收命令：
+验收：
 
 ```bash
-python3 -m json.tool content/worldbooks/long_night_lanterns/world_instance_config.json
-python3 -m json.tool game_data/demo/initial_map.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_report.v0.1.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/demo/export_evidence.py
+python3 -m json.tool shared/schemas/provider_artifact_promotion_report.v0.1.schema.json >/tmp/provider_artifact_promotion_report.schema.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_report_evidence
+git diff --check
 ```
 
-完成标准：
+### P1-B-14 ProviderArtifactPromotionReport 后端 ledger 接线
 
-- 使用稳定内部 ID。
-- 玩家侧名称可作为 locked 示例，但不得假定未来写死。
-- 不出现 provider / prompt / schema 技术词。
+状态：已完成最小骨架。
 
-### P0-003 locked manifest v0.1 schema 与校验器
+已落地：
 
-任务类型：实现
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts` 会额外校验并登记 `ProviderArtifactPromotionReport v0.1` 摘要。
+- `GET /api/sessions/{session_id}/generation-schedule/artifact-ledger` 会返回三类记录：provider output envelope、provider artifact staging manifest、provider artifact promotion report。
+- `backend/tests/test_frontend_mock_api.py` 已覆盖三类 ledger entry、promotion 阻断状态、reset 清理和 evidence 聚合。
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_ledger.v0.1.json`
 
-推荐执行：CodeBuddy
+当前结论：
 
-允许 CodeBuddy 子代理：是
+- 当前 promotion report 是 `blocked_review_required`，因此 ledger 中 `promotion_allowed_count` 仍为 0。
+- 该层只登记摘要，不调用 provider、不读取 `.env`、不写世界状态、不修改 runtime。
 
-参考材料：
-
-- `/tmp/ai-compiled-td-research/locked_manifest_v0_1.md`
-- `/tmp/ai-compiled-td-research/locked_manifest_prototype/`
-- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
-
-目标：
-
-```text
-实现 locked manifest v0.1 的 JSON Schema、示例和校验脚本。
-```
-
-允许修改：
-
-- `shared/schemas/`
-- `examples/locked_manifests/`
-- `tools/content_pipeline/`
-
-验收命令：
+验收：
 
 ```bash
-python3 tools/content_pipeline/validate_locked_manifest.py examples/locked_manifests/mvp_light_snare.locked_manifest.json
-python3 -m py_compile tools/content_pipeline/validate_locked_manifest.py
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_ledger.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_promotion_ledger python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_ledger_evidence
+git diff --check
 ```
 
-完成标准：
+### P1-B-15 GenerationExecutorRunRequest 执行请求包边界
 
-- 递归拒绝 `provider`、`model`、`raw_prompt`、`full_trace`、`raw_json`、`api_key`、`secret`。
-- manifest 不内嵌完整 gameplay。
-- media refs 不使用 provider 临时 URL。
+状态：已完成最小骨架。
 
-### P0-004 研发任务状态机
+已落地：
 
-任务类型：实现
+- `shared/schemas/generation_executor_run_request.v0.1.schema.json`
+- `examples/generation_executor_requests/p1b_generation_executor_run_request.example.json`
+- `tools/dev/validate_generation_executor_run_request.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/prepare-executor-request`
+- `backend/app/services/generation_scheduler_service.py` 中从 `waiting_review` 队列项和 live executor guard 生成执行请求包的逻辑。
+- `generation_artifact_ledger` 现在可登记 `generation_executor_run_request` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 GenerationExecutorRunRequest 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_generation_executor_request.v0.1.json`
 
-推荐执行：CodeBuddy
+当前结论：
 
-允许 CodeBuddy 子代理：是
+- 该层位于 live executor guard 之后、真实 provider adapter 之前。
+- 请求包只保存 source refs、input refs、context refs、attempt budget、provider mode/profile、授权门和必过 gates。
+- 该层不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 如果队列项尚未经过 live executor guard，后端会以 409 阻断 `prepare-executor-request`。
+- 后续真实执行器必须消费该请求包，再在显式授权后生成 `ProviderOutputEnvelope`、`ProviderArtifactStagingManifest` 和 `ProviderArtifactPromotionReport`，不能直接把 provider 输出写入 runtime 或 WorldStateDelta。
 
-参考材料：
-
-- `/tmp/ai-compiled-td-research/research_job_state_machine/`
-- `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`
-
-目标：
-
-```text
-实现确认试作后的研发任务状态机：创建任务、倒计时、样品完成、战斗中送达、使用后进入战后观察。
-```
-
-允许修改：
-
-- `backend/`
-- `shared/`
-- `tools/`
-- `examples/`
-
-验收命令：
+验收：
 
 ```bash
-pytest backend/tests
-python3 -m compileall backend tools
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_executor_request.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/generation_executor_requests/p1b_generation_executor_run_request.example.json
+python3 -m json.tool shared/schemas/generation_executor_run_request.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_generation_executor_run_request.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/generation_executor_request_evidence
+git diff --check
 ```
 
-完成标准：
+### P1-B-16 ProviderArtifactStaging 依赖 executor request
 
-- 支持 happy path。
-- 支持 delayed / failed / unstable 状态枚举。
-- 玩家侧事件流不出现 AI/provider/schema/prompt。
-- 内部事件流可供证据导出读取。
+状态：已完成最小骨架。
 
-### P0-005 Mock AI 编译管线 API
+已落地：
 
-任务类型：实现
+- `POST /api/sessions/{session_id}/generation-schedule/workers/stage-provider-artifacts` 现在必须先看到 latest run 已登记 `generation_executor_run_request`。
+- 若缺少 executor request，接口返回 409，不会登记 ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport。
+- `stage-provider-artifacts` 响应会返回 `worker_step.upstream_request_id` 和 `generation_executor_run_request` 摘要，供 evidence / Studio 串联。
+- `backend/tests/test_frontend_mock_api.py` 已覆盖提前 stage 的 409，以及 dry-run worker -> live executor guard -> prepare executor request -> stage provider artifacts 的完整顺序。
+- `examples/worker_task_packs/p1b_provider_staging_requires_executor_request.v0.1.json`
 
-推荐执行：CodeBuddy
+当前结论：
 
-允许 CodeBuddy 子代理：是
+- Provider artifact ledger 不能再绕过 dry-run worker、live executor guard 和 GenerationExecutorRunRequest。
+- 该层仍不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 由于现有 provider fixture 仍是早期 stage05 样例，当前只要求 latest run 存在 executor request，不强制 fixture envelope 的 schedule item 与 executor request 完全相同；后续真实 provider adapter 接入时应把 source schedule item 精确绑定。
 
-目标：
-
-```text
-基于现有 content_pipeline，提供后端 API：玩家构想 -> 试作方案 -> 确认试作 -> compiled candidate / sample。
-```
-
-允许修改：
-
-- `backend/`
-- `tools/content_pipeline/`
-- `shared/schemas/`
-- `examples/`
-
-接口建议：
-
-```text
-POST /api/sessions/{session_id}/research/proposals
-POST /api/sessions/{session_id}/research/proposals/{proposal_id}/confirm
-GET /api/sessions/{session_id}/research/jobs/{job_id}
-```
-
-验收命令：
+验收：
 
 ```bash
-python3 tools/content_pipeline/run_mock_pipeline.py examples/proposals/light_slow_field.proposal.json --output-dir /tmp/ai_compiled_td_mock_runs
-pytest backend/tests
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_staging_requires_executor_request.v0.1.json
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_staging_requires_executor_request_evidence
+git diff --check
 ```
 
-完成标准：
+### P1-B-17 Provider fixture source 与 scheduler/executor request 对齐
 
-- P0 可用 mock / fixture，不强制真实 provider。
-- 结构化输出必须经过本地校验。
-- 技术错误进入内部日志，玩家侧只显示世界内状态。
+状态：已完成最小骨架。
 
-### P0-006 前端应用骨架
+已落地：
 
-任务类型：实现
+- `GenerationScheduleQueueTransitionRequest` 增加可选 `schedule_item_id`。
+- `dry-run-step`、`live-executor-guard` 和 `prepare-executor-request` 可定向处理指定队列项；若目标项状态不匹配则返回 409。
+- provider artifact source envelope 已从早期 `schedule_map_visual_reference_old_signal_tower` 对齐到当前计划项 `sched_next_map_visual_prefetch`，object kind/ref 对齐为 `map_visual_prefetch` / `map_compile_package:old_signal_tower_pressure`。
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，不再接受任意 executor request。
+- 测试覆盖了错误调度项 request 不能 stage、正确调度项 request 可以 stage，以及 provider envelope source schedule item 对齐。
+- `examples/worker_task_packs/p1b_provider_source_alignment.v0.1.json`
 
-推荐执行：CodeBuddy
+当前结论：
 
-允许 CodeBuddy 子代理：是
+- Provider artifact staging 已从“session 内存在任意 executor request”收紧为“同 schedule item 的 executor request”。
+- 这仍是 fixture-backed / review-only，不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 后续真实 provider adapter 接入时，应继续把 ProviderOutputEnvelope.source.run_id / schedule_item_id / guard_id / executor request id 做强绑定，并把显式授权记录纳入同一链。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_source_alignment.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_source_alignment_evidence
+git diff --check
+```
+
+### P1-B-18 ProviderExecutionAuthorization 显式授权记录
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_execution_authorization.v0.1.schema.json`
+- `examples/provider_authorizations/p1b_provider_execution_authorization.example.json`
+- `tools/dev/validate_provider_execution_authorization.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/grant-provider-authorization`
+- `GenerationScheduleQueueTransitionRequest` 增加可选 `authorization_ref`。
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，且存在同 `ProviderOutputEnvelope.provider_call.authorization_ref` 的 `provider_execution_authorization`。
+- `stage-provider-artifacts` 响应会返回 `worker_step.authorization_ref`、`provider_execution_authorization` 摘要和带 `authorization_ref` 的 provider call 摘要。
+- `generation_artifact_ledger` 现在可登记 `provider_execution_authorization` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 ProviderExecutionAuthorization 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_provider_authorization_record.v0.1.json`
+
+当前结论：
+
+- ProviderExecutionAuthorization 位于 GenerationExecutorRunRequest 之后、真实 provider adapter 之前。
+- 该层只记录 `provider_adapter_execution_only` 的显式授权，不调用 provider、不读取 `.env`、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- ProviderOutputEnvelope / staging / promotion report 不能再只依赖 executor request；必须能追到同 schedule item 和同 authorization ref 的授权记录。
+- 该层仍然不是 runtime activation gate，也不是 WorldStateDeltaTransaction 提交授权。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_authorization_record.v0.1.json
+python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1b_provider_execution_authorization.example.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 -m json.tool shared/schemas/provider_execution_authorization.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_provider_execution_authorization.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_authorization_record_evidence
+git diff --check
+```
+
+### P1-B-19 ProviderAdapterExecutionReceipt 执行边界回执
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json`
+- `examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json`
+- `tools/dev/validate_provider_adapter_execution_receipt.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-fixture`
+- `stage-provider-artifacts` 现在要求 latest run 中存在同 `ProviderOutputEnvelope.source.schedule_item_id` 的 `generation_executor_run_request`，同 `ProviderOutputEnvelope.provider_call.authorization_ref` 的 `provider_execution_authorization`，以及同 schedule item / authorization ref 的 `provider_adapter_execution_receipt`。
+- `stage-provider-artifacts` 响应会返回 `provider_adapter_execution_receipt` 摘要。
+- `generation_artifact_ledger` 现在可登记 `provider_adapter_execution_receipt` 摘要。
+- `tools/demo/export_evidence.py` 已纳入 ProviderAdapterExecutionReceipt 的 source file、validation command 和 evidence 摘要。
+- `examples/worker_task_packs/p1b_provider_adapter_execution_boundary.v0.1.json`
+
+当前结论：
+
+- ProviderAdapterExecutionReceipt 位于 ProviderExecutionAuthorization 之后、ProviderOutputEnvelope 之前。
+- 当前后端只实现 `fixture_backed_no_provider_call` 模式：不读取 `.env`、不调用 provider、不保存 prompt 正文或 provider 响应正文、不写世界状态、不激活 runtime。
+- 后续真实 provider adapter 可使用同一 schema 的 `live_redacted_provider_call` 模式，但仍只能向 ProviderOutputEnvelope 输出脱敏摘要、digest 和本地 artifact refs。
+- ProviderOutputEnvelope / staging / promotion report 不能再只依赖授权记录；必须能追到同 schedule item 和同 authorization ref 的 adapter receipt。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_execution_boundary.v0.1.json
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_executions/p1b_provider_adapter_execution_receipt.example.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_artifact_staging.source_envelope.json
+python3 -m json.tool shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json
+python3 -m py_compile tools/dev/validate_provider_adapter_execution_receipt.py tools/demo/export_evidence.py
+python3 -m compileall backend
+pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_execution_boundary_evidence
+git diff --check
+```
+
+### P1-B-20 Provider adapter runner 脱敏执行工具
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/provider_adapter/run_provider_adapter.py`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json`
+- `examples/worker_task_packs/p1b_provider_adapter_runner.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 runner dry-run 命令、静态输出校验和 `provider_adapter_runner` evidence 摘要。
+
+当前结论：
+
+- Provider adapter runner 是工具层执行入口，不是后端自动后台执行器。
+- 默认 `fixture` 模式是 deterministic dry-run：不读取 `.env`、不调用 provider、不创建候选 artifact，只输出可校验的 `ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。
+- 显式 `--mode llm_text --live` 才允许调用 `tools/llm/adapter.py` 中的 LLM profile；live 输出仍只能保存 digest、计数和 redacted summary refs，不保存 prompt 正文或 provider 响应正文。
+- 图片 provider adapter 已由 P1-B-21 单独推进；视频 provider adapter、媒体后处理自动串接和 media gate 仍应后续单独推进。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json
+python3 tools/provider_adapter/run_provider_adapter.py --executor-request examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json --authorization examples/provider_authorizations/p1b_provider_execution_authorization.example.json --receipt-output /tmp/p1b_provider_adapter_runner.receipt.json --envelope-output /tmp/p1b_provider_adapter_runner.envelope.json --created-at 2026-07-03T00:00:00Z
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
+python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_runner_evidence
+git diff --check
+```
+
+### P1-B-21 Provider adapter image runner 图片候选执行边界
+
+状态：已完成最小骨架。
 
 目标：
 
 ```text
-创建 React + Vite + TypeScript 前端骨架，包含页面路由和基础布局。
+在 ProviderExecutionAuthorization 之后，为 image provider 增加显式 live 工具层边界：调用图像 provider、下载成本地 review-only artifact ref，并只输出 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope。
 ```
+
+已落地：
+
+- `tools/provider_adapter/run_provider_adapter.py`：新增 `--mode image --live`、`--image-profile`、`--size`；默认 fixture 行为保持不联网、不读取 `.env`。
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json`
+- `examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json`
+- `examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json`
+- `examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 image runner request / authorization / dry-run / receipt / envelope 校验和 `provider_adapter_image_runner` evidence 摘要。
+
+当前结论：
+
+- 默认 `fixture` dry-run 仍不读取 `.env`、不调用 provider、不创建候选 artifact。
+- 显式 `--mode image --live` 才允许调用 `tools/media/image_provider.py` 中的 image profile。
+- live image 只允许保存 prompt digest、image digest、byte size、本地 artifact ref 和 redacted summary；不得保存 prompt 正文、provider 原始响应、临时 URL 或 secret。
+- image runner 产物仍是 review-only；后续必须进入 ProviderArtifactStagingManifest、media gate、semantic gate、human review 和 ProviderArtifactPromotionReport，不能直接进入 runtime package、published media 或世界状态。
+- 视频 provider adapter、图生视频帧、后处理自动串接、media gate 自动执行和后端自动后台 executor 仍未完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_image_runner.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json
+python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json
+python3 tools/provider_adapter/run_provider_adapter.py --executor-request examples/provider_adapter_runs/p1b_provider_adapter_image_runner.executor_request.json --authorization examples/provider_authorizations/p1b_provider_execution_authorization_image.example.json --receipt-output /tmp/p1b_provider_adapter_image_runner.receipt.json --envelope-output /tmp/p1b_provider_adapter_image_runner.envelope.json --created-at 2026-07-03T00:00:00Z
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.receipt.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1b_provider_adapter_image_runner.envelope.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_runner python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py tools/media/image_provider.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_image_runner_evidence
+git diff --check
+```
+
+### P1-B-22 Provider image artifact staging 失败闸门
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+把 image ProviderOutputEnvelope 接到 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport，证明已经下载到本地的图片候选仍会因 media / semantic gate 失败而被阻断，不能直接进入 MapRuntimePackage、published media、runtime package 或世界状态。
+```
+
+已落地：
+
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json`
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json`
+- `examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json`
+- `examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 image staging / image promotion report 校验与 evidence 摘要。
+- `docs/PROVIDER_ARTIFACT_STAGING_V0_1.md`、`docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md`、`docs/GENERATION_SCHEDULER_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md` 已同步该失败门语义。
+
+当前结论：
+
+- source envelope 和 local PNG ref 可以合法保存为 review-only evidence。
+- 该图片候选被明确标记为 `validation_failed` / `blocked_validation_failed`。
+- 差图、控制图残留图、路径 / 塔位 / 目标语义不一致的生成图只能作为负样本和下一轮重生 / paintover 输入。
+- 后续仍需要 MapRuntimePackage 驱动的控制图、reference-image provider、局部清理或人工 paintover，再重新走 media / semantic / human review / promotion gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_staging.v0.1.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.source_envelope.json
+python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_image_artifact_staging_evidence
+git diff --check
+```
+
+### P1-B-23 ProviderArtifactPromotionReport 失败决策校验加严
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+把 blocked_validation_failed 从文档约定升级为 validator 约束：只有至少一个 required gate 的 status=failed 时，ProviderArtifactPromotionReport 才能使用该决策。
+```
+
+已落地：
+
+- `tools/dev/validate_provider_artifact_promotion_report.py`：新增 `blocked_validation_failed` 必须对应至少一个 failed required gate 的校验。
+- `tools/dev/check_provider_artifact_promotion_report_negative_fixture.py`
+- `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json`
+- `examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json`
+- `tools/demo/export_evidence.py` 已把负例检查纳入静态校验。
+- `docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md` 和 `docs/CURRENT_ARCHITECTURE_INDEX.md` 已同步该规则。
+
+当前结论：
+
+- `blocked_review_required` 用于“还没通过 / 还没审查”的阻断。
+- `blocked_validation_failed` 用于“至少一个 required gate 已明确失败”的阻断。
+- 这防止 report 在没有 failed gate 的情况下伪装成验证失败，也让 image candidate 负样本闭环成为可执行约束。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_promotion_validator_hardening.v0.1.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json
+python3 tools/dev/validate_provider_artifact_promotion_report.py examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json
+python3 tools/dev/check_provider_artifact_promotion_report_negative_fixture.py examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.invalid_blocked_validation_without_failed_gate.json --expected-error "blocked_validation_failed requires at least one required gate failed"
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_promo_validator_hardening python3 -m py_compile tools/dev/validate_provider_artifact_promotion_report.py tools/dev/check_provider_artifact_promotion_report_negative_fixture.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_promotion_validator_hardening_evidence
+git diff --check
+```
+
+### P1-B-24 Provider image artifact 失败门后端 ledger profile
+
+状态：已完成最小闭环。
+
+目标：
+
+```text
+扩展 fixture-backed stage-provider-artifacts worker，让它在默认行为不变的前提下支持 artifact_profile=image_failure，把 image ProviderOutputEnvelope / ProviderArtifactStagingManifest / ProviderArtifactPromotionReport 登记到同一 generation_artifact_ledger。
+```
+
+已落地：
+
+- `backend/app/models.py`：`GenerationScheduleQueueTransitionRequest` 显式支持 `authorization_ref` 和 `artifact_profile`。
+- `backend/app/services/generation_scheduler_service.py`：`stage_provider_artifacts_fixture` 支持 `default` 与 `image_failure` 两个 fixture profile。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 image failure profile、未知 profile 409、默认 profile 兼容。
+- `examples/worker_task_packs/p1b_provider_image_artifact_ledger_profile.v0.1.json`
+- `docs/CURRENT_ARCHITECTURE_INDEX.md` 和 `docs/GENERATION_SCHEDULER_V0_1.md` 已同步该后端 ledger profile。
+
+当前结论：
+
+- 默认 stage worker 仍登记通用 `blocked_review_required` 示例。
+- `artifact_profile=image_failure` 会登记 `validation_failed` / `blocked_validation_failed` 图片候选负样本。
+- image failure profile 仍然是 Studio / evidence 用后端状态层：不调用 provider、不读取 `.env`、不写世界状态、不发布媒体、不激活 runtime。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_image_artifact_ledger_profile.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_image_staging_ledger python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-25 Generation Scheduler fixture executor chain
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 review-only 的 executor chain API，把现有 dry-run worker、live executor guard、executor request、provider authorization、fixture adapter receipt 和 provider artifact staging 串成一次可审计调用，为后续真实后台执行器提供稳定壳。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain`
+- 缺少最新 scheduler run 时自动创建 session 级 run。
+- 默认从所选 `artifact_profile` 的 ProviderOutputEnvelope fixture 反推 `schedule_item_id` 和 `authorization_ref`，避免 artifact ledger 挂到错误调度项下。
+- 支持 `artifact_profile=default` 与 `artifact_profile=image_failure`。
+- 显式传入不匹配的 `schedule_item_id` 或 `authorization_ref` 时返回 409。
+- 返回 `executor_chain`、各阶段 `worker_step`、executor request、authorization、adapter receipt、staging、promotion report 与 ledger 汇总。
+
+当前结论：
+
+- 这只是正式后台执行器的 fixture-backed 编排壳，不是真 provider 调度器。
+- 仍然不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不写世界状态、不激活 runtime。
+- 后续真实 executor 可以替换 provider adapter 步骤，但必须保留同一授权链、产物信封、staging、promotion 与 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_executor_chain.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_executor_chain python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-26 Provider adapter runner 后端 bridge
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+在后端 worker API 中复用工具层 provider adapter runner 的 dry-run artifact builder，把 runner 形态的 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope 登记到 generation_artifact_ledger，为后续 live provider bridge 做安全落点。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-provider-adapter-runner-fixture`
+- 该入口要求已有匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 后端从 ledger compact 还原 runner 校验所需的最小安全 payload，不保存 prompt / provider 正文。
+- 复用 `tools/provider_adapter/run_provider_adapter.py` 的 dry-run artifact builder，生成并校验 runner 形态 receipt/envelope。
+- receipt 与 envelope 均登记到 `generation_artifact_ledger`。
+
+当前结论：
+
+- 这是 runner bridge 的 dry-run 后端落账，不是真 live provider 调度。
+- 不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live bridge 可以替换 runner 模式，但必须保留 executor request、authorization、redacted envelope、staging、promotion 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner_bridge.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_adapter_runner_bridge python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-27 Provider adapter runner 输出导入
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+允许开发期 / 外部工具先生成本地 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope 文件，再由后端 worker API 校验并导入 generation_artifact_ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-adapter-runner-output`
+- 请求体支持 `receipt_path` 与 `envelope_path`。
+- 只接受仓库内或 `/tmp` 下的本地 JSON 文件，禁止 `.env`。
+- 导入前检查敏感键：`raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等。
+- 导入前重新校验 `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`。
+- 导入前要求已存在匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 导入前检查 receipt/envelope/source 与 ledger 授权链一致。
+
+当前结论：
+
+- 这是外部 runner / 人工生成产物的后端验收入账路径，不是真 provider 调用入口。
+- 导入本身不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live provider smoke 可以先由工具层 runner 生成本地 receipt/envelope，再通过该接口导入并继续走 staging / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_adapter_runner_output_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_adapter_output_import python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-28 Provider artifact review 输出导入
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+允许开发期 / 外部工具先生成本地 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport 文件，再由后端 worker API 校验并导入 generation_artifact_ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/import-provider-artifact-review-output`
+- 请求体支持 `staging_path` 与 `promotion_report_path`。
+- 只接受仓库内或 `/tmp` 下的本地 JSON 文件，禁止 `.env`。
+- 导入前检查敏感键：`raw_prompt`、`provider_response`、`provider_body`、`secret`、`api_key` 等。
+- 导入前重新校验 `ProviderArtifactStagingManifest` 与 `ProviderArtifactPromotionReport`。
+- 导入前要求同一 session / latest run / schedule item 已存在匹配 `source_envelope_id` 的 `ProviderOutputEnvelope` ledger entry。
+- 导入前检查 promotion report 的 `source_staging_ref` 指向本次导入的 staging 文件。
+- 导入前检查 promotion report 的 `source_staging_id` 与 staging `manifest_id` 一致。
+- 导入前检查 `reviewed_artifacts[].staged_artifact_id` 均能在 staging `staged_artifacts[].artifact_id` 中找到。
+
+当前结论：
+
+- 这是外部 media gate / semantic gate / 人工审查产物的后端验收入账路径，不是真 provider 调用入口。
+- 导入本身不读取 `.env`、不调用 provider、不发布素材、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续 live provider smoke 可以先由工具层 runner 生成本地 receipt/envelope，再由外部工具生成 staging/promotion review 文件，最后通过该接口导入并等待显式 promotion / runtime package / world transaction builder。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_review_output_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_review_output_import python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-29 Generation Scheduler review-only dispatcher step
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 review-only dispatcher API，把一个 queued 调度项按既有 guard / request / authorization / runner fixture 链推进到 ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope ledger 边界，但不进入 staging、promotion、队列完成或 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-step`
+- 缺少最新 scheduler run 时自动创建 session 级 run。
+- 支持显式 `schedule_item_id`；未提供时处理下一个 `queued` 项。
+- 固定复用 `dry-run-step -> live-executor-guard -> prepare-executor-request -> grant-provider-authorization -> run-provider-adapter-runner-fixture`。
+- 返回统一 `worker_step`、各阶段 `steps`、queue item、worker cache、guard log、executor request、authorization、runner receipt、ProviderOutputEnvelope 和 ledger 摘要。
+- 队列项保持 `waiting_review`，ledger 只包含 executor request、authorization、adapter receipt、ProviderOutputEnvelope 四类。
+
+当前结论：
+
+- 这是正式后台 dispatcher / executor 前的 review-only 编排壳，不是真 provider 调度器。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续真实后台执行器可以替换 runner fixture 步骤，但必须保留同一授权链、redacted envelope、staging / promotion gate 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_dispatcher.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_dispatcher python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-30 Generation Scheduler review-only dispatcher drain
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 bounded review-only dispatcher drain API，模拟后台 worker 的一个受限 tick：按预算连续处理多个 queued 且 provider_review_required 的调度项，并把它们推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，但不进入 staging、promotion、队列完成或 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-dispatcher-drain`
+- 请求体复用 `worker_id`、`note` 和 `max_items`；`max_items` 默认 4，单次上限 16。
+- 拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile`、runner import path、staging / promotion path 等定向 metadata，避免一次 drain 错挂授权或产物路径。
+- 内部复用 `run-review-only-dispatcher-step`，不复制 guard、authorization 或 runner 校验逻辑。
+- 返回 `worker_step.stop_reason`：`budget_exhausted` 或 `no_eligible_items`，并返回 `remaining_eligible_count`。
+- 返回 `dispatcher_steps`、queue、worker cache 和 artifact ledger 汇总。
+- ledger 只包含 executor request、authorization、adapter receipt、ProviderOutputEnvelope 四类。
+
+当前结论：
+
+- 这是正式后台执行器前的吞吐量控制面雏形，不是真 provider worker。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 如果第 N 个 item 失败，前 N-1 个 item 的 review-only ledger 写入会保留；该行为是 fail-fast partial progress，不是事务性批处理。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_dispatcher_drain.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_dispatcher_drain python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-31 Campaign Router dispatcher prefetch
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+保留现有 Campaign Router `prefetch-next` dry-run 语义，同时新增显式 dispatcher drain 预取入口，让玩家进入当前节点时的后台预取证据可以推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/campaign-router/prefetch-next-dispatcher-drain`
+- 旧 `POST /api/sessions/{session_id}/campaign-router/prefetch-next` 保持 dry-run worker step 语义不变。
+- 新入口默认 `max_items = 2`，调用 `run_review_only_dispatcher_drain`。
+- 返回 `prefetch_request`、`worker_step`、`dispatcher_steps`、queue、worker cache、artifact ledger 和更新后的 `campaign_router`。
+- 拒绝 `schedule_item_id`、`authorization_ref`、`artifact_profile` 和本地导入路径；Campaign Router 的 next node 只是触发上下文，不是 scheduler queue 定向过滤器。
+
+当前结论：
+
+- 这是运行时路由到 review-only dispatcher drain 的胶水，不是真 provider 调度器。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 前端现有 fire-and-forget 仍应使用旧 `prefetch-next`，新入口优先用于 Studio / evidence 或显式后台执行器实验。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_campaign_router_dispatcher_prefetch.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_campaign_router_dispatcher_prefetch python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-32 Generation Scheduler prefetch cache view
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增只读 prefetch cache API，从 latest generation schedule run 的 queue 与 generation_artifact_ledger 派生 schedule item 级预取状态视图，供前端 / Studio 读取后台预取证据，但不创建 run、不推进 dispatcher、不调用 provider、不写世界状态、不激活 runtime。
+```
+
+已落地：
+
+- `GET /api/sessions/{session_id}/generation-schedule/prefetch-cache`
+- 视图按 `schedule_item_id` 汇总 executor request、provider authorization、adapter receipt、ProviderOutputEnvelope、staging manifest 与 promotion report refs。
+- `cache_status` 区分 `queued`、`review_only_envelope_ready`、`staged_review_only`、`promotion_blocked`、`promotion_allowed_pending_activation` 等状态。
+- `provider_call_count_by_this_request` 与 `world_mutation_count_by_this_request` 固定为 0；历史 envelope 中记录过的 provider 调用只计入 `recorded_provider_call_count`。
+- GET 前后不改变 `generation_schedule_runs`、`generation_schedule_queue_items`、`generation_schedule_worker_cache`、`generation_artifact_ledger`、`provider_logs` 或 `world_instance`。
+
+当前结论：
+
+- 这是从 queue / ledger 派生的读模型，不是新的缓存表，不是真后台执行器，也不是正式预生成产物缓存。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 后续真实后台 executor 可以让该视图读到更多 reviewed refs，但仍必须经过 staging、promotion、runtime package、WorldStateDeltaTransaction 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_prefetch_cache_view.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_prefetch_cache_view python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-33 Provider adapter runner handoff 导出
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增外部 provider adapter runner handoff 导出 API，让后端能从 latest run 的 ledger 中导出已校验的 GenerationExecutorRunRequest / ProviderExecutionAuthorization、建议 /tmp 路径、runner argv 模板和 import 回灌请求体；该 API 不直接调用 provider，也不写 ledger。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/export-provider-adapter-runner-handoff`
+- 要求同一 session / latest run / schedule item 下已有匹配的 `GenerationExecutorRunRequest` 与 `ProviderExecutionAuthorization`。
+- 从 ledger compact 还原并重新校验 runner 所需的 executor request 与 authorization。
+- 返回 dry-run、live text、live image 三类 `tools/provider_adapter/run_provider_adapter.py` argv 模板。
+- 返回外部 runner 完成后调用 `import-provider-adapter-runner-output` 的请求体。
+- 测试覆盖只读副作用：导出前后 generation schedule / worker cache / ledger / provider logs / world instance 行数不变。
+
+当前结论：
+
+- 这是正式后台执行器前的外部 worker 交接单，不是真 provider 调用入口。
+- 它不读取 `.env`、不调用 provider、不包含 prompt 正文、不包含 provider 响应正文、不生成 receipt/envelope、不 staging、不 promotion、不写世界状态、不激活 runtime。
+- live 模板中的 dotenv 路径、prompt 文件和 artifact 输出必须由外部 worker 在显式授权下提供；runner 输出仍必须通过 import API 回灌并继续走 staging / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_export.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_export python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-34 Provider adapter runner handoff roundtrip smoke
+
+状态：已完成最小烟测。
+
+目标：
+
+```text
+补一条 fixture roundtrip smoke，证明 export-provider-adapter-runner-handoff 返回的 runner_inputs 可以生成 dry-run ProviderAdapterExecutionReceipt / ProviderOutputEnvelope，本地文件可通过 import-provider-adapter-runner-output 回灌 ledger，并能被 prefetch-cache 读成 review_only_envelope_ready。
+```
+
+已落地：
+
+- 新增 `test_provider_adapter_runner_handoff_roundtrip_import_updates_prefetch_cache`。
+- 测试直接消费 handoff 的 `runner_inputs.executor_request` 与 `runner_inputs.provider_execution_authorization`。
+- 使用 `tools/provider_adapter/run_provider_adapter.py` 的 dry-run builder 生成 receipt / envelope，并写入 pytest `/tmp`。
+- 通过既有 `import-provider-adapter-runner-output` API 回灌 ledger。
+- 最后通过 `GET /generation-schedule/prefetch-cache` 验证 `sched_next_map_visual_prefetch` 为 `review_only_envelope_ready`，且 staging / promotion / activation 仍为空或阻断。
+
+当前结论：
+
+- 这是 handoff 与 import 边界的 fixture smoke，不是真 provider 调用。
+- 它不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_roundtrip.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_roundtrip python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+git diff --check
+```
+
+### P1-B-35 Provider runner handoff evidence summary
+
+状态：已完成最小证据接入。
+
+目标：
+
+```text
+把 provider runner handoff export / dry-run runner / import / prefetch-cache roundtrip 的能力纳入 demo evidence，让 evidence.json、summary.md 和 index.html 都能展示 handoff 状态、roundtrip cache 状态、安全边界和对应任务包。
+```
+
+已落地：
+
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.provider_runner_handoff` 摘要。
+- `summary.md` 和 `index.html` 的 Generation Scheduler 区块展示 `fixture_roundtrip_covered`、`review_only_envelope_ready` 和 runtime activation 阻断状态。
+- 摘要引用 P1-B-33 / P1-B-34 的任务包与验收命令，证明 handoff export 与 roundtrip smoke 已被覆盖。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json` 新增本轮证据接入任务包。
+
+边界：
+
+- 本任务不新增 provider 调用、不读取 `.env`、不写 ledger、不 staging、不 promotion、不写世界状态、不激活 runtime。
+- 它只导出演示证据摘要，不代表后端自动后台执行器已经完成。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_evidence.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_evidence python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_evidence
+rg -n "provider_runner_handoff|runner handoff|fixture_roundtrip_covered|review_only_envelope_ready" /tmp/provider_runner_handoff_evidence
+git diff --check
+```
+
+### P1-B-36 Generation Scheduler background executor tick
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+新增 Generation Scheduler review-only background executor tick API，作为正式后台执行器 / daemon loop 前的稳定最小壳：默认按小预算复用现有 dispatcher drain，把 eligible queued provider-review 项推进到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，同时保持零 live provider 调用、零 staging、零 promotion、零队列完成、零世界写入、零 runtime 激活。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-executor-tick`
+- 默认 `max_items = 2`，单次上限 8。
+- 内部复用 `run_review_only_dispatcher_drain`，不复制 guard、authorization、runner 或 ledger 校验逻辑。
+- 返回 `worker_step.worker_mode = review_only_background_executor_tick`、底层 `dispatcher_worker_step`、`dispatcher_steps`、queue、worker cache、artifact ledger 和 `generation_prefetch_cache`。
+- `background_executor_tick.safety` 明确记录不读取 `.env`、不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.background_executor_tick` 摘要，并在 `summary.md` / `index.html` 展示 tick 状态、默认预算和安全边界。
+- `examples/worker_task_packs/p1b_scheduler_background_executor_tick.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是正式后台执行器 / daemon loop 前的 API 形状与吞吐预算壳，不是真 provider worker。
+- 后续可以把触发方式从手动 API 换成定时 / 事件驱动，但仍必须保留 ProviderOutputEnvelope、staging / promotion gate、runtime package gate 和 WorldStateDeltaTransaction gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_scheduler_background_executor_tick.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_tick python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_tick_tools python3 -m py_compile tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/scheduler_background_tick_evidence
+rg -n "background_executor_tick|review_only_tick_api_ready|run-review-only-background-executor-tick" /tmp/scheduler_background_tick_evidence
+git diff --check
+```
+
+### P1-B-37 Generation Scheduler background handoff tick
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+在现有 review-only background executor tick 基础上，新增 background handoff tick API：先按小预算推进 eligible queued provider-review 项到 ProviderAdapterExecutionReceipt / ProviderOutputEnvelope ledger 边界，再为本轮 dispatched 项批量导出 provider adapter runner handoff bundle，形成外部 runner 可消费的安全 outbox；不得调用 provider、不得读取 .env、不得运行 provider adapter、不得 staging/promotion、不得 complete queue item、不得写世界状态、不得激活 runtime。
+```
+
+已落地：
+
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick`
+- 默认 `max_items = 2`，单次上限 8。
+- 内部复用 `run_review_only_background_executor_tick` 和 `export_provider_adapter_runner_handoff`。
+- 返回 `runner_handoffs[]`，每项包含脱敏 executor request、provider authorization、建议 `/tmp` 路径、dry-run / live text / live image 命令模板和 import 回灌请求体。
+- `background_handoff_tick.safety` 明确记录不读取 `.env`、不调用 provider、不运行 provider adapter、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `tools/demo/export_evidence.py` 新增 `generation_scheduler.background_handoff_tick` 摘要，并在 `summary.md` / `index.html` 展示 handoff tick 状态、handoff 数和安全边界。
+- `examples/worker_task_packs/p1b_scheduler_background_handoff_tick.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是正式后台 provider worker 前的安全 outbox，不是真 provider worker。
+- 外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_scheduler_background_handoff_tick.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_handoff_tick python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_scheduler_background_handoff_tick_tools python3 -m py_compile tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/scheduler_background_handoff_tick_evidence
+rg -n "background_handoff_tick|review_only_handoff_tick_ready|run-review-only-background-handoff-tick" /tmp/scheduler_background_handoff_tick_evidence
+git diff --check
+```
+
+### P1-B-38 Provider adapter runner handoff outbox
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+把 background handoff tick 返回的 runner_handoffs 固化为可验证的 ProviderAdapterRunnerHandoffOutbox v0.1：新增 schema、validator、后端 outbox wrapper、测试和 evidence 摘要，使外部 runner / worker 可以消费一个机器可校验的批量交接单；不得调用 provider、不得读取 .env、不得运行 provider adapter、不得 staging/promotion、不得 complete queue item、不得写世界状态、不得激活 runtime。
+```
+
+已落地：
+
+- `shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json`
+- `tools/dev/validate_provider_adapter_runner_handoff_outbox.py`
+- `POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick` 返回 `provider_adapter_runner_handoff_outbox`。
+- outbox 记录 `source`、`safety`、`runner_handoff_count`、`runner_handoffs[]` 和 `import_contract`。
+- validator 会递归拒绝 secret、API key、prompt 正文、provider response、raw JSON / trace、unreviewed content 等敏感内容，并检查 handoff source、授权 ref、建议 `/tmp` 路径、live 模板显式授权和 import 回灌合同。
+- `tools/demo/export_evidence.py` 新增 outbox schema / validator / task pack 摘要，并在 `summary.md` / `index.html` 展示 `provider_adapter_runner_handoff_outbox_v0_1_ready`。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- outbox 是外部 runner 的批量交接单，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。
+- live 模板可以存在，但必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径。
+- 外部 runner 执行后仍必须通过 `import-provider-adapter-runner-output` 回灌 receipt/envelope，并继续走 staging / promotion / activation gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_outbox_evidence
+rg -n "provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox" /tmp/provider_runner_handoff_outbox_evidence
+git diff --check
+```
+
+### P1-B-39 Architecture fact source freeze
+
+状态：已完成文档治理。
+
+目标：
+
+```text
+冻结 AI 编译系统 v0.1 的事实源层级和生命周期映射：CURRENT_ARCHITECTURE_INDEX 只做导航与事实源路由，AI_COMPILATION_SYSTEM 只做概念 / 边界 / 权限 / 生命周期事实源，字段、op 白名单、semantic gate、builder、validator 和运行命令以 shared/schemas、tools 和专题文档为准；补齐 ProviderAdapterRunnerHandoffOutbox、ProviderOutputEnvelope、staging、promotion、runtime package、媒体、地图 certified 与 CGOP 生命周期关系；不得改实现代码、不得调用 provider、不得读取 .env。
+```
+
+已落地：
+
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md` 新增 `v0.1 冻结断言`，明确索引、概念文档、schema/tools、Scheduler、WorldStateDeltaTransaction、ProviderAdapterRunnerHandoffOutbox、MapRuntimePackage、媒体与 runtime 的边界。
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md` 生命周期映射补齐 ProviderOutputEnvelope、ProviderArtifactStagingManifest、ProviderArtifactPromotionReport 与 ProviderAdapterRunnerHandoffOutbox。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md` 新增冻结快照，明确当前 worker 应使用的事实源层级，并禁止从旧 task worktree、早期聊天摘要或滞后 main 文档推导字段事实。
+- `examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json` 记录本轮文档治理任务包，以及 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是事实源治理，不是 schema 迁移，也不是实现重构。
+- 概念层可以触发后续 schema 修订，但不能让实现绕过当前 gate。
+- `ProviderAdapterRunnerHandoffOutbox` 只能作为外部 runner 交接单，不得被任何 worker 解释为 provider 输出、runtime artifact 或世界事务。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json
+rg -n "v0.1 冻结断言|ProviderAdapterRunnerHandoffOutbox|CURRENT_ARCHITECTURE_INDEX.md|shared/schemas/ \\+ tools/ \\+ 专题文档" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md
+rg -n "Architecture fact source freeze|p1b_architecture_fact_source_freeze" control/TASK_QUEUE.md examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json
+git diff --check
+```
+
+### P1-B-40 Refactor scheduler handoff builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 provider adapter runner handoff 和 ProviderAdapterRunnerHandoffOutbox 的纯 payload 构造逻辑从 generation_scheduler_service.py 抽到独立 builder 模块；保持 API 返回兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_handoff_builders.py`。
+- `generation_scheduler_service.py` 继续负责 latest run、ledger 查询、schema 校验和 API 编排；handoff payload、runner 命令模板、outbox safety 与 import contract 改由纯 builder 构造。
+- `backend/tests/test_frontend_mock_api.py` 新增 builder 安全合同测试，并保留原 handoff / outbox API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_handoff_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是减少 `generation_scheduler_service.py` 继续膨胀。
+- 新 builder 是纯构造模块，不拥有调度状态、不读 DB、不调用 provider、不保存 prompt / provider response。
+- 后续可按同一方式继续拆分 scheduler service 的 ledger import、queue transition 和 prefetch cache view。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_handoff_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_handoff python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_handoff_builders|build_provider_adapter_runner_handoff_outbox|provider_runner_outbox_safety" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-41 Refactor scheduler import safety
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 provider runner / artifact review import 的本地路径限制、.env 路径拒绝、敏感 key 扫描和安全 JSON 加载从 generation_scheduler_service.py 抽到独立模块；保持 API 错误和返回兼容，不改变 DB / ledger / queue 行为，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_import_safety.py`。
+- `generation_scheduler_service.py` 保留 `_resolve_import_path`、`_load_runner_import_json`、`_display_import_path` 兼容薄包装，并把实际安全规则交给 import safety 模块。
+- `backend/tests/test_frontend_mock_api.py` 增加 `.envelope.json` 后缀允许、真实 `.env` 路径拒绝的回归测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_import_safety.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是让导入安全规则从调度状态机中分离出来。
+- 新模块只处理本地路径和 JSON 内容安全，不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- `.envelope.json` 文件名不会被误判为 `.env` 路径；真正包含 `.env` 路径段的导入仍会被拒绝。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_import_safety.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_import_safety python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_import_safety|resolve_import_path|load_safe_import_json|display_import_path" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-42 Refactor provider artifact fixture catalog
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 provider artifact fixture profile、fixture 文件路径和 metadata 读取逻辑从 generation_scheduler_service.py 抽到独立 catalog 模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_artifact_fixtures.py`。
+- `generation_scheduler_service.py` 保留 `_provider_artifact_fixture_paths`、`_provider_artifact_fixture_metadata` 兼容薄包装，并把 profile alias、fixture 路径和 source refs 读取交给 catalog 模块。
+- `backend/tests/test_frontend_mock_api.py` 增加 default / image_failure profile catalog 直接测试，并保留现有 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_provider_artifact_fixtures.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是让 fixture profile 目录从调度状态机中分离出来。
+- 新模块只处理 repo 内 fixture catalog、路径解析和 envelope source refs 提取，不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续增加新的 provider artifact fixture 时，应先更新 catalog 和直接单测，再接 API 端到端流程。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_artifact_fixtures.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_artifact_fixtures python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_artifact_fixtures|provider_artifact_fixture_paths|provider_artifact_fixture_metadata" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-43 Refactor scheduler run and queue builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation schedule buffer、run payload、queue item payload、queue summary、worker cache summary、provider guard log summary、safe id / cache id 等纯 payload 构造与摘要函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_run_queue_builders.py`。
+- `generation_scheduler_service.py` 继续负责 fixture 加载、DB、queue transition、ledger 和 API 编排；纯 run / queue / cache / guard summary builder 改由独立模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 run / queue builder 与 worker cache builder 安全合同测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_run_queue_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是让 scheduler service 继续从巨型状态机文件收缩为编排层。
+- 新模块只处理纯 dict 构造和摘要，不读 fixture、不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续可继续拆分 provider request / authorization / receipt payload builders，或 artifact ledger 读写层。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_run_queue_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_run_queue_builders|build_generation_schedule_buffer|build_worker_cache_payload|compact_generation_queue|safe_id_fragment" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-44 Refactor artifact ledger builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 ProviderOutputEnvelope compact、ProviderArtifactStaging compact、ProviderArtifactPromotionReport compact、artifact ledger entry payload、artifact ledger summary 和 compact ledger view 等纯 dict 构造/摘要函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_artifact_ledger_builders.py`。
+- `generation_scheduler_service.py` 继续负责 DB、ledger 查询 / upsert、queue 状态和 API 编排；provider artifact compact 与 ledger entry / summary builder 改由独立模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 provider artifact compact 与 ledger summary 安全合同测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_artifact_ledger_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 artifact ledger 的无副作用摘要逻辑从 scheduler service 中分离。
+- 新模块只处理纯 dict compact、ledger entry payload 和 summary，不读 fixture、不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续可继续拆分 provider request / authorization / receipt payload builders，或 artifact ledger repository 读写层。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_artifact_ledger_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_artifact_ledger_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_artifact_ledger_builders|compact_provider_output_envelope|compact_provider_artifact_staging|compact_provider_artifact_promotion_report|build_artifact_ledger_payload|compact_generation_artifact_ledger" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-45 Refactor provider execution builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 provider guard id、executor request id、authorization ref、adapter receipt id、live executor guard payload、executor request payload / compact、provider authorization payload / compact、runner rehydrate、adapter receipt payload / compact 等纯构造函数抽到独立模块；保持 API 行为兼容，不改变 queue / ledger / DB 状态流转，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_provider_execution_builders.py`。
+- `generation_scheduler_service.py` 继续负责 repo ref 注入、DB、ledger、queue 状态和 API 编排；provider execution 边界对象构造改由独立模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 guard / executor request / authorization / receipt / runner rehydrate 安全合同测试，并保留原 API 兼容测试。
+- `generation_scheduler_service.py` 的 run id 生成从 `secrets.token_urlsafe` 改为 `secrets.token_hex`，避免随机出现 `sk-` 片段被 secret-fragment gate 误判。
+- `examples/worker_task_packs/p1b_refactor_provider_execution_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 provider execution 边界的无副作用构造逻辑从 scheduler service 中分离。
+- 新模块只处理纯 dict payload / compact / rehydrate，不读 fixture、不读 DB、不读 `.env`、不调用 provider、不写 ledger。
+- 后续可继续拆分 artifact ledger repository 读写层，或转向 MapRuntimePackage / 前端 mock 体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_execution_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_execution_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q
+rg -n "generation_scheduler_provider_execution_builders|build_live_executor_guard_payload|build_generation_executor_run_request_payload|build_provider_execution_authorization_payload|build_provider_adapter_execution_receipt_payload|rehydrate_generation_executor_request_for_runner|rehydrate_provider_authorization_for_runner" backend/app/services backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+### P1-B-46 Refactor artifact ledger repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_artifact_ledger 的 upsert、load、latest executor request / provider authorization / provider adapter receipt / provider output envelope 查询函数抽到独立 repository 模块；保持 API 行为兼容，不改变 queue / ledger payload / DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_artifact_ledger_repository.py`。
+- `generation_scheduler_service.py` 继续负责业务编排、payload 构造、validation 和 API 返回；ledger SQLite 读写与 latest 查询改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 repository upsert / run filter / latest provider chain 查询测试，并保留原 API 兼容测试。
+- `backend/app/api/sessions.py` 的 session id 生成从 URL-safe token 改为 hex token，避免随机出现 `sk-` 片段被 generation executor request 的 secret-fragment gate 误判。
+- `examples/worker_task_packs/p1b_refactor_artifact_ledger_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 artifact ledger 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_artifact_ledger` 表读写和 latest 查询，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 queue repository / worker cache repository，或转向 MapRuntimePackage / 前端 mock 体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_artifact_ledger_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_artifact_ledger_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_artifact_ledger_repository|upsert_generation_artifact_ledger|load_generation_artifact_ledger_items|latest_generation_executor_request_ledger_entry|latest_provider_authorization_ledger_entry|latest_provider_adapter_execution_ledger_entry|latest_provider_output_envelope_ledger_entry|token_hex" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-47 Refactor scheduler run queue repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_schedule_runs 与 generation_schedule_queue_items 的 SQLite 插入、读取、按状态查找和更新函数抽到独立 repository 模块；保持 API 行为兼容，不改变 queue payload、worker cache、provider guard、ledger、DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_run_queue_repository.py`。
+- `generation_scheduler_service.py` 继续负责状态转移规则、attempt / retry / fallback 预算、业务异常和 API 编排；run / queue 两张表的 SQLite 访问改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 repository run / queue insert、load latest、run filter、按状态取下一项、定向 row lookup 和 update 测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 scheduler run / queue 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_schedule_runs` 与 `generation_schedule_queue_items` 表读写，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 worker cache repository / provider guard log repository，或转向正式后台 executor 与 MapRuntimePackage / 前端体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_run_queue_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_run_queue_repository|insert_generation_schedule_run|insert_generation_queue_items|load_latest_generation_schedule_run|load_generation_queue_items|load_generation_queue_item_row|load_next_generation_item_row_by_status|update_generation_queue_item" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-48 Refactor scheduler worker state repository
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 generation_schedule_worker_cache 与 provider_logs 的 SQLite upsert、load、insert 和 guard log 过滤函数抽到独立 repository 模块；保持 API 行为兼容，不改变 run / queue / ledger payload、DB schema，不调用 provider，不读取 .env，不 staging，不 promotion，不写世界状态，不激活 runtime。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_worker_state_repository.py`。
+- `generation_scheduler_service.py` 继续负责 worker cache payload 构造、live executor guard payload 构造、状态转移和 API 编排；worker cache 与 provider guard log 的 SQLite 读写改由 repository 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 worker cache upsert / run filter / created_at 保留，以及 provider guard log schema / run filter 测试，并保留原 API 兼容测试。
+- `examples/worker_task_packs/p1b_refactor_scheduler_worker_state_repository.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 worker cache 与 provider guard log 的 SQLite 访问细节从 scheduler service 中分离。
+- 新模块只处理 `generation_schedule_worker_cache` 与 `provider_logs` 两张表读写和过滤，不读 `.env`、不调用 provider、不构造 provider payload、不写世界状态。
+- 后续可继续拆分 provider review import / staging import repository，或转向正式后台 executor 与 MapRuntimePackage / 前端体验闭环。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_worker_state_repository.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_worker_state_repository python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_worker_state_repository|upsert_worker_cache_payload|load_worker_cache_items|insert_provider_guard_log|load_provider_guard_logs" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-49 Refactor provider artifact review helpers
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 ProviderArtifactStagingManifest 与 ProviderArtifactPromotionReport 之间的纯 review contract 校验、staging / reviewed artifact 引用匹配和 promotion_allowed 判断抽到独立 helper 模块；保持 API 行为兼容，不改变 ledger payload、DB schema、fixture 路径、安全门或 runtime activation 边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_provider_artifact_review_helpers.py`。
+- `generation_scheduler_service.py` 继续负责路径解析、schema validator 调用、latest run / ledger 查询、ledger upsert 和 API 编排；staging / promotion report 的跨文件 contract 判断改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖正常引用、`promotion_allowed` 判断和未 staged 的 reviewed artifact 阻断。
+- `examples/worker_task_packs/p1b_refactor_provider_artifact_review_helpers.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 provider artifact review 的纯判断从 scheduler service 中分离。
+- 新模块只处理 staging / promotion report 的跨文件 review contract，不读 fixture、不读 `.env`、不调用 provider、不写 ledger、不写世界状态、不激活 runtime。
+- 后续可继续拆分 provider artifact review import / staging import 编排，或转向正式后台 executor、真实 provider 调度与 activation / promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_artifact_review_helpers.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_artifact_review_helpers python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_provider_artifact_review_helpers|validate_provider_artifact_review_contract|provider_artifact_promotion_allowed|missing_reviewed_staged_artifact_ids" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-50 Refactor prefetch cache read-model builders
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 GET prefetch-cache 的只读视图构造逻辑抽到独立 builder 模块；保持 API 行为兼容，不改变 queue / ledger 读写、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_prefetch_cache_builders.py`。
+- `generation_scheduler_service.py` 继续负责 latest run、queue items 和 artifact ledger items 的读取；preload / prefetch cache 的 refs 汇总、`cache_status` 推导、activation / promotion gate 摘要和 summary 计数改由 builder 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 builder 级读模型测试，覆盖 queue / ledger refs 汇总、`promotion_allowed_pending_activation`、queued fallback 状态、provider 调用历史计数和只读安全计数。
+- `examples/worker_task_packs/p1b_refactor_prefetch_cache_builders.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把前端 / Studio 读取的 prefetch cache 派生视图从 scheduler service 中分离。
+- 新模块只从 queue items 与 artifact ledger items 派生只读 payload，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续真实后台 executor、跨请求缓存或 activation gate 接入时，应优先扩展该读模型 builder，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_prefetch_cache_builders.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_prefetch_cache_builders python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_prefetch_cache_builders|build_generation_prefetch_cache_payload|prefetch_cache_status|ledger_entry_ref" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-51 Refactor provider adapter runner import helpers
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 import-provider-adapter-runner-output 的纯 receipt / envelope / ledger authorization chain alignment 检查抽到独立 helper 模块；保持 API 行为兼容，不改变 runner output validator、ledger payload、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_provider_adapter_import_helpers.py`。
+- `generation_scheduler_service.py` 继续负责路径解析、runner output validator、latest run / ledger 查询、ledger upsert 和 API 编排；receipt / envelope / executor request / authorization 的 alignment checks 改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖全部 alignment 通过和失败名称回报。
+- `examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把外部 runner 回灌的授权链对齐规则从 scheduler service 中分离。
+- 新模块只检查 receipt / envelope / ledger authorization chain alignment，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续 live provider runner、视频 adapter 或多 provider import 扩展时，应复用该 helper，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_adapter_runner_import_helpers python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_provider_adapter_import_helpers|validate_provider_adapter_runner_import_contract|provider_adapter_runner_import_alignment_checks" backend/app backend/tests
+git diff --check
+```
+
+### P1-B-52 Refactor scheduler dispatcher controls
+
+状态：已完成小范围重构。
+
+目标：
+
+```text
+把 Generation Scheduler 中 review-only dispatcher drain / background tick 的 max_items 解析、targeted metadata 拒绝和 dispatcher step metadata 构造等纯控制面规则抽到独立 helper 模块；保持 API 行为兼容，不改变 dispatcher 编排、queue / ledger 读写、DB schema、provider 调用边界、staging / promotion / activation gate 或世界状态边界。
+```
+
+已落地：
+
+- 新增 `backend/app/services/generation_scheduler_dispatcher_controls.py`。
+- `generation_scheduler_service.py` 继续负责 dispatcher drain、background executor tick 和 background handoff tick 的实际编排；`max_items` 解析、targeted metadata 拒绝和 dispatcher step metadata 构造改由 helper 模块提供。
+- `backend/tests/test_frontend_mock_api.py` 增加 helper 级合同测试，覆盖默认 / 字符串 `max_items`、越界错误、targeted metadata 列表、拒绝错误文案和 step metadata 输出。
+- `examples/worker_task_packs/p1b_refactor_scheduler_dispatcher_controls.v0.1.json` 记录本轮任务包与 OpenCode headless 在当前受控通道内被执行环境拒绝后的 `local_codex_safe_fallback`。
+
+当前结论：
+
+- 这是行为保持型重构，目标是把 dispatcher / tick 的控制面规则从 scheduler service 中分离。
+- 新模块只处理控制面规则，不读 `.env`、不调用 provider、不写 DB、不写 ledger、不写世界状态、不激活 runtime。
+- 后续正式后台 executor、daemon loop 或多 worker 调度接入时，应复用该 helper，而不是继续扩张 scheduler service。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_dispatcher_controls.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_dispatcher_controls python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "generation_scheduler_dispatcher_controls|requested_max_items|reject_targeted_metadata|dispatcher_step_metadata|targeted_metadata_keys" backend/app backend/tests
+git diff --check
+```
+
+### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
+
+状态：已完成并清零当前迁移队列。
+
+已落地：
+
+- `shared/schemas/core_artifact_alignment_report.v0.1.schema.json`
+- `tools/content_pipeline/build_core_artifact_alignment_report.py`
+- `tools/content_pipeline/validate_core_artifact_alignment_report.py`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+- `docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md`
+- `examples/worker_task_packs/p1c_core_artifact_alignment_report.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入报告摘要和 validation command。
+
+当前结论：
+
+- 该报告只做内部 evidence / 迁移审计，不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+- 当前报告状态为 `passed`，无核心对象 validator 失败，`missing_core_alignment_count=0`，`migration_tasks=[]`。
+- 前端 mock pack、核心示例和 stage01-stage07 WorldStateDeltaTransaction 链已处于 `native_snapshot_ready`。
+- 初始 8 个早期叙事 / 阶段 / dossier review pack 已完成 P1-C-2 到 P1-C-9 的显式边界收敛：`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 均已声明为 `review_only_not_applicable`。后续新增 review pack / provider artifact / runtime package 必须携带核心对象原生快照、core refs 或显式 not-applicable 边界，否则报告会重新回到 `needs_migration`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_core_artifact_alignment_report.v0.1.json
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_core_artifact_alignment_report.py tools/content_pipeline/validate_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/core_artifact_alignment_report_evidence
+git diff --check
+```
+
+### P1-C-2 MVP Compiler Review Dossier 核心对象对齐边界
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json` 增加 `core_artifact_alignment` 字段。
+- `tools/content_pipeline/build_mvp_compiler_review_dossier.py` 会确定性输出该边界。
+- `examples/review_packs/mvp_compiler_review_dossier.v0.1.json` 显式声明 `review_only_not_applicable`。
+- `tools/content_pipeline/build_core_artifact_alignment_report.py` 会优先尊重显式 not-applicable 边界。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 8 个降为 7 个。
+- `examples/worker_task_packs/p1c_dossier_core_alignment_boundary.v0.1.json`
+
+当前结论：
+
+- `mvp_compiler_review_dossier` 是总审查交付包，不是 runtime package、CGOP、ContextPackage、FactEntry 或 WorldStateDeltaTransaction。
+- 后续核心对象迁移应针对它引用的阶段候选包、多阶段内容包或具体运行时产物，而不是把总审查包强行包装成核心对象。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_dossier_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/dossier_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-3 StageCandidatePack 核心对象对齐边界
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `shared/schemas/stage_candidate_pack.v0.1.schema.json` 增加可选 `core_artifact_alignment` 字段。
+- `tools/content_pipeline/build_stage_candidate_pack.py` 会为 `mvp_stage_candidate_pack` 确定性输出该边界。
+- `examples/review_packs/mvp_stage_candidate_pack.v0.1.json` 显式声明 `review_only_not_applicable`。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 7 个降为 6 个。
+- `examples/worker_task_packs/p1c_stage_candidate_core_alignment_boundary.v0.1.json`
+
+当前结论：
+
+- `StageCandidatePack` 是 review-only 阶段候选容器，不是 runtime package、CGOP、ContextPackage、FactEntry 或 WorldStateDeltaTransaction。
+- 后续核心对象迁移应针对每个 stage candidate 引用的 WorldStateDelta / WorldStateDeltaTransaction / runtime package，而不是激活整个 review pack。
+
+### P1-C-4 Multistage StageCandidatePack 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_multistage_stage_candidate_core_alignment_boundary.v0.1.json`
+- `tools/content_pipeline/build_multistage_content_pack.py`
+- `examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_multistage_stage_candidate_pack.v0.1` 是 review-only 多阶段候选容器。
+- 它聚合 Stage 05/06/07 的候选摘要、WorldStateDelta 引用、资产晋升状态和 runtime package 引用，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 6 个降为 5 个。
+
+后续：
+
+- 剩余迁移目标包括 `mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_stage05_plan_realization_report`、`mvp_story_asset_promotion_report` 与 `mvp_story_asset_review_pack`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_multistage_stage_candidate_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_multistage_content_pack.py --validate
+python3 tools/content_pipeline/validate_stage_candidate_pack.py examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_multistage_content_pack.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/multistage_stage_candidate_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-5 MultistageContentPack 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_multistage_content_core_alignment_boundary.v0.1.json`
+- `shared/schemas/multistage_content_pack.v0.1.schema.json`
+- `tools/content_pipeline/build_multistage_content_pack.py`
+- `examples/review_packs/mvp_multistage_content_pack.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_multistage_content_pack.v0.1` 是 review-only 多阶段内容生产审查包。
+- 它串联 Stage 05/06/07 的叙事包、WorldStateDelta、compiled asset candidate 和阶段候选包引用，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 5 个降为 4 个。
+
+后续：
+
+- 剩余迁移目标包括 `mvp_next_stage_compilable_object_plan`、`mvp_stage05_plan_realization_report`、`mvp_story_asset_promotion_report` 与 `mvp_story_asset_review_pack`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_multistage_content_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_multistage_content_pack.py --validate
+python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_multistage_content_pack.py tools/content_pipeline/validate_multistage_content_pack.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/multistage_content_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-6 CompilableObjectPlan 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_compilable_object_plan_core_alignment_boundary.v0.1.json`
+- `shared/schemas/compilable_object_plan.v0.1.schema.json`
+- `tools/content_pipeline/build_compilable_object_plan.py`
+- `examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_next_stage_compilable_object_plan.v0.1` 是 review-only 下一阶段编译计划。
+- 它声明下一步要生成哪些对象、依赖什么证据和验证门，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 4 个降为 3 个。
+
+后续：
+
+- 剩余迁移目标包括 `mvp_stage05_plan_realization_report`、`mvp_story_asset_promotion_report` 与 `mvp_story_asset_review_pack`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_compilable_object_plan_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_compilable_object_plan.py --validate
+python3 tools/content_pipeline/validate_compilable_object_plan.py examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_compilable_object_plan.py tools/content_pipeline/validate_compilable_object_plan.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/compilable_object_plan_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-7 StoryAssetReviewPack 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_story_asset_review_core_alignment_boundary.v0.1.json`
+- `shared/schemas/mvp_story_asset_review_pack.v0.1.schema.json`
+- `examples/review_packs/mvp_story_asset_review_pack.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_story_asset_review_pack.v0.1` 是 review-only 多阶段剧情与玩法对象审查索引。
+- 它汇总阶段剧情、NPC、材料、地图节点、战斗节点、研发 hook 和资产引用，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 3 个降为 2 个。
+
+后续：
+
+- 剩余迁移目标包括 `mvp_stage05_plan_realization_report` 与 `mvp_story_asset_promotion_report`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_story_asset_review_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/validate_mvp_story_asset_review_pack.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+python3 tools/narrative/validate_narrative_gameplay_contract.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/validate_mvp_story_asset_review_pack.py tools/narrative/validate_narrative_gameplay_contract.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/story_asset_review_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-8 StoryAssetPromotionReport 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_story_asset_promotion_core_alignment_boundary.v0.1.json`
+- `tools/content_pipeline/build_mvp_review_pack_promotion_report.py`
+- `examples/review_packs/mvp_story_asset_promotion_report.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_story_asset_promotion_report.v0.1` 是 review-only 资产晋升决策报告。
+- 它记录 fallback_ready、candidate_only、blocked 等晋升判断，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 中待迁移目标从 2 个降为 1 个。
+
+后续：
+
+- 剩余迁移目标为 `mvp_stage05_plan_realization_report`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_story_asset_promotion_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_mvp_review_pack_promotion_report.py examples/review_packs/mvp_story_asset_review_pack.v0.1.json --output examples/review_packs/mvp_story_asset_promotion_report.v0.1.json
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_mvp_review_pack_promotion_report.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/story_asset_promotion_core_alignment_evidence
+git diff --check
+```
+
+### P1-C-9 Stage05PlanRealizationReport 核心对象对齐边界
+
+状态：已完成。
+
+产物：
+
+- `examples/worker_task_packs/p1c_stage05_realization_core_alignment_boundary.v0.1.json`
+- `tools/content_pipeline/build_stage05_plan_realization.py`
+- `examples/review_packs/mvp_stage05_plan_realization_report.v0.1.json`
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json`
+
+决策：
+
+- `mvp_stage05_plan_realization_report.v0.1` 是 review-only 计划落地审查报告。
+- 它证明 plan 可以落地成 `NarrativeEventBundle`、`WorldStateDelta`、next `RunWorldState`、`Proposal` 和 `CompiledAssetCandidate`，但本身不是 `ContextPackage`、`FactEntry`、`CGOP` 或 `WorldStateDeltaTransaction`。
+- 它不能直接激活 runtime，也不能直接写世界状态。
+- `examples/review_packs/core_artifact_alignment_report.v0.1.json` 的 `missing_core_alignment_count` 已降为 0，`overall_status` 为 `passed`。
+
+后续：
+
+- 新增 review pack / provider artifact / runtime package 时，必须携带核心对象原生快照、core refs 或显式 not-applicable 边界，否则 CoreArtifactAlignmentReport 会重新回到 `needs_migration`。
+- 本任务不调用 provider、不读取 `.env`、不激活 runtime、不写世界状态。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_stage05_realization_core_alignment_boundary.v0.1.json
+python3 tools/content_pipeline/build_stage05_plan_realization.py --validate
+python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate
+python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate
+python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json
+python3 -m py_compile tools/content_pipeline/build_stage05_plan_realization.py tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/stage05_realization_core_alignment_evidence
+git diff --check
+```
+
+## 4. 当前 P0 任务
+
+### P0-M 前端战斗地图视觉底座改造
+
+状态：已完成。
+
+目标：
+
+- 不再把失败的整图候选作为默认玩家地图。
+- 以前端可运行体验为优先，基于 `MapRuntimePackage` 绘制全屏自然战场底座：地形、道路、部署基座、核心目标、出生点和遮挡氛围分层渲染。
+- 战斗底图必须像游戏画面，而不是控制图、参考图、棋盘、平行四边形或调试画布。
+- 保留 `painted_visual_layer` 作为未来晋升入口；当发布底图不足时，程序化底图是玩家侧默认 fallback。
 
 允许修改：
 
 - `frontend/`
-- `package.json`
-- `pnpm-lock.yaml`
-- `README.md`
+- `tools/frontend/`
+- 必要的 `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
+- 必要的 evidence / validation 文档更新
 
-技术：
-
-```text
-React
-Vite
-TypeScript
-react-router
-Zustand
-TanStack Query
-```
-
-页面：
-
-- 本地档案入口。
-- 世界实例配置。
-- 预制开场。
-- 大地图。
-- 节点 Briefing。
-- 现场应急研发。
-- 塔防战斗。
-- 战后结算。
-
-验收命令：
+验收：
 
 ```bash
-npm install
-npm run build
-npm run lint
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
 ```
 
-完成标准：
+验收重点：
 
-- 可启动本地前端。
-- 页面路由完整。
-- 不做登录。
-- 不显示 Studio/debug 页面。
+- 战斗画布占据浏览器中部主视觉，不能只是小块地图。
+- 路径、塔位、目标和出生点仍来自 `MapRuntimePackage`，不能从图片里反推。
+- 默认玩家视图不得显示 control sketch、reference board、箭头、网格标签或 provider 生成失败图。
+- 拖拽部署路径保持可用，点击放置可作为 fallback。
 
-### P0-007 Phaser 战斗运行时原型
+已落地：
 
-任务类型：实现
+- `frontend/app.js`：默认战斗底座改为 `MapRuntimePackage` seed 驱动的程序化地形、土石路、部署基座、目标地基和入口雾潮；整张玩家地图图像不再进入默认 preload / drawBackdrop。
+- `frontend/app.js` v0.2：新增平滑路口、路肩、车辙 / 木板细节、暗潮洼地、废墟 / 补给 / 灯具 / 信号残骸地标，让玩家默认战场更接近完整塔防关卡画面。
+- `frontend/styles.css`：压低 HUD 遮挡，battle canvas 继续全屏铺底。
+- `tools/frontend/validate_battle_visual_contract.py`：增加程序化底座、棋盘 helper 禁止、失败视觉层禁止发布、runtime package 结构、路肩、车辙、暗潮洼地和世界地标检查。
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md` 与 `frontend/README.md`：同步玩家默认战斗底座事实源。
 
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：是
-
-目标：
-
-```text
-实现 Phaser 3 战斗页原型：斜视角伪 3D 地图、敌人路径、样品热栏、减速陷阱、基础 HUD。
-```
-
-允许修改：
-
-- `frontend/src/game/`
-- `frontend/src/pages/Battle*`
-- `frontend/src/components/battle/`
-- `frontend/public/assets/`
-
-验收命令：
+已验证：
 
 ```bash
-npm run build
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/frontend_procedural_map_polish_smoke
+python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evidence
 ```
 
-完成标准：
+遗留风险：
 
-- 中央战场可见。
-- 敌人沿路径移动。
-- 研发倒计时后底部热栏点亮样品。
-- 玩家可部署样品。
-- 样品触发后敌人明显减速。
-- 有 `ring_pulse` / `aura_field` / `sprite_flash` 至少一种表现。
+- 当前截图只覆盖首战视觉烟测，不替代后续多节点地图、真实拖拽交互和完整录屏的人工验收。
 
-### P0-008 前端玩家主链路集成
+补充：`WorldStateDeltaTransaction v0.1` 已作为架构固化项落地到 schema、批量 validator、首战示例、stage01-stage07 事务链和 demo evidence；它包装现有 `WorldStateDelta v0.1`，不替换 delta schema，也不允许通用 `effects[]` 绕过 `operations[]` 白名单。
 
-任务类型：实现 / 集成
+补充：Campaign Router 消费的三节点 MVP 主线已经能通过战斗结算接口连续推进。`lamp_wick_store` 使用 stage04 battle_result transaction；`old_signal_tower` 当前只有 research_job 来源的 after-state，因此以 `fixture_bridge` 暴露，并在返回值中保留 `fixture_baseline` 说明。
 
-推荐执行：CodeBuddy
+下一轮可进入 P1。执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md` 前仍需保护 `main` 上 `docs/ASSET_GRAPH_COMPILER_V0_1.md` 用户草稿，并确认是否晋级整个 `develop`。
 
-允许 CodeBuddy 子代理：是
+## 5. P1 任务
+
+### P1-A 视频帧 / spritesheet / atlas 增强
 
 目标：
 
 ```text
-把本地档案入口、世界配置、开场、大地图、briefing、现场研发、战斗、战后结算串成完整可走流程。
+在已接入 virtual atlas 的基础上，继续固化“图片 -> 图生视频 -> 关键帧 -> 后处理 -> spritesheet atlas -> runtime manifest”路线。
 ```
 
-允许修改：
+要点：
 
-- `frontend/`
-- `backend/`
-- `game_data/`
-- `content/`
+- `virtual_single_frame`、确定性 4 帧 frame sequence、实体 spritesheet atlas 与 LoopContinuityReport 已完成；本任务后续继续推进真实图生视频关键帧。
+- 首尾帧一致或 end frame 控制优先。
+- 加入 LoopContinuityCheck。
+- 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。
+- 前端已优先消费实体 spritesheet atlas，静态 PNG 作为 fallback；后续需把当前确定性 frame PNG 来源升级为真实视频关键帧。
 
-验收命令：
+### P1-B 世界演化预生成与调度
+
+目标：
+
+```text
+建立类似视频缓冲的后台预生成机制，让剧情、任务、地图、资产在玩家到达前被异步准备。
+```
+
+要点：
+
+- `GenerationSchedulePlan v0.1` 的 review-only 计划包已完成，后续应基于它实现执行器而不是重新定义调度字段。
+- 区分 blocking、prefetch、background、lazy。
+- 引入预算、失败重试、降级 fixture。
+- 世界演化必须服务玩法和进度，不自由失控生长。
+
+### P1-C 更多可编译对象覆盖
+
+目标：
+
+```text
+继续扩展 NPC、任务、随机事件、剧情节点、材料、怪物、地图、设施等可编译对象。
+```
+
+要点：
+
+- 所有对象先进入统一 CGOP / package manifest 模型。
+- 不允许直接自由写 runtime。
+- 每类对象定义最小可玩字段和审查门禁。
+- Research Job proposal / job metadata、battle settlement evidence、frontend mock pack、多节点 battle settlement 与 stage01-stage07 WorldStateDeltaTransaction 链已开始携带或引用统一核心对象；当前已纳入 `CoreArtifactAlignmentReport` 的 review pack 已完成边界收敛。下一步新增可编译对象或真实 provider 产物时，必须继续映射到同一套核心对象字段或显式 not-applicable 边界，而不是新增平行元数据口径。
+
+### P1-D Map Visual Reference 生成管线升级
+
+目标：
+
+```text
+把地图参考图升级为可选的开发者管线：逻辑地图 -> 控制图 / composition sketch -> 地图底图生成 -> 结构化路线与塔位回写。
+```
+
+要点：
+
+- 图像模型只负责自然游戏地图渲染。
+- 路线、塔位、目标以结构化数据为准。
+- 需要支持世界书风格、地形、威胁状态和黑暗区域。
+- 必须消费 `MapVisualQualityReport v0.1` 的 warnings，优先解决节点专属玩家底图、overlay correction 和视觉审查证据不足。
+- 必须消费 `NodeMapPaintedCandidateReview v0.2` 的候选结论，下一步重点不是继续盲目生图，而是做坐标对齐、裁切/尺寸标准化、战斗可读性复核和显式晋升流程；候选图只能在显式晋升后进入 published visual layer。
+- 必须消费 `MapCandidateAlignmentReview v0.1` 的对齐前置结论；下一步任务应生成 normalized candidate、overlay review 截图或结构化 overlay report，然后再决定是否晋升 published visual layer。
+- 必须消费 `MapCandidateOverlayReview v0.1` 的 normalized PNG 与 SVG overlay；下一步应做人眼或视觉模型 overlay 复核，确认路径、塔位、目标与画面语义不冲突，再通过独立 promotion report 晋升。
+- 必须消费 `MapCandidateOverlayVisualReview v0.1` 的拒绝晋升结论；下一步任务应生成 layout reconciliation plan，明确每个节点是重投影 runtime coordinates，还是重新生成符合现有 topology 的地图。
+- 必须消费 `MapLayoutReconciliationPlan v0.1` 的节点级动作；下一步可拆为 `RuntimeMapPatchCandidate` 和 `TopologyConstrainedMapPromptPack` 两条任务，前者只产出 review-only runtime patch，后者只产出更严格的地图重生 prompt / control brief。
+- 必须消费 `RuntimeMapPatchCandidates v0.1`、`TopologyConstrainedMapPromptPack v0.1/v0.2`、`MapTopologyControlSketchPack v0.1`、`MapControlledRegenerationRequestPack v0.1`、`ControlledMapCandidateGenerationRun v0.1`、`ControlledMapCandidateReview v0.1`、`ControlledMapTextFallbackGenerationRun v0.1` 和 `ControlledMapTextFallbackCandidateReview v0.1`。下一步候选任务：对 runtime patch candidate 重新生成 overlay PNG 复核；接入支持参考图的真实图像 provider，或优先完成 `P0-M` 的 MapRuntimePackage 驱动分层程序化底图。不要再把纯文本整图生成作为地图发布候选路线。
+- 该任务在 `P0-G MapCompilePackage v0.2` 之后执行。
+
+#### P1-D-01 MapVisualPromotionGateReport 地图视觉发布闸门
+
+状态：已完成最小骨架。
+
+已落地：
+
+- `tools/media/build_map_visual_promotion_gate_report.py`
+- `examples/review_packs/map_visual_promotion_gate_report.v0.1.json`
+- `examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json`
+- `tools/demo/export_evidence.py` 已纳入 `map_visual_promotion_gate` 静态校验和 evidence 摘要。
+
+当前结论：
+
+- 该闸门不评价地图是否漂亮，只检查已被 review 阻断、待重生、待 provider / paintover、`do_not_promote` 或 review-only 的地图候选是否被误发布给玩家侧。
+- 当前报告阻断候选 22 个、published 玩家图层 4 个、违规 0 个。
+- 这证明现有差图已被隔离在 review evidence / 负样本中；真正改善地图画面仍需后续 reference-image provider、paintover 或 MapRuntimePackage 驱动的分层程序化底图。
+
+验收：
 
 ```bash
-npm run build
-pytest backend/tests
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json
+python3 tools/media/build_map_visual_promotion_gate_report.py --output examples/review_packs/map_visual_promotion_gate_report.v0.1.json
+python3 -m py_compile tools/media/build_map_visual_promotion_gate_report.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_visual_promotion_gate_evidence
+python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
 ```
 
-完成标准：
+#### P1-D-02 FrontendProceduralBattleBackdrop v0.3 分层底图 polish
 
-- 新 session 能走完整链路。
-- 结算后返回大地图且状态变化。
-- 玩家侧不出现 AI/provider/schema/prompt/raw JSON 等词。
-
-### P0-009 战后结算与世界生长
-
-任务类型：实现 / 内容
-
-推荐执行：CodeBuddy + 内容队友
-
-允许 CodeBuddy 子代理：是
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/settlement_world_growth.md`
+状态：已完成最小修补。
 
 目标：
 
 ```text
-实现战后结算页和后端结果记录：节点状态变化、资源变化、样品观察、NPC 反馈、下一步研发线索。
+在不消费失败整图候选、不改写 MapRuntimePackage 事实源的前提下，把前端默认战斗底座继续打磨成更像真实塔防关卡的全屏画面。
 ```
 
-允许修改：
+已落地：
 
-- `frontend/`
-- `backend/`
-- `content/`
-- `game_data/`
+- `frontend/app.js`：新增节点调色、地貌深度带、道路边缘世界小物和部署基座接驳痕迹。
+- `tools/frontend/validate_battle_visual_contract.py`：补充静态合约，要求保留道路边缘小物、基座接驳、节点调色 / 地貌深度层，并继续禁止默认整图候选、控制图、参考图、棋盘和虚线控制线。
+- `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`：记录 v0.3 视觉审计结论和截图验收路径。
+- `examples/worker_task_packs/p1d_frontend_procedural_backdrop_v3.v0.1.json`：新增本任务 worker handoff 包。
 
-验收命令：
+边界：
+
+- 运行时事实仍只来自 `MapRuntimePackage.grid/path_routes/build_slots/objectives/spawn_points`。
+- 路边小物、地貌深度带和接驳痕迹只是表现层，不改变寻路、放置合法性或目标耐久。
+- 不调用 provider、不读取 `.env`、不修改地图 runtime package、不晋升任何 AI 地图候选。
+- OpenCode headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
 
 ```bash
-npm run build
-pytest backend/tests
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_procedural_backdrop_v3.v0.1.json
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/map_procedural_backdrop_v3_after2
+git diff --check
 ```
 
-完成标准：
+#### P1-D-03 FrontendProceduralBattleBackdrop v0.4 战场关卡读法
 
-- 胜利和失败都能产生结果。
-- 样品表现写入内部记录。
-- 玩家侧用世界内语言表达。
-- 后续正式研发线索被记录但不强制实现正式研发页。
-
-### P0-010 演示证据导出脚本
-
-任务类型：实现
-
-推荐执行：CodeBuddy
-
-允许 CodeBuddy 子代理：否
-
-参考材料：
-
-- `/tmp/ai-compiled-td-research/demo_evidence_exporter/`
+状态：已完成最小修补。
 
 目标：
 
 ```text
-实现从 session / run 记录导出 summary.md、evidence.json、index.html 的脚本。
+在不消费失败整图候选、不改写 MapRuntimePackage 事实源的前提下，把默认战斗画面从“漂亮道路底图”继续推进到更像完整塔防关卡：安全区缩放、可玩地块边界、部署台地、路线方向、目标防御区和多路线移动一致性。
 ```
 
-允许修改：
+已落地：
 
-- `tools/demo/`
-- `backend/`
-- `control/`
+- `frontend/app.js`：`computeBattleMetrics()` 改为按 `path_routes / build_slots / objectives / spawn_points` bounds 和 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段。
+- `frontend/app.js`：新增可玩地块边界、可部署台地、目标防御区和路线方向 cue，让入口、路线、放置点和核心关系更容易读。
+- `frontend/app.js`：地图内 sprite 尺寸随投影缩放并带下限，避免移动端地图缩小时目标/敌人/防御件过大。
+- `frontend/app.js`：敌人生成按 `spawn_points.route_id` / route 轮转绑定路线，多路线地图不再画两条路却只跑第一条。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 safe-area fit、关卡边界、路线方向 cue、部署台地、目标防御区和 route-bound enemy movement 的静态合约。
+- `examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json`：新增本轮 worker handoff 包。
 
-验收命令：
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改地图 runtime package、不晋升任何 AI 地图候选。
+- 可玩地块边界、台地、方向 cue 和防御区都是表现层；路径、塔位、目标、出生点和放置合法性仍只来自 `MapRuntimePackage`。
+- OpenCode headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
 
 ```bash
-python3 tools/demo/export_evidence.py --help
-python3 tools/demo/export_evidence.py --fixture examples/demo/run_bundle.json --out /tmp/ai_compiled_td_evidence
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_battlefield_depth_v4.v0.1.json
+node --check frontend/app.js
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/battlefield_depth_v4_scaled_smoke
+git diff --check
 ```
 
-完成标准：
+#### P1-D-04 MapCompilationDesign 地图编译设计采纳审查
 
-- 导出 Markdown、JSON、HTML。
-- 不泄露 API key。
-- 不输出完整敏感 prompt。
-- 不输出 provider 原始错误栈。
-
-## 4. P1 任务
-
-### P1-001 真实 provider 接入
+状态：已完成设计审查与项目化采纳。
 
 目标：
 
 ```text
-把 mock 方案生成替换为可配置 provider，保留演示稳定模式。
+审查外部 AI 提出的地图编译方案，采纳其 logic-first / StylePack / 程序化渲染方向，但不照搬完整 LevelBundle 或一组全新 schema。
 ```
 
-优先模型：
+已落地：
 
-- 方舟 Coding Plan 长上下文模型。
-- DeepSeek 官方 fallback。
-- GLM fallback。
+- `docs/MAP_COMPILATION_DESIGN_V0_1.md`：新增审查采纳文档，明确 AI 不再负责整张运行时地图，AI 只负责风格、组件和参考，程序负责结构和对齐，Validator 负责可信。
+- `docs/MAP_COMPILATION_DESIGN_V0_1.md` 2026-07-04 加固：补充地图编译权限分层、强语义 / 弱语义 / 装饰 / 氛围分级，以及 Reachability / Placement / Resource / Hazard / Collision / SemanticVisual / StyleConsistency validator 在本项目中的映射。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：把该文档加入当前有效设计文档和实现事实。
+- `examples/worker_task_packs/p1d_map_compilation_design_review.v0.1.json`：新增本轮 worker handoff 包。
 
-### P1-002 离线图像生成与缓存
+采纳结论：
+
+- 保留 `MapRuntimePackage` 作为运行时地图事实源。
+- 保留 `MapCompilePackage` 作为编译证据源。
+- 后续新增 `MapStylePack`、`ProceduralMapRenderPlan`、`SemanticVisualConsistencyReport`，而不是继续 prompt-only 整图生成。
+- `LevelBundle` 暂时只作为未来聚合概念，不替代现有 schema。
+- Spline 思路采纳为 v0.2 方向，但短期保持 `path_routes.waypoints` 兼容。
+- 玩家不直接编译地图拓扑；玩家编译解法，系统编译遭遇，开发者编译关卡，发布层控制 runtime 激活。
+
+边界：
+
+- 本任务不改代码、不调用 provider、不读取 `.env`。
+- 外部文档仅作为参考，不作为字段级事实源。
+- Codex headless 在当前受控通道内被安全策略拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback` 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_compilation_design_review.v0.1.json
+python3 -m py_compile tools/dev/validate_worker_task_pack.py
+rg -n "MAP_COMPILATION_DESIGN|MapStylePack|ProceduralMapRenderPlan|SemanticVisualConsistencyReport|AI 负责风格和组件" docs control examples/worker_task_packs
+git diff --check
+```
+
+#### P1-D-05 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport 最小链路
+
+状态：已完成第一版实现。
 
 目标：
 
 ```text
-用 Agnes / GLM / CodeBuddy Hunyuan 生成候选图标或动画卡，下载并缓存为 reviewed / locked 素材。
+把地图编译从“AI 整图候选”推进到 MapRuntimePackage + MapStylePack -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport 的可验证最小链路。
 ```
 
-### P1-003 正式研发机构轻量入口
+已落地：
+
+- `shared/schemas/map_style_pack.v0.1.schema.json`：StylePack 字段事实源，只允许表现层风格、材质、prefab、氛围和可读性规则。
+- `shared/schemas/procedural_map_render_plan.v0.1.schema.json`：分层程序化渲染计划，强语义 layer 必须来自 MapRuntimePackage。
+- `shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`：语义视觉一致性报告，记录 route / slot / objective / spawn / debug-player 边界检查。
+- `tools/asset_graph/procedural_map_render_plan.py`：核心 builder / validator helper。
+- `tools/asset_graph/build_procedural_map_render_plan.py`：从 runtime package + style pack 生成 render plan 和 consistency report。
+- `tools/asset_graph/validate_map_style_pack.py`
+- `tools/asset_graph/validate_procedural_map_render_plan.py`
+- `tools/asset_graph/validate_semantic_visual_consistency_report.py`
+- `examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json`
+- `examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json`
+- `examples/worker_task_packs/p1d_map_style_render_plan.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片。
+- StylePack 不允许决定路线、塔位、目标、出生点或碰撞事实。
+- RenderPlan 的 player default 层不得包含 debug/reference layer。
+- Codex headless 已尝试委派，但当前执行环境拒绝外部 coding model 披露工作区数据，本轮使用 `local_codex_safe_fallback` 在隔离 task worktree 完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_style_render_plan.v0.1.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json --style-pack examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json --output examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-style-render-plan python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/validate_map_style_pack.py tools/asset_graph/validate_procedural_map_render_plan.py tools/asset_graph/validate_semantic_visual_consistency_report.py
+git diff --check
+```
+
+#### P1-D-06 MapRenderPlan 后端与前端 mock 数据层只读接入
+
+状态：已完成第一版接入。
 
 目标：
 
 ```text
-战后出现正式研发机构入口，只展示样品可登记为后续蓝图线索，不实现完整技术树。
+让前端 mock API 和静态前端数据层能拿到 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport bundle，为后续前端真正消费分层地图渲染计划做接口准备。
 ```
 
-### P1-004 第二战役节点
+已落地：
+
+- `backend/app/services/map_render_plan_service.py`：新增 node -> render plan bundle 的 fixture-backed 只读服务。
+- `backend/app/services/frontend_mock_service.py`：`get_battle_config()` 与 `get_runtime_package()` 可选返回 `map_render_plan_bundle`。
+- `backend/app/api/frontend_mock.py`：新增 `/api/sessions/{session_id}/battles/{node_id}/map-render-plan` endpoint。
+- `frontend/app.js`：API 模式和静态模式都能保存 `state.data.mapRenderPlanBundle`，但暂不改变战斗画面渲染。
+- `backend/tests/test_frontend_mock_api.py`：补充首战 bundle 和非首战 404 的测试断言。
+- `examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改变前端战斗绘制函数。
+- 当前只有 `gray_lantern_station` 有 RenderPlan bundle；其他节点返回 `null`，单独 endpoint 返回 404。
+- 完整 pytest 在当前受控环境中未能执行：系统 Python 无 pytest / FastAPI，`uv run` 需要访问用户缓存目录但升级权限被平台额度限制拒绝。已用服务层 smoke、`py_compile`、`node --check` 与 `git diff --check` 覆盖本轮核心风险。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api PYTHONPATH=/tmp/ai-td-task-map-render-plan-api/backend python3 - <<'PY'
+from app.services import frontend_mock_service, map_render_plan_service
+bundle = map_render_plan_service.load_map_render_plan_bundle('gray_lantern_station')
+assert bundle['procedural_map_render_plan']['schema_version'] == 'procedural_map_render_plan.v0.1'
+assert bundle['semantic_visual_consistency_report']['status'] == 'passed'
+assert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']
+payload = frontend_mock_service.get_battle_config('smoke_session', 'gray_lantern_station')
+assert payload['map_render_plan_bundle']['node_id'] == 'gray_lantern_station'
+assert frontend_mock_service.get_battle_config('smoke_session', 'lamp_wick_store')['map_render_plan_bundle'] is None
+try:
+    map_render_plan_service.load_map_render_plan_bundle('lamp_wick_store')
+except map_render_plan_service.MapRenderPlanNotFoundError:
+    pass
+else:
+    raise AssertionError('expected MapRenderPlanNotFoundError')
+PY
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 -m py_compile backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py
+node --check frontend/app.js
+git diff --check
+```
+
+#### P1-D-07 MVP 三节点 MapRenderPlan bundle 补齐
+
+状态：已完成第一版实现。
 
 目标：
 
 ```text
-增加一个节点，用第一场样品反馈推动第二次研发。
+让 gray_lantern_station、lamp_wick_store、old_signal_tower 三个 MVP 战斗节点都具备 MapStylePack / ProceduralMapRenderPlan / SemanticVisualConsistencyReport bundle，而不是只有首战节点可走地图编译最小链路。
 ```
 
-## 5. P2 不做任务
+已落地：
 
-这些任务禁止进入 MVP：
+- `examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json`
+- `examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json`
+- `examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json`
+- `examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json`
+- `examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json`
+- `backend/app/services/map_render_plan_service.py`：映射扩展为三节点。
+- `backend/tests/test_frontend_mock_api.py`：三节点均要求暴露 render plan bundle，单独 `/map-render-plan` endpoint 均应返回 `passed` report。
+- `examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json`
 
-- 登录注册。
-- 多人联机。
-- 真 3D。
-- 实时视频生成。
-- 完整技术树。
-- 复杂经营系统。
-- 可视化 AssetGraph 编辑器。
-- 运行时动态注册新 node / effect。
+边界：
 
-## 6. 首批推荐派工顺序
+- 本任务不调用 provider、不读取 `.env`、不生成图片。
+- 新 StylePack 仍只描述表现层，不允许决定路线、塔位、目标或出生点。
+- RenderPlan 由已有 builder 从 MapRuntimePackage + StylePack 生成；SemanticVisualConsistencyReport 必须为 `passed`。
 
-建议顺序：
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json
+python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --output examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --output examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes PYTHONPATH=/tmp/ai-td-task-map-render-plan-all-nodes/backend python3 - <<'PY'
+from app.services import frontend_mock_service, map_render_plan_service
+expected = {
+    'gray_lantern_station': 'render_plan_gray_lantern_station_v0_1',
+    'lamp_wick_store': 'render_plan_lamp_wick_store_v0_1',
+    'old_signal_tower': 'render_plan_old_signal_tower_v0_1',
+}
+assert map_render_plan_service.available_map_render_plan_node_ids() == sorted(expected)
+for node_id, plan_id in expected.items():
+    bundle = map_render_plan_service.load_map_render_plan_bundle(node_id)
+    assert bundle['procedural_map_render_plan']['plan_id'] == plan_id
+    assert bundle['semantic_visual_consistency_report']['status'] == 'passed'
+    assert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']
+    payload = frontend_mock_service.get_battle_config('smoke_session', node_id)
+    assert payload['map_render_plan_bundle']['procedural_map_render_plan']['plan_id'] == plan_id
+PY
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py
+git diff --check
+```
+
+#### P1-D-08 前端消费 MapRenderPlan / StylePack 表现层
+
+状态：已完成第一版实现。
+
+目标：
 
 ```text
-1. P0-003 locked manifest schema 与校验器
-2. P0-001 后端 session
-3. P0-002 内容 fixture
-4. P0-004 研发任务状态机
-5. P0-005 Mock AI 编译管线 API
-6. P0-006 前端应用骨架
-7. P0-007 Phaser 战斗运行时
-8. P0-008 主链路集成
-9. P0-009 战后结算
-10. P0-010 演示证据导出
+让前端战斗画面在保持 MapRuntimePackage 为运行时语义事实源的前提下，消费 map_render_plan_bundle / MapStylePack 的表现层信息，驱动道路、塔基、目标和出生点的玩家可见样式。
 ```
 
-并行建议：
+已落地：
+
+- `frontend/app.js`：新增 `mapRenderPlanBundle()`、`mapStylePack()`、`mapStylePalette()`、`colorFromStyle()`、`rgbaFromStyle()`、`mapRenderPlanHasLayer()`。
+- `frontend/app.js`：`battleNodeVisualProfile()` 会在 `map_style_pack.v0.1` 可用时用 StylePack 调整地形、道路、部署基座、目标和出生点表现色。
+- `frontend/app.js`：道路、路肩、碎石、车辙、方向 cue、部署基座、目标地基和出生点氛围读取 StylePack 派生颜色，缺失时保留原本节点 fallback。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 MapRenderPlan / StylePack 前端消费契约，确保玩家默认画面仍不使用控制图或失败整图。
+- `frontend/README.md`：说明 `MapStylePack` 只管表现层，`MapRuntimePackage` 仍管运行时语义。
+- `examples/worker_task_packs/p1d_frontend_consume_map_render_plan.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片、不修改 schema。
+- StylePack 不允许决定路线、塔位、目标、出生点或碰撞事实。
+- ProceduralMapRenderPlan 只作为前端分层绘制就绪证据，不替代 MapRuntimePackage。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_consume_map_render_plan.v0.1.json
+node --check frontend/app.js
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-consume-map-render-plan python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
+```
+
+#### P1-D-09 前端消费 RenderPlan 层几何参数
+
+状态：已完成第一版实现。
+
+目标：
 
 ```text
-P0-003、P0-001、P0-002 可以并行。
-P0-006 可以与后端并行。
-P0-007 等前端骨架完成后开始。
-P0-010 可以在后端 run 记录结构确定后开始。
+让前端战斗画面不只读取 MapStylePack 颜色，也读取 ProceduralMapRenderPlan 的非语义表现层几何参数，例如 road_band.width_cells、road_edge.shoulder_width_cells 和 build_slot_platform.footprint。
 ```
+
+已落地：
+
+- `frontend/app.js`：新增 `mapRenderPlan()`、`mapRenderPlanLayer()`、`mapRenderPlanOperation()`、`renderGeometryNumber()` 等 RenderPlan adapter。
+- `frontend/app.js`：道路宽度读取 `road_band.geometry.width_cells`，路肩厚度读取 `road_edge.geometry.shoulder_width_cells`。
+- `frontend/app.js`：部署台地和部署底座读取 `build_slot_platform.geometry.footprint.width_cells / height_cells`。
+- `tools/frontend/validate_battle_visual_contract.py`：补充 RenderPlan geometry 前端消费契约，避免后续只保留 StylePack 调色。
+- `frontend/README.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`、`docs/MAP_COMPILATION_DESIGN_V0_1.md`：同步说明 RenderPlan 已进入玩家侧表现层，但不拥有玩法语义。
+- `examples/worker_task_packs/p1d_frontend_render_plan_layer_params.v0.1.json`
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成图片、不修改 schema。
+- RenderPlan 不提供路线、塔位、目标或出生点事实；这些事实仍只来自 `MapRuntimePackage`。
+- 前端只读取表现层 geometry，不从 RenderPlan 的重复 waypoints / position 反推 runtime 语义。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_render_plan_layer_params.v0.1.json
+node --check frontend/app.js
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-render-plan-layer-params python3 tools/frontend/validate_battle_visual_contract.py
+git diff --check
+```
+
+#### P1-D-10 RenderPlan 离线 SVG 预览
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让 ProceduralMapRenderPlan 不只被前端运行时消费，也能在无浏览器、无 provider 的环境中生成 review-only SVG 预览和可校验 report，证明它是可执行表现计划。
+```
+
+已落地：
+
+- `tools/asset_graph/render_procedural_map_preview.py`：输入 MapRuntimePackage、MapStylePack、ProceduralMapRenderPlan，输出伪 3D SVG 预览和 `procedural_map_preview_report.v0.1`。
+- `tools/asset_graph/validate_procedural_map_preview_report.py`：校验 SVG 文件存在、sha256 匹配、usage policy、semantic source policy 和基本渲染统计。
+- `examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg`
+- `examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg`
+- `examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg`
+- 三份对应 `*.procedural_map_preview_report.json`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不生成位图、不修改前端/后端/schema。
+- 预览 SVG 是 review-only evidence，不是玩家 runtime 背景，不进入 media manifest。
+- 路线、塔位、目标、出生点坐标仍来自 `MapRuntimePackage`；RenderPlan 只提供 road width、shoulder width 和 slot footprint 等表现几何参数。
+
+验收：
+
+```bash
+python3 tools/asset_graph/render_procedural_map_preview.py --output examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py
+git diff --check
+```
+
+#### P1-D-11 RenderPlan 离线预览接入 demo evidence
+
+状态：已完成第一版实现。
+
+目标：
+
+```text
+让 `examples/map_render_previews/*.procedural_map_preview_report.json` 被统一 demo evidence 自动纳入，使评审/录屏能直接看到 MapRuntimePackage + MapStylePack + ProceduralMapRenderPlan 的 review-only SVG 预览证据。
+```
+
+已落地：
+
+- `tools/demo/export_evidence.py`：新增动态发现 `examples/map_render_previews/*.procedural_map_preview_report.json`，并把预览 report 纳入 validation commands、source files、`assets_and_media.map_visual_reference.procedural_map_previews`、`summary.md` 和 `index.html`。
+- `examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json`：记录本任务的 worktree、边界、验收命令和 `local_codex_safe_fallback` 原因。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 demo evidence 已展示 RenderPlan 离线预览事实。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改前端/后端/schema。
+- 预览 report 只作为 review-only evidence，不修改 `MapRuntimePackage`、不晋升 published visual layer、不改变玩家 runtime 背景。
+- 新增地图节点后，只要补充 `*.procedural_map_preview_report.json`，统一 evidence 会动态纳入。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/render_preview_evidence_export
+python3 - <<'PY'
+import json
+from pathlib import Path
+root = Path('/tmp/render_preview_evidence_export')
+evidence = json.loads((root / 'evidence.json').read_text(encoding='utf-8'))
+previews = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews']
+assert previews['report_count'] == 3
+assert previews['ready_count'] == 3
+assert previews['runtime_activation_policy'] == 'review_only_not_player_runtime'
+summary = (root / 'summary.md').read_text(encoding='utf-8')
+assert '地图 RenderPlan 离线预览' in summary
+PY
+git diff --check
+```
+
+#### P1-D-12 MapRuntimePackage v0.2 强语义 preview
+
+状态：已完成第一版旁路实现。
+
+目标：
+
+```text
+在不替换现有前端/后端默认 v0.1 地图包的前提下，建立 MapRuntimePackage v0.2 preview：把资源点、机关区、防守锚点和阻挡区变成结构化运行时语义对象，避免继续依赖图片或整图生成反推这些玩法信息。
+```
+
+已落地：
+
+- `shared/schemas/map_runtime_package.v0.2.schema.json`：定义 v0.2 顶层合同和四类新增强语义对象。
+- `tools/asset_graph/map_runtime_package_v02.py`：复用 v0.1 builder，追加 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas`，并做 Python 语义校验。
+- `tools/asset_graph/build_map_runtime_package_v02.py` / `validate_map_runtime_package_v02.py`：提供离线构建和校验入口。
+- `examples/map_runtime_packages_v02/*.map_runtime_package_v02.json`：三张 MVP 战斗节点的 v0.2 preview 包。
+- `tools/demo/export_evidence.py`：新增 `map_runtime_packages_v02` evidence 摘要、source files 和 validation commands；summary / index 会展示资源点、机关区、防守锚点和阻挡区计数。
+- `examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- v0.2 preview 不进入 `backend/app/services/map_runtime_service.py` 的默认节点映射。
+- v0.2 示例放在 `examples/map_runtime_packages_v02/`，不混入 `examples/map_runtime_packages/` 的 v0.1 正式 runtime 包扫描。
+- 本任务不调用 provider、不读取 `.env`、不改前端、不改后端、不发布任何地图视觉层。
+- 资源点、机关区、防守锚点和阻挡区是结构化玩法语义；图像/StylePack/RenderPlan 只能表现这些语义，不能反向决定它们。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-runtime-v02 python3 -m py_compile tools/asset_graph/map_runtime_package_v02.py tools/asset_graph/build_map_runtime_package_v02.py tools/asset_graph/validate_map_runtime_package_v02.py tools/demo/export_evidence.py
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/map_runtime_v02_evidence/evidence.json').read_text(encoding='utf-8'))
+v02 = evidence['map_runtime_packages_v02']
+assert v02['package_count'] == 3
+assert v02['total_resource_node_count'] == 3
+assert v02['total_hazard_zone_count'] == 3
+assert v02['total_defense_anchor_count'] == 3
+assert v02['total_blocked_area_count'] == 3
+PY
+git diff --check
+```
+
+#### P1-D-13 RenderPlan v0.2 强语义预览
+
+状态：已完成第一版旁路实现。
+
+目标：
+
+```text
+让 ProceduralMapRenderPlan 和离线 SVG 预览消费 MapRuntimePackage v0.2 preview 的资源点、机关区、防守锚点和阻挡区，同时保持该链路为 review-only 旁路，不替换前端/后端默认 v0.1 runtime。
+```
+
+已落地：
+
+- `shared/schemas/procedural_map_render_plan.v0.1.schema.json`：补充 `resource_node`、`hazard_zone`、`defense_anchor`、`blocked_area` semantic kind，以及 `draw_zone`、`draw_blocked_cells`、`draw_anchor_marker` operation。
+- `tools/asset_graph/procedural_map_render_plan.py`：从 v0.2 runtime 包生成 `resource_or_hazard` 与 `blocking_prop` layer，并在 `SemanticVisualConsistencyReport` 中检查四类强语义覆盖。
+- `tools/asset_graph/build_procedural_map_render_plan.py`：自动识别 `map_runtime_package.v0.2`，调用 v0.2 validator。
+- `tools/asset_graph/render_procedural_map_preview.py`：离线 SVG 预览可以绘制资源点、机关区、防守锚点和阻挡区，并在 report 中记录语义计数。
+- `examples/map_style_packs/*.map_style_pack.json`：补齐最小 resource / hazard / blocking procedural prefab。
+- `examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/`、`examples/map_render_previews_v02/`：三张 MVP 地图的 v0.2 review-only 旁路证据。
+- `tools/demo/export_evidence.py`：新增 `procedural_map_previews_v02` evidence 摘要、source files 和 validation commands。
+- `examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端/后端。
+- v0.2 preview SVG 只作为 review-only evidence，不作为玩家 runtime 或 published visual layer。
+- 资源点、机关区、防守锚点和阻挡区必须来自 `MapRuntimePackage v0.2 preview`，不能从图像反推。
+- `MapStylePack` 只提供表现层 prefab / palette，不控制 gameplay truth。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/render_plan_v02_semantics_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/render_plan_v02_semantics_evidence/evidence.json').read_text(encoding='utf-8'))
+summary = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews_v02']
+assert summary['report_count'] == 3
+assert summary['ready_count'] == 3
+for sample in summary['preview_samples']:
+    render = sample['render_summary']
+    assert render['resource_node_count'] == 1
+    assert render['hazard_zone_count'] == 1
+    assert render['defense_anchor_count'] == 1
+    assert render['blocked_area_count'] == 1
+PY
+git diff --check
+```
+
+#### P1-D-14 MapRuntimePackage v0.2 审查接口
+
+状态：已完成第一版后端旁路实现。
+
+目标：
+
+```text
+给前端 / Studio / 演示脚本一个统一入口读取 MapRuntimePackage v0.2 preview 与 v0.2 RenderPlan 证据，同时明确禁止它替换玩家默认 v0.1 地图运行时。
+```
+
+已落地：
+
+- `backend/app/services/map_runtime_service.py`：登记三张 MVP 节点的 `MapRuntimePackage v0.2 preview`，提供 v0.2 加载入口。
+- `backend/app/services/map_render_plan_service.py`：登记三张 MVP 节点的 v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview`，返回 review-only payload。
+- `backend/tests/test_frontend_mock_api.py`：覆盖三张节点的 v0.2 预览接口、unknown node 404，以及默认 `/map-runtime-package` 仍返回 v0.1。
+- `docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充接口边界。
+- `examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json`：记录本轮任务边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端玩家默认地图渲染。
+- `map-v02-preview` 只供审查 / Studio / 录屏证据使用。
+- `runtime_activation_allowed` 必须保持 `false`。
+- 默认 `/map-runtime-package` 仍返回 `MapRuntimePackage v0.1`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-preview-api python3 -m py_compile backend/app/api/frontend_mock.py backend/app/services/map_runtime_service.py backend/app/services/map_render_plan_service.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-preview-api uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -k "map_v02_preview or all_battle_nodes_expose_map_runtime_and_render_plan_packages"
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_preview_api_evidence
+git diff --check
+```
+
+#### P1-D-15 MapRuntimePackage v0.2 API evidence
+
+状态：已完成第一版 TestClient smoke 证据。
+
+目标：
+
+```text
+把 review-only MapRuntimePackage v0.2 预览接口纳入可重复演示证据：不只证明静态 JSON 和 RenderPlan 存在，还证明后端 API 能在匿名 session 下读取三张节点的 v0.2 强语义预览，并且默认玩家地图 runtime 仍保持 v0.1。
+```
+
+已落地：
+
+- `tools/dev/check_map_v02_preview_api.py`：使用 FastAPI TestClient 创建临时 SQLite session，逐节点请求 `/map-v02-preview` 和默认 `/map-runtime-package`。
+- `examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json`：固化本轮通过报告，记录三节点语义计数、默认 v0.1 保留、unknown node 404 和安全摘要。
+- `tools/demo/export_evidence.py`：读取 smoke report，新增 `backend_api_evidence.map_v02_preview`，并在 `summary.md` / `index.html` 展示 API smoke 摘要。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充该 evidence 事实源。
+- `examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端玩家默认地图渲染。
+- smoke 工具只使用临时 SQLite 和 TestClient，不写长期 session 数据。
+- `map-v02-preview` 仍是 review-only；默认 `/map-runtime-package` 必须保持 `MapRuntimePackage v0.1`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence uv run --extra dev python tools/dev/check_map_v02_preview_api.py --output /tmp/map_v02_preview_api_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_api_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/map_v02_api_evidence/evidence.json').read_text(encoding='utf-8'))
+api = evidence['backend_api_evidence']['map_v02_preview']
+assert api['status'] == 'passed'
+assert api['node_count'] == 3
+assert api['default_runtime_v01_preserved_count'] == 3
+assert api['safety']['provider_call_count'] == 0
+assert api['runtime_activation_allowed'] is False
+PY
+git diff --check
+```
+
+#### P1-D-16 MVP 主流程 API smoke evidence
+
+状态：已完成第一版本地 HTTP smoke 证据。
+
+目标：
+
+```text
+把玩家 MVP 主路径纳入可重复演示证据：通过本地 HTTP 调用走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，证明后端 mock API 足以支撑当前演示闭环。
+```
+
+已落地：
+
+- `tools/dev/check_mvp_primary_api_flow.py`：启动临时 `uvicorn` 服务和临时 SQLite，使用真实 localhost HTTP 请求跑主流程。
+- `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`：固化本轮通过报告，记录 21 个 endpoint step、主节点、研发 job、地图包、结算和安全摘要。
+- `tools/demo/export_evidence.py`：读取 smoke report，新增 `backend_api_evidence.mvp_primary_flow`，并在 `summary.md` / `index.html` 展示主流程 smoke 摘要。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充该 evidence 事实源。
+- `examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端玩家默认地图渲染。
+- smoke 工具只绑定 `127.0.0.1` 临时端口，使用临时 SQLite，不写长期 session 数据。
+- 报告不保存玩家输入正文、玩家长文本、provider 原始输出或 trace 文件路径，只保存计数、状态和脱敏 endpoint 模板。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-mvp-api-flow python3 -m py_compile tools/dev/check_mvp_primary_api_flow.py tools/demo/export_evidence.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence-develop UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence-develop uv run --extra dev python tools/dev/check_mvp_primary_api_flow.py --output /tmp/mvp_primary_api_flow_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00
+python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_primary_api_flow_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/mvp_primary_api_flow_evidence/evidence.json').read_text(encoding='utf-8'))
+flow = evidence['backend_api_evidence']['mvp_primary_flow']
+assert flow['status'] == 'passed'
+assert flow['passed_step_count'] == flow['step_count'] == 21
+assert flow['research']['job_status'] == 'completed'
+assert flow['safety']['provider_call_count'] == 0
+assert flow['safety']['runtime_activation_mutation_count'] == 0
+PY
+git diff --check
+```
+
+### P1-E 手动 CodeBuddy / OpenCode 任务交付包
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+生成可粘贴给用户侧 CodeBuddy / OpenCode 主代理的任务包模板。
+```
+
+要点：
+
+- 任务包包含允许修改范围、验收命令、禁止事项、汇报格式。
+- 可被 IDE 侧代理读取完整仓库后执行。
+- 不要求本 Codex 受控通道直接外发仓库上下文。
+- 新增 `WorkerTaskPack v0.1` schema、validator、中文文档和示例任务包。
+- 后续 worker 任务包应先通过 `tools/dev/validate_worker_task_pack.py` 校验，再交给 CodeBuddy / OpenCode / Codex headless / 人类 worker。
+
+已落地：
+
+- `shared/schemas/worker_task_pack.v0.1.schema.json`
+- `docs/WORKER_TASK_PACK_V0_1.md`
+- `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
+- `tools/dev/validate_worker_task_pack.py`
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json
+python3 -m py_compile tools/dev/validate_worker_task_pack.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/worker_task_pack_evidence
+git diff --check
+```
+
+### P1-F AI 编译架构事实源同步
+
+状态：已完成最小修补。
+
+目标：
+
+```text
+把 AI 编译系统总架构、当前架构索引、Generation Scheduler 文档和任务队列之间的事实源边界对齐，避免后续 worker 用概念文档绕过字段级 schema、semantic gate 或 tools。
+```
+
+已落地：
+
+- `docs/AI_COMPILATION_SYSTEM_V0_1.md`：把概念层 latency 口径改为 `GenerationSchedulePlan v0.1` 的实际字段枚举映射，避免使用未落地调度枚举。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 `WorldStateDelta v0.1` 本体的字段级事实源、结构 validator、semantic gate、applier、transaction schema 和 transaction validator 入口。
+- `control/TASK_QUEUE.md`：修正旧状态描述，明确 item 级队列、session dry-run 持久化、worker cache、retry / fallback、provider guard 和 Campaign Router dry-run 胶水已落地；正式后台 executor、真实 provider 调度、跨请求缓存和 activation / promotion gate 仍未完成。
+- `examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json`：新增架构事实源同步任务包。
+
+边界：
+
+- 本任务不修改 schema、工具脚本、后端、前端或媒体资源。
+- 本任务不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+- OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此使用 `local_codex_safe_fallback` 在隔离 worktree 内完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_architecture_fact_source_sync.v0.1.json
+python3 -c "from pathlib import Path; paths=[Path('docs/AI_COMPILATION_SYSTEM_V0_1.md'), Path('docs/CURRENT_ARCHITECTURE_INDEX.md'), Path('docs/GENERATION_SCHEDULER_V0_1.md'), Path('control/TASK_QUEUE.md')]; terms=('async'+'_visible','batch'+'_offline'); bad=[str(p) for p in paths if any(term in p.read_text(encoding='utf-8') for term in terms)]; raise SystemExit(('stale latency terms: '+', '.join(bad)) if bad else 0)"
+rg -n "effects\\[\\]|operations\\[\\]|WorldStateDeltaTransaction|横切控制面|概念与边界事实源" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md docs/GENERATION_SCHEDULER_V0_1.md control/TASK_QUEUE.md
+git diff --check
+```
+
+### P1-B Generation Scheduler activation gate read-model
+
+状态：已完成最小后端读模型。
+
+目标：
+
+```text
+把 latest run 的 prefetch-cache 进一步派生成只读 activation gate 视图，明确 review-only 候选为何仍不能进入玩家 runtime。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_activation_gate_builders.py`：新增纯 builder，从 `generation_prefetch_cache` 派生 `generation_activation_gate`。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_activation_gate()`，复用现有 prefetch cache read-model，不新增 DB 写入。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/generation-schedule/activation-gate`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、无 run 空视图、dispatcher drain 后 envelope 阻断、fixture executor chain 后 promotion 阻断，以及只读性。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 activation gate read-model 边界。
+- `examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 本接口不创建 run、不推进 worker、不写 ledger、不 staging、不 promotion、不 complete queue item。
+- 本接口不读取 `.env`、不调用 provider、不写世界状态、不激活 runtime。
+- 即使某个候选出现 `promotion_allowed_pending_activation`，也只能进入后续 runtime package / WorldStateDeltaTransaction 构建与复验；当前 read-model 仍返回 `activation_allowed_count = 0`。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_activation_gate_view python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "activation-gate|generation_activation_gate|build_generation_activation_gate_payload" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
+### P1-B Generation Scheduler shared prefetch cache index
+
+状态：已完成最小后端索引层。
+
+目标：
+
+```text
+把 promotion 已允许、但仍等待 runtime package / WorldStateDeltaTransaction / activation gate 的候选，登记进跨 session 可复用的脱敏 shared prefetch cache index。
+```
+
+已落地：
+
+- `backend/app/db.py`：新增 `generation_shared_prefetch_cache` 全局 SQLite 表和索引。该表不随单个 session reset 级联清除。
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_builders.py`：新增 builder，只从 activation gate 中筛选 `promotion_allowed = true` 且 `activation_allowed = false` / `runtime_ready = false` 的候选。
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_repository.py`：新增 upsert / load repository。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_shared_prefetch_cache()` 与 `index_generation_shared_prefetch_cache()`。
+- `backend/app/api/frontend_mock.py`：新增 `GET /generation-schedule/shared-prefetch-cache` 与 `POST /generation-schedule/workers/index-shared-prefetch-cache`。
+- `backend/tests/test_frontend_mock_api.py` 与 `backend/tests/test_sessions.py`：覆盖 builder、repository、API、跨 session 可读、session reset 不清除 shared cache，以及 blocked 候选不会被索引。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充共享预取索引边界。
+- `examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- shared cache index 只保存脱敏摘要和 refs presence，不保存 prompt 正文或 provider response。
+- 它不调用 provider、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `promotion_allowed_pending_runtime_build` 只表示可进入后续 runtime package / WorldStateDeltaTransaction 构建与复验，不表示 runtime-ready。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_prefetch_cache.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_prefetch_cache python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "shared-prefetch-cache|generation_shared_prefetch_cache|build_shared_prefetch_cache_records" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
+### P1-B Generation Scheduler shared prefetch cache hits
+
+状态：已完成最小只读命中视图。
+
+目标：
+
+```text
+让当前 session/latest run 能发现哪些调度项命中了跨 session shared prefetch cache index，同时继续保持命中不等于 runtime-ready。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_shared_prefetch_cache_hit_builders.py`：新增只读 hit read-model builder，用 `object_kind + object_ref` 精确匹配当前 prefetch item 与 shared cache record。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_shared_prefetch_cache_hits()`。
+- `backend/app/api/frontend_mock.py`：新增 `GET /generation-schedule/shared-prefetch-cache/hits`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、缺失 session、无 run 空结果、跨 session 命中、只读性和 runtime/activation 阻断。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 hit read-model 边界。
+- `examples/worker_task_packs/p1b_generation_shared_cache_hits.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- hits 视图不创建 run、不推进 worker、不写 shared cache、不调用 provider、不写世界状态、不激活 runtime。
+- 命中状态 `shared_candidate_available_pending_runtime_build` 只表示当前调度项有可复用脱敏候选摘要，后续仍必须过 runtime package / WorldStateDeltaTransaction build、media / semantic gate 和 activation gate。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_cache_hits.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_cache_hits python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "shared-prefetch-cache/hits|generation_shared_prefetch_cache_hits|build_shared_prefetch_cache_hit_payload" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
+### P1-B Generation Scheduler shared cache reuse candidate ledger
+
+状态：已完成最小 review-only ledger 桥接层。
+
+目标：
+
+```text
+把当前 run 的 shared cache hit 显式记录为 generation_artifact_ledger 里的复用候选，使后续 runtime package / WorldStateDeltaTransaction builder 能消费统一 evidence chain。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_shared_cache_reuse_builders.py`：新增 shared cache reuse candidate builder 与 compact 摘要。
+- `backend/app/services/generation_scheduler_prefetch_cache_builders.py`：新增 `shared_prefetch_cache_reuse_candidate` ref kind 与 `shared_cache_reuse_pending_runtime_build` 状态。
+- `backend/app/services/generation_scheduler_service.py`：新增 `record_shared_prefetch_cache_reuse_candidate()`，从当前 hit view 选择一个命中并幂等写入 ledger。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、缺失 session / 无 run / 无 hit、写入 review-only ledger、prefetch-cache refs、幂等和安全计数。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 reuse candidate 边界。
+- `examples/worker_task_packs/p1b_generation_shared_cache_reuse_candidate.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- reuse candidate 不是 runtime package、不是 WorldStateDeltaTransaction、不是 provider 输出，也不是 published media。
+- 该 worker 不调用 provider、不读取 `.env`、不写 shared cache、不 complete queue item、不写世界状态、不激活 runtime。
+- `shared_cache_reuse_pending_runtime_build` 只表示当前 run 已把跨 session 候选挂入 evidence chain，后续仍必须过 runtime package / WorldStateDeltaTransaction build、media / semantic gate 和 activation gate。
+- OpenCode headless 在当前受控通道内仍被执行环境拒绝为外部数据披露风险，本轮使用 `local_codex_safe_fallback`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_shared_cache_reuse_candidate.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_cache_reuse_candidate python3 -m compileall backend
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
+rg -n "record-shared-prefetch-cache-reuse-candidate|shared_prefetch_cache_reuse_candidate|shared_cache_reuse_pending_runtime_build" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
+## 6. P2 暂不做
+
+本阶段明确不做：
+
+- 复杂注册登录、多用户权限、联机同步。
+- 真 3D 战斗画面。
+- 玩家运行时任意代码执行。
+- 游戏内可视化 DAG 编辑器。
+- 游玩中实时生成长视频作为关键路径。
+- 完整长期存档和跨局世界继承。
+- 复杂后台管理系统。
+
+## 7. 推荐执行顺序
+
+建议当前批次按以下顺序推进：
+
+1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
+2. 新增 WorldStateDelta / review pack / provider artifact 继续按 CoreArtifactAlignmentReport 口径进入原生产物字段、core refs 或显式 not-applicable 边界；当前已扫描范围的 migration task 已清零。
+3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
+4. 扩展地图补丁后的 overlay / 视觉模型复核，并在新增战斗节点后复跑 `tools/frontend/capture_battle_visual_smoke.py`。
+5. `P1-A` 真实视频关键帧增强。
+6. `P1-B` Generation Scheduler 正式后台执行器、真实 provider 调度、跨请求缓存和 activation / promotion gate；Campaign Router v0.1 dry-run 预取胶水已落地，不应重复实现。
+
+若需要并行，优先组合：
+
+- `P1-A` 与 `P1-B` 可并行，但都应避免破坏当前 MVP 静态 fixture 路径。
+- main 同步执行必须单独进行，不应与大规模 P1 实现任务混在同一 worktree。
+- `P1-A` 视频帧 / atlas 增强应在地图质量防线之后推进，避免动画资产先接入了错误的地图展示框架。

@@ -1,0 +1,65 @@
+{
+  "id": "intel_dark_echo_survey_001",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "intel_asset",
+    "base_stats": {
+      "action_cost": 1,
+      "valid_turns": 2,
+      "confidence": 0.6
+    },
+    "effect_blocks": [
+      {
+        "type": "scout_reveal",
+        "reveal_scope": "next_wave_path"
+      },
+      {
+        "type": "weakness_tag",
+        "tag_key": "dark_region_echo_weakness",
+        "confidence": 0.5
+      },
+      {
+        "type": "path_prediction",
+        "prediction_horizon": 2
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": false,
+      "max_instances": 1,
+      "allowed_phases": [
+        "battle"
+      ]
+    },
+    "type_specific": {
+      "reveal_mode": "fog_of_war",
+      "applies_to": "enemy_wave",
+      "consumer_hint": "use_before_next_wave"
+    }
+  },
+  "presentation": {
+    "name": "东暗回声测记",
+    "short_description": "通过回声与旧信标读数，揭示下一波影潮路径及可能弱点，仅对短期战斗有效。",
+    "icon_prompt": "2D game icon, intel asset, glowing lantern with echo waves, clean silhouette, dark background",
+    "animation_card_prompt": "2D animation card for dark echo survey intel, revealing enemy path on minimap, tower defense strategy game",
+    "visual_tags": [
+      "intel_asset",
+      "compiled_asset"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_east_dark_echo_survey_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_deepseek_v4_flash",
+    "model": "deepseek-v4-flash",
+    "npc_ids": [
+      "npc_gray_lantern_keeper"
+    ],
+    "material_ids": [
+      "lantern_ash",
+      "conductor_filament"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

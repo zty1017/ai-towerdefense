@@ -1,0 +1,33 @@
+{
+  "id": "proposal_signal_echo_marker",
+  "mode": "runtime_safe",
+  "title": "回声测标短札方案",
+  "summary": "把旧信号塔回流压成一枚短札，在下一段黑路开始前标出敌群来向并给出克制提示。",
+  "intended_asset_type": "support_item",
+  "expected_effect": [
+    "scouting",
+    "support"
+  ],
+  "risk_level": "low",
+  "estimated_cost": "low",
+  "required_inputs": {
+    "npc_ids": [
+      "npc_road_scout"
+    ],
+    "materials": [
+      "lamp_shard",
+      "lantern_ash"
+    ],
+    "facility": "field_workshop",
+    "knowledge_tags": [
+      "signal_echo_marker_possible",
+      "old_signal_tower_resonance_measured"
+    ]
+  },
+  "known_tradeoffs": [
+    "只能在战前或准备阶段使用。",
+    "它提供来向和弱点提示，不能直接造成伤害。"
+  ],
+  "player_prompt": "我想把旧塔回流做成一个能提前标出敌群方向的小道具，帮助下一场布防。",
+  "worldbook_id": "long_night_lanterns"
+}

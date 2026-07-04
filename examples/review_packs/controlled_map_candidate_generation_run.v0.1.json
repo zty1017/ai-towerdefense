@@ -1,0 +1,70 @@
+{
+  "failures": [],
+  "live": false,
+  "model": null,
+  "output_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1",
+  "policy": [
+    "Controlled map candidates are review-only.",
+    "Reference-image mode prepares sidecars and public URL hints, but does not call the current text-only image adapter.",
+    "Text-fallback live generation is allowed only with --live and still cannot update runtime or published visual layers.",
+    "All generated images must pass candidate, alignment, overlay, visual, and promotion gates."
+  ],
+  "provider_mode": "reference-image",
+  "provider_profile": null,
+  "report_id": "mvp_controlled_map_candidate_generation_reference_image",
+  "request_pack_path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+  "results": [
+    {
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.png",
+      "control_sketch_public_url": null,
+      "image_exists": false,
+      "node_id": "gray_lantern_station",
+      "provider_called_this_run": false,
+      "provider_mode": "reference-image",
+      "request_id": "gray_lantern_station.controlled_map_regeneration_request",
+      "review_status": "awaiting_provider_or_paintover_output",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png.candidate.json",
+      "status": "reference_image_handoff_ready"
+    },
+    {
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/old_signal_tower.controlled_reference_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.png",
+      "control_sketch_public_url": null,
+      "image_exists": false,
+      "node_id": "old_signal_tower",
+      "provider_called_this_run": false,
+      "provider_mode": "reference-image",
+      "request_id": "old_signal_tower.controlled_map_regeneration_request",
+      "review_status": "awaiting_provider_or_paintover_output",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/old_signal_tower.controlled_reference_candidate.png.candidate.json",
+      "status": "reference_image_handoff_ready"
+    },
+    {
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/lamp_wick_store.controlled_reference_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.png",
+      "control_sketch_public_url": null,
+      "image_exists": false,
+      "node_id": "lamp_wick_store",
+      "provider_called_this_run": false,
+      "provider_mode": "reference-image",
+      "request_id": "lamp_wick_store.controlled_map_regeneration_request",
+      "review_status": "awaiting_provider_or_paintover_output",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/lamp_wick_store.controlled_reference_candidate.png.candidate.json",
+      "status": "reference_image_handoff_ready"
+    }
+  ],
+  "schema_version": "controlled_map_candidate_generation_run.v0.1",
+  "status": "completed_review_only",
+  "summary": {
+    "failure_count": 0,
+    "handoff_ready_count": 3,
+    "image_exists_count": 0,
+    "provider_call_count": 0,
+    "request_count": 3,
+    "result_count": 3,
+    "status_counts": {
+      "reference_image_handoff_ready": 3
+    }
+  }
+}

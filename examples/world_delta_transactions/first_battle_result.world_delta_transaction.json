@@ -1,0 +1,153 @@
+{
+  "schema_version": "world_state_delta_transaction.v0.1",
+  "transaction_id": "tx_first_battle_result_repaired_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "actor": "system",
+  "source": "battle_result",
+  "created_turn": 2,
+  "created_at": "2026-07-02T00:00:00Z",
+  "base_world_version": "run_demo_001_turn_1",
+  "idempotency_key": "run_demo_001:first_battle_result:delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+  "scope": {
+    "kind": "battle_result_commit",
+    "node_ids": ["gray_lantern_station"],
+    "object_refs": [
+      "battle:first_battle",
+      "sample:sample_trap_7f3a_repaired",
+      "fact:sample_trap_tested_in_battle_repaired"
+    ],
+    "state_fields": [
+      "progress_phase",
+      "map_nodes.gray_lantern_station",
+      "resources.lamp_oil",
+      "global_state.hope",
+      "global_state.pressure",
+      "facts.sample_trap_tested_in_battle_repaired",
+      "research.temporary_samples.sample_trap_7f3a_repaired",
+      "events.gray_lantern_first_defense_repaired_success",
+      "flags.tutorial_first_battle_completed"
+    ]
+  },
+  "source_refs": {
+    "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+    "battle_result_path": "examples/asset_graph/battle_result.sample.json",
+    "run_state_before_path": "examples/run_world_states/demo_initial.run_world_state.json"
+  },
+  "world_state_delta_ref": {
+    "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json",
+    "schema_version": "world_state_delta.v0.1",
+    "delta_id": "delta_run_demo_001_gray_lantern_station_2_battle_result_repaired",
+    "sha256": "82cbdd4dea51f417ece7d1f07ba22e6ee2ec49c1514bfb8735140243ecd03c16"
+  },
+  "preconditions": [
+    {
+      "kind": "run_state_version",
+      "ref": "run_demo_001_turn_1",
+      "summary": "提交前使用首战前的演示运行态。"
+    },
+    {
+      "kind": "node_state",
+      "ref": "map_nodes.gray_lantern_station",
+      "summary": "灰灯驿站仍是当前首战节点。"
+    },
+    {
+      "kind": "artifact_available",
+      "ref": "battle:first_battle",
+      "summary": "首战结算已经产生，可被世界状态提交消费。"
+    }
+  ],
+  "operation_effects_mapping": [
+    {
+      "operation_index": 0,
+      "op": "append_event",
+      "target_ref": "events.gray_lantern_first_defense_repaired_success",
+      "effect_kind": "event_append",
+      "summary": "追加首战结束事件。"
+    },
+    {
+      "operation_index": 1,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.gray_lantern_station",
+      "effect_kind": "map_node_patch",
+      "summary": "灰灯驿站进入 secured 状态。"
+    },
+    {
+      "operation_index": 2,
+      "op": "adjust_resource",
+      "target_ref": "resources.lamp_oil",
+      "effect_kind": "resource_delta",
+      "summary": "扣除首战消耗的灯油。"
+    },
+    {
+      "operation_index": 3,
+      "op": "unlock_fact",
+      "target_ref": "facts.sample_trap_tested_in_battle_repaired",
+      "effect_kind": "fact_unlock",
+      "summary": "解锁折光绊索实战效果事实。"
+    },
+    {
+      "operation_index": 4,
+      "op": "add_temporary_sample",
+      "target_ref": "research.temporary_samples.sample_trap_7f3a_repaired",
+      "effect_kind": "sample_registration",
+      "summary": "登记战后回收的折光绊索样品。"
+    },
+    {
+      "operation_index": 5,
+      "op": "set_progress_phase",
+      "target_ref": "progress_phase",
+      "effect_kind": "phase_change",
+      "summary": "阶段推进到首防战后。"
+    },
+    {
+      "operation_index": 6,
+      "op": "set_flag",
+      "target_ref": "flags.tutorial_first_battle_completed",
+      "effect_kind": "flag_set",
+      "summary": "标记教学首战完成。"
+    },
+    {
+      "operation_index": 7,
+      "op": "adjust_global_state",
+      "target_ref": "global_state.hope",
+      "effect_kind": "global_state_delta",
+      "summary": "提升幸存者希望。"
+    },
+    {
+      "operation_index": 8,
+      "op": "adjust_global_state",
+      "target_ref": "global_state.pressure",
+      "effect_kind": "global_state_delta",
+      "summary": "降低短期压迫。"
+    }
+  ],
+  "conflict_policy": {
+    "mode": "reject_on_conflict",
+    "conflict_keys": [
+      "progress_phase",
+      "map_nodes.gray_lantern_station",
+      "resources.lamp_oil",
+      "global_state.hope",
+      "global_state.pressure",
+      "facts.sample_trap_tested_in_battle_repaired",
+      "research.temporary_samples.sample_trap_7f3a_repaired",
+      "events.gray_lantern_first_defense_repaired_success",
+      "flags.tutorial_first_battle_completed"
+    ]
+  },
+  "rollback_policy": {
+    "mode": "required_snapshot",
+    "inverse_operations_required": false,
+    "notes": "v0.1 事务壳只登记提交语义；回滚依赖提交前运行态快照，不生成通用逆向 DSL。"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "world_delta_structure": "passed",
+    "world_delta_semantics": "passed",
+    "operation_mapping": "passed",
+    "runtime_apply_checked": true,
+    "warnings": []
+  },
+  "status": "committed"
+}

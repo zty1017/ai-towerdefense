@@ -1,0 +1,81 @@
+{
+  "id": "asset_signal_wick_decoy",
+  "lifecycle": "session_blueprint",
+  "gameplay": {
+    "asset_type": "support_item",
+    "base_stats": {
+      "deploy_cost": 75,
+      "cooldown": 14.0,
+      "use_count": 3,
+      "cast_range": 130
+    },
+    "effect_blocks": [
+      {
+        "type": "trap_tile_effect",
+        "tile_radius": 1,
+        "duration": 8.0,
+        "description": "在路径格上生成信标灯芯诱饵区域，持续吸引并干扰经过的敌人。"
+      },
+      {
+        "type": "slow",
+        "slow_ratio": 0.3,
+        "duration": 3.5,
+        "stacking": "refresh",
+        "description": "诱饵灯光信号迟滞范围内的敌人移动速度。"
+      },
+      {
+        "type": "risk_modifier",
+        "risk_delta": -12,
+        "description": "诱饵分散前锋注意力，临时降低防线威胁等级。"
+      },
+      {
+        "type": "countermeasure_hint",
+        "hint_scope": "path_adjacent",
+        "description": "诱饵部署后反馈附近路径上的敌人类型与密度，辅助补防决策。"
+      }
+    ],
+    "constraints": {
+      "requires_power_grid": false,
+      "max_instances": 3,
+      "allowed_phases": [
+        "preparation",
+        "battle"
+      ],
+      "placement_rule": "path_adjacent",
+      "heavy_enemy_resistance": "reduced_attraction"
+    },
+    "type_specific": {
+      "item_slot": "throwable",
+      "delivery_method": "toss",
+      "target_rule": "path_tile"
+    }
+  },
+  "presentation": {
+    "name": "信标灯芯诱饵",
+    "short_description": "投掷到路径附近的一次性信标诱饵，发出灯光信号迟滞并吸引影潮前锋，为防线争取喘息时间。",
+    "icon_prompt": "2D game icon, small glowing lantern wick decoy on a stone tile, warm amber light pulse, dark fantasy tower defense style, clean background",
+    "animation_card_prompt": "2D animation card for signal wick decoy deployment, glowing lamp shard with conductor filament sparks attracting shadow creatures, tower defense strategy game",
+    "visual_tags": [
+      "support_item",
+      "compiled_asset",
+      "decoy",
+      "light"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_signal_wick_decoy_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_glm_5_2",
+    "model": "glm-5.2",
+    "npc_ids": [
+      "npc_gray_lantern_keeper"
+    ],
+    "material_ids": [
+      "lamp_shard",
+      "conductor_filament"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

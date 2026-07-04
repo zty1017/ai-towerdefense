@@ -1,0 +1,82 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-53-generation-activation-gate-view",
+  "title": "Generation Scheduler activation gate read-model",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/generation-activation-gate-view",
+  "worktree": "/tmp/ai-td-task-generation-activation-gate-view",
+  "objective": "新增 Generation Scheduler activation gate 只读视图，从现有 prefetch cache 派生每个后台候选仍不能进入玩家 runtime 的原因；保持零 provider 调用、零 world mutation、零 runtime activation。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_prefetch_cache_builders.py",
+    "backend/tests/test_frontend_mock_api.py"
+  ],
+  "allowed_paths": [
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_activation_gate_builders.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_activation_gate_view.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_activation_gate_view python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+    "rg -n \"activation-gate|generation_activation_gate|build_generation_activation_gate_payload\" backend/app backend/tests docs control/TASK_QUEUE.md",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务先尝试 OpenCode headless；当前受控通道仍被执行环境拒绝为外部数据披露风险，因此采用 local_codex_safe_fallback。",
+    "activation gate read-model 必须复用 prefetch-cache 输出，不新增数据库表，不复制 provider adapter / staging / promotion 执行逻辑。",
+    "promotion_allowed_pending_activation 仍不得被解释为 runtime activation allowed；它只允许进入后续 runtime package 或 WorldStateDeltaTransaction 构建与复验。",
+    "返回 payload 中 provider_call_count_by_this_request、world_mutation_count_by_this_request、runtime_ready_count、activation_allowed_count 必须保持为 0。"
+  ]
+}

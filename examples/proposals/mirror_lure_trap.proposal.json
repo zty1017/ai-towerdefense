@@ -1,0 +1,23 @@
+{
+  "id": "proposal_mirror_lure_trap_001",
+  "mode": "runtime_safe",
+  "title": "折光诱饵陷阱",
+  "summary": "用碎镜和灯芯灰做成一次性诱饵，短暂吸引并迟滞一小片区域内的敌人，为矿点撤离争取时间。",
+  "intended_asset_type": "support_item",
+  "expected_effect": ["control", "support"],
+  "risk_level": "low",
+  "estimated_cost": "low",
+  "required_inputs": {
+    "npc_ids": ["scout_001"],
+    "materials": ["mirror_shard", "wick_ash"],
+    "facility": "field_workbench",
+    "knowledge_tags": ["basic_lure_protocol"]
+  },
+  "known_tradeoffs": [
+    "一次性消耗品",
+    "影响范围有限",
+    "对重甲目标没有直接伤害"
+  ],
+  "player_prompt": "我想做一个便宜的一次性陷阱，可以拖住一小群敌人，让采集点附近的人撤出来。",
+  "worldbook_id": "long_night_lanterns"
+}

@@ -1,0 +1,210 @@
+{
+  "schema_version": "map_style_pack.v0.1",
+  "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "lamp_wick_store",
+  "created_at": "2026-07-04T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+    "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "developer_fixture"
+  },
+  "node_theme_tags": [
+    "wick_store",
+    "old_pipe_lane",
+    "lamp_oil_shelves",
+    "ash_burst_residue",
+    "supply_line_pressure"
+  ],
+  "palette": {
+    "terrain_base": "#2A2D25",
+    "terrain_detail": "#5B5140",
+    "road_base": "#6D5A41",
+    "road_edge": "#C49A5A",
+    "build_slot": "#D2B15E",
+    "objective": "#F2B858",
+    "spawn": "#5E4B83",
+    "resource": "#9DC66F",
+    "hazard": "#A25D3A",
+    "fog": "#8B8172",
+    "accent": "#E0A34A"
+  },
+  "lighting": {
+    "time_of_day": "night",
+    "contrast_policy": "high_path_readability",
+    "shadow_policy": "soft_blob",
+    "intensity": 0.76
+  },
+  "terrain_materials": [
+    {
+      "material_id": "terrain_wick_store_oiled_stone",
+      "role": "terrain_base",
+      "base_color": "#2A2D25",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    },
+    {
+      "material_id": "terrain_wick_store_ash_crate_detail",
+      "role": "terrain_detail",
+      "base_color": "#5B5140",
+      "texture_policy": "reviewed_component_optional",
+      "component_ref": null
+    }
+  ],
+  "road_materials": [
+    {
+      "material_id": "road_wick_store_old_pipe_track",
+      "role": "road_band",
+      "base_color": "#6D5A41",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    },
+    {
+      "material_id": "road_edge_wick_chalk_and_oil",
+      "role": "road_edge",
+      "base_color": "#C49A5A",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    }
+  ],
+  "road_edge_rules": {
+    "edge_style": "broken_planks",
+    "shoulder_width_cells": 0.28,
+    "direction_cue_policy": "embedded_marks"
+  },
+  "build_slot_platforms": [
+    {
+      "prefab_id": "platform_wick_store_brass_floor_ring",
+      "role": "build_slot_platform",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "brass_floor_ring_with_wick_marks"
+      }
+    }
+  ],
+  "objective_prefabs": [
+    {
+      "prefab_id": "objective_wick_store_shelf_foundation",
+      "role": "objective_foundation",
+      "anchor_policy": "bottom_center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "stockpile_base_with_oil_lamps"
+      }
+    }
+  ],
+  "spawn_prefabs": [
+    {
+      "prefab_id": "spawn_pipe_shadow_leak",
+      "role": "spawn_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "dark_leak_from_broken_pipe"
+      }
+    }
+  ],
+  "resource_prefabs": [
+    {
+      "prefab_id": "resource_wick_crate_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "small_wick_crate_marker"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "hazard_wick_store_oil_shadow_pool",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "dark_oil_pool_with_warm_wick_edges"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "blocking_wick_store_crate_wall",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_crate_and_broken_shelf_blocker"
+      }
+    }
+  ],
+  "non_blocking_props": [
+    {
+      "prefab_id": "prop_low_oil_crate",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "bottom_center",
+      "placement_policy": "edge_decoration_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_oil_crate"
+      }
+    }
+  ],
+  "decorative_props": [
+    {
+      "prefab_id": "decor_ash_and_brass_scraps",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "ash_brass_scrap_cluster"
+      }
+    }
+  ],
+  "atmosphere_layers": [
+    {
+      "layer_id": "oil_smoke_edge_haze",
+      "role": "fog",
+      "opacity": 0.24,
+      "placement_policy": "map_edges_only"
+    }
+  ],
+  "postprocess": {
+    "contrast_boost": 0.35,
+    "saturation": 0.96,
+    "vignette": 0.16
+  },
+  "readability_rules": {
+    "minimum_path_contrast": 0.44,
+    "build_slot_marker_policy": "diegetic_platform",
+    "objective_marker_policy": "diegetic_foundation",
+    "spawn_marker_policy": "diegetic_portal",
+    "no_baked_ui_text": true,
+    "no_baked_enemy_or_tower": true,
+    "debug_layers_player_default_allowed": false
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "style_only": true,
+    "gates": [
+      {
+        "gate_id": "style_only_visual_boundary",
+        "status": "passed",
+        "summary": "This pack only defines lamp-wick store materials, prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
+      },
+      {
+        "gate_id": "player_readability_boundary",
+        "status": "passed",
+        "summary": "Pipe routes, build slots, objectives, and spawn markers remain readable without baked UI text or baked enemies/towers."
+      }
+    ]
+  }
+}

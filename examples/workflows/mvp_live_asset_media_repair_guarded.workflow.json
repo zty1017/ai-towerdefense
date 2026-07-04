@@ -1,0 +1,159 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_live_asset_media_repair_guarded",
+  "mode": "live",
+  "description": "LIVE guarded media repair loop: generate media -> deterministic/vision review -> build repair plan -> regenerate failed roles -> merge -> re-review -> media processing -> published manifest -> runtime readiness gate. WARNING: calls real image and vision providers.",
+  "nodes": [
+    {
+      "id": "load_candidate",
+      "node_type": "source.load_json",
+      "params": {
+        "path": "examples/compiled_assets/mirror_lure_trap.compiled_asset.json"
+      }
+    },
+    {
+      "id": "generate_images",
+      "node_type": "media.generate_asset_images_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "image_profile": "agnes_image_flash",
+        "size": "1024x1024",
+        "roles": "auto",
+        "request_timeout": 180
+      }
+    },
+    {
+      "id": "visual_identity",
+      "node_type": "media.build_visual_identity_spec"
+    },
+    {
+      "id": "quality",
+      "node_type": "media.check_quality"
+    },
+    {
+      "id": "consistency",
+      "node_type": "media.check_consistency"
+    },
+    {
+      "id": "vision_review",
+      "node_type": "media.review_with_vision_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "vision_profile": "glm_5v_turbo",
+        "max_images": 4,
+        "max_tokens": 4096,
+        "request_timeout": 240
+      }
+    },
+    {
+      "id": "repair_plan",
+      "node_type": "media.build_prompt_repair_plan"
+    },
+    {
+      "id": "regenerate_failed_roles",
+      "node_type": "media.generate_asset_images_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "image_profile": "agnes_image_flash",
+        "size": "1024x1024",
+        "roles": "repair_failed",
+        "request_timeout": 180
+      }
+    },
+    {
+      "id": "merge_repair",
+      "node_type": "media.merge_repaired_sequence"
+    },
+    {
+      "id": "quality_after_repair",
+      "node_type": "media.check_quality"
+    },
+    {
+      "id": "consistency_after_repair",
+      "node_type": "media.check_consistency"
+    },
+    {
+      "id": "vision_review_after_repair",
+      "node_type": "media.review_with_vision_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "vision_profile": "glm_5v_turbo",
+        "max_images": 4,
+        "max_tokens": 4096,
+        "request_timeout": 240
+      }
+    },
+    {
+      "id": "remove_bg",
+      "node_type": "media.remove_background_stub"
+    },
+    {
+      "id": "crop_pad",
+      "node_type": "media.crop_and_pad_stub"
+    },
+    {
+      "id": "normalize",
+      "node_type": "media.normalize_canvas_stub"
+    },
+    {
+      "id": "assign_anchor",
+      "node_type": "media.assign_anchor_stub"
+    },
+    {
+      "id": "pack_sheet",
+      "node_type": "media.pack_sprite_sheet_stub"
+    },
+    {
+      "id": "build_atlas",
+      "node_type": "media.build_atlas_json_stub",
+      "runtime_public": true
+    },
+    {
+      "id": "runtime_readiness",
+      "node_type": "media.check_runtime_readiness"
+    }
+  ],
+  "edges": [
+    { "source": "load_candidate", "target": "generate_images", "target_input": "candidate" },
+    { "source": "load_candidate", "target": "visual_identity", "target_input": "candidate" },
+    { "source": "load_candidate", "target": "quality", "target_input": "candidate" },
+    { "source": "generate_images", "target": "quality", "target_input": "media_metadata" },
+    { "source": "load_candidate", "target": "consistency", "target_input": "candidate" },
+    { "source": "generate_images", "target": "consistency", "target_input": "media_metadata" },
+    { "source": "visual_identity", "target": "consistency", "target_input": "visual_identity" },
+    { "source": "quality", "target": "consistency", "target_input": "quality_report" },
+    { "source": "load_candidate", "target": "vision_review", "target_input": "candidate" },
+    { "source": "generate_images", "target": "vision_review", "target_input": "media_metadata" },
+    { "source": "visual_identity", "target": "vision_review", "target_input": "visual_identity" },
+    { "source": "quality", "target": "vision_review", "target_input": "quality_report" },
+    { "source": "consistency", "target": "vision_review", "target_input": "consistency_report" },
+    { "source": "load_candidate", "target": "repair_plan", "target_input": "candidate" },
+    { "source": "visual_identity", "target": "repair_plan", "target_input": "visual_identity" },
+    { "source": "quality", "target": "repair_plan", "target_input": "quality_report" },
+    { "source": "consistency", "target": "repair_plan", "target_input": "consistency_report" },
+    { "source": "vision_review", "target": "repair_plan", "target_input": "vision_review_report" },
+    { "source": "load_candidate", "target": "regenerate_failed_roles", "target_input": "candidate" },
+    { "source": "repair_plan", "target": "regenerate_failed_roles", "target_input": "repair_plan" },
+    { "source": "generate_images", "target": "merge_repair", "target_input": "original_media_metadata" },
+    { "source": "regenerate_failed_roles", "target": "merge_repair", "target_input": "repair_media_metadata" },
+    { "source": "repair_plan", "target": "merge_repair", "target_input": "repair_plan" },
+    { "source": "load_candidate", "target": "quality_after_repair", "target_input": "candidate" },
+    { "source": "merge_repair", "target": "quality_after_repair", "target_input": "media_metadata" },
+    { "source": "load_candidate", "target": "consistency_after_repair", "target_input": "candidate" },
+    { "source": "merge_repair", "target": "consistency_after_repair", "target_input": "media_metadata" },
+    { "source": "visual_identity", "target": "consistency_after_repair", "target_input": "visual_identity" },
+    { "source": "quality_after_repair", "target": "consistency_after_repair", "target_input": "quality_report" },
+    { "source": "load_candidate", "target": "vision_review_after_repair", "target_input": "candidate" },
+    { "source": "merge_repair", "target": "vision_review_after_repair", "target_input": "media_metadata" },
+    { "source": "visual_identity", "target": "vision_review_after_repair", "target_input": "visual_identity" },
+    { "source": "quality_after_repair", "target": "vision_review_after_repair", "target_input": "quality_report" },
+    { "source": "consistency_after_repair", "target": "vision_review_after_repair", "target_input": "consistency_report" },
+    { "source": "merge_repair", "target": "remove_bg", "target_input": "media_metadata" },
+    { "source": "remove_bg", "target": "crop_pad", "target_input": "media_metadata" },
+    { "source": "crop_pad", "target": "normalize", "target_input": "media_metadata" },
+    { "source": "normalize", "target": "assign_anchor", "target_input": "media_metadata" },
+    { "source": "assign_anchor", "target": "pack_sheet", "target_input": "media_metadata" },
+    { "source": "pack_sheet", "target": "build_atlas", "target_input": "media_metadata" },
+    { "source": "build_atlas", "target": "runtime_readiness", "target_input": "published_media" }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "schema_version": "frontend_battle_mock_art_kit.v0.1",
+  "kit_id": "frontend_battle_mock_art_kit_long_night_lanterns_v0_1",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "worldbook_id": "long_night_lanterns",
+  "mode": "developer_compiled_runtime_art",
+  "source_boundary": {
+    "player_visible_compilation": false,
+    "developer_art_pipeline": true,
+    "calls_live_media_service_when_generating_media": true,
+    "runtime_uses_processed_media": true
+  },
+  "coverage": {
+    "battle_nodes": ["gray_lantern_station"],
+    "enemy_archetypes": ["shadow_tide_runner", "shadow_tide_shade", "shadow_tide_cluster"],
+    "protection_targets": ["target_node_core", "target_signal_beacon", "target_lamp_wick_cache"],
+    "basic_defenses": ["basic_lantern_barricade"],
+    "npc_portraits": ["npc_gray_lantern_keeper", "npc_workshop_mentor"],
+    "map_tokens": ["path_tile", "tower_socket", "spawn_marker", "core_marker", "resource_marker", "dark_region", "threat_edge"],
+    "procedural_effects": ["lantern_projectile", "warm_hit_burst", "slow_status_ring", "enemy_death_puff", "leak_marker"]
+  },
+  "art_assets": [
+    {
+      "stable_internal_id": "enemy_shadow_tide_runner",
+      "source_game_id": "shadow_tide_runner",
+      "asset_kind": "enemy_archetype",
+      "display_name": "影潮奔行者",
+      "usage": ["battle_enemy", "wave_preview"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "unit_sprite"],
+      "visual_prompt": "non-human shadow tide runner, lean fast creature silhouette, smoky black body with faint blue lantern edge glow, no weapons, no armor, readable side-forward pose"
+    },
+    {
+      "stable_internal_id": "enemy_shadow_tide_shade",
+      "source_game_id": "shadow_tide_shade",
+      "asset_kind": "enemy_archetype",
+      "display_name": "影潮残影",
+      "usage": ["battle_enemy", "wave_preview"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "unit_sprite"],
+      "visual_prompt": "non-human shadow tide shade, drifting hostile silhouette, ragged mist body, low durability ghostlike form, faint cold rim light, no face text or symbols"
+    },
+    {
+      "stable_internal_id": "enemy_shadow_tide_cluster",
+      "source_game_id": "shadow_tide_cluster",
+      "asset_kind": "enemy_archetype",
+      "display_name": "影潮聚团",
+      "usage": ["battle_enemy", "wave_preview"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "unit_sprite"],
+      "visual_prompt": "non-human shadow tide cluster, compact mass of several fused smoky shadow forms, heavier silhouette, faint lantern-lit edges, no individual human bodies"
+    },
+    {
+      "stable_internal_id": "objective_station_core",
+      "source_game_id": "target_node_core",
+      "asset_kind": "protection_target",
+      "display_name": "驿站核心",
+      "usage": ["battle_objective", "settlement"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "objective_sprite"],
+      "visual_prompt": "lantern station core device, sturdy brass and glass core with warm protected light, defensive objective prop, pseudo-isometric base, no active attack effect"
+    },
+    {
+      "stable_internal_id": "objective_signal_beacon",
+      "source_game_id": "target_signal_beacon",
+      "asset_kind": "protection_target",
+      "display_name": "信标天线",
+      "usage": ["battle_objective", "map_node_detail"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "objective_sprite"],
+      "visual_prompt": "small lantern signal beacon antenna, brass tripod mast with glass lamp housing, fragile field facility prop, pseudo-isometric base"
+    },
+    {
+      "stable_internal_id": "objective_lamp_wick_cache",
+      "source_game_id": "target_lamp_wick_cache",
+      "asset_kind": "resource_target",
+      "display_name": "灯芯物资箱",
+      "usage": ["battle_resource_target", "map_resource_marker"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "objective_sprite"],
+      "visual_prompt": "sealed lamp wick supply cache, brass reinforced crate with small glass vials and warm lantern-world materials, resource objective prop"
+    },
+    {
+      "stable_internal_id": "defense_basic_lantern_barricade",
+      "source_game_id": "basic_lantern_barricade",
+      "asset_kind": "basic_defense",
+      "display_name": "基础灯栏",
+      "usage": ["battle_toolbar", "battle_deployable"],
+      "anchor": "bottom_center",
+      "media_roles": ["icon", "defense_sprite"],
+      "visual_prompt": "temporary lantern barricade, low brass-and-wood barrier with small unlit lantern posts, readable tower defense obstacle, no enemies, no attack effect"
+    },
+    {
+      "stable_internal_id": "npc_gray_lantern_keeper_portrait",
+      "source_game_id": "npc_gray_lantern_keeper",
+      "asset_kind": "npc_portrait",
+      "display_name": "灰灯驿站守灯人",
+      "usage": ["dialogue_portrait", "battle_radio"],
+      "anchor": "center",
+      "media_roles": ["icon", "portrait"],
+      "visual_prompt": "fictional adult lantern station custodian character, practical cloak and brass lantern tools, calm determined expression, long night lantern fantasy style, non-photorealistic concept art, no text"
+    },
+    {
+      "stable_internal_id": "npc_workshop_mentor_portrait",
+      "source_game_id": "npc_workshop_mentor",
+      "asset_kind": "npc_portrait",
+      "display_name": "临时工坊老师傅",
+      "usage": ["dialogue_portrait", "workshop_review"],
+      "anchor": "center",
+      "media_roles": ["icon", "portrait"],
+      "visual_prompt": "fictional adult field workshop mentor character, calm careful craftsperson, brass goggles and lantern repair apron, warm lamplight fantasy style, non-photorealistic concept art, no text"
+    }
+  ],
+  "map_tokens": [
+    {
+      "token_id": "path_tile",
+      "render_kind": "procedural_tile",
+      "shape": "oblique_diamond",
+      "fill": "#5f5846",
+      "stroke": "#bca56a",
+      "usage": "enemy_path"
+    },
+    {
+      "token_id": "tower_socket",
+      "render_kind": "procedural_marker",
+      "shape": "ring",
+      "fill": "#2f3740",
+      "stroke": "#e5c878",
+      "usage": "deployable_tower_position"
+    },
+    {
+      "token_id": "spawn_marker",
+      "render_kind": "procedural_marker",
+      "shape": "chevron",
+      "fill": "#3c2f56",
+      "stroke": "#9c8cff",
+      "usage": "enemy_spawn"
+    },
+    {
+      "token_id": "core_marker",
+      "render_kind": "procedural_marker",
+      "shape": "lantern_hex",
+      "fill": "#4c3b1e",
+      "stroke": "#ffd37a",
+      "usage": "core_target"
+    },
+    {
+      "token_id": "resource_marker",
+      "render_kind": "procedural_marker",
+      "shape": "crate_diamond",
+      "fill": "#3c4a39",
+      "stroke": "#9fd48a",
+      "usage": "resource_target"
+    },
+    {
+      "token_id": "dark_region",
+      "render_kind": "procedural_overlay",
+      "shape": "soft_polygon",
+      "fill": "#111827",
+      "opacity": 0.72,
+      "usage": "unknown_or_threatened_area"
+    },
+    {
+      "token_id": "threat_edge",
+      "render_kind": "procedural_overlay",
+      "shape": "pulsing_arc",
+      "stroke": "#8067ff",
+      "opacity": 0.82,
+      "usage": "moving_threat_front"
+    }
+  ],
+  "procedural_effects": [
+    {
+      "effect_id": "lantern_projectile",
+      "primitive": "beam",
+      "usage": "basic_tower_attack",
+      "style": {
+        "color": "#ffd37a",
+        "width": 3,
+        "duration_ms": 120
+      }
+    },
+    {
+      "effect_id": "warm_hit_burst",
+      "primitive": "particle_burst",
+      "usage": "impact_vfx",
+      "style": {
+        "color": "#ffbf66",
+        "particle_count": 8,
+        "duration_ms": 240
+      }
+    },
+    {
+      "effect_id": "slow_status_ring",
+      "primitive": "aura_field",
+      "usage": "slow_status",
+      "style": {
+        "color": "#9edcff",
+        "radius_px": 48,
+        "duration_ms": 700
+      }
+    },
+    {
+      "effect_id": "enemy_death_puff",
+      "primitive": "particle_burst",
+      "usage": "enemy_death",
+      "style": {
+        "color": "#5b5f7a",
+        "particle_count": 12,
+        "duration_ms": 320
+      }
+    },
+    {
+      "effect_id": "leak_marker",
+      "primitive": "floating_text",
+      "usage": "enemy_leak_feedback",
+      "style": {
+        "color": "#ff897a",
+        "duration_ms": 900
+      }
+    }
+  ],
+  "frontend_usage": {
+    "battle_config_nodes": ["gray_lantern_station", "lamp_wick_store", "old_signal_tower"],
+    "fallback_policy": "If generated media is missing, frontend may render procedural map/effect tokens and deterministic silhouette sprites.",
+    "player_visibility": "这些素材是开发者模式编译产物，不作为玩家现场研发内容展示。"
+  }
+}

@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/narrative_event_bundle.v0.1.schema.json",
+  "title": "NarrativeEventBundle v0.1",
+  "description": "A controlled bundle of staged narrative nodes. It may propose WorldStateDelta intent but never mutates the BaseWorldbook directly.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "run_id",
+    "worldbook_id",
+    "source",
+    "created_turn",
+    "stage",
+    "lane",
+    "commit_policy",
+    "worldbook_base_mutation_allowed",
+    "nodes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "narrative_event_bundle.v0.1"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "enum": ["battle_result", "research_job", "world_tick", "system"]
+    },
+    "created_turn": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "stage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lane": {
+      "type": "string",
+      "enum": ["world_line", "player_line", "shared"]
+    },
+    "commit_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_generation", "commit_gate", "commit_order"],
+      "properties": {
+        "candidate_generation": {
+          "type": "string",
+          "enum": ["parallel_allowed", "serial_only"]
+        },
+        "commit_gate": {
+          "type": "string",
+          "const": "world_state_delta_required"
+        },
+        "commit_order": {
+          "type": "string",
+          "enum": ["serial_by_created_turn", "manual_review_then_serial"]
+        }
+      }
+    },
+    "worldbook_base_mutation_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/narrative_node"
+      }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "string",
+      "enum": ["world_line", "player_line", "shared"]
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["world", "map", "npc", "battle", "workshop", "quest", "resource"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["player_visible", "system_only", "npc_known", "hinted"]
+    },
+    "gameplay_purpose": {
+      "type": "string",
+      "enum": [
+        "unlock_battle_node",
+        "introduce_functional_npc",
+        "introduce_generic_npc",
+        "introduce_material",
+        "create_research_need",
+        "modify_map_node_state",
+        "offer_workshop_hook",
+        "advance_main_pressure",
+        "explain_battle_result",
+        "trigger_random_event",
+        "teach_mechanic",
+        "reward_player_choice",
+        "increase_threat",
+        "open_resource_route",
+        "create_quest_hook"
+      ]
+    },
+    "gameplay_hook": {
+      "type": "string",
+      "enum": [
+        "unlock_battle_node",
+        "introduce_functional_npc",
+        "introduce_generic_npc",
+        "introduce_material",
+        "create_research_need",
+        "modify_map_node_state",
+        "offer_workshop_hook",
+        "advance_main_pressure",
+        "explain_battle_result",
+        "trigger_random_event",
+        "teach_mechanic",
+        "reward_player_choice",
+        "increase_threat",
+        "open_resource_route",
+        "create_quest_hook"
+      ]
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["battle_result", "world_tick", "research_complete", "player_choice", "map_entered"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scene_type", "blocks"],
+      "properties": {
+        "scene_type": {
+          "type": "string",
+          "enum": ["dialogue", "black_screen_text", "map_event", "battle_overlay", "workshop_notice"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text"],
+            "properties": {
+              "speaker_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "speaker_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "gameplay_hook_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hook", "target_ref", "summary"],
+      "properties": {
+        "hook": {
+          "$ref": "#/$defs/gameplay_hook"
+        },
+        "target_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "npc_intro": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "npc_id",
+        "npc_kind",
+        "display_name",
+        "narrative_roles",
+        "gameplay_roles",
+        "introduction_status"
+      ],
+      "properties": {
+        "npc_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "npc_kind": {
+          "type": "string",
+          "enum": ["generic", "functional", "candidate"]
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "narrative_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "gameplay_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "introduction_status": {
+          "type": "string",
+          "enum": ["candidate_only", "hinted", "active"]
+        }
+      }
+    },
+    "proposed_delta_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_operations", "summary"],
+      "properties": {
+        "expected_operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "append_event",
+              "set_map_node_state",
+              "adjust_resource",
+              "introduce_map_node",
+              "set_flag",
+              "unlock_fact",
+              "update_npc_relationship",
+              "introduce_npc",
+              "add_temporary_sample",
+              "upsert_task",
+              "set_task_status",
+              "schedule_random_event",
+              "set_random_event_status",
+              "upsert_research_job",
+              "unlock_blueprint",
+              "set_progress_phase",
+              "adjust_global_state"
+            ]
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "narrative_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "stage",
+        "phase",
+        "lane",
+        "scope",
+        "trigger",
+        "prerequisites",
+        "visibility",
+        "presentation",
+        "gameplay_purpose",
+        "gameplay_hooks",
+        "npc_refs",
+        "npc_introductions",
+        "proposed_delta_summary"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lane": {
+          "$ref": "#/$defs/lane"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "trigger": {
+          "$ref": "#/$defs/trigger"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "presentation": {
+          "$ref": "#/$defs/presentation"
+        },
+        "gameplay_purpose": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/gameplay_purpose"
+          },
+          "uniqueItems": true
+        },
+        "gameplay_hooks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/gameplay_hook_object"
+          }
+        },
+        "npc_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "npc_introductions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/npc_intro"
+          }
+        },
+        "proposed_world_delta_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed_delta_summary": {
+          "$ref": "#/$defs/proposed_delta_summary"
+        }
+      }
+    }
+  }
+}

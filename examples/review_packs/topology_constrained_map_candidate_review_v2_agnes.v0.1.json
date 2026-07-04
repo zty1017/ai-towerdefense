@@ -1,0 +1,51 @@
+{
+  "candidate_dir": "game_data/media/map_visual_reference/node_candidates_topology_v2",
+  "candidates": [
+    {
+      "battle_config": null,
+      "blocking_findings": [
+        "provider_output_still_violates_negative_constraints",
+        "visible_people_or_character_like_marks_or_watermark_risk",
+        "objective_and_build_pad_readability_not_ready_for_runtime_promotion"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_topology_v2/old_signal_tower.topology_constrained_candidate.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": null,
+      "file_status": "present_png",
+      "generation_status": "live_generated",
+      "image_size_bytes": 1901680,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "old_signal_tower",
+      "prompt_sha256": "4e5da90e1adfeb343f45d112cd2c8febe42dfb040087a7cc528684d8b9f863c8",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "stop blind prompt-only retries; use a topology control sketch, reference composition, inpaint cleanup, or stronger vision review before another provider call",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_topology_v2/old_signal_tower.topology_constrained_candidate.png.candidate.json",
+      "strengths": [
+        "prompt_repair_attempt_is_recorded_as_provider_comparison_evidence"
+      ]
+    }
+  ],
+  "policy": [
+    "This report reviews provider-generated map candidates only.",
+    "Candidates do not update MapRuntimePackage or player runtime visual layers.",
+    "Runtime truth remains paths, build slots, objectives, spawn points, and explicitly published visual layers.",
+    "Bad candidates are useful compiler evidence: they tune prompts, control sketches, and review gates."
+  ],
+  "report_id": "mvp_node_map_painted_candidate_review_topology_repair_v2_failed",
+  "review_profile": "topology_repair_v2_failed",
+  "schema_version": "node_map_painted_candidate_review.v0.1",
+  "status": "review_only_not_runtime_ready",
+  "summary": {
+    "blocking_candidate_count": 1,
+    "candidate_count": 1,
+    "review_status_counts": {
+      "needs_regeneration": 1
+    },
+    "runtime_promotion_count": 0
+  }
+}

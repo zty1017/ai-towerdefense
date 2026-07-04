@@ -1,0 +1,195 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_first_battle_controlled_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "battle_result",
+  "created_turn": 2,
+  "stage": "act_1_gray_lantern_after_first_defense",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "serial_by_created_turn"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "world_line_gray_lantern_recovered",
+      "stage": "act_1_gray_lantern_after_first_defense",
+      "phase": "post_first_defense",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "battle_result",
+        "ref": "gray_lantern_station",
+        "summary": "灰灯驿站首战结束，灯栏仍在燃烧。"
+      },
+      "prerequisites": ["tutorial_first_battle_started"],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "驿站灯栏回稳",
+        "blocks": [
+          {
+            "text": "夜雾退到路口之外，灰灯驿站的灯栏在风里重新排成一线。"
+          },
+          {
+            "text": "北侧旧路露出断续的光点，像是有人在更远处回应。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "modify_map_node_state",
+        "advance_main_pressure",
+        "open_resource_route"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "modify_map_node_state",
+          "target_ref": "gray_lantern_station",
+          "summary": "把灰灯驿站从争夺状态推进到可整备状态。"
+        },
+        {
+          "hook": "open_resource_route",
+          "target_ref": "northern_road_crossing",
+          "summary": "让玩家下一步可侦察北侧路口。"
+        }
+      ],
+      "npc_refs": ["engineer_001", "scout_002"],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_from_first_battle_controlled_bundle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "adjust_global_state",
+          "append_event"
+        ],
+        "summary": "提交地图节点状态、希望与压力变化，并记录世界线事件。"
+      }
+    },
+    {
+      "node_id": "player_line_battle_feedback_workshop_need",
+      "stage": "act_1_gray_lantern_after_first_defense",
+      "phase": "post_first_defense",
+      "lane": "player_line",
+      "scope": "workshop",
+      "trigger": {
+        "kind": "battle_result",
+        "ref": "sample_trap_7f3a",
+        "summary": "折光绊索在首战中耗尽，但迟滞效果被确认。"
+      },
+      "prerequisites": ["sample_trap_7f3a_used"],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "dialogue",
+        "title": "战后评审",
+        "blocks": [
+          {
+            "speaker_id": "engineer_001",
+            "speaker_name": "灯匠",
+            "text": "绊索能拖住影潮，但线圈烧得太快。下一件试作品需要更稳的引光材料。"
+          },
+          {
+            "text": "战场边缘留下几片焦黑的折射碎片，仍能折出细小的白光。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "explain_battle_result",
+        "create_research_need",
+        "offer_workshop_hook",
+        "introduce_material"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "explain_battle_result",
+          "target_ref": "sample_trap_7f3a",
+          "summary": "解释试作品有效但消耗过快。"
+        },
+        {
+          "hook": "offer_workshop_hook",
+          "target_ref": "field_research",
+          "summary": "引导玩家回到现场研发，尝试改进下一件样品。"
+        },
+        {
+          "hook": "introduce_material",
+          "target_ref": "sample_refraction_chard",
+          "summary": "把战场遗留物转成可被研发流程引用的临时样品。"
+        }
+      ],
+      "npc_refs": ["engineer_001"],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_from_first_battle_controlled_bundle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "add_temporary_sample",
+          "unlock_fact",
+          "update_npc_relationship",
+          "append_event"
+        ],
+        "summary": "提交临时样品、研发线索、NPC 信任变化与玩家线事件。"
+      }
+    },
+    {
+      "node_id": "shared_line_functional_npc_candidate",
+      "stage": "act_1_gray_lantern_after_first_defense",
+      "phase": "post_first_defense",
+      "lane": "shared",
+      "scope": "npc",
+      "trigger": {
+        "kind": "world_tick",
+        "ref": "northern_road_crossing",
+        "summary": "北侧路口的光点在首战后变得稳定。"
+      },
+      "prerequisites": ["gray_lantern_station_secured"],
+      "visibility": "hinted",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "北路回光",
+        "blocks": [
+          {
+            "text": "侦察员在北侧路口看到一盏小灯，对方熟悉废旧线缆和临时支架。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "introduce_functional_npc",
+        "create_quest_hook",
+        "offer_workshop_hook"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "introduce_functional_npc",
+          "target_ref": "npc_wire_mender_003",
+          "summary": "引入可影响现场研发的功能 NPC 候选。"
+        },
+        {
+          "hook": "create_quest_hook",
+          "target_ref": "quest_follow_northern_light",
+          "summary": "为后续路口侦察或救援任务留下入口。"
+        }
+      ],
+      "npc_refs": ["scout_002"],
+      "npc_introductions": [
+        {
+          "npc_id": "npc_wire_mender_003",
+          "npc_kind": "functional",
+          "display_name": "补线人",
+          "narrative_roles": ["road_contact", "survivor"],
+          "gameplay_roles": ["research_review", "material_discount"],
+          "introduction_status": "candidate_only"
+        }
+      ],
+      "proposed_world_delta_ref": "delta_from_first_battle_controlled_bundle",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "unlock_fact",
+          "append_event",
+          "set_flag"
+        ],
+        "summary": "只提交候选 NPC 的线索和任务入口，不直接把新 NPC 写入当前状态。"
+      }
+    }
+  ]
+}

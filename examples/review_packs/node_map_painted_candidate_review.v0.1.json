@@ -1,0 +1,111 @@
+{
+  "candidate_dir": "game_data/media/map_visual_reference/node_candidates",
+  "candidates": [
+    {
+      "battle_config": "game_data/demo/first_battle_config.json",
+      "blocking_findings": [
+        "visible_arrow_symbols_on_path",
+        "prebuilt_vertical_tower_structures",
+        "route_direction_marks_baked_into_background"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/gray_lantern_station.painted_candidate.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": "灰灯驿站·第一场战斗",
+      "file_status": "present_png",
+      "generation_status": "existing_image_sidecar_refreshed",
+      "image_size_bytes": 1811523,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "gray_lantern_station",
+      "prompt_sha256": "a73f77a24b2972c023b9d84203264db7a48be53352ac25d8fd193e5315369324",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "regenerate_with_stronger_no_arrows_and_no_prebuilt_towers_constraints",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates/gray_lantern_station.painted_candidate.png.candidate.json",
+      "strengths": [
+        "readable_full-frame_tower_defense_composition",
+        "world_style_is_close_to_lantern_frontier",
+        "empty_foundations_are_visually_clear"
+      ]
+    },
+    {
+      "battle_config": "game_data/demo/wick_store_pressure_battle_config.json",
+      "blocking_findings": [
+        "visible_arrow_symbols_on_path",
+        "modern_asphalt_roads_and_lane_markings",
+        "too_many_baked_buildings_inside_play_area"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/lamp_wick_store.painted_candidate.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": "灯芯仓·压力防守",
+      "file_status": "present_png",
+      "generation_status": "existing_image_sidecar_refreshed",
+      "image_size_bytes": 1956682,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "lamp_wick_store",
+      "prompt_sha256": "b606417ec15a9a49c85659680394c8eb0be027cc875e3df2a0eb1bdfb53ba850",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "regenerate_from_a_clean_control_sketch_with_no_road_markings",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates/lamp_wick_store.painted_candidate.png.candidate.json",
+      "strengths": [
+        "supply_depot_identity_is_clear",
+        "roads_and_pad_areas_are_readable"
+      ]
+    },
+    {
+      "battle_config": "game_data/demo/old_signal_tower_pressure_battle_config.json",
+      "blocking_findings": [
+        "small_visible_arrow_symbol_on_path",
+        "some_pad_markers_are_too_diagram_like"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates/old_signal_tower.painted_candidate.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": "旧信号塔·回光压力",
+      "file_status": "present_png",
+      "generation_status": "existing_image_sidecar_refreshed",
+      "image_size_bytes": 2009413,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "old_signal_tower",
+      "prompt_sha256": "491aaee415ebb28d624697f37e2013e54063f9fdba724f32254e819b7b089ecc",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "attempt_inpaint_or_regenerate_one_cleanup_pass_before_runtime_promotion",
+      "review_status": "near_promotable_after_cleanup",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates/old_signal_tower.painted_candidate.png.candidate.json",
+      "strengths": [
+        "node_objective_is_clear_and_world_appropriate",
+        "terrain_and_paths_fit_a_tower_defense_battlefield",
+        "empty_foundations_are_readable"
+      ]
+    }
+  ],
+  "policy": [
+    "This report reviews provider-generated map candidates only.",
+    "Candidates do not update MapRuntimePackage or player runtime visual layers.",
+    "Runtime truth remains paths, build slots, objectives, spawn points, and explicitly published visual layers.",
+    "Bad candidates are useful compiler evidence: they tune prompts, control sketches, and review gates."
+  ],
+  "report_id": "mvp_node_map_painted_candidate_review",
+  "schema_version": "node_map_painted_candidate_review.v0.1",
+  "status": "review_only_not_runtime_ready",
+  "summary": {
+    "blocking_candidate_count": 3,
+    "candidate_count": 3,
+    "review_status_counts": {
+      "near_promotable_after_cleanup": 1,
+      "needs_regeneration": 2
+    },
+    "runtime_promotion_count": 0
+  }
+}

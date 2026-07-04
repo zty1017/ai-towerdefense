@@ -1,0 +1,22 @@
+{
+  "schema_version": "compile_template_selection.v0.1",
+  "template_name": "TowerCompileGraph",
+  "template_version": "v0.1",
+  "confidence": "high",
+  "rationale": "Alchemy Furnace is a tower asset. The TowerCompileGraph template covers the full compile pipeline: proposal validation, LLM compile, candidate validation, simulation, scoring, promotion evaluation, and pipeline summary.",
+  "parameter_overrides": {
+    "proposal_path": "examples/proposals/alchemy_furnace_tower.proposal.json",
+    "max_tokens": 8192,
+    "request_timeout": 240,
+    "simulation_duration_seconds": 30
+  },
+  "budgets": {
+    "max_iterations": 3,
+    "max_provider_calls": 5,
+    "max_seconds": 600,
+    "max_candidates": 3,
+    "max_repair_rounds": 2,
+    "fallback_on_budget_exhausted": true
+  },
+  "selected_branch": "projectile"
+}

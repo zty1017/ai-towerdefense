@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/agent_node_contract.v0.1.schema.json",
+  "title": "AgentNodeContract v0.1",
+  "description": "Contract for a bounded ReAct-style agent loop encapsulated inside one AssetGraph node. The outer WorkflowGraph remains a DAG.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "agent_kind",
+    "runtime_modes",
+    "loop_policy",
+    "provider_policy",
+    "tool_policy",
+    "input_artifacts",
+    "output_artifact",
+    "failure_policy",
+    "trace_policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "agent_node_contract.v0.1" },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "agent_kind": {
+      "type": "string",
+      "enum": [
+        "asset_compile",
+        "media_repair",
+        "world_delta",
+        "candidate_selection",
+        "tool_development"
+      ]
+    },
+    "runtime_modes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "enum": ["studio", "live"] },
+      "uniqueItems": true
+    },
+    "loop_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["style", "max_steps", "max_tool_calls", "max_seconds", "stop_conditions"],
+      "properties": {
+        "style": { "type": "string", "enum": ["bounded_react"] },
+        "max_steps": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "max_tool_calls": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "max_seconds": { "type": "integer", "minimum": 1, "maximum": 600 },
+        "stop_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "provider_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow_live_provider_call", "primary_profiles", "fallback_profiles"],
+      "properties": {
+        "allow_live_provider_call": { "type": "boolean" },
+        "primary_profiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fallback_profiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "max_output_tokens": { "type": "integer", "minimum": 256 },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "tool_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_tools", "forbidden_actions"],
+      "properties": {
+        "allowed_tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tool_permission" }
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "input_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact_port" }
+    },
+    "output_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schema_ref", "runtime_public"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "schema_ref": { "type": "string", "minLength": 1 },
+        "runtime_public": { "type": "boolean", "const": false },
+        "post_validators": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "failure_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["on_budget_exhausted", "on_schema_invalid", "on_tool_error", "max_repair_attempts"],
+      "properties": {
+        "on_budget_exhausted": { "type": "string", "enum": ["fail_node", "fallback_artifact", "needs_human"] },
+        "on_schema_invalid": { "type": "string", "enum": ["repair_then_fail", "fallback_artifact", "needs_human"] },
+        "on_tool_error": { "type": "string", "enum": ["retry_then_fail", "fallback_artifact", "needs_human"] },
+        "max_repair_attempts": { "type": "integer", "minimum": 0, "maximum": 8 }
+      }
+    },
+    "trace_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_steps", "record_tool_results", "redact_fields", "runtime_public_trace"],
+      "properties": {
+        "record_steps": { "type": "boolean" },
+        "record_tool_results": { "type": "boolean" },
+        "redact_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "runtime_public_trace": { "type": "boolean", "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "tool_permission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_id", "access"],
+      "properties": {
+        "tool_id": { "type": "string", "minLength": 1 },
+        "access": {
+          "type": "string",
+          "enum": ["read_artifact", "write_artifact", "provider_call", "sandboxed_code", "validator", "simulator"]
+        },
+        "purpose": { "type": "string" }
+      }
+    },
+    "artifact_port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind", "required"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" },
+        "schema_ref": { "type": "string" }
+      }
+    }
+  }
+}

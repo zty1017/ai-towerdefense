@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_consistency_report.v0.1.schema.json",
+  "title": "MediaConsistencyReport v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "candidate_id",
+    "asset_type",
+    "status",
+    "consistency_score",
+    "expected_roles",
+    "roles_present",
+    "issues",
+    "warnings",
+    "review_flags",
+    "visual_identity_ref"
+  ],
+  "properties": {
+    "report_version": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "asset_type": { "type": "string" },
+    "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+    "consistency_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "expected_roles": { "type": "array", "items": { "type": "string" } },
+    "roles_present": { "type": "array", "items": { "type": "string" } },
+    "provider_profiles": { "type": "array", "items": { "type": "string" } },
+    "models": { "type": "array", "items": { "type": "string" } },
+    "dimensions": { "type": "array", "items": { "type": "array" } },
+    "issues": { "type": "array", "items": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "review_flags": { "type": "array", "items": { "type": "string" } },
+    "visual_identity_ref": { "type": "object" },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

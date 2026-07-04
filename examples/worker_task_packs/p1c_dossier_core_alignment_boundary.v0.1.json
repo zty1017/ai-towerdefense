@@ -1,0 +1,79 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-C-2-dossier-core-alignment-boundary",
+  "title": "MVP Compiler Review Dossier 核心对象对齐边界",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/dossier-core-alignment",
+  "worktree": "/tmp/ai-td-task-dossier-core-alignment",
+  "objective": "为 mvp_compiler_review_dossier.v0.1 增加显式 core_artifact_alignment 边界，声明它是 review-only 总审查交付包，不应强行迁移为 ContextPackage / FactEntry / CGOP / WorldStateDeltaTransaction 原生对象，也不能进入 runtime 或写世界状态。同步 schema、deterministic builder、生成样例和 CoreArtifactAlignmentReport builder，使该 dossier 在核心对象对齐报告中从 missing_core_alignment 变为 review_only_not_applicable。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/CORE_ARTIFACT_ALIGNMENT_REPORT_V0_1.md",
+    "docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md"
+  ],
+  "allowed_paths": [
+    "shared/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
+    "tools/content_pipeline/build_mvp_compiler_review_dossier.py",
+    "tools/content_pipeline/build_core_artifact_alignment_report.py",
+    "examples/review_packs/mvp_compiler_review_dossier.v0.1.json",
+    "examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "examples/worker_task_packs/",
+    "docs/",
+    "control/TASK_QUEUE.md",
+    "tools/demo/export_evidence.py"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "backend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1c_dossier_core_alignment_boundary.v0.1.json",
+    "python3 tools/content_pipeline/build_mvp_compiler_review_dossier.py --validate",
+    "python3 tools/content_pipeline/build_core_artifact_alignment_report.py --validate",
+    "python3 tools/content_pipeline/validate_core_artifact_alignment_report.py examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "python3 -m py_compile tools/content_pipeline/build_mvp_compiler_review_dossier.py tools/content_pipeline/build_core_artifact_alignment_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/dossier_core_alignment_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "不要把 dossier 伪装成 runtime package、CGOP 或 WorldStateDeltaTransaction。",
+    "本任务只减少 CoreArtifactAlignmentReport 中的一个误分类迁移目标；其他 7 个内容包仍需后续逐个判断。",
+    "如果 OpenCode headless 因外部数据披露策略被拒绝，允许主代理在同一 worktree 本地完成。"
+  ]
+}

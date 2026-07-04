@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/node_registry.v0.1.schema.json",
+  "title": "NodeRegistry v0.1",
+  "description": "Registry of node types the workflow engine may instantiate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "nodes"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "node_registry.v0.1" },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node_type" }
+    }
+  },
+  "$defs": {
+    "node_type": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_type", "category", "modes", "has_side_effects", "description"],
+      "properties": {
+        "node_type": { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": ["pure", "llm", "provider", "agent", "media", "human", "io", "report", "runtime"]
+        },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["deterministic", "studio", "live"] },
+          "minItems": 1
+        },
+        "has_side_effects": { "type": "boolean" },
+        "calls_provider": { "type": "boolean", "default": false },
+        "description": { "type": "string" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "version": { "type": "string" }
+      }
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["artifact_ref", "object", "string", "number", "boolean"] },
+        "required": { "type": "boolean", "default": true },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

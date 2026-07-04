@@ -1,0 +1,107 @@
+{
+  "schema_version": "compiled_game_object_package.v0.1",
+  "package_id": "cgop_mvp_light_snare_sample",
+  "object_type": "trap",
+  "content_version": "0.1.0",
+  "artifact_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "worldbook_id": "long_night_lanterns",
+  "run_world_version": "turn_001_demo_snapshot",
+  "lifecycle_state": "reviewed",
+  "authority": {
+    "compile_actor": "player",
+    "can_lock": false,
+    "can_publish": false,
+    "direct_world_mutation_allowed": false,
+    "runtime_activation_requires_review": true
+  },
+  "source_intent": {
+    "intent_ref": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json",
+    "summary": "玩家希望把临时材料转化成能延缓影潮的现场试作品。"
+  },
+  "context_package_id": "ctx_mvp_first_battle_asset_compile",
+  "source_refs": [
+    {
+      "ref_id": "context_package",
+      "ref_kind": "review_pack",
+      "path": "examples/review_packs/mvp_first_battle.context_package.json"
+    },
+    {
+      "ref_id": "locked_manifest",
+      "ref_kind": "locked_manifest",
+      "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+    }
+  ],
+  "policy_refs": [
+    {
+      "ref_id": "ai_compilation_boundary",
+      "ref_kind": "document",
+      "path": "docs/AI_COMPILATION_SYSTEM_V0_1.md"
+    }
+  ],
+  "execution_trace_ref": null,
+  "world_context": {
+    "scope": "node.gray_lantern_station",
+    "required_fact_ids": ["fact_gray_lantern_first_battle_pressure"],
+    "forbidden_world_mutations": ["base_worldbook_rewrite", "direct_resource_change", "unreviewed_npc_creation"]
+  },
+  "semantic_spec": {
+    "player_visible_name_hint": "临时缚光索",
+    "world_fit": "以余灯材料短时束缚影潮脚步，适合教学关中途送达。"
+  },
+  "gameplay_spec": {
+    "role": "temporary_trap_sample",
+    "allowed_effects": ["slow", "short_stun"],
+    "deployment_limit": 2
+  },
+  "runtime_contract": {
+    "runtime_loadable": false,
+    "load_surface": "review_only",
+    "manifest_refs": [
+      {
+        "ref_id": "locked_manifest",
+        "ref_kind": "locked_manifest",
+        "path": "examples/locked_manifests/mvp_light_snare.locked_manifest.json"
+      }
+    ],
+    "world_delta_refs": [],
+    "state_instance_policy": "blueprint_only"
+  },
+  "media_presentation": {
+    "media_manifest_ref": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+    "atlas_manifest_ref": "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json"
+  },
+  "dependencies": ["map_runtime_package:mvp_first_battle"],
+  "conflicts": [],
+  "required_capabilities": ["battle_runtime.trap_deploy", "effect_catalog.ring_pulse"],
+  "runtime_budget": {
+    "max_instances": 2,
+    "texture_budget_kb": 1024,
+    "particle_budget": 32,
+    "cpu_budget_hint": "low",
+    "browser_tier": "mvp"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "runtime_loadable": false,
+    "gates": [
+      {
+        "gate_id": "schema",
+        "status": "passed",
+        "summary": "示例 CGOP 通过结构校验，但尚未进入运行时激活。"
+      },
+      {
+        "gate_id": "semantic_boundary",
+        "status": "passed",
+        "summary": "对象包不直接修改世界状态，也不携带完整世界资料。"
+      }
+    ],
+    "approved_scopes": ["review_pack"],
+    "failed_rules": [],
+    "warnings": []
+  },
+  "lineage": {
+    "compiled_at": "2026-07-02T00:00:00+08:00",
+    "compiler_version": "ai_compile_core.v0.1",
+    "parent_package_ids": []
+  }
+}

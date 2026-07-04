@@ -1,0 +1,18 @@
+{
+  "schema_version": "legalization_report.v0.1",
+  "legalization_mode": "runtime_safe",
+  "passed": true,
+  "issues": [],
+  "applied_fixes": [
+    {
+      "action": "field_completion",
+      "description": "Populated effect blocks from legalized gameplay fields.",
+      "field_path": "gameplay.effect_blocks"
+    }
+  ],
+  "fallback_summary": {
+    "unmapped_mechanics": [],
+    "degraded_to_proposal": false,
+    "stable_enough_for_compile": true
+  }
+}

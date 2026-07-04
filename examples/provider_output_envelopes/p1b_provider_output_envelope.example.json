@@ -1,0 +1,113 @@
+{
+  "schema_version": "provider_output_envelope.v0.1",
+  "envelope_id": "pout_guarded_stage05_map_visual_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source": {
+    "run_id": "gsrun_example_stage05",
+    "schedule_item_id": "schedule_map_visual_reference_old_signal_tower",
+    "object_kind": "map_visual_reference",
+    "object_ref": "old_signal_tower",
+    "provider_profile": "image_map_visual_after_review",
+    "provider_mode": "manual_only",
+    "worker_id": "live_executor_guard",
+    "guard_id": "pguard_example_stage05_map_visual_001"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_call": {
+    "status": "not_performed_guarded",
+    "performed": false,
+    "authorization_required": true,
+    "authorization_granted": false,
+    "authorization_ref": null,
+    "attempt_count": 1,
+    "max_attempts": 1
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only"
+  },
+  "redacted_request_summary": {
+    "intent_class": "map_visual_reference_generation",
+    "input_refs": [
+      {
+        "artifact_id": "controlled_map_regeneration_request_pack",
+        "kind": "review_pack",
+        "path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json"
+      }
+    ],
+    "policy_notes": [
+      "Provider call is blocked until explicit authorization and reference-image capable adapter are available.",
+      "The envelope stores only refs and redacted summaries."
+    ],
+    "request_digest": null
+  },
+  "redacted_result_summary": {
+    "result_kind": "none",
+    "status": "blocked_before_provider_call",
+    "summary": "No provider call was performed. The candidate remains behind authorization, validation, review, and promotion gates.",
+    "result_digest": null,
+    "finish_reason": null
+  },
+  "artifact_manifest": {
+    "status": "not_created",
+    "output_refs": [],
+    "review_only": true,
+    "notes": [
+      "No artifact exists yet because the provider call was intentionally blocked."
+    ]
+  },
+  "validation": {
+    "schema_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Schema validation waits for a concrete candidate artifact."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Map semantic alignment waits for a concrete candidate artifact."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Media gate waits for local artifact refs, not temporary provider URLs."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual review is required before promotion."
+      ]
+    }
+  },
+  "activation_gate": {
+    "activation_allowed": false,
+    "blocked_reason": "provider_call_not_performed",
+    "required_next_gates": [
+      "explicit_user_authorization",
+      "provider_adapter_execution",
+      "artifact_manifest_write",
+      "schema_or_media_validation",
+      "manual_or_semantic_review",
+      "promotion_report"
+    ]
+  }
+}

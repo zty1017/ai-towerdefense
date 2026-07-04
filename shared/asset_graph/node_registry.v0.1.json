@@ -1,0 +1,745 @@
+{
+  "schema_version": "node_registry.v0.1",
+  "nodes": [
+    {
+      "node_type": "source.load_json",
+      "category": "io",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Load a JSON file from disk and expose it as an artifact_ref.",
+      "inputs": [
+        { "name": "path", "kind": "string", "required": true, "description": "Absolute or repo-relative path to a JSON file." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef pointing at the loaded JSON payload (copied into run output dir)." }
+      ]
+    },
+    {
+      "node_type": "proposal.validate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a Proposal JSON against proposal.v0.1 using tools/content_pipeline/validate_proposal.validate.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a proposal JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validation_result.json (status + errors)." }
+      ]
+    },
+    {
+      "node_type": "intent.parse_player_utterance_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to parse free player utterance into a hidden PlayerIntent v0.1. Requires params.allow_live_provider_call=true and workflow mode=live. Output must not be runtime_public.",
+      "inputs": [
+        { "name": "player_utterance", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a player_utterance.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON used for world/progression context." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to player_intent.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.build_design_spec_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to compile PlayerIntent + world/progression context into a hidden AssetDesignSpec v0.1. This is a DSL/specification artifact, not a playable asset.",
+      "inputs": [
+        { "name": "player_intent", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to player_intent.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "module_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to gameplay/effect module registry for available design space." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_design_spec.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.legalize_design_spec",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic hard gate: convert AssetDesignSpec into LegalizedDesignSpec by conflict detection, dimension reduction, missing-field completion, budget clamps, world-fit checks, media constraints, and fallback mapping.",
+      "inputs": [
+        { "name": "design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_design_spec.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "module_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to available effect blocks and asset modules." },
+        { "name": "budget_rules", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to progression and balance budget rules." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalization_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.build_asset_plan",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build an AssetPlan v0.1 from LegalizedDesignSpec. Splits the asset into gameplay, presentation, media roles, visual recipes, runtime metadata, and fallback requirements.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "legalization_report", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to legalization_report.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "proposal.build_from_legalized_spec",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a player-visible Proposal from LegalizedDesignSpec and AssetPlan. The proposal explains direction, costs, tradeoffs, and NPC review in world language, but does not expose provider, prompt, schema, or runtime internals.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "asset_plan", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." },
+        { "name": "run_world_state", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to current RunWorldState JSON for localized naming and NPC framing." },
+        { "name": "template_selection", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to compile_template_selection.v0.1 JSON for explaining execution approach without exposing technical details to players." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to proposal.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.select_compile_template_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Select a registered object-level compile graph template from LegalizedDesignSpec and AssetPlan. The node may call an LLM for planning, but it cannot invent arbitrary DAGs; output is a compile_template_selection.v0.1 artifact.",
+      "inputs": [
+        { "name": "legalized_design_spec", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to legalized_design_spec.v0.1 JSON." },
+        { "name": "asset_plan", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_plan.v0.1 JSON." },
+        { "name": "template_registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to registered object-level compile graph templates." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to compile_template_selection.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.validate_planned_workflow",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a planned WorkflowGraph before execution: registered node types, mode permissions, DAG acyclicity, required inputs, runtime_public safety, and template policy constraints.",
+      "inputs": [
+        { "name": "workflow_graph", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_graph.v0.1 JSON." },
+        { "name": "template_selection", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to compile_template_selection.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_validation_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "graph.repair_with_react_guarded",
+      "category": "agent",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Bounded ReAct repair agent. It inspects validation reports and trace summaries, then emits a repair_action_plan.v0.1 using only the allowed action set. It must declare max_iterations, max_provider_calls, and fallback behavior.",
+      "inputs": [
+        { "name": "workflow_graph", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to workflow_graph.v0.1 JSON or executed subgraph summary." },
+        { "name": "validation_report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to typed validation or readiness report." },
+        { "name": "execution_trace_summary", "kind": "artifact_ref", "required": false, "description": "Optional redacted execution trace summary, never raw provider output." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to repair_action_plan.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.mock_compile_proposal",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock compile of a Proposal into a CompiledAssetCandidate. Does not call a real LLM.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to compiled_asset.json." }
+      ]
+    },
+    {
+      "node_type": "asset.compile_with_llm_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to generate a CompiledAssetCandidate v0.1 from a Proposal. Requires params.allow_live_provider_call=true and workflow mode=live. Validates the candidate with validate_asset_candidate before writing. Output artifact kind is compiled_asset_candidate.",
+      "inputs": [
+        { "name": "proposal", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a Proposal JSON." },
+        { "name": "registry", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to an effect_blocks registry. Defaults to shared/module_registry/effect_blocks.v0.1.json." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validated CompiledAssetCandidate JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.validate_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Validate a CompiledAssetCandidate against effect_blocks registry using validate_asset_candidate.validate.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "registry", "kind": "artifact_ref", "required": false, "description": "Defaults to shared/module_registry/effect_blocks.v0.1.json." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to validation_result.json." }
+      ]
+    },
+    {
+      "node_type": "asset.simulate_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Run a deterministic mock simulation of a CompiledAssetCandidate using simulate_asset_candidate.simulate.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "duration_seconds", "kind": "number", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to simulation_report.json." }
+      ]
+    },
+    {
+      "node_type": "asset.score_candidate",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Score a CompiledAssetCandidate using validation, simulation, world-fit, media readiness, and risk guardrails. Produces candidate_score.v0.1.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to candidate_score.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "asset.evaluate_promotion_policy",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic delivery policy: decide whether a compiled asset is runtime_ready, fallback_ready, preview_only, or failed. Gameplay core may be playable even when generated media falls back.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_score", "kind": "artifact_ref", "required": false },
+        { "name": "runtime_readiness", "kind": "artifact_ref", "required": false },
+        { "name": "vision_review", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to asset_promotion_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "report.pipeline_summary",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Aggregate upstream artifacts into a pipeline_summary.json (status, paths, balance_flags).",
+      "inputs": [
+        { "name": "proposal_validation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_validation", "kind": "artifact_ref", "required": false },
+        { "name": "simulation", "kind": "artifact_ref", "required": false },
+        { "name": "candidate_score", "kind": "artifact_ref", "required": false },
+        { "name": "asset_promotion", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true }
+      ]
+    },
+    {
+      "node_type": "runtime.build_package_stub",
+      "category": "runtime",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a stub RuntimePackage from upstream locked_manifest + first_battle_config. Output is runtime_public-eligible but must not carry raw_media or provider URLs.",
+      "inputs": [
+        { "name": "locked_manifest", "kind": "artifact_ref", "required": true },
+        { "name": "battle_config", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to runtime_package.json." }
+      ]
+    },
+    {
+      "node_type": "research.build_delivery_payload_stub",
+      "category": "runtime",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a research delivery payload stub from locked_manifest + first_battle_config. Carries sample trap metadata with delivery_state; never exposes provider/trace.",
+      "inputs": [
+        { "name": "locked_manifest", "kind": "artifact_ref", "required": true },
+        { "name": "battle_config", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to research_delivery_payload_stub.json." }
+      ]
+    },
+    {
+      "node_type": "media.publish_stub_manifest",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Publish a stub media manifest from raw_media stub metadata. Enforces raw_media -> processed_media -> published_media layering. Output published_media may be runtime_public; raw/processed may not.",
+      "inputs": [
+        { "name": "raw_media_metadata", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to published_media_manifest.json (media_layer=published_media)." }
+      ]
+    },
+    {
+      "node_type": "narrative.mock_npc_feedback",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock of NPC feedback after a battle. Reads battle_result + session_context and produces world-in-language NPC reactions. Does not call a real LLM. Output is narrative-only; no provider/schema/prompt/trace terms.",
+      "inputs": [
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative artifact JSON (npc_feedback[], battle_summary, world_events[])." }
+      ]
+    },
+    {
+      "node_type": "narrative.mock_world_growth_event",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock of post-battle world growth events. Reads battle_result + session_context and produces world-in-language world state change events. Does not call a real LLM. Output is narrative-only; no provider/schema/prompt/trace terms.",
+      "inputs": [
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative artifact JSON (npc_feedback[], battle_summary, world_events[])." }
+      ]
+    },
+    {
+      "node_type": "narrative.build_controlled_world_player_bundle",
+      "category": "report",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic builder for NarrativeEventBundle v0.1. Reads RunWorldState + battle_result + session_context and emits staged world_line/player_line/shared narrative nodes with gameplay purpose/hooks and proposed WorldStateDelta intent. Does not call a real LLM.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to current RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON fixture." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON fixture." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a narrative_event_bundle.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.generate_asset_images_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an image provider to generate media images for a CompiledAssetCandidate. Requires params.allow_live_provider_call=true and workflow mode=live. Supports roles auto/icon/tower_sprite/ui_card/effect_preview/battle_preview/repair_failed, downloads to local paths, and writes a raw_media_sequence.v0.1 metadata artifact (media_layer=raw_media). Optional repair_plan input appends deterministic prompt repair constraints. Output must flow through the media processing chain before becoming runtime_public.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." },
+        { "name": "repair_plan", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a MediaPromptRepairPlan JSON. Required when params.roles='repair_failed'." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a raw_media_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.generate_video_from_image_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an image-to-video provider to animate selected raw image seeds. Requires params.allow_live_provider_call=true and workflow mode=live. Input seed images must already be local, reviewed enough for animation use, and published to a provider-accessible URL when the provider requires it. Writes a raw_video_sequence.v0.1 metadata artifact (media_layer=raw_media). Output is never runtime_public directly.",
+      "inputs": [
+        { "name": "image_seed_media", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw or animation-seed media metadata containing local image seed paths." },
+        { "name": "candidate", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a CompiledAssetCandidate for motion intent and role metadata." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw_video_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.extract_video_keyframes",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Extract ordered PNG keyframes from local raw video files. The implementation may use ffmpeg, browser media APIs, or a bundled decoder, but output must be local frame_sequence.v0.1 metadata and must not include provider temporary URLs.",
+      "inputs": [
+        { "name": "video_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to raw_video_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to frame_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.select_keyframes",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Select a short, stable subset of extracted frames for gameplay animation states. Rules may include first/middle/last, motion delta, blur rejection, and max_frames. Output remains frame_sequence.v0.1.",
+      "inputs": [
+        { "name": "frame_sequence", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to extracted frame_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to selected frame_sequence.v0.1 JSON (media_layer=raw_media)." }
+      ]
+    },
+    {
+      "node_type": "media.postprocess_frame_sequence",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Batch-process selected PNG frames with matte removal, near-white island cleanup, crop/pad, normalized canvas, frame alignment, and role anchors. Promotes raw frame_sequence to processed_media suitable for atlas packing.",
+      "inputs": [
+        { "name": "frame_sequence", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to selected frame_sequence.v0.1 JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to processed frame_sequence or media_metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.build_visual_identity_spec",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a deterministic VisualIdentitySpec from a CompiledAssetCandidate. The spec fixes subject, silhouette, materials, palette, required motifs, forbidden elements, and role directives before media generation or review.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a CompiledAssetCandidate JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to visual_identity_spec.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.check_quality",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Check media metadata and local file headers when available. Reports role coverage, dimensions, format/extension mismatch, fallback use, and required visual/OCR review flags.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_quality_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.check_consistency",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Check role coverage, provider/model/style consistency, dimensions, stable IDs, and VisualIdentitySpec linkage. Produces a MediaConsistencyReport.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_consistency_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.review_with_vision_guarded",
+      "category": "media",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call a vision model to review local generated images for OCR/text, watermark, same-subject consistency, world fit, and role fit. Produces a MediaVisionReviewReport and never writes raw prompts or raw provider responses.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_vision_review_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.build_prompt_repair_plan",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Build a deterministic MediaPromptRepairPlan from quality, consistency, and vision review reports. The plan identifies failed roles, reusable roles, negative constraints, and role-specific prompt suffixes for a repair generation pass.",
+      "inputs": [
+        { "name": "candidate", "kind": "artifact_ref", "required": true },
+        { "name": "visual_identity", "kind": "artifact_ref", "required": true },
+        { "name": "quality_report", "kind": "artifact_ref", "required": false },
+        { "name": "consistency_report", "kind": "artifact_ref", "required": false },
+        { "name": "vision_review_report", "kind": "artifact_ref", "required": false }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_prompt_repair_plan.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.merge_repaired_sequence",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Merge original raw media with regenerated repair media by media_role. Reuses passed roles, replaces target_roles from MediaPromptRepairPlan, and outputs a complete raw_media_sequence for re-review.",
+      "inputs": [
+        { "name": "original_media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "repair_media_metadata", "kind": "artifact_ref", "required": true },
+        { "name": "repair_plan", "kind": "artifact_ref", "required": true }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a merged raw_media_sequence.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "media.remove_background_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 processor: remove pure/near-pure matte background from raw_media PNG items, write transparent PNG files, and promote media_layer raw_media -> processed_media. Node name is kept for workflow compatibility.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=raw_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.crop_and_pad_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 processor: crop processed_media PNG items to alpha bounds, add padding, write updated PNG files, and keep media_layer=processed_media. Node name is kept for workflow compatibility.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.normalize_canvas_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 processor: normalize processed_media PNG item canvas dimensions, optionally square-pad and bottom-align sprites. media_layer stays processed_media. Node name is kept for workflow compatibility.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.assign_anchor_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 metadata processor: assign anchor points to processed_media items. Sprites default to bottom_center; UI/preview media default to center. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.pack_sprite_sheet_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 processor: pack processed_media PNG items into a horizontal atlas PNG plus JSON descriptor, and attach atlas frames to item metadata. media_layer stays processed_media.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ]
+    },
+    {
+      "node_type": "media.build_atlas_json_stub",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "PNG v0.1 publisher: copy processed PNG items and atlas files into a published directory, write hashes, anchors, atlas frames, and local /assets/generated paths. Promotes processed_media -> published_media. Output is runtime_public-eligible.",
+      "inputs": [
+        { "name": "media_metadata", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a media metadata JSON (media_layer=processed_media)." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a published_media manifest JSON (media_layer=published_media)." }
+      ]
+    },
+    {
+      "node_type": "media.check_runtime_readiness",
+      "category": "media",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic runtime media gate: check published PNG files, /assets paths, sha256, alpha coverage, subject bounds, anchors, texture keys, and atlas frames before media is considered game-loadable.",
+      "inputs": [
+        { "name": "published_media", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a published_media_manifest JSON produced by media.build_atlas_json_stub." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to media_runtime_readiness_report.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "world_state.build_delta_from_narrative_stub",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic mock: build a WorldStateDelta from battle_result + session_context + narrative artifacts (npc_feedback, world_growth). Validates the delta before writing. Does not call a real LLM. Output is a world_state_delta.v0.1 JSON artifact with no provider/model/raw_prompt/trace terms.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON." },
+        { "name": "npc_feedback", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative npc_feedback artifact." },
+        { "name": "world_growth", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a narrative world_growth artifact." },
+        { "name": "narrative_bundle", "kind": "artifact_ref", "required": false, "description": "Optional ArtifactRef to a NarrativeEventBundle v0.1. When present, the delta builder validates it and appends controlled narrative commit events/facts." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a world_state_delta.v0.1 JSON." }
+      ]
+    },
+    {
+      "node_type": "world_state.apply_delta",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic: apply a validated WorldStateDelta to a RunWorldState. Delegates to apply_world_delta.apply_delta and validates both input and output state. Raises NodeError on failure. Does not call a real LLM. Output is a next RunWorldState JSON artifact.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a WorldStateDelta JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the next RunWorldState JSON." }
+      ]
+    },
+    {
+      "node_type": "world_state.validate_delta_semantics",
+      "category": "pure",
+      "modes": ["deterministic", "studio", "live"],
+      "has_side_effects": false,
+      "calls_provider": false,
+      "version": "v0.1",
+      "description": "Deterministic semantic gate for WorldStateDelta v0.1. Checks run/worldbook alignment, map/resource/NPC references, sample source, battle_result flag semantics, legacy fixture NPC refs, and player/world visible technical text before apply_delta. Writes a validation report and forwards the delta only when the gate passes.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the current RunWorldState JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a structurally valid WorldStateDelta JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to the semantic-validated WorldStateDelta JSON." },
+        { "name": "world_state_delta", "kind": "artifact_ref", "required": true, "description": "Alias of default: semantic-validated WorldStateDelta JSON." },
+        { "name": "validation_report", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to world_state_delta_semantic_gate.v0.1 validation report JSON." }
+      ]
+    },
+    {
+      "node_type": "world_state.build_delta_with_llm_guarded",
+      "category": "provider",
+      "modes": ["live"],
+      "has_side_effects": true,
+      "calls_provider": true,
+      "version": "v0.1",
+      "description": "Call an LLM provider to generate a WorldStateDelta v0.1 with the full gameplay-object op set. Requires params.allow_live_provider_call=true and workflow mode=live. Validates the delta with jsonschema + world delta rules before writing; pair with world_state.validate_delta_semantics for reference gates. Output artifact is a world_state_delta with no provider/model/raw_prompt terms.",
+      "inputs": [
+        { "name": "run_world_state", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a RunWorldState JSON." },
+        { "name": "battle_result", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a battle_result JSON." },
+        { "name": "session_context", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a session_context JSON." }
+      ],
+      "outputs": [
+        { "name": "default", "kind": "artifact_ref", "required": true, "description": "ArtifactRef to a validated WorldStateDelta v0.1 JSON." }
+      ]
+    }
+  ]
+}

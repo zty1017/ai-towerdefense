@@ -1,0 +1,91 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-A-7-loop-continuity-report",
+  "title": "P1-A LoopContinuityReport 与视频帧门禁骨架",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/p1a-loop-continuity",
+  "worktree": "/tmp/ai-td-task-p1a-loop-continuity",
+  "objective": "在现有 MediaAtlasManifest 多帧 spritesheet 基础上补 LoopContinuityReport v0.1：读取 atlas frame sequence，计算首尾帧 alpha bbox、anchor、coverage 和像素差异，输出 review pack，并把 atlas animation items 标注 frame_source_kind / loop_continuity_ref，为后续真实图生视频关键帧替换建立可执行门禁。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "docs/MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md",
+    "shared/schemas/media_atlas_manifest.v0.1.schema.json",
+    "tools/media/build_multiframe_atlas_manifest.py",
+    "tools/media/validate_multiframe_atlas_contract.py"
+  ],
+  "allowed_paths": [
+    "shared/schemas/",
+    "tools/media/",
+    "tools/demo/export_evidence.py",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/review_packs/",
+    "examples/worker_task_packs/",
+    "game_data/media/frontend_mock/",
+    "game_data/media/frontend_runtime_mock/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "content/",
+    "examples/provider_artifact_staging/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_loop_continuity_report.v0.1.json",
+    "python3 tools/media/build_multiframe_atlas_manifest.py --manifest game_data/media/frontend_mock/frontend_media_manifest.v0.1.json --output game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json --atlas-id frontend_media_atlas_v0_1 --frames-output-dir game_data/media/frontend_mock/atlas_frames --frames-url-prefix /assets/frontend_mock/atlas_frames --spritesheet-output-dir game_data/media/frontend_mock/atlas_sheets --spritesheet-url-prefix /assets/frontend_mock/atlas_sheets --animated-frame-count 4 --animated-fps 6 --loop-continuity-report-ref examples/review_packs/frontend_loop_continuity_report.v0.1.json",
+    "python3 tools/media/build_multiframe_atlas_manifest.py --manifest game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json --output game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --atlas-id frontend_runtime_art_atlas_v0_1 --frames-output-dir game_data/media/frontend_runtime_mock/atlas_frames --frames-url-prefix /assets/frontend_runtime_mock/atlas_frames --spritesheet-output-dir game_data/media/frontend_runtime_mock/atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/atlas_sheets --animated-frame-count 4 --animated-fps 6 --loop-continuity-report-ref examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
+    "python3 tools/media/build_loop_continuity_report.py --atlas game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json --output examples/review_packs/frontend_loop_continuity_report.v0.1.json --report-id frontend_loop_continuity_report_v0_1",
+    "python3 tools/media/build_loop_continuity_report.py --atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --output examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
+    "python3 tools/media/validate_loop_continuity_report.py examples/review_packs/frontend_loop_continuity_report.v0.1.json",
+    "python3 tools/media/validate_loop_continuity_report.py examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
+    "python3 tools/media/validate_media_atlas_manifest.py game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+    "python3 tools/media/validate_multiframe_atlas_contract.py game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json",
+    "python3 tools/media/validate_media_atlas_manifest.py game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+    "python3 tools/media/validate_multiframe_atlas_contract.py game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/p1a_loop_continuity_evidence",
+    "python3 -m py_compile tools/media/build_multiframe_atlas_manifest.py tools/media/build_loop_continuity_report.py tools/media/validate_loop_continuity_report.py tools/demo/export_evidence.py",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "provider_calls",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用图像/视频 provider，也不读取 .env；它先固化真实视频帧进入 atlas 前必须通过的 loop continuity gate。",
+    "atlas schema 如需扩展，只允许添加受限 metadata 字段，不得让 provider、model、raw_prompt、raw_response、api_key、secret 进入 runtime manifest。",
+    "LoopContinuityReport 是 review-only evidence，不直接激活 runtime，也不修改世界状态。"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-10-provider-artifact-staging",
+  "title": "ProviderArtifactStaging v0.1 审查暂存清单",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/provider-artifact-staging-v0",
+  "worktree": "/tmp/ai-td-task-provider-artifact-staging-v0",
+  "objective": "新增 ProviderArtifactStaging v0.1 schema、示例、validator 和中文文档，定义 ProviderOutputEnvelope 之后允许保存的本地候选 artifact 暂存清单。该清单只能用于 review-only staging，不能声明 runtime-ready，不能写世界状态，不能绕过 media gate、semantic gate、human review 或 promotion gate。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md"
+  ],
+  "allowed_paths": [
+    "shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json",
+    "examples/provider_artifact_staging/",
+    "tools/dev/validate_provider_artifact_staging_manifest.py",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_artifact_staging.v0.1.json",
+    "python3 tools/dev/validate_provider_artifact_staging_manifest.py examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_artifact_staging python3 -m py_compile tools/dev/validate_provider_artifact_staging_manifest.py",
+    "python3 -m json.tool shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json >/tmp/provider_artifact_staging.schema.pretty.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_artifact_staging_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务接在 ProviderOutputEnvelope 之后，只登记本地候选 artifact refs，不调用真实 provider。",
+    "ProviderArtifactStaging 不能替代 runtime package、WorldStateDeltaTransaction、media gate 或人工 review。",
+    "如果 OpenCode headless 因外部数据披露策略被拒绝，允许主代理在同一 worktree 中按该任务包本地完成。"
+  ]
+}

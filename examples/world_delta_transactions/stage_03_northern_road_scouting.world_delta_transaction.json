@@ -1,0 +1,242 @@
+{
+  "schema_version": "world_state_delta_transaction.v0.1",
+  "transaction_id": "tx_stage_03_northern_road_scouting_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "actor": "system",
+  "source": "narrative_event",
+  "created_turn": 4,
+  "created_at": "2026-07-02T00:00:00Z",
+  "base_world_version": "run_demo_001:before_stage_03",
+  "idempotency_key": "run_demo_001:delta_stage_03_northern_road_scouting",
+  "scope": {
+    "kind": "narrative_stage_commit",
+    "node_ids": [
+      "northern_road_crossing",
+      "old_signal_tower"
+    ],
+    "object_refs": [
+      "phase:northern_road_scouting",
+      "map_node:northern_road_crossing",
+      "map_node:old_signal_tower",
+      "npc:npc_road_scout",
+      "resource:lantern_ash",
+      "resource:conductor_filament",
+      "task:task_scout_northern_road",
+      "random_event:random_event_wick_store_pressure_hint",
+      "random_event:random_event_old_signal_tower_pressure",
+      "research_job:research_signal_wick_decoy_trial",
+      "research_job:research_dark_echo_survey",
+      "fact:east_dark_echo_survey_ready",
+      "fact:old_signal_tower_pressure_hint",
+      "sample:intel_dark_echo_survey_001",
+      "event:northern_road_scouting_completed",
+      "flag:stage_03_northern_scouting_completed"
+    ],
+    "state_fields": [
+      "progress_phase",
+      "map_nodes.northern_road_crossing",
+      "map_nodes.old_signal_tower",
+      "npcs.npc_road_scout",
+      "resources.lantern_ash",
+      "resources.conductor_filament",
+      "tasks.task_scout_northern_road",
+      "random_events.random_event_wick_store_pressure_hint",
+      "random_events.random_event_old_signal_tower_pressure",
+      "research.jobs.research_signal_wick_decoy_trial",
+      "research.jobs.research_dark_echo_survey",
+      "facts.east_dark_echo_survey_ready",
+      "facts.old_signal_tower_pressure_hint",
+      "research.temporary_samples.intel_dark_echo_survey_001",
+      "events.northern_road_scouting_completed",
+      "flags.stage_03_northern_scouting_completed"
+    ]
+  },
+  "source_refs": {
+    "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+    "battle_result_path": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
+    "run_state_before_path": "examples/run_world_states/demo_after_stage_02_dawn_review.run_world_state.json",
+    "run_state_after_path": "examples/run_world_states/demo_after_stage_03_northern_road.run_world_state.json"
+  },
+  "world_state_delta_ref": {
+    "path": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
+    "schema_version": "world_state_delta.v0.1",
+    "delta_id": "delta_stage_03_northern_road_scouting",
+    "sha256": "11d9a5ce4854ba85f1db82f73006306846dacac785f9601ca970a6b3b4bb19c2"
+  },
+  "preconditions": [
+    {
+      "kind": "run_state_version",
+      "ref": "run_demo_001:before_stage_03",
+      "summary": "提交前使用 examples/run_world_states/demo_after_stage_02_dawn_review.run_world_state.json 快照。"
+    },
+    {
+      "kind": "artifact_available",
+      "ref": "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json",
+      "summary": "来源产物已经生成并通过白名单 delta gate。"
+    },
+    {
+      "kind": "node_state",
+      "ref": "map_nodes.northern_road_crossing",
+      "summary": "相关地图节点存在于提交前运行态或本次受控引入范围。"
+    }
+  ],
+  "operation_effects_mapping": [
+    {
+      "operation_index": 0,
+      "op": "set_progress_phase",
+      "target_ref": "progress_phase",
+      "effect_kind": "phase_change",
+      "summary": "将 set_progress_phase 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 1,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.northern_road_crossing",
+      "effect_kind": "map_node_patch",
+      "summary": "将 set_map_node_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 2,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.old_signal_tower",
+      "effect_kind": "map_node_patch",
+      "summary": "将 set_map_node_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 3,
+      "op": "introduce_npc",
+      "target_ref": "npcs.npc_road_scout",
+      "effect_kind": "npc_introduction",
+      "summary": "将 introduce_npc 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 4,
+      "op": "adjust_resource",
+      "target_ref": "resources.lantern_ash",
+      "effect_kind": "resource_delta",
+      "summary": "将 adjust_resource 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 5,
+      "op": "adjust_resource",
+      "target_ref": "resources.conductor_filament",
+      "effect_kind": "resource_delta",
+      "summary": "将 adjust_resource 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 6,
+      "op": "upsert_task",
+      "target_ref": "tasks.task_scout_northern_road",
+      "effect_kind": "task_upsert",
+      "summary": "将 upsert_task 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 7,
+      "op": "set_task_status",
+      "target_ref": "tasks.task_scout_northern_road",
+      "effect_kind": "task_upsert",
+      "summary": "将 set_task_status 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 8,
+      "op": "set_random_event_status",
+      "target_ref": "random_events.random_event_wick_store_pressure_hint",
+      "effect_kind": "random_event_schedule",
+      "summary": "将 set_random_event_status 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 9,
+      "op": "schedule_random_event",
+      "target_ref": "random_events.random_event_old_signal_tower_pressure",
+      "effect_kind": "random_event_schedule",
+      "summary": "将 schedule_random_event 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 10,
+      "op": "upsert_research_job",
+      "target_ref": "research.jobs.research_signal_wick_decoy_trial",
+      "effect_kind": "research_job_upsert",
+      "summary": "将 upsert_research_job 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 11,
+      "op": "upsert_research_job",
+      "target_ref": "research.jobs.research_dark_echo_survey",
+      "effect_kind": "research_job_upsert",
+      "summary": "将 upsert_research_job 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 12,
+      "op": "unlock_fact",
+      "target_ref": "facts.east_dark_echo_survey_ready",
+      "effect_kind": "fact_unlock",
+      "summary": "将 unlock_fact 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 13,
+      "op": "unlock_fact",
+      "target_ref": "facts.old_signal_tower_pressure_hint",
+      "effect_kind": "fact_unlock",
+      "summary": "将 unlock_fact 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 14,
+      "op": "add_temporary_sample",
+      "target_ref": "research.temporary_samples.intel_dark_echo_survey_001",
+      "effect_kind": "sample_registration",
+      "summary": "将 add_temporary_sample 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 15,
+      "op": "append_event",
+      "target_ref": "events.northern_road_scouting_completed",
+      "effect_kind": "event_append",
+      "summary": "将 append_event 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 16,
+      "op": "set_flag",
+      "target_ref": "flags.stage_03_northern_scouting_completed",
+      "effect_kind": "flag_set",
+      "summary": "将 set_flag 提交到受控运行态字段。"
+    }
+  ],
+  "conflict_policy": {
+    "mode": "reject_on_conflict",
+    "conflict_keys": [
+      "progress_phase",
+      "map_nodes.northern_road_crossing",
+      "map_nodes.old_signal_tower",
+      "npcs.npc_road_scout",
+      "resources.lantern_ash",
+      "resources.conductor_filament",
+      "tasks.task_scout_northern_road",
+      "random_events.random_event_wick_store_pressure_hint",
+      "random_events.random_event_old_signal_tower_pressure",
+      "research.jobs.research_signal_wick_decoy_trial",
+      "research.jobs.research_dark_echo_survey",
+      "facts.east_dark_echo_survey_ready",
+      "facts.old_signal_tower_pressure_hint",
+      "research.temporary_samples.intel_dark_echo_survey_001",
+      "events.northern_road_scouting_completed",
+      "flags.stage_03_northern_scouting_completed"
+    ]
+  },
+  "rollback_policy": {
+    "mode": "required_snapshot",
+    "inverse_operations_required": false,
+    "notes": "v0.1 事务壳依赖提交前 RunWorldState 快照回滚，不生成通用逆向操作 DSL。"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "world_delta_structure": "passed",
+    "world_delta_semantics": "passed",
+    "operation_mapping": "passed",
+    "runtime_apply_checked": true,
+    "warnings": [
+      "source_refs.battle_result_path 是 v0.1 兼容字段；非战斗来源时指向对应来源 delta 产物。"
+    ]
+  },
+  "status": "committed"
+}

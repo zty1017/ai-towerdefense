@@ -1,0 +1,100 @@
+{
+  "manifest_path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
+  "notes": [
+    "This audit is deterministic and does not replace human or vision-model map review.",
+    "Warnings are evidence for follow-up work; only missing/load-invalid player layers are hard failures.",
+    "Runtime truth remains MapRuntimePackage paths, build slots, objectives, and spawn points."
+  ],
+  "package_dir": "examples/map_runtime_packages",
+  "packages": [
+    {
+      "issues": [],
+      "node_id": "gray_lantern_station",
+      "package_id": "map_pkg_gray_lantern_station_v0_1",
+      "package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "player_ready_layer_count": 1,
+      "player_ready_layers": [
+        {
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
+          "review_status": "passed_player_visual_quality",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+          "source_kind": null
+        }
+      ],
+      "status": "passed",
+      "warnings": []
+    },
+    {
+      "issues": [],
+      "node_id": "old_signal_tower",
+      "package_id": "map_pkg_old_signal_tower_v0_1",
+      "package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      "player_ready_layer_count": 1,
+      "player_ready_layers": [
+        {
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
+          "review_status": "passed_player_visual_quality",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+          "source_kind": null
+        }
+      ],
+      "status": "passed",
+      "warnings": []
+    },
+    {
+      "issues": [],
+      "node_id": "lamp_wick_store",
+      "package_id": "map_pkg_lamp_wick_store_v0_1",
+      "package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "player_ready_layer_count": 1,
+      "player_ready_layers": [
+        {
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
+          "review_status": "passed_player_visual_quality",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+          "source_kind": null
+        }
+      ],
+      "status": "passed",
+      "warnings": []
+    }
+  ],
+  "report_id": "mvp_map_visual_quality_report",
+  "schema_version": "map_visual_quality_report.v0.1",
+  "shared_player_visual_layer_groups": [
+    {
+      "layer_key": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "node_count": 3,
+      "node_ids": [
+        "gray_lantern_station",
+        "lamp_wick_store",
+        "old_signal_tower"
+      ]
+    }
+  ],
+  "status": "passed_with_warnings",
+  "summary": {
+    "issue_counts": {},
+    "manifest_player_ready_layer_count": 1,
+    "map_package_count": 3,
+    "node_ids": [
+      "gray_lantern_station",
+      "old_signal_tower",
+      "lamp_wick_store"
+    ],
+    "package_status_counts": {
+      "passed": 3
+    },
+    "shared_player_visual_layer_group_count": 1,
+    "warning_counts": {
+      "node_specific_player_visual_layers_missing": 1,
+      "shared_player_visual_layer_across_nodes": 1
+    }
+  }
+}

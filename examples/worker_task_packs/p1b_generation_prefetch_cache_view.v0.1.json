@@ -1,0 +1,81 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-32-generation-prefetch-cache-view",
+  "title": "Generation Scheduler prefetch cache view 预取缓存读模型",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/generation-prefetch-cache-view",
+  "worktree": "/tmp/ai-td-task-generation-prefetch-cache-view",
+  "objective": "新增只读 prefetch cache API，从 latest generation schedule run 的 queue 与 generation_artifact_ledger 派生 schedule item 级预取状态视图，供前端 / Studio 读取后台预取证据；不得创建 run、推进 worker、调用 provider、写世界状态、晋升 artifact 或激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_STAGING_V0_1.md",
+    "docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_generation_prefetch_cache_view.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "shared/schemas/",
+    "tools/provider_adapter/",
+    "tools/llm/",
+    "tools/media/",
+    "frontend/",
+    "game_data/media/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_prefetch_cache_view.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_prefetch_cache_view python3 -m compileall backend",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "api_added",
+    "read_only_side_effect_evidence",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "该接口只能读取 latest run 的 generation_schedule_queue_items 与 generation_artifact_ledger，不得调用 create_generation_schedule_run 或 dispatcher / staging / promotion worker。",
+    "provider_call_count_by_this_request 与 world_mutation_count_by_this_request 必须始终为 0；历史 envelope 中记录过的 provider 调用只能计入 recorded_provider_call_count。",
+    "OpenCode headless 在当前受控通道内尝试被安全策略拒绝为外部数据披露风险，因此本任务使用 local_codex_safe_fallback 完成。"
+  ]
+}

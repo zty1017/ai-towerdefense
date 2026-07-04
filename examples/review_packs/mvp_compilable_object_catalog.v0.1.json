@@ -1,0 +1,4321 @@
+{
+  "schema_version": "compilable_object_catalog.v0.1",
+  "catalog_id": "mvp_compilable_object_catalog_001",
+  "visibility": "review_only",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_at": "2026-07-01T00:00:00+08:00",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "catalog_builder_reads_env": false,
+    "catalog_builder_calls_provider": false,
+    "base_worldbook_mutation": false,
+    "runtime_export_included": "referenced_only"
+  },
+  "object_model": {
+    "definition": "AI 可编译对象是能被描述、结构化、分解、校验、导出并被运行时或审查流程执行的游戏对象。",
+    "permission_levels": [
+      {
+        "level": "L1_presentation",
+        "name": "表现编译",
+        "player_open_policy": "open",
+        "description": "名称、说明、图标、外观、特效等低风险表现对象。"
+      },
+      {
+        "level": "L2_entity",
+        "name": "实体编译",
+        "player_open_policy": "guarded",
+        "description": "防御塔、道具、陷阱、NPC、怪物等完整运行实体，需要运行时契约。"
+      },
+      {
+        "level": "L3_behavior",
+        "name": "行为与局部叙事编译",
+        "player_open_policy": "guarded",
+        "description": "技能、Buff、任务、随机事件、NPC 建议等状态机对象，必须 DSL 化或 Delta 化。"
+      },
+      {
+        "level": "L4_system_rule",
+        "name": "系统规则编译",
+        "player_open_policy": "system_assisted",
+        "description": "地图、经济、进度、科技树、关卡规则等影响面较大的系统对象。"
+      },
+      {
+        "level": "L5_engine",
+        "name": "引擎与底层编译",
+        "player_open_policy": "developer_only",
+        "description": "存档、寻路、渲染、底层代码和安全策略；MVP 不进入玩家侧编译。"
+      }
+    ],
+    "object_layers": [
+      {
+        "layer": "visual",
+        "default_permission_level": "L1_presentation",
+        "player_exposure": "player_visible",
+        "description": "图像、图标、动画、特效、音效和表现文本。",
+        "example_types": [
+          "icon",
+          "tower_sprite",
+          "attack_vfx",
+          "dialogue_text"
+        ]
+      },
+      {
+        "layer": "entity",
+        "default_permission_level": "L2_entity",
+        "player_exposure": "player_visible",
+        "description": "可部署、可交互、可被运行时加载的游戏实体。",
+        "example_types": [
+          "tower_blueprint",
+          "support_item",
+          "temporary_sample",
+          "npc"
+        ]
+      },
+      {
+        "layer": "behavior",
+        "default_permission_level": "L3_behavior",
+        "player_exposure": "player_influenced",
+        "description": "技能、触发器、状态效果、临时改制和可执行行为片段。",
+        "example_types": [
+          "temporary_mod",
+          "skill",
+          "buff",
+          "target_selector"
+        ]
+      },
+      {
+        "layer": "rule",
+        "default_permission_level": "L4_system_rule",
+        "player_exposure": "system_side",
+        "description": "影响全局或多对象交互的系统规则。",
+        "example_types": [
+          "synergy_rule",
+          "unlock_rule",
+          "world_flag"
+        ]
+      },
+      {
+        "layer": "level",
+        "default_permission_level": "L4_system_rule",
+        "player_exposure": "player_visible",
+        "description": "地图节点、路线、战斗节点、波次和关卡环境。",
+        "example_types": [
+          "map_node",
+          "battle_node",
+          "encounter",
+          "wave"
+        ]
+      },
+      {
+        "layer": "narrative",
+        "default_permission_level": "L3_behavior",
+        "player_exposure": "player_influenced",
+        "description": "剧情节点、任务、随机事件、事实、对话和分支。",
+        "example_types": [
+          "stage_candidate",
+          "quest_task",
+          "random_event",
+          "world_fact"
+        ]
+      },
+      {
+        "layer": "progression",
+        "default_permission_level": "L4_system_rule",
+        "player_exposure": "player_visible",
+        "description": "研发任务、蓝图、解锁路线、科技节点和长期成长。",
+        "example_types": [
+          "research_job",
+          "blueprint",
+          "tech_node"
+        ]
+      },
+      {
+        "layer": "economy",
+        "default_permission_level": "L4_system_rule",
+        "player_exposure": "player_visible",
+        "description": "素材、资源、掉落、成本、配方和库存压力。",
+        "example_types": [
+          "material",
+          "resource",
+          "drop_table",
+          "recipe"
+        ]
+      },
+      {
+        "layer": "adaptive",
+        "default_permission_level": "L4_system_rule",
+        "player_exposure": "system_side",
+        "description": "玩家画像、难度调节、AI Director 和推荐策略。",
+        "example_types": [
+          "difficulty_director",
+          "player_profile"
+        ]
+      },
+      {
+        "layer": "ui_explanation",
+        "default_permission_level": "L1_presentation",
+        "player_exposure": "player_visible",
+        "description": "教程、报告、复盘、提示和编译解释文本。",
+        "example_types": [
+          "compile_report",
+          "battle_report",
+          "tooltip"
+        ]
+      },
+      {
+        "layer": "toolchain",
+        "default_permission_level": "L5_engine",
+        "player_exposure": "developer_side",
+        "description": "测试、DAG 模板、Validator、Prompt 模板和调试报告。",
+        "example_types": [
+          "validator",
+          "workflow_graph",
+          "test_suite"
+        ]
+      }
+    ]
+  },
+  "objects": [
+    {
+      "object_id": "asset:asset_ash_burst_lantern",
+      "object_type": "tower_blueprint",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "material:lamp_shard",
+        "material:lantern_ash",
+        "npc:npc_workshop_mentor"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "tower_blueprint"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "usable_fixture_pending_runtime_promotion",
+      "notes": [
+        "Handles clustered enemies at the resource node entrance.",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "asset:asset_echo_prism_relay",
+      "object_type": "tower_blueprint",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "multistage_asset_candidate",
+      "source_files": [
+        "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_echo_prism_relay"
+      ],
+      "stage_refs": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "fact:old_signal_tower_resonance_measured",
+        "flag:stage_05_old_signal_tower_pressure_planned",
+        "map_node:old_signal_tower",
+        "material:glow_crystal",
+        "npc:npc_road_scout",
+        "random_event:random_event_old_signal_tower_pressure",
+        "random_event:random_event_signal_backwash",
+        "research_job:research_echo_prism_relay_trial",
+        "sample:sample_resonant_glass_shard_trial",
+        "task:task_stabilize_old_signal_tower"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py",
+        "validate_multistage_content_pack.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "tower_blueprint"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_ready",
+      "notes": [
+        "attach_deterministic_fallback_skin",
+        "candidate_score_simulation_low",
+        "continue_media_generation_or_repair_in_background",
+        "generate_media",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:control_has_weak_cost"
+      ]
+    },
+    {
+      "object_id": "asset:asset_overload_chain_breaker",
+      "object_type": "temporary_mod",
+      "object_layer": "behavior",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "player",
+      "source_kind": "multistage_asset_candidate",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_overload_chain_breaker"
+      ],
+      "stage_refs": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "dependency_refs": [
+        "fact:split_tide_needs_chain_control",
+        "flag:stage_07_split_tide_containment_planned",
+        "map_node:east_dark_ridge",
+        "map_node:northern_road_crossing",
+        "material:conductor_filament",
+        "npc:npc_wire_mender_003",
+        "random_event:random_event_east_ridge_pressure",
+        "random_event:random_event_split_tide_pressure",
+        "research_job:research_overload_chain_breaker_trial",
+        "sample:sample_charged_copper_coil_trial",
+        "task:task_contain_split_tide"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py",
+        "validate_multistage_content_pack.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "temporary_mod"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_ready",
+      "notes": [
+        "attach_deterministic_fallback_skin",
+        "candidate_score_simulation_low",
+        "continue_media_generation_or_repair_in_background",
+        "generate_media",
+        "missing_runtime_readiness_report"
+      ]
+    },
+    {
+      "object_id": "asset:asset_signal_echo_marker",
+      "object_type": "support_item",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "multistage_asset_candidate",
+      "source_files": [
+        "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_echo_marker"
+      ],
+      "stage_refs": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "dependency_refs": [
+        "blueprint:asset_echo_prism_relay",
+        "fact:signal_echo_marker_possible",
+        "flag:stage_06_signal_resonance_trial_completed",
+        "map_node:old_signal_tower",
+        "material:lantern_ash",
+        "npc:npc_road_scout",
+        "random_event:random_event_signal_backwash",
+        "random_event:random_event_split_tide_pressure",
+        "research_job:research_echo_prism_relay_trial",
+        "research_job:research_signal_echo_marker_trial",
+        "sample:sample_signal_echo_marker_trial",
+        "task:task_map_signal_backwash",
+        "task:task_stabilize_old_signal_tower"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py",
+        "validate_multistage_content_pack.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "support_item"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_ready",
+      "notes": [
+        "attach_deterministic_fallback_skin",
+        "continue_media_generation_or_repair_in_background",
+        "generate_media",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "asset:asset_signal_wick_decoy",
+      "object_type": "support_item",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_wick_decoy"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "material:conductor_filament",
+        "material:lamp_shard",
+        "npc:npc_gray_lantern_keeper"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "support_item"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "usable_fixture_pending_runtime_promotion",
+      "notes": [
+        "Pulls fast enemies away from the storehouse entrance.",
+        "Reusable decoy item for path-adjacent slow and pressure relief.",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "asset:asset_wick_barrier_pylon",
+      "object_type": "tower_blueprint",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_wick_barrier_pylon"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "material:conductor_filament",
+        "material:lamp_shard",
+        "npc:npc_gray_lantern_keeper",
+        "npc:npc_workshop_mentor"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "tower_blueprint"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "usable_fixture_pending_runtime_promotion",
+      "notes": [
+        "Protects resource targets and nearby defenses.",
+        "Support tower that shields and repairs nearby defenses.",
+        "candidate_score_simulation_low",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "asset:intel_dark_echo_survey_001",
+      "object_type": "intel_asset",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "intel_dark_echo_survey_001"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "material:conductor_filament",
+        "material:lantern_ash",
+        "npc:npc_gray_lantern_keeper"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "intel_asset"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "usable_fixture_pending_runtime_promotion",
+      "notes": [
+        "Short-term path reveal and weakness hint using canonical materials.",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "asset:intel_shadow_tide_survey",
+      "object_type": "intel_asset",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "intel_shadow_tide_survey"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "material:charcoal_map",
+        "material:signal_wick",
+        "npc:archivist_001",
+        "npc:scout_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "battle_capability",
+          "intel_asset"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_until_materials_and_npcs_registered",
+      "notes": [
+        "Better scouting package, but it currently depends on unregistered materials and NPC refs.",
+        "missing_runtime_readiness_report",
+        "review_pack_status:candidate_only_until_materials_and_npcs_registered",
+        "review_simulation_flag:high_cost_efficiency",
+        "unregistered_materials:charcoal_map,signal_wick",
+        "unregistered_npcs:archivist_001,scout_001"
+      ]
+    },
+    {
+      "object_id": "asset:mod_overload_chain_arc_001",
+      "object_type": "temporary_mod",
+      "object_layer": "behavior",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "player",
+      "source_kind": "compiled_asset",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "mod_overload_chain_arc_001"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "material:charged_copper_coil",
+        "material:cracked_insulator",
+        "npc:engineer_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "battle_capability",
+          "temporary_mod"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_high_risk",
+      "notes": [
+        "Optional later risk tradeoff; not part of default MVP battle because it requires unregistered materials and a power-grid context.",
+        "candidate_only_high_risk",
+        "candidate_score_simulation_low",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_power_demand",
+        "unregistered_materials:charged_copper_coil,cracked_insulator",
+        "unregistered_npcs:engineer_001"
+      ]
+    },
+    {
+      "object_id": "asset:sample_trap_7f3a",
+      "object_type": "runtime_sample_trap",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "player",
+      "source_kind": "runtime_package_fixture",
+      "source_files": [
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json",
+        "examples/runtime_packages/mvp_demo.runtime_package.json"
+      ],
+      "source_ids": [
+        "sample_trap_7f3a"
+      ],
+      "stage_refs": [
+        "act_1_stage_01_gray_lantern_first_defense"
+      ],
+      "dependency_refs": [],
+      "validators": [
+        "asset_promotion_policy.py",
+        "score_asset_candidate.py",
+        "simulate_asset_candidate.py",
+        "validate_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_capability",
+          "runtime_sample_trap"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "usable_fixture",
+      "notes": [
+        "Mid-battle temporary sample that slows fast enemies."
+      ]
+    },
+    {
+      "object_id": "blueprint:asset_ash_burst_lantern",
+      "object_type": "blueprint",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "research_job:research_ash_burst_lantern_blueprint"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_compile_capability",
+          "unlock_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "known"
+    },
+    {
+      "object_id": "blueprint:asset_echo_prism_relay",
+      "object_type": "blueprint",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "asset_echo_prism_relay"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "research_job:research_echo_prism_relay_trial"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_compile_capability",
+          "unlock_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "known"
+    },
+    {
+      "object_id": "fact:east_dark_echo_survey_ready",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "east_dark_echo_survey_ready"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:glow_crystal_discovered",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "glow_crystal_discovered"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:old_signal_tower_pressure_hint",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "old_signal_tower_pressure_hint"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "hinted"
+    },
+    {
+      "object_id": "fact:old_signal_tower_resonance_measured",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "old_signal_tower_resonance_measured"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:refraction_snare_consumes_too_fast",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "refraction_snare_consumes_too_fast"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:refraction_trap_observed",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "refraction_trap_observed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:sample_trap_tested_in_battle",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "sample_trap_tested_in_battle"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:signal_echo_marker_possible",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "signal_echo_marker_possible"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:split_tide_needs_chain_control",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "split_tide_needs_chain_control"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:wick_store_defense_combo_validated",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "wick_store_defense_combo_validated"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "player_known"
+    },
+    {
+      "object_id": "fact:wire_mender_candidate_seen",
+      "object_type": "world_fact",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "wire_mender_candidate_seen"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "future_trigger_context",
+          "knowledge_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "hinted"
+    },
+    {
+      "object_id": "flag:stage_02_supply_line_review_completed",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_02_supply_line_review_completed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:stage_03_northern_scouting_completed",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_03_northern_scouting_completed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:stage_04_wick_store_defense_completed",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_04_wick_store_defense_completed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:stage_05_old_signal_tower_pressure_planned",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_05_old_signal_tower_pressure_planned"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:stage_06_signal_resonance_trial_completed",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_06_signal_resonance_trial_completed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:stage_07_split_tide_containment_planned",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "stage_07_split_tide_containment_planned"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:tutorial_first_battle_completed",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "tutorial_first_battle_completed"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:True"
+    },
+    {
+      "object_id": "flag:tutorial_first_battle_started",
+      "object_type": "world_flag",
+      "object_layer": "rule",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "tutorial_first_battle_started"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_condition",
+          "progress_gate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "value:False"
+    },
+    {
+      "object_id": "map_node:east_dark_ridge",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "east_dark_ridge"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "known"
+    },
+    {
+      "object_id": "map_node:gray_lantern_station",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "gray_lantern_station"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "secured"
+    },
+    {
+      "object_id": "map_node:lamp_wick_store",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "lamp_wick_store"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "secured"
+    },
+    {
+      "object_id": "map_node:northern_road_crossing",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "northern_road_crossing"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "contested"
+    },
+    {
+      "object_id": "map_node:old_signal_tower",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "old_signal_tower"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "secured"
+    },
+    {
+      "object_id": "map_node:supply_line_hub_to_gray",
+      "object_type": "map_node",
+      "object_layer": "level",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "supply_line_hub_to_gray"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "available_actions",
+          "map_visibility",
+          "threat_level"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "secured"
+    },
+    {
+      "object_id": "material:conductor_filament",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "conductor_filament"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "depleted"
+    },
+    {
+      "object_id": "material:glow_crystal",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "glow_crystal"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "depleted"
+    },
+    {
+      "object_id": "material:iron_scrap",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "iron_scrap"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "material:lamp_oil",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "lamp_oil"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "material:lamp_shard",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "lamp_shard"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "material:lantern_ash",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "lantern_ash"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "material:rationed_food",
+      "object_type": "material",
+      "object_layer": "economy",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "rationed_food"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "compile_capability",
+          "resource_budget"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "npc:engineer_001",
+      "object_type": "npc",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "engineer_001"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:gray_lantern_station"
+      ],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "battle_feedback",
+          "field_engineer"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "present"
+    },
+    {
+      "object_id": "npc:npc_road_scout",
+      "object_type": "npc",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "npc_road_scout"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:northern_road_crossing"
+      ],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "dark_edge_witness",
+          "path_prediction",
+          "route_warning",
+          "scouting_reliability",
+          "weakness_hint"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "present"
+    },
+    {
+      "object_id": "npc:npc_wire_mender_003",
+      "object_type": "npc",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "npc_wire_mender_003"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:supply_line_hub_to_gray"
+      ],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "field_review",
+          "material_adjustment",
+          "route_pressure_hint",
+          "route_repair",
+          "workshop_witness"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "present"
+    },
+    {
+      "object_id": "npc:scout_002",
+      "object_type": "npc",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "scout_002"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:northern_road_crossing"
+      ],
+      "validators": [
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "scout",
+          "world_observation"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "present"
+    },
+    {
+      "object_id": "random_event:random_event_east_ridge_pressure",
+      "object_type": "random_event",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "random_event_east_ridge_pressure"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:east_dark_ridge",
+        "task:task_contain_split_tide"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_trigger",
+          "pressure_event",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "pending"
+    },
+    {
+      "object_id": "random_event:random_event_old_signal_tower_pressure",
+      "object_type": "random_event",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "random_event_old_signal_tower_pressure"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "task:task_scout_northern_road"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_trigger",
+          "pressure_event",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "random_event:random_event_signal_backwash",
+      "object_type": "random_event",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "random_event_signal_backwash"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "task:task_stabilize_old_signal_tower"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_trigger",
+          "pressure_event",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "random_event:random_event_split_tide_pressure",
+      "object_type": "random_event",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "random_event_split_tide_pressure"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "task:task_map_signal_backwash"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_trigger",
+          "pressure_event",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "available"
+    },
+    {
+      "object_id": "random_event:random_event_wick_store_pressure_hint",
+      "object_type": "random_event",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "random_event_wick_store_pressure_hint"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:lamp_wick_store",
+        "task:task_prepare_wick_store_defense"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "branch_trigger",
+          "pressure_event",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "resolved"
+    },
+    {
+      "object_id": "research_job:research_ash_burst_lantern_blueprint",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_ash_burst_lantern_blueprint"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "sample:asset_ash_burst_lantern_trial",
+        "task:task_formalize_ash_burst_lantern"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "research_job:research_dark_echo_survey",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_dark_echo_survey"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "task:task_scout_northern_road"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "research_job:research_echo_prism_relay_trial",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_echo_prism_relay_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "sample:sample_resonant_glass_shard_trial",
+        "task:task_stabilize_old_signal_tower"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "research_job:research_overload_chain_breaker_trial",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_overload_chain_breaker_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "sample:sample_charged_copper_coil_trial",
+        "task:task_contain_split_tide"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "queued"
+    },
+    {
+      "object_id": "research_job:research_signal_echo_marker_trial",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_signal_echo_marker_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "sample:sample_signal_echo_marker_trial",
+        "task:task_map_signal_backwash"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "queued"
+    },
+    {
+      "object_id": "research_job:research_signal_wick_decoy_trial",
+      "object_type": "research_job",
+      "object_layer": "progression",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "research_signal_wick_decoy_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "sample:sample_trap_7f3a_repaired",
+        "task:task_repair_supply_line_hub"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_progress",
+          "unlock_candidate"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "sample:asset_ash_burst_lantern_trial",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_04_wick_store_pressure_battle"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "灯芯仓防守中临时装配的爆鸣装置，适合继续整理成正式蓝图。"
+      ]
+    },
+    {
+      "object_id": "sample:intel_dark_echo_survey_001",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "intel_dark_echo_survey_001"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_03_northern_road_scouting"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "用灯灰和导线记录的短期侦测札记，可辅助下一场防守布置。"
+      ]
+    },
+    {
+      "object_id": "sample:sample_charged_copper_coil_trial",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "sample_charged_copper_coil_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_07_split_tide_containment"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "导线被短时压成不稳定线圈，可支撑一次连弧改造试作。"
+      ]
+    },
+    {
+      "object_id": "sample:sample_resonant_glass_shard_trial",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "sample_resonant_glass_shard_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_05_old_signal_tower_pressure"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "辉晶被磨成薄片并贴合旧塔铜槽后，形成一份只能支撑现场试作的回光样本。"
+      ]
+    },
+    {
+      "object_id": "sample:sample_signal_echo_marker_trial",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "sample_signal_echo_marker_trial"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_06_signal_resonance_trial"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "旧信号塔回流被记录成短札，可在下一段黑路开始前标出敌群来向。"
+      ]
+    },
+    {
+      "object_id": "sample:sample_trap_7f3a_repaired",
+      "object_type": "temporary_sample",
+      "object_layer": "entity",
+      "compile_permission_level": "L2_entity",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "sample_trap_7f3a_repaired"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "delta:delta_stage_01_gray_lantern_first_defense"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "research_input",
+          "temporary_asset"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "available",
+      "notes": [
+        "从驿站战斗中回收的折光绊索样品，仍留有夜雾擦过的痕迹。"
+      ]
+    },
+    {
+      "object_id": "stage:act_1_stage_01_gray_lantern_first_defense",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+        "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_01_gray_lantern_first_defense.world_delta.json",
+        "game_data/demo/first_battle_config.json"
+      ],
+      "source_ids": [
+        "act_1_stage_01_gray_lantern_first_defense"
+      ],
+      "stage_refs": [
+        "act_1_stage_01_gray_lantern_first_defense"
+      ],
+      "dependency_refs": [
+        "asset:sample_trap_7f3a",
+        "runtime_package:package_session_lampwright_7f3a_001"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "facts",
+          "flags",
+          "map_nodes",
+          "resources",
+          "samples"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "reviewed_fixture"
+    },
+    {
+      "object_id": "stage:act_1_stage_02_dawn_review_supply_line",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+        "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_02_dawn_review_supply_line.world_delta.json"
+      ],
+      "source_ids": [
+        "act_1_stage_02_dawn_review_supply_line"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_wick_decoy",
+        "asset:asset_wick_barrier_pylon"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "reviewed_fixture"
+    },
+    {
+      "object_id": "stage:act_1_stage_03_northern_road_scouting",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+        "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_03_northern_road_scouting.world_delta.json"
+      ],
+      "source_ids": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "asset:intel_dark_echo_survey_001",
+        "asset:intel_shadow_tide_survey"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "samples",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "reviewed_fixture"
+    },
+    {
+      "object_id": "stage:act_1_stage_04_wick_store_pressure_battle",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+        "examples/review_packs/mvp_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+        "game_data/demo/wick_store_pressure_battle_config.json"
+      ],
+      "source_ids": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_ash_burst_lantern",
+        "asset:asset_signal_wick_decoy",
+        "asset:asset_wick_barrier_pylon",
+        "asset:mod_overload_chain_arc_001",
+        "runtime_package:package_session_lampwright_wick_store_001"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "blueprints",
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "samples",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "low"
+      },
+      "review_status": "reviewed_fixture"
+    },
+    {
+      "object_id": "stage:act_1_stage_05_old_signal_tower_pressure",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_05_old_signal_tower_pressure.narrative_event_bundle.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_05_old_signal_tower_pressure.world_delta.json",
+        "game_data/demo/old_signal_tower_pressure_battle_config.json"
+      ],
+      "source_ids": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "stage_refs": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "asset:asset_echo_prism_relay",
+        "runtime_package:package_session_lampwright_old_signal_tower_001"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "samples",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "medium"
+      },
+      "review_status": "needs_review"
+    },
+    {
+      "object_id": "stage:act_1_stage_06_signal_resonance_trial",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_06_signal_resonance_trial.narrative_event_bundle.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_06_signal_resonance_trial.world_delta.json"
+      ],
+      "source_ids": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "stage_refs": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_echo_marker"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "blueprints",
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "samples",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "medium"
+      },
+      "review_status": "needs_review"
+    },
+    {
+      "object_id": "stage:act_1_stage_07_split_tide_containment",
+      "object_type": "stage_candidate",
+      "object_layer": "narrative",
+      "compile_permission_level": "L4_system_rule",
+      "compile_actor": "system",
+      "source_kind": "stage_candidate_pack",
+      "source_files": [
+        "examples/narrative_bundles/stage_07_split_tide_containment.narrative_event_bundle.json",
+        "examples/review_packs/mvp_multistage_stage_candidate_pack.v0.1.json",
+        "examples/world_deltas/stage_07_split_tide_containment.world_delta.json"
+      ],
+      "source_ids": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "stage_refs": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "dependency_refs": [
+        "asset:asset_overload_chain_breaker"
+      ],
+      "validators": [
+        "validate_narrative_bundle.py",
+        "validate_narrative_gameplay_contract.py",
+        "validate_stage_candidate_pack.py",
+        "validate_world_delta.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "stage_candidate_pack",
+        "state_effects": [
+          "facts",
+          "flags",
+          "map_nodes",
+          "npcs",
+          "random_events",
+          "research_jobs",
+          "resources",
+          "samples",
+          "tasks"
+        ],
+        "export_status": "review_only",
+        "rollback_policy": "delta_replay",
+        "player_visible": false,
+        "risk_level": "medium"
+      },
+      "review_status": "needs_review"
+    },
+    {
+      "object_id": "task:task_contain_split_tide",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_contain_split_tide"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:east_dark_ridge",
+        "npc:npc_wire_mender_003",
+        "ref:asset_overload_chain_breaker",
+        "ref:east_dark_ridge",
+        "ref:random_event_east_ridge_pressure",
+        "ref:random_event_split_tide_pressure",
+        "ref:sample_charged_copper_coil_trial"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "active"
+    },
+    {
+      "object_id": "task:task_formalize_ash_burst_lantern",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_formalize_ash_burst_lantern"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:lamp_wick_store",
+        "npc:npc_wire_mender_003",
+        "ref:asset_ash_burst_lantern",
+        "ref:asset_ash_burst_lantern_trial",
+        "ref:glow_crystal"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "task:task_map_signal_backwash",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_map_signal_backwash"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout",
+        "ref:asset_signal_echo_marker",
+        "ref:random_event_signal_backwash",
+        "ref:random_event_split_tide_pressure",
+        "ref:sample_signal_echo_marker_trial"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "active"
+    },
+    {
+      "object_id": "task:task_prepare_wick_store_defense",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_prepare_wick_store_defense"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:lamp_wick_store",
+        "npc:npc_wire_mender_003",
+        "ref:asset_signal_wick_decoy",
+        "ref:asset_wick_barrier_pylon",
+        "ref:glow_crystal",
+        "ref:lamp_wick_store"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "task:task_repair_supply_line_hub",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_repair_supply_line_hub"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:supply_line_hub_to_gray",
+        "npc:npc_wire_mender_003",
+        "ref:asset_signal_wick_decoy",
+        "ref:asset_wick_barrier_pylon",
+        "ref:lantern_ash",
+        "ref:supply_line_hub_to_gray"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "task:task_scout_northern_road",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_scout_northern_road"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:northern_road_crossing",
+        "npc:npc_road_scout",
+        "ref:intel_dark_echo_survey_001",
+        "ref:northern_road_crossing",
+        "ref:old_signal_tower"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "task:task_stabilize_old_signal_tower",
+      "object_type": "quest_task",
+      "object_layer": "narrative",
+      "compile_permission_level": "L3_behavior",
+      "compile_actor": "system",
+      "source_kind": "run_world_state",
+      "source_files": [
+        "examples/run_world_states/demo_after_stage_07_split_tide.run_world_state.json"
+      ],
+      "source_ids": [
+        "task_stabilize_old_signal_tower"
+      ],
+      "stage_refs": [],
+      "dependency_refs": [
+        "map_node:old_signal_tower",
+        "npc:npc_road_scout",
+        "ref:asset_echo_prism_relay",
+        "ref:glow_crystal",
+        "ref:old_signal_tower",
+        "ref:sample_resonant_glass_shard_trial"
+      ],
+      "validators": [
+        "validate_narrative_gameplay_contract.py",
+        "validate_run_world_state.py",
+        "validate_world_delta_semantics.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "run_world_state",
+        "state_effects": [
+          "objective_chain",
+          "reward_refs",
+          "world_progress"
+        ],
+        "export_status": "runtime_ready",
+        "rollback_policy": "delta_replay",
+        "player_visible": true,
+        "risk_level": "low"
+      },
+      "review_status": "completed"
+    },
+    {
+      "object_id": "visual:asset_ash_burst_lantern:battle_preview",
+      "object_type": "battle_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern",
+        "battle_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_ash_burst_lantern"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:asset_ash_burst_lantern:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_ash_burst_lantern"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:asset_ash_burst_lantern:tower_sprite",
+      "object_type": "tower_sprite",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_ash_burst_lantern",
+        "tower_sprite"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_ash_burst_lantern"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "tower_sprite",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:asset_echo_prism_relay:battle_preview",
+      "object_type": "battle_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_echo_prism_relay",
+        "battle_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "asset:asset_echo_prism_relay"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_echo_prism_relay:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_echo_prism_relay",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "asset:asset_echo_prism_relay"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_echo_prism_relay:tower_sprite",
+      "object_type": "tower_sprite",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/echo_prism_relay.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_echo_prism_relay",
+        "tower_sprite"
+      ],
+      "stage_refs": [
+        "act_1_stage_05_old_signal_tower_pressure"
+      ],
+      "dependency_refs": [
+        "asset:asset_echo_prism_relay"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "tower_sprite",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_overload_chain_breaker:effect_preview",
+      "object_type": "effect_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_overload_chain_breaker",
+        "effect_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "dependency_refs": [
+        "asset:asset_overload_chain_breaker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "effect_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_overload_chain_breaker:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_overload_chain_breaker",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "dependency_refs": [
+        "asset:asset_overload_chain_breaker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_overload_chain_breaker:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_breaker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_overload_chain_breaker",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_07_split_tide_containment"
+      ],
+      "dependency_refs": [
+        "asset:asset_overload_chain_breaker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_echo_marker:effect_preview",
+      "object_type": "effect_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_echo_marker",
+        "effect_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_echo_marker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "effect_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_echo_marker:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_echo_marker",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_echo_marker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_echo_marker:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "multistage_expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_echo_marker.compiled_asset.json",
+        "examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_echo_marker",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_06_signal_resonance_trial"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_echo_marker"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_runtime_readiness_report.v0.1",
+        "score_asset_candidate.py"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "generate_media"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_wick_decoy:effect_preview",
+      "object_type": "effect_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_wick_decoy",
+        "effect_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_wick_decoy"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "effect_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_wick_decoy:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_wick_decoy",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_wick_decoy"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:asset_signal_wick_decoy:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_signal_wick_decoy",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_signal_wick_decoy"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:asset_wick_barrier_pylon:battle_preview",
+      "object_type": "battle_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_wick_barrier_pylon",
+        "battle_preview"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_wick_barrier_pylon"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "battle_preview",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:asset_wick_barrier_pylon:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_wick_barrier_pylon",
+        "icon"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_wick_barrier_pylon"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:asset_wick_barrier_pylon:tower_sprite",
+      "object_type": "tower_sprite",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "asset_wick_barrier_pylon",
+        "tower_sprite"
+      ],
+      "stage_refs": [
+        "act_1_stage_02_dawn_review_supply_line",
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:asset_wick_barrier_pylon"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "tower_sprite",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready"
+      ]
+    },
+    {
+      "object_id": "visual:intel_dark_echo_survey_001:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "icon",
+        "intel_dark_echo_survey_001"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "asset:intel_dark_echo_survey_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:intel_dark_echo_survey_001:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "intel_dark_echo_survey_001",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "asset:intel_dark_echo_survey_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "battle_runtime",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "fallback_ready",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": true,
+        "risk_level": "medium"
+      },
+      "review_status": "fallback_media_role",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "real_media_not_generated_or_not_runtime_ready",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:intel_shadow_tide_survey:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "icon",
+        "intel_shadow_tide_survey"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "asset:intel_shadow_tide_survey"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_until_materials_and_npcs_registered",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:intel_shadow_tide_survey:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "intel_shadow_tide_survey",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_03_northern_road_scouting"
+      ],
+      "dependency_refs": [
+        "asset:intel_shadow_tide_survey"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_until_materials_and_npcs_registered",
+      "notes": [
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_cost_efficiency"
+      ]
+    },
+    {
+      "object_id": "visual:mod_overload_chain_arc_001:effect_preview",
+      "object_type": "effect_preview",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "effect_preview",
+        "mod_overload_chain_arc_001"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:mod_overload_chain_arc_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "effect_preview",
+          "visual_presentation"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_high_risk",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_power_demand"
+      ]
+    },
+    {
+      "object_id": "visual:mod_overload_chain_arc_001:icon",
+      "object_type": "icon",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "icon",
+        "mod_overload_chain_arc_001"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:mod_overload_chain_arc_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "icon",
+          "visual_presentation"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_high_risk",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_power_demand"
+      ]
+    },
+    {
+      "object_id": "visual:mod_overload_chain_arc_001:ui_card",
+      "object_type": "ui_card",
+      "object_layer": "visual",
+      "compile_permission_level": "L1_presentation",
+      "compile_actor": "system",
+      "source_kind": "expected_media_role",
+      "source_files": [
+        "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+        "examples/review_packs/mvp_story_asset_promotion_report.v0.1.json"
+      ],
+      "source_ids": [
+        "mod_overload_chain_arc_001",
+        "ui_card"
+      ],
+      "stage_refs": [
+        "act_1_stage_04_wick_store_pressure_battle"
+      ],
+      "dependency_refs": [
+        "asset:mod_overload_chain_arc_001"
+      ],
+      "validators": [
+        "asset_promotion_policy.py",
+        "media_consistency_report.v0.1",
+        "media_runtime_readiness_report.v0.1"
+      ],
+      "runtime_contract": {
+        "load_surface": "review_pack",
+        "state_effects": [
+          "ui_card",
+          "visual_presentation"
+        ],
+        "export_status": "candidate_only",
+        "rollback_policy": "remove_from_runtime_package",
+        "player_visible": false,
+        "risk_level": "high"
+      },
+      "review_status": "candidate_only_high_risk",
+      "notes": [
+        "candidate_score_simulation_low",
+        "expected_media_role",
+        "missing_runtime_readiness_report",
+        "review_simulation_flag:high_power_demand"
+      ]
+    }
+  ],
+  "summary": {
+    "total_objects": 104,
+    "layer_counts": {
+      "behavior": 2,
+      "economy": 7,
+      "entity": 14,
+      "level": 6,
+      "narrative": 34,
+      "progression": 8,
+      "rule": 8,
+      "visual": 25
+    },
+    "permission_level_counts": {
+      "L1_presentation": 25,
+      "L2_entity": 14,
+      "L3_behavior": 29,
+      "L4_system_rule": 36
+    },
+    "runtime_export_counts": {
+      "candidate_only": 7,
+      "fallback_ready": 27,
+      "review_only": 7,
+      "runtime_ready": 63
+    },
+    "risk_counts": {
+      "high": 7,
+      "low": 59,
+      "medium": 38
+    },
+    "player_exposed_count": 80,
+    "review_required_count": 14
+  },
+  "validation_commands": [
+    {
+      "purpose": "构建并校验可编译对象目录",
+      "command": "python3 tools/content_pipeline/build_compilable_object_catalog.py --validate"
+    },
+    {
+      "purpose": "单独校验可编译对象目录",
+      "command": "python3 tools/content_pipeline/validate_compilable_object_catalog.py examples/review_packs/mvp_compilable_object_catalog.v0.1.json"
+    },
+    {
+      "purpose": "校验多阶段内容生产包",
+      "command": "python3 tools/content_pipeline/validate_multistage_content_pack.py examples/review_packs/mvp_multistage_content_pack.v0.1.json"
+    }
+  ]
+}

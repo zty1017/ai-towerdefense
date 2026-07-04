@@ -1,0 +1,84 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-38-provider-runner-handoff-outbox",
+  "title": "Provider adapter runner handoff outbox",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-handoff-outbox",
+  "worktree": "/tmp/ai-td-task-provider-runner-handoff-outbox",
+  "objective": "把 background handoff tick 返回的 runner_handoffs 固化为可验证的 ProviderAdapterRunnerHandoffOutbox v0.1：新增 schema、validator、后端 outbox wrapper、测试和 evidence 摘要，使外部 runner / worker 可以消费一个机器可校验的批量交接单；不得调用 provider、不得读取 .env、不得运行 provider adapter、不得 staging/promotion、不得 complete queue item、不得写世界状态、不得激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/demo/export_evidence.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
+    "shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/demo/export_evidence.py",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox python3 -m compileall backend",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_outbox_evidence",
+    "rg -n \"provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "Outbox 是外部 runner 的批量交接单，不是 provider 输出、staging manifest、promotion report 或 runtime package。",
+    "Outbox 可以包含 live 命令模板，但必须要求外部显式授权、显式 prompt file、显式 artifact output 和显式 dotenv path。",
+    "Validator 必须拒绝 raw_prompt、provider_response、secret、api_key、full_trace 等敏感字段或字符串。",
+    "本 Codex 受控通道尝试 OpenCode headless 时被执行环境拒绝为外部数据披露风险；本任务采用 local_codex_safe_fallback。"
+  ]
+}

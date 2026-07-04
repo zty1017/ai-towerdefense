@@ -1,0 +1,23 @@
+{
+  "id": "proposal_east_dark_echo_survey_001",
+  "mode": "runtime_safe",
+  "title": "东暗回声测记方案",
+  "summary": "整理东侧黑暗边缘的回声与旧信标读数，提前标记下一波影潮路径和可能弱点。",
+  "intended_asset_type": "intel_asset",
+  "expected_effect": ["scouting", "support"],
+  "risk_level": "medium",
+  "estimated_cost": "low",
+  "required_inputs": {
+    "npc_ids": ["npc_gray_lantern_keeper"],
+    "materials": ["lantern_ash", "conductor_filament"],
+    "facility": "temporary_workshop",
+    "knowledge_tags": ["dark_region_echo", "route_prediction"]
+  },
+  "known_tradeoffs": [
+    "情报只对短期战斗有效",
+    "无法直接造成伤害",
+    "黑暗边缘干扰会降低可信度"
+  ],
+  "player_prompt": "先别急着造塔，我想知道东边黑暗里下一波会从哪条路来，有没有能利用的弱点。",
+  "worldbook_id": "long_night_lanterns"
+}

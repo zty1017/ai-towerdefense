@@ -1,6 +1,6 @@
 # AI Provider 调研与烟测基线
 
-Last updated: 2026-06-29
+Last updated: 2026-07-01
 
 ## 1. 目标
 
@@ -10,10 +10,13 @@ Last updated: 2026-06-29
 
 ```text
 AGNES_API_KEY
+AGNES_API_KEY_2
+AGNES_API_KEY_3
 ARK_API_KEY
 DEEPSEEK_API_KEY
 GLM_API_KEY
 GLM_API_KEY_FREE
+LONGCAT_API_KEY
 ```
 
 文档、日志、测试输出都不能打印 API key 的真实值。
@@ -31,11 +34,12 @@ GLM_API_KEY_FREE
 
 | Provider | 环境变量 | 主要用途 | 推荐接入方式 | 关键风险 |
 |---|---|---|---|---|
-| Agnes | `AGNES_API_KEY` | 免费文本、图像、视频、多模态原型 | OpenAI-compatible + 视频异步接口 | 免费策略和 RPM 可能变化 |
+| Agnes | `AGNES_API_KEY` / `_2` / `_3` | 免费文本、图像、视频、多模态原型 | OpenAI-compatible + 视频异步接口 | 免费策略和 RPM 可能变化 |
 | 火山方舟 Coding Plan | `ARK_API_KEY` | 编码模型、开发辅助、可能的内部编译评审 | OpenAI-compatible `/api/coding/v3` 或 Anthropic-compatible `/api/coding` | 用错 Base URL 会产生额外费用 |
 | DeepSeek | `DEEPSEEK_API_KEY` | 低成本文本、结构化内容、推理/非推理切换 | OpenAI-compatible | 旧模型别名有明确下线日期 |
 | 智谱 GLM | `GLM_API_KEY` | 高质量文本、多模态、图像/视频能力 | `zai-sdk` / HTTP v4 | 主账户生成额度有限 |
 | 智谱 GLM Free | `GLM_API_KEY_FREE` | 免费模型隔离账户 | `zai-sdk` / HTTP v4 | 免费模型也可能限流或占用账户配额 |
+| LongCat | `LONGCAT_API_KEY` | 大额度长上下文文本、世界书演化、批量资产编译/审查 | OpenAI-compatible `/openai/v1` | 当前主要作为文本模型；结构化输出需本地 parser / Schema 校验 |
 | CodeBuddy / 混元图像 | CodeBuddy 本地配置 | 比赛合规、开发期图像候选、离线素材生成 | CodeBuddy `ImageGen` tool | 当前实测可调用但遇到限流，暂不作为默认运行时主通道 |
 
 ## 4. Agnes
@@ -47,6 +51,16 @@ GLM_API_KEY_FREE
 - 控制台：[platform.agnes-ai.com](https://platform.agnes-ai.com)
 - Base URL：`https://apihub.agnes-ai.com/v1`
 - 鉴权：`Authorization: Bearer <AGNES_API_KEY>`
+
+项目内 Agnes profile 支持多个环境变量候选，按以下顺序选择第一个存在且非空的 key：
+
+```text
+AGNES_API_KEY
+AGNES_API_KEY_2
+AGNES_API_KEY_3
+```
+
+dry-run 和错误信息只能展示环境变量名，不能展示 key 值。`AGNES_API_KEY_2`、`AGNES_API_KEY_3` 仅用于同一个 Agnes provider 的额度/限流分摊，不应静默 fallback 到其他付费 provider。
 
 模型与接口：
 
@@ -202,6 +216,66 @@ GLM_API_KEY_FREE  -> 免费模型隔离账户
 
 不要用后缀简单判断是否免费。例如 `glm-4.7-flashx` 是收费模型，不等同于 `glm-4.7-flash`。
 
+2026-06-30 已用 `glm-5v-turbo` 完成真实素材视觉审查闭环。当前项目内 profile：
+
+```text
+glm_5v_turbo        -> GLM_API_KEY
+glmfree_4_6v_flash  -> GLM_API_KEY_FREE
+agnes_multimodal_flash -> AGNES_API_KEY / AGNES_API_KEY_2 / AGNES_API_KEY_3
+```
+
+`media.review_with_vision_guarded` 会把本地生成图片以内联图片输入发送给视觉模型，
+输出 `media_vision_review_report.v0.1`。该报告用于检查可读文字、水印、主体漂移、
+世界观语义和媒体角色匹配度，不进入玩家运行时包。
+
+## 7.1 LongCat
+
+官方信息：
+
+- 文档首页：[LongCat API Docs](https://longcat.chat/platform/docs/zh/)
+- 聊天补全：[POST 聊天补全](https://longcat.chat/platform/docs/zh/api/chat.html)
+- 模型列表：[GET 模型列表](https://longcat.chat/platform/docs/zh/api/models.html)
+- Codex 配置：[接入 Codex](https://longcat.chat/platform/docs/zh/Codex.html)
+- Base URL：`https://api.longcat.chat/openai/v1`
+- 鉴权：`Authorization: Bearer <LONGCAT_API_KEY>`
+
+当前开放平台模型：
+
+| 模型 | API 格式 | 上下文 / 输出能力 | 建议用途 |
+|---|---|---|---|
+| `LongCat-2.0` | OpenAI / Anthropic | 1M 上下文，最大输出 128K Tokens | 世界书长上下文、批量剧情/事件/资产草稿、低成本审查与修复 |
+
+OpenAI-compatible 端点：
+
+```text
+GET  https://api.longcat.chat/openai/v1/models
+POST https://api.longcat.chat/openai/v1/chat/completions
+```
+
+Anthropic-compatible 端点：
+
+```text
+GET  https://api.longcat.chat/anthropic/v1/models
+POST https://api.longcat.chat/anthropic/v1/messages
+```
+
+项目内先按文本模型接入：
+
+```text
+profile: longcat_2_0
+env_key: LONGCAT_API_KEY
+model:   LongCat-2.0
+json_object: 暂不默认依赖；使用 prompt-only JSON + 本地 parser / Schema 校验
+```
+
+推荐定位：
+
+1. 世界书和运行态世界状态的长上下文审查。
+2. 大批量 NPC / 材料 / 任务 / 事件候选生成。
+3. 资产编译失败后的低成本修复 pass。
+4. 前端 mock 内容包批量扩写。
+5. 不作为图像/视频默认通道；图像仍按 Agnes / GLM / CodeBuddy 策略处理。
+
 ## 8. 建议的项目内 Provider 架构
 
 建议后端逐步形成如下结构：
@@ -213,6 +287,7 @@ backend/app/ai_gateway/
     ark.py
     deepseek.py
     glm.py
+    longcat.py
   model_catalog.py
   task_policy.py
   quota_guard.py
@@ -238,18 +313,57 @@ ProviderAdapter
 | 任务 | 初期建议 |
 |---|---|
 | 玩家自然语言解析 | Agnes / DeepSeek Flash / GLM Free 低成本模型 |
-| 防御塔蓝图结构化编译 | DeepSeek JSON mode / GLM 旗舰 |
-| 蓝图规则评审 | DeepSeek Pro / GLM 旗舰 / 方舟编码模型 |
-| 内容草稿生成 | Agnes / DeepSeek Flash / GLM Free |
-| 世界书一致性审查 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `glm-5.2` 优先，DeepSeek 官方 API fallback |
-| 世界书内容生长 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `deepseek-v4-flash` / `glm-5.2` 优先，按成本与质量切换 |
-| 弱主线 / 长剧情节点生成 | 方舟 Coding Plan 内的 1M 上下文模型优先，必要时拆分成多轮 reviewed 候选 |
+| 防御塔蓝图结构化编译 | DeepSeek JSON mode / GLM 旗舰；LongCat 作为 prompt-only JSON 修复/批量候选 |
+| 蓝图规则评审 | DeepSeek Pro / GLM 旗舰 / 方舟编码模型；LongCat 可做低成本第二评审 |
+| 内容草稿生成 | Agnes / DeepSeek Flash / GLM Free / LongCat |
+| 世界书一致性审查 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `glm-5.2` 优先，LongCat / DeepSeek 官方 API fallback |
+| 世界书内容生长 | 方舟 Coding Plan 内的 `deepseek-v4-pro` / `deepseek-v4-flash` / `glm-5.2` 优先；LongCat 适合大额度批量生成和修复 |
+| 弱主线 / 长剧情节点生成 | 方舟 Coding Plan 内的 1M 上下文模型和 LongCat 优先，必要时拆分成多轮 reviewed 候选 |
 | 图像 prompt 扩写 | Agnes / GLM Free |
 | 关键图像生成 | Agnes Image 优先，智谱主账户 fallback，智谱免费模型二级 fallback |
 | 批量图像草稿 | Agnes Image 优先，智谱免费模型 fallback，必要时才用智谱主账户 |
 | CodeBuddy 图像候选 | CodeBuddy `ImageGen` + `hunyuan-image-v3.0` | 主要用于开发期、比赛合规记录和离线素材候选 |
 | 视频原型 | MVP 不进入核心闭环；开场动画预制，后续离线生成与 reviewed / locked |
-| 开发编码辅助 | 方舟 Coding Plan |
+| 开发编码辅助 | 方舟 Coding Plan；LongCat 可作为额外 Codex/OpenAI-compatible 候选 |
+
+### 8.0a 图像生成真实烟测：防御塔候选媒体包
+
+2026-06-30 已授权对 `examples/compiled_assets/light_slow_tower.compiled_asset.json`
+派生的视觉 prompt 进行真实图像 provider 调用。测试目标不是选最终美术，而是验证：
+
+1. `CompiledAssetCandidate` 可以派生 `icon` / `tower_sprite` 两类视觉 prompt。
+2. 图像 provider adapter 可以真实生成并下载图片。
+3. 生成图片可以写入 `raw_media_sequence.v0.1`。
+4. `raw_media_sequence` 可以通过媒体处理 DAG 进入 `published_media_manifest.v0.1`。
+5. 最终 runtime-public manifest 不泄漏 provider 临时 URL、prompt、provider_profile 或本地路径。
+
+本轮真实调用结果：
+
+| Provider profile | 模型 | 输出尺寸 | 状态 | 主要观察 |
+|---|---|---:|---|---|
+| `agnes_image_flash` | `agnes-image-2.1-flash` | 1024x1024 | 通过 | 画面质量高，无明显水印；`tower_sprite` 更像战斗预览，仍带场景背景 |
+| `glmfree_cogview_3_flash` | `cogview-3-flash` | 1024x1024 | 通过 | 塔体干净度较好，但存在“AI生成”水印；实际下载内容为 JPEG |
+| `glm_image` | `glm-image` | 1280x1280 | 通过 | 可生成，但主题贴合度弱于 Agnes；存在水印；实际下载内容为 JPEG |
+
+本地烟测产物：
+
+```text
+/tmp/live_asset_media_agnes/raw_media_sequence.v0.1.json
+/tmp/live_asset_media_glmfree/raw_media_sequence.v0.1.json
+/tmp/live_asset_media_glm/raw_media_sequence.v0.1.json
+
+/tmp/live_asset_media_agnes_processed/mvp_live_asset_media_agnes_process/build_atlas__published_media_manifest.json
+/tmp/live_asset_media_glmfree_processed/mvp_live_asset_media_glmfree_process/build_atlas__published_media_manifest.json
+/tmp/live_asset_media_glm_processed/mvp_live_asset_media_glm_process/build_atlas__published_media_manifest.json
+```
+
+关键结论：
+
+- Agnes 当前更适合做 MVP 默认图像 provider。
+- GLM / GLMFree 已验证可接入，适合 fallback 或对照候选，但需要水印检测与裁切。
+- 图像 provider 不一定按请求返回 PNG；adapter 不能固定使用 `.png` 扩展名，应按响应头或 magic bytes 归一化。
+- `tower_sprite` prompt 需要进一步收紧为“可抠图的干净塔体”，另设 `battle_preview` / `animation_card` 承载带背景的演示图。
+- 媒体处理节点已具备 PNG v0.1 实处理能力：纯色背景去除、alpha 裁切留白、画布归一、锚点、atlas 和 published manifest 已可自动产出。仍需补齐 JPEG/WebP 格式归一化、复杂背景抠图、缩放重采样和水印检测。
 
 ### 8.0 运行时设置与离线导入
 
@@ -352,8 +466,10 @@ manifest 草案：
 | 1 | 方舟 Coding Plan | `deepseek-v4-pro` | 世界书一致性审查、复杂设定冲突检查、高质量内容生长 |
 | 2 | 方舟 Coding Plan | `glm-5.2` | 长上下文综合、中文叙事质量、设定润色与结构化整理 |
 | 3 | 方舟 Coding Plan | `deepseek-v4-flash` | 大批量候选生成、较低成本预处理、草稿扩展 |
-| 4 | DeepSeek 官方 API | `deepseek-v4-pro` | 方舟不可用、限流、套餐策略变化时的质量 fallback |
-| 5 | DeepSeek 官方 API | `deepseek-v4-flash` | 方舟不可用时的低成本 fallback |
+| 4 | 方舟 Coding Plan | `kimi-k2.6` | 世界书推理、叙事生长、复杂方案评审候选 |
+| 5 | 方舟 Coding Plan | `kimi-k2.7-code` | 开发期编译器规则、Schema、DAG 节点、结构化资产转换候选 |
+| 6 | DeepSeek 官方 API | `deepseek-v4-pro` | 方舟不可用、限流、套餐策略变化时的质量 fallback |
+| 7 | DeepSeek 官方 API | `deepseek-v4-flash` | 方舟不可用时的低成本 fallback |
 
 运行时策略：
 
@@ -362,6 +478,7 @@ manifest 草案：
 3. fallback 必须记录在 `AI_GENERATION_LOG`，包括原 provider、目标 provider、原因、模型名、输入摘要和输出摘要。
 4. 对世界书内容生长，模型输出仍然只能进入 `generated` 状态，必须经过 reviewed / locked 流程。
 5. 对需要严格 JSON 的任务，方舟某些模型可能不支持 `response_format=json_object`，应优先使用 prompt-only JSON + 本地 JSON parser + Schema 校验；如果失败，再切 DeepSeek 官方 JSON mode。
+6. Kimi 系列在方舟 Coding Plan 中已验证文本和 JSON 输出可用；运行时 artifact 只允许读取 `message.content`，不得保存 `reasoning_content`。
 
 ### 8.2 图像生成任务路由
 
@@ -385,6 +502,14 @@ manifest 草案：
 5. fallback 必须记录原因，例如 Agnes 限流、接口失败、图像质量不可用、内容安全拒绝、结果 URL 失效、CodeBuddy ImageGen 限流。
 6. 生成结果不能直接成为正式资产，应进入 `generated -> reviewed -> locked` 流程。
 7. CodeBuddy ImageGen 当前建议由 `glm-5.1` 驱动，并用 `-y` 或权限配置允许工具执行；实测 `deepseek-v4-flash` 不稳定触发图像工具。
+
+2026-06-30 媒体 repair loop 发现：Agnes 对某些过度负面的修复 prompt 会返回
+`content_policy_violation`。因此 repair plan 可以保存完整诊断，但发送到图像 provider 的 prompt
+必须压缩为更短、更正向、更安全的视觉描述，例如“镜片装置、灯光环、暗雾、无文字、无 logo”，
+不要把视觉审查报告原文直接拼进图像 prompt。
+
+`tools/media/image_provider.py` 已补充 HTTPError body 捕获，便于区分普通网络错误、参数错误和
+provider 内容策略拒绝。
 
 CodeBuddy ImageGen 非交互调用示例：
 
@@ -449,11 +574,12 @@ python3 tools/provider_smoke_check.py --provider all --mode dry
 | `review` | 16384 | 蓝图评审、规则解释、平衡说明 |
 | `world` | 32768 | 世界书内容生长、剧情节点生成 |
 | `large` | 65536 | 长文档、批量内容、较长审查 |
+| `huge` | 131072 | 明确支持 128K 输出的模型；只用于专项验证或大批量离线内容 |
 
 如果某个模型明确支持更高输出，例如 128k 级别输出，直接使用：
 
 ```bash
-python3 tools/provider_smoke_check.py --provider glm --mode structured --live --max-tokens 128000
+python3 tools/provider_smoke_check.py --provider longcat --mode structured --live --budget huge
 ```
 
 建议初期任务级输出预算：
@@ -482,11 +608,15 @@ python3 tools/provider_smoke_check.py --provider deepseek --mode chat --live
 python3 tools/provider_smoke_check.py --provider ark --mode chat --live
 python3 tools/provider_smoke_check.py --provider glm --mode chat --live
 python3 tools/provider_smoke_check.py --provider glmfree --mode chat --live
+python3 tools/provider_smoke_check.py --provider longcat --mode chat --live
 
 # 贴近项目核心的结构化资产编译
 python3 tools/provider_smoke_check.py --provider deepseek --mode structured --live
 python3 tools/provider_smoke_check.py --provider glm --mode structured --live
+python3 tools/provider_smoke_check.py --provider longcat --mode structured --live
 ```
+
+`--mode dry` 不会加载 `.env`，只检查当前进程环境中是否存在对应变量名；真实 provider 调用仍必须显式加 `--live`。
 
 图像和视频不建议放入自动 CI 烟测。它们更适合手动触发，并把任务 ID、结果 URL、耗时、控制台用量写入 `AI_GENERATION_LOG`。
 
@@ -529,6 +659,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | 方舟 Coding Plan | `deepseek-v4-pro` | 成功 | 作为方舟内长上下文候选模型可调用 |
 | 方舟 Coding Plan | `deepseek-v4-flash` | 成功 | 作为方舟内低成本长上下文候选模型可调用 |
 | 方舟 Coding Plan | `glm-5.2` | 成功 | 作为方舟内长上下文候选模型可调用，但会返回较多 reasoning tokens |
+| LongCat | `LongCat-2.0` | 成功 | `/models` 返回 `LongCat-2.0`；OpenAI-compatible chat 可用；`thinking.disabled` 可用 |
 
 ### 11.2 结构化资产编译
 
@@ -544,6 +675,7 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | 火山方舟 Coding Plan | `glm-5.2` | 支持 | 成功返回 JSON，但仍应经过本地 parser / Schema 校验 |
 | 智谱主账户 | `glm-5.2` | 支持 | 成功返回合法 JSON |
 | 智谱免费账户 | `glm-4.7-flash` | 未稳定验证 | 一次返回 429 模型繁忙，需稍后重试 |
+| LongCat | `LongCat-2.0` | 不作为默认依赖 | prompt-only JSON 成功；AssetGraph guarded compile 通过，候选 `光幕迟滞塔` 晋级 `fallback_ready` |
 
 ### 11.3 图像与视频
 
@@ -557,11 +689,86 @@ python3 tools/provider_smoke_check.py --provider glmfree --mode job --live --job
 | Agnes | `agnes-video-v2.0` | 部分成功 | 提交成功，查询接口成功；最近一次查询状态为 `in_progress`，进度 30% |
 | CodeBuddy ImageGen | `hunyuan-image-v3.0` | 可调用但被限流 | `glm-5.1` 能发现并调用 ImageGen；需 `-y` 或允许 `DeferExecuteTool`；最近一次返回 `Too many requests` |
 
-## 12. 待确认问题
+## 12. Guarded LLM WorldStateDelta 实现说明
+
+本轮实现新增了一条受控的 LLM 世界状态 delta 生成路径，位于 `tools/llm/`。
+
+### 12.1 新增文件
+
+- `tools/llm/__init__.py` — 空包初始化。
+- `tools/llm/adapter.py` — 最小 LLM adapter，支持 OpenAI-compatible chat completions。
+  - 8 个 provider profile：`ark_deepseek_v4_flash`、`ark_deepseek_v4_pro`、`ark_glm_5_2`、`ark_kimi_k2_6`、`ark_kimi_k2_7_code`、`deepseek_v4_flash`、`deepseek_v4_pro`、`longcat_2_0`。
+  - `load_dotenv()` 从 `.env` 加载环境变量，日志只显示 env key 名称。
+  - 方舟 `deepseek-v4-*` profile 默认不发送 `response_format=json_object`，改走 prompt-only JSON + 本地 JSON parser + Schema 校验；`ark_glm_5_2` 与 DeepSeek 官方 profile 可发送 JSON mode。
+  - `extract_json()` 支持直接 JSON、markdown fenced JSON、文本中第一个 JSON object。
+  - `chat_completion()` 使用 stdlib `urllib`，无额外依赖。
+- `tools/llm/generate_world_delta.py` — CLI 工具。
+  - 输入：`--run-world-state`、`--battle-result`、`--session-context`、`--output`、`--review-pack`。
+  - 参数：`--provider-profile`、`--max-tokens`、`--request-timeout`、`--live`、`--apply-output`、`--skip-semantic-gate`。
+  - 没有 `--live` 时拒绝联网并返回非 0 退出码；dry-run guard 之前不会加载 `.env`。
+  - live 模式下调用 provider，提取 JSON，执行 `validate_with_jsonschema` + `validate_world_delta`。
+  - 默认继续执行 `validate_world_delta_semantics.py`，用 review pack 的 canonical / candidate / legacy 边界拦截坏引用。
+  - 如提供 `--apply-output`，语义门通过后会应用 delta 并写出下一份 `RunWorldState`。
+  - 校验不通过则退出非 0，并将失败 artifact 写入 `/tmp/failed_delta_*.json`。
+- `tools/llm/world_delta_prompt.py` — WorldStateDelta 共享提示词与输入压缩器，CLI 和 AssetGraph live 节点共用同一套顶层字段、17 种 operation 模板、review boundary 和禁止形态约束。提示词明确要求剧情推进必须落到任务、随机事件、研发任务、样品、蓝图、资源、NPC 或地图节点等玩法对象/状态上，不能只返回氛围文本。
+
+### 12.2 新增 AssetGraph 节点
+
+- `tools/asset_graph/nodes.py` 新增 `node_world_state_build_delta_with_llm_guarded`。
+  - node_type：`world_state.build_delta_with_llm_guarded`。
+  - inputs：`run_world_state`、`battle_result`、`session_context`。
+  - params：`allow_live_provider_call`（必须为 true）、`provider_profile`（默认 `ark_deepseek_v4_flash`）、`max_tokens`（默认 8192）、`request_timeout`（默认 90）、`review_pack_path`。
+  - `allow_live_provider_call` 不为 true 时抛出 NodeError，要求显式开启。
+  - 调用 provider 后执行 JSON 提取 + 双重校验（jsonschema + 规则校验）。
+  - `review_pack_path` 只用于给模型提供 canonical / candidate / legacy 引用边界，输出 artifact 不含这些技术路径。
+  - 输出 artifact kind 为 `world_state_delta`，不含 provider/model/raw_prompt 字段。
+- `shared/asset_graph/node_registry.v0.1.json` 注册该节点，`calls_provider: true`，`modes: ["live"]`。
+
+### 12.3 新增示例 workflow
+
+- `examples/workflows/mvp_live_world_delta_guarded.workflow.json`
+  - mode 为 `live`。
+  - 加载 demo state / battle result / session context。
+  - 调用 `world_state.build_delta_with_llm_guarded`（`allow_live_provider_call: true`）。
+  - 调用 `world_state.validate_delta_semantics` 通过引用和状态语义门。
+  - 调用 `world_state.apply_delta` 应用通过语义门的 delta。
+  - 文档强调该 workflow 会真实联网，由人工显式执行。
+
+### 12.4 安全与隐私
+
+- 本实现只在显式 live 路径读取 `.env` / 环境变量中的 API key，且不记录、不打印、不写入 artifact；日志只显示 env key 名称。
+- 默认 CLI 路径不调用真实 provider；只有 `--live` 或 AssetGraph 中 `allow_live_provider_call=true` 的 live workflow 才允许联网。
+- 输出 artifact 不包含 provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content。
+
+### 12.5 Guarded LLM 资产候选编译路径
+
+本轮新增 `CompiledAssetCandidate` 的 live 编译路径：
+
+- `tools/llm/asset_candidate_prompt.py` — 共享提示词与输入压缩器，明确候选顶层结构、生命周期、资产类型、effect registry 白名单、provenance 结构和禁止字段。
+- `tools/llm/generate_asset_candidate.py` — CLI 工具。默认拒绝联网；显式 `--live` 后调用 provider，提取 JSON，并用 `validate_asset_candidate.validate()` 校验。
+- `asset.compile_with_llm_guarded` — AssetGraph live 节点。必须设置 `allow_live_provider_call: true`，输出前必须通过 effect registry 校验。
+- `examples/workflows/mvp_live_asset_compile_guarded.workflow.json` — live workflow：proposal -> proposal validation -> LLM compile -> candidate validation -> mock simulation -> summary。
+
+首次真实烟测结果：
+
+| 通道 | 模型 | 结果 | 说明 |
+|---|---|---|---|
+| 方舟 Coding Plan | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `aura_buff` / `power_cost`，通过候选校验和 mock simulation |
+| DeepSeek 官方 | `deepseek-v4-flash` | 成功 | 生成 `tower_blueprint`，effect 为 `slow` / `power_cost`，通过候选校验和 mock simulation |
+| AssetGraph live workflow | 方舟 `deepseek-v4-flash` | 成功 | `source.load_json -> proposal.validate -> asset.compile_with_llm_guarded -> asset.validate_candidate -> asset.simulate_candidate -> report.pipeline_summary` 全部 passed |
+| 方舟 Coding Plan | `kimi-k2.6` | 成功 | 文本 chat 可用；较低 `max_tokens` 时可能只返回 `reasoning_content` 并被截断，正常上限下返回 `message.content` |
+| 方舟 Coding Plan | `kimi-k2.6` | 成功 | `response_format=json_object` 结构化输出可用，返回可解析 JSON |
+| 方舟 Coding Plan | `kimi-k2.7-code` | 成功 | `response_format=json_object` 结构化输出可用，适合作为开发期/编译器规则候选模型 |
+| AssetGraph live workflow | 方舟 `kimi-k2.6` | 成功 | `mvp_live_asset_compile_kimi_guarded.workflow.json` 全节点 passed；生成 `asset_luminous_slow_tower`，评分 `72.9`，建议进入 `generate_media` |
+
+两个候选都被模拟器标记为 `pure_control_requires_damage_partner`，说明当前提案会产出“控场但不能独立击杀”的资产。这类缺陷可以进入玩家侧的世界内反馈，例如 NPC 评审、样品限制、需要搭配伤害塔等，而不是展示 provider/schema 等技术信息。
+
+## 13. 待确认问题
 
 1. Agnes 的 `GET /v1/models` 是否稳定可用。官方文档未明确承诺，不能作为生产依赖。
 2. 方舟 Coding Plan 已验证可调用长上下文候选模型；仍需确认长期作为游戏运行时主通道时的套餐边界、并发限制、日志归因和费用策略。
-3. 智谱免费模型在两个账户中的真实限流、每日额度和账单延迟。
-4. 图像/视频生成结果的存储策略：本地缓存、对象存储、还是只保存远程 URL。
-5. 资产编译的主结构化模型应以 DeepSeek JSON mode、GLM 旗舰，还是双模型交叉评审为第一版。
-6. CodeBuddy ImageGen / `hunyuan-image-v3.0` 的真实限流、稳定 output_dir 行为和是否适合进入运行时 fallback。
+3. 方舟 Coding Plan 暴露的 `kimi-k2.6` / `kimi-k2.7-code` 已验证文本与 JSON 调用，但是否支持图片输入仍未确认；视觉素材审查暂不依赖 Kimi。
+4. 智谱免费模型在两个账户中的真实限流、每日额度和账单延迟。
+5. 图像/视频生成结果的存储策略：本地缓存、对象存储、还是只保存远程 URL。
+6. 资产编译的主结构化模型应以 DeepSeek JSON mode、GLM 旗舰，还是双模型交叉评审为第一版。
+7. CodeBuddy ImageGen / `hunyuan-image-v3.0` 的真实限流、稳定 output_dir 行为和是否适合进入运行时 fallback。

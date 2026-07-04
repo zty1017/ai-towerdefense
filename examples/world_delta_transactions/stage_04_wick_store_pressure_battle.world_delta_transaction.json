@@ -1,0 +1,243 @@
+{
+  "schema_version": "world_state_delta_transaction.v0.1",
+  "transaction_id": "tx_stage_04_wick_store_pressure_battle_001",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "actor": "system",
+  "source": "battle_result",
+  "created_turn": 5,
+  "created_at": "2026-07-02T00:00:00Z",
+  "base_world_version": "run_demo_001:before_stage_04",
+  "idempotency_key": "run_demo_001:delta_stage_04_wick_store_pressure_battle",
+  "scope": {
+    "kind": "battle_result_commit",
+    "node_ids": [
+      "lamp_wick_store",
+      "supply_line_hub_to_gray"
+    ],
+    "object_refs": [
+      "phase:post_wick_store_defense",
+      "map_node:lamp_wick_store",
+      "map_node:supply_line_hub_to_gray",
+      "npc:npc_wire_mender_003",
+      "task:task_prepare_wick_store_defense",
+      "task:task_repair_supply_line_hub",
+      "random_event:random_event_wick_store_pressure_hint",
+      "task:task_formalize_ash_burst_lantern",
+      "resource:lantern_ash",
+      "resource:glow_crystal",
+      "fact:wick_store_defense_combo_validated",
+      "fact:glow_crystal_discovered",
+      "sample:asset_ash_burst_lantern_trial",
+      "research_job:research_ash_burst_lantern_blueprint",
+      "blueprint:asset_ash_burst_lantern",
+      "event:wick_store_pressure_battle_resolved",
+      "flag:stage_04_wick_store_defense_completed"
+    ],
+    "state_fields": [
+      "progress_phase",
+      "map_nodes.lamp_wick_store",
+      "map_nodes.supply_line_hub_to_gray",
+      "npcs.npc_wire_mender_003.relationship",
+      "tasks.task_prepare_wick_store_defense",
+      "tasks.task_repair_supply_line_hub",
+      "random_events.random_event_wick_store_pressure_hint",
+      "tasks.task_formalize_ash_burst_lantern",
+      "resources.lantern_ash",
+      "resources.glow_crystal",
+      "facts.wick_store_defense_combo_validated",
+      "facts.glow_crystal_discovered",
+      "research.temporary_samples.asset_ash_burst_lantern_trial",
+      "research.jobs.research_ash_burst_lantern_blueprint",
+      "research.blueprints.asset_ash_burst_lantern",
+      "events.wick_store_pressure_battle_resolved",
+      "flags.stage_04_wick_store_defense_completed"
+    ]
+  },
+  "source_refs": {
+    "context_package_path": "examples/review_packs/mvp_first_battle.context_package.json",
+    "battle_result_path": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+    "run_state_before_path": "examples/run_world_states/demo_after_stage_03_northern_road.run_world_state.json",
+    "run_state_after_path": "examples/run_world_states/demo_after_stage_04_wick_store.run_world_state.json"
+  },
+  "world_state_delta_ref": {
+    "path": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+    "schema_version": "world_state_delta.v0.1",
+    "delta_id": "delta_stage_04_wick_store_pressure_battle",
+    "sha256": "235ef448f3cd830423b38c6ab770d1fa80dbb2bab4d3649a12361b909a0e9b4f"
+  },
+  "preconditions": [
+    {
+      "kind": "run_state_version",
+      "ref": "run_demo_001:before_stage_04",
+      "summary": "提交前使用 examples/run_world_states/demo_after_stage_03_northern_road.run_world_state.json 快照。"
+    },
+    {
+      "kind": "artifact_available",
+      "ref": "examples/world_deltas/stage_04_wick_store_pressure_battle.world_delta.json",
+      "summary": "来源产物已经生成并通过白名单 delta gate。"
+    },
+    {
+      "kind": "node_state",
+      "ref": "map_nodes.lamp_wick_store",
+      "summary": "相关地图节点存在于提交前运行态或本次受控引入范围。"
+    }
+  ],
+  "operation_effects_mapping": [
+    {
+      "operation_index": 0,
+      "op": "set_progress_phase",
+      "target_ref": "progress_phase",
+      "effect_kind": "phase_change",
+      "summary": "将 set_progress_phase 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 1,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.lamp_wick_store",
+      "effect_kind": "map_node_patch",
+      "summary": "将 set_map_node_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 2,
+      "op": "set_map_node_state",
+      "target_ref": "map_nodes.supply_line_hub_to_gray",
+      "effect_kind": "map_node_patch",
+      "summary": "将 set_map_node_state 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 3,
+      "op": "update_npc_relationship",
+      "target_ref": "npcs.npc_wire_mender_003.relationship",
+      "effect_kind": "npc_relationship_delta",
+      "summary": "将 update_npc_relationship 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 4,
+      "op": "set_task_status",
+      "target_ref": "tasks.task_prepare_wick_store_defense",
+      "effect_kind": "task_upsert",
+      "summary": "将 set_task_status 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 5,
+      "op": "set_task_status",
+      "target_ref": "tasks.task_repair_supply_line_hub",
+      "effect_kind": "task_upsert",
+      "summary": "将 set_task_status 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 6,
+      "op": "set_random_event_status",
+      "target_ref": "random_events.random_event_wick_store_pressure_hint",
+      "effect_kind": "random_event_schedule",
+      "summary": "将 set_random_event_status 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 7,
+      "op": "upsert_task",
+      "target_ref": "tasks.task_formalize_ash_burst_lantern",
+      "effect_kind": "task_upsert",
+      "summary": "将 upsert_task 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 8,
+      "op": "adjust_resource",
+      "target_ref": "resources.lantern_ash",
+      "effect_kind": "resource_delta",
+      "summary": "将 adjust_resource 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 9,
+      "op": "adjust_resource",
+      "target_ref": "resources.glow_crystal",
+      "effect_kind": "resource_delta",
+      "summary": "将 adjust_resource 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 10,
+      "op": "unlock_fact",
+      "target_ref": "facts.wick_store_defense_combo_validated",
+      "effect_kind": "fact_unlock",
+      "summary": "将 unlock_fact 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 11,
+      "op": "unlock_fact",
+      "target_ref": "facts.glow_crystal_discovered",
+      "effect_kind": "fact_unlock",
+      "summary": "将 unlock_fact 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 12,
+      "op": "add_temporary_sample",
+      "target_ref": "research.temporary_samples.asset_ash_burst_lantern_trial",
+      "effect_kind": "sample_registration",
+      "summary": "将 add_temporary_sample 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 13,
+      "op": "upsert_research_job",
+      "target_ref": "research.jobs.research_ash_burst_lantern_blueprint",
+      "effect_kind": "research_job_upsert",
+      "summary": "将 upsert_research_job 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 14,
+      "op": "unlock_blueprint",
+      "target_ref": "research.blueprints.asset_ash_burst_lantern",
+      "effect_kind": "blueprint_unlock",
+      "summary": "将 unlock_blueprint 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 15,
+      "op": "append_event",
+      "target_ref": "events.wick_store_pressure_battle_resolved",
+      "effect_kind": "event_append",
+      "summary": "将 append_event 提交到受控运行态字段。"
+    },
+    {
+      "operation_index": 16,
+      "op": "set_flag",
+      "target_ref": "flags.stage_04_wick_store_defense_completed",
+      "effect_kind": "flag_set",
+      "summary": "将 set_flag 提交到受控运行态字段。"
+    }
+  ],
+  "conflict_policy": {
+    "mode": "reject_on_conflict",
+    "conflict_keys": [
+      "progress_phase",
+      "map_nodes.lamp_wick_store",
+      "map_nodes.supply_line_hub_to_gray",
+      "npcs.npc_wire_mender_003.relationship",
+      "tasks.task_prepare_wick_store_defense",
+      "tasks.task_repair_supply_line_hub",
+      "random_events.random_event_wick_store_pressure_hint",
+      "tasks.task_formalize_ash_burst_lantern",
+      "resources.lantern_ash",
+      "resources.glow_crystal",
+      "facts.wick_store_defense_combo_validated",
+      "facts.glow_crystal_discovered",
+      "research.temporary_samples.asset_ash_burst_lantern_trial",
+      "research.jobs.research_ash_burst_lantern_blueprint",
+      "research.blueprints.asset_ash_burst_lantern",
+      "events.wick_store_pressure_battle_resolved",
+      "flags.stage_04_wick_store_defense_completed"
+    ]
+  },
+  "rollback_policy": {
+    "mode": "required_snapshot",
+    "inverse_operations_required": false,
+    "notes": "v0.1 事务壳依赖提交前 RunWorldState 快照回滚，不生成通用逆向操作 DSL。"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "world_delta_structure": "passed",
+    "world_delta_semantics": "passed",
+    "operation_mapping": "passed",
+    "runtime_apply_checked": true,
+    "warnings": []
+  },
+  "status": "committed"
+}

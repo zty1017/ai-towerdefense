@@ -1,0 +1,438 @@
+{
+  "pack_version": "mvp_story_asset_review_pack.v0.1",
+  "pack_id": "mvp_story_asset_review_pack_001",
+  "worldbook_id": "long_night_lanterns",
+  "run_id": "run_demo_001",
+  "created_for": "mvp_content_review",
+  "generation_boundary": {
+    "front_end_integration": "not_included",
+    "real_service_calls": false,
+    "base_worldbook_mutation": false,
+    "commit_rule": "NarrativeEventBundle proposes intent; WorldStateDelta commits selected changes in serial order."
+  },
+  "core_artifact_alignment": {
+    "alignment_state": "review_only_not_applicable",
+    "reason": "StoryAssetReviewPack 是 review-only 多阶段剧情与玩法对象审查索引；它汇总阶段剧情、NPC、材料、地图节点、战斗节点、研发 hook 和资产引用，但自身不是 ContextPackage、FactEntry、CGOP 或 WorldStateDeltaTransaction。",
+    "expected_core_artifacts": [],
+    "present_core_artifacts": [],
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "next_action": "后续核心对象迁移应针对它引用的 NarrativeEventBundle、WorldStateDelta、WorldStateDeltaTransaction、CGOP、runtime package 或具体 promotion report，而不是激活整个 story asset review pack。"
+  },
+  "pipeline_summary": [
+    "RunWorldState, BattleResult, SessionContext are reduced to a stage brief.",
+    "The stage brief produces one NarrativeEventBundle with world_line, player_line, and shared nodes.",
+    "Gameplay Purpose Gate rejects nodes without gameplay_purpose, gameplay_hooks, or proposed_delta_summary.",
+    "Commit Gate accepts only reviewed WorldStateDelta operations and never rewrites the base worldbook.",
+    "Review pack links each stage to NPC, materials, map nodes, battle nodes, research hooks, and reusable assets."
+  ],
+  "canonical_boundaries": {
+    "canonical_npcs": [
+      {
+        "npc_id": "npc_gray_lantern_keeper",
+        "display_name": "灰灯驿站守灯人",
+        "role": "field_npc",
+        "source_file": "content/worldbooks/long_night_lanterns/npcs.json"
+      },
+      {
+        "npc_id": "npc_workshop_mentor",
+        "display_name": "临时工坊老师傅",
+        "role": "craft_mentor",
+        "source_file": "content/worldbooks/long_night_lanterns/npcs.json"
+      }
+    ],
+    "candidate_functional_npcs": [
+      {
+        "npc_id": "npc_wire_mender_003",
+        "display_name": "补线人",
+        "review_status": "candidate_only",
+        "intended_roles": [
+          "research_review",
+          "material_discount",
+          "route_repair"
+        ],
+        "first_hint_stage": "act_1_stage_02_dawn_review_supply_line"
+      },
+      {
+        "npc_id": "npc_road_scout",
+        "display_name": "北路斥候",
+        "review_status": "candidate_only",
+        "intended_roles": [
+          "scout_reveal",
+          "path_prediction",
+          "weakness_hint"
+        ],
+        "first_hint_stage": "act_1_stage_03_northern_road_scouting"
+      }
+    ],
+    "compatibility_refs": [
+      {
+        "ref_id": "engineer_001",
+        "status": "legacy_fixture_ref",
+        "recommended_action": "Do not use in this review pack as a canonical NPC."
+      },
+      {
+        "ref_id": "scout_002",
+        "status": "legacy_fixture_ref",
+        "recommended_action": "Replace with candidate or canonical NPC before runtime package promotion."
+      }
+    ],
+    "canonical_materials": [
+      "lamp_shard",
+      "conductor_filament",
+      "lantern_ash",
+      "glow_crystal"
+    ],
+    "candidate_only_materials": [
+      {
+        "material_id": "charcoal_map",
+        "reason": "Used by shadow_tide_survey fixture but not registered in the current worldbook."
+      },
+      {
+        "material_id": "signal_wick",
+        "reason": "Used by shadow_tide_survey fixture but not registered in the current worldbook."
+      },
+      {
+        "material_id": "charged_copper_coil",
+        "reason": "Used by overload_chain_mod fixture and requires a later high-risk research context."
+      },
+      {
+        "material_id": "cracked_insulator",
+        "reason": "Used by overload_chain_mod fixture and requires a later high-risk research context."
+      }
+    ]
+  },
+  "excluded_from_mvp_story_pack": [
+    {
+      "ref": "examples/intent_specs/alchemy_furnace_tower.*.json",
+      "reason": "Useful for intent compilation tests, but theme and material vocabulary do not belong to the current lantern-world MVP path."
+    },
+    {
+      "ref": "examples/compiled_assets/mirror_lure_trap.compiled_asset.json",
+      "reason": "Uses unregistered mirror_shard and wick_ash materials; keep as candidate-only until world growth registers them."
+    },
+    {
+      "ref": "examples/compiled_assets/light_slow_tower.compiled_asset.json",
+      "reason": "Older generic fixture. It can inspire balance tests but is not part of this staged content pack."
+    }
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "stage_id": "act_1_stage_01_gray_lantern_first_defense",
+      "title": "灰灯驿站首防",
+      "bundle_file": "examples/narrative_bundles/stage_01_gray_lantern_first_defense.narrative_event_bundle.json",
+      "lane_coverage": [
+        "world_line",
+        "player_line",
+        "shared"
+      ],
+      "map_nodes": [
+        {
+          "node_id": "gray_lantern_station",
+          "status": "canonical",
+          "purpose": "First crisis battle node."
+        },
+        {
+          "node_id": "temporary_workshop",
+          "status": "canonical",
+          "purpose": "Field research entry before the first battle."
+        }
+      ],
+      "battle_nodes": [
+        {
+          "node_id": "gray_lantern_station",
+          "fixture": "game_data/demo/first_battle_config.json",
+          "purpose": "Two-wave tutorial defense with one mid-battle sample delivery."
+        }
+      ],
+      "npcs": {
+        "canonical": [
+          "npc_gray_lantern_keeper",
+          "npc_workshop_mentor"
+        ],
+        "candidate": []
+      },
+      "materials": {
+        "canonical": [
+          "lamp_shard",
+          "conductor_filament"
+        ],
+        "candidate_only": []
+      },
+      "assets": [
+        {
+          "asset_id": "sample_trap_7f3a",
+          "asset_kind": "runtime_sample_trap",
+          "source_file": "examples/runtime_packages/mvp_demo.runtime_package.json",
+          "review_status": "usable_fixture",
+          "gameplay_role": "Mid-battle temporary sample that slows fast enemies."
+        }
+      ],
+      "research_hooks": [
+        "field_research_once",
+        "sample_delivery_mid_battle",
+        "fast_enemy_counter"
+      ],
+      "gameplay_service": [
+        "Teaches map node selection.",
+        "Teaches one field trial before battle.",
+        "Proves player idea can become a temporary battlefield sample."
+      ]
+    },
+    {
+      "order": 2,
+      "stage_id": "act_1_stage_02_dawn_review_supply_line",
+      "title": "黎明复盘与护线",
+      "bundle_file": "examples/narrative_bundles/stage_02_dawn_review_supply_line.narrative_event_bundle.json",
+      "lane_coverage": [
+        "world_line",
+        "player_line",
+        "shared"
+      ],
+      "map_nodes": [
+        {
+          "node_id": "supply_line_hub_to_gray",
+          "status": "canonical",
+          "purpose": "Damaged route that motivates repair and support assets."
+        },
+        {
+          "node_id": "lamp_wick_store",
+          "status": "canonical",
+          "purpose": "Resource storage node foreshadowed as the next pressure point."
+        }
+      ],
+      "battle_nodes": [],
+      "npcs": {
+        "canonical": [
+          "npc_gray_lantern_keeper",
+          "npc_workshop_mentor"
+        ],
+        "candidate": [
+          "npc_wire_mender_003"
+        ]
+      },
+      "materials": {
+        "canonical": [
+          "lantern_ash",
+          "lamp_shard",
+          "conductor_filament"
+        ],
+        "candidate_only": []
+      },
+      "assets": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Reusable decoy item for path-adjacent slow and pressure relief."
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Support tower that shields and repairs nearby defenses."
+        }
+      ],
+      "research_hooks": [
+        "post_battle_review",
+        "supply_line_repair",
+        "support_unlock"
+      ],
+      "gameplay_service": [
+        "Turns first battle outcome into repair pressure.",
+        "Introduces lantern_ash as a stabilizing material.",
+        "Creates a functional NPC candidate without committing it as canonical."
+      ]
+    },
+    {
+      "order": 3,
+      "stage_id": "act_1_stage_03_northern_road_scouting",
+      "title": "北路侦测与路径预测",
+      "bundle_file": "examples/narrative_bundles/stage_03_northern_road_scouting.narrative_event_bundle.json",
+      "lane_coverage": [
+        "world_line",
+        "player_line",
+        "shared"
+      ],
+      "map_nodes": [
+        {
+          "node_id": "northern_road_crossing",
+          "status": "run_state_fixture_or_candidate",
+          "purpose": "Edge of the northern dark region; should stay partially hidden until scouting succeeds."
+        },
+        {
+          "node_id": "old_signal_tower",
+          "status": "run_state_fixture_or_candidate",
+          "purpose": "Possible later battle or route pressure node."
+        }
+      ],
+      "battle_nodes": [],
+      "npcs": {
+        "canonical": [
+          "npc_gray_lantern_keeper",
+          "npc_workshop_mentor"
+        ],
+        "candidate": [
+          "npc_road_scout"
+        ]
+      },
+      "materials": {
+        "canonical": [
+          "lantern_ash",
+          "conductor_filament"
+        ],
+        "candidate_only": [
+          "charcoal_map",
+          "signal_wick"
+        ]
+      },
+      "assets": [
+        {
+          "asset_id": "intel_dark_echo_survey_001",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/east_dark_echo_survey.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Short-term path reveal and weakness hint using canonical materials."
+        },
+        {
+          "asset_id": "intel_shadow_tide_survey",
+          "asset_kind": "intel_asset",
+          "source_file": "examples/compiled_assets/shadow_tide_survey.compiled_asset.json",
+          "review_status": "candidate_only_until_materials_and_npcs_registered",
+          "gameplay_role": "Better scouting package, but it currently depends on unregistered materials and NPC refs."
+        }
+      ],
+      "research_hooks": [
+        "scouting_tutorial",
+        "path_prediction",
+        "weakness_discovery"
+      ],
+      "gameplay_service": [
+        "Shows that the world can create non-combat preparation choices.",
+        "Keeps hidden regions hidden until a controlled scouting action resolves.",
+        "Introduces a functional scout NPC as a candidate gameplay unlock."
+      ]
+    },
+    {
+      "order": 4,
+      "stage_id": "act_1_stage_04_wick_store_pressure_battle",
+      "title": "第二节点压力战 / 灯芯仓防守",
+      "bundle_file": "examples/narrative_bundles/stage_04_wick_store_pressure_battle.narrative_event_bundle.json",
+      "lane_coverage": [
+        "world_line",
+        "player_line",
+        "shared"
+      ],
+      "map_nodes": [
+        {
+          "node_id": "lamp_wick_store",
+          "status": "canonical",
+          "purpose": "Resource node promoted into a pressure battle node."
+        },
+        {
+          "node_id": "supply_line_hub_to_gray",
+          "status": "canonical",
+          "purpose": "Damaged route explains why resource defense matters."
+        }
+      ],
+      "battle_nodes": [
+        {
+          "node_id": "lamp_wick_store",
+          "fixture": "game_data/demo/wick_store_pressure_battle_config.json",
+          "purpose": "Second battle config should protect a resource facility and test combined defenses."
+        }
+      ],
+      "npcs": {
+        "canonical": [
+          "npc_gray_lantern_keeper",
+          "npc_workshop_mentor"
+        ],
+        "candidate": [
+          "npc_wire_mender_003"
+        ]
+      },
+      "materials": {
+        "canonical": [
+          "lamp_shard",
+          "conductor_filament",
+          "lantern_ash",
+          "glow_crystal"
+        ],
+        "candidate_only": [
+          "charged_copper_coil",
+          "cracked_insulator"
+        ]
+      },
+      "assets": [
+        {
+          "asset_id": "asset_signal_wick_decoy",
+          "asset_kind": "support_item",
+          "source_file": "examples/compiled_assets/signal_wick_decoy.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Pulls fast enemies away from the storehouse entrance."
+        },
+        {
+          "asset_id": "asset_wick_barrier_pylon",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/wick_barrier_pylon.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Protects resource targets and nearby defenses."
+        },
+        {
+          "asset_id": "asset_ash_burst_lantern",
+          "asset_kind": "tower_blueprint",
+          "source_file": "examples/compiled_assets/ash_burst_lantern.compiled_asset.json",
+          "review_status": "usable_fixture_pending_runtime_promotion",
+          "gameplay_role": "Handles clustered enemies at the resource node entrance."
+        },
+        {
+          "asset_id": "mod_overload_chain_arc_001",
+          "asset_kind": "temporary_mod",
+          "source_file": "examples/compiled_assets/overload_chain_mod.compiled_asset.json",
+          "review_status": "candidate_only_high_risk",
+          "gameplay_role": "Optional later risk tradeoff; not part of default MVP battle because it requires unregistered materials and a power-grid context."
+        }
+      ],
+      "research_hooks": [
+        "combined_defense",
+        "resource_node_protection",
+        "risk_tradeoff"
+      ],
+      "gameplay_service": [
+        "Moves from a single tutorial trap to a combined tower-defense setup.",
+        "Turns a resource storage node into a concrete battle objective.",
+        "Introduces glow_crystal as a rare reward after successful defense."
+      ]
+    }
+  ],
+  "next_required_artifacts": [
+    {
+      "artifact": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+      "reason": "Completed Stage 04 runtime package that protects lamp_wick_store and uses combined defenses."
+    },
+    {
+      "artifact": "future_world_deltas_after_stage_04",
+      "reason": "Stage 02/03/04 reviewed deltas now exist; future work should extend beyond the current tutorial chain."
+    },
+    {
+      "artifact": "candidate NPC registration packs",
+      "reason": "npc_wire_mender_003 and npc_road_scout must be registered or rejected before becoming permanent run content."
+    },
+    {
+      "artifact": "asset promotion reports",
+      "reason": "Compiled assets still carry pending validation status and should pass runtime promotion before front-end package inclusion."
+    }
+  ],
+  "commit_gate_checks": [
+    "Reject player-visible text that exposes technical or tool terms.",
+    "Reject direct base worldbook mutation; accept only reviewed WorldStateDelta operations.",
+    "Reject unregistered NPCs, materials, map nodes, or enemies unless marked candidate-only.",
+    "Reject first-battle violations of one field trial and mid-battle sample delivery.",
+    "Reject overpowered effects with no cost, phase limit, placement rule, or instance limit.",
+    "Reject scouting assets that reveal hidden regions without action cost or confidence limits.",
+    "Reject content that is only atmosphere and has no gameplay_purpose, gameplay_hooks, or proposed_delta_summary."
+  ]
+}

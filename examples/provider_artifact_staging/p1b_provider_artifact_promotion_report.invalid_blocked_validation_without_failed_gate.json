@@ -1,0 +1,108 @@
+{
+  "schema_version": "provider_artifact_promotion_report.v0.1",
+  "report_id": "ppromo_invalid_blocked_validation_without_failed_gate_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source_staging_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+  "source_staging_id": "pstaging_stage05_map_visual_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "report_only": true,
+    "direct_runtime_mutation_allowed": false,
+    "direct_world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required"
+  },
+  "decision": {
+    "promotion_decision": "blocked_validation_failed",
+    "promotion_allowed": false,
+    "blocked_reason": "synthetic_validation_failed_without_failed_gate",
+    "required_next_actions": [
+      "repair_gate_statuses_or_use_blocked_review_required"
+    ],
+    "notes": [
+      "This fixture is intentionally invalid because blocked_validation_failed must be backed by at least one failed required gate."
+    ]
+  },
+  "reviewed_artifacts": [
+    {
+      "staged_artifact_id": "stage05_map_visual_candidate_summary_staged",
+      "source_artifact_id": "stage05_map_visual_candidate_summary",
+      "kind": "json_candidate",
+      "path": "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
+      "review_result": "blocked_pending_review",
+      "notes": [
+        "The reviewed artifact remains pending review; no required gate has actually failed."
+      ]
+    }
+  ],
+  "gate_results": {
+    "source_staging_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/p1b_provider_artifact_staging.example.json",
+      "notes": [
+        "The referenced staging manifest validates."
+      ]
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The reviewed artifact path is local and exists."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "This gate has not failed; blocked_validation_failed must not be used yet."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "This gate has not failed; blocked_validation_failed must not be used yet."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "This gate has not failed; blocked_validation_failed must not be used yet."
+      ]
+    },
+    "simulation_gate": {
+      "status": "not_applicable",
+      "required_before_promotion": false,
+      "report_ref": null,
+      "notes": [
+        "Simulation is not applicable for this summary artifact."
+      ]
+    }
+  },
+  "promotion_targets": {
+    "target_kind": "none",
+    "runtime_package_refs": [],
+    "world_transaction_refs": [],
+    "published_media_refs": []
+  },
+  "safety_summary": {
+    "provider_call_count_by_report": 0,
+    "world_mutation_count_by_report": 0,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "stores_secret": false,
+    "uses_temporary_url": false
+  }
+}

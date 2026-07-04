@@ -1,0 +1,24 @@
+{
+  "metadata_version": "raw_media_metadata.v0.1",
+  "description": "Stub raw_media metadata for the mvp_media_stub_publish workflow. These items live in the raw_media layer and may NOT be referenced directly by runtime_public artifacts; they must go through media.publish_stub_manifest first.",
+  "raw_media_items": [
+    {
+      "stable_internal_id": "sample_trap_7f3a_icon",
+      "source_layer": "raw_media",
+      "source_kind": "imported_stub",
+      "width": 512,
+      "height": 512,
+      "fallback_used": true,
+      "notes": "Placeholder icon for the 折光绊索 sample trap. No real image generation was invoked."
+    },
+    {
+      "stable_internal_id": "sample_trap_7f3a_sprite",
+      "source_layer": "raw_media",
+      "source_kind": "imported_stub",
+      "width": 256,
+      "height": 256,
+      "fallback_used": true,
+      "notes": "Placeholder sprite for the 折光绊索 sample trap."
+    }
+  ]
+}

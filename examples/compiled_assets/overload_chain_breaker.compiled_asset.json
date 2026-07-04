@@ -1,0 +1,60 @@
+{
+  "id": "asset_overload_chain_breaker",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "temporary_mod",
+    "base_stats": {
+      "activation_cost": 45,
+      "duration_seconds": 20,
+      "cooldown": 60
+    },
+    "effect_blocks": [
+      {
+        "type": "charge_burst",
+        "charge_seconds": 4,
+        "burst_multiplier": 1.8
+      },
+      {
+        "type": "risk_modifier",
+        "risk_delta": 10
+      }
+    ],
+    "constraints": {
+      "allowed_phases": [
+        "battle"
+      ]
+    },
+    "type_specific": {
+      "attach_to": "tower",
+      "target_asset_type": "tower_blueprint",
+      "stacking": "replace_same_source",
+      "rollback_behavior": "expire_and_restore_base_tower"
+    }
+  },
+  "presentation": {
+    "name": "过载连弧断潮改造资产",
+    "short_description": "把短压铜线圈接入现有塔座，让下一段攻击短时跳向多个敌人，用来压住分散影潮。",
+    "icon_prompt": "2D game icon, unstable modification module, clean background",
+    "animation_card_prompt": "2D animation card for 过载连弧断潮改造方案, tower defense strategy game",
+    "visual_tags": [
+      "temporary_mod",
+      "compiled_asset"
+    ]
+  },
+  "provenance": {
+    "proposal_id": "proposal_overload_chain_breaker",
+    "mode": "runtime_experimental",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "mock",
+    "model": "mock_compiler_v0.1",
+    "npc_ids": [
+      "npc_wire_mender_003"
+    ],
+    "material_ids": [
+      "conductor_filament",
+      "sample_charged_copper_coil_trial"
+    ],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

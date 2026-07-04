@@ -1,0 +1,19 @@
+{
+  "schema_version": "player_intent.v0.1",
+  "id": "player_intent_alchemy_furnace_tower_001",
+  "utterance_id": "player_utterance_alchemy_furnace_tower_001",
+  "asset_kind": "tower_blueprint",
+  "summary": "玩家想要一座炼丹炉主题的防御塔，具备牵引敌人、范围紫火持续伤害、击杀成长机制。",
+  "desired_mechanics": [
+    "pull_in",
+    "cone_damage_over_time",
+    "gain_stack_on_kill"
+  ],
+  "desired_theme": {
+    "archetype": "alchemy_furnace",
+    "world_tags": ["field_research", "night_fire"],
+    "tone": "dangerous_but_useful"
+  },
+  "desired_role": ["area_damage", "soft_control"],
+  "confidence": "high"
+}

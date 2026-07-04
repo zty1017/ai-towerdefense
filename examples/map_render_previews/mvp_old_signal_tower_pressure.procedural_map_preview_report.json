@@ -1,0 +1,42 @@
+{
+  "canvas": {
+    "height": 720,
+    "width": 1280
+  },
+  "preview_svg_path": "examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg",
+  "preview_svg_sha256": "82dc29243f5a18222fd7820e02976477237d83988cb9baa6e29d18123dce5b1e",
+  "render_summary": {
+    "build_slot_count": 12,
+    "objective_count": 3,
+    "projection": {
+      "scale": 0.7179,
+      "tile_h": 32.0,
+      "tile_w": 61.538,
+      "type": "pseudo3d_oblique_svg_preview"
+    },
+    "route_count": 2,
+    "spawn_point_count": 2
+  },
+  "report_id": "mvp_old_signal_tower_pressure.procedural_map_preview_report",
+  "schema_version": "procedural_map_preview_report.v0.1",
+  "semantic_source_policy": {
+    "build_slots": "map_runtime_package",
+    "colors": "map_style_pack",
+    "objectives": "map_runtime_package",
+    "road_width_and_slot_footprint": "procedural_map_render_plan",
+    "routes": "map_runtime_package",
+    "spawn_points": "map_runtime_package"
+  },
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
+    "procedural_map_render_plan_path": "examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json"
+  },
+  "status": "preview_ready_review_only",
+  "usage_policy": [
+    "review_only",
+    "not_player_runtime",
+    "not_published_visual_layer",
+    "does_not_modify_map_runtime_package"
+  ]
+}

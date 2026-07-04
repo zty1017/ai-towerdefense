@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/repair_action_plan.v0.1.schema.json",
+  "title": "RepairActionPlan v0.1",
+  "description": "A bounded ReAct repair action plan produced by graph.repair_with_react_guarded. Must not carry provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "triggered_by", "budgets", "actions"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "repair_action_plan.v0.1" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "triggered_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "message"],
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "message": { "type": "string" },
+          "node_id": { "type": "string" },
+          "severity": { "type": "string", "enum": ["error", "warning"] }
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_iterations", "max_provider_calls", "max_seconds"],
+      "properties": {
+        "max_iterations": { "type": "integer", "minimum": 1 },
+        "max_provider_calls": { "type": "integer", "minimum": 0 },
+        "max_seconds": { "type": "number", "minimum": 1 },
+        "fallback_on_exhausted": { "type": "string", "default": "abort_compile" }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_type"],
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "inspect_spec",
+              "inspect_artifact",
+              "inspect_validation_report",
+              "patch_spec",
+              "patch_prompt",
+              "rerun_node",
+              "increase_candidates",
+              "replace_with_template",
+              "split_asset_layer",
+              "fallback_to_preset",
+              "accept_with_warning",
+              "abort_compile"
+            ]
+          },
+          "target_node_id": { "type": "string" },
+          "target_field": { "type": "string" },
+          "patch_value": {},
+          "rationale": { "type": "string" },
+          "order": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "overall_rationale": { "type": "string" }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_player_intent_to_asset_plan",
+  "mode": "live",
+  "description": "LIVE guarded hidden compiler front-end: free player utterance -> PlayerIntent -> AssetDesignSpec -> deterministic legalization -> AssetPlan -> player-visible Proposal. This workflow calls a real LLM only in the guarded parsing/spec-building nodes.",
+  "nodes": [
+    {
+      "id": "load_player_utterance",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/player_inputs/alchemy_furnace_tower.player_utterance.json" }
+    },
+    {
+      "id": "load_world_state",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/run_world_states/demo_initial.run_world_state.json" }
+    },
+    {
+      "id": "parse_intent",
+      "node_type": "intent.parse_player_utterance_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "provider_profile": "ark_deepseek_v4_flash",
+        "max_tokens": 4096,
+        "request_timeout": 120
+      }
+    },
+    {
+      "id": "build_design_spec",
+      "node_type": "asset.build_design_spec_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "provider_profile": "ark_deepseek_v4_flash",
+        "max_tokens": 8192,
+        "request_timeout": 120
+      }
+    },
+    {
+      "id": "legalize_design_spec",
+      "node_type": "asset.legalize_design_spec"
+    },
+    {
+      "id": "build_asset_plan",
+      "node_type": "asset.build_asset_plan"
+    },
+    {
+      "id": "select_compile_template",
+      "node_type": "graph.select_compile_template_guarded",
+      "params": {
+        "allow_live_provider_call": true,
+        "provider_profile": "ark_deepseek_v4_flash",
+        "allowed_templates": [
+          "TowerCompileGraph",
+          "SupportItemCompileGraph",
+          "TemporaryModCompileGraph",
+          "IntelAssetCompileGraph"
+        ],
+        "max_tokens": 2048,
+        "request_timeout": 120
+      }
+    },
+    {
+      "id": "build_proposal",
+      "node_type": "proposal.build_from_legalized_spec"
+    },
+    {
+      "id": "validate_proposal",
+      "node_type": "proposal.validate"
+    }
+  ],
+  "edges": [
+    { "source": "load_player_utterance", "target": "parse_intent", "target_input": "player_utterance" },
+    { "source": "load_world_state", "target": "parse_intent", "target_input": "run_world_state" },
+    { "source": "parse_intent", "target": "build_design_spec", "target_input": "player_intent" },
+    { "source": "load_world_state", "target": "build_design_spec", "target_input": "run_world_state" },
+    { "source": "build_design_spec", "target": "legalize_design_spec", "target_input": "design_spec" },
+    { "source": "load_world_state", "target": "legalize_design_spec", "target_input": "run_world_state" },
+    { "source": "legalize_design_spec", "target": "build_asset_plan", "target_input": "legalized_design_spec" },
+    { "source": "legalize_design_spec", "source_output": "report", "target": "build_asset_plan", "target_input": "legalization_report" },
+    { "source": "legalize_design_spec", "target": "select_compile_template", "target_input": "legalized_design_spec" },
+    { "source": "build_asset_plan", "target": "select_compile_template", "target_input": "asset_plan" },
+    { "source": "legalize_design_spec", "target": "build_proposal", "target_input": "legalized_design_spec" },
+    { "source": "build_asset_plan", "target": "build_proposal", "target_input": "asset_plan" },
+    { "source": "load_world_state", "target": "build_proposal", "target_input": "run_world_state" },
+    { "source": "select_compile_template", "target": "build_proposal", "target_input": "template_selection" },
+    { "source": "build_proposal", "target": "validate_proposal", "target_input": "proposal" }
+  ]
+}

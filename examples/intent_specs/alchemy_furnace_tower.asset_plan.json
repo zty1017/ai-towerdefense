@@ -1,0 +1,108 @@
+{
+  "schema_version": "asset_plan.v0.1",
+  "asset_kind": "tower_blueprint",
+  "gameplay": {
+    "effect_blocks": [
+      {
+        "type": "damage_over_time",
+        "params": {
+          "damage_per_tick": 15,
+          "tick_interval": 1.0,
+          "duration": 3.0,
+          "element": "purple_fire"
+        }
+      },
+      {
+        "type": "aura_buff",
+        "params": {
+          "radius": 120,
+          "effect": "pull_in",
+          "strength": "medium"
+        }
+      },
+      {
+        "type": "charge_burst",
+        "params": {
+          "stacks_on_kill": true,
+          "max_stacks": 10,
+          "damage_bonus_per_stack": 0.05
+        }
+      }
+    ],
+    "targeting": "dense_area",
+    "range": 150,
+    "cooldown": 2.5,
+    "build_cost": 220,
+    "growth_mechanic": "gain_stack_on_kill"
+  },
+  "presentation": {
+    "name": "炼丹炉",
+    "short_description": "将玩家构想整理成可试作的防御设施。",
+    "detailed_description": "该方案会先生成稳定的战斗规则，随后准备塔体、图标与特效素材。",
+    "visual_style_ref": "compiler_td_v1"
+  },
+  "media_roles": {
+    "tower_body": {
+      "role": "tower_body",
+      "required": true,
+      "prompt_hint": "isometric alchemy_furnace, purple_fire, clean background, single subject",
+      "fallback_strategy": "placeholder_sprite"
+    },
+    "tower_icon": {
+      "role": "tower_icon",
+      "required": true,
+      "prompt_hint": "2D game icon, alchemy_furnace, clean silhouette",
+      "fallback_strategy": "placeholder_sprite"
+    },
+    "attack_vfx": {
+      "role": "attack_vfx",
+      "required": true,
+      "prompt_hint": "purple_fire attack effect, transparent background",
+      "fallback_strategy": "visual_recipe"
+    },
+    "impact_vfx": {
+      "role": "impact_vfx",
+      "required": false,
+      "prompt_hint": "purple_fire impact burst",
+      "fallback_strategy": "visual_recipe"
+    },
+    "projectile": {
+      "role": "projectile",
+      "required": false,
+      "prompt_hint": "purple_fire projectile",
+      "fallback_strategy": "visual_recipe"
+    },
+    "selection_ring": {
+      "role": "selection_ring",
+      "required": false,
+      "prompt_hint": "",
+      "fallback_strategy": "deterministic_shape"
+    },
+    "shadow": {
+      "role": "shadow",
+      "required": false,
+      "prompt_hint": "",
+      "fallback_strategy": "deterministic_shape"
+    }
+  },
+  "runtime_metadata": {
+    "anchor_point": "bottom_center",
+    "footprint": {
+      "width": 1,
+      "height": 1
+    },
+    "collision_box": {
+      "width": 0.8,
+      "height": 0.8
+    },
+    "attack_socket": {
+      "x": 0,
+      "y": 0.5
+    }
+  },
+  "fallback_plan": {
+    "media_fallback_strategy": "placeholder_sprite",
+    "gameplay_fallback_strategy": "skip_unregistered_effects",
+    "can_degrade_to_proposal": false
+  }
+}

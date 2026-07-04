@@ -1,0 +1,47 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_controlled_narrative_world_progression",
+  "mode": "deterministic",
+  "description": "battle result + RunWorldState -> controlled NarrativeEventBundle -> WorldStateDelta -> next RunWorldState. No live provider calls.",
+  "nodes": [
+    {
+      "id": "load_run_state",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/run_world_states/demo_initial.run_world_state.json" }
+    },
+    {
+      "id": "load_battle_result",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/battle_result.sample.json" }
+    },
+    {
+      "id": "load_session_context",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/session_context.sample.json" }
+    },
+    {
+      "id": "build_narrative_bundle",
+      "node_type": "narrative.build_controlled_world_player_bundle",
+      "runtime_public": true
+    },
+    {
+      "id": "build_delta",
+      "node_type": "world_state.build_delta_from_narrative_stub"
+    },
+    {
+      "id": "apply_delta",
+      "node_type": "world_state.apply_delta"
+    }
+  ],
+  "edges": [
+    { "source": "load_run_state", "target": "build_narrative_bundle", "target_input": "run_world_state" },
+    { "source": "load_battle_result", "target": "build_narrative_bundle", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "build_narrative_bundle", "target_input": "session_context" },
+    { "source": "load_run_state", "target": "build_delta", "target_input": "run_world_state" },
+    { "source": "load_battle_result", "target": "build_delta", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "build_delta", "target_input": "session_context" },
+    { "source": "build_narrative_bundle", "target": "build_delta", "target_input": "narrative_bundle" },
+    { "source": "load_run_state", "target": "apply_delta", "target_input": "run_world_state" },
+    { "source": "build_delta", "target": "apply_delta", "target_input": "world_state_delta" }
+  ]
+}

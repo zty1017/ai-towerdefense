@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/media_runtime_readiness_report.v0.1.schema.json",
+  "title": "MediaRuntimeReadinessReport v0.1",
+  "description": "Deterministic report that checks whether published media can be loaded and placed by the game runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "media_layer",
+    "status",
+    "passed_count",
+    "needs_review_count",
+    "failed_count",
+    "manifest_issues",
+    "items_total",
+    "items",
+    "atlas",
+    "thresholds",
+    "notes"
+  ],
+  "properties": {
+    "report_version": { "type": "string", "const": "media_runtime_readiness_report.v0.1" },
+    "media_layer": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+    "passed_count": { "type": "integer", "minimum": 0 },
+    "needs_review_count": { "type": "integer", "minimum": 0 },
+    "failed_count": { "type": "integer", "minimum": 0 },
+    "manifest_issues": { "type": "array", "items": { "type": "string" } },
+    "items_total": { "type": "integer", "minimum": 0 },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "atlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "issues", "warnings"],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+        "issues": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "texture_key": { "type": ["string", "null"] },
+        "image": { "type": ["string", "null"] },
+        "descriptor": { "type": ["string", "null"] }
+      }
+    },
+    "thresholds": { "type": "object" },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["stable_internal_id", "media_role", "status", "issues", "warnings"],
+      "properties": {
+        "stable_internal_id": { "type": ["string", "null"] },
+        "media_role": { "type": "string" },
+        "status": { "type": "string", "enum": ["passed", "needs_review", "failed"] },
+        "file": { "type": "string" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "sha256": { "type": "string" },
+        "metrics": { "type": "object" },
+        "issues": { "type": "array", "items": { "type": "string" } },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "runtime_refs": { "type": "object" }
+      }
+    }
+  }
+}

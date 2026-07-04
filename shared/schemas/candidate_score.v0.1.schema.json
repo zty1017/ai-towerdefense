@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/candidate_score.v0.1.schema.json",
+  "title": "CandidateScore v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "score_version",
+    "candidate_id",
+    "asset_type",
+    "total_score",
+    "dimension_scores",
+    "weights",
+    "recommendation",
+    "reasons",
+    "expected_media_roles"
+  ],
+  "properties": {
+    "score_version": {
+      "type": "string"
+    },
+    "candidate_id": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string"
+    },
+    "total_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "dimension_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100
+      }
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": [
+        "reject",
+        "revise",
+        "generate_media",
+        "needs_review",
+        "promote_candidate"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_media_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

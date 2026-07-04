@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_runtime_package.v0.1.schema.json",
+  "title": "MapRuntimePackage v0.1",
+  "description": "Runtime-safe logical map package for tower defense battles. It keeps routes, build slots, objectives, spawn points, and visual layer references explicit; generated/painted images are presentation only and never the source of gameplay truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "worldbook_id",
+    "node_id",
+    "battle_config_version",
+    "created_at",
+    "source_refs",
+    "grid",
+    "path_routes",
+    "build_slots",
+    "objectives",
+    "spawn_points",
+    "visual_layers",
+    "runtime_hints",
+    "validation_report"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_runtime_package.v0.1" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "battle_config_version": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "grid": { "$ref": "#/$defs/grid" },
+    "path_routes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/path_route" }
+    },
+    "build_slots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/build_slot" }
+    },
+    "objectives": { "$ref": "#/$defs/objectives" },
+    "spawn_points": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/spawn_point" }
+    },
+    "visual_layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/visual_layer" }
+    },
+    "runtime_hints": { "$ref": "#/$defs/runtime_hints" },
+    "validation_report": { "$ref": "#/$defs/validation_report" }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["battle_config_path", "logic_authority"],
+      "properties": {
+        "battle_config_path": { "type": "string", "minLength": 1 },
+        "visual_reference_manifest_path": { "type": "string", "minLength": 1 },
+        "logic_authority": {
+          "type": "string",
+          "enum": ["battle_config", "certified_map_template"]
+        }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection", "width_cells", "height_cells", "cell_size"],
+      "properties": {
+        "projection": { "type": "string", "minLength": 1 },
+        "width_cells": { "type": "integer", "minimum": 1 },
+        "height_cells": { "type": "integer", "minimum": 1 },
+        "cell_size": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" }
+      }
+    },
+    "path_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_id", "display_name", "waypoints", "entry_label", "exit_label"],
+      "properties": {
+        "route_id": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "waypoints": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/point" }
+        },
+        "entry_label": { "type": "string", "minLength": 1 },
+        "exit_label": { "type": "string", "minLength": 1 }
+      }
+    },
+    "build_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_id",
+        "position",
+        "footprint",
+        "allowed_asset_kinds",
+        "placement_tags",
+        "visual_hint"
+      ],
+      "properties": {
+        "slot_id": { "type": "string", "minLength": 1 },
+        "position": { "$ref": "#/$defs/point" },
+        "footprint": { "$ref": "#/$defs/footprint" },
+        "allowed_asset_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "tower_blueprint",
+              "temporary_trap_sample",
+              "support_item",
+              "temporary_mod"
+            ]
+          }
+        },
+        "placement_tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "visual_hint": {
+          "type": "string",
+          "enum": ["ground_plate", "ruin_plinth", "roadside_marker"]
+        }
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_cells", "height_cells"],
+      "properties": {
+        "width_cells": { "type": "integer", "minimum": 1 },
+        "height_cells": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "display_name", "position", "durability"],
+      "properties": {
+        "target_id": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "position": { "$ref": "#/$defs/point" },
+        "durability": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "objectives": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["core_target", "optional_targets"],
+      "properties": {
+        "core_target": { "$ref": "#/$defs/target" },
+        "optional_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/target" }
+        }
+      }
+    },
+    "spawn_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spawn_id", "route_id", "position", "label"],
+      "properties": {
+        "spawn_id": { "type": "string", "minLength": 1 },
+        "route_id": { "type": "string", "minLength": 1 },
+        "position": { "$ref": "#/$defs/point" },
+        "label": { "type": "string", "minLength": 1 }
+      }
+    },
+    "visual_layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer_id", "role", "url", "local_path", "width", "height", "sha256", "authority"],
+      "properties": {
+        "layer_id": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "battle_control_sketch",
+            "battle_reference_board",
+            "battle_runtime_background",
+            "painted_visual_layer",
+            "strategic_control_sketch"
+          ]
+        },
+        "url": { "type": "string", "pattern": "^/assets/map_visual_reference/.+" },
+        "local_path": { "type": "string", "minLength": 1 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "authority": {
+          "type": "string",
+          "enum": ["reference_only", "published_visual_layer", "candidate_visual_layer"]
+        },
+        "review_status": { "type": "string", "minLength": 1 },
+        "player_visible_quality": {
+          "type": "string",
+          "enum": ["passed", "warning", "failed", "not_applicable"]
+        },
+        "logic_alignment_status": {
+          "type": "string",
+          "enum": ["passed", "needs_overlay_correction", "failed", "not_checked", "not_applicable"]
+        }
+      }
+    },
+    "runtime_hints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drag_deploy_enabled",
+        "show_grid_policy",
+        "path_preview_policy",
+        "target_marker_policy"
+      ],
+      "properties": {
+        "drag_deploy_enabled": { "type": "boolean" },
+        "show_grid_policy": {
+          "type": "string",
+          "enum": ["hidden_until_drag", "subtle_overlay", "debug_only"]
+        },
+        "path_preview_policy": {
+          "type": "string",
+          "enum": ["subtle_highlight", "always_visible", "debug_only"]
+        },
+        "target_marker_policy": {
+          "type": "string",
+          "enum": ["icon_overlay", "diegetic_marker", "debug_only"]
+        }
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_status", "runtime_loadable", "gates"],
+      "properties": {
+        "gate_status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+        "runtime_loadable": { "type": "boolean" },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["gate_id", "status", "summary"],
+            "properties": {
+              "gate_id": { "type": "string", "minLength": 1 },
+              "status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+              "summary": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

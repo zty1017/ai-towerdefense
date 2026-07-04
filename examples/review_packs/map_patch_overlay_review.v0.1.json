@@ -1,0 +1,446 @@
+{
+  "artifacts": [
+    {
+      "acceptance_gates": [
+        "patched_runtime_schema_passed",
+        "patched_overlay_artifact_ready",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "battle_simulation_still_valid",
+        "explicit_promotion_report_updates_MapRuntimePackage"
+      ],
+      "after_summary": {
+        "path_route_count": 1,
+        "route_bounds": {
+          "max_x": 15,
+          "max_y": 4,
+          "min_x": 3,
+          "min_y": 2
+        }
+      },
+      "before_summary": {
+        "path_route_count": 1,
+        "route_bounds": {
+          "max_x": 15,
+          "max_y": 6,
+          "min_x": 1,
+          "min_y": 2
+        }
+      },
+      "node_id": "gray_lantern_station",
+      "patch_operation_count": 5,
+      "patch_operation_deltas": [
+        {
+          "after_waypoints": [
+            {
+              "x": 15,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 4
+            },
+            {
+              "x": 11,
+              "y": 4
+            },
+            {
+              "x": 9,
+              "y": 4
+            },
+            {
+              "x": 7,
+              "y": 4
+            },
+            {
+              "x": 5,
+              "y": 4
+            },
+            {
+              "x": 4,
+              "y": 3
+            },
+            {
+              "x": 3,
+              "y": 2
+            }
+          ],
+          "before_waypoints": [
+            {
+              "x": 15,
+              "y": 4
+            },
+            {
+              "x": 10,
+              "y": 4
+            },
+            {
+              "x": 10,
+              "y": 2
+            },
+            {
+              "x": 5,
+              "y": 2
+            },
+            {
+              "x": 5,
+              "y": 6
+            },
+            {
+              "x": 1,
+              "y": 6
+            }
+          ],
+          "op": "replace_path_waypoints",
+          "route_id": "path_main_road"
+        },
+        {
+          "after_position": {
+            "x": 3,
+            "y": 2
+          },
+          "before_position": {
+            "x": 0,
+            "y": 6
+          },
+          "op": "move_objective",
+          "target_id": "target_node_core"
+        },
+        {
+          "after_position": {
+            "x": 4,
+            "y": 1
+          },
+          "before_position": {
+            "x": 3,
+            "y": 2
+          },
+          "op": "move_objective",
+          "target_id": "target_signal_beacon"
+        },
+        {
+          "after_position": {
+            "x": 15,
+            "y": 4
+          },
+          "before_position": {
+            "x": 15,
+            "y": 4
+          },
+          "op": "move_spawn_point",
+          "spawn_id": "spawn_path_main_road"
+        },
+        {
+          "after_position": {
+            "x": 8,
+            "y": 3
+          },
+          "before_position": {
+            "x": 9,
+            "y": 4
+          },
+          "op": "move_build_slot",
+          "slot_id": "slot_06"
+        }
+      ],
+      "patch_strategy": "hybrid_runtime_reprojection",
+      "patched_overlay_png_sha256": "37e94c0fd8ab3d0ff9fa3e97d6b799c58218b3063f4ee8a2cd25015759cf31f5",
+      "patched_overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/gray_lantern_station.patched_overlay_review.svg",
+      "patched_overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/gray_lantern_station.patched_overlay_review.png",
+      "patched_overlay_sha256": "f7a68554db4a3551b844c06eba9cc1ce45acb6c7fc84fd4d4126403daa4b8560",
+      "patched_runtime_review_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/gray_lantern_station.patched_runtime_review.json",
+      "patched_runtime_sha256": "a0fd50efb4c4561453476eb1b362155ce04b2ff926c3b557c013089f4b613cee",
+      "promotion_allowed_now": false,
+      "review_notes": [
+        "This artifact applies patch candidates to an in-memory runtime package only.",
+        "The source MapRuntimePackage file is not changed by this tool.",
+        "Patched overlay readiness does not approve visual readability or runtime promotion."
+      ],
+      "review_required": true,
+      "risk_level": "medium",
+      "source_normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/gray_lantern_station.normalized_1280x720.png",
+      "source_runtime_package": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "status": "patched_overlay_artifact_ready",
+      "validation": {
+        "error_count": 0,
+        "errors": [],
+        "status": "passed"
+      }
+    },
+    {
+      "acceptance_gates": [
+        "patched_runtime_schema_passed",
+        "patched_overlay_artifact_ready",
+        "runtime_paths_follow_visible_roads",
+        "objectives_land_on_unique_visible_landmarks",
+        "build_slots_land_on_visible_empty_pads",
+        "battle_simulation_still_valid",
+        "explicit_promotion_report_updates_MapRuntimePackage"
+      ],
+      "after_summary": {
+        "path_route_count": 2,
+        "route_bounds": {
+          "max_x": 17,
+          "max_y": 8,
+          "min_x": 1,
+          "min_y": 4
+        }
+      },
+      "before_summary": {
+        "path_route_count": 2,
+        "route_bounds": {
+          "max_x": 17,
+          "max_y": 8,
+          "min_x": 1,
+          "min_y": 2
+        }
+      },
+      "node_id": "lamp_wick_store",
+      "patch_operation_count": 6,
+      "patch_operation_deltas": [
+        {
+          "after_waypoints": [
+            {
+              "x": 17,
+              "y": 4
+            },
+            {
+              "x": 15,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 4
+            },
+            {
+              "x": 11,
+              "y": 4
+            },
+            {
+              "x": 9,
+              "y": 5
+            },
+            {
+              "x": 7,
+              "y": 5
+            },
+            {
+              "x": 5,
+              "y": 5
+            },
+            {
+              "x": 3,
+              "y": 5
+            },
+            {
+              "x": 1,
+              "y": 5
+            }
+          ],
+          "before_waypoints": [
+            {
+              "x": 17,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 4
+            },
+            {
+              "x": 13,
+              "y": 2
+            },
+            {
+              "x": 8,
+              "y": 2
+            },
+            {
+              "x": 8,
+              "y": 6
+            },
+            {
+              "x": 3,
+              "y": 6
+            },
+            {
+              "x": 1,
+              "y": 5
+            }
+          ],
+          "op": "replace_path_waypoints",
+          "route_id": "path_wick_store_main_pipe"
+        },
+        {
+          "after_waypoints": [
+            {
+              "x": 17,
+              "y": 8
+            },
+            {
+              "x": 15,
+              "y": 8
+            },
+            {
+              "x": 13,
+              "y": 8
+            },
+            {
+              "x": 11,
+              "y": 7
+            },
+            {
+              "x": 9,
+              "y": 7
+            },
+            {
+              "x": 7,
+              "y": 7
+            },
+            {
+              "x": 5,
+              "y": 6
+            },
+            {
+              "x": 3,
+              "y": 6
+            },
+            {
+              "x": 2,
+              "y": 5
+            }
+          ],
+          "before_waypoints": [
+            {
+              "x": 17,
+              "y": 8
+            },
+            {
+              "x": 12,
+              "y": 8
+            },
+            {
+              "x": 10,
+              "y": 7
+            },
+            {
+              "x": 6,
+              "y": 7
+            },
+            {
+              "x": 2,
+              "y": 5
+            }
+          ],
+          "op": "replace_path_waypoints",
+          "route_id": "path_wick_store_service_lane"
+        },
+        {
+          "after_position": {
+            "x": 1,
+            "y": 5
+          },
+          "before_position": {
+            "x": 0,
+            "y": 5
+          },
+          "op": "move_objective",
+          "target_id": "target_wick_store_core"
+        },
+        {
+          "after_position": {
+            "x": 2,
+            "y": 7
+          },
+          "before_position": {
+            "x": 2,
+            "y": 7
+          },
+          "op": "move_objective",
+          "target_id": "target_supply_line_coupler"
+        },
+        {
+          "after_position": {
+            "x": 4,
+            "y": 3
+          },
+          "before_position": {
+            "x": 4,
+            "y": 3
+          },
+          "op": "move_objective",
+          "target_id": "target_lamp_oil_shelf"
+        },
+        {
+          "after_position": {
+            "x": 12,
+            "y": 6
+          },
+          "before_position": {
+            "x": 12,
+            "y": 4
+          },
+          "op": "move_build_slot",
+          "slot_id": "slot_06"
+        }
+      ],
+      "patch_strategy": "runtime_path_reprojection",
+      "patched_overlay_png_sha256": "6b35833d9db28a24d4a67ae85287599ff0ecd206617178c0ba92acc81fa89194",
+      "patched_overlay_review_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/lamp_wick_store.patched_overlay_review.svg",
+      "patched_overlay_review_png_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/lamp_wick_store.patched_overlay_review.png",
+      "patched_overlay_sha256": "65c9de49814a778bcfff9ab33f31853f6e0a29fb86b5021ac7659fedb94a06b2",
+      "patched_runtime_review_path": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay/lamp_wick_store.patched_runtime_review.json",
+      "patched_runtime_sha256": "dce24867e0e537da62ffc4bf791b60c2926d2b904dea8ccb3f65205a44471c8c",
+      "promotion_allowed_now": false,
+      "review_notes": [
+        "This artifact applies patch candidates to an in-memory runtime package only.",
+        "The source MapRuntimePackage file is not changed by this tool.",
+        "Patched overlay readiness does not approve visual readability or runtime promotion."
+      ],
+      "review_required": true,
+      "risk_level": "medium",
+      "source_normalized_path": "game_data/media/map_visual_reference/node_candidates_v2_normalized/lamp_wick_store.normalized_1280x720.png",
+      "source_runtime_package": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      "status": "patched_overlay_artifact_ready",
+      "validation": {
+        "error_count": 0,
+        "errors": [],
+        "status": "passed"
+      }
+    },
+    {
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "reason": "No runtime patch candidate is proposed for this node; use topology-constrained prompt pack instead.",
+      "review_required": true,
+      "status": "skipped"
+    }
+  ],
+  "output_dir": "game_data/media/map_visual_reference/node_candidates_v2_patched_overlay",
+  "policy": [
+    "Patched runtime JSON files are review snapshots, not promoted MapRuntimePackage files.",
+    "The frontend runtime must not consume these artifacts unless a later promotion report explicitly updates published runtime packages or visual layers.",
+    "This report only proves that patch candidates can be visualized against the existing normalized background."
+  ],
+  "report_id": "mvp_map_patch_overlay_review",
+  "runtime_map_patch_candidates_path": "examples/review_packs/runtime_map_patch_candidates.v0.1.json",
+  "schema_version": "map_patch_overlay_review.v0.1",
+  "source_overlay_review_path": "examples/review_packs/map_candidate_overlay_review.v0.1.json",
+  "status": "patched_overlay_artifacts_ready_review_required",
+  "summary": {
+    "blocked_count": 0,
+    "candidate_count": 3,
+    "patched_overlay_artifact_ready_count": 2,
+    "promotion_allowed_now_count": 0,
+    "skipped_count": 1,
+    "status_counts": {
+      "patched_overlay_artifact_ready": 2,
+      "skipped": 1
+    },
+    "target_size": {
+      "height": 720,
+      "width": 1280
+    },
+    "validation_failed_count": 0
+  }
+}

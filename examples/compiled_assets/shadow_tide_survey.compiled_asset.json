@@ -1,0 +1,58 @@
+{
+  "id": "intel_shadow_tide_survey",
+  "lifecycle": "ephemeral",
+  "gameplay": {
+    "asset_type": "intel_asset",
+    "base_stats": {
+      "action_cost": 2,
+      "valid_turns": 3,
+      "confidence": 0.75
+    },
+    "effect_blocks": [
+      {
+        "type": "path_prediction",
+        "prediction_horizon": 2
+      },
+      {
+        "type": "weakness_tag",
+        "tag_key": "shadow_tide_fissure",
+        "confidence": 0.75
+      },
+      {
+        "type": "countermeasure_hint",
+        "hint_scope": "next_wave_vulnerability"
+      },
+      {
+        "type": "risk_modifier",
+        "risk_delta": -10
+      }
+    ],
+    "constraints": {
+      "requires_scout_present": true,
+      "allowed_phases": ["preparation", "battle"]
+    },
+    "type_specific": {
+      "reveal_mode": "next_wave_path_and_weakness",
+      "applies_to": "enemy_routes",
+      "consumer_hint": "需要斥候在场才能更新；情报仅适用于短期战斗"
+    }
+  },
+  "presentation": {
+    "name": "影潮测绘札记",
+    "short_description": "整理哨兵观察、旧路标和灯火读数，揭示下一波敌潮路径与可利用弱点。不直接造成伤害。",
+    "icon_prompt": "2D game icon, weathered scroll with shadowy wave patterns and watchtower silhouette, charcoal and signal wick motifs, clean background",
+    "animation_card_prompt": "2D animation card for shadow tide survey intel asset, ink-and-ember cartography style, tower defense strategy game",
+    "visual_tags": ["intel_asset", "compiled_asset", "scouting"]
+  },
+  "provenance": {
+    "proposal_id": "proposal_shadow_tide_survey_001",
+    "mode": "runtime_safe",
+    "worldbook_id": "long_night_lanterns",
+    "provider": "ark_glm_5_2",
+    "model": "glm-5.2",
+    "npc_ids": ["scout_001", "archivist_001"],
+    "material_ids": ["charcoal_map", "signal_wick"],
+    "validation_status": "pending",
+    "simulation_report_id": null
+  }
+}

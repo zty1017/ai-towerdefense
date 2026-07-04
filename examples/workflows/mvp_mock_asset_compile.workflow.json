@@ -1,0 +1,60 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_mock_asset_compile",
+  "mode": "deterministic",
+  "description": "player proposal -> validate -> mock compile -> validate candidate -> simulate -> pipeline summary",
+  "nodes": [
+    {
+      "id": "load_proposal",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/proposals/light_slow_field.proposal.json" }
+    },
+    {
+      "id": "validate_proposal",
+      "node_type": "proposal.validate"
+    },
+    {
+      "id": "mock_compile",
+      "node_type": "asset.mock_compile_proposal"
+    },
+    {
+      "id": "validate_candidate",
+      "node_type": "asset.validate_candidate"
+    },
+    {
+      "id": "simulate",
+      "node_type": "asset.simulate_candidate",
+      "params": { "duration_seconds": 30.0 }
+    },
+    {
+      "id": "score",
+      "node_type": "asset.score_candidate"
+    },
+    {
+      "id": "promotion",
+      "node_type": "asset.evaluate_promotion_policy"
+    },
+    {
+      "id": "summary",
+      "node_type": "report.pipeline_summary"
+    }
+  ],
+  "edges": [
+    { "source": "load_proposal", "target": "validate_proposal", "target_input": "proposal" },
+    { "source": "load_proposal", "target": "mock_compile", "target_input": "proposal" },
+    { "source": "mock_compile", "target": "validate_candidate", "target_input": "candidate" },
+    { "source": "mock_compile", "target": "simulate", "target_input": "candidate" },
+    { "source": "mock_compile", "target": "score", "target_input": "candidate" },
+    { "source": "validate_candidate", "target": "score", "target_input": "validation" },
+    { "source": "simulate", "target": "score", "target_input": "simulation" },
+    { "source": "mock_compile", "target": "promotion", "target_input": "candidate" },
+    { "source": "validate_candidate", "target": "promotion", "target_input": "validation" },
+    { "source": "simulate", "target": "promotion", "target_input": "simulation" },
+    { "source": "score", "target": "promotion", "target_input": "candidate_score" },
+    { "source": "validate_proposal", "target": "summary", "target_input": "proposal_validation" },
+    { "source": "validate_candidate", "target": "summary", "target_input": "candidate_validation" },
+    { "source": "simulate", "target": "summary", "target_input": "simulation" },
+    { "source": "score", "target": "summary", "target_input": "candidate_score" },
+    { "source": "promotion", "target": "summary", "target_input": "asset_promotion" }
+  ]
+}

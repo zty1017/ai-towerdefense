@@ -1,0 +1,185 @@
+{
+  "schema_version": "generation_schedule_run_report.v0.1",
+  "report_id": "mvp_generation_schedule_run_report_v0_1",
+  "visibility": "review_only",
+  "run_mode": "dry_run",
+  "generated_at": "2026-07-02T00:00:00Z",
+  "source_refs": {
+    "generation_schedule_plan": "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+  },
+  "execution_policy": {
+    "reads_env": false,
+    "calls_provider": false,
+    "mutates_world_state": false,
+    "writes_runtime_package": false,
+    "activates_prefetch_results": false
+  },
+  "summary": {
+    "plan_id": "mvp_generation_schedule_plan_v0_1",
+    "item_count": 8,
+    "action_counts": {
+      "reuse_ready": 3,
+      "schedule_background": 1,
+      "schedule_lazy": 1,
+      "schedule_prefetch": 2,
+      "select_fallback": 1
+    },
+    "status_counts": {
+      "fallback": 1,
+      "passed": 3,
+      "scheduled": 4
+    },
+    "ready_reused_count": 3,
+    "fallback_selected_count": 1,
+    "scheduled_count": 4,
+    "blocked_count": 0,
+    "provider_call_count": 0,
+    "world_mutation_count": 0
+  },
+  "items": [
+    {
+      "schedule_item_id": "sched_session_frontend_mock_bootstrap",
+      "compile_request_id": "compile_session_frontend_mock_bootstrap",
+      "object_ref": "frontend_mock_pack:mvp",
+      "latency_class": "sync_blocking",
+      "source_status": "ready",
+      "action": "reuse_ready",
+      "result_status": "passed",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": false,
+      "world_mutation_performed": false,
+      "fallback_ref": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "notes": [
+        "复用已审同步内容，不进行实时生成。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_first_battle_map_runtime_package",
+      "compile_request_id": "compile_first_battle_map_runtime_package",
+      "object_ref": "map_runtime_package:mvp_first_battle",
+      "latency_class": "sync_blocking",
+      "source_status": "ready",
+      "action": "reuse_ready",
+      "result_status": "passed",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": false,
+      "world_mutation_performed": false,
+      "fallback_ref": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      "notes": [
+        "复用已审同步内容，不进行实时生成。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_runtime_art_atlas_ready",
+      "compile_request_id": "compile_runtime_art_atlas_ready",
+      "object_ref": "media_atlas:frontend_runtime_art_atlas_v0_1",
+      "latency_class": "sync_blocking",
+      "source_status": "ready",
+      "action": "reuse_ready",
+      "result_status": "passed",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": false,
+      "world_mutation_performed": false,
+      "fallback_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
+      "notes": [
+        "复用已审同步内容，不进行实时生成。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_static_fallback_runtime_route",
+      "compile_request_id": "compile_static_fallback_runtime_route",
+      "object_ref": "runtime_package:mvp_demo",
+      "latency_class": "fallback_static",
+      "source_status": "fallback_ready",
+      "action": "select_fallback",
+      "result_status": "fallback",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": false,
+      "world_mutation_performed": false,
+      "fallback_ref": "examples/runtime_packages/mvp_demo.runtime_package.json",
+      "notes": [
+        "静态兜底路径已可用。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_stage05_worldline_prefetch",
+      "compile_request_id": "compile_stage05_worldline_prefetch",
+      "object_ref": "compilable_object_plan:act_1_stage_05_old_signal_tower_pressure",
+      "latency_class": "background_prefetch",
+      "source_status": "review_only",
+      "action": "schedule_prefetch",
+      "result_status": "scheduled",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": true,
+      "world_mutation_performed": false,
+      "fallback_ref": "examples/review_packs/mvp_next_stage_compilable_object_plan.v0.1.json",
+      "notes": [
+        "需要人工或系统授权后才允许真实生成。",
+        "预取结果启用前必须重新通过结构和语义门。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_next_map_visual_prefetch",
+      "compile_request_id": "compile_next_map_visual_prefetch",
+      "object_ref": "map_compile_package:old_signal_tower_pressure",
+      "latency_class": "background_prefetch",
+      "source_status": "planned",
+      "action": "schedule_prefetch",
+      "result_status": "scheduled",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": true,
+      "world_mutation_performed": false,
+      "fallback_ref": "examples/map_compile_packages/mvp_old_signal_tower_pressure.map_compile_package.json",
+      "notes": [
+        "需要人工或系统授权后才允许真实生成。",
+        "预取结果启用前必须重新通过结构和语义门。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_video_frame_background_compile",
+      "compile_request_id": "compile_video_frame_background_compile",
+      "object_ref": "media_pipeline:image_to_video_sprite_frames",
+      "latency_class": "background",
+      "source_status": "planned",
+      "action": "schedule_background",
+      "result_status": "scheduled",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": true,
+      "world_mutation_performed": false,
+      "fallback_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+      "notes": [
+        "后台增强不阻塞玩家流程，真实调用需另行授权。"
+      ]
+    },
+    {
+      "schedule_item_id": "sched_frontend_mock_sprite_repair_lazy",
+      "compile_request_id": "compile_frontend_mock_sprite_repair_lazy",
+      "object_ref": "review_pack:frontend_sprite_cutout_repair_plan",
+      "latency_class": "lazy",
+      "source_status": "planned",
+      "action": "schedule_lazy",
+      "result_status": "scheduled",
+      "dependencies_satisfied": true,
+      "provider_call_planned": false,
+      "provider_review_required": true,
+      "world_mutation_performed": false,
+      "fallback_ref": "game_data/media/frontend_mock/frontend_media_manifest.v0.1.json",
+      "notes": [
+        "低优先级修复，只在空闲窗口处理。"
+      ]
+    }
+  ],
+  "validation_commands": [
+    {
+      "purpose": "validate schedule run report",
+      "command": "python3 tools/scheduler/validate_generation_schedule_run_report.py examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
+    }
+  ]
+}

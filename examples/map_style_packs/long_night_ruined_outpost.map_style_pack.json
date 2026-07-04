@@ -1,0 +1,210 @@
+{
+  "schema_version": "map_style_pack.v0.1",
+  "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "created_at": "2026-07-04T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "developer_fixture"
+  },
+  "node_theme_tags": [
+    "ruined_outpost",
+    "cold_lantern_light",
+    "wet_stone",
+    "dark_fog_edge",
+    "tutorial_battle"
+  ],
+  "palette": {
+    "terrain_base": "#23302B",
+    "terrain_detail": "#4F5A45",
+    "road_base": "#766C55",
+    "road_edge": "#B8A56D",
+    "build_slot": "#D7C47A",
+    "objective": "#FFD26A",
+    "spawn": "#6650A6",
+    "resource": "#7EC8A5",
+    "hazard": "#8C3D4A",
+    "fog": "#87908A",
+    "accent": "#E5D48A"
+  },
+  "lighting": {
+    "time_of_day": "night",
+    "contrast_policy": "high_path_readability",
+    "shadow_policy": "soft_blob",
+    "intensity": 0.72
+  },
+  "terrain_materials": [
+    {
+      "material_id": "terrain_wet_ruin_moss",
+      "role": "terrain_base",
+      "base_color": "#23302B",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    },
+    {
+      "material_id": "terrain_broken_stone_detail",
+      "role": "terrain_detail",
+      "base_color": "#4F5A45",
+      "texture_policy": "reviewed_component_optional",
+      "component_ref": null
+    }
+  ],
+  "road_materials": [
+    {
+      "material_id": "road_old_station_track",
+      "role": "road_band",
+      "base_color": "#766C55",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    },
+    {
+      "material_id": "road_edge_lantern_chalk",
+      "role": "road_edge",
+      "base_color": "#B8A56D",
+      "texture_policy": "procedural_only",
+      "component_ref": null
+    }
+  ],
+  "road_edge_rules": {
+    "edge_style": "soft_embedded",
+    "shoulder_width_cells": 0.25,
+    "direction_cue_policy": "embedded_marks"
+  },
+  "build_slot_platforms": [
+    {
+      "prefab_id": "platform_lantern_foundation_ring",
+      "role": "build_slot_platform",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "round_ruin_plate_with_lantern_marks"
+      }
+    }
+  ],
+  "objective_prefabs": [
+    {
+      "prefab_id": "objective_gray_lantern_core_foundation",
+      "role": "objective_foundation",
+      "anchor_policy": "bottom_center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "raised_lantern_core_base"
+      }
+    }
+  ],
+  "spawn_prefabs": [
+    {
+      "prefab_id": "spawn_dark_fog_gate",
+      "role": "spawn_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "fog_rift_edge_marker"
+      }
+    }
+  ],
+  "resource_prefabs": [
+    {
+      "prefab_id": "resource_lantern_crystal_cluster_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "small_pale_green_lantern_crystal_cluster"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "hazard_lantern_dark_pool_marker",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_dark_pool_with_cold_lantern_edge"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "blocking_lantern_broken_wall_marker",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_broken_ruin_wall_chunk"
+      }
+    }
+  ],
+  "non_blocking_props": [
+    {
+      "prefab_id": "prop_broken_lamp_post",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "bottom_center",
+      "placement_policy": "edge_decoration_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "small_broken_lamp_post"
+      }
+    }
+  ],
+  "decorative_props": [
+    {
+      "prefab_id": "decor_cold_ash_and_loose_stones",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_contrast_ash_stones"
+      }
+    }
+  ],
+  "atmosphere_layers": [
+    {
+      "layer_id": "thin_edge_fog",
+      "role": "fog",
+      "opacity": 0.28,
+      "placement_policy": "map_edges_only"
+    }
+  ],
+  "postprocess": {
+    "contrast_boost": 0.32,
+    "saturation": 0.88,
+    "vignette": 0.18
+  },
+  "readability_rules": {
+    "minimum_path_contrast": 0.42,
+    "build_slot_marker_policy": "diegetic_platform",
+    "objective_marker_policy": "diegetic_foundation",
+    "spawn_marker_policy": "diegetic_portal",
+    "no_baked_ui_text": true,
+    "no_baked_enemy_or_tower": true,
+    "debug_layers_player_default_allowed": false
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "style_only": true,
+    "gates": [
+      {
+        "gate_id": "style_only_visual_boundary",
+        "status": "passed",
+        "summary": "This pack only defines materials, prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
+      },
+      {
+        "gate_id": "player_readability_boundary",
+        "status": "passed",
+        "summary": "Path, build slots, objective, and spawn markers remain readable without baked UI text or baked enemies/towers."
+      }
+    ]
+  }
+}

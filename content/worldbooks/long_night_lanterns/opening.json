@@ -1,0 +1,69 @@
+{
+  "opening_version": "opening.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "display_name": "长夜灯火·开场",
+  "total_duration_ms": 45000,
+  "skippable": true,
+  "replayable": true,
+  "segments": [
+    {
+      "stable_internal_id": "opening_segment_01_background",
+      "display_name": "黑屏白字·世界背景",
+      "kind": "black_screen_text",
+      "duration_ms": 12000,
+      "lines": [
+        "长夜没有结束。",
+        "灯塔一座接一座熄灭。",
+        "余灯中枢，是最后稳定的光。"
+      ],
+      "visual": { "bg": "#000000", "text_color": "#cccccc", "fade_in_ms": 800 },
+      "audio": "ambient.wind_low"
+    },
+    {
+      "stable_internal_id": "opening_segment_02_distant_view",
+      "display_name": "动画卡一·远景",
+      "kind": "animated_card",
+      "duration_ms": 11000,
+      "narration": "暗色大地图缓缓浮现，灯火稀疏。东方的影潮边缘正在逼近。",
+      "visual": {
+        "scene": "distant_map",
+        "camera": "slow_zoom_in",
+        "particles": "ash_drift"
+      },
+      "audio": "ambient.distant_bell"
+    },
+    {
+      "stable_internal_id": "opening_segment_03_crisis",
+      "display_name": "动画卡二·危机",
+      "kind": "animated_card",
+      "duration_ms": 11000,
+      "narration": "灰灯驿站被标红。守灯人发来急报：高速影潮正在接近，请求立即支援。",
+      "visual": {
+        "scene": "crisis_alert",
+        "highlight_node": "gray_lantern_station",
+        "camera": "push_to_crisis",
+        "particles": "alert_pulse"
+      },
+      "audio": "sfx.alert_bell"
+    },
+    {
+      "stable_internal_id": "opening_segment_04_player_entry",
+      "display_name": "动画卡三·玩家介入",
+      "kind": "animated_card",
+      "duration_ms": 11000,
+      "narration": "你被唤醒为守灯技师。用有限材料临时改造防线，是你能做的事。",
+      "visual": {
+        "scene": "player_awakening",
+        "camera": "slow_pull_back",
+        "particles": "lantern_glow_rise"
+      },
+      "audio": "ambient.lantern_hum"
+    }
+  ],
+  "landing": {
+    "target_page": "world_map",
+    "target_node_id": "residual_lantern_hub",
+    "initial_quest": "前往灰灯驿站，在影潮抵达前组织防线。",
+    "hint": "点击灰灯驿站进入第一场战斗。"
+  }
+}

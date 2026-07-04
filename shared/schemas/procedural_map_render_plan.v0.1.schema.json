@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/procedural_map_render_plan.v0.1.schema.json",
+  "title": "ProceduralMapRenderPlan v0.1",
+  "description": "Executable layered render plan derived from MapRuntimePackage and MapStylePack. Strong semantic visuals are generated from structured runtime map facts, not from image inference.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "map_runtime_package_id",
+    "style_pack_id",
+    "worldbook_id",
+    "node_id",
+    "created_at",
+    "source_refs",
+    "canvas",
+    "coordinate_projection",
+    "layers",
+    "player_default_layer_ids",
+    "debug_layer_ids",
+    "validation_report"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "procedural_map_render_plan.v0.1" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "map_runtime_package_id": { "type": "string", "minLength": 1 },
+    "style_pack_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "canvas": { "$ref": "#/$defs/canvas" },
+    "coordinate_projection": { "$ref": "#/$defs/coordinate_projection" },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/layer" }
+    },
+    "player_default_layer_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "debug_layer_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "validation_report": { "$ref": "#/$defs/validation_report" }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map_runtime_package_path", "map_style_pack_path", "logic_authority", "style_authority"],
+      "properties": {
+        "map_runtime_package_path": { "type": "string", "minLength": 1 },
+        "map_style_pack_path": { "type": "string", "minLength": 1 },
+        "logic_authority": { "type": "string", "const": "map_runtime_package" },
+        "style_authority": { "type": "string", "const": "map_style_pack" }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "safe_area"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "safe_area": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["left", "top", "right", "bottom"],
+          "properties": {
+            "left": { "type": "integer", "minimum": 0 },
+            "top": { "type": "integer", "minimum": 0 },
+            "right": { "type": "integer", "minimum": 0 },
+            "bottom": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "coordinate_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection", "grid", "mapping"],
+      "properties": {
+        "projection": { "type": "string", "minLength": 1 },
+        "grid": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width_cells", "height_cells", "cell_size"],
+          "properties": {
+            "width_cells": { "type": "integer", "minimum": 1 },
+            "height_cells": { "type": "integer", "minimum": 1 },
+            "cell_size": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "mapping": {
+          "type": "string",
+          "enum": ["map_runtime_cell_to_visual_plane"]
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer_id", "kind", "authority", "player_default", "source", "operations"],
+      "properties": {
+        "layer_id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "terrain_base",
+            "road_band",
+            "road_edge",
+            "build_slot_platform",
+            "objective_foundation",
+            "spawn_atmosphere",
+            "resource_or_hazard",
+            "blocking_prop",
+            "non_blocking_decoration",
+            "fog_light_weather",
+            "runtime_interaction_overlay",
+            "debug_control_overlay",
+            "debug_reference_overlay"
+          ]
+        },
+        "authority": {
+          "type": "string",
+          "enum": ["runtime_semantic", "visual_style", "runtime_overlay", "debug_reference"]
+        },
+        "player_default": { "type": "boolean" },
+        "source": {
+          "type": "string",
+          "enum": ["map_runtime_package", "map_style_pack", "derived"]
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/operation" }
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op_id", "op_type", "semantic_ref", "style_ref", "geometry"],
+      "properties": {
+        "op_id": { "type": "string", "minLength": 1 },
+        "op_type": {
+          "type": "string",
+          "enum": [
+            "fill_grid",
+            "draw_polyline_band",
+            "draw_polyline_edge",
+            "place_prefab",
+            "draw_zone",
+            "draw_blocked_cells",
+            "draw_anchor_marker",
+            "scatter_decoration",
+            "apply_overlay",
+            "draw_runtime_overlay"
+          ]
+        },
+        "semantic_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "grid",
+                "path_route",
+                "build_slot",
+                "objective",
+                "spawn_point",
+                "resource_node",
+                "hazard_zone",
+                "defense_anchor",
+                "blocked_area",
+                "decoration_zone",
+                "runtime_overlay",
+                "none"
+              ]
+            },
+            "id": { "type": ["string", "null"] }
+          }
+        },
+        "style_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["material", "prefab", "atmosphere_layer", "palette", "none"]
+            },
+            "id": { "type": ["string", "null"] }
+          }
+        },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_status", "runtime_truth_preserved", "player_default_safe", "gates"],
+      "properties": {
+        "gate_status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+        "runtime_truth_preserved": { "type": "boolean", "const": true },
+        "player_default_safe": { "type": "boolean" },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/gate" }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "status", "summary"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/asset_design_spec.v0.1.schema.json",
+  "title": "AssetDesignSpec v0.1",
+  "description": "Hidden DSL / Schema describing visual, gameplay, balance, and world-fit requirements. This is a hidden intermediate representation and must not be runtime_public. It must not contain provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "asset_kind",
+    "theme",
+    "visual",
+    "gameplay",
+    "balance",
+    "world_fit"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "asset_design_spec.v0.1"
+    },
+    "asset_kind": {
+      "type": "string",
+      "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archetype", "tone"],
+      "properties": {
+        "archetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "world_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tone": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["view", "style_id", "body_archetype"],
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": ["isometric_3_4", "top_down", "side_view", "front_view"]
+        },
+        "style_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body_archetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "core_element": {
+          "type": "string"
+        },
+        "body_layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vfx_layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "single_subject": {
+              "type": "boolean"
+            },
+            "clean_background": {
+              "type": "boolean"
+            },
+            "no_enemy_in_sprite": {
+              "type": "boolean"
+            },
+            "no_attack_effect_on_body_sprite": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "gameplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attack_pattern", "targeting", "intended_role"],
+      "properties": {
+        "attack_pattern": {
+          "type": "string",
+          "minLength": 1
+        },
+        "control_effect": {
+          "type": "string"
+        },
+        "growth_mechanic": {
+          "type": "string"
+        },
+        "targeting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intended_role": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "balance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_tier", "cost_band"],
+      "properties": {
+        "risk_tier": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "unstable"]
+        },
+        "cost_band": {
+          "type": "string",
+          "enum": ["cheap", "medium", "expensive"]
+        },
+        "control_strength_cap": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "growth_cap": {
+          "type": "string",
+          "enum": ["none", "limited", "unlimited"]
+        }
+      }
+    },
+    "world_fit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_materials"],
+      "properties": {
+        "source_materials": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "npc_disciplines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "facility_requirement": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

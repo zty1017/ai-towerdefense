@@ -1,0 +1,125 @@
+{
+  "candidate_dir": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1",
+  "candidates": [
+    {
+      "battle_config": null,
+      "blocking_findings": [
+        "text_fallback_baked_direction_arrows_into_background",
+        "text_fallback_baked_control_shapes_into_background",
+        "parchment_board_frame_not_valid_battlefield_background",
+        "runtime_path_and_build_slots_cannot_be_trusted_from_image"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/gray_lantern_station.controlled_text_fallback_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/gray_lantern_station.topology_control_sketch.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": null,
+      "file_status": "present_png",
+      "generation_status": "live_generated_text_fallback",
+      "image_size_bytes": 1965617,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "gray_lantern_station",
+      "prompt_sha256": "152c366caa3a3ad670dc6c4c25f9524d5601ce0b788f359eb56276c9400af7ed",
+      "provider_mode": "text-fallback",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "reject this candidate; switch to reference-image, paintover, or layered procedural map background before any overlay review",
+      "request_id": "gray_lantern_station.controlled_map_regeneration_request",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_kind": "controlled_map_candidate",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/gray_lantern_station.controlled_text_fallback_candidate.png.candidate.json",
+      "strengths": [
+        "uses_controlled_regeneration_request_pack",
+        "useful_negative_sample_for_map_compiler_quality_gate"
+      ]
+    },
+    {
+      "battle_config": null,
+      "blocking_findings": [
+        "text_fallback_baked_direction_arrows_into_background",
+        "text_fallback_baked_unverified_pad_markers_into_background",
+        "text_fallback_added_unverified_figures_or_units",
+        "runtime_path_and_build_slots_cannot_be_trusted_from_image"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/lamp_wick_store.controlled_text_fallback_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/lamp_wick_store.topology_control_sketch.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": null,
+      "file_status": "present_png",
+      "generation_status": "live_generated_text_fallback",
+      "image_size_bytes": 1903307,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "lamp_wick_store",
+      "prompt_sha256": "ff61e3928f53a490ca89ed046e2278543a3147d5c25572fdfcf072ce7113596e",
+      "provider_mode": "text-fallback",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "reject this candidate; rebuild the battlefield from MapRuntimePackage topology and only use image generation for style-compliant terrain layers",
+      "request_id": "lamp_wick_store.controlled_map_regeneration_request",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_kind": "controlled_map_candidate",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/lamp_wick_store.controlled_text_fallback_candidate.png.candidate.json",
+      "strengths": [
+        "uses_controlled_regeneration_request_pack",
+        "route_readability_is_a_useful_reference_for_future_layout_briefs"
+      ]
+    },
+    {
+      "battle_config": null,
+      "blocking_findings": [
+        "text_fallback_added_unverified_people_or_unit_like_figures",
+        "text_fallback_added_unverified_fenced_build_zones",
+        "route_topology_visually_diverges_from_runtime_package",
+        "large_world_landmarks_are_not_locked_to_runtime_objectives"
+      ],
+      "candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/old_signal_tower.controlled_text_fallback_candidate.png",
+      "control_sketch_png_path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.png",
+      "dimensions": {
+        "height": 736,
+        "width": 1312
+      },
+      "display_name": null,
+      "file_status": "present_png",
+      "generation_status": "live_generated_text_fallback",
+      "image_size_bytes": 1993976,
+      "model": "agnes-image-2.1-flash",
+      "node_id": "old_signal_tower",
+      "prompt_sha256": "d51835fb77edc3c870d26176644eea3dd835cd891bb5c38497b717646d903e57",
+      "provider_mode": "text-fallback",
+      "provider_profile": "agnes_image_flash",
+      "recommended_next_action": "reject this candidate for runtime; keep as style reference only and regenerate through a controlled topology or manual paintover path",
+      "request_id": "old_signal_tower.controlled_map_regeneration_request",
+      "review_status": "needs_regeneration",
+      "runtime_promotion": "blocked_until_explicit_review",
+      "sidecar_kind": "controlled_map_candidate",
+      "sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_text_v1/old_signal_tower.controlled_text_fallback_candidate.png.candidate.json",
+      "strengths": [
+        "world_mood_and_painted_style_are_closer_than_the_other_text_fallback_samples",
+        "useful_negative_sample_for_reference_image_requirement"
+      ]
+    }
+  ],
+  "policy": [
+    "This report reviews provider-generated map candidates only.",
+    "Candidates do not update MapRuntimePackage or player runtime visual layers.",
+    "Runtime truth remains paths, build slots, objectives, spawn points, and explicitly published visual layers.",
+    "Bad candidates are useful compiler evidence: they tune prompts, control sketches, and review gates."
+  ],
+  "report_id": "mvp_node_map_painted_candidate_review_controlled_text_fallback_v1",
+  "review_profile": "controlled_text_fallback_v1",
+  "schema_version": "node_map_painted_candidate_review.v0.1",
+  "status": "review_only_not_runtime_ready",
+  "summary": {
+    "blocking_candidate_count": 3,
+    "candidate_count": 3,
+    "review_status_counts": {
+      "needs_regeneration": 3
+    },
+    "runtime_promotion_count": 0
+  }
+}

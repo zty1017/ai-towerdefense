@@ -1,0 +1,76 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-01-map-visual-promotion-gate",
+  "title": "Map visual promotion gate 地图视觉发布闸门",
+  "task_type": "implementation",
+  "handoff_mode": "opencode_headless",
+  "base_branch": "develop",
+  "branch": "task/map-visual-promotion-gate",
+  "worktree": "/tmp/ai-td-task-map-visual-promotion-gate",
+  "objective": "新增确定性地图视觉发布闸门：读取 map candidate review、overlay visual review、layout reconciliation、patch overlay review、map visual manifest 与 MapRuntimePackage，证明被拒绝、未生成、待重生、do_not_promote 或 review-only 的地图候选不会进入玩家侧 published visual layer。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/frontend/validate_battle_visual_contract.py",
+    "tools/media/audit_map_visual_quality.py",
+    "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
+    "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+    "examples/review_packs/topology_constrained_map_overlay_visual_review.v0.1.json",
+    "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/media/build_map_visual_promotion_gate_report.py",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+    "examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/media/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_visual_promotion_gate.v0.1.json",
+    "python3 tools/media/build_map_visual_promotion_gate_report.py --output examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+    "python3 -m py_compile tools/media/build_map_visual_promotion_gate_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/map_visual_promotion_gate_evidence",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不生成或晋升地图图片，只建立发布资格证据。",
+    "差图可作为负样本保留在 review_packs 和 game_data/media 中，但不得进入 published_visual_layer。",
+    "真正改善地图美术应后续走 reference-image provider、paintover 或 MapRuntimePackage 驱动的分层程序化底图。"
+  ]
+}

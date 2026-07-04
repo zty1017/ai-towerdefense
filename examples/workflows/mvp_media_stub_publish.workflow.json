@@ -1,0 +1,21 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_media_stub_publish",
+  "mode": "deterministic",
+  "description": "raw/imported media stub metadata -> published media manifest stub, demonstrating raw_media -> published_media layering",
+  "nodes": [
+    {
+      "id": "load_raw_media_metadata",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/raw_media_metadata.sample.json" }
+    },
+    {
+      "id": "publish_media",
+      "node_type": "media.publish_stub_manifest",
+      "runtime_public": true
+    }
+  ],
+  "edges": [
+    { "source": "load_raw_media_metadata", "target": "publish_media", "target_input": "raw_media_metadata" }
+  ]
+}

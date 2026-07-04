@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/asset_promotion_report.v0.1.schema.json",
+  "title": "AssetPromotionReport v0.1",
+  "description": "Deterministic delivery policy report deciding whether a compiled asset can be delivered to the player runtime, with generated media or fallback media.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "promotion_version",
+    "candidate_id",
+    "asset_type",
+    "promotion_state",
+    "playable",
+    "uses_fallback_media",
+    "gameplay_core_state",
+    "media_state",
+    "blockers",
+    "warnings",
+    "required_next_actions",
+    "fallback_media_strategy",
+    "source_summary"
+  ],
+  "properties": {
+    "promotion_version": { "type": "string", "const": "asset_promotion_policy.v0.1" },
+    "candidate_id": { "type": "string", "minLength": 1 },
+    "asset_type": { "type": "string", "minLength": 1 },
+    "promotion_state": {
+      "type": "string",
+      "enum": ["runtime_ready", "fallback_ready", "preview_only", "failed"]
+    },
+    "playable": { "type": "boolean" },
+    "uses_fallback_media": { "type": "boolean" },
+    "gameplay_core_state": {
+      "type": "string",
+      "enum": ["passed", "needs_review", "failed"]
+    },
+    "media_state": {
+      "type": "string",
+      "enum": ["runtime_ready", "needs_review", "missing", "failed"]
+    },
+    "blockers": { "type": "array", "items": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "required_next_actions": { "type": "array", "items": { "type": "string" } },
+    "fallback_media_strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "skin", "icon", "effects"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "skin": { "type": "string" },
+        "icon": { "type": "string" },
+        "effects": { "type": "string" }
+      }
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

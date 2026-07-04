@@ -1,0 +1,45 @@
+{
+  "node_briefing_version": "first_crisis_node.v0.1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "display_name": "灰灯驿站",
+  "summary": "灰灯驿站是余灯中枢东翼的前哨。影潮奔行者正在高速接近，驿站信标忽明忽暗。",
+  "threat": {
+    "enemy_archetypes": ["shadow_tide_runner", "shadow_tide_shade"],
+    "enemy_traits": "高速、低耐久，移动极快，基础手段难以留住。",
+    "approach_direction": "东南方向，影潮移动边缘正在逼近。",
+    "estimated_waves": 2
+  },
+  "protection_targets": [
+    {
+      "stable_internal_id": "target_node_core",
+      "display_name": "驿站核心",
+      "kind": "core",
+      "summary": "驿站的灯火核心，一旦被击穿，节点即失守。",
+      "must_protect": true
+    },
+    {
+      "stable_internal_id": "target_signal_beacon",
+      "display_name": "信标天线",
+      "kind": "facility",
+      "summary": "用于向中枢示警的小型信标天线，损坏后会降低后续支援效率。",
+      "must_protect": false
+    }
+  ],
+  "available_materials": [
+    { "material_id": "lamp_shard", "quantity": 4 },
+    { "material_id": "conductor_filament", "quantity": 2 }
+  ],
+  "npcs_present": [
+    "npc_gray_lantern_keeper"
+  ],
+  "facility_state": {
+    "temporary_workshop": "available",
+    "summary": "临时工坊可在节点现场进行一次应急改造。"
+  },
+  "constraints": {
+    "research_budget": "本节点只允许一次现场试作。",
+    "sample_delivery": "样品在战斗中途送达，非即时。"
+  },
+  "player_action_hint": "向临时工坊说明你的构想，生成一个试作方案。"
+}

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/player_utterance.v0.1.schema.json",
+  "title": "PlayerUtterance v0.1",
+  "description": "Player's free-text input. This is the only artifact that carries raw natural language from the player. It must not contain provider/model/raw_prompt/full_trace/raw_json/api_key/secret/unreviewed_content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "session_id",
+    "run_id",
+    "locale",
+    "intended_asset_type_hint",
+    "text",
+    "source_context"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "player_utterance.v0.1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intended_asset_type_hint": {
+      "type": "string",
+      "enum": ["tower_blueprint", "support_item", "temporary_mod", "intel_asset"]
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["page", "current_node_id"],
+      "properties": {
+        "page": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "available_material_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nearby_npc_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

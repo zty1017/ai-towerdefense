@@ -1,0 +1,120 @@
+{
+  "schema_version": "provider_output_envelope.v0.1",
+  "envelope_id": "pout_performed_stage05_map_visual_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source": {
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_next_map_visual_prefetch",
+    "object_kind": "map_visual_prefetch",
+    "object_ref": "map_compile_package:old_signal_tower_pressure",
+    "provider_profile": "image_map_visual_after_review",
+    "provider_mode": "manual_authorized_demo",
+    "worker_id": "provider_adapter_demo",
+    "guard_id": "pguard_example_next_map_visual_prefetch_001"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_call": {
+    "status": "performed_redacted",
+    "performed": true,
+    "authorization_required": true,
+    "authorization_granted": true,
+    "authorization_ref": "auth_sched_next_map_visual_prefetch_fixture_001",
+    "attempt_count": 1,
+    "max_attempts": 1
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only"
+  },
+  "redacted_request_summary": {
+    "intent_class": "map_visual_reference_generation",
+    "input_refs": [
+      {
+        "artifact_id": "controlled_map_regeneration_request_pack",
+        "kind": "review_pack",
+        "path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json"
+      }
+    ],
+    "policy_notes": [
+      "Only local refs and redacted summaries are retained.",
+      "The candidate remains behind validation, review, and promotion gates."
+    ],
+    "request_digest": null
+  },
+  "redacted_result_summary": {
+    "result_kind": "json_candidate",
+    "status": "candidate_ready_for_validation",
+    "summary": "A local review candidate summary was saved for staging validation.",
+    "result_digest": null,
+    "finish_reason": "completed"
+  },
+  "artifact_manifest": {
+    "status": "review_only_artifacts_ready",
+    "output_refs": [
+      {
+        "artifact_id": "stage05_map_visual_candidate_summary",
+        "kind": "json_candidate",
+        "path": "examples/provider_artifact_staging/artifacts/p1b_stage05_map_visual_candidate.summary.json",
+        "content_type": "application/json",
+        "media_layer": "processed_media"
+      }
+    ],
+    "review_only": true,
+    "notes": [
+      "The artifact is staged as internal evidence and cannot be consumed by runtime."
+    ]
+  },
+  "validation": {
+    "schema_gate": {
+      "status": "passed",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "The envelope shape is valid."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Gameplay or map semantic review must run after staging."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Media review waits for the staged local refs."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual model review is required before promotion."
+      ]
+    }
+  },
+  "activation_gate": {
+    "activation_allowed": false,
+    "blocked_reason": "promotion_required",
+    "required_next_gates": [
+      "artifact_staging_manifest",
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ]
+  }
+}

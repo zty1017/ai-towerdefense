@@ -111,7 +111,8 @@ def compile_support_item(proposal: dict[str, Any]) -> dict[str, Any]:
     return {
         "asset_type": "support_item",
         "base_stats": {
-            "uses": 1,
+            "deploy_cost": 35,
+            "use_count": 1,
             "cooldown": 0
         },
         "effect_blocks": [
@@ -128,7 +129,9 @@ def compile_support_item(proposal: dict[str, Any]) -> dict[str, Any]:
             "allowed_phases": ["preparation"]
         },
         "type_specific": {
-            "item_slot": "tactical"
+            "item_slot": "tactical",
+            "delivery_method": "pre_battle_consumable",
+            "target_rule": "current_node_or_next_wave"
         }
     }
 
@@ -137,7 +140,8 @@ def compile_temporary_mod(proposal: dict[str, Any]) -> dict[str, Any]:
     return {
         "asset_type": "temporary_mod",
         "base_stats": {
-            "duration": 20,
+            "activation_cost": 45,
+            "duration_seconds": 20,
             "cooldown": 60
         },
         "effect_blocks": [
@@ -155,7 +159,10 @@ def compile_temporary_mod(proposal: dict[str, Any]) -> dict[str, Any]:
             "allowed_phases": ["battle"]
         },
         "type_specific": {
-            "attach_to": "tower"
+            "attach_to": "tower",
+            "target_asset_type": "tower_blueprint",
+            "stacking": "replace_same_source",
+            "rollback_behavior": "expire_and_restore_base_tower"
         }
     }
 
@@ -164,7 +171,9 @@ def compile_intel_asset(proposal: dict[str, Any]) -> dict[str, Any]:
     return {
         "asset_type": "intel_asset",
         "base_stats": {
-            "uses": 1
+            "action_cost": 1,
+            "valid_turns": 1,
+            "confidence": 0.65
         },
         "effect_blocks": [
             {
@@ -185,7 +194,10 @@ def compile_intel_asset(proposal: dict[str, Any]) -> dict[str, Any]:
             "allowed_phases": ["preparation"]
         },
         "type_specific": {
-            "intel_channel": "scout_report"
+            "intel_channel": "scout_report",
+            "reveal_mode": "next_wave_preview",
+            "applies_to": "current_node",
+            "consumer_hint": "show_countermeasure_tags"
         }
     }
 
@@ -272,4 +284,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,0 +1,32 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_world_delta_semantic_gate_demo",
+  "mode": "deterministic",
+  "description": "Deterministic demo: repaired WorldStateDelta -> semantic gate -> apply_delta. No provider calls.",
+  "nodes": [
+    {
+      "id": "load_run_state",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/run_world_states/demo_initial.run_world_state.json" }
+    },
+    {
+      "id": "load_repaired_delta",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/world_deltas/repaired_first_battle_semantic_pass.world_delta.json" }
+    },
+    {
+      "id": "semantic_gate",
+      "node_type": "world_state.validate_delta_semantics"
+    },
+    {
+      "id": "apply_delta",
+      "node_type": "world_state.apply_delta"
+    }
+  ],
+  "edges": [
+    { "source": "load_run_state", "target": "semantic_gate", "target_input": "run_world_state" },
+    { "source": "load_repaired_delta", "target": "semantic_gate", "target_input": "world_state_delta" },
+    { "source": "load_run_state", "target": "apply_delta", "target_input": "run_world_state" },
+    { "source": "semantic_gate", "target": "apply_delta", "target_input": "world_state_delta" }
+  ]
+}

@@ -1,0 +1,747 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/mvp_compiler_review_dossier.v0.1.schema.json",
+  "title": "MVP Compiler Review Dossier v0.1",
+  "description": "A review-only dossier that summarizes the AI compiler pipeline, staged world/player progression, gameplay objects, assets, and verification evidence. This is not a front-end runtime package and must not be loaded by the player client.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dossier_id",
+    "visibility",
+    "worldbook_id",
+    "run_id",
+    "created_at",
+    "generation_boundary",
+    "pipeline_overview",
+    "stage_reviews",
+    "content_inventory",
+    "runtime_package_summaries",
+    "workflow_reviews",
+    "stage_candidate_pack_summary",
+    "compilable_object_catalog_summary",
+    "compilable_object_plan_summary",
+    "multistage_content_pack_summary",
+    "core_artifact_alignment",
+    "runtime_state_summary",
+    "readiness_summary",
+    "source_evidence",
+    "validation_commands",
+    "known_risks"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "mvp_compiler_review_dossier.v0.1"
+    },
+    "dossier_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visibility": {
+      "type": "string",
+      "const": "review_only"
+    },
+    "worldbook_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "front_end_integration",
+        "dossier_builder_reads_env",
+        "dossier_builder_calls_provider",
+        "base_worldbook_mutation",
+        "runtime_package_included"
+      ],
+      "properties": {
+        "front_end_integration": {
+          "type": "string",
+          "const": "not_included"
+        },
+        "dossier_builder_reads_env": {
+          "type": "boolean",
+          "const": false
+        },
+        "dossier_builder_calls_provider": {
+          "type": "boolean",
+          "const": false
+        },
+        "base_worldbook_mutation": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_package_included": {
+          "type": "string",
+          "enum": ["referenced_only", "embedded_runtime_safe_subset"]
+        }
+      }
+    },
+    "pipeline_overview": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/pipeline_step"
+      }
+    },
+    "stage_reviews": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/stage_review"
+      }
+    },
+    "content_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assets",
+        "npcs",
+        "materials",
+        "map_nodes",
+        "tasks",
+        "random_events",
+        "research_jobs",
+        "blueprints"
+      ],
+      "properties": {
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/asset_summary"
+          }
+        },
+        "npcs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/simple_ref"
+          }
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/simple_ref"
+          }
+        },
+        "map_nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/simple_ref"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameplay_object_summary"
+          }
+        },
+        "random_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameplay_object_summary"
+          }
+        },
+        "research_jobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameplay_object_summary"
+          }
+        },
+        "blueprints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/simple_ref"
+          }
+        }
+      }
+    },
+    "runtime_state_summary": {
+      "$ref": "#/$defs/runtime_state_summary"
+    },
+    "runtime_package_summaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/runtime_package_summary"
+      }
+    },
+    "workflow_reviews": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/workflow_review"
+      }
+    },
+    "stage_candidate_pack_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_file",
+        "stage_count",
+        "status_counts",
+        "validation_gate_counts",
+        "runtime_package_reference_count",
+        "review_recommendation"
+      ],
+      "properties": {
+        "pack_file": { "type": "string", "minLength": 1 },
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "status_counts": { "$ref": "#/$defs/count_map" },
+        "validation_gate_counts": { "$ref": "#/$defs/count_map" },
+        "runtime_package_reference_count": { "type": "integer", "minimum": 0 },
+        "review_recommendation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "compilable_object_catalog_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog_file",
+        "total_objects",
+        "layer_counts",
+        "permission_level_counts",
+        "runtime_export_counts",
+        "risk_counts",
+        "player_exposed_count",
+        "review_required_count"
+      ],
+      "properties": {
+        "catalog_file": { "type": "string", "minLength": 1 },
+        "total_objects": { "type": "integer", "minimum": 0 },
+        "layer_counts": { "$ref": "#/$defs/count_map" },
+        "permission_level_counts": { "$ref": "#/$defs/count_map" },
+        "runtime_export_counts": { "$ref": "#/$defs/count_map" },
+        "risk_counts": { "$ref": "#/$defs/count_map" },
+        "player_exposed_count": { "type": "integer", "minimum": 0 },
+        "review_required_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "compilable_object_plan_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_file",
+        "target_stage_id",
+        "request_count",
+        "layer_counts",
+        "permission_level_counts",
+        "compile_actor_counts",
+        "risk_counts",
+        "requires_llm_count",
+        "requires_media_count",
+        "requires_human_review_count"
+      ],
+      "properties": {
+        "plan_file": { "type": "string", "minLength": 1 },
+        "target_stage_id": { "type": "string", "minLength": 1 },
+        "request_count": { "type": "integer", "minimum": 0 },
+        "layer_counts": { "$ref": "#/$defs/count_map" },
+        "permission_level_counts": { "$ref": "#/$defs/count_map" },
+        "compile_actor_counts": { "$ref": "#/$defs/count_map" },
+        "risk_counts": { "$ref": "#/$defs/count_map" },
+        "requires_llm_count": { "type": "integer", "minimum": 0 },
+        "requires_media_count": { "type": "integer", "minimum": 0 },
+        "requires_human_review_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "multistage_content_pack_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_file",
+        "stage_count",
+        "asset_type_counts",
+        "effect_block_counts",
+        "asset_policy_promotion_counts",
+        "asset_policy_recommendation_counts",
+        "initial_state_file",
+        "final_state_file",
+        "stage_candidate_pack_file"
+      ],
+      "properties": {
+        "pack_file": { "type": "string", "minLength": 1 },
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "asset_type_counts": { "$ref": "#/$defs/count_map" },
+        "effect_block_counts": { "$ref": "#/$defs/count_map" },
+        "asset_policy_promotion_counts": { "$ref": "#/$defs/count_map" },
+        "asset_policy_recommendation_counts": { "$ref": "#/$defs/count_map" },
+        "initial_state_file": { "type": "string", "minLength": 1 },
+        "final_state_file": { "type": "string", "minLength": 1 },
+        "stage_candidate_pack_file": { "type": "string", "minLength": 1 }
+      }
+    },
+    "core_artifact_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alignment_state",
+        "reason",
+        "expected_core_artifacts",
+        "present_core_artifacts",
+        "runtime_activation_allowed",
+        "world_mutation_allowed",
+        "next_action"
+      ],
+      "properties": {
+        "alignment_state": {
+          "type": "string",
+          "const": "review_only_not_applicable"
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "expected_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "present_core_artifacts": {
+          "type": "array",
+          "maxItems": 0,
+          "items": { "type": "string" }
+        },
+        "runtime_activation_allowed": { "type": "boolean", "const": false },
+        "world_mutation_allowed": { "type": "boolean", "const": false },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_count",
+        "playable_asset_references",
+        "fallback_ready_asset_references",
+        "runtime_fixture_asset_references",
+        "candidate_or_blocked_asset_references",
+        "task_count",
+        "random_event_count",
+        "research_job_count",
+        "blueprint_count",
+        "mvp_support_level"
+      ],
+      "properties": {
+        "stage_count": { "type": "integer", "minimum": 0 },
+        "playable_asset_references": { "type": "integer", "minimum": 0 },
+        "fallback_ready_asset_references": { "type": "integer", "minimum": 0 },
+        "runtime_fixture_asset_references": { "type": "integer", "minimum": 0 },
+        "candidate_or_blocked_asset_references": { "type": "integer", "minimum": 0 },
+        "task_count": { "type": "integer", "minimum": 0 },
+        "random_event_count": { "type": "integer", "minimum": 0 },
+        "research_job_count": { "type": "integer", "minimum": 0 },
+        "blueprint_count": { "type": "integer", "minimum": 0 },
+        "mvp_support_level": {
+          "type": "string",
+          "enum": ["insufficient", "reviewable_vertical_slice", "frontend_ready_candidate"]
+        }
+      }
+    },
+    "source_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source_evidence"
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validation_command"
+      }
+    },
+    "known_risks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/risk"
+      }
+    }
+  },
+  "$defs": {
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "pipeline_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "name", "purpose", "inputs", "outputs", "gate"],
+      "properties": {
+        "step_id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "gate": { "type": "string", "minLength": 1 }
+      }
+    },
+    "stage_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_order",
+        "stage_id",
+        "title",
+        "bundle_file",
+        "world_delta_file",
+        "lane_counts",
+        "gameplay_purposes",
+        "gameplay_hooks",
+        "delta_operation_counts",
+        "assets",
+        "npcs",
+        "materials",
+        "map_nodes",
+        "research_hooks",
+        "gameplay_service"
+      ],
+      "properties": {
+        "stage_order": { "type": "integer", "minimum": 1 },
+        "stage_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "bundle_file": { "type": "string", "minLength": 1 },
+        "world_delta_file": { "type": ["string", "null"] },
+        "lane_counts": { "$ref": "#/$defs/string_int_map" },
+        "gameplay_purposes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "gameplay_hooks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "delta_operation_counts": { "$ref": "#/$defs/string_int_map" },
+        "assets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/asset_summary" }
+        },
+        "npcs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/simple_ref" }
+        },
+        "materials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/simple_ref" }
+        },
+        "map_nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/simple_ref" }
+        },
+        "research_hooks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "gameplay_service": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "asset_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "asset_kind",
+        "source_file",
+        "promotion_state",
+        "playable",
+        "uses_fallback_media",
+        "gameplay_role"
+      ],
+      "properties": {
+        "asset_id": { "type": "string", "minLength": 1 },
+        "asset_kind": { "type": "string", "minLength": 1 },
+        "source_file": { "type": "string", "minLength": 1 },
+        "promotion_state": { "type": "string", "minLength": 1 },
+        "playable": { "type": "boolean" },
+        "uses_fallback_media": { "type": "boolean" },
+        "gameplay_role": { "type": "string", "minLength": 1 }
+        ,
+        "gameplay_summary": {
+          "$ref": "#/$defs/compiled_asset_gameplay_summary"
+        },
+        "runtime_asset_summary": {
+          "$ref": "#/$defs/runtime_asset_summary"
+        }
+      }
+    },
+    "compiled_asset_gameplay_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lifecycle",
+        "asset_type",
+        "effect_blocks",
+        "material_ids",
+        "npc_ids",
+        "provenance_mode",
+        "worldbook_id",
+        "validation_status"
+      ],
+      "properties": {
+        "lifecycle": { "type": "string", "minLength": 1 },
+        "asset_type": { "type": "string", "minLength": 1 },
+        "base_stats": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "effect_blocks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "type_specific": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "material_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "npc_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "provenance_mode": { "type": "string", "minLength": 1 },
+        "worldbook_id": { "type": "string", "minLength": 1 },
+        "validation_status": { "type": "string", "minLength": 1 }
+      }
+    },
+    "runtime_asset_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "asset_kind",
+        "lifecycle_state",
+        "display_name",
+        "battle_surfaces",
+        "visual_recipe_kinds"
+      ],
+      "properties": {
+        "stable_internal_id": { "type": "string", "minLength": 1 },
+        "asset_kind": { "type": "string", "minLength": 1 },
+        "lifecycle_state": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "battle_surfaces": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "visual_recipe_kinds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "runtime_package_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package_file",
+        "package_id",
+        "session_id",
+        "worldbook_id",
+        "node_id",
+        "asset_count",
+        "assets",
+        "battle_context_summary"
+      ],
+      "properties": {
+        "package_file": { "type": "string", "minLength": 1 },
+        "package_id": { "type": "string", "minLength": 1 },
+        "session_id": { "type": "string", "minLength": 1 },
+        "worldbook_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "asset_count": { "type": "integer", "minimum": 0 },
+        "assets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/runtime_asset_summary" }
+        },
+        "battle_context_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "projection",
+            "width_cells",
+            "height_cells",
+            "path_count",
+            "optional_target_count",
+            "sample_delivery_delay_ms"
+          ],
+          "properties": {
+            "projection": { "type": "string", "minLength": 1 },
+            "width_cells": { "type": "integer", "minimum": 0 },
+            "height_cells": { "type": "integer", "minimum": 0 },
+            "path_count": { "type": "integer", "minimum": 0 },
+            "optional_target_count": { "type": "integer", "minimum": 0 },
+            "sample_delivery_delay_ms": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "workflow_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_file",
+        "workflow_id",
+        "mode",
+        "description",
+        "node_count",
+        "edge_count",
+        "live_provider_risk",
+        "nodes"
+      ],
+      "properties": {
+        "workflow_file": { "type": "string", "minLength": 1 },
+        "workflow_id": { "type": "string", "minLength": 1 },
+        "mode": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "node_count": { "type": "integer", "minimum": 0 },
+        "edge_count": { "type": "integer", "minimum": 0 },
+        "live_provider_risk": { "type": "boolean" },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workflow_node_summary" }
+        }
+      }
+    },
+    "workflow_node_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "node_type", "runtime_public"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "node_type": { "type": "string", "minLength": 1 },
+        "runtime_public": { "type": "boolean" }
+      }
+    },
+    "simple_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "source_file": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "gameplay_object_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "summary"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "node_id": { "type": ["string", "null"] },
+        "npc_id": { "type": ["string", "null"] },
+        "source_task_id": { "type": "string", "minLength": 1 },
+        "source_sample_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "runtime_state_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_file",
+        "progress",
+        "global_state",
+        "map_node_count",
+        "npc_count",
+        "event_count",
+        "task_count",
+        "random_event_count",
+        "temporary_sample_count",
+        "blueprint_count"
+      ],
+      "properties": {
+        "state_file": { "type": "string", "minLength": 1 },
+        "progress": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "global_state": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "map_node_count": { "type": "integer", "minimum": 0 },
+        "npc_count": { "type": "integer", "minimum": 0 },
+        "event_count": { "type": "integer", "minimum": 0 },
+        "task_count": { "type": "integer", "minimum": 0 },
+        "random_event_count": { "type": "integer", "minimum": 0 },
+        "temporary_sample_count": { "type": "integer", "minimum": 0 },
+        "blueprint_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "source_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "exists", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "exists": { "type": "boolean" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "validation_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command"],
+      "properties": {
+        "purpose": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_id", "severity", "summary", "next_action"],
+      "properties": {
+        "risk_id": { "type": "string", "minLength": 1 },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "summary": { "type": "string", "minLength": 1 },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "string_int_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  }
+}

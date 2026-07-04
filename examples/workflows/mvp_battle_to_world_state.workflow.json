@@ -1,0 +1,54 @@
+{
+  "schema_version": "workflow_graph.v0.1",
+  "workflow_id": "mvp_battle_to_world_state",
+  "mode": "deterministic",
+  "description": "battle result -> narrative -> WorldStateDelta -> next RunWorldState: first complete closed loop",
+  "nodes": [
+    {
+      "id": "load_run_state",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/run_world_states/demo_initial.run_world_state.json" }
+    },
+    {
+      "id": "load_battle_result",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/battle_result.sample.json" }
+    },
+    {
+      "id": "load_session_context",
+      "node_type": "source.load_json",
+      "params": { "path": "examples/asset_graph/session_context.sample.json" }
+    },
+    {
+      "id": "npc_feedback",
+      "node_type": "narrative.mock_npc_feedback",
+      "runtime_public": true
+    },
+    {
+      "id": "world_growth",
+      "node_type": "narrative.mock_world_growth_event",
+      "runtime_public": true
+    },
+    {
+      "id": "build_delta",
+      "node_type": "world_state.build_delta_from_narrative_stub"
+    },
+    {
+      "id": "apply_delta",
+      "node_type": "world_state.apply_delta"
+    }
+  ],
+  "edges": [
+    { "source": "load_battle_result", "target": "npc_feedback", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "npc_feedback", "target_input": "session_context" },
+    { "source": "load_battle_result", "target": "world_growth", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "world_growth", "target_input": "session_context" },
+    { "source": "load_run_state", "target": "build_delta", "target_input": "run_world_state" },
+    { "source": "load_battle_result", "target": "build_delta", "target_input": "battle_result" },
+    { "source": "load_session_context", "target": "build_delta", "target_input": "session_context" },
+    { "source": "npc_feedback", "target": "build_delta", "target_input": "npc_feedback" },
+    { "source": "world_growth", "target": "build_delta", "target_input": "world_growth" },
+    { "source": "load_run_state", "target": "apply_delta", "target_input": "run_world_state" },
+    { "source": "build_delta", "target": "apply_delta", "target_input": "world_state_delta" }
+  ]
+}

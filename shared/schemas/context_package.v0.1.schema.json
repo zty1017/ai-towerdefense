@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/context_package.v0.1.schema.json",
+  "title": "ContextPackage v0.1",
+  "description": "Advisory context assembled before AI compilation. It ranks and redacts context but never commits world facts or runtime objects.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "context_package_id",
+    "run_id",
+    "worldbook_id",
+    "run_world_version",
+    "purpose",
+    "scope",
+    "authority",
+    "blocks",
+    "policy_refs",
+    "source_refs",
+    "token_budget",
+    "insertion_plan",
+    "redaction_report",
+    "created_at",
+    "hash"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "context_package.v0.1" },
+    "context_package_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "run_world_version": { "type": "string", "minLength": 1 },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "asset_compile",
+        "encounter_compile",
+        "world_delta",
+        "narrative",
+        "media",
+        "map_compile",
+        "scheduler_prefetch"
+      ]
+    },
+    "scope": { "type": "string", "minLength": 1 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisory_only",
+        "can_mutate_world",
+        "can_publish_runtime",
+        "requires_downstream_validation"
+      ],
+      "properties": {
+        "advisory_only": { "type": "boolean", "const": true },
+        "can_mutate_world": { "type": "boolean", "const": false },
+        "can_publish_runtime": { "type": "boolean", "const": false },
+        "requires_downstream_validation": { "type": "boolean", "const": true }
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/context_block" }
+    },
+    "policy_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_ref" }
+    },
+    "source_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact_ref" }
+    },
+    "token_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_tokens", "reserved_response_tokens"],
+      "properties": {
+        "max_tokens": { "type": "integer", "minimum": 1 },
+        "reserved_response_tokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "insertion_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot", "block_ids"],
+        "properties": {
+          "slot": { "type": "string", "minLength": 1 },
+          "block_ids": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "redaction_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redacted_block_count", "dropped_block_count", "notes"],
+      "properties": {
+        "redacted_block_count": { "type": "integer", "minimum": 0 },
+        "dropped_block_count": { "type": "integer", "minimum": 0 },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "created_at": { "type": "string", "minLength": 1 },
+    "hash": { "$ref": "#/$defs/sha256_ref" }
+  },
+  "$defs": {
+    "sha256_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_id", "ref_kind", "path"],
+      "properties": {
+        "ref_id": { "type": "string", "minLength": 1 },
+        "ref_kind": {
+          "type": "string",
+          "enum": ["document", "schema", "tool", "fixture", "runtime_package", "world_state", "media_manifest", "map_package"]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "hash": { "$ref": "#/$defs/sha256_ref" }
+      }
+    },
+    "context_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "block_id",
+        "block_kind",
+        "source_ref",
+        "trust_level",
+        "visibility",
+        "priority",
+        "token_budget",
+        "trim_policy",
+        "content_hash"
+      ],
+      "properties": {
+        "block_id": { "type": "string", "minLength": 1 },
+        "block_kind": {
+          "type": "string",
+          "enum": [
+            "worldbook",
+            "runtime_fact",
+            "memory",
+            "policy",
+            "player_input",
+            "developer_instruction",
+            "recent_event",
+            "battle_result",
+            "map_context",
+            "media_context"
+          ]
+        },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "trust_level": {
+          "type": "string",
+          "enum": ["developer", "system", "ai_inferred", "player_claim"]
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["player_visible", "ai_visible", "system_private", "spoiler"]
+        },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "token_budget": { "type": "integer", "minimum": 0 },
+        "trim_policy": {
+          "type": "string",
+          "enum": ["keep_full", "trim_middle", "summarize", "drop_if_over_budget"]
+        },
+        "content_hash": { "$ref": "#/$defs/sha256_ref" },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

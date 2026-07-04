@@ -1,0 +1,216 @@
+{
+  "schema_version": "narrative_event_bundle.v0.1",
+  "bundle_id": "bundle_stage_01_gray_lantern_first_defense",
+  "run_id": "run_demo_001",
+  "worldbook_id": "long_night_lanterns",
+  "source": "system",
+  "created_turn": 1,
+  "stage": "act_1_stage_01_gray_lantern_first_defense",
+  "lane": "shared",
+  "commit_policy": {
+    "candidate_generation": "parallel_allowed",
+    "commit_gate": "world_state_delta_required",
+    "commit_order": "manual_review_then_serial"
+  },
+  "worldbook_base_mutation_allowed": false,
+  "nodes": [
+    {
+      "node_id": "stage_01_world_gray_station_alarm",
+      "stage": "act_1_stage_01_gray_lantern_first_defense",
+      "phase": "preparation",
+      "lane": "world_line",
+      "scope": "map",
+      "trigger": {
+        "kind": "map_entered",
+        "ref": "gray_lantern_station",
+        "summary": "灰灯驿站急报抵达余灯中枢。"
+      },
+      "prerequisites": [
+        "run_started",
+        "residual_lantern_hub_controlled"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "map_event",
+        "title": "灰灯驿站急报",
+        "blocks": [
+          {
+            "text": "东南的夜雾压到驿站坡下，信标天线一明一灭，像是快要被风掐断。"
+          },
+          {
+            "speaker_id": "npc_gray_lantern_keeper",
+            "speaker_name": "灰灯驿站守灯人",
+            "text": "守灯技师，影潮跑得太快。只要核心还亮，我们就能把路守住。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "unlock_battle_node",
+        "advance_main_pressure",
+        "teach_mechanic"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "unlock_battle_node",
+          "target_ref": "gray_lantern_station",
+          "summary": "开放第一战斗节点，引导玩家进入灰灯驿站防守。"
+        },
+        {
+          "hook": "advance_main_pressure",
+          "target_ref": "gray_lantern_station",
+          "summary": "记录东南影潮逼近，使首战成为必须处理的危机。"
+        },
+        {
+          "hook": "teach_mechanic",
+          "target_ref": "gray_lantern_station",
+          "summary": "让玩家理解地图节点、保护目标与入夜防守的关系。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_01_gray_lantern_first_defense",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_map_node_state",
+          "adjust_global_state",
+          "append_event"
+        ],
+        "summary": "提交灰灯驿站危机状态、东南压力变化与首战事件记录。"
+      }
+    },
+    {
+      "node_id": "stage_01_player_field_trial_brief",
+      "stage": "act_1_stage_01_gray_lantern_first_defense",
+      "phase": "preparation",
+      "lane": "player_line",
+      "scope": "workshop",
+      "trigger": {
+        "kind": "map_entered",
+        "ref": "temporary_workshop",
+        "summary": "玩家抵达临时工坊，准备一次现场试作。"
+      },
+      "prerequisites": [
+        "gray_lantern_station_selected"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "workshop_notice",
+        "title": "现场试作",
+        "blocks": [
+          {
+            "speaker_id": "npc_workshop_mentor",
+            "speaker_name": "临时工坊老师傅",
+            "text": "灯芯碎片和导线够做一件急用的东西。别求花样，先让影潮慢下来。"
+          },
+          {
+            "text": "工坊把你的构想写进试作单，样品会在封装完成后送到前线。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "create_research_need",
+        "offer_workshop_hook",
+        "teach_mechanic"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "create_research_need",
+          "target_ref": "fast_enemy_counter",
+          "summary": "把高速低耐久敌人转化为明确研发需求。"
+        },
+        {
+          "hook": "offer_workshop_hook",
+          "target_ref": "field_research_once",
+          "summary": "开启本节点唯一一次现场试作。"
+        },
+        {
+          "hook": "teach_mechanic",
+          "target_ref": "sample_delivery_mid_battle",
+          "summary": "说明样品不是开场获得，而是在战斗中途送达。"
+        }
+      ],
+      "npc_refs": [
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_01_gray_lantern_first_defense",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "set_flag",
+          "unlock_fact",
+          "append_event"
+        ],
+        "summary": "提交一次现场试作限制、样品延迟送达事实与玩家线准备事件。"
+      }
+    },
+    {
+      "node_id": "stage_01_shared_sample_arrival",
+      "stage": "act_1_stage_01_gray_lantern_first_defense",
+      "phase": "battle",
+      "lane": "shared",
+      "scope": "battle",
+      "trigger": {
+        "kind": "research_complete",
+        "ref": "sample_trap_7f3a",
+        "summary": "首战中途，折光绊索样品送达。"
+      },
+      "prerequisites": [
+        "first_wave_started",
+        "field_research_once_committed"
+      ],
+      "visibility": "player_visible",
+      "presentation": {
+        "scene_type": "battle_overlay",
+        "title": "样品送达",
+        "blocks": [
+          {
+            "speaker_id": "npc_gray_lantern_keeper",
+            "speaker_name": "灰灯驿站守灯人",
+            "text": "封装箱到了！绊索别铺在直路上，放在转角，影潮会撞上去。"
+          },
+          {
+            "text": "一卷带着微光的绊索被抛上前线，临时刻线还在发烫。"
+          }
+        ]
+      },
+      "gameplay_purpose": [
+        "reward_player_choice",
+        "teach_mechanic",
+        "explain_battle_result"
+      ],
+      "gameplay_hooks": [
+        {
+          "hook": "reward_player_choice",
+          "target_ref": "sample_trap_7f3a",
+          "summary": "把玩家战前构想转化为可部署样品。"
+        },
+        {
+          "hook": "teach_mechanic",
+          "target_ref": "sample_trap_7f3a",
+          "summary": "通过中途送达展示临时样品的战斗部署方式。"
+        },
+        {
+          "hook": "explain_battle_result",
+          "target_ref": "shadow_tide_runner",
+          "summary": "让玩家看到迟滞高速敌人的即时价值。"
+        }
+      ],
+      "npc_refs": [
+        "npc_gray_lantern_keeper",
+        "npc_workshop_mentor"
+      ],
+      "npc_introductions": [],
+      "proposed_world_delta_ref": "delta_stage_01_gray_lantern_first_defense",
+      "proposed_delta_summary": {
+        "expected_operations": [
+          "add_temporary_sample",
+          "set_flag",
+          "append_event"
+        ],
+        "summary": "提交折光绊索样品获得、首战部署标记与战斗中段事件。"
+      }
+    }
+  ]
+}

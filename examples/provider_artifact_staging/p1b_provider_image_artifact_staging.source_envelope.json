@@ -1,0 +1,130 @@
+{
+  "schema_version": "provider_output_envelope.v0.1",
+  "envelope_id": "pout_image_candidate_old_signal_tower_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source": {
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_next_map_visual_prefetch",
+    "object_kind": "map_visual_prefetch",
+    "object_ref": "map_compile_package:old_signal_tower_pressure",
+    "provider_profile": "agnes_image_flash",
+    "provider_mode": "manual_authorized_demo",
+    "worker_id": "provider_adapter_image_runner",
+    "guard_id": "pguard_example_next_map_visual_prefetch_001"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_call": {
+    "status": "performed_redacted",
+    "performed": true,
+    "authorization_required": true,
+    "authorization_granted": true,
+    "authorization_ref": "auth_sched_next_map_visual_prefetch_image_fixture_001",
+    "attempt_count": 1,
+    "max_attempts": 1
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only"
+  },
+  "redacted_request_summary": {
+    "intent_class": "map_visual_reference_generation",
+    "input_refs": [
+      {
+        "artifact_id": "controlled_map_regeneration_request_pack",
+        "kind": "review_pack",
+        "path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json"
+      },
+      {
+        "artifact_id": "old_signal_tower_topology_control_sketch",
+        "kind": "image_reference",
+        "path": "game_data/media/map_visual_reference/topology_control_sketches/old_signal_tower.topology_control_sketch.png",
+        "content_type": "image/png",
+        "media_layer": "processed_media"
+      }
+    ],
+    "policy_notes": [
+      "Only local refs and redacted summaries are retained.",
+      "The generated map image remains a review-only candidate until media, semantic, and human review pass."
+    ],
+    "request_digest": null
+  },
+  "redacted_result_summary": {
+    "result_kind": "image_candidate",
+    "status": "candidate_ready_for_validation",
+    "summary": "A local review-only image candidate was saved for staging validation; later media review rejected this candidate for runtime promotion.",
+    "result_digest": "e94f88eec738a631992425fbd6c9e3fc6ed53013d634ef886101906c4f944f70",
+    "finish_reason": "downloaded_local_ref"
+  },
+  "artifact_manifest": {
+    "status": "review_only_artifacts_ready",
+    "output_refs": [
+      {
+        "artifact_id": "old_signal_tower_map_image_candidate",
+        "kind": "image_candidate",
+        "path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+        "sha256": "e94f88eec738a631992425fbd6c9e3fc6ed53013d634ef886101906c4f944f70",
+        "byte_size": 1709959,
+        "content_type": "image/png",
+        "media_layer": "processed_media"
+      }
+    ],
+    "review_only": true,
+    "notes": [
+      "The artifact is a local candidate ref only.",
+      "It cannot be consumed by runtime or published media without an explicit promotion report."
+    ]
+  },
+  "validation": {
+    "schema_gate": {
+      "status": "passed",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "The envelope shape is valid."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Map topology and gameplay alignment must be checked after staging."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Concrete visual quality review waits for the staged local image ref."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual model review is required before promotion."
+      ]
+    }
+  },
+  "activation_gate": {
+    "activation_allowed": false,
+    "blocked_reason": "promotion_required",
+    "required_next_gates": [
+      "artifact_staging_manifest",
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ]
+  }
+}

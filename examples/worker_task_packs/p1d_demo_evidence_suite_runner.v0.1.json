@@ -1,0 +1,84 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-19-demo-evidence-suite-runner",
+  "title": "Demo evidence suite runner",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/demo-evidence-suite-runner",
+  "worktree": "/tmp/ai-td-task-demo-evidence-suite-runner",
+  "objective": "新增一个录屏 / 评审前可重复运行的一键证据套件：串联浏览器玩家链路截图、截图 report 校验、统一 demo evidence 导出，并写出 suite report，降低演示前手动命令遗漏风险。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "tools/demo/export_evidence.py",
+    "tools/demo/build_mvp_demo_readiness_report.py",
+    "examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/demo/run_demo_evidence_suite.py",
+    "examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/demo/run_demo_evidence_suite.py",
+    "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_evidence_suite_acceptance --browser-timeout 45 --command-timeout 180",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nroot = Path('/tmp/demo_evidence_suite_acceptance')\nreport = json.loads((root / 'demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8'))\nassert report['status'] == 'passed'\nassert report['frontend_flow_visual_smoke']['status'] == 'captured'\nassert report['frontend_flow_visual_smoke']['captured_screenshot_count'] == 14\nassert report['frontend_flow_visual_smoke']['expected_screenshot_count'] == 14\nassert report['demo_evidence']['export_validation_status'] == 'passed'\nassert report['demo_evidence']['frontend_flow_status'] == 'captured'\nassert report['safety_summary']['provider_call_count_during_suite'] == 0\nassert report['safety_summary']['world_mutation_count_during_suite'] == 0\nassert not report['failures']\nfor output in report['outputs'].values():\n    assert output['exists'], output\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只做本地演示证据编排，不调用 provider，不读取 .env，不生成新素材。",
+    "默认要求本地可用 Chromium 兼容浏览器；只有显式 --allow-missing-browser 才允许生成 browser_unavailable_allowed 套件报告。",
+    "suite report 只保存子命令摘要、输出文件指纹和安全计数，不保存原始 provider 响应、prompt 或 secret。",
+    "输出默认写入 /tmp，不把截图 PNG 或 evidence bundle 提交进仓库。"
+  ]
+}

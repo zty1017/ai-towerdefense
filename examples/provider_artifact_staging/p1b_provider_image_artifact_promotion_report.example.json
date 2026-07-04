@@ -1,0 +1,113 @@
+{
+  "schema_version": "provider_artifact_promotion_report.v0.1",
+  "report_id": "ppromo_old_signal_tower_image_001",
+  "created_at": "2026-07-03T00:00:00Z",
+  "source_staging_ref": "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
+  "source_staging_id": "pstaging_old_signal_tower_image_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "report_only": true,
+    "direct_runtime_mutation_allowed": false,
+    "direct_world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required"
+  },
+  "decision": {
+    "promotion_decision": "blocked_validation_failed",
+    "promotion_allowed": false,
+    "blocked_reason": "image_media_and_semantic_gates_failed",
+    "required_next_actions": [
+      "regenerate_or_paintover_from_topology_control_sketch",
+      "rerun_media_gate_on_repaired_candidate",
+      "rerun_semantic_alignment_against_map_runtime_package",
+      "complete_human_or_visual_model_review_before_any_promotion"
+    ],
+    "notes": [
+      "The candidate is useful as negative evidence for the map compiler, but must not enter published media or runtime package construction.",
+      "This report intentionally blocks the local image even though the source envelope and local refs are valid."
+    ]
+  },
+  "reviewed_artifacts": [
+    {
+      "staged_artifact_id": "old_signal_tower_map_image_candidate_staged",
+      "source_artifact_id": "old_signal_tower_map_image_candidate",
+      "kind": "image_candidate",
+      "path": "game_data/media/map_visual_reference/node_candidates_v2/old_signal_tower.painted_candidate.png",
+      "review_result": "needs_repair",
+      "notes": [
+        "The candidate requires regeneration or paintover before another promotion attempt.",
+        "It remains review-only and player-invisible."
+      ]
+    }
+  ],
+  "gate_results": {
+    "source_staging_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/p1b_provider_image_artifact_staging.example.json",
+      "notes": [
+        "The referenced image staging manifest validates."
+      ]
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "The reviewed image path is local and exists."
+      ]
+    },
+    "media_gate": {
+      "status": "failed",
+      "required_before_promotion": true,
+      "report_ref": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
+      "notes": [
+        "The visual candidate is not suitable for runtime presentation."
+      ]
+    },
+    "semantic_gate": {
+      "status": "failed",
+      "required_before_promotion": true,
+      "report_ref": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+      "notes": [
+        "The candidate does not satisfy MapRuntimePackage semantic alignment requirements."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_promotion": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual model review should run only after a repaired candidate exists."
+      ]
+    },
+    "simulation_gate": {
+      "status": "not_applicable",
+      "required_before_promotion": false,
+      "report_ref": null,
+      "notes": [
+        "This visual candidate is blocked before runtime battle simulation."
+      ]
+    }
+  },
+  "promotion_targets": {
+    "target_kind": "none",
+    "runtime_package_refs": [],
+    "world_transaction_refs": [],
+    "published_media_refs": []
+  },
+  "safety_summary": {
+    "provider_call_count_by_report": 0,
+    "world_mutation_count_by_report": 0,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "stores_secret": false,
+    "uses_temporary_url": false
+  }
+}
