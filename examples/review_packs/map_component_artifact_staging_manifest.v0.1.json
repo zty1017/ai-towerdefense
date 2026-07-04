@@ -1,0 +1,1497 @@
+{
+  "created_at": "2026-07-05T00:00:00Z",
+  "manifest_id": "map_component_artifact_staging_manifest_v0_1",
+  "runtime_effect": {
+    "frontend_default_modified": false,
+    "manifest_replacement_written": false,
+    "render_plan_modified": false,
+    "runtime_map_truth_modified": false,
+    "style_pack_modified": false
+  },
+  "schema_version": "map_component_artifact_staging_manifest.v0.1",
+  "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+  "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+  "staging_slots": [
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone",
+      "component_role": "terrain_base",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail",
+      "component_role": "terrain_detail",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track",
+      "component_role": "road_band",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil",
+      "component_role": "road_edge",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring",
+      "component_role": "build_slot_platform",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation",
+      "component_role": "objective_foundation",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak",
+      "component_role": "spawn_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_resource_wick_crate_marker",
+      "component_role": "resource_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_resource_wick_crate_marker.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_resource_wick_crate_marker.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool",
+      "component_role": "hazard_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall",
+      "component_role": "blocking_prop",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_prop_low_oil_crate",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_prop_low_oil_crate.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_prop_low_oil_crate.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "lamp_wick_store",
+      "request_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone",
+      "component_role": "terrain_base",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail",
+      "component_role": "terrain_detail",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_road_signal_tower_ridge_line",
+      "component_role": "road_band",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_road_signal_tower_ridge_line.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_road_signal_tower_ridge_line.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace",
+      "component_role": "road_edge",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring",
+      "component_role": "build_slot_platform",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation",
+      "component_role": "objective_foundation",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate",
+      "component_role": "spawn_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_resource_copper_pin_marker",
+      "component_role": "resource_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_resource_copper_pin_marker.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_resource_copper_pin_marker.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool",
+      "component_role": "hazard_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck",
+      "component_role": "blocking_prop",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_prop_broken_signal_pole",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_prop_broken_signal_pole.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_prop_broken_signal_pole.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_old_signal_tower_decor_resonant_glass_shards",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "old_signal_tower",
+      "request_id": "map_component_old_signal_tower_decor_resonant_glass_shards.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_old_signal_tower_decor_resonant_glass_shards.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss",
+      "component_role": "terrain_base",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_terrain_broken_stone_detail",
+      "component_role": "terrain_detail",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_terrain_broken_stone_detail.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_terrain_broken_stone_detail.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_road_old_station_track",
+      "component_role": "road_band",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_road_old_station_track.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_road_old_station_track.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_road_edge_lantern_chalk",
+      "component_role": "road_edge",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_road_edge_lantern_chalk.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_road_edge_lantern_chalk.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring",
+      "component_role": "build_slot_platform",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation",
+      "component_role": "objective_foundation",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_spawn_dark_fog_gate",
+      "component_role": "spawn_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_spawn_dark_fog_gate.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_spawn_dark_fog_gate.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker",
+      "component_role": "resource_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker",
+      "component_role": "hazard_marker",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker",
+      "component_role": "blocking_prop",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_prop_broken_lamp_post",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_prop_broken_lamp_post.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_prop_broken_lamp_post.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "accepted_input_kinds": [
+        "png",
+        "svg",
+        "webp"
+      ],
+      "candidate_local_path": null,
+      "candidate_sha256": null,
+      "component_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones",
+      "component_role": "non_blocking_decoration",
+      "expected_size": {
+        "height": 256,
+        "width": 256
+      },
+      "import_status": "awaiting_local_artifact",
+      "node_id": "gray_lantern_station",
+      "request_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.image.request",
+      "required_next_gates": [
+        "local_artifact_import",
+        "candidate_review",
+        "visual_qa",
+        "cutout_normalization",
+        "map_style_component_binding_report_refresh",
+        "explicit_promotion_gate"
+      ],
+      "review_status": "not_imported",
+      "slot_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.image.request.artifact_staging",
+      "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "usage_policy": [
+        "review_gate_only",
+        "local_artifact_import_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "no_frontend_default_consumption",
+        "no_manifest_or_style_pack_or_render_plan_mutation",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    }
+  ],
+  "status": "awaiting_local_artifacts",
+  "summary": {
+    "accepted_input_kind_counts": {
+      "png": 36,
+      "svg": 36,
+      "webp": 36
+    },
+    "awaiting_count": 36,
+    "component_count": 36,
+    "import_status_counts": {
+      "awaiting_local_artifact": 36
+    },
+    "imported_count": 0,
+    "node_count": 3,
+    "not_imported_count": 36,
+    "request_count": 36,
+    "review_status_counts": {
+      "not_imported": 36
+    },
+    "slot_count": 36,
+    "status_counts": {
+      "not_imported": 36
+    },
+    "style_pack_count": 3
+  },
+  "usage_policy": [
+    "review_gate_only",
+    "local_artifact_import_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "no_frontend_default_consumption",
+    "no_manifest_or_style_pack_or_render_plan_mutation",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_artifact_staging_manifest.py examples/review_packs/map_component_artifact_staging_manifest.v0.1.json"
+    ],
+    "validator": "tools/media/validate_map_component_artifact_staging_manifest.py"
+  }
+}

@@ -162,6 +162,8 @@ PATHS = {
     / "examples/review_packs/map_style_component_binding_report.v0.1.json",
     "map_component_generation_request_pack": ROOT
     / "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+    "map_component_artifact_staging_manifest": ROOT
+    / "examples/review_packs/map_component_artifact_staging_manifest.v0.1.json",
     "map_component_candidate_review_report": ROOT
     / "examples/review_packs/map_component_candidate_review_report.v0.1.json",
     "map_component_promotion_gate_report": ROOT
@@ -527,6 +529,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_component_generation_request_pack.py",
             "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_artifact_staging_manifest",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_artifact_staging_manifest.py",
+            "examples/review_packs/map_component_artifact_staging_manifest.v0.1.json",
         ],
     },
     {
@@ -1797,6 +1807,54 @@ def map_component_generation_request_summary(pack: dict[str, Any]) -> dict[str, 
                 "required_gates": as_list(request.get("required_gates")),
             }
             for request in requests[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_component_artifact_staging_summary(manifest: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(manifest.get("summary"))
+    slots = [
+        slot
+        for slot in as_list(manifest.get("staging_slots"))
+        if isinstance(slot, dict)
+    ]
+    return {
+        "schema_version": manifest.get("schema_version"),
+        "manifest_id": manifest.get("manifest_id"),
+        "status": manifest.get("status"),
+        "source_request_pack_path": manifest.get("source_request_pack_path"),
+        "source_manifest_path": manifest.get("source_manifest_path"),
+        "slot_count": summary.get("slot_count"),
+        "request_count": summary.get("request_count"),
+        "component_count": summary.get("component_count"),
+        "style_pack_count": summary.get("style_pack_count"),
+        "node_count": summary.get("node_count"),
+        "imported_count": summary.get("imported_count"),
+        "awaiting_count": summary.get("awaiting_count"),
+        "not_imported_count": summary.get("not_imported_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "import_status_counts": as_obj(summary.get("import_status_counts")),
+        "review_status_counts": as_obj(summary.get("review_status_counts")),
+        "accepted_input_kind_counts": as_obj(summary.get("accepted_input_kind_counts")),
+        "runtime_effect": as_obj(manifest.get("runtime_effect")),
+        "usage_policy": as_list(manifest.get("usage_policy")),
+        "validation_commands": as_list(as_obj(manifest.get("validation")).get("commands")),
+        "slot_samples": [
+            {
+                "slot_id": slot.get("slot_id"),
+                "request_id": slot.get("request_id"),
+                "component_id": slot.get("component_id"),
+                "component_role": slot.get("component_role"),
+                "style_pack_id": slot.get("style_pack_id"),
+                "node_id": slot.get("node_id"),
+                "expected_size": as_obj(slot.get("expected_size")),
+                "accepted_input_kinds": as_list(slot.get("accepted_input_kinds")),
+                "candidate_local_path": slot.get("candidate_local_path"),
+                "import_status": slot.get("import_status"),
+                "review_status": slot.get("review_status"),
+                "required_next_gates": as_list(slot.get("required_next_gates")),
+            }
+            for slot in slots[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -3666,6 +3724,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_component_generation_request_pack"],
         ),
         (
+            "map_component_artifact_staging_manifest",
+            PATHS["map_component_artifact_staging_manifest"],
+        ),
+        (
             "map_component_candidate_review_report",
             PATHS["map_component_candidate_review_report"],
         ),
@@ -3879,6 +3941,9 @@ def build_evidence(
     map_component_generation_request_pack = load_json(
         PATHS["map_component_generation_request_pack"]
     )
+    map_component_artifact_staging_manifest = load_json(
+        PATHS["map_component_artifact_staging_manifest"]
+    )
     map_component_candidate_review_report = load_json(
         PATHS["map_component_candidate_review_report"]
     )
@@ -4063,6 +4128,9 @@ def build_evidence(
             "request_pack": map_component_generation_request_summary(
                 map_component_generation_request_pack
             ),
+            "artifact_staging": map_component_artifact_staging_summary(
+                map_component_artifact_staging_manifest
+            ),
             "candidate_review": map_component_candidate_review_summary(
                 map_component_candidate_review_report
             ),
@@ -4167,6 +4235,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_component_generation_request = as_obj(
         map_component_generation_pipeline.get("request_pack")
+    )
+    map_component_artifact_staging = as_obj(
+        map_component_generation_pipeline.get("artifact_staging")
     )
     map_component_candidate_review = as_obj(
         map_component_generation_pipeline.get("candidate_review")
@@ -4569,6 +4640,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
         f"- MapComponent generation request pack：`{map_component_generation_request.get('status')}`，requests `{map_component_generation_request.get('request_count')}`，components `{map_component_generation_request.get('component_count')}`，target kinds `{map_component_generation_request.get('target_media_kind_counts')}`",
+        f"- MapComponent artifact staging：`{map_component_artifact_staging.get('status')}`，slots `{map_component_artifact_staging.get('slot_count')}`，imported `{map_component_artifact_staging.get('imported_count')}`，awaiting `{map_component_artifact_staging.get('awaiting_count')}`，not imported `{map_component_artifact_staging.get('not_imported_count')}`，runtime/manifest 写入 `{map_component_artifact_staging.get('runtime_effect')}`",
         f"- MapComponent candidate review：`{map_component_candidate_review.get('status')}`，candidates `{map_component_candidate_review.get('candidate_count')}`，baseline fixtures `{map_component_candidate_review.get('baseline_fixture_candidate_count')}`，generated `{map_component_candidate_review.get('generated_candidate_count')}`，可晋升 `{map_component_candidate_review.get('promotable_count')}`",
         f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
