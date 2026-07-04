@@ -120,6 +120,15 @@ loop_continuity_ref: examples/review_packs/...#animation_id
 
 当前 deterministic frame sequence 的机械循环连续性通过，但报告会保留 `deterministic_placeholder_not_real_video_keyframes` warning。后续真实图生视频关键帧进入 atlas 时，应把 `frame_source_kind` 改为 `video_keyframe_sequence` 并重新跑同一报告。
 
+当前已补充 `FrameSequence v0.1` 字段级事实源：
+
+```text
+shared/schemas/frame_sequence.v0.1.schema.json
+tools/media/validate_frame_sequence.py
+```
+
+schema 层只固化结构和基本类型；validator 层负责本地语义门：拒绝任何 `http://` / `https://` remote URL，拒绝 provider / model / raw prompt / trace / raw JSON / secret / unreviewed content 等敏感键，检查 fixture 序列必须全链路 `review_only=true` 且带 `fixture_notice`，并验证 runtime sprite import 所需的 `loop=true`、`fps>=1`、至少 2 帧、`frame_index` 唯一、本地 PNG 存在、声明尺寸 / sha 与文件一致、同一序列画布一致，以及 frame `url` 如存在必须以 `/assets/` 开头。`tools/media/import_video_keyframe_sequence.py` 必须复用该 validator；无效 `frame_sequence` 不得写出 output atlas。
+
 后续接入图生视频和关键帧时，应在同一合同上扩展：
 
 - `frames` 从当前 4 帧临时循环扩展为 8-16 帧真实关键帧。
@@ -326,7 +335,7 @@ assign anchor
 
 ## 5. 帧序列 manifest 草案
 
-`frame_sequence.v0.1` 建议结构：
+`frame_sequence.v0.1` 正式结构以 `shared/schemas/frame_sequence.v0.1.schema.json` 为准。下面是单序列的核心形状：
 
 ```json
 {

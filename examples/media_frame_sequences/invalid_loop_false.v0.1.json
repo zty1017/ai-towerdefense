@@ -1,0 +1,46 @@
+{
+  "metadata_version": "frame_sequence.v0.1",
+  "sequence_id": "invalid_loop_false_v0_1",
+  "source_kind": "reviewed_local_png",
+  "review_only": true,
+  "asset_id": "enemy_shadow_tide_runner",
+  "source_game_id": "shadow_tide_runner",
+  "asset_name": "Shadow Tide Runner",
+  "asset_type": "enemy_archetype",
+  "media_role": "unit_sprite",
+  "animation_state": "idle",
+  "target_animation_id": "enemy_shadow_tide_runner.unit_sprite.idle",
+  "frame_source_kind": "video_keyframe_sequence",
+  "fps": 6,
+  "loop": false,
+  "frames": [
+    {
+      "stable_internal_id": "invalid_loop_false.frame_000",
+      "frame_index": 0,
+      "timestamp_ms": 0,
+      "media_role": "unit_sprite",
+      "local_path": "examples/media_frame_sequences/frames/frontend_runtime_video_keyframe_fixture_enemy_shadow_tide_runner_unit_sprite_frame_000.png",
+      "url": "/assets/frontend_runtime_mock/video_keyframe_frames/frontend_runtime_video_keyframe_fixture_enemy_shadow_tide_runner_unit_sprite_frame_000.png",
+      "width": 836,
+      "height": 836,
+      "sha256": "79267e53a177494af1a824381cd6bc3ddc41bfe7f651cf1b41a637f2d1406b9d"
+    },
+    {
+      "stable_internal_id": "invalid_loop_false.frame_001",
+      "frame_index": 1,
+      "timestamp_ms": 167,
+      "media_role": "unit_sprite",
+      "local_path": "examples/media_frame_sequences/frames/frontend_runtime_video_keyframe_fixture_enemy_shadow_tide_runner_unit_sprite_frame_001.png",
+      "url": "/assets/frontend_runtime_mock/video_keyframe_frames/frontend_runtime_video_keyframe_fixture_enemy_shadow_tide_runner_unit_sprite_frame_001.png",
+      "width": 836,
+      "height": 836,
+      "sha256": "c233f6f062bfc88c02be5473df547daed78fe8afabcdc1a74f7ee295bd783321"
+    }
+  ],
+  "summary": {
+    "frame_count": 2,
+    "fps": 6,
+    "duration_ms": 334,
+    "review_only": true
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/frame_sequence.v0.1.schema.json",
+  "title": "FrameSequence v0.1",
+  "description": "Local-only PNG frame sequence contract for reviewed video keyframe imports. The schema defines structure; tools/media/validate_frame_sequence.py owns local path, PNG, sha, fixture, forbidden payload, and runtime import semantic gates.",
+  "oneOf": [
+    { "$ref": "#/$defs/frame_sequence" },
+    { "$ref": "#/$defs/frame_sequence_bundle" }
+  ],
+  "$defs": {
+    "frame_sequence_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metadata_version", "sequences"],
+      "properties": {
+        "metadata_version": { "type": "string", "const": "frame_sequence.v0.1" },
+        "bundle_id": { "type": "string", "minLength": 1 },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture_only": { "type": "boolean" },
+        "fixture_notice": { "type": "string", "minLength": 1 },
+        "sequences": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/frame_sequence" }
+        },
+        "summary": { "$ref": "#/$defs/bundle_summary" }
+      }
+    },
+    "frame_sequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metadata_version",
+        "sequence_id",
+        "asset_id",
+        "media_role",
+        "animation_state",
+        "frame_source_kind",
+        "fps",
+        "loop",
+        "frames",
+        "summary"
+      ],
+      "properties": {
+        "metadata_version": { "type": "string", "const": "frame_sequence.v0.1" },
+        "sequence_id": { "type": "string", "minLength": 1 },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture_only": { "type": "boolean" },
+        "fixture_notice": { "type": "string", "minLength": 1 },
+        "source_video_id": { "type": ["string", "null"] },
+        "media_layer": {
+          "type": "string",
+          "enum": ["raw_media", "processed_media", "published_media"]
+        },
+        "asset_id": { "type": "string", "minLength": 1 },
+        "source_game_id": { "type": ["string", "null"] },
+        "asset_name": { "type": ["string", "null"] },
+        "asset_type": { "type": ["string", "null"] },
+        "media_role": { "type": "string", "minLength": 1 },
+        "animation_state": { "type": "string", "minLength": 1 },
+        "target_animation_id": { "type": "string", "minLength": 1 },
+        "frame_source_kind": {
+          "type": "string",
+          "enum": ["video_keyframe_sequence"]
+        },
+        "loop_continuity_ref": { "type": ["string", "null"] },
+        "fps": { "type": "integer", "minimum": 1 },
+        "loop": { "type": "boolean" },
+        "playback": { "$ref": "#/$defs/playback" },
+        "frames": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/frame" }
+        },
+        "summary": { "$ref": "#/$defs/sequence_summary" }
+      }
+    },
+    "playback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "fps", "loop", "frame_count"],
+      "properties": {
+        "state": { "type": "string", "minLength": 1 },
+        "fps": { "type": "integer", "minimum": 1 },
+        "loop": { "type": "boolean" },
+        "frame_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "frame_index",
+        "timestamp_ms",
+        "media_role",
+        "local_path",
+        "width",
+        "height",
+        "sha256"
+      ],
+      "properties": {
+        "stable_internal_id": { "type": "string", "minLength": 1 },
+        "frame_index": { "type": "integer", "minimum": 0 },
+        "timestamp_ms": { "type": "integer", "minimum": 0 },
+        "media_role": { "type": "string", "minLength": 1 },
+        "local_path": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "duration_ms": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "anchor": { "$ref": "#/$defs/anchor" },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture_only": { "type": "boolean" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset", "x", "y"],
+      "properties": {
+        "preset": { "type": "string", "minLength": 1 },
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "sequence_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame_count", "fps", "duration_ms"],
+      "properties": {
+        "frame_count": { "type": "integer", "minimum": 1 },
+        "fps": { "type": "integer", "minimum": 1 },
+        "duration_ms": { "type": "integer", "minimum": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture": { "type": "boolean" }
+      }
+    },
+    "bundle_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sequence_count": { "type": "integer", "minimum": 1 },
+        "frame_count": { "type": "integer", "minimum": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture": { "type": "boolean" }
+      }
+    }
+  }
+}
