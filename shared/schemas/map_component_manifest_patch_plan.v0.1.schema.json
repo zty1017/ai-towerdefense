@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_manifest_patch_plan.v0.1.schema.json",
+  "title": "MapComponentManifestPatchPlan v0.1",
+  "description": "Review-only manifest patch proposals derived from allowed MapComponent promotion gate decisions. This plan never writes MapComponentMediaManifest, copies candidate files, modifies StylePack or RenderPlan, changes frontend defaults, or mutates runtime map truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "created_at",
+    "source_promotion_gate_report_path",
+    "source_candidate_review_report_path",
+    "source_visual_quality_report_path",
+    "source_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "patches",
+    "runtime_effect",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_manifest_patch_plan.v0.1" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_promotion_gate_report_path": { "type": "string", "minLength": 1 },
+    "source_candidate_review_report_path": { "type": "string", "minLength": 1 },
+    "source_visual_quality_report_path": { "type": "string", "minLength": 1 },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["no_allowed_candidates", "ready_for_developer_apply", "blocked"]
+    },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "patches": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/patch" }
+    },
+    "runtime_effect": { "$ref": "#/$defs/runtime_effect" },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_decision_count",
+        "patch_count",
+        "blocked_patch_count",
+        "ready_patch_count",
+        "manifest_item_count",
+        "runtime_effect"
+      ],
+      "properties": {
+        "allowed_decision_count": { "type": "integer", "minimum": 0 },
+        "patch_count": { "type": "integer", "minimum": 0 },
+        "blocked_patch_count": { "type": "integer", "minimum": 0 },
+        "ready_patch_count": { "type": "integer", "minimum": 0 },
+        "manifest_item_count": { "type": "integer", "minimum": 0 },
+        "runtime_effect": { "$ref": "#/$defs/runtime_effect" }
+      }
+    },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_replacement_written",
+        "style_pack_modified",
+        "render_plan_modified",
+        "frontend_default_modified",
+        "runtime_map_truth_modified",
+        "candidate_file_copied"
+      ],
+      "properties": {
+        "manifest_replacement_written": { "type": "boolean", "const": false },
+        "style_pack_modified": { "type": "boolean", "const": false },
+        "render_plan_modified": { "type": "boolean", "const": false },
+        "frontend_default_modified": { "type": "boolean", "const": false },
+        "runtime_map_truth_modified": { "type": "boolean", "const": false },
+        "candidate_file_copied": { "type": "boolean", "const": false }
+      }
+    },
+    "target_manifest_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_path",
+        "url",
+        "sha256",
+        "width",
+        "height",
+        "source_kind",
+        "style_pack_id",
+        "node_id",
+        "component_role",
+        "source_binding",
+        "media_role"
+      ],
+      "properties": {
+        "local_path": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "component_role": { "type": "string", "minLength": 1 },
+        "source_binding": { "type": "string", "minLength": 1 },
+        "media_role": { "type": "string", "minLength": 1 }
+      }
+    },
+    "replacement_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_local_path", "candidate_sha256", "file_type", "width", "height"],
+      "properties": {
+        "candidate_local_path": { "type": "string", "minLength": 1 },
+        "candidate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "file_type": { "type": "string", "enum": ["svg", "png", "webp", "unknown"] },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "patch_id",
+        "candidate_id",
+        "component_id",
+        "stable_internal_id",
+        "target_manifest_item_found",
+        "target_manifest_item",
+        "replacement_source",
+        "visual_quality_item_status",
+        "candidate_review_status",
+        "patch_status",
+        "manifest_schema_compatible_now",
+        "proposed_processed_local_path",
+        "proposed_public_url",
+        "required_next_actions"
+      ],
+      "properties": {
+        "patch_id": { "type": "string", "minLength": 1 },
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "component_id": { "type": "string", "minLength": 1 },
+        "stable_internal_id": { "type": "string", "minLength": 1 },
+        "target_manifest_item_found": { "type": "boolean" },
+        "target_manifest_item": {
+          "anyOf": [
+            { "$ref": "#/$defs/target_manifest_item" },
+            { "type": "null" }
+          ]
+        },
+        "replacement_source": { "$ref": "#/$defs/replacement_source" },
+        "visual_quality_item_status": {
+          "type": ["string", "null"],
+          "enum": [null, "blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode", "passed"]
+        },
+        "candidate_review_status": { "type": "string", "minLength": 1 },
+        "patch_status": {
+          "type": "string",
+          "enum": [
+            "ready_for_developer_apply",
+            "blocked_missing_manifest_item",
+            "blocked_candidate_not_allowed",
+            "blocked_visual_not_passed",
+            "blocked_manifest_schema_incompatible"
+          ]
+        },
+        "manifest_schema_compatible_now": { "type": "boolean" },
+        "proposed_processed_local_path": { "type": ["string", "null"], "minLength": 1 },
+        "proposed_public_url": { "type": ["string", "null"], "minLength": 1 },
+        "required_next_actions": { "$ref": "#/$defs/string_list" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}
