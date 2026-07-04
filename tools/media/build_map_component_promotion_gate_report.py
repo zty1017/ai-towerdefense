@@ -55,7 +55,11 @@ def resolve_path(value: str) -> Path:
 
 
 def rel(path: Path) -> str:
-    return path.resolve().relative_to(ROOT).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -228,15 +232,30 @@ def build_report(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build MapComponentPromotionGateReport v0.1.")
-    parser.add_argument("--candidate-review", default=str(DEFAULT_CANDIDATE_REVIEW))
+    parser.add_argument(
+        "--candidate-review",
+        default=None,
+        help=(
+            "Candidate review report path. Defaults to the source_candidate_review_report_path "
+            "declared by --visual-quality-report, or the canonical example when absent."
+        ),
+    )
     parser.add_argument("--visual-quality-report", default=str(DEFAULT_VISUAL_QUALITY_REPORT))
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--created-at", default=None)
     args = parser.parse_args()
 
-    candidate_review_path = resolve_path(args.candidate_review)
     visual_quality_report_path = resolve_path(args.visual_quality_report)
+    if args.candidate_review:
+        candidate_review_path = resolve_path(args.candidate_review)
+    else:
+        visual_quality_report = as_obj(load_json(visual_quality_report_path))
+        source_candidate_review = visual_quality_report.get("source_candidate_review_report_path")
+        if isinstance(source_candidate_review, str) and source_candidate_review.strip():
+            candidate_review_path = resolve_path(source_candidate_review)
+        else:
+            candidate_review_path = DEFAULT_CANDIDATE_REVIEW
     manifest_path = resolve_path(args.manifest)
     output_path = resolve_path(args.output)
     report = build_report(

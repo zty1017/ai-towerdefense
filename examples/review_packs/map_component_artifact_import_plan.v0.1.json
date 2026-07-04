@@ -1,0 +1,9 @@
+{
+  "imports": [
+    {
+      "candidate_local_path": "game_data/media/map_components/candidates/fixtures/map_component_lamp_wick_store_terrain_wick_store_oiled_stone.fixture.svg",
+      "request_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request"
+    }
+  ],
+  "schema_version": "map_component_artifact_import_plan.v0.1"
+}
