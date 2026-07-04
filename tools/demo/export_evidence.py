@@ -27,6 +27,7 @@ MAX_VALIDATION_OUTPUT_CHARS = 1400
 MAX_SAMPLE_ITEMS = 12
 MAP_RUNTIME_PACKAGE_DIR = ROOT / "examples/map_runtime_packages"
 MAP_COMPILE_PACKAGE_DIR = ROOT / "examples/map_compile_packages"
+MAP_RENDER_PREVIEW_DIR = ROOT / "examples/map_render_previews"
 WORLD_DELTA_TRANSACTION_DIR = ROOT / "examples/world_delta_transactions"
 STAGE_WORLD_DELTA_TRANSACTION_PATHS = [
     WORLD_DELTA_TRANSACTION_DIR
@@ -972,6 +973,10 @@ def map_compile_package_paths() -> list[Path]:
     return sorted(MAP_COMPILE_PACKAGE_DIR.glob("*.map_compile_package.json"))
 
 
+def map_render_preview_report_paths() -> list[Path]:
+    return sorted(MAP_RENDER_PREVIEW_DIR.glob("*.procedural_map_preview_report.json"))
+
+
 def validation_commands() -> list[dict[str, Any]]:
     commands = list(STATIC_VALIDATION_COMMANDS)
     for path in map_runtime_package_paths():
@@ -992,6 +997,17 @@ def validation_commands() -> list[dict[str, Any]]:
                 "command": [
                     "python3",
                     "tools/asset_graph/validate_map_compile_package.py",
+                    rel(path),
+                ],
+            }
+        )
+    for path in map_render_preview_report_paths():
+        commands.append(
+            {
+                "name": f"procedural_map_preview_report_{path.stem.replace('.', '_')}",
+                "command": [
+                    "python3",
+                    "tools/asset_graph/validate_procedural_map_preview_report.py",
                     rel(path),
                 ],
             }
@@ -1573,6 +1589,56 @@ def map_topology_control_sketch_pack_summary(pack: dict[str, Any]) -> dict[str, 
             }
             for sketch in sketches[:MAX_SAMPLE_ITEMS]
         ],
+    }
+
+
+def procedural_map_preview_summary(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    status_counts = Counter(
+        str(report.get("status") or "unknown")
+        for report in reports
+        if isinstance(report, dict)
+    )
+    usage_counts: Counter[str] = Counter()
+    source_policy_counts: Counter[str] = Counter()
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        usage_counts.update(str(policy) for policy in as_list(report.get("usage_policy")))
+        semantic_policy = as_obj(report.get("semantic_source_policy"))
+        source_policy_counts.update(
+            f"{key}:{value}" for key, value in sorted(semantic_policy.items())
+        )
+
+    samples = []
+    for report in reports[:MAX_SAMPLE_ITEMS]:
+        if not isinstance(report, dict):
+            continue
+        source_refs = as_obj(report.get("source_refs"))
+        runtime_path = str(source_refs.get("map_runtime_package_path") or "")
+        node_id = Path(runtime_path).name.replace(".map_runtime_package.json", "")
+        samples.append(
+            {
+                "report_id": report.get("report_id"),
+                "status": report.get("status"),
+                "node_id": node_id or None,
+                "preview_svg_path": report.get("preview_svg_path"),
+                "preview_svg_sha256": report.get("preview_svg_sha256"),
+                "render_summary": as_obj(report.get("render_summary")),
+                "semantic_source_policy": as_obj(report.get("semantic_source_policy")),
+                "source_refs": source_refs,
+                "usage_policy": as_list(report.get("usage_policy")),
+            }
+        )
+
+    return {
+        "schema_version": "procedural_map_preview_report.v0.1",
+        "report_count": len(reports),
+        "ready_count": status_counts.get("preview_ready_review_only", 0),
+        "status_counts": dict(sorted(status_counts.items())),
+        "usage_policy_counts": dict(sorted(usage_counts.items())),
+        "semantic_source_policy_counts": dict(sorted(source_policy_counts.items())),
+        "preview_samples": samples,
+        "runtime_activation_policy": "review_only_not_player_runtime",
     }
 
 
@@ -2440,6 +2506,7 @@ def collect_assets_and_media(
     controlled_map_candidate_review: dict[str, Any],
     controlled_map_text_fallback_generation_run: dict[str, Any],
     controlled_map_text_fallback_candidate_review: dict[str, Any],
+    procedural_map_preview_reports: list[dict[str, Any]],
 ) -> dict[str, Any]:
     assets = [asset for asset in as_list(frontend_pack.get("assets")) if isinstance(asset, dict)]
     compiler_summary = as_obj(frontend_pack.get("compiler_summary"))
@@ -2552,6 +2619,9 @@ def collect_assets_and_media(
             ),
             "topology_control_sketch_pack": map_topology_control_sketch_pack_summary(
                 map_topology_control_sketch_pack
+            ),
+            "procedural_map_previews": procedural_map_preview_summary(
+                procedural_map_preview_reports
             ),
             "controlled_regeneration_request_pack": map_controlled_regeneration_request_pack_summary(
                 map_controlled_regeneration_request_pack
@@ -2876,6 +2946,10 @@ def collect_source_files() -> list[dict[str, Any]]:
     source_paths.extend(
         ("map_compile_package", path) for path in map_compile_package_paths()
     )
+    source_paths.extend(
+        ("procedural_map_preview_report", path)
+        for path in map_render_preview_report_paths()
+    )
     source_paths.extend(("reviewed_workflow", path) for path in REVIEWED_WORKFLOW_FILES)
     return [file_ref(path, role) for role, path in source_paths]
 
@@ -2905,6 +2979,11 @@ def build_evidence() -> dict[str, Any]:
         package
         for package in (load_json(path) for path in map_compile_package_paths())
         if isinstance(package, dict)
+    ]
+    procedural_map_preview_reports = [
+        report
+        for report in (load_json(path) for path in map_render_preview_report_paths())
+        if isinstance(report, dict)
     ]
     frontend_media_manifest = load_json(PATHS["frontend_media_manifest"])
     frontend_media_atlas_manifest = load_json(PATHS["frontend_media_atlas_manifest"])
@@ -3155,6 +3234,7 @@ def build_evidence() -> dict[str, Any]:
             controlled_map_candidate_review,
             controlled_map_text_fallback_generation_run,
             controlled_map_text_fallback_candidate_review,
+            procedural_map_preview_reports,
         ),
         "validation_summary": collect_validation_summary(
             validation_results, audit_report, dossier, map_packages, map_compile_packages
@@ -3254,6 +3334,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     topology_control_sketch = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "topology_control_sketch_pack"
+        )
+    )
+    procedural_map_previews = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "procedural_map_previews"
         )
     )
     controlled_regeneration_request = as_obj(
@@ -3526,6 +3611,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 拓扑约束地图 prompt pack：`{topology_prompt_pack.get('status')}`，主 prompt `{topology_prompt_pack.get('primary_prompt_count')}`，fallback `{topology_prompt_pack.get('fallback_prompt_count')}`",
         f"- 旧信号塔拓扑候选：candidate `{topology_candidate_review.get('status')}`，alignment `{topology_alignment_review.get('status')}`，overlay `{topology_overlay_review.get('status')}`，visual `{topology_overlay_visual_review.get('status')}`，可晋升 `{topology_overlay_visual_review.get('promotable_count')}`",
         f"- 地图 topology control sketch：`{topology_control_sketch.get('status')}`，sketch `{topology_control_sketch.get('sketch_count')}`，ready `{topology_control_sketch.get('ready_count')}`，目标尺寸 `{topology_control_sketch.get('target_size')}`",
+        f"- 地图 RenderPlan 离线预览：report `{procedural_map_previews.get('report_count')}`，ready `{procedural_map_previews.get('ready_count')}`，状态 `{procedural_map_previews.get('status_counts')}`，runtime 策略 `{procedural_map_previews.get('runtime_activation_policy')}`",
         f"- 地图受控重生请求包：`{controlled_regeneration_request.get('status')}`，request `{controlled_regeneration_request.get('request_count')}`，reference image request `{controlled_regeneration_request.get('reference_image_request_count')}`，blocked `{controlled_regeneration_request.get('blocked_count')}`",
         f"- 地图受控候选生成 dry-run：`{controlled_candidate_generation.get('status')}`，handoff `{controlled_candidate_generation.get('handoff_ready_count')}`，图片 `{controlled_candidate_generation.get('image_exists_count')}`，provider calls `{controlled_candidate_generation.get('provider_call_count')}`",
         f"- 地图受控候选审查：`{controlled_candidate_review.get('status')}`，候选 `{controlled_candidate_review.get('candidate_count')}`，晋升 runtime `{controlled_candidate_review.get('runtime_promotion_count')}`，状态 `{controlled_candidate_review.get('review_status_counts')}`",
@@ -3751,6 +3837,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         as_obj(assets_media.get("map_visual_reference")).get(
             "topology_control_sketch_pack"
         )
+    )
+    procedural_map_previews = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get("procedural_map_previews")
     )
     controlled_regeneration_request = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get(
@@ -4013,6 +4102,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Topology Control Sketch</div>
           <div class="metric">{html_escape(topology_control_sketch.get("status"))}</div>
           <p class="muted">sketch：{html_escape(topology_control_sketch.get("sketch_count"))}；ready：{html_escape(topology_control_sketch.get("ready_count"))}；目标尺寸：{html_escape(topology_control_sketch.get("target_size"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">RenderPlan 预览</div>
+          <div class="metric">{html_escape(procedural_map_previews.get("ready_count"))}/{html_escape(procedural_map_previews.get("report_count"))}</div>
+          <p class="muted">离线 SVG 预览只作为 review-only evidence；策略：{html_escape(procedural_map_previews.get("runtime_activation_policy"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">受控重生请求</div>
