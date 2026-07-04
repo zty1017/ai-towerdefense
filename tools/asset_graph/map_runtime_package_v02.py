@@ -13,7 +13,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-import map_runtime_package as v01
+try:
+    import map_runtime_package as v01
+except ModuleNotFoundError:  # pragma: no cover - supports package-style imports.
+    from tools.asset_graph import map_runtime_package as v01  # type: ignore
 
 
 TOP_LEVEL_ALLOWED_V02 = frozenset(v01.TOP_LEVEL_ALLOWED | {
@@ -268,6 +271,11 @@ def validate_package_v02(package: dict[str, Any], schema: dict[str, Any] | None 
     v01.scan_forbidden_fields(package, "", errors)
     v01.scan_external_urls(package, "", errors)
     return list(dict.fromkeys(errors))
+
+
+def placement_review_warnings_v02(package: dict[str, Any]) -> list[str]:
+    """Return non-fatal placement geometry warnings for v0.2 review output."""
+    return v01.placement_review_warnings(package)
 
 
 def validate_pure_python_v02(package: dict[str, Any]) -> list[str]:
