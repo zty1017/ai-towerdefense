@@ -99,6 +99,22 @@ MapStylePack material.component_ref / prefab visual_ref
 
 `MapComponentMediaManifest v0.1` 只登记 reviewed local component media：local refs、sha256、width/height、component_role、style_pack_id / node_id 和 usage policy。它可以让 `/assets/map_components/...` 的表现层组件 URL 在后端只读静态挂载中可解析，但不表示前端默认会消费这些组件，也不允许组件反向决定任何地图语义。
 
+当前真实 AI 组件生成尚未接入 provider。为了让后续图像 / 视频组件候选有可审查入口，组件媒体链路先扩展为 review-only 门禁结构：
+
+```text
+MapComponentMediaManifest deterministic SVG baseline
+  -> MapComponentGenerationRequestPack
+  -> MapComponentCandidateReviewReport
+  -> MapComponentPromotionGateReport
+  -> future MapComponentMediaManifest replacement build
+```
+
+`MapComponentGenerationRequestPack v0.1` 只从现有 manifest 派生每个组件的生成请求摘要：component_id、component_role、style_pack_id、node_id、baseline_local_path、target_size、prompt_profile_id、negative constraints、required gates 和 usage policy。它可以包含 redacted prompt summary / structured prompt tokens，但不得保存 provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 或外部临时 URL。
+
+`MapComponentCandidateReviewReport v0.1` 是真实候选进入后的审查层。当前没有真实生成候选，因此 36 个 baseline SVG 只能作为 `baseline_fixture_candidate` / `no_generated_candidate_yet` 负责任地占位，不能伪装成 AI 生成结果。报告会阻断晋升，并要求后续导入本地生成 artifact、visual QA、cutout / normalization 和 binding refresh。
+
+`MapComponentPromotionGateReport v0.1` 是显式晋升门。当前 `promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。只有未来 candidate review 真正通过，才允许单独生成新的 MapComponentMediaManifest 或 promotion report。
+
 该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。Manifest 与报告都不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
 
 ### 1.4 采纳：程序化分层渲染
@@ -248,6 +264,9 @@ worldbook + node state + visual identity
   -> component prompt pack
   -> component image/video generation
   -> media postprocess
+  -> MapComponentGenerationRequestPack
+  -> MapComponentCandidateReviewReport
+  -> MapComponentPromotionGateReport
   -> reviewed component manifest / atlas
   -> MapStyleComponentBindingReport
   -> procedural renderer consumes reviewed components
@@ -255,7 +274,7 @@ worldbook + node state + visual identity
 
 在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
 
-`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
+`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再由 candidate review 和 promotion gate 明确保持阻断；即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
 
 ### 3.2 前端视觉路线确认
 

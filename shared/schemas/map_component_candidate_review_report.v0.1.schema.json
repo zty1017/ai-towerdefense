@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_candidate_review_report.v0.1.schema.json",
+  "title": "MapComponentCandidateReviewReport v0.1",
+  "description": "Review-only report for MapComponent generation candidates. Baseline SVG fixtures may be listed as placeholders but never count as generated candidates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_request_pack_path",
+    "source_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "candidates",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_candidate_review_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_request_pack_path": { "type": "string", "minLength": 1 },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["warning", "blocked_from_promotion", "passed"] },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/candidate" }
+    },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "target_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "baseline_fixture_candidate_count",
+        "generated_candidate_count",
+        "promotable_count",
+        "blocked_from_promotion_count",
+        "no_generated_candidate_yet_count",
+        "status_counts",
+        "candidate_kind_counts"
+      ],
+      "properties": {
+        "candidate_count": { "type": "integer", "minimum": 0 },
+        "baseline_fixture_candidate_count": { "type": "integer", "minimum": 0 },
+        "generated_candidate_count": { "type": "integer", "minimum": 0 },
+        "promotable_count": { "type": "integer", "minimum": 0 },
+        "blocked_from_promotion_count": { "type": "integer", "minimum": 0 },
+        "no_generated_candidate_yet_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "candidate_kind_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "request_id",
+        "component_id",
+        "component_role",
+        "style_pack_id",
+        "node_id",
+        "candidate_kind",
+        "review_status",
+        "promotion_recommendation",
+        "promotion_allowed_now",
+        "baseline_local_path",
+        "baseline_sha256",
+        "target_size",
+        "findings",
+        "required_next_actions",
+        "usage_policy"
+      ],
+      "properties": {
+        "candidate_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "request_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "component_id": { "type": "string", "minLength": 1 },
+        "component_role": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "candidate_kind": { "type": "string", "enum": ["baseline_fixture_candidate", "generated_candidate"] },
+        "review_status": { "type": "string", "enum": ["no_generated_candidate_yet", "blocked_from_promotion", "passed"] },
+        "promotion_recommendation": { "type": "string", "enum": ["do_not_promote", "eligible_for_promotion"] },
+        "promotion_allowed_now": { "type": "boolean" },
+        "baseline_local_path": { "type": "string", "pattern": "^game_data/media/map_components/processed/[A-Za-z0-9_.-]+\\.svg$" },
+        "baseline_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "target_size": { "$ref": "#/$defs/target_size" },
+        "findings": { "$ref": "#/$defs/string_list" },
+        "required_next_actions": { "$ref": "#/$defs/string_list" },
+        "usage_policy": { "$ref": "#/$defs/string_list" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}

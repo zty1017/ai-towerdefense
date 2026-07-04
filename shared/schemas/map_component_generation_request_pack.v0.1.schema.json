@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_generation_request_pack.v0.1.schema.json",
+  "title": "MapComponentGenerationRequestPack v0.1",
+  "description": "Review-only generation request summaries derived from MapComponentMediaManifest. This pack contains redacted request metadata only and never stores provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content or external temporary URLs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pack_id",
+    "created_at",
+    "source_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "requests",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_generation_request_pack.v0.1" },
+    "pack_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["request_pack_ready_review_only", "blocked"] },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/request" }
+    },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "target_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_count",
+        "component_count",
+        "style_pack_count",
+        "node_count",
+        "target_media_kind_counts",
+        "component_role_counts",
+        "status_counts"
+      ],
+      "properties": {
+        "request_count": { "type": "integer", "minimum": 0 },
+        "component_count": { "type": "integer", "minimum": 0 },
+        "style_pack_count": { "type": "integer", "minimum": 0 },
+        "node_count": { "type": "integer", "minimum": 0 },
+        "target_media_kind_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "component_role_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "component_id",
+        "component_role",
+        "style_pack_id",
+        "node_id",
+        "source_manifest_item_id",
+        "baseline_local_path",
+        "baseline_sha256",
+        "target_size",
+        "target_media_kind",
+        "prompt_profile_id",
+        "redacted_prompt_summary",
+        "structured_prompt_tokens",
+        "negative_constraints",
+        "required_gates",
+        "usage_policy",
+        "status"
+      ],
+      "properties": {
+        "request_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "component_id": { "type": "string", "minLength": 1 },
+        "component_role": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "source_manifest_item_id": { "type": "string", "minLength": 1 },
+        "baseline_local_path": { "type": "string", "pattern": "^game_data/media/map_components/processed/[A-Za-z0-9_.-]+\\.svg$" },
+        "baseline_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "target_size": { "$ref": "#/$defs/target_size" },
+        "target_media_kind": { "type": "string", "enum": ["image", "video"] },
+        "prompt_profile_id": { "type": "string", "minLength": 1 },
+        "redacted_prompt_summary": { "type": "string", "minLength": 1 },
+        "structured_prompt_tokens": { "$ref": "#/$defs/string_list" },
+        "negative_constraints": { "$ref": "#/$defs/string_list" },
+        "required_gates": { "$ref": "#/$defs/string_list" },
+        "usage_policy": { "$ref": "#/$defs/string_list" },
+        "status": { "type": "string", "enum": ["request_ready_review_only", "blocked"] }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}

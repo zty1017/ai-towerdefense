@@ -160,6 +160,12 @@ PATHS = {
     / "game_data/media/map_components/map_component_media_manifest.v0.1.json",
     "map_style_component_binding_report": ROOT
     / "examples/review_packs/map_style_component_binding_report.v0.1.json",
+    "map_component_generation_request_pack": ROOT
+    / "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+    "map_component_candidate_review_report": ROOT
+    / "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+    "map_component_promotion_gate_report": ROOT
+    / "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -513,6 +519,30 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_map_style_component_binding_report.py",
             "examples/review_packs/map_style_component_binding_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_generation_request_pack",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_generation_request_pack.py",
+            "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_candidate_review_report",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_candidate_review_report.py",
+            "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_promotion_gate_report",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_promotion_gate_report.py",
+            "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
         ],
     },
     {
@@ -1728,6 +1758,120 @@ def map_style_component_binding_summary(report: dict[str, Any]) -> dict[str, Any
             for binding in bindings[:MAX_SAMPLE_ITEMS]
         ],
         "coverage_gap_samples": gaps[:MAX_SAMPLE_ITEMS],
+    }
+
+
+def map_component_generation_request_summary(pack: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(pack.get("summary"))
+    requests = [
+        request
+        for request in as_list(pack.get("requests"))
+        if isinstance(request, dict)
+    ]
+    return {
+        "schema_version": pack.get("schema_version"),
+        "pack_id": pack.get("pack_id"),
+        "status": pack.get("status"),
+        "source_manifest_path": pack.get("source_manifest_path"),
+        "request_count": summary.get("request_count"),
+        "component_count": summary.get("component_count"),
+        "style_pack_count": summary.get("style_pack_count"),
+        "node_count": summary.get("node_count"),
+        "target_media_kind_counts": as_obj(summary.get("target_media_kind_counts")),
+        "component_role_counts": as_obj(summary.get("component_role_counts")),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "usage_policy": as_list(pack.get("usage_policy")),
+        "validation_commands": as_list(as_obj(pack.get("validation")).get("commands")),
+        "request_samples": [
+            {
+                "request_id": request.get("request_id"),
+                "component_id": request.get("component_id"),
+                "component_role": request.get("component_role"),
+                "style_pack_id": request.get("style_pack_id"),
+                "node_id": request.get("node_id"),
+                "baseline_local_path": request.get("baseline_local_path"),
+                "target_size": as_obj(request.get("target_size")),
+                "target_media_kind": request.get("target_media_kind"),
+                "prompt_profile_id": request.get("prompt_profile_id"),
+                "structured_prompt_tokens": as_list(request.get("structured_prompt_tokens")),
+                "required_gates": as_list(request.get("required_gates")),
+            }
+            for request in requests[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_component_candidate_review_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    candidates = [
+        candidate
+        for candidate in as_list(report.get("candidates"))
+        if isinstance(candidate, dict)
+    ]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "source_request_pack_path": report.get("source_request_pack_path"),
+        "candidate_count": summary.get("candidate_count"),
+        "baseline_fixture_candidate_count": summary.get("baseline_fixture_candidate_count"),
+        "generated_candidate_count": summary.get("generated_candidate_count"),
+        "promotable_count": summary.get("promotable_count"),
+        "blocked_from_promotion_count": summary.get("blocked_from_promotion_count"),
+        "no_generated_candidate_yet_count": summary.get("no_generated_candidate_yet_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "candidate_kind_counts": as_obj(summary.get("candidate_kind_counts")),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
+        "candidate_samples": [
+            {
+                "candidate_id": candidate.get("candidate_id"),
+                "component_id": candidate.get("component_id"),
+                "component_role": candidate.get("component_role"),
+                "candidate_kind": candidate.get("candidate_kind"),
+                "review_status": candidate.get("review_status"),
+                "promotion_recommendation": candidate.get("promotion_recommendation"),
+                "promotion_allowed_now": candidate.get("promotion_allowed_now"),
+                "required_next_actions": as_list(candidate.get("required_next_actions")),
+            }
+            for candidate in candidates[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_component_promotion_gate_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    decisions = [
+        decision
+        for decision in as_list(report.get("decisions"))
+        if isinstance(decision, dict)
+    ]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "candidate_count": summary.get("candidate_count"),
+        "generated_candidate_count": summary.get("generated_candidate_count"),
+        "promotion_allowed_count": summary.get("promotion_allowed_count"),
+        "promotion_blocked_count": summary.get("promotion_blocked_count"),
+        "baseline_preserved_count": summary.get("baseline_preserved_count"),
+        "decision_counts": as_obj(summary.get("decision_counts")),
+        "blocked_reasons": as_list(report.get("blocked_reasons")),
+        "runtime_effect": as_obj(report.get("runtime_effect")),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
+        "decision_samples": [
+            {
+                "component_id": decision.get("component_id"),
+                "candidate_id": decision.get("candidate_id"),
+                "candidate_kind": decision.get("candidate_kind"),
+                "decision": decision.get("decision"),
+                "promotion_allowed": decision.get("promotion_allowed"),
+                "baseline_preserved": decision.get("baseline_preserved"),
+                "reason": decision.get("reason"),
+            }
+            for decision in decisions[:MAX_SAMPLE_ITEMS]
+        ],
     }
 
 
@@ -3517,6 +3661,18 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_style_component_binding_report",
             PATHS["map_style_component_binding_report"],
         ),
+        (
+            "map_component_generation_request_pack",
+            PATHS["map_component_generation_request_pack"],
+        ),
+        (
+            "map_component_candidate_review_report",
+            PATHS["map_component_candidate_review_report"],
+        ),
+        (
+            "map_component_promotion_gate_report",
+            PATHS["map_component_promotion_gate_report"],
+        ),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
@@ -3720,6 +3876,15 @@ def build_evidence(
     map_style_component_binding_report = load_json(
         PATHS["map_style_component_binding_report"]
     )
+    map_component_generation_request_pack = load_json(
+        PATHS["map_component_generation_request_pack"]
+    )
+    map_component_candidate_review_report = load_json(
+        PATHS["map_component_candidate_review_report"]
+    )
+    map_component_promotion_gate_report = load_json(
+        PATHS["map_component_promotion_gate_report"]
+    )
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
@@ -3894,6 +4059,17 @@ def build_evidence(
         "map_style_component_bindings": map_style_component_binding_summary(
             map_style_component_binding_report
         ),
+        "map_component_generation_pipeline": {
+            "request_pack": map_component_generation_request_summary(
+                map_component_generation_request_pack
+            ),
+            "candidate_review": map_component_candidate_review_summary(
+                map_component_candidate_review_report
+            ),
+            "promotion_gate": map_component_promotion_gate_summary(
+                map_component_promotion_gate_report
+            ),
+        },
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3985,6 +4161,18 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_component_media = as_obj(evidence.get("map_component_media"))
     map_style_component_bindings = as_obj(
         evidence.get("map_style_component_bindings")
+    )
+    map_component_generation_pipeline = as_obj(
+        evidence.get("map_component_generation_pipeline")
+    )
+    map_component_generation_request = as_obj(
+        map_component_generation_pipeline.get("request_pack")
+    )
+    map_component_candidate_review = as_obj(
+        map_component_generation_pipeline.get("candidate_review")
+    )
+    map_component_promotion_gate = as_obj(
+        map_component_generation_pipeline.get("promotion_gate")
     )
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
@@ -4380,6 +4568,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
+        f"- MapComponent generation request pack：`{map_component_generation_request.get('status')}`，requests `{map_component_generation_request.get('request_count')}`，components `{map_component_generation_request.get('component_count')}`，target kinds `{map_component_generation_request.get('target_media_kind_counts')}`",
+        f"- MapComponent candidate review：`{map_component_candidate_review.get('status')}`，candidates `{map_component_candidate_review.get('candidate_count')}`，baseline fixtures `{map_component_candidate_review.get('baseline_fixture_candidate_count')}`，generated `{map_component_candidate_review.get('generated_candidate_count')}`，可晋升 `{map_component_candidate_review.get('promotable_count')}`",
+        f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
