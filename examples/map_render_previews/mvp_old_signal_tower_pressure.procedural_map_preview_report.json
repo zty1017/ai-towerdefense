@@ -4,9 +4,12 @@
     "width": 1280
   },
   "preview_svg_path": "examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg",
-  "preview_svg_sha256": "82dc29243f5a18222fd7820e02976477237d83988cb9baa6e29d18123dce5b1e",
+  "preview_svg_sha256": "483909d76484fb94e42881d95bc4e9687bcbe556defac7e9122a52ed2b327e6e",
   "render_summary": {
+    "blocked_area_count": 0,
     "build_slot_count": 12,
+    "defense_anchor_count": 0,
+    "hazard_zone_count": 0,
     "objective_count": 3,
     "projection": {
       "scale": 0.7179,
@@ -14,15 +17,21 @@
       "tile_w": 61.538,
       "type": "pseudo3d_oblique_svg_preview"
     },
+    "resource_node_count": 0,
     "route_count": 2,
     "spawn_point_count": 2
   },
   "report_id": "mvp_old_signal_tower_pressure.procedural_map_preview_report",
   "schema_version": "procedural_map_preview_report.v0.1",
   "semantic_source_policy": {
+    "blocked_areas": "map_runtime_package",
     "build_slots": "map_runtime_package",
     "colors": "map_style_pack",
+    "defense_anchors": "map_runtime_package",
+    "hazard_zones": "map_runtime_package",
     "objectives": "map_runtime_package",
+    "resource_hazard_and_blocking_style": "procedural_map_render_plan",
+    "resource_nodes": "map_runtime_package",
     "road_width_and_slot_footprint": "procedural_map_render_plan",
     "routes": "map_runtime_package",
     "spawn_points": "map_runtime_package"

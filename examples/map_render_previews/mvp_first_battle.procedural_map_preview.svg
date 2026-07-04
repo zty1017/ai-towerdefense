@@ -54,6 +54,8 @@
     <ellipse cx="823.3" cy="399.5" rx="33.1" ry="13.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="823.3" cy="394.0" rx="30.7" ry="17.3" fill="#D7C47A" fill-opacity="0.32" stroke="#D7C47A" stroke-opacity="0.38" stroke-width="1.5"/>
   </g>
+  <g id="runtime-v02-strong-semantics">
+  </g>
   <g id="runtime-objectives">
     <ellipse cx="323.3" cy="274.7" rx="50.7" ry="20.1" fill="#FFD26A" fill-opacity="0.18" stroke="#FFD26A" stroke-opacity="0.3" stroke-width="2.0"/>
     <ellipse cx="323.3" cy="272.7" rx="21.3" ry="10.4" fill="#947D43" stroke="#FFD26A" stroke-opacity="0.55" stroke-width="1.5"/>

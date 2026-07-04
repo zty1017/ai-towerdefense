@@ -247,6 +247,11 @@ def route_distance_to_rect(route: dict[str, Any], rect: Rect) -> float:
     return min(_rect_segment_distance(rect, a, b) for a, b in segments)
 
 
+def footprint_rect(position: Any, footprint: Any) -> Rect:
+    """Return the continuous footprint rectangle used for road-band checks."""
+    return _rect_from_position(position, footprint)
+
+
 def nearest_route_distance_to_rect(path_routes: list[dict[str, Any]], rect: Rect) -> tuple[str, float]:
     nearest_route_id = ""
     nearest_distance = math.inf
@@ -258,6 +263,19 @@ def nearest_route_distance_to_rect(path_routes: list[dict[str, Any]], rect: Rect
             nearest_route_id = str(route.get("route_id") or "")
             nearest_distance = distance
     return nearest_route_id, nearest_distance
+
+
+def nearest_road_band_gap(
+    path_routes: list[dict[str, Any]],
+    position: Any,
+    footprint: Any,
+    *,
+    road_width_cells: float = DEFAULT_ROAD_WIDTH_CELLS,
+) -> tuple[str, float, float]:
+    """Return nearest route, centerline distance, and footprint gap to road band."""
+    rect = footprint_rect(position, footprint)
+    nearest_route_id, centerline_distance = nearest_route_distance_to_rect(path_routes, rect)
+    return nearest_route_id, centerline_distance, centerline_distance - (float(road_width_cells) / 2.0)
 
 
 def derive_path_geometry(
@@ -317,9 +335,12 @@ def _slot_distance_record(
     road_half_width: float,
     turns: list[tuple[str, Point, float]],
 ) -> dict[str, Any]:
-    rect = _rect_from_position(slot.get("position"), slot.get("footprint"))
-    nearest_route_id, centerline_distance = nearest_route_distance_to_rect(path_routes, rect)
-    road_band_gap = centerline_distance - road_half_width
+    nearest_route_id, centerline_distance, road_band_gap = nearest_road_band_gap(
+        path_routes,
+        slot.get("position"),
+        slot.get("footprint"),
+        road_width_cells=road_half_width * 2.0,
+    )
     center = _point(slot.get("position"))
     near_turns = [
         {

@@ -561,8 +561,8 @@ MapRuntimePackage v0.1 / v0.2 preview
 MapRuntimePackage v0.1 / v0.2 preview
   -> path_routes.waypoints
   -> deterministic path geometry helper
-  -> placement validator warnings
-  -> review-only MapPathGeometryReport
+  -> builder-side road band avoidance
+  -> placement validator / review-only MapPathGeometryReport
 ```
 
 已新增：
@@ -573,12 +573,13 @@ MapRuntimePackage v0.1 / v0.2 preview
 - `shared/schemas/map_path_geometry_report.v0.1.schema.json`
 - `examples/review_packs/map_path_geometry_report.v0.1.json`
 
-该实现只从现有 `MapRuntimePackage` 的 `path_routes.waypoints` 派生 sampled centerline、route length、turn angle / near_turn hints、road band envelope 和塔位到 road band 的距离统计。它是 validator / evidence 的支撑模块，不是新的运行时地图事实源，也不写回 `MapRuntimePackage`、不替换 v0.1 玩家默认 runtime 包。
+该实现只从现有 `MapRuntimePackage` 的 `path_routes.waypoints` 派生 sampled centerline、route length、turn angle / near_turn hints、road band envelope 和塔位到 road band 的距离统计。它是 builder / validator / evidence 的支撑模块，不是新的运行时地图事实源，不从表现层反推地图语义，也不替换 v0.1 玩家默认 runtime 包。
 
-当前 placement 升级采用非破坏性策略：
+当前 placement 升级采用源头避让加非破坏性审查策略：
 
+- v0.1 / v0.2 builder 在自动派生 `build_slots` 时，使用从 `path_routes.waypoints` 派生的连续 footprint-to-road-band 距离过滤候选，避免只避开离散 path cells。
 - v0.1 / v0.2 validator 会输出 `placement_geometry_warnings`，但不会因派生 road band warning 改变已有 valid fixture 的 exit code。
-- 旧信号塔压力地图存在少量塔位与派生 road band 相交的历史 fixture 问题，因此先进入 review-only 报告，而不是在本轮改成 hard failure。
+- 旧信号塔压力地图的历史塔位重叠 fixture 已由 builder 源头修复并重建 v0.1 / v0.2 runtime、RenderPlan、semantic report 和 review-only preview；`MapPathGeometryReport` 当前为 `passed` 且 warning 为 0。
 - v0.2 的 resource / blocked / objective / spawn 与塔位、road band 的冲突同样通过 helper 进入 warning/report；后续如果模板和示例完成迁移，可再把明确重叠升级为硬失败。
 
 硬边界保持不变：不得从图片、SVG、preview 或 AI candidate 反推路线、塔位、资源点、机关或碰撞；StylePack / RenderPlan 仍只表现结构化地图事实。

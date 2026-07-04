@@ -44,20 +44,22 @@
     <ellipse cx="916.9" cy="464.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
     <ellipse cx="916.9" cy="405.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="916.9" cy="400.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
-    <ellipse cx="855.4" cy="437.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
-    <ellipse cx="855.4" cy="432.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
-    <ellipse cx="855.4" cy="405.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
-    <ellipse cx="855.4" cy="400.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
     <ellipse cx="886.2" cy="389.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="886.2" cy="384.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
     <ellipse cx="947.7" cy="421.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="947.7" cy="416.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
     <ellipse cx="886.2" cy="453.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="886.2" cy="448.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
-    <ellipse cx="793.8" cy="405.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
-    <ellipse cx="793.8" cy="400.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
     <ellipse cx="732.3" cy="437.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
     <ellipse cx="732.3" cy="432.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
+    <ellipse cx="763.1" cy="389.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
+    <ellipse cx="763.1" cy="384.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
+    <ellipse cx="701.5" cy="421.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
+    <ellipse cx="701.5" cy="416.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
+    <ellipse cx="670.8" cy="341.1" rx="30.6" ry="12.2" fill="#000000" opacity="0.25"/>
+    <ellipse cx="670.8" cy="336.0" rx="28.3" ry="16.0" fill="#D6B77C" fill-opacity="0.32" stroke="#D6B77C" stroke-opacity="0.38" stroke-width="1.5"/>
+  </g>
+  <g id="runtime-v02-strong-semantics">
   </g>
   <g id="runtime-objectives">
     <ellipse cx="393.8" cy="257.9" rx="46.8" ry="18.6" fill="#E8C66A" fill-opacity="0.18" stroke="#E8C66A" stroke-opacity="0.3" stroke-width="2.0"/>
