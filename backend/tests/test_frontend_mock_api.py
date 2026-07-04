@@ -4984,6 +4984,76 @@ def test_all_battle_nodes_expose_map_runtime_and_render_plan_packages(client):
         ]["player_default_layer_ids"]
 
 
+def test_all_battle_nodes_expose_review_only_map_v02_preview(client):
+    sid = _create_session(client)
+    expected = {
+        "gray_lantern_station": "map_pkg_gray_lantern_station_v0_2",
+        "lamp_wick_store": "map_pkg_lamp_wick_store_v0_2",
+        "old_signal_tower": "map_pkg_old_signal_tower_v0_2",
+    }
+    for node_id, package_id in expected.items():
+        preview = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-v02-preview")
+        )
+        assert preview["preview_mode"] == "review_only_map_v02"
+        assert preview["review_only"] is True
+        assert preview["runtime_activation_allowed"] is False
+        assert preview["usage_policy"] == [
+            "review_only",
+            "not_player_runtime",
+            "not_published_visual_layer",
+            "does_not_modify_map_runtime_package",
+        ]
+        assert preview["source_refs"]["map_runtime_package_v02"].endswith(
+            ".map_runtime_package_v02.json"
+        )
+        assert preview["preview_svg_ref"].endswith(".procedural_map_preview.svg")
+        assert preview["safety"]["player_default_runtime_mutation"] is False
+        assert preview["safety"]["provider_call_count"] == 0
+        assert preview["safety"]["reads_env"] is False
+
+        map_package = preview["map_runtime_package_v02"]
+        assert map_package["schema_version"] == "map_runtime_package.v0.2"
+        assert map_package["package_id"] == package_id
+        assert map_package["node_id"] == node_id
+        assert len(map_package["resource_nodes"]) == 1
+        assert len(map_package["hazard_zones"]) == 1
+        assert len(map_package["defense_anchors"]) == 1
+        assert len(map_package["blocked_areas"]) == 1
+
+        bundle = preview["map_render_plan_bundle_v02"]
+        assert bundle["review_only"] is True
+        assert bundle["runtime_activation_allowed"] is False
+        assert bundle["procedural_map_render_plan"]["schema_version"] == (
+            "procedural_map_render_plan.v0.1"
+        )
+        assert bundle["semantic_visual_consistency_report"]["status"] == "passed"
+        assert bundle["procedural_map_preview_report"]["status"] == (
+            "preview_ready_review_only"
+        )
+        render_summary = bundle["procedural_map_preview_report"]["render_summary"]
+        assert render_summary["resource_node_count"] == 1
+        assert render_summary["hazard_zone_count"] == 1
+        assert render_summary["defense_anchor_count"] == 1
+        assert render_summary["blocked_area_count"] == 1
+        assert preview["preview_report_v02"] == bundle["procedural_map_preview_report"]
+
+        runtime = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-runtime-package")
+        )
+        assert runtime["map_runtime_package"]["schema_version"] == (
+            "map_runtime_package.v0.1"
+        )
+        assert "resource_nodes" not in runtime["map_runtime_package"]
+
+
+def test_map_v02_preview_unknown_node_returns_404(client):
+    sid = _create_session(client)
+    resp = client.get(f"/api/sessions/{sid}/battles/unknown/map-v02-preview")
+    assert resp.status_code == 404
+    assert "map runtime package not found" in resp.json()["detail"]
+
+
 def test_frontend_mock_endpoints_require_existing_session(client):
     resp = client.get("/api/sessions/missing/frontend-mock-pack")
     assert resp.status_code == 404

@@ -80,6 +80,7 @@ P2：本阶段明确不做
 - 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
 - 地图 RenderPlan 已有离线 SVG 预览入口和 report 校验，三张 MVP 地图均可生成 `preview_ready_review_only` 的审查预览；该预览证明 RenderPlan 可执行，但不作为玩家 runtime 或 published visual layer。
 - MapRuntimePackage v0.2 的强语义 preview 已接入 RenderPlan 旁路预览：`examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/` 和 `examples/map_render_previews_v02/` 会用结构化资源点、机关区、防守锚点和阻挡区生成 review-only evidence；统一 demo evidence 会展示 `procedural_map_previews_v02`，但前端/后端默认 runtime 仍使用 v0.1。
+- 后端已提供 review-only v0.2 地图预览接口：`GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview` 会聚合 `MapRuntimePackage v0.2 preview`、v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref；该接口仅供审查 / Studio / 录屏证据使用，不替换默认 `/map-runtime-package` 的 v0.1 玩家运行时包。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -2985,6 +2986,42 @@ for sample in summary['preview_samples']:
     assert render['defense_anchor_count'] == 1
     assert render['blocked_area_count'] == 1
 PY
+git diff --check
+```
+
+#### P1-D-14 MapRuntimePackage v0.2 审查接口
+
+状态：已完成第一版后端旁路实现。
+
+目标：
+
+```text
+给前端 / Studio / 演示脚本一个统一入口读取 MapRuntimePackage v0.2 preview 与 v0.2 RenderPlan 证据，同时明确禁止它替换玩家默认 v0.1 地图运行时。
+```
+
+已落地：
+
+- `backend/app/services/map_runtime_service.py`：登记三张 MVP 节点的 `MapRuntimePackage v0.2 preview`，提供 v0.2 加载入口。
+- `backend/app/services/map_render_plan_service.py`：登记三张 MVP 节点的 v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview`，返回 review-only payload。
+- `backend/tests/test_frontend_mock_api.py`：覆盖三张节点的 v0.2 预览接口、unknown node 404，以及默认 `/map-runtime-package` 仍返回 v0.1。
+- `docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充接口边界。
+- `examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json`：记录本轮任务边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端玩家默认地图渲染。
+- `map-v02-preview` 只供审查 / Studio / 录屏证据使用。
+- `runtime_activation_allowed` 必须保持 `false`。
+- 默认 `/map-runtime-package` 仍返回 `MapRuntimePackage v0.1`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-preview-api python3 -m py_compile backend/app/api/frontend_mock.py backend/app/services/map_runtime_service.py backend/app/services/map_render_plan_service.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-preview-api uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -k "map_v02_preview or all_battle_nodes_expose_map_runtime_and_render_plan_packages"
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_preview_api_evidence
 git diff --check
 ```
 

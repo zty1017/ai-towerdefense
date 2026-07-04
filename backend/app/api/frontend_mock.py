@@ -881,6 +881,68 @@ def get_map_render_plan(session_id: str, node_id: str) -> FrontendMockPayloadRes
     return _payload(session_id, data)
 
 
+@router.get(
+    "/api/sessions/{session_id}/battles/{node_id}/map-v02-preview",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_map_v02_preview(session_id: str, node_id: str) -> FrontendMockPayloadResponse:
+    """Return review-only MapRuntimePackage v0.2 and RenderPlan preview data."""
+    _require_session(session_id)
+    try:
+        map_package = map_runtime_service.load_map_runtime_package_v02(node_id)
+        render_bundle = map_render_plan_service.load_map_render_plan_bundle_v02(node_id)
+    except MapRuntimePackageNotFoundError as exc:
+        raise _map_runtime_fixture_404(exc) from exc
+    except MapRenderPlanNotFoundError as exc:
+        raise _map_render_plan_fixture_404(exc) from exc
+    preview_report = render_bundle["procedural_map_preview_report"]
+    refs = dict(render_bundle.get("refs") or {})
+    return _payload(
+        session_id,
+        {
+            "session_id": session_id,
+            "mode": "frontend_mock_fixture",
+            "node_id": node_id,
+            "preview_mode": "review_only_map_v02",
+            "review_only": True,
+            "runtime_activation_allowed": False,
+            "usage_policy": [
+                "review_only",
+                "not_player_runtime",
+                "not_published_visual_layer",
+                "does_not_modify_map_runtime_package",
+            ],
+            "source_refs": {
+                "map_runtime_package_v02": (
+                    map_runtime_service.map_runtime_package_v02_ref(node_id)
+                ),
+                "map_style_pack": refs.get("map_style_pack"),
+                "procedural_map_render_plan": refs.get("procedural_map_render_plan"),
+                "semantic_visual_consistency_report": refs.get(
+                    "semantic_visual_consistency_report"
+                ),
+                "procedural_map_preview_report": refs.get(
+                    "procedural_map_preview_report"
+                ),
+                "procedural_map_preview_svg": refs.get("procedural_map_preview_svg"),
+            },
+            "map_runtime_package_v02": map_package,
+            "map_render_plan_bundle_v02": render_bundle,
+            "preview_report_v02": preview_report,
+            "preview_svg_ref": refs.get("procedural_map_preview_svg"),
+            "safety": {
+                "player_default_runtime_mutation": False,
+                "provider_call_count": 0,
+                "reads_env": False,
+                "review_only_boundary": (
+                    "MapRuntimePackage v0.2 preview remains outside player runtime "
+                    "until explicit promotion and frontend/backend upgrade gates pass."
+                ),
+            },
+        },
+    )
+
+
 @router.post(
     "/api/sessions/{session_id}/battles/{node_id}/results",
     response_model=FrontendMockPayloadResponse,

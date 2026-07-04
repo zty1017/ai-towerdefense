@@ -65,6 +65,85 @@ _MAP_RENDER_PLAN_BY_NODE = {
     },
 }
 
+_MAP_RENDER_PLAN_V02_BY_NODE = {
+    "gray_lantern_station": {
+        "map_style_pack": (
+            _REPO_ROOT
+            / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+        ),
+        "procedural_map_render_plan": (
+            _REPO_ROOT
+            / "examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json"
+        ),
+        "semantic_visual_consistency_report": (
+            _REPO_ROOT
+            / "examples/semantic_visual_consistency_reports_v02/"
+            "mvp_first_battle.semantic_visual_consistency_report.json"
+        ),
+        "procedural_map_preview_report": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/"
+            "mvp_first_battle.procedural_map_preview_report.json"
+        ),
+        "procedural_map_preview_svg": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview.svg"
+        ),
+    },
+    "lamp_wick_store": {
+        "map_style_pack": (
+            _REPO_ROOT
+            / "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json"
+        ),
+        "procedural_map_render_plan": (
+            _REPO_ROOT
+            / "examples/map_render_plans_v02/"
+            "mvp_wick_store_pressure.procedural_map_render_plan.json"
+        ),
+        "semantic_visual_consistency_report": (
+            _REPO_ROOT
+            / "examples/semantic_visual_consistency_reports_v02/"
+            "mvp_wick_store_pressure.semantic_visual_consistency_report.json"
+        ),
+        "procedural_map_preview_report": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/"
+            "mvp_wick_store_pressure.procedural_map_preview_report.json"
+        ),
+        "procedural_map_preview_svg": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/"
+            "mvp_wick_store_pressure.procedural_map_preview.svg"
+        ),
+    },
+    "old_signal_tower": {
+        "map_style_pack": (
+            _REPO_ROOT
+            / "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json"
+        ),
+        "procedural_map_render_plan": (
+            _REPO_ROOT
+            / "examples/map_render_plans_v02/"
+            "mvp_old_signal_tower_pressure.procedural_map_render_plan.json"
+        ),
+        "semantic_visual_consistency_report": (
+            _REPO_ROOT
+            / "examples/semantic_visual_consistency_reports_v02/"
+            "mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json"
+        ),
+        "procedural_map_preview_report": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/"
+            "mvp_old_signal_tower_pressure.procedural_map_preview_report.json"
+        ),
+        "procedural_map_preview_svg": (
+            _REPO_ROOT
+            / "examples/map_render_previews_v02/"
+            "mvp_old_signal_tower_pressure.procedural_map_preview.svg"
+        ),
+    },
+}
+
 
 class MapRenderPlanNotFoundError(LookupError):
     """Raised when a node does not have a reviewed render plan bundle."""
@@ -90,6 +169,13 @@ def map_render_plan_refs(node_id: str) -> dict[str, str] | None:
     return {key: _rel(path) for key, path in paths.items()}
 
 
+def map_render_plan_v02_refs(node_id: str) -> dict[str, str] | None:
+    paths = _MAP_RENDER_PLAN_V02_BY_NODE.get(node_id)
+    if paths is None:
+        return None
+    return {key: _rel(path) for key, path in paths.items()}
+
+
 def load_map_render_plan_bundle(node_id: str) -> dict[str, Any]:
     paths = _MAP_RENDER_PLAN_BY_NODE.get(node_id)
     if paths is None:
@@ -108,9 +194,45 @@ def load_map_render_plan_bundle(node_id: str) -> dict[str, Any]:
     }
 
 
+def load_map_render_plan_bundle_v02(node_id: str) -> dict[str, Any]:
+    paths = _MAP_RENDER_PLAN_V02_BY_NODE.get(node_id)
+    if paths is None:
+        raise MapRenderPlanNotFoundError(node_id)
+    missing = [key for key, path in paths.items() if not path.exists()]
+    if missing:
+        raise MapRenderPlanNotFoundError(f"{node_id}: missing {', '.join(missing)}")
+    return {
+        "node_id": node_id,
+        "review_only": True,
+        "runtime_activation_allowed": False,
+        "usage_policy": [
+            "review_only",
+            "not_player_runtime",
+            "not_published_visual_layer",
+            "does_not_modify_map_runtime_package",
+        ],
+        "refs": {key: _rel(path) for key, path in paths.items()},
+        "map_style_pack": _load_json(paths["map_style_pack"]),
+        "procedural_map_render_plan": _load_json(paths["procedural_map_render_plan"]),
+        "semantic_visual_consistency_report": _load_json(
+            paths["semantic_visual_consistency_report"]
+        ),
+        "procedural_map_preview_report": _load_json(
+            paths["procedural_map_preview_report"]
+        ),
+    }
+
+
 def load_map_render_plan_bundle_optional(node_id: str) -> dict[str, Any] | None:
     try:
         return load_map_render_plan_bundle(node_id)
+    except MapRenderPlanNotFoundError:
+        return None
+
+
+def load_map_render_plan_bundle_v02_optional(node_id: str) -> dict[str, Any] | None:
+    try:
+        return load_map_render_plan_bundle_v02(node_id)
     except MapRenderPlanNotFoundError:
         return None
 

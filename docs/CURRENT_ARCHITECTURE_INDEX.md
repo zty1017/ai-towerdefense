@@ -110,6 +110,8 @@ shared/schemas/ + tools/ + 专题文档
   - MapRuntimePackage v0.2 强语义 preview：在不替换当前 v0.1 正式 runtime 包的前提下，旁路表达资源点、机关区、防守锚点和阻挡区；统一 demo evidence 会纳入 `map_runtime_packages_v02` 摘要，但前端/后端默认路径仍使用 v0.1。
 - `examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/`、`examples/map_render_previews_v02/`
   - MapRuntimePackage v0.2 强语义的 RenderPlan / SVG preview 旁路证据：资源点、机关区、防守锚点和阻挡区来自 `MapRuntimePackage v0.2 preview`，StylePack 只提供 procedural prefab / palette；统一 demo evidence 会纳入 `procedural_map_previews_v02`，但这些 SVG 仍是 review-only，不是玩家 runtime 或 published visual layer。
+- `backend/app/services/map_runtime_service.py`、`backend/app/services/map_render_plan_service.py`、`backend/app/api/frontend_mock.py`
+  - 后端已暴露 review-only `/api/sessions/{session_id}/battles/{node_id}/map-v02-preview`：聚合 `MapRuntimePackage v0.2 preview`、v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref。该接口只用于审查 / Studio / 录屏证据，`runtime_activation_allowed=false`，不改变默认 `/map-runtime-package` 的 v0.1 玩家运行时路径。
 
 ### AI 编译器与 AssetGraph
 
