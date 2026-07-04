@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_manifest_apply_report.v0.1.schema.json",
+  "title": "MapComponentManifestApplyReport v0.1",
+  "description": "Developer-approved replacement manifest build report for SVG-only MapComponentMediaManifest v0.1 patch plans. This report can describe a replacement manifest artifact, but it never implies StylePack, RenderPlan, frontend default, or runtime map truth mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_patch_plan_path",
+    "source_manifest_path",
+    "source_approval_plan_path",
+    "approval_id",
+    "output_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "runtime_effect",
+    "manifest_sha",
+    "patch_results",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_manifest_apply_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_patch_plan_path": { "type": "string", "minLength": 1 },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "source_approval_plan_path": { "type": "string", "minLength": 1 },
+    "approval_id": { "type": "string", "minLength": 1 },
+    "output_manifest_path": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "no_approved_patches",
+        "replacement_manifest_built",
+        "blocked"
+      ]
+    },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "runtime_effect": { "$ref": "#/$defs/runtime_effect" },
+    "manifest_sha": { "$ref": "#/$defs/manifest_sha" },
+    "patch_results": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/patch_result" }
+    },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_patch_count",
+        "approved_patch_count",
+        "applied_patch_count",
+        "skipped_patch_count",
+        "blocked_patch_count",
+        "ready_patch_count",
+        "manifest_item_count"
+      ],
+      "properties": {
+        "source_patch_count": { "type": "integer", "minimum": 0 },
+        "approved_patch_count": { "type": "integer", "minimum": 0 },
+        "applied_patch_count": { "type": "integer", "minimum": 0 },
+        "skipped_patch_count": { "type": "integer", "minimum": 0 },
+        "blocked_patch_count": { "type": "integer", "minimum": 0 },
+        "ready_patch_count": { "type": "integer", "minimum": 0 },
+        "manifest_item_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_replacement_written",
+        "style_pack_modified",
+        "render_plan_modified",
+        "frontend_default_modified",
+        "runtime_map_truth_modified",
+        "candidate_file_copied"
+      ],
+      "properties": {
+        "manifest_replacement_written": { "type": "boolean" },
+        "style_pack_modified": { "type": "boolean", "const": false },
+        "render_plan_modified": { "type": "boolean", "const": false },
+        "frontend_default_modified": { "type": "boolean", "const": false },
+        "runtime_map_truth_modified": { "type": "boolean", "const": false },
+        "candidate_file_copied": { "type": "boolean" }
+      }
+    },
+    "manifest_sha": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_manifest_file_sha256_before",
+        "replacement_manifest_content_sha256_after",
+        "replacement_manifest_file_sha256_after"
+      ],
+      "properties": {
+        "source_manifest_file_sha256_before": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "replacement_manifest_content_sha256_after": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "replacement_manifest_file_sha256_after": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "patch_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "patch_id",
+        "candidate_id",
+        "component_id",
+        "stable_internal_id",
+        "approval_status",
+        "apply_status",
+        "reason",
+        "candidate_local_path",
+        "candidate_sha256",
+        "target_local_path",
+        "target_public_url",
+        "target_sha256_before",
+        "target_sha256_after",
+        "candidate_file_copied"
+      ],
+      "properties": {
+        "patch_id": { "type": "string", "minLength": 1 },
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "component_id": { "type": "string", "minLength": 1 },
+        "stable_internal_id": { "type": "string", "minLength": 1 },
+        "approval_status": {
+          "type": "string",
+          "enum": ["approved", "not_approved"]
+        },
+        "apply_status": {
+          "type": "string",
+          "enum": ["applied_to_replacement_manifest", "skipped_not_approved", "blocked"]
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "candidate_local_path": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "candidate_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "target_local_path": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "target_public_url": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "target_sha256_before": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "target_sha256_after": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidate_file_copied": { "type": "boolean" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}
