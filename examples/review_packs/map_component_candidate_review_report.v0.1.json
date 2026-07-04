@@ -1,0 +1,1443 @@
+{
+  "candidates": [
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_terrain_wick_store_oiled_stone.svg",
+      "baseline_sha256": "0f74d75c225607cc3984160e3f0ddf6a71a7f803e69f66d95f3c54b202fdf080",
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone",
+      "component_role": "terrain_base",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.svg",
+      "baseline_sha256": "b2f0b8753d487419da9f5ff9fb11648d822774ced7e2732bd0a8f5a27cd70003",
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail",
+      "component_role": "terrain_detail",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_road_wick_store_old_pipe_track.svg",
+      "baseline_sha256": "e099e6a208f2d871c76000a475f8882aee165b1c5b6e6fb7d2f0760233b00f2e",
+      "candidate_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track",
+      "component_role": "road_band",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.svg",
+      "baseline_sha256": "8f87e12d330fe01082c8ab74b30c6fc9a3e5a0512f1ac9e5af700219f13fcc1f",
+      "candidate_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil",
+      "component_role": "road_edge",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.svg",
+      "baseline_sha256": "06a507a2d65df8bf726f0234fdb9d7a759f36f08266bdda65382b3d1f41e5e7b",
+      "candidate_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring",
+      "component_role": "build_slot_platform",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_objective_wick_store_shelf_foundation.svg",
+      "baseline_sha256": "910149a68c7553b207de9be5559f60252b9100b752348b605f93daa804199ddc",
+      "candidate_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation",
+      "component_role": "objective_foundation",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_spawn_pipe_shadow_leak.svg",
+      "baseline_sha256": "b5f0cfe6aa1bd9f7706b73d6eb4ff9c150cc56c019c887df7b7b375255c387f8",
+      "candidate_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak",
+      "component_role": "spawn_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_resource_wick_crate_marker.svg",
+      "baseline_sha256": "0aaaf1051a7f45db4d3cb3fbf16e73958f80081d2f02a8c08aa4794c9485e3ba",
+      "candidate_id": "map_component_lamp_wick_store_resource_wick_crate_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_resource_wick_crate_marker",
+      "component_role": "resource_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_resource_wick_crate_marker.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.svg",
+      "baseline_sha256": "3cdcbba31e509c5ef8a5fb71251bab3ddaba7db2e459a7c71d5bca88152eae44",
+      "candidate_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool",
+      "component_role": "hazard_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_blocking_wick_store_crate_wall.svg",
+      "baseline_sha256": "f2e4c11e84265a44e08cda7bf87cd52f59717b5b9719688e2c65fa8529301b81",
+      "candidate_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall",
+      "component_role": "blocking_prop",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_prop_low_oil_crate.svg",
+      "baseline_sha256": "fa3e32913d7be85771790cf089ca4f82c20a097849a70f03326e9e6e38dc6bc3",
+      "candidate_id": "map_component_lamp_wick_store_prop_low_oil_crate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_prop_low_oil_crate",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_prop_low_oil_crate.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_lamp_wick_store_decor_ash_and_brass_scraps.svg",
+      "baseline_sha256": "0b85277d8de20cafbcbd18238f389d7ecac39b27c88466f780218ccbe808a173",
+      "candidate_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "lamp_wick_store",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.svg",
+      "baseline_sha256": "a6d313d01037e9947b7fb2cf931390f929ff708b54e793aac98e61c3024c58b1",
+      "candidate_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone",
+      "component_role": "terrain_base",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.svg",
+      "baseline_sha256": "711b3377acf69f3cc3c652e07876485f8ceee3787c761de1a60ce25e843b7466",
+      "candidate_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail",
+      "component_role": "terrain_detail",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_road_signal_tower_ridge_line.svg",
+      "baseline_sha256": "058ea2688d4d247d68fc035eba8e3ec221c8c50aeabbe9fd19db4b4a78747361",
+      "candidate_id": "map_component_old_signal_tower_road_signal_tower_ridge_line.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_road_signal_tower_ridge_line",
+      "component_role": "road_band",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_road_signal_tower_ridge_line.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_road_edge_copper_resonance_trace.svg",
+      "baseline_sha256": "1d1d66047f3e68f52e328c189df0efe06eae1fd1635e6482035fad5d09d62ba3",
+      "candidate_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace",
+      "component_role": "road_edge",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_platform_signal_tower_copper_ring.svg",
+      "baseline_sha256": "34968f4ee62de3458ffa1770b2ddd973c74f8211730fce72e580ee4e28f20eef",
+      "candidate_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring",
+      "component_role": "build_slot_platform",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_objective_signal_tower_glass_foundation.svg",
+      "baseline_sha256": "5b88c2128c35a0a10064a6315c40a454ea36835ae93f26a160f802ff729094f8",
+      "candidate_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation",
+      "component_role": "objective_foundation",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_spawn_return_light_shadow_gate.svg",
+      "baseline_sha256": "eb5b7b28111ec6d78fd2ddd6834edd2ab6d7cff74e3406e8c7aff28d6462a6f1",
+      "candidate_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate",
+      "component_role": "spawn_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_resource_copper_pin_marker.svg",
+      "baseline_sha256": "298dbf55cf34c7b5c9761294399029b16a6a054b66e750082acf4bcf36d11bc0",
+      "candidate_id": "map_component_old_signal_tower_resource_copper_pin_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_resource_copper_pin_marker",
+      "component_role": "resource_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_resource_copper_pin_marker.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.svg",
+      "baseline_sha256": "4d85d9d754cc8ab2e95e4e365c5269286b0c9d134e009f3255e371011985573a",
+      "candidate_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool",
+      "component_role": "hazard_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_blocking_signal_tower_machine_wreck.svg",
+      "baseline_sha256": "c1fbc8d8edb1a1af3376d73f17936bd87526c78f8f23b773a9dbc06fbfaa3c83",
+      "candidate_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck",
+      "component_role": "blocking_prop",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_prop_broken_signal_pole.svg",
+      "baseline_sha256": "1f96ab0f8c3dcd63af5d3c7ba02af306f6fafca8ae0bd68fdf368d007d5808c0",
+      "candidate_id": "map_component_old_signal_tower_prop_broken_signal_pole.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_prop_broken_signal_pole",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_prop_broken_signal_pole.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_old_signal_tower_decor_resonant_glass_shards.svg",
+      "baseline_sha256": "5576b154e15506295723cde8abd250d1a0d472eb09087224b78afb037e66ea15",
+      "candidate_id": "map_component_old_signal_tower_decor_resonant_glass_shards.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_decor_resonant_glass_shards",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "old_signal_tower",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_old_signal_tower_decor_resonant_glass_shards.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_terrain_wet_ruin_moss.svg",
+      "baseline_sha256": "acc23a31ffa055f28a3f779dad1136c2b563e14306a7484c5964964019fc9c73",
+      "candidate_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss",
+      "component_role": "terrain_base",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_terrain_broken_stone_detail.svg",
+      "baseline_sha256": "2b314c15de2e12bcc4be3385eb92e50b015b4160091bbb2a6f9f43a841c79eb8",
+      "candidate_id": "map_component_gray_lantern_station_terrain_broken_stone_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_terrain_broken_stone_detail",
+      "component_role": "terrain_detail",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_terrain_broken_stone_detail.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_road_old_station_track.svg",
+      "baseline_sha256": "2886454286e9ea81a2f4dd31da26df6dd65b46295f8ab85c0cfedbdb97cd5fea",
+      "candidate_id": "map_component_gray_lantern_station_road_old_station_track.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_road_old_station_track",
+      "component_role": "road_band",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_road_old_station_track.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_road_edge_lantern_chalk.svg",
+      "baseline_sha256": "fab4692ab5fa5a33ad9c755dacfc7985c6e8ab4afb36c5ede8e2eecba305312a",
+      "candidate_id": "map_component_gray_lantern_station_road_edge_lantern_chalk.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_road_edge_lantern_chalk",
+      "component_role": "road_edge",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_road_edge_lantern_chalk.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_platform_lantern_foundation_ring.svg",
+      "baseline_sha256": "4de807830d5b671c9746837bde6dd80411eb1930fa067473e01dbc65006c5cb6",
+      "candidate_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring",
+      "component_role": "build_slot_platform",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_objective_gray_lantern_core_foundation.svg",
+      "baseline_sha256": "c14ee4eb0b5b1d902ea829418796bf76bfc41411854a494b1e39647f2b96bb07",
+      "candidate_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation",
+      "component_role": "objective_foundation",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_spawn_dark_fog_gate.svg",
+      "baseline_sha256": "3dccc83f9194c3bba35e12ebde29459cc6d068330cc50121e9da9027514321e2",
+      "candidate_id": "map_component_gray_lantern_station_spawn_dark_fog_gate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_spawn_dark_fog_gate",
+      "component_role": "spawn_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_spawn_dark_fog_gate.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.svg",
+      "baseline_sha256": "d04fc76d3089613b685c3ceada5b8622753f586c816ba51238853f0e34fcb254",
+      "candidate_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker",
+      "component_role": "resource_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.svg",
+      "baseline_sha256": "28484697e1d7f7d5993eacb7fa0473753586f8af4771f9bf0e86a5c28926c68b",
+      "candidate_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker",
+      "component_role": "hazard_marker",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.svg",
+      "baseline_sha256": "0a6514e90e75b052af9ba1460119463f9a498f8984781dc0c336643b83bee37a",
+      "candidate_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker",
+      "component_role": "blocking_prop",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_prop_broken_lamp_post.svg",
+      "baseline_sha256": "a80b60db20ef528aabba3a16b51507ef8595281ed115944e0308ef476e585af0",
+      "candidate_id": "map_component_gray_lantern_station_prop_broken_lamp_post.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_prop_broken_lamp_post",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_prop_broken_lamp_post.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    },
+    {
+      "baseline_local_path": "game_data/media/map_components/processed/map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.svg",
+      "baseline_sha256": "5b710e6e195d5b44074aef236fd0cac765131fe3d0beada398d94afcbadd8c14",
+      "candidate_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones",
+      "component_role": "non_blocking_decoration",
+      "findings": [
+        "Deterministic SVG baseline is present only as a fixture candidate.",
+        "No generated image or video artifact has been imported for this component.",
+        "Fixture SVG cannot replace itself as a generated candidate and cannot pass promotion."
+      ],
+      "node_id": "gray_lantern_station",
+      "promotion_allowed_now": false,
+      "promotion_recommendation": "do_not_promote",
+      "request_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.image.request",
+      "required_next_actions": [
+        "import reviewed generation artifact",
+        "run visual QA against baseline and StylePack role",
+        "run cutout and normalization checks",
+        "refresh MapStyleComponentBindingReport after accepted local artifacts exist",
+        "run explicit promotion gate before any manifest replacement"
+      ],
+      "review_status": "no_generated_candidate_yet",
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "target_size": {
+        "height": 256,
+        "width": 256
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "baseline_fixture_is_not_generated_candidate",
+        "no_frontend_default_consumption",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ]
+    }
+  ],
+  "created_at": "2026-07-05T00:00:00Z",
+  "report_id": "map_component_candidate_review_report_v0_1",
+  "schema_version": "map_component_candidate_review_report.v0.1",
+  "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+  "source_request_pack_path": "examples/review_packs/map_component_generation_request_pack.v0.1.json",
+  "status": "blocked_from_promotion",
+  "summary": {
+    "baseline_fixture_candidate_count": 36,
+    "blocked_from_promotion_count": 36,
+    "candidate_count": 36,
+    "candidate_kind_counts": {
+      "baseline_fixture_candidate": 36
+    },
+    "generated_candidate_count": 0,
+    "no_generated_candidate_yet_count": 36,
+    "promotable_count": 0,
+    "status_counts": {
+      "no_generated_candidate_yet": 36
+    }
+  },
+  "usage_policy": [
+    "review_gate_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "baseline_fixture_is_not_generated_candidate",
+    "no_frontend_default_consumption",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_candidate_review_report.py examples/review_packs/map_component_candidate_review_report.v0.1.json"
+    ],
+    "validator": "tools/media/validate_map_component_candidate_review_report.py"
+  }
+}
