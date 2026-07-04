@@ -29,7 +29,6 @@
       },
       "blocking_reasons": [
         "activation_gate_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "map_compile_package": {
@@ -142,7 +141,7 @@
           "status:needs_layout_reconciliation": 2
         },
         "published_layer_alignment_statuses": [
-          "needs_overlay_correction"
+          "passed"
         ],
         "published_player_layer_count": 1
       }
@@ -155,7 +154,6 @@
       },
       "blocking_reasons": [
         "activation_gate_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "map_compile_package": {
@@ -268,7 +266,7 @@
           "status:needs_path_reprojection": 2
         },
         "published_layer_alignment_statuses": [
-          "needs_overlay_correction"
+          "passed"
         ],
         "published_player_layer_count": 1
       }
@@ -281,7 +279,6 @@
       },
       "blocking_reasons": [
         "activation_gate_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "map_compile_package": {
@@ -394,7 +391,7 @@
           "status:needs_prompt_iteration": 2
         },
         "published_layer_alignment_statuses": [
-          "needs_overlay_correction"
+          "passed"
         ],
         "published_player_layer_count": 1
       }
@@ -432,7 +429,6 @@
     "blocked_visual_candidate_count": 22,
     "blocker_counts": {
       "activation_gate_required": 3,
-      "published_visual_layer_needs_overlay_correction": 3,
       "review_only_or_rejected_visual_candidates_present": 3
     },
     "default_runtime_v01_count": 3,

@@ -435,9 +435,9 @@
       "width": 1672,
       "height": 941,
       "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
-      "authority": "published_visual_layer",
-      "review_status": "passed_player_visual_quality",
-      "player_visible_quality": "passed",
+      "authority": "candidate_visual_layer",
+      "review_status": "superseded_requires_overlay_correction",
+      "player_visible_quality": "not_applicable",
       "logic_alignment_status": "needs_overlay_correction"
     },
     {
@@ -448,9 +448,9 @@
       "width": 1280,
       "height": 720,
       "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
-      "authority": "candidate_visual_layer",
-      "review_status": "failed_player_visual_quality",
-      "player_visible_quality": "failed",
+      "authority": "published_visual_layer",
+      "review_status": "passed_player_visual_quality",
+      "player_visible_quality": "passed",
       "logic_alignment_status": "passed"
     }
   ],

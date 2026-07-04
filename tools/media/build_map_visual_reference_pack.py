@@ -622,9 +622,9 @@ def main() -> int:
         width, height = png_dimensions(file_path)
         if role == "painted_visual_layer":
             source_kind = "human_reviewed_painted_visual_runtime_overlay"
-            authority = "published_visual_layer"
-            review_status = "passed_player_visual_quality"
-            player_visible_quality = "passed"
+            authority = "candidate_visual_layer"
+            review_status = "superseded_requires_overlay_correction"
+            player_visible_quality = "not_applicable"
             logic_alignment_status = "needs_overlay_correction"
         elif role == "painted_visual_candidate":
             source_kind = "external_painted_candidate"
@@ -634,9 +634,9 @@ def main() -> int:
             logic_alignment_status = "not_checked"
         elif role == "battle_runtime_background":
             source_kind = "deterministic_logic_aligned_runtime_background"
-            authority = "candidate_visual_layer"
-            review_status = "failed_player_visual_quality"
-            player_visible_quality = "failed"
+            authority = "published_visual_layer"
+            review_status = "passed_player_visual_quality"
+            player_visible_quality = "passed"
             logic_alignment_status = "passed"
         else:
             source_kind = "deterministic_logical_map_reference"

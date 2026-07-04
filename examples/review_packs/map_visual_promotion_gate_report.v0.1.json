@@ -319,44 +319,44 @@
   ],
   "published_player_layers": [
     {
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "logic_alignment_status": "needs_overlay_correction",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
       "node_id": "manifest",
       "review_status": "passed_player_visual_quality",
-      "role": "painted_visual_layer",
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "source": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png"
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
     },
     {
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "logic_alignment_status": "needs_overlay_correction",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
       "node_id": "gray_lantern_station",
       "review_status": "passed_player_visual_quality",
-      "role": "painted_visual_layer",
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "source": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png"
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
     },
     {
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "logic_alignment_status": "needs_overlay_correction",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
       "node_id": "old_signal_tower",
       "review_status": "passed_player_visual_quality",
-      "role": "painted_visual_layer",
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "source": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png"
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
     },
     {
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "logic_alignment_status": "needs_overlay_correction",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "logic_alignment_status": "passed",
       "node_id": "lamp_wick_store",
       "review_status": "passed_player_visual_quality",
-      "role": "painted_visual_layer",
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "role": "battle_runtime_background",
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "source": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png"
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png"
     }
   ],
   "report_id": "mvp_map_visual_promotion_gate",

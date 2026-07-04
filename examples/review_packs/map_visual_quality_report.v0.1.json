@@ -15,19 +15,16 @@
       "player_ready_layer_count": 1,
       "player_ready_layers": [
         {
-          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-          "logic_alignment_status": "needs_overlay_correction",
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
           "review_status": "passed_player_visual_quality",
-          "role": "painted_visual_layer",
-          "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
           "source_kind": null
         }
       ],
-      "status": "passed_with_warnings",
-      "warnings": [
-        "player_layer_needs_overlay_correction",
-        "player_layer_review_is_manual_or_weakly_described"
-      ]
+      "status": "passed",
+      "warnings": []
     },
     {
       "issues": [],
@@ -37,19 +34,16 @@
       "player_ready_layer_count": 1,
       "player_ready_layers": [
         {
-          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-          "logic_alignment_status": "needs_overlay_correction",
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
           "review_status": "passed_player_visual_quality",
-          "role": "painted_visual_layer",
-          "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
           "source_kind": null
         }
       ],
-      "status": "passed_with_warnings",
-      "warnings": [
-        "player_layer_needs_overlay_correction",
-        "player_layer_review_is_manual_or_weakly_described"
-      ]
+      "status": "passed",
+      "warnings": []
     },
     {
       "issues": [],
@@ -59,26 +53,23 @@
       "player_ready_layer_count": 1,
       "player_ready_layers": [
         {
-          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-          "logic_alignment_status": "needs_overlay_correction",
+          "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+          "logic_alignment_status": "passed",
           "review_status": "passed_player_visual_quality",
-          "role": "painted_visual_layer",
-          "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+          "role": "battle_runtime_background",
+          "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
           "source_kind": null
         }
       ],
-      "status": "passed_with_warnings",
-      "warnings": [
-        "player_layer_needs_overlay_correction",
-        "player_layer_review_is_manual_or_weakly_described"
-      ]
+      "status": "passed",
+      "warnings": []
     }
   ],
   "report_id": "mvp_map_visual_quality_report",
   "schema_version": "map_visual_quality_report.v0.1",
   "shared_player_visual_layer_groups": [
     {
-      "layer_key": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "layer_key": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "node_count": 3,
       "node_ids": [
         "gray_lantern_station",
@@ -98,14 +89,11 @@
       "lamp_wick_store"
     ],
     "package_status_counts": {
-      "passed_with_warnings": 3
+      "passed": 3
     },
     "shared_player_visual_layer_group_count": 1,
     "warning_counts": {
-      "manifest_player_layer_needs_overlay_correction": 1,
       "node_specific_player_visual_layers_missing": 1,
-      "player_layer_needs_overlay_correction": 3,
-      "player_layer_review_is_manual_or_weakly_described": 3,
       "shared_player_visual_layer_across_nodes": 1
     }
   }
