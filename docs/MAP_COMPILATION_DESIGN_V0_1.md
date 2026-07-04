@@ -1,6 +1,6 @@
 # 地图编译设计采纳审查 v0.1
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 本文用于审查并项目化采纳外部 AI 给出的地图编译方案。该外部方案的核心建议是：
 
@@ -119,6 +119,41 @@ runtime_interaction_overlay
 
 强语义元素必须由结构化 anchor 渲染。弱语义和装饰元素可以有随机性，但必须受 allowed / forbidden zone 约束。
 
+### 1.5 采纳：地图编译权限分层
+
+外部文档把权限边界说得很清楚，这一点应正式纳入本项目地图编译口径：
+
+```text
+玩家编译解法。
+系统编译遭遇。
+开发者编译关卡。
+发布层决定什么能进正式 runtime。
+```
+
+对应到地图：
+
+| 权限层 | 可以做什么 | 不可以做什么 |
+|---|---|---|
+| 玩家侧 | 通过塔、道具、陷阱、研究方向影响某个节点的解法 | 直接自定义路径、塔位、资源点、碰撞或关卡拓扑 |
+| 系统侧 | 根据世界状态、战斗结果和进度生成遭遇、奖励、环境 modifier、后续节点候选 | 绕过地图 validator 修改已发布运行时事实 |
+| 开发者侧 | 使用 AI 辅助生成地图模板、StylePack、组件、候选关卡和审查证据 | 让未审 AI 图片直接成为玩家默认地图 |
+| 发布层 | 把已验证地图包、表现层和证据包晋升为可运行内容 | 把 review-only、negative evidence 或 provider 临时产物晋升 |
+
+因此，MVP 和后续版本都应保持这个口径：普通玩家不直接编译战斗地图，玩家编译的是战术解法和世界内研发结果；地图作为关卡 / 系统内容，由开发者或系统侧在严格门禁下编译。
+
+### 1.6 采纳：地图元素按语义强度分级
+
+外部文档的 A-D 分级适合转化成 worker 约束。当前不新增独立 schema，但后续地图任务必须按下表理解各元素的权威来源：
+
+| 级别 | 例子 | 权威来源 | 渲染策略 |
+|---|---|---|---|
+| A 强语义 | 路径、出生点、目标、塔位、资源点、机关区、防守锚点、阻挡区 | `MapRuntimePackage` / v0.2 preview | 必须由结构化坐标、anchor 或 zone 派生，不能从图片反推 |
+| B 弱语义 | 路边护栏、塔位周边碎石、资源点附属物、机关旁提示物 | `MapRuntimePackage` anchor + `MapStylePack` prefab | 可随机，但必须受 allowed / forbidden zone 约束 |
+| C 装饰 | 远景、墙裂、地面污渍、非阻挡杂物 | `MapStylePack` / renderer seed | 可更自由，但不能像道路、塔位、资源或阻挡物 |
+| D 氛围 | 雾、雨雪、火花、光照、天气粒子 | `MapStylePack.atmosphere_layers` | 只能增强气质，不能遮挡路径、塔位、目标和操作提示 |
+
+这条分级比“是否由 AI 生成”更重要。AI 可以参与 B/C/D 的组件生成，也可以为 A 类提供表现素材，但 A 类位置和玩法语义必须始终来自结构化地图事实。
+
 ## 2. 不照搬的部分
 
 ### 2.1 不新增完整 LevelBundle 体系
@@ -224,6 +259,22 @@ worldbook + node state + visual identity
 - 生成地表 tile / decal / prop atlas。
 - 用视觉模型审查 preview 是否像游戏地图、是否误导玩家。
 
+### 3.4 Validator 职责拆分
+
+外部文档列出的 validator 名称可以采纳为任务拆分语言，但当前字段事实仍以已有工具为准：
+
+| 外部 validator | 本项目当前落点 | 后续用途 |
+|---|---|---|
+| ReachabilityValidator | `validate_map_runtime_package.py` / `map_runtime_package_v02.py` 的路线和目标检查 | 后续加入多路线长度、断路、卡死风险和通路压力指标 |
+| PlacementValidator | `build_slots` 与 collision / road overlap 检查 | 后续加入道路距离、塔位间距、转角收益和占位 footprint 检查 |
+| ResourceValidator | v0.2 `resource_nodes` 与 semantic visual report | 后续接奖励经济、保护目标和交互半径 |
+| HazardValidator | v0.2 `hazard_zones` 与 semantic visual report | 后续接触发频率、必败风险和视觉范围一致性 |
+| CollisionValidator | v0.2 `blocked_areas` 与前端静态视觉合约 | 后续接 blocking prop / collision 同步检查 |
+| SemanticVisualConsistencyValidator | `validate_semantic_visual_consistency_report.py` | 继续作为强语义可视化覆盖和 debug/player 边界门禁 |
+| StyleConsistencyValidator | `validate_map_style_pack.py` + 后续视觉模型审查 | 后续检查同一 StylePack 下道路、平台、资源和氛围是否统一 |
+
+这意味着 validator 不是一个单独大脚本，而是贯穿 `MapRuntimePackage`、`MapStylePack`、`ProceduralMapRenderPlan`、preview report、前端视觉合约和 promotion gate 的多层门禁。
+
 ## 4. 推荐执行顺序
 
 ### P1-MAP-A：冻结本文档并更新事实源索引
@@ -308,6 +359,8 @@ examples/map_render_plans/*.json
 6. 程序化渲染必须从结构化 map package 派生强语义元素。
 7. 进入玩家默认视图的视觉层必须通过 quality gate、semantic visual gate 和 promotion gate。
 8. 失败整图候选必须作为 review-only / negative evidence 保留，不能静默删除或误发布。
+9. 玩家侧不能直接编译战斗地图拓扑；玩家输入只能影响战术解法、研发对象或受控世界状态。
+10. 地图元素必须按强语义、弱语义、装饰和氛围分级处理；强语义位置不得由视觉图像反推。
 ```
 
 ## 6. 审查结论

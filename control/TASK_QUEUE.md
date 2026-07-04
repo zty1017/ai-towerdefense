@@ -2562,6 +2562,7 @@ git diff --check
 已落地：
 
 - `docs/MAP_COMPILATION_DESIGN_V0_1.md`：新增审查采纳文档，明确 AI 不再负责整张运行时地图，AI 只负责风格、组件和参考，程序负责结构和对齐，Validator 负责可信。
+- `docs/MAP_COMPILATION_DESIGN_V0_1.md` 2026-07-04 加固：补充地图编译权限分层、强语义 / 弱语义 / 装饰 / 氛围分级，以及 Reachability / Placement / Resource / Hazard / Collision / SemanticVisual / StyleConsistency validator 在本项目中的映射。
 - `docs/CURRENT_ARCHITECTURE_INDEX.md`：把该文档加入当前有效设计文档和实现事实。
 - `examples/worker_task_packs/p1d_map_compilation_design_review.v0.1.json`：新增本轮 worker handoff 包。
 
@@ -2572,6 +2573,7 @@ git diff --check
 - 后续新增 `MapStylePack`、`ProceduralMapRenderPlan`、`SemanticVisualConsistencyReport`，而不是继续 prompt-only 整图生成。
 - `LevelBundle` 暂时只作为未来聚合概念，不替代现有 schema。
 - Spline 思路采纳为 v0.2 方向，但短期保持 `path_routes.waypoints` 兼容。
+- 玩家不直接编译地图拓扑；玩家编译解法，系统编译遭遇，开发者编译关卡，发布层控制 runtime 激活。
 
 边界：
 
