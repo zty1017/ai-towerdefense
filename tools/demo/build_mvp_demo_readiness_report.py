@@ -36,6 +36,12 @@ PATHS = {
     / "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json",
     "map_candidate_overlay_visual_review": ROOT
     / "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json",
+    "frontend_flow_visual_smoke_tool": ROOT
+    / "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "frontend_flow_visual_smoke_validator": ROOT
+    / "tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "frontend_flow_visual_smoke_task_pack": ROOT
+    / "examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json",
 }
 
 PASSING_STATUSES = {"passed", "passed_with_warnings"}
@@ -312,8 +318,40 @@ def blocked_map_candidate_gate(
     )
 
 
+def frontend_flow_smoke_gate() -> dict[str, Any]:
+    tool_ready = PATHS["frontend_flow_visual_smoke_tool"].exists()
+    validator_ready = PATHS["frontend_flow_visual_smoke_validator"].exists()
+    task_pack_ready = PATHS["frontend_flow_visual_smoke_task_pack"].exists()
+    status = "passed" if tool_ready and validator_ready and task_pack_ready else "not_ready"
+    return gate(
+        gate_id="frontend_flow_visual_smoke_harness",
+        title="浏览器玩家链路截图门禁",
+        status=status,
+        required_for_mvp_demo=True,
+        summary="玩家入口、开局配置、开场、大地图、工坊、战斗和结算已具备真实 Chromium 截图 smoke harness；截图报告是运行时 evidence，需要按任务包命令复跑生成。",
+        evidence_keys=[
+            "frontend_flow_visual_smoke_tool",
+            "frontend_flow_visual_smoke_validator",
+            "frontend_flow_visual_smoke_task_pack",
+        ],
+        metrics={
+            "tool_ready": tool_ready,
+            "validator_ready": validator_ready,
+            "task_pack_ready": task_pack_ready,
+            "expected_viewports": ["desktop", "mobile"],
+            "expected_step_count_per_viewport": 7,
+            "expected_screenshot_count": 14,
+            "provider_call_count": 0,
+        },
+    )
+
+
 def build_report(generated_at: str) -> dict[str, Any]:
-    reports = {key: load_json(path) for key, path in PATHS.items()}
+    reports = {
+        key: load_json(path)
+        for key, path in PATHS.items()
+        if path.suffix == ".json"
+    }
     gates = [
         primary_api_gate(reports["mvp_primary_api_flow"]),
         map_v02_api_gate(reports["map_v02_preview_api"]),
@@ -329,6 +367,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
             reports["controlled_map_text_fallback_review"],
             reports["map_candidate_overlay_visual_review"],
         ),
+        frontend_flow_smoke_gate(),
     ]
 
     required_gates = [item for item in gates if item["required_for_mvp_demo"]]
@@ -404,7 +443,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
         "recommended_next_actions": [
             "补 reference-image / paintover / 分层程序化地图路线，而不是继续纯文本整图生成。",
             "把真实图生视频关键帧接入 LoopContinuityReport、atlas contract 和浏览器视觉烟测。",
-            "补浏览器端全链路截图门禁，把玩家第一屏、大地图、工坊、战斗和结算纳入可复跑 evidence。",
+            "把浏览器全链路截图报告纳入演示归档流程，保留每次录屏前的可复跑证据目录。",
             "将实时 provider 调度继续保持在 staging / promotion / activation gate 后面，不直接污染玩家 runtime。",
         ],
         "safety_summary": {

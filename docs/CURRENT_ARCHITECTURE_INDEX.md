@@ -116,6 +116,8 @@ shared/schemas/ + tools/ + 专题文档
   - 后端 v0.2 地图预览 API 的 TestClient smoke 证据：创建匿名 session，逐节点请求 `/map-v02-preview`，确认 v0.2 强语义可读、默认 `/map-runtime-package` 仍保持 v0.1、unknown node 返回 404，且 provider 调用、`.env` 读取、玩家默认 runtime 修改均为 0。
 - `tools/dev/check_mvp_primary_api_flow.py`、`examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`
   - MVP 玩家主流程 API smoke 证据：启动本地 `uvicorn` 临时服务和临时 SQLite，走通匿名 session、世界实例、开场、mock pack、大地图、campaign router、预取、节点 briefing、研发 proposal/job、战斗配置、runtime package、MapRuntimePackage、RenderPlan、v0.2 地图预览、战斗结果、latest settlement 和 session evidence；该报告纳入统一 demo evidence，证明主路径可通过真实本地 HTTP 调用完成。
+- `tools/frontend/capture_frontend_flow_visual_smoke.py`、`tools/frontend/validate_frontend_flow_visual_smoke_report.py`
+  - 浏览器玩家链路截图门禁：用真实 Chromium 与 no-build 静态前端，从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，输出桌面 / 移动 14 张截图和结构化 smoke report。该工具不调用 provider、不读取 `.env`、不写世界状态；`flowVisualSmoke` query 只用于截图时加速战斗，不改变正常玩家入口。
 - `tools/demo/build_mvp_demo_readiness_report.py`、`examples/review_packs/mvp_demo_readiness_report.v0.1.json`
   - MVP 演示 readiness 总报告：从主流程 API、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、循环动画连续性和失败地图候选隔离等已审 evidence 推导 `ready_for_mvp_demo_with_known_limitations`；该报告不调用 provider、不读取 `.env`、不生成新内容，只作为录屏 / 评审 / 合并前的顶层验收摘要。
 
