@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_visual_quality_report.v0.1.schema.json",
+  "title": "MapComponentVisualQualityReport v0.1",
+  "description": "Review-only local file visual quality and cutout normalization gate for MapComponent generated candidates. It reads MapComponentCandidateReviewReport generated candidates, records deterministic local file checks, and never promotes or mutates runtime/component manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_candidate_review_report_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "items",
+    "runtime_effect",
+    "promotion_effect",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_visual_quality_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_candidate_review_report_path": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+    },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "runtime_effect": { "$ref": "#/$defs/runtime_effect" },
+    "promotion_effect": { "$ref": "#/$defs/promotion_effect" },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "nullable_string": { "type": ["string", "null"] },
+    "nullable_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_candidate_count",
+        "generated_candidate_count",
+        "checked_candidate_count",
+        "blocked_pending_quality_gates_count",
+        "needs_review_count",
+        "unsupported_decode_count",
+        "status_counts",
+        "file_type_counts",
+        "issue_counts"
+      ],
+      "properties": {
+        "source_candidate_count": { "type": "integer", "minimum": 0 },
+        "generated_candidate_count": { "type": "integer", "minimum": 0 },
+        "checked_candidate_count": { "type": "integer", "minimum": 0 },
+        "blocked_pending_quality_gates_count": { "type": "integer", "minimum": 0 },
+        "needs_review_count": { "type": "integer", "minimum": 0 },
+        "unsupported_decode_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "file_type_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "issue_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "file_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_file_exists",
+        "declared_sha256",
+        "actual_sha256",
+        "sha256_matches_declared",
+        "file_size_bytes",
+        "extension",
+        "detected_file_type",
+        "file_type_matches_extension"
+      ],
+      "properties": {
+        "local_file_exists": { "type": "boolean" },
+        "declared_sha256": { "$ref": "#/$defs/nullable_sha256" },
+        "actual_sha256": { "$ref": "#/$defs/nullable_sha256" },
+        "sha256_matches_declared": { "type": ["boolean", "null"] },
+        "file_size_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "extension": { "type": "string", "enum": ["png", "svg", "webp", "unknown"] },
+        "detected_file_type": { "type": "string", "enum": ["png", "svg", "webp", "unknown"] },
+        "file_type_matches_extension": { "type": ["boolean", "null"] }
+      }
+    },
+    "png_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decode_status",
+        "width",
+        "height",
+        "matches_target_size",
+        "alpha_visible_ratio",
+        "alpha_transparent_ratio",
+        "subject_bbox",
+        "subject_bbox_coverage",
+        "edge_contact"
+      ],
+      "properties": {
+        "decode_status": { "type": "string", "enum": ["decoded", "decode_failed", "not_applicable"] },
+        "width": { "type": ["integer", "null"], "minimum": 1 },
+        "height": { "type": ["integer", "null"], "minimum": 1 },
+        "matches_target_size": { "type": ["boolean", "null"] },
+        "alpha_visible_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "alpha_transparent_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "subject_bbox": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["x", "y", "w", "h"],
+          "properties": {
+            "x": { "type": "integer", "minimum": 0 },
+            "y": { "type": "integer", "minimum": 0 },
+            "w": { "type": "integer", "minimum": 1 },
+            "h": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "subject_bbox_coverage": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "edge_contact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["top", "right", "bottom", "left"],
+          "properties": {
+            "top": { "type": "boolean" },
+            "right": { "type": "boolean" },
+            "bottom": { "type": "boolean" },
+            "left": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "svg_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parse_status", "contains_svg_root", "has_script", "has_remote_reference"],
+      "properties": {
+        "parse_status": { "type": "string", "enum": ["checked", "read_failed", "not_applicable"] },
+        "contains_svg_root": { "type": ["boolean", "null"] },
+        "has_script": { "type": ["boolean", "null"] },
+        "has_remote_reference": { "type": ["boolean", "null"] }
+      }
+    },
+    "webp_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decode_status", "needs_manual_review"],
+      "properties": {
+        "decode_status": { "type": "string", "enum": ["unsupported_decode", "not_applicable"] },
+        "needs_manual_review": { "type": "boolean" }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "request_id",
+        "component_id",
+        "component_role",
+        "style_pack_id",
+        "node_id",
+        "candidate_kind",
+        "source_candidate_local_path",
+        "source_candidate_sha256",
+        "target_size",
+        "review_status",
+        "promotion_allowed_now",
+        "runtime_ready",
+        "file_checks",
+        "png_checks",
+        "svg_checks",
+        "webp_checks",
+        "cutout_normalization_status",
+        "issues",
+        "warnings",
+        "required_next_actions",
+        "usage_policy"
+      ],
+      "properties": {
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "request_id": { "type": "string", "minLength": 1 },
+        "component_id": { "type": "string", "minLength": 1 },
+        "component_role": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "candidate_kind": { "type": "string", "const": "generated_candidate" },
+        "source_candidate_local_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(game_data/media/map_components/candidates/.+|/tmp/.+)\\.(png|svg|webp)$"
+        },
+        "source_candidate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "target_size": { "$ref": "#/$defs/target_size" },
+        "review_status": {
+          "type": "string",
+          "enum": ["blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode"]
+        },
+        "promotion_allowed_now": { "type": "boolean", "const": false },
+        "runtime_ready": { "type": "boolean", "const": false },
+        "file_checks": { "$ref": "#/$defs/file_checks" },
+        "png_checks": { "$ref": "#/$defs/png_checks" },
+        "svg_checks": { "$ref": "#/$defs/svg_checks" },
+        "webp_checks": { "$ref": "#/$defs/webp_checks" },
+        "cutout_normalization_status": {
+          "type": "string",
+          "enum": [
+            "pending_human_visual_review",
+            "pending_png_cutout_review",
+            "not_applicable_svg_vector_review",
+            "needs_review_unsupported_decode",
+            "blocked_file_level_issue"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "required_next_actions": { "$ref": "#/$defs/string_list" },
+        "usage_policy": { "$ref": "#/$defs/string_list" }
+      }
+    },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_replacement_written",
+        "style_pack_modified",
+        "render_plan_modified",
+        "frontend_default_modified",
+        "runtime_map_truth_modified"
+      ],
+      "properties": {
+        "manifest_replacement_written": { "type": "boolean", "const": false },
+        "style_pack_modified": { "type": "boolean", "const": false },
+        "render_plan_modified": { "type": "boolean", "const": false },
+        "frontend_default_modified": { "type": "boolean", "const": false },
+        "runtime_map_truth_modified": { "type": "boolean", "const": false }
+      }
+    },
+    "promotion_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generated_candidate_promoted",
+        "promotion_gate_bypassed",
+        "candidate_marked_runtime_ready"
+      ],
+      "properties": {
+        "generated_candidate_promoted": { "type": "boolean", "const": false },
+        "promotion_gate_bypassed": { "type": "boolean", "const": false },
+        "candidate_marked_runtime_ready": { "type": "boolean", "const": false }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}
