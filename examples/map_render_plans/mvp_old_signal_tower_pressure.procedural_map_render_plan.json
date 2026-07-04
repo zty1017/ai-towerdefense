@@ -57,7 +57,14 @@
               "height_cells": 10,
               "cell_size": 64
             },
-            "palette_key": "terrain_base"
+            "palette_key": "terrain_base",
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "terrain_signal_tower_cold_ridge_stone",
+              "role": "terrain_base",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -107,7 +114,14 @@
                 "y": 5
               }
             ],
-            "width_cells": 0.85
+            "width_cells": 0.85,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_signal_tower_ridge_line",
+              "role": "road_band",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         },
         {
@@ -148,7 +162,14 @@
                 "y": 5
               }
             ],
-            "width_cells": 0.85
+            "width_cells": 0.85,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_signal_tower_ridge_line",
+              "role": "road_band",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -199,7 +220,14 @@
               }
             ],
             "edge_style": "stone_trim",
-            "shoulder_width_cells": 0.24
+            "shoulder_width_cells": 0.24,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_edge_copper_resonance_trace",
+              "role": "road_edge",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         },
         {
@@ -241,7 +269,14 @@
               }
             ],
             "edge_style": "stone_trim",
-            "shoulder_width_cells": 0.24
+            "shoulder_width_cells": 0.24,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_edge_copper_resonance_trace",
+              "role": "road_edge",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -273,7 +308,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -296,7 +340,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -319,7 +372,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -342,7 +404,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -365,7 +436,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -388,7 +468,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -411,7 +500,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -434,7 +532,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -457,7 +564,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -480,7 +596,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -503,7 +628,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         },
         {
@@ -526,7 +660,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_signal_tower_copper_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "copper_resonance_floor_ring"
+              }
+            }
           }
         }
       ]
@@ -554,7 +697,16 @@
               "x": 1,
               "y": 5
             },
-            "durability": 12
+            "durability": 12,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_signal_tower_glass_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "old_signal_base_with_resonant_glass"
+              }
+            }
           }
         },
         {
@@ -573,7 +725,16 @@
               "x": 4,
               "y": 4
             },
-            "durability": 5
+            "durability": 5,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_signal_tower_glass_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "old_signal_base_with_resonant_glass"
+              }
+            }
           }
         },
         {
@@ -592,7 +753,16 @@
               "x": 6,
               "y": 7
             },
-            "durability": 4
+            "durability": 4,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_signal_tower_glass_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "old_signal_base_with_resonant_glass"
+              }
+            }
           }
         }
       ]
@@ -620,7 +790,16 @@
               "x": 17,
               "y": 2
             },
-            "route_id": "path_old_signal_north_ridge"
+            "route_id": "path_old_signal_north_ridge",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "spawn_return_light_shadow_gate",
+              "role": "spawn_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "violet_shadow_gate_with_signal_noise"
+              }
+            }
           }
         },
         {
@@ -639,7 +818,16 @@
               "x": 16,
               "y": 8
             },
-            "route_id": "path_old_signal_copper_trench"
+            "route_id": "path_old_signal_copper_trench",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "spawn_return_light_shadow_gate",
+              "role": "spawn_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "violet_shadow_gate_with_signal_noise"
+              }
+            }
           }
         }
       ]
@@ -668,7 +856,16 @@
               "path_route",
               "build_slot",
               "objective"
-            ]
+            ],
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "decor_resonant_glass_shards",
+              "role": "non_blocking_decoration",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "low_contrast_glass_shard_cluster"
+              }
+            }
           }
         }
       ]

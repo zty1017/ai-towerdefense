@@ -57,7 +57,14 @@
               "height_cells": 10,
               "cell_size": 64
             },
-            "palette_key": "terrain_base"
+            "palette_key": "terrain_base",
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "terrain_wick_store_oiled_stone",
+              "role": "terrain_base",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -111,7 +118,14 @@
                 "y": 5
               }
             ],
-            "width_cells": 0.85
+            "width_cells": 0.85,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_wick_store_old_pipe_track",
+              "role": "road_band",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         },
         {
@@ -148,7 +162,14 @@
                 "y": 5
               }
             ],
-            "width_cells": 0.85
+            "width_cells": 0.85,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_wick_store_old_pipe_track",
+              "role": "road_band",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -203,7 +224,14 @@
               }
             ],
             "edge_style": "broken_planks",
-            "shoulder_width_cells": 0.28
+            "shoulder_width_cells": 0.28,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_edge_wick_chalk_and_oil",
+              "role": "road_edge",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         },
         {
@@ -241,7 +269,14 @@
               }
             ],
             "edge_style": "broken_planks",
-            "shoulder_width_cells": 0.28
+            "shoulder_width_cells": 0.28,
+            "style_component_binding": {
+              "source": "map_style_pack.material",
+              "owner_id": "road_edge_wick_chalk_and_oil",
+              "role": "road_edge",
+              "texture_policy": "procedural_only",
+              "component_ref": null
+            }
           }
         }
       ]
@@ -273,7 +308,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -296,7 +340,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -319,7 +372,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -342,7 +404,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -365,7 +436,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -388,7 +468,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -411,7 +500,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -434,7 +532,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -457,7 +564,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -480,7 +596,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -503,7 +628,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         },
         {
@@ -526,7 +660,16 @@
               "width_cells": 1,
               "height_cells": 1
             },
-            "visual_hint": "ground_plate"
+            "visual_hint": "ground_plate",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "platform_wick_store_brass_floor_ring",
+              "role": "build_slot_platform",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "brass_floor_ring_with_wick_marks"
+              }
+            }
           }
         }
       ]
@@ -554,7 +697,16 @@
               "x": 0,
               "y": 5
             },
-            "durability": 14
+            "durability": 14,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_wick_store_shelf_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "stockpile_base_with_oil_lamps"
+              }
+            }
           }
         },
         {
@@ -573,7 +725,16 @@
               "x": 2,
               "y": 7
             },
-            "durability": 6
+            "durability": 6,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_wick_store_shelf_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "stockpile_base_with_oil_lamps"
+              }
+            }
           }
         },
         {
@@ -592,7 +753,16 @@
               "x": 4,
               "y": 3
             },
-            "durability": 5
+            "durability": 5,
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "objective_wick_store_shelf_foundation",
+              "role": "objective_foundation",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "stockpile_base_with_oil_lamps"
+              }
+            }
           }
         }
       ]
@@ -620,7 +790,16 @@
               "x": 17,
               "y": 4
             },
-            "route_id": "path_wick_store_main_pipe"
+            "route_id": "path_wick_store_main_pipe",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "spawn_pipe_shadow_leak",
+              "role": "spawn_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "dark_leak_from_broken_pipe"
+              }
+            }
           }
         },
         {
@@ -639,7 +818,16 @@
               "x": 17,
               "y": 8
             },
-            "route_id": "path_wick_store_service_lane"
+            "route_id": "path_wick_store_service_lane",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "spawn_pipe_shadow_leak",
+              "role": "spawn_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "dark_leak_from_broken_pipe"
+              }
+            }
           }
         }
       ]
@@ -675,7 +863,16 @@
             "resource_tag": "energy",
             "blocking": false,
             "interactable": true,
-            "visual_hint": "crystal_cluster"
+            "visual_hint": "crystal_cluster",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "resource_wick_crate_marker",
+              "role": "resource_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "small_wick_crate_marker"
+              }
+            }
           }
         },
         {
@@ -702,7 +899,16 @@
               "duration_ms": 2600
             },
             "hazard_type": "shadow_pressure",
-            "visual_hint": "dark_pool"
+            "visual_hint": "dark_pool",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "hazard_wick_store_oil_shadow_pool",
+              "role": "hazard_marker",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "dark_oil_pool_with_warm_wick_edges"
+              }
+            }
           }
         },
         {
@@ -763,7 +969,16 @@
             ],
             "blocked_type": "ruin_wall",
             "blocking_policy": "blocks_building",
-            "visual_hint": "broken_wall"
+            "visual_hint": "broken_wall",
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "blocking_wick_store_crate_wall",
+              "role": "blocking_prop",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "low_crate_and_broken_shelf_blocker"
+              }
+            }
           }
         }
       ]
@@ -792,7 +1007,16 @@
               "path_route",
               "build_slot",
               "objective"
-            ]
+            ],
+            "style_component_binding": {
+              "source": "map_style_pack.prefab",
+              "owner_id": "decor_ash_and_brass_scraps",
+              "role": "non_blocking_decoration",
+              "visual_ref": {
+                "kind": "procedural_shape",
+                "value": "ash_brass_scrap_cluster"
+              }
+            }
           }
         }
       ]

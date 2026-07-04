@@ -1,0 +1,812 @@
+{
+  "schema_version": "map_style_component_binding_report.v0.1",
+  "report_id": "map_style_component_binding_report_v0_1",
+  "created_at": "2026-07-05T00:00:00Z",
+  "source_refs": {
+    "map_style_pack_paths": [
+      "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json",
+      "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
+      "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    ],
+    "media_manifest_paths": [
+      "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json"
+    ],
+    "atlas_manifest_paths": [
+      "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+      "game_data/media/frontend_mock/frontend_media_atlas_manifest.v0.1.json"
+    ]
+  },
+  "status": "warning",
+  "summary": {
+    "style_pack_count": 3,
+    "material_component_ref_count": 0,
+    "prefab_reviewed_component_ref_count": 0,
+    "resolved_ref_count": 0,
+    "missing_ref_count": 0,
+    "procedural_fallback_count": 36,
+    "ambiguous_ref_count": 0,
+    "external_url_rejected_count": 0,
+    "component_coverage_gap_count": 36,
+    "status_counts": {
+      "procedural_fallback": 36
+    }
+  },
+  "usage_policy": [
+    "review_gate_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "no_external_temporary_url_pass",
+    "redacted_summary_only"
+  ],
+  "review_notes": [
+    "This report only resolves explicit MapStylePack media refs; MapRuntimePackage remains the map logic source.",
+    "No image, atlas, or media entry may create or override routes, build slots, objectives, spawn points, resources, hazards, or collision.",
+    "Current StylePacks have no explicit reviewed component media refs; procedural fallback remains in use and component coverage is a known gap."
+  ],
+  "bindings": [
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_wick_store_oiled_stone",
+      "role": "terrain_base",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_wick_store_ash_crate_detail",
+      "role": "terrain_detail",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_wick_store_old_pipe_track",
+      "role": "road_band",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_edge_wick_chalk_and_oil",
+      "role": "road_edge",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "platform_wick_store_brass_floor_ring",
+      "role": "build_slot_platform",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "objective_wick_store_shelf_foundation",
+      "role": "objective_foundation",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "spawn_pipe_shadow_leak",
+      "role": "spawn_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "resource_wick_crate_marker",
+      "role": "resource_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "hazard_wick_store_oil_shadow_pool",
+      "role": "hazard_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "blocking_wick_store_crate_wall",
+      "role": "blocking_prop",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "prop_low_oil_crate",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "binding_source": "procedural_fallback",
+      "owner_id": "decor_ash_and_brass_scraps",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_signal_tower_cold_ridge_stone",
+      "role": "terrain_base",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_signal_tower_glass_shard_detail",
+      "role": "terrain_detail",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_signal_tower_ridge_line",
+      "role": "road_band",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_edge_copper_resonance_trace",
+      "role": "road_edge",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "platform_signal_tower_copper_ring",
+      "role": "build_slot_platform",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "objective_signal_tower_glass_foundation",
+      "role": "objective_foundation",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "spawn_return_light_shadow_gate",
+      "role": "spawn_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "resource_copper_pin_marker",
+      "role": "resource_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "hazard_signal_tower_static_shadow_pool",
+      "role": "hazard_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "blocking_signal_tower_machine_wreck",
+      "role": "blocking_prop",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "prop_broken_signal_pole",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "binding_source": "procedural_fallback",
+      "owner_id": "decor_resonant_glass_shards",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_wet_ruin_moss",
+      "role": "terrain_base",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "terrain_broken_stone_detail",
+      "role": "terrain_detail",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_old_station_track",
+      "role": "road_band",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "road_edge_lantern_chalk",
+      "role": "road_edge",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "platform_lantern_foundation_ring",
+      "role": "build_slot_platform",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "objective_gray_lantern_core_foundation",
+      "role": "objective_foundation",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "spawn_dark_fog_gate",
+      "role": "spawn_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "resource_lantern_crystal_cluster_marker",
+      "role": "resource_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "hazard_lantern_dark_pool_marker",
+      "role": "hazard_marker",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "blocking_lantern_broken_wall_marker",
+      "role": "blocking_prop",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "prop_broken_lamp_post",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "binding_source": "procedural_fallback",
+      "owner_id": "decor_cold_ash_and_loose_stones",
+      "role": "non_blocking_decoration",
+      "ref": null,
+      "ref_kind": "none",
+      "resolution_status": "procedural_fallback",
+      "resolved_ref": null,
+      "notes": [
+        "No reviewed component ref provided."
+      ]
+    }
+  ],
+  "coverage_gaps": [
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "terrain_wick_store_oiled_stone",
+      "role": "terrain_base",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "terrain_wick_store_ash_crate_detail",
+      "role": "terrain_detail",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "road_wick_store_old_pipe_track",
+      "role": "road_band",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "road_edge_wick_chalk_and_oil",
+      "role": "road_edge",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "platform_wick_store_brass_floor_ring",
+      "role": "build_slot_platform",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "objective_wick_store_shelf_foundation",
+      "role": "objective_foundation",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "spawn_pipe_shadow_leak",
+      "role": "spawn_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "resource_wick_crate_marker",
+      "role": "resource_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "hazard_wick_store_oil_shadow_pool",
+      "role": "hazard_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "blocking_wick_store_crate_wall",
+      "role": "blocking_prop",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "prop_low_oil_crate",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+      "node_id": "lamp_wick_store",
+      "owner_id": "decor_ash_and_brass_scraps",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "terrain_signal_tower_cold_ridge_stone",
+      "role": "terrain_base",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "terrain_signal_tower_glass_shard_detail",
+      "role": "terrain_detail",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "road_signal_tower_ridge_line",
+      "role": "road_band",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "road_edge_copper_resonance_trace",
+      "role": "road_edge",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "platform_signal_tower_copper_ring",
+      "role": "build_slot_platform",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "objective_signal_tower_glass_foundation",
+      "role": "objective_foundation",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "spawn_return_light_shadow_gate",
+      "role": "spawn_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "resource_copper_pin_marker",
+      "role": "resource_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "hazard_signal_tower_static_shadow_pool",
+      "role": "hazard_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "blocking_signal_tower_machine_wreck",
+      "role": "blocking_prop",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "prop_broken_signal_pole",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_old_signal_tower_v0_1",
+      "node_id": "old_signal_tower",
+      "owner_id": "decor_resonant_glass_shards",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "terrain_wet_ruin_moss",
+      "role": "terrain_base",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "terrain_broken_stone_detail",
+      "role": "terrain_detail",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "road_old_station_track",
+      "role": "road_band",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "road_edge_lantern_chalk",
+      "role": "road_edge",
+      "reason": "material uses procedural fallback; no reviewed component_ref bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "platform_lantern_foundation_ring",
+      "role": "build_slot_platform",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "objective_gray_lantern_core_foundation",
+      "role": "objective_foundation",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "spawn_dark_fog_gate",
+      "role": "spawn_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "resource_lantern_crystal_cluster_marker",
+      "role": "resource_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "hazard_lantern_dark_pool_marker",
+      "role": "hazard_marker",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "blocking_lantern_broken_wall_marker",
+      "role": "blocking_prop",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "prop_broken_lamp_post",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    },
+    {
+      "style_pack_id": "style_long_night_ruined_outpost_v0_1",
+      "node_id": "gray_lantern_station",
+      "owner_id": "decor_cold_ash_and_loose_stones",
+      "role": "non_blocking_decoration",
+      "reason": "prefab uses procedural visual_ref; no reviewed component media bound yet"
+    }
+  ],
+  "validation": {
+    "validator": "tools/asset_graph/validate_map_style_component_binding_report.py",
+    "commands": [
+      "python3 tools/asset_graph/validate_map_style_component_binding_report.py examples/review_packs/map_style_component_binding_report.v0.1.json"
+    ]
+  }
+}

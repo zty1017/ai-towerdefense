@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_style_component_binding_report.v0.1.schema.json",
+  "title": "MapStyleComponentBindingReport v0.1",
+  "description": "Review gate report for explicit MapStylePack component media bindings. This report resolves reviewed media refs for audit evidence only; it is not a runtime semantic source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_refs",
+    "status",
+    "summary",
+    "usage_policy",
+    "review_notes",
+    "bindings",
+    "coverage_gaps",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_style_component_binding_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map_style_pack_paths", "media_manifest_paths", "atlas_manifest_paths"],
+      "properties": {
+        "map_style_pack_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "media_manifest_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "atlas_manifest_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "status": { "type": "string", "enum": ["passed", "warning", "failed"] },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style_pack_count",
+        "material_component_ref_count",
+        "prefab_reviewed_component_ref_count",
+        "resolved_ref_count",
+        "missing_ref_count",
+        "procedural_fallback_count",
+        "ambiguous_ref_count",
+        "external_url_rejected_count",
+        "component_coverage_gap_count",
+        "status_counts"
+      ],
+      "properties": {
+        "style_pack_count": { "type": "integer", "minimum": 0 },
+        "material_component_ref_count": { "type": "integer", "minimum": 0 },
+        "prefab_reviewed_component_ref_count": { "type": "integer", "minimum": 0 },
+        "resolved_ref_count": { "type": "integer", "minimum": 0 },
+        "missing_ref_count": { "type": "integer", "minimum": 0 },
+        "procedural_fallback_count": { "type": "integer", "minimum": 0 },
+        "ambiguous_ref_count": { "type": "integer", "minimum": 0 },
+        "external_url_rejected_count": { "type": "integer", "minimum": 0 },
+        "component_coverage_gap_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "usage_policy": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "review_notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/binding" }
+    },
+    "coverage_gaps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/coverage_gap" }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style_pack_id",
+        "node_id",
+        "binding_source",
+        "owner_id",
+        "role",
+        "ref",
+        "ref_kind",
+        "resolution_status",
+        "resolved_ref",
+        "notes"
+      ],
+      "properties": {
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "binding_source": {
+          "type": "string",
+          "enum": ["material.component_ref", "prefab.visual_ref", "procedural_fallback"]
+        },
+        "owner_id": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "ref": { "type": ["string", "null"] },
+        "ref_kind": {
+          "type": "string",
+          "enum": ["media", "atlas", "bare", "none", "invalid"]
+        },
+        "resolution_status": {
+          "type": "string",
+          "enum": ["resolved", "missing", "procedural_fallback", "ambiguous", "external_url_rejected"]
+        },
+        "resolved_ref": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "manifest_path": { "type": "string", "minLength": 1 },
+            "manifest_kind": { "type": "string", "enum": ["media_manifest", "atlas_manifest"] },
+            "stable_internal_id": { "type": "string", "minLength": 1 },
+            "animation_id": { "type": "string", "minLength": 1 },
+            "asset_id": { "type": ["string", "null"] },
+            "asset_type": { "type": ["string", "null"] },
+            "media_role": { "type": ["string", "null"] },
+            "media_layer": { "type": ["string", "null"] },
+            "local_path": { "type": ["string", "null"] },
+            "url": { "type": ["string", "null"] },
+            "sha256": { "type": ["string", "null"] }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "coverage_gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["style_pack_id", "node_id", "owner_id", "role", "reason"],
+      "properties": {
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "owner_id": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

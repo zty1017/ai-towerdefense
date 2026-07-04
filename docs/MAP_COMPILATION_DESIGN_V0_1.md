@@ -87,6 +87,17 @@ readability_rules
 
 StylePack 不是运行时事实源。它只影响表现层，并且必须服务 `MapRuntimePackage` 的结构化事实。
 
+`MapStylePack` 可以携带显式组件媒体引用，但这些引用必须经过单独的 component binding 审查门：
+
+```text
+MapStylePack material.component_ref / prefab visual_ref
+  -> MapStyleComponentBindingReport
+  -> reviewed media / atlas ref 解析证据
+  -> ProceduralMapRenderPlan 表现层元数据
+```
+
+该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。它不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
+
 ### 1.4 采纳：程序化分层渲染
 
 当前前端已走向正确方向：`drawProceduralTerrain()`、`drawPath()`、`drawBuildableTerraces()`、`drawDeploymentBase()`、`drawObjectiveDefensiveZone()` 等函数已经从 `MapRuntimePackage` 派生玩家默认战场，而不是绘制失败整图候选。
@@ -234,8 +245,11 @@ worldbook + node state + visual identity
   -> component image/video generation
   -> media postprocess
   -> reviewed component atlas
+  -> MapStyleComponentBindingReport
   -> procedural renderer consumes reviewed components
 ```
+
+在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
 
 ### 3.2 前端视觉路线确认
 
