@@ -1,0 +1,300 @@
+{
+  "demo_claim": {
+    "boundary": "本报告不声称地图美术、真实视频关键帧或实时 provider 调度已经完成。",
+    "compiler_evidence": "证据包可展示 AI 编译对象、调度、地图预览、素材门禁和失败候选隔离。",
+    "player_experience": "当前 reviewed fixture 与本地 API 已足以支撑一条 MVP 教学演示闭环。"
+  },
+  "gates": [
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json"
+        }
+      ],
+      "gate_id": "primary_api_flow",
+      "metrics": {
+        "passed_step_count": 21,
+        "provider_call_count": 0,
+        "report_status": "passed",
+        "research_job_completed": true,
+        "runtime_activation_mutation_count": 0,
+        "step_count": 21
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "本地 HTTP smoke 已走通匿名 session、世界实例、研发、战斗、结算与 session evidence。",
+      "title": "MVP 玩家主流程 API"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
+        }
+      ],
+      "gate_id": "map_v02_preview_api",
+      "metrics": {
+        "default_runtime_v01_preserved_count": 3,
+        "node_count": 3,
+        "provider_call_count": 0,
+        "report_status": "passed",
+        "runtime_activation_allowed": false
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "v0.2 强语义地图预览已可通过后端 API 读取，且不会替换玩家默认 v0.1 运行时地图。",
+      "title": "MapRuntimePackage v0.2 预览 API"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
+        }
+      ],
+      "gate_id": "core_artifact_alignment",
+      "metrics": {
+        "missing_core_alignment_count": 0,
+        "native_snapshot_ready_count": 6,
+        "overall_status": "passed",
+        "target_count": 53,
+        "validation_failed_count": 0
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "ContextPackage、FactEntry、CGOP 与事务链证据已完成核心对齐审计。",
+      "title": "AI 编译核心对象对齐"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_visual_quality_report.v0.1.json"
+        }
+      ],
+      "gate_id": "map_visual_runtime_safety",
+      "metrics": {
+        "blocked_candidate_count": 22,
+        "promotion_status": "passed",
+        "published_player_layer_count": 4,
+        "quality_status": "passed_with_warnings",
+        "violation_count": 0,
+        "warning_counts": {
+          "manifest_player_layer_needs_overlay_correction": 1,
+          "node_specific_player_visual_layers_missing": 1,
+          "player_layer_needs_overlay_correction": 3,
+          "player_layer_review_is_manual_or_weakly_described": 3,
+          "shared_player_visual_layer_across_nodes": 1
+        }
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed_with_warnings",
+      "summary": "候选地图被 promotion gate 隔离，玩家侧不会误用 review-only 或失败地图；地图美术质量仍有 warning。",
+      "title": "地图视觉发布安全"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json"
+        }
+      ],
+      "gate_id": "runtime_sprite_geometry",
+      "metrics": {
+        "failed_count": 0,
+        "needs_review_count": 0,
+        "passed_count": 7,
+        "report_status": "passed",
+        "sprite_item_count": 7
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "战斗运行时素材已通过 cutout quality gate，可供当前 MVP 战斗画面使用。",
+      "title": "战斗运行时 sprite 几何质量"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json"
+        }
+      ],
+      "gate_id": "runtime_loop_continuity",
+      "metrics": {
+        "animation_count": 18,
+        "checked_count": 7,
+        "failed_count": 0,
+        "frame_source_counts": {
+          "deterministic_frame_sequence": 7,
+          "single_frame_static": 11
+        },
+        "passed_with_warnings_count": 7,
+        "report_status": "passed_with_warnings"
+      },
+      "required_for_mvp_demo": false,
+      "status": "passed_with_warnings",
+      "summary": "当前 atlas 可循环播放，但帧序列仍是确定性占位，不等同于真实图生视频关键帧。",
+      "title": "运行时循环动画连续性"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/controlled_map_candidate_review.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+        }
+      ],
+      "gate_id": "negative_map_candidates_isolated",
+      "metrics": {
+        "controlled_runtime_promotion_count": 0,
+        "overlay_promotable_count": 0,
+        "overlay_visual_status": "needs_layout_reconciliation",
+        "text_fallback_candidate_status": "review_only_not_runtime_ready",
+        "text_fallback_runtime_promotion_count": 0
+      },
+      "required_for_mvp_demo": true,
+      "status": "blocked_as_expected",
+      "summary": "已知失败或未完成对齐的地图候选只作为负样本证据，不会晋升到玩家 runtime。",
+      "title": "失败地图候选隔离"
+    }
+  ],
+  "generated_at": "2026-07-04T00:00:00+00:00",
+  "known_limitations": [
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_visual_quality_report.v0.1.json"
+        }
+      ],
+      "limitation_id": "map_player_visual_quality",
+      "severity": "medium",
+      "summary": "当前玩家地图底图仍有共享底图和 overlay correction warning；程序化地图可演示，但不是最终美术目标。"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+        }
+      ],
+      "limitation_id": "map_candidate_promotion",
+      "severity": "medium",
+      "summary": "多轮真实或受控地图候选仍未通过坐标对齐和视觉复核，已被隔离为负样本证据。"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json"
+        }
+      ],
+      "limitation_id": "video_keyframes",
+      "severity": "low",
+      "summary": "当前循环动画为 deterministic frame sequence；真实图生视频关键帧尚未接入 atlas 晋升流程。"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
+          "path": "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
+        }
+      ],
+      "limitation_id": "live_provider_runtime",
+      "severity": "low",
+      "summary": "MVP 玩家主路径仍使用 reviewed fixture 与本地 mock API；实时 provider 调度应继续走 review / staging / promotion 门禁。"
+    }
+  ],
+  "overall_status": "ready_for_mvp_demo_with_known_limitations",
+  "recommended_next_actions": [
+    "补 reference-image / paintover / 分层程序化地图路线，而不是继续纯文本整图生成。",
+    "把真实图生视频关键帧接入 LoopContinuityReport、atlas contract 和浏览器视觉烟测。",
+    "补浏览器端全链路截图门禁，把玩家第一屏、大地图、工坊、战斗和结算纳入可复跑 evidence。",
+    "将实时 provider 调度继续保持在 staging / promotion / activation gate 后面，不直接污染玩家 runtime。"
+  ],
+  "report_id": "mvp_demo_readiness_report_v0_1",
+  "safety_summary": {
+    "provider_call_count": 0,
+    "reads_env_file": false,
+    "runtime_activation_allowed": false,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "stores_sensitive_value": false,
+    "world_mutation_count_by_report": 0
+  },
+  "schema_version": "mvp_demo_readiness_report.v0.1",
+  "source_files": [
+    {
+      "exists": true,
+      "path": "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_visual_quality_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/controlled_map_candidate_review.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/controlled_map_text_fallback_candidate_review.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_candidate_overlay_visual_review.v0.1.json"
+    }
+  ],
+  "summary": {
+    "blocking_gate_count": 0,
+    "evidence_source_count": 10,
+    "expected_block_count": 1,
+    "provider_call_count_by_report": 0,
+    "required_gate_count": 6,
+    "required_gate_passed_or_expected_count": 6,
+    "runtime_mutation_count_by_report": 0,
+    "warning_gate_count": 2,
+    "world_mutation_count_by_report": 0
+  }
+}

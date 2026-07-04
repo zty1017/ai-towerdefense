@@ -1,0 +1,87 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-17-mvp-demo-readiness-report",
+  "title": "MVP demo readiness report",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/mvp-demo-readiness",
+  "worktree": "/tmp/ai-td-task-mvp-demo-readiness",
+  "objective": "把当前 MVP 演示可用性收束为一个确定性 readiness 报告：聚合主流程 API、MapRuntimePackage v0.2 预览 API、核心对象对齐、地图视觉发布闸门、运行时素材几何质量、循环动画连续性和失败地图候选隔离，明确给出可演示状态、已知限制和下一步动作。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/DEMO_VERTICAL_SLICE.md",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json",
+    "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+    "examples/review_packs/map_visual_quality_report.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/demo/build_mvp_demo_readiness_report.py",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
+    "examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/",
+    "frontend/",
+    "game_data/media/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-mvp-demo-readiness python3 -m py_compile tools/demo/build_mvp_demo_readiness_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/mvp_demo_readiness_report.json --generated-at 2026-07-04T00:00:00+00:00",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_demo_readiness_evidence",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nreport = json.loads(Path('/tmp/mvp_demo_readiness_report.json').read_text(encoding='utf-8'))\nassert report['overall_status'] == 'ready_for_mvp_demo_with_known_limitations'\nassert report['summary']['blocking_gate_count'] == 0\nassert report['summary']['required_gate_passed_or_expected_count'] == report['summary']['required_gate_count']\nevidence = json.loads(Path('/tmp/mvp_demo_readiness_evidence/evidence.json').read_text(encoding='utf-8'))\nreadiness = evidence['mvp_demo_readiness']\nassert readiness['overall_status'] == 'ready_for_mvp_demo_with_known_limitations'\nassert readiness['summary']['provider_call_count_by_report'] == 0\nassert readiness['summary']['blocking_gate_count'] == 0\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider，不读取 .env，不生成新游戏素材。",
+    "readiness 报告只聚合已审 evidence，显式区分可演示状态、已知限制和下一步动作。",
+    "失败地图候选隔离是正向验收项：它证明 promotion gate 没有把 review-only 或不合格候选放入玩家 runtime。",
+    "报告状态为 ready_for_mvp_demo_with_known_limitations，不代表地图最终美术、真实图生视频关键帧或实时 provider 调度已完成。"
+  ]
+}
