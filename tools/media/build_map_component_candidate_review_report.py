@@ -58,7 +58,11 @@ def resolve_path(value: str) -> Path:
 
 
 def rel(path: Path) -> str:
-    return path.resolve().relative_to(ROOT).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
 
 
 def as_obj(value: Any) -> dict[str, Any]:
