@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_path_geometry_report.v0.1.schema.json",
+  "title": "MapPathGeometryReport v0.1",
+  "description": "Review-only geometry evidence derived from MapRuntimePackage path_routes.waypoints. This report is not a runtime map fact source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "status",
+    "source_policy",
+    "summary",
+    "maps",
+    "usage_policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_path_geometry_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "status": { "type": "string", "enum": ["passed", "warning"] },
+    "source_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "geometry_source",
+        "no_image_or_preview_reverse_inference",
+        "does_not_modify_runtime_package"
+      ],
+      "properties": {
+        "geometry_source": {
+          "type": "string",
+          "const": "MapRuntimePackage.path_routes.waypoints"
+        },
+        "no_image_or_preview_reverse_inference": { "type": "boolean", "const": true },
+        "does_not_modify_runtime_package": { "type": "boolean", "const": true }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_count",
+        "route_count",
+        "build_slot_count",
+        "total_route_length_cells",
+        "warning_count"
+      ],
+      "properties": {
+        "map_count": { "type": "integer", "minimum": 1 },
+        "route_count": { "type": "integer", "minimum": 1 },
+        "build_slot_count": { "type": "integer", "minimum": 1 },
+        "total_route_length_cells": { "type": "number", "minimum": 0 },
+        "warning_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "maps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/map_summary" }
+    },
+    "usage_policy": {
+      "type": "array",
+      "contains": { "const": "not_map_runtime_fact_source" },
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "distance_cells", "t"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "distance_cells": { "type": "number", "minimum": 0 },
+        "t": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "turn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["waypoint_index", "position", "turn_angle_degrees", "t", "hint"],
+      "properties": {
+        "waypoint_index": { "type": "integer", "minimum": 0 },
+        "position": { "$ref": "#/$defs/point" },
+        "turn_angle_degrees": { "type": "number", "minimum": 0, "maximum": 180 },
+        "t": { "type": "number", "minimum": 0, "maximum": 1 },
+        "hint": { "type": "string", "const": "near_turn" }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_x", "min_y", "max_x", "max_y"],
+      "properties": {
+        "min_x": { "type": "number" },
+        "min_y": { "type": "number" },
+        "max_x": { "type": "number" },
+        "max_y": { "type": "number" }
+      }
+    },
+    "route_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_id",
+        "route_length_cells",
+        "sampled_centerline",
+        "sampled_point_count",
+        "turns",
+        "turn_count",
+        "road_band_envelope"
+      ],
+      "properties": {
+        "route_id": { "type": "string", "minLength": 1 },
+        "route_length_cells": { "type": "number", "minimum": 0 },
+        "sampled_centerline": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/sample" }
+        },
+        "sampled_point_count": { "type": "integer", "minimum": 2 },
+        "turns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/turn" }
+        },
+        "turn_count": { "type": "integer", "minimum": 0 },
+        "road_band_envelope": { "$ref": "#/$defs/envelope" }
+      }
+    },
+    "near_turn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_id", "turn_angle_degrees", "distance_cells"],
+      "properties": {
+        "route_id": { "type": "string", "minLength": 1 },
+        "turn_angle_degrees": { "type": "number" },
+        "distance_cells": { "type": "number", "minimum": 0 }
+      }
+    },
+    "slot_distance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_id",
+        "nearest_route_id",
+        "centerline_distance_cells",
+        "road_band_gap_cells",
+        "near_turns",
+        "derived_tags"
+      ],
+      "properties": {
+        "slot_id": { "type": "string", "minLength": 1 },
+        "nearest_route_id": { "type": "string" },
+        "centerline_distance_cells": { "type": "number", "minimum": 0 },
+        "road_band_gap_cells": { "type": "number" },
+        "near_turns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/near_turn" }
+        },
+        "derived_tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "slot_distance_stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["road_band_gap_cells"],
+      "properties": {
+        "road_band_gap_cells": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max", "average"],
+          "properties": {
+            "min": { "type": ["number", "null"] },
+            "max": { "type": ["number", "null"] },
+            "average": { "type": ["number", "null"] }
+          }
+        }
+      }
+    },
+    "near_turn_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot_id", "nearest_route_id", "derived_tags", "near_turns"],
+      "properties": {
+        "slot_id": { "type": "string", "minLength": 1 },
+        "nearest_route_id": { "type": "string" },
+        "derived_tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "near_turns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/near_turn" }
+        }
+      }
+    },
+    "map_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_runtime_package_path",
+        "schema_version",
+        "package_id",
+        "node_id",
+        "route_count",
+        "build_slot_count",
+        "total_route_length_cells",
+        "route_summaries",
+        "slot_distances",
+        "slot_distance_stats",
+        "near_turn_slots",
+        "warnings",
+        "warning_count"
+      ],
+      "properties": {
+        "map_runtime_package_path": { "type": "string", "minLength": 1 },
+        "schema_version": {
+          "type": "string",
+          "enum": ["map_runtime_package.v0.1", "map_runtime_package.v0.2"]
+        },
+        "package_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "route_count": { "type": "integer", "minimum": 1 },
+        "build_slot_count": { "type": "integer", "minimum": 1 },
+        "total_route_length_cells": { "type": "number", "minimum": 0 },
+        "route_summaries": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/route_summary" }
+        },
+        "slot_distances": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/slot_distance" }
+        },
+        "slot_distance_stats": { "$ref": "#/$defs/slot_distance_stats" },
+        "near_turn_slots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/near_turn_slot" }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "warning_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

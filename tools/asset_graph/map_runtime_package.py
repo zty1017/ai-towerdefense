@@ -23,6 +23,11 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+try:
+    import map_path_geometry
+except ModuleNotFoundError:  # pragma: no cover - supports package-style imports.
+    from tools.asset_graph import map_path_geometry  # type: ignore
+
 
 FORBIDDEN_FIELDS = frozenset(
     {
@@ -478,6 +483,11 @@ def validate_package(package: dict[str, Any], schema: dict[str, Any] | None = No
     scan_forbidden_fields(package, "", errors)
     scan_external_urls(package, "", errors)
     return list(dict.fromkeys(errors))
+
+
+def placement_review_warnings(package: dict[str, Any]) -> list[str]:
+    """Return non-fatal placement geometry warnings for review output."""
+    return map_path_geometry.placement_warning_messages(package)
 
 
 def validate_pure_python(package: dict[str, Any]) -> list[str]:

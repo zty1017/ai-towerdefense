@@ -154,6 +154,8 @@ PATHS = {
     / "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
     "map_runtime_activation_gate_report": ROOT
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+    "map_path_geometry_report": ROOT
+    / "examples/review_packs/map_path_geometry_report.v0.1.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -476,6 +478,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_runtime_activation_gate_report.py",
             "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_path_geometry_report",
+        "command": [
+            "python3",
+            "tools/asset_graph/validate_map_path_geometry_report.py",
+            "examples/review_packs/map_path_geometry_report.v0.1.json",
         ],
     },
     {
@@ -1573,6 +1583,45 @@ def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any
                 ),
             }
             for decision in decisions[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_path_geometry_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    maps = [item for item in as_list(report.get("maps")) if isinstance(item, dict)]
+    warning_maps = [item for item in maps if int(item.get("warning_count") or 0) > 0]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "map_count": summary.get("map_count"),
+        "route_count": summary.get("route_count"),
+        "build_slot_count": summary.get("build_slot_count"),
+        "total_route_length_cells": summary.get("total_route_length_cells"),
+        "warning_count": summary.get("warning_count"),
+        "source_policy": as_obj(report.get("source_policy")),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "warning_map_samples": [
+            {
+                "node_id": item.get("node_id"),
+                "schema_version": item.get("schema_version"),
+                "warning_count": item.get("warning_count"),
+                "warnings": as_list(item.get("warnings"))[:MAX_SAMPLE_ITEMS],
+            }
+            for item in warning_maps[:MAX_SAMPLE_ITEMS]
+        ],
+        "map_samples": [
+            {
+                "node_id": item.get("node_id"),
+                "schema_version": item.get("schema_version"),
+                "route_count": item.get("route_count"),
+                "build_slot_count": item.get("build_slot_count"),
+                "total_route_length_cells": item.get("total_route_length_cells"),
+                "near_turn_slot_count": len(as_list(item.get("near_turn_slots"))),
+                "warning_count": item.get("warning_count"),
+            }
+            for item in maps[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -3357,6 +3406,7 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_runtime_activation_gate_report",
             PATHS["map_runtime_activation_gate_report"],
         ),
+        ("map_path_geometry_report", PATHS["map_path_geometry_report"]),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
@@ -3555,6 +3605,7 @@ def build_evidence(
     map_runtime_activation_gate_report = load_json(
         PATHS["map_runtime_activation_gate_report"]
     )
+    map_path_geometry_report = load_json(PATHS["map_path_geometry_report"])
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
@@ -3724,6 +3775,7 @@ def build_evidence(
         "map_runtime_activation_gate": map_runtime_activation_gate_summary(
             map_runtime_activation_gate_report
         ),
+        "map_path_geometry": map_path_geometry_summary(map_path_geometry_report),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3811,6 +3863,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         evidence.get("map_runtime_promotion_readiness")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
+    map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "quality_audit"
@@ -4202,6 +4255,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapRuntimePackage v0.2 API smoke：`{map_v02_api.get('status')}`，节点 `{map_v02_api.get('node_count')}`，默认 v0.1 保留 `{map_v02_api.get('default_runtime_v01_preserved_count')}`，provider calls `{as_obj(map_v02_api.get('safety')).get('provider_call_count')}`，runtime 激活 `{map_v02_api.get('runtime_activation_allowed')}`",
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
+        f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -4391,6 +4445,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         evidence.get("map_runtime_promotion_readiness")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
+    map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
@@ -4707,6 +4762,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Map Runtime 激活门</div>
           <div class="metric">{html_escape(map_runtime_activation_gate.get("status"))}</div>
           <p class="muted">允许 {html_escape(map_runtime_activation_gate.get("activation_allowed_count"))}；阻断 {html_escape(map_runtime_activation_gate.get("activation_blocked_count"))}；runtime 修改 {html_escape(as_obj(map_runtime_activation_gate.get("safety")).get("default_runtime_mutation_performed"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">地图路径几何审查</div>
+          <div class="metric">{html_escape(map_path_geometry.get("status"))}</div>
+          <p class="muted">地图 {html_escape(map_path_geometry.get("map_count"))}；路线 {html_escape(map_path_geometry.get("route_count"))}；塔位 {html_escape(map_path_geometry.get("build_slot_count"))}；warning {html_escape(map_path_geometry.get("warning_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>
