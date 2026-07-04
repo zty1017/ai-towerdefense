@@ -6,7 +6,6 @@
         "api_frontend_contract_update_required",
         "explicit_developer_activation_approval_missing",
         "post_activation_evidence_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "checks": [
@@ -56,10 +55,10 @@
           "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
         }
       ],
-      "decision_reason": "blocked_visual_reconciliation_required",
+      "decision_reason": "blocked_review_only_candidate_isolation_required",
       "node_id": "gray_lantern_station",
       "required_next_actions": [
-        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "record_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
@@ -85,7 +84,6 @@
         "api_frontend_contract_update_required",
         "explicit_developer_activation_approval_missing",
         "post_activation_evidence_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "checks": [
@@ -135,10 +133,10 @@
           "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
         }
       ],
-      "decision_reason": "blocked_visual_reconciliation_required",
+      "decision_reason": "blocked_review_only_candidate_isolation_required",
       "node_id": "lamp_wick_store",
       "required_next_actions": [
-        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "record_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
@@ -164,7 +162,6 @@
         "api_frontend_contract_update_required",
         "explicit_developer_activation_approval_missing",
         "post_activation_evidence_required",
-        "published_visual_layer_needs_overlay_correction",
         "review_only_or_rejected_visual_candidates_present"
       ],
       "checks": [
@@ -214,10 +211,10 @@
           "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
         }
       ],
-      "decision_reason": "blocked_visual_reconciliation_required",
+      "decision_reason": "blocked_review_only_candidate_isolation_required",
       "node_id": "old_signal_tower",
       "required_next_actions": [
-        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "record_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
@@ -296,7 +293,6 @@
       "api_frontend_contract_update_required": 3,
       "explicit_developer_activation_approval_missing": 3,
       "post_activation_evidence_required": 3,
-      "published_visual_layer_needs_overlay_correction": 3,
       "review_only_or_rejected_visual_candidates_present": 3
     },
     "check_status_counts": {
@@ -308,7 +304,7 @@
       "blocked": 3
     },
     "decision_reason_counts": {
-      "blocked_visual_reconciliation_required": 3
+      "blocked_review_only_candidate_isolation_required": 3
     },
     "node_count": 3,
     "provider_call_count_by_report": 0,

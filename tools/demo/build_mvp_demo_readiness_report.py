@@ -412,7 +412,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
             {
                 "limitation_id": "map_player_visual_quality",
                 "severity": "medium",
-                "summary": "当前玩家地图底图仍有共享底图和 overlay correction warning；程序化地图可演示，但不是最终美术目标。",
+                "summary": "当前玩家地图底图仍有共享底图和非节点专属 warning；程序化地图可演示，但不是最终美术目标。",
                 "evidence_refs": [source_ref(PATHS["map_visual_quality"])],
             },
             {

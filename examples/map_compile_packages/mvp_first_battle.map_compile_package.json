@@ -397,17 +397,17 @@
     "authority": "published_visual_layer",
     "status": "published",
     "artifact": {
-      "artifact_id": "artifact_painted_visual_layer",
-      "role": "painted_visual_layer",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.1.png",
-      "width": 1672,
-      "height": 941,
-      "sha256": "bd4b9bec11e8e826f0e361a712a2e03b813fd19416d2f388bfeea8816c21972e",
+      "artifact_id": "artifact_battle_runtime_background",
+      "role": "battle_runtime_background",
+      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
       "authority": "published_visual_layer",
       "review_status": "passed_player_visual_quality",
       "player_visible_quality": "passed",
-      "logic_alignment_status": "needs_overlay_correction"
+      "logic_alignment_status": "passed"
     },
     "visual_constraints": [
       "player-facing map only",
@@ -420,8 +420,8 @@
   "alignment_layer": {
     "authority": "runtime_overlay_alignment",
     "reference_size": {
-      "width": 1672,
-      "height": 941
+      "width": 1280,
+      "height": 720
     },
     "projection": "pseudo3d_oblique",
     "coordinate_mapping": "map_runtime_cell_to_visual_plane",
@@ -437,8 +437,8 @@
           "y": 4
         },
         "expected_pixel": {
-          "x": 1256,
-          "y": 695
+          "x": 1000,
+          "y": 553
         }
       },
       {
@@ -449,8 +449,8 @@
           "y": 2
         },
         "expected_pixel": {
-          "x": 808,
-          "y": 345
+          "x": 616,
+          "y": 254
         }
       },
       {
@@ -461,8 +461,8 @@
           "y": 6
         },
         "expected_pixel": {
-          "x": 360,
-          "y": 345
+          "x": 232,
+          "y": 254
         }
       },
       {
@@ -473,8 +473,8 @@
           "y": 6
         },
         "expected_pixel": {
-          "x": 304,
-          "y": 316
+          "x": 184,
+          "y": 229
         }
       },
       {
@@ -485,8 +485,8 @@
           "y": 3
         },
         "expected_pixel": {
-          "x": 1312,
-          "y": 666
+          "x": 1048,
+          "y": 528
         }
       },
       {
@@ -497,8 +497,8 @@
           "y": 5
         },
         "expected_pixel": {
-          "x": 1200,
-          "y": 724
+          "x": 952,
+          "y": 578
         }
       },
       {
@@ -509,8 +509,8 @@
           "y": 3
         },
         "expected_pixel": {
-          "x": 1256,
-          "y": 637
+          "x": 1000,
+          "y": 503
         }
       },
       {
@@ -521,8 +521,8 @@
           "y": 5
         },
         "expected_pixel": {
-          "x": 1144,
-          "y": 695
+          "x": 904,
+          "y": 553
         }
       }
     ]
@@ -566,7 +566,7 @@
   ],
   "export_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
-    "frontend_default_visual_role": "painted_visual_layer"
+    "frontend_default_visual_role": "battle_runtime_background"
   },
   "validation_report": {
     "gate_status": "warning",

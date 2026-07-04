@@ -268,8 +268,28 @@ def build_node_decision(
     decision_reason = "blocked_pending_explicit_activation_authorization"
     if status_counts.get("failed"):
         decision_reason = "blocked_failed_activation_preconditions"
-    elif present_visual_blockers:
+    elif "published_visual_layer_needs_overlay_correction" in present_visual_blockers:
         decision_reason = "blocked_visual_reconciliation_required"
+    elif "review_only_or_rejected_visual_candidates_present" in present_visual_blockers:
+        decision_reason = "blocked_review_only_candidate_isolation_required"
+
+    required_next_actions: list[str] = []
+    if "published_visual_layer_needs_overlay_correction" in present_visual_blockers:
+        required_next_actions.append(
+            "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer"
+        )
+    if "review_only_or_rejected_visual_candidates_present" in present_visual_blockers:
+        required_next_actions.append(
+            "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate"
+        )
+    required_next_actions.extend(
+        [
+            "record_explicit_developer_activation_authorization",
+            "update_backend_api_contract_if_v02_becomes_default",
+            "update_frontend_runtime_contract_if_v02_becomes_default",
+            "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes",
+        ]
+    )
 
     return {
         "node_id": node_id,
@@ -290,13 +310,7 @@ def build_node_decision(
             "world_state_mutation_performed": False,
             "provider_call_count_by_gate": 0,
         },
-        "required_next_actions": [
-            "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
-            "record_explicit_developer_activation_authorization",
-            "update_backend_api_contract_if_v02_becomes_default",
-            "update_frontend_runtime_contract_if_v02_becomes_default",
-            "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes",
-        ],
+        "required_next_actions": required_next_actions,
     }
 
 

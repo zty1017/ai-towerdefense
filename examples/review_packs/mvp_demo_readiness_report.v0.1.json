@@ -85,10 +85,7 @@
         "quality_status": "passed_with_warnings",
         "violation_count": 0,
         "warning_counts": {
-          "manifest_player_layer_needs_overlay_correction": 1,
           "node_specific_player_visual_layers_missing": 1,
-          "player_layer_needs_overlay_correction": 3,
-          "player_layer_review_is_manual_or_weakly_described": 3,
           "shared_player_visual_layer_across_nodes": 1
         }
       },
@@ -214,7 +211,7 @@
       ],
       "limitation_id": "map_player_visual_quality",
       "severity": "medium",
-      "summary": "当前玩家地图底图仍有共享底图和 overlay correction warning；程序化地图可演示，但不是最终美术目标。"
+      "summary": "当前玩家地图底图仍有共享底图和非节点专属 warning；程序化地图可演示，但不是最终美术目标。"
     },
     {
       "evidence_refs": [

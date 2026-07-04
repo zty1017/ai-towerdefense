@@ -120,7 +120,14 @@ def audit_runtime_package(path: Path) -> dict[str, Any]:
         warnings.extend(file_warnings)
         if layer.get("logic_alignment_status") != "passed":
             warnings.append("player_layer_needs_overlay_correction")
-        if layer.get("source_kind") in {None, "", "human_reviewed_painted_visual_runtime_overlay"}:
+        deterministic_runtime_background = (
+            layer.get("role") == "battle_runtime_background"
+            and layer.get("logic_alignment_status") == "passed"
+        )
+        if (
+            not deterministic_runtime_background
+            and layer.get("source_kind") in {None, "", "human_reviewed_painted_visual_runtime_overlay"}
+        ):
             warnings.append("player_layer_review_is_manual_or_weakly_described")
 
     for role in ("battle_control_sketch", "battle_reference_board"):
