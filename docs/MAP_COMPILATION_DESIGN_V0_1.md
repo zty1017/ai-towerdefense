@@ -106,6 +106,7 @@ MapComponentMediaManifest deterministic SVG baseline
   -> MapComponentGenerationRequestPack
   -> MapComponentArtifactStagingManifest
   -> MapComponentCandidateReviewReport
+  -> MapComponentVisualQualityReport
   -> MapComponentPromotionGateReport
   -> future MapComponentMediaManifest replacement build
 ```
@@ -115,6 +116,8 @@ MapComponentMediaManifest deterministic SVG baseline
 `MapComponentArtifactStagingManifest v0.1` 是 request pack 之后、candidate review 之前的 review-only 本地 artifact 导入边界。它把 36 个 request 派生为 36 个 staging slot，声明外部 provider 或人工生成的本地 `png/svg/webp` 候选如何进入候选池；当前没有真实候选，因此所有 slot 都是 `awaiting_local_artifact` / `not_imported`，`imported_count=0`、`awaiting_count=36`。非空 candidate path 只能来自仓库内 `game_data/media/map_components/candidates/` 或 `/tmp/...` 本地文件，并必须通过存在性、sha256 和扩展名校验。staging 只说明“可进入后续审查的导入边界”，不代表 review passed，也不写 manifest、不改 StylePack / RenderPlan / frontend default / runtime map truth。
 
 `MapComponentCandidateReviewReport v0.1` 是本地 artifact staging 之后的审查层。报告顶层记录 `source_artifact_staging_manifest_path`，并且 generated candidate 只能来自 artifact staging 中 `imported` + `staged_for_review`、本地 path / sha 匹配的 slot。当前 artifact staging 没有真实生成候选，`imported_count=0`，因此 36 个 baseline SVG 仍只能作为 `baseline_fixture_candidate` / `no_generated_candidate_yet` 负责任地占位，`generated_candidate_count=0`，不能伪装成 AI 生成结果。报告会阻断晋升，并要求后续导入本地生成 artifact、visual QA、cutout / normalization 和 binding refresh。
+
+`MapComponentVisualQualityReport v0.1` 是 candidate review 之后、promotion gate 之前的本地文件质量 / cutout normalization gate。它默认读取 `MapComponentCandidateReviewReport`，只对 `candidate_kind == generated_candidate` 的条目执行本地检查；baseline SVG fixture 不进入该 report，也不能被当作 generated candidate。当前默认没有 generated candidate，因此 report 为 `awaiting_generated_candidates`，`generated_candidate_count=0`、`checked_candidate_count=0`，validator 仍通过，表示结构化等待/阻断状态而不是伪造通过。未来 generated candidate 进入该层时，报告会复核 candidate review 提供的 local path / sha，记录文件类型、sha、size；PNG 会检查尺寸、alpha visible ratio、subject bbox、edge contact 和 cutout review 状态；SVG 会检查 `<svg`、script 和远程引用；WebP 在无本地 decode 依赖时只能标记为 `needs_review_unsupported_decode`。v0.1 不允许该层直接宣称可晋升，所有 generated candidate 最多进入 `needs_review` 或 `blocked_pending_quality_gates`，仍必须等待显式 promotion gate。
 
 `MapComponentPromotionGateReport v0.1` 是显式晋升门。当前 `promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。只有未来 candidate review 真正通过，才允许单独生成新的 MapComponentMediaManifest 或 promotion report。
 
@@ -254,6 +257,11 @@ AI 整图不能作为运行时地图，但仍可用于：
 MapRuntimePackage
   -> StylePack / component assets
   -> MapComponentMediaManifest
+  -> MapComponentGenerationRequestPack
+  -> MapComponentArtifactStagingManifest
+  -> MapComponentCandidateReviewReport
+  -> MapComponentVisualQualityReport
+  -> MapComponentPromotionGateReport
   -> deterministic procedural render
   -> semantic visual consistency check
   -> published visual layer or runtime canvas style update
@@ -270,6 +278,7 @@ worldbook + node state + visual identity
   -> MapComponentGenerationRequestPack
   -> MapComponentArtifactStagingManifest
   -> MapComponentCandidateReviewReport
+  -> MapComponentVisualQualityReport
   -> MapComponentPromotionGateReport
   -> reviewed component manifest / atlas
   -> MapStyleComponentBindingReport

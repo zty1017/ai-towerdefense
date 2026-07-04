@@ -166,6 +166,8 @@ PATHS = {
     / "examples/review_packs/map_component_artifact_staging_manifest.v0.1.json",
     "map_component_candidate_review_report": ROOT
     / "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+    "map_component_visual_quality_report": ROOT
+    / "examples/review_packs/map_component_visual_quality_report.v0.1.json",
     "map_component_promotion_gate_report": ROOT
     / "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
     "node_map_candidate_review": ROOT
@@ -545,6 +547,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_component_candidate_review_report.py",
             "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_visual_quality_report",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_visual_quality_report.py",
+            "examples/review_packs/map_component_visual_quality_report.v0.1.json",
         ],
     },
     {
@@ -1900,6 +1910,52 @@ def map_component_candidate_review_summary(report: dict[str, Any]) -> dict[str, 
                 "required_next_actions": as_list(candidate.get("required_next_actions")),
             }
             for candidate in candidates[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_component_visual_quality_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    items = [
+        item
+        for item in as_list(report.get("items"))
+        if isinstance(item, dict)
+    ]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "source_candidate_review_report_path": report.get(
+            "source_candidate_review_report_path"
+        ),
+        "source_candidate_count": summary.get("source_candidate_count"),
+        "generated_candidate_count": summary.get("generated_candidate_count"),
+        "checked_candidate_count": summary.get("checked_candidate_count"),
+        "blocked_pending_quality_gates_count": summary.get(
+            "blocked_pending_quality_gates_count"
+        ),
+        "needs_review_count": summary.get("needs_review_count"),
+        "unsupported_decode_count": summary.get("unsupported_decode_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "file_type_counts": as_obj(summary.get("file_type_counts")),
+        "issue_counts": as_obj(summary.get("issue_counts")),
+        "runtime_effect": as_obj(report.get("runtime_effect")),
+        "promotion_effect": as_obj(report.get("promotion_effect")),
+        "usage_policy": as_list(report.get("usage_policy")),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
+        "item_samples": [
+            {
+                "candidate_id": item.get("candidate_id"),
+                "component_id": item.get("component_id"),
+                "component_role": item.get("component_role"),
+                "review_status": item.get("review_status"),
+                "source_candidate_local_path": item.get("source_candidate_local_path"),
+                "file_checks": as_obj(item.get("file_checks")),
+                "cutout_normalization_status": item.get("cutout_normalization_status"),
+                "issues": as_list(item.get("issues")),
+                "warnings": as_list(item.get("warnings")),
+            }
+            for item in items[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -3739,6 +3795,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_component_candidate_review_report"],
         ),
         (
+            "map_component_visual_quality_report",
+            PATHS["map_component_visual_quality_report"],
+        ),
+        (
             "map_component_promotion_gate_report",
             PATHS["map_component_promotion_gate_report"],
         ),
@@ -3954,6 +4014,9 @@ def build_evidence(
     map_component_candidate_review_report = load_json(
         PATHS["map_component_candidate_review_report"]
     )
+    map_component_visual_quality_report = load_json(
+        PATHS["map_component_visual_quality_report"]
+    )
     map_component_promotion_gate_report = load_json(
         PATHS["map_component_promotion_gate_report"]
     )
@@ -4141,6 +4204,9 @@ def build_evidence(
             "candidate_review": map_component_candidate_review_summary(
                 map_component_candidate_review_report
             ),
+            "visual_quality_gate": map_component_visual_quality_summary(
+                map_component_visual_quality_report
+            ),
             "promotion_gate": map_component_promotion_gate_summary(
                 map_component_promotion_gate_report
             ),
@@ -4248,6 +4314,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_component_candidate_review = as_obj(
         map_component_generation_pipeline.get("candidate_review")
+    )
+    map_component_visual_quality = as_obj(
+        map_component_generation_pipeline.get("visual_quality_gate")
     )
     map_component_promotion_gate = as_obj(
         map_component_generation_pipeline.get("promotion_gate")
@@ -4649,6 +4718,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapComponent generation request pack：`{map_component_generation_request.get('status')}`，requests `{map_component_generation_request.get('request_count')}`，components `{map_component_generation_request.get('component_count')}`，target kinds `{map_component_generation_request.get('target_media_kind_counts')}`",
         f"- MapComponent artifact staging：`{map_component_artifact_staging.get('status')}`，slots `{map_component_artifact_staging.get('slot_count')}`，imported `{map_component_artifact_staging.get('imported_count')}`，awaiting `{map_component_artifact_staging.get('awaiting_count')}`，not imported `{map_component_artifact_staging.get('not_imported_count')}`，runtime/manifest 写入 `{map_component_artifact_staging.get('runtime_effect')}`",
         f"- MapComponent candidate review：`{map_component_candidate_review.get('status')}`，读取 staging `{map_component_candidate_review.get('source_artifact_staging_manifest_path')}`，candidates `{map_component_candidate_review.get('candidate_count')}`，baseline fixtures `{map_component_candidate_review.get('baseline_fixture_candidate_count')}`，generated `{map_component_candidate_review.get('generated_candidate_count')}`，可晋升 `{map_component_candidate_review.get('promotable_count')}`",
+        f"- MapComponent visual quality / cutout gate：`{map_component_visual_quality.get('status')}`，读取 candidate review `{map_component_visual_quality.get('source_candidate_review_report_path')}`，generated `{map_component_visual_quality.get('generated_candidate_count')}`，checked `{map_component_visual_quality.get('checked_candidate_count')}`，blocked `{map_component_visual_quality.get('blocked_pending_quality_gates_count')}`，runtime/manifest 写入 `{map_component_visual_quality.get('runtime_effect')}`，promotion effect `{map_component_visual_quality.get('promotion_effect')}`",
         f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
@@ -4840,6 +4910,12 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
+    map_component_generation_pipeline = as_obj(
+        evidence.get("map_component_generation_pipeline")
+    )
+    map_component_visual_quality = as_obj(
+        map_component_generation_pipeline.get("visual_quality_gate")
+    )
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
@@ -5161,6 +5237,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图路径几何审查</div>
           <div class="metric">{html_escape(map_path_geometry.get("status"))}</div>
           <p class="muted">地图 {html_escape(map_path_geometry.get("map_count"))}；路线 {html_escape(map_path_geometry.get("route_count"))}；塔位 {html_escape(map_path_geometry.get("build_slot_count"))}；warning {html_escape(map_path_geometry.get("warning_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapComponent Visual Gate</div>
+          <div class="metric status-metric">{html_escape(map_component_visual_quality.get("status"))}</div>
+          <p class="muted">generated {html_escape(map_component_visual_quality.get("generated_candidate_count"))}；checked {html_escape(map_component_visual_quality.get("checked_candidate_count"))}；runtime 修改 {html_escape(as_obj(map_component_visual_quality.get("runtime_effect")).get("runtime_map_truth_modified"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>

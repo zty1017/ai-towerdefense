@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-07-05T00:00:00Z",
+  "items": [],
+  "promotion_effect": {
+    "candidate_marked_runtime_ready": false,
+    "generated_candidate_promoted": false,
+    "promotion_gate_bypassed": false
+  },
+  "report_id": "map_component_visual_quality_report_v0_1",
+  "runtime_effect": {
+    "frontend_default_modified": false,
+    "manifest_replacement_written": false,
+    "render_plan_modified": false,
+    "runtime_map_truth_modified": false,
+    "style_pack_modified": false
+  },
+  "schema_version": "map_component_visual_quality_report.v0.1",
+  "source_candidate_review_report_path": "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+  "status": "awaiting_generated_candidates",
+  "summary": {
+    "blocked_pending_quality_gates_count": 0,
+    "checked_candidate_count": 0,
+    "file_type_counts": {},
+    "generated_candidate_count": 0,
+    "issue_counts": {},
+    "needs_review_count": 0,
+    "source_candidate_count": 36,
+    "status_counts": {},
+    "unsupported_decode_count": 0
+  },
+  "usage_policy": [
+    "review_gate_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "generated_candidates_only",
+    "baseline_fixture_is_not_generated_candidate",
+    "no_frontend_default_consumption",
+    "no_manifest_or_style_pack_or_render_plan_mutation",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_visual_quality_report.py examples/review_packs/map_component_visual_quality_report.v0.1.json"
+    ],
+    "validator": "tools/media/validate_map_component_visual_quality_report.py"
+  }
+}
