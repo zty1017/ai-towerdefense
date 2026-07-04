@@ -6,7 +6,7 @@
   "style_pack_id": "style_long_night_ruined_outpost_v0_1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "gray_lantern_station",
-  "created_at": "2026-07-04T00:00:00Z",
+  "created_at": "2026-07-05T00:00:00Z",
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",

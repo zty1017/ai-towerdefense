@@ -5,7 +5,7 @@
   "style_pack_id": "style_long_night_ruined_outpost_v0_1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "gray_lantern_station",
-  "created_at": "2026-07-04T00:00:00Z",
+  "created_at": "2026-07-05T00:00:00Z",
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
@@ -62,8 +62,8 @@
               "source": "map_style_pack.material",
               "owner_id": "terrain_wet_ruin_moss",
               "role": "terrain_base",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_gray_lantern_station_terrain_wet_ruin_moss"
             }
           }
         }
@@ -119,8 +119,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_old_station_track",
               "role": "road_band",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_gray_lantern_station_road_old_station_track"
             }
           }
         }
@@ -177,8 +177,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_edge_lantern_chalk",
               "role": "road_edge",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_gray_lantern_station_road_edge_lantern_chalk"
             }
           }
         }
@@ -217,8 +217,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -249,8 +249,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -281,8 +281,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -313,8 +313,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -345,8 +345,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -377,8 +377,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -409,8 +409,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -441,8 +441,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -473,8 +473,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -505,8 +505,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -537,8 +537,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -569,8 +569,8 @@
               "owner_id": "platform_lantern_foundation_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "round_ruin_plate_with_lantern_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
               }
             }
           }
@@ -606,8 +606,8 @@
               "owner_id": "objective_gray_lantern_core_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "raised_lantern_core_base"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_objective_gray_lantern_core_foundation"
               }
             }
           }
@@ -634,8 +634,8 @@
               "owner_id": "objective_gray_lantern_core_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "raised_lantern_core_base"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_objective_gray_lantern_core_foundation"
               }
             }
           }
@@ -671,8 +671,8 @@
               "owner_id": "spawn_dark_fog_gate",
               "role": "spawn_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "fog_rift_edge_marker"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_spawn_dark_fog_gate"
               }
             }
           }
@@ -709,8 +709,8 @@
               "owner_id": "decor_cold_ash_and_loose_stones",
               "role": "non_blocking_decoration",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "low_contrast_ash_stones"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_gray_lantern_station_decor_cold_ash_and_loose_stones"
               }
             }
           }

@@ -1145,6 +1145,20 @@ def validate_render_plan(
             errors.append(f"player default layer {layer.get('layer_id')} has debug/reference kind")
         if layer.get("authority") == "debug_reference" and layer.get("player_default") is True:
             errors.append(f"debug_reference layer {layer.get('layer_id')} cannot be player_default")
+        for operation in layer.get("operations", []):
+            if not isinstance(operation, dict):
+                continue
+            semantic_ref = operation.get("semantic_ref")
+            if not isinstance(semantic_ref, dict):
+                continue
+            for ref_key in ("kind", "id"):
+                ref_value = semantic_ref.get(ref_key)
+                if isinstance(ref_value, str) and (
+                    ref_value.startswith("media:") or ref_value.startswith("atlas:")
+                ):
+                    errors.append(
+                        f"{operation.get('op_id')}.semantic_ref.{ref_key} must not contain media or atlas refs"
+                    )
     report = render_plan.get("validation_report")
     if isinstance(report, dict):
         if report.get("runtime_truth_preserved") is not True:

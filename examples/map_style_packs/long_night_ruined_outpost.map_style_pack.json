@@ -41,15 +41,15 @@
       "material_id": "terrain_wet_ruin_moss",
       "role": "terrain_base",
       "base_color": "#23302B",
-      "texture_policy": "procedural_only",
-      "component_ref": null
+      "texture_policy": "reviewed_component_optional",
+      "component_ref": "media:map_component_gray_lantern_station_terrain_wet_ruin_moss"
     },
     {
       "material_id": "terrain_broken_stone_detail",
       "role": "terrain_detail",
       "base_color": "#4F5A45",
       "texture_policy": "reviewed_component_optional",
-      "component_ref": null
+      "component_ref": "media:map_component_gray_lantern_station_terrain_broken_stone_detail"
     }
   ],
   "road_materials": [
@@ -57,15 +57,15 @@
       "material_id": "road_old_station_track",
       "role": "road_band",
       "base_color": "#766C55",
-      "texture_policy": "procedural_only",
-      "component_ref": null
+      "texture_policy": "reviewed_component_optional",
+      "component_ref": "media:map_component_gray_lantern_station_road_old_station_track"
     },
     {
       "material_id": "road_edge_lantern_chalk",
       "role": "road_edge",
       "base_color": "#B8A56D",
-      "texture_policy": "procedural_only",
-      "component_ref": null
+      "texture_policy": "reviewed_component_optional",
+      "component_ref": "media:map_component_gray_lantern_station_road_edge_lantern_chalk"
     }
   ],
   "road_edge_rules": {
@@ -80,8 +80,8 @@
       "anchor_policy": "center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "round_ruin_plate_with_lantern_marks"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_platform_lantern_foundation_ring"
       }
     }
   ],
@@ -92,8 +92,8 @@
       "anchor_policy": "bottom_center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "raised_lantern_core_base"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_objective_gray_lantern_core_foundation"
       }
     }
   ],
@@ -104,8 +104,8 @@
       "anchor_policy": "center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "fog_rift_edge_marker"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_spawn_dark_fog_gate"
       }
     }
   ],
@@ -116,8 +116,8 @@
       "anchor_policy": "center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "small_pale_green_lantern_crystal_cluster"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker"
       }
     }
   ],
@@ -128,8 +128,8 @@
       "anchor_policy": "center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "low_dark_pool_with_cold_lantern_edge"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_hazard_lantern_dark_pool_marker"
       }
     }
   ],
@@ -140,8 +140,8 @@
       "anchor_policy": "center",
       "placement_policy": "semantic_anchor_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "low_broken_ruin_wall_chunk"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_blocking_lantern_broken_wall_marker"
       }
     }
   ],
@@ -152,8 +152,8 @@
       "anchor_policy": "bottom_center",
       "placement_policy": "edge_decoration_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "small_broken_lamp_post"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_prop_broken_lamp_post"
       }
     }
   ],
@@ -164,8 +164,8 @@
       "anchor_policy": "center",
       "placement_policy": "allowed_zone_only",
       "visual_ref": {
-        "kind": "procedural_shape",
-        "value": "low_contrast_ash_stones"
+        "kind": "reviewed_component_ref",
+        "value": "media:map_component_gray_lantern_station_decor_cold_ash_and_loose_stones"
       }
     }
   ],
