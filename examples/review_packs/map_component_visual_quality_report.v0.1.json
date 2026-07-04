@@ -24,6 +24,7 @@
     "generated_candidate_count": 0,
     "issue_counts": {},
     "needs_review_count": 0,
+    "passed_count": 0,
     "source_candidate_count": 36,
     "status_counts": {},
     "unsupported_decode_count": 0

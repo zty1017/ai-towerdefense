@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ DEFAULT_SCHEMA = ROOT / "shared/schemas/map_component_candidate_review_report.v0
 FORBIDDEN_KEY_FRAGMENTS = (
     "provider",
     "model",
+    "prompt",
     "raw_prompt",
     "full_prompt",
     "full_trace",
@@ -42,6 +44,15 @@ GENERATED_STAGING_FIELDS = (
     "staging_import_status",
     "artifact_review_status",
 )
+APPROVAL_RECORD_FIELDS = {
+    "approval_status",
+    "approval_scope",
+    "approved_at",
+    "reviewer",
+    "rationale",
+    "source_approval_plan_path",
+}
+APPROVAL_SCOPE_CANDIDATE_REVIEW = "candidate_review"
 
 
 def load_json(path: Path) -> Any:
@@ -70,6 +81,14 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def is_valid_datetime(value: str) -> bool:
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
+
+
 def scan_forbidden_key_fragments(value: Any, path: str, errors: list[str]) -> None:
     if isinstance(value, dict):
         for key, child in value.items():
@@ -94,6 +113,55 @@ def scan_external_urls(value: Any, path: str, errors: list[str]) -> None:
         lowered = value.lower()
         if any(marker in lowered for marker in EXTERNAL_URL_MARKERS):
             errors.append(f"{path} must not contain an external URL")
+
+
+def validate_approval_record(
+    approval_record: Any,
+    *,
+    path: str,
+    required_scope: str,
+    errors: list[str],
+) -> bool:
+    if not isinstance(approval_record, dict):
+        errors.append(f"{path} must be an object")
+        return False
+
+    unexpected_keys = sorted(set(approval_record) - APPROVAL_RECORD_FIELDS)
+    for key in unexpected_keys:
+        errors.append(f"{path} contains unsupported field: {key}")
+    missing_keys = sorted(APPROVAL_RECORD_FIELDS - set(approval_record))
+    for key in missing_keys:
+        errors.append(f"{path}.{key} is required")
+
+    approval_status = approval_record.get("approval_status")
+    if approval_status != "approved":
+        errors.append(f"{path}.approval_status must be approved")
+
+    approval_scope = approval_record.get("approval_scope")
+    scope_values = [str(scope) for scope in as_list(approval_scope)]
+    if not scope_values:
+        errors.append(f"{path}.approval_scope must not be empty")
+    if required_scope not in scope_values:
+        errors.append(f"{path}.approval_scope must include {required_scope}")
+
+    approved_at = approval_record.get("approved_at")
+    if not isinstance(approved_at, str) or not approved_at.strip():
+        errors.append(f"{path}.approved_at must be a non-empty string")
+    elif not is_valid_datetime(approved_at):
+        errors.append(f"{path}.approved_at must be an ISO 8601 date-time")
+
+    for key in ("reviewer", "rationale", "source_approval_plan_path"):
+        value = approval_record.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{path}.{key} must be a non-empty string")
+
+    source_path = approval_record.get("source_approval_plan_path")
+    if isinstance(source_path, str) and source_path.strip():
+        resolved_source_path = resolve_repo_path(source_path)
+        if not resolved_source_path.exists():
+            errors.append(f"{path}.source_approval_plan_path does not exist: {source_path}")
+
+    return not any(error.startswith(path) for error in errors)
 
 
 def validate_with_jsonschema(value: dict[str, Any], schema: dict[str, Any] | None) -> list[str]:
@@ -151,6 +219,8 @@ def validate_baseline_candidate(candidate: dict[str, Any], index: int, errors: l
     for field in GENERATED_STAGING_FIELDS:
         if field in candidate:
             errors.append(f"candidates[{index}] baseline fixture must not include {field}")
+    if "approval_record" in candidate:
+        errors.append(f"candidates[{index}] baseline fixture must not include approval_record")
 
 
 def validate_generated_candidate(
@@ -192,12 +262,32 @@ def validate_generated_candidate(
         if actual != expected:
             errors.append(f"candidates[{index}].{key} must match artifact staging slot")
 
-    if candidate.get("promotion_allowed_now") is not False:
-        errors.append(f"candidates[{index}] generated candidate cannot allow promotion in v0.1 review")
-    if candidate.get("promotion_recommendation") != "do_not_promote":
-        errors.append(f"candidates[{index}] generated candidate recommendation must be do_not_promote")
-    if candidate.get("review_status") != "blocked_from_promotion":
-        errors.append(f"candidates[{index}] generated candidate status must be blocked_from_promotion")
+    is_approved_tuple = (
+        candidate.get("review_status") == "passed"
+        and candidate.get("promotion_recommendation") == "eligible_for_promotion"
+        and candidate.get("promotion_allowed_now") is True
+    )
+    is_blocked_tuple = (
+        candidate.get("review_status") == "blocked_from_promotion"
+        and candidate.get("promotion_recommendation") == "do_not_promote"
+        and candidate.get("promotion_allowed_now") is False
+    )
+    approval_record = candidate.get("approval_record")
+    if is_approved_tuple:
+        validate_approval_record(
+            approval_record,
+            path=f"candidates[{index}].approval_record",
+            required_scope=APPROVAL_SCOPE_CANDIDATE_REVIEW,
+            errors=errors,
+        )
+    elif is_blocked_tuple:
+        if "approval_record" in candidate:
+            errors.append(f"candidates[{index}] blocked generated candidate must not include approval_record")
+    else:
+        errors.append(
+            f"candidates[{index}] generated candidate must be either blocked_from_promotion/"
+            "do_not_promote/false or passed/eligible_for_promotion/true with approval_record"
+        )
 
     candidate_path_value = candidate.get("candidate_local_path")
     candidate_sha = candidate.get("candidate_sha256")

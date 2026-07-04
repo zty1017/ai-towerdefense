@@ -371,6 +371,7 @@ def build_report(
             "source_candidate_count": len(source_candidates),
             "generated_candidate_count": len(generated),
             "checked_candidate_count": len(items),
+            "passed_count": status_counts.get("passed", 0),
             "blocked_pending_quality_gates_count": blocked_count,
             "needs_review_count": status_counts.get("needs_review", 0),
             "unsupported_decode_count": status_counts.get("needs_review_unsupported_decode", 0),

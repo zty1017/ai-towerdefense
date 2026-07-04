@@ -109,6 +109,7 @@
             "required": ["candidate_kind"]
           },
           "then": {
+            "not": { "required": ["approval_record"] },
             "properties": {
               "review_status": { "const": "no_generated_candidate_yet" },
               "promotion_recommendation": { "const": "do_not_promote" },
@@ -129,10 +130,25 @@
               "staging_import_status",
               "artifact_review_status"
             ],
+            "oneOf": [
+              {
+                "not": { "required": ["approval_record"] },
+                "properties": {
+                  "review_status": { "const": "blocked_from_promotion" },
+                  "promotion_recommendation": { "const": "do_not_promote" },
+                  "promotion_allowed_now": { "const": false }
+                }
+              },
+              {
+                "required": ["approval_record"],
+                "properties": {
+                  "review_status": { "const": "passed" },
+                  "promotion_recommendation": { "const": "eligible_for_promotion" },
+                  "promotion_allowed_now": { "const": true }
+                }
+              }
+            ],
             "properties": {
-              "review_status": { "const": "blocked_from_promotion" },
-              "promotion_recommendation": { "const": "do_not_promote" },
-              "promotion_allowed_now": { "const": false },
               "staging_import_status": { "const": "imported" },
               "artifact_review_status": { "const": "staged_for_review" }
             }
@@ -164,7 +180,28 @@
         "target_size": { "$ref": "#/$defs/target_size" },
         "findings": { "$ref": "#/$defs/string_list" },
         "required_next_actions": { "$ref": "#/$defs/string_list" },
-        "usage_policy": { "$ref": "#/$defs/string_list" }
+        "usage_policy": { "$ref": "#/$defs/string_list" },
+        "approval_record": { "$ref": "#/$defs/approval_record" }
+      }
+    },
+    "approval_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_status",
+        "approval_scope",
+        "approved_at",
+        "reviewer",
+        "rationale",
+        "source_approval_plan_path"
+      ],
+      "properties": {
+        "approval_status": { "type": "string", "const": "approved" },
+        "approval_scope": { "$ref": "#/$defs/string_list" },
+        "approved_at": { "type": "string", "format": "date-time" },
+        "reviewer": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "source_approval_plan_path": { "type": "string", "minLength": 1 }
       }
     },
     "validation": {
