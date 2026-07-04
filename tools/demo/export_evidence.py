@@ -209,6 +209,8 @@ PATHS = {
     / "examples/provider_artifact_staging/p1b_provider_image_artifact_promotion_report.example.json",
     "core_artifact_alignment_report": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
+    "mvp_primary_api_flow_smoke_report": ROOT
+    / "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json",
     "map_v02_preview_api_smoke_report": ROOT
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
 }
@@ -1848,6 +1850,66 @@ def collect_map_v02_preview_api_smoke(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def collect_mvp_primary_api_flow_smoke(report: dict[str, Any]) -> dict[str, Any]:
+    safety = as_obj(report.get("safety_summary"))
+    summary = as_obj(report.get("summary"))
+    research = as_obj(report.get("research"))
+    core_artifacts = as_obj(report.get("core_artifacts"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "flow_id": report.get("flow_id"),
+        "transport": report.get("transport"),
+        "node_id": report.get("node_id"),
+        "step_count": report.get("step_count"),
+        "passed_step_count": report.get("passed_step_count"),
+        "endpoint_steps": as_list(report.get("endpoint_steps")),
+        "summary": {
+            "world_phase": summary.get("world_phase"),
+            "opening_card_count": summary.get("opening_card_count"),
+            "frontend_asset_count": summary.get("frontend_asset_count"),
+            "runtime_art_asset_count": summary.get("runtime_art_asset_count"),
+            "map_node_count": summary.get("map_node_count"),
+            "campaign_current_node": summary.get("campaign_current_node"),
+            "campaign_next_node": summary.get("campaign_next_node"),
+            "battle_enemy_wave_count": summary.get("battle_enemy_wave_count"),
+            "battle_toolbar_asset_count": summary.get("battle_toolbar_asset_count"),
+            "runtime_asset_count": summary.get("runtime_asset_count"),
+            "map_build_slot_count": summary.get("map_build_slot_count"),
+            "settlement_mode": summary.get("settlement_mode"),
+            "settlement_phase": summary.get("settlement_phase"),
+        },
+        "research": {
+            "proposal_created": research.get("proposal_created"),
+            "job_status": research.get("job_status"),
+            "job_fetch_status": research.get("job_fetch_status"),
+            "job_trace_count": research.get("job_trace_count"),
+            "runtime_package_exists": research.get("runtime_package_exists"),
+            "delivery_payload_exists": research.get("delivery_payload_exists"),
+            "job_gate_status": research.get("job_gate_status"),
+            "player_text_safety": research.get("player_text_safety"),
+        },
+        "core_artifacts": {
+            "proposal_status": core_artifacts.get("proposal_status"),
+            "job_status": core_artifacts.get("job_status"),
+            "settlement_status": core_artifacts.get("settlement_status"),
+            "world_delta_transaction_id": core_artifacts.get(
+                "world_delta_transaction_id"
+            ),
+        },
+        "checks": as_obj(report.get("checks")),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count": safety.get("provider_call_count"),
+            "runtime_activation_mutation_count": safety.get(
+                "runtime_activation_mutation_count"
+            ),
+            "world_state_write_scope": safety.get("world_state_write_scope"),
+        },
+    }
+
+
 def collect_map_compile_package(package: dict[str, Any]) -> dict[str, Any]:
     logical = as_obj(package.get("logical_map_layer"))
     control = as_obj(package.get("control_layer"))
@@ -2958,6 +3020,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["core_artifact_alignment_report"],
         ),
         (
+            "mvp_primary_api_flow_smoke_report",
+            PATHS["mvp_primary_api_flow_smoke_report"],
+        ),
+        (
             "map_v02_preview_api_smoke_report",
             PATHS["map_v02_preview_api_smoke_report"],
         ),
@@ -3222,6 +3288,9 @@ def build_evidence() -> dict[str, Any]:
     core_artifact_alignment_report = load_json(
         PATHS["core_artifact_alignment_report"]
     )
+    mvp_primary_api_flow_smoke_report = load_json(
+        PATHS["mvp_primary_api_flow_smoke_report"]
+    )
     map_v02_preview_api_smoke_report = load_json(
         PATHS["map_v02_preview_api_smoke_report"]
     )
@@ -3307,6 +3376,9 @@ def build_evidence() -> dict[str, Any]:
         "map_runtime_packages": collect_map_runtime_packages(map_packages),
         "map_runtime_packages_v02": collect_map_runtime_packages(map_packages_v02),
         "backend_api_evidence": {
+            "mvp_primary_flow": collect_mvp_primary_api_flow_smoke(
+                mvp_primary_api_flow_smoke_report
+            ),
             "map_v02_preview": collect_map_v02_preview_api_smoke(
                 map_v02_preview_api_smoke_report
             ),
@@ -3380,6 +3452,9 @@ def md_table(headers: list[str], rows: list[list[Any]]) -> str:
 def render_summary_markdown(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
+    primary_flow_api = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get("mvp_primary_flow")
+    )
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_v02_api = as_obj(
@@ -3651,6 +3726,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "## 1. AI 编译链路存在性",
         "",
         f"- 受控链路说明：{ai_link.get('claim')}",
+        f"- MVP 主流程 API smoke：`{primary_flow_api.get('status')}`，步骤 `{primary_flow_api.get('passed_step_count')}` / `{primary_flow_api.get('step_count')}`，节点 `{primary_flow_api.get('node_id')}`，transport `{primary_flow_api.get('transport')}`",
         f"- 可玩资产数：`{as_obj(ai_link.get('compiled_artifact_counts')).get('playable_assets')}`",
         f"- runtime package 数：`{as_obj(ai_link.get('compiled_artifact_counts')).get('runtime_packages')}`",
         f"- 多阶段内容阶段数：`{ai_link.get('multistage_stage_count')}`",
@@ -3895,6 +3971,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
+    primary_flow_api = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get("mvp_primary_flow")
+    )
     map_packages = as_obj(evidence.get("map_runtime_packages"))
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_v02_api = as_obj(
@@ -4147,6 +4226,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">可玩资产</div>
           <div class="metric">{html_escape(counts.get("playable_assets"))}</div>
           <p class="muted">来自 frontend mock pack 的 reviewed playable 资产。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MVP API Flow</div>
+          <div class="metric">{html_escape(primary_flow_api.get("status"))}</div>
+          <p class="muted">步骤 {html_escape(primary_flow_api.get("passed_step_count"))} / {html_escape(primary_flow_api.get("step_count"))}；节点 {html_escape(primary_flow_api.get("node_id"))}；transport {html_escape(primary_flow_api.get("transport"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">RuntimePackage</div>
