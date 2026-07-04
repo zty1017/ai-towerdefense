@@ -1,0 +1,459 @@
+{
+  "generated_at": "2026-07-04T00:00:00Z",
+  "inputs": {
+    "map_compile_package_dir": "examples/map_compile_packages",
+    "map_render_plan_v02_dir": "examples/map_render_plans_v02",
+    "map_runtime_package_dir": "examples/map_runtime_packages",
+    "map_runtime_package_v02_dir": "examples/map_runtime_packages_v02",
+    "map_visual_promotion_gate_report": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
+    "semantic_visual_consistency_report_v02_dir": "examples/semantic_visual_consistency_reports_v02"
+  },
+  "next_required_gates": [
+    {
+      "gate_id": "explicit_map_runtime_activation_gate",
+      "required": true,
+      "summary": "A later task must explicitly decide whether v0.2 semantics become default runtime, update API/frontend contracts, and rerun visual/API/browser evidence."
+    },
+    {
+      "gate_id": "visual_model_or_human_review_for_published_layer",
+      "required": true,
+      "summary": "Published visual layers still need stronger visual review before they can be treated as final art rather than MVP-safe presentation."
+    }
+  ],
+  "nodes": [
+    {
+      "activation_policy": {
+        "default_runtime_mutation_allowed": false,
+        "required_next_gate": "explicit_map_runtime_activation_gate",
+        "runtime_activation_allowed": false
+      },
+      "blocking_reasons": [
+        "activation_gate_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "map_compile_package": {
+        "package_id": "map_compile_gray_lantern_station_v0_2",
+        "painted_visual_status": "published",
+        "player_visual_safe": true,
+        "present": true,
+        "quality_gate_count": 7,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_compile_packages/mvp_first_battle.map_compile_package.json",
+        "validation_gate_status": "warning"
+      },
+      "node_id": "gray_lantern_station",
+      "readiness_gates": [
+        {
+          "gate_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime remains MapRuntimePackage v0.1."
+        },
+        {
+          "gate_id": "v02_preview_semantics_available",
+          "status": "passed",
+          "summary": "MapRuntimePackage v0.2 preview has explicit strong semantic extensions."
+        },
+        {
+          "gate_id": "strong_semantic_counts_nonzero",
+          "status": "passed",
+          "summary": "Resource nodes, hazard zones, defense anchors, and blocked areas are present."
+        },
+        {
+          "gate_id": "v02_render_plan_executable",
+          "status": "passed",
+          "summary": "ProceduralMapRenderPlan v0.2 preview is executable and preserves runtime truth."
+        },
+        {
+          "gate_id": "semantic_visual_consistency_passed",
+          "status": "passed",
+          "summary": "SemanticVisualConsistencyReport passed with no blocking visual-semantic failures."
+        },
+        {
+          "gate_id": "map_compile_package_safe",
+          "status": "warning",
+          "summary": "MapCompilePackage preserves runtime truth and marks player visual layer safe, with MVP warnings if present."
+        },
+        {
+          "gate_id": "published_visual_layer_isolated",
+          "status": "warning",
+          "summary": "Published player layer exists; rejected/review-only candidates remain isolated by the visual promotion gate."
+        },
+        {
+          "gate_id": "activation_gate_required",
+          "status": "blocked",
+          "summary": "No task has explicitly promoted v0.2 preview into the default player runtime."
+        }
+      ],
+      "render_plan_v02": {
+        "debug_layer_count": 1,
+        "plan_id": "render_plan_gray_lantern_station_v0_1",
+        "player_default_layer_count": 11,
+        "player_default_safe": true,
+        "present": true,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json",
+        "target_package_id": "map_pkg_gray_lantern_station_v0_2",
+        "validation_gate_status": "passed"
+      },
+      "runtime_v01": {
+        "build_slot_count": 12,
+        "package_id": "map_pkg_gray_lantern_station_v0_1",
+        "path_route_count": 1,
+        "present": true,
+        "published_visual_layer_count": 1,
+        "schema_version": "map_runtime_package.v0.1",
+        "source_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+        "spawn_point_count": 1
+      },
+      "runtime_v02_preview": {
+        "package_id": "map_pkg_gray_lantern_station_v0_2",
+        "present": true,
+        "runtime_loadable": true,
+        "schema_version": "map_runtime_package.v0.2",
+        "source_path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+        "strong_semantic_counts": {
+          "blocked_areas": 1,
+          "defense_anchors": 1,
+          "hazard_zones": 1,
+          "resource_nodes": 1
+        },
+        "validation_gate_status": "passed"
+      },
+      "semantic_visual_consistency": {
+        "failed_count": 0,
+        "passed_count": 10,
+        "present": true,
+        "report_id": "semantic_visual_gray_lantern_station_v0_1",
+        "source_path": "examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json",
+        "status": "passed",
+        "warning_count": 0
+      },
+      "status": "promotion_candidate_activation_required",
+      "visual_promotion_gate": {
+        "blocked_candidate_count": 7,
+        "blocked_reason_counts": {
+          "blocking_findings_present": 4,
+          "promotion_allowed_now:false": 2,
+          "promotion_recommendation:do_not_promote": 2,
+          "review_status:awaiting_provider_or_paintover_output": 1,
+          "review_status:needs_regeneration": 2,
+          "runtime_promotion:blocked_until_explicit_review": 4,
+          "status:needs_layout_reconciliation": 2
+        },
+        "published_layer_alignment_statuses": [
+          "needs_overlay_correction"
+        ],
+        "published_player_layer_count": 1
+      }
+    },
+    {
+      "activation_policy": {
+        "default_runtime_mutation_allowed": false,
+        "required_next_gate": "explicit_map_runtime_activation_gate",
+        "runtime_activation_allowed": false
+      },
+      "blocking_reasons": [
+        "activation_gate_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "map_compile_package": {
+        "package_id": "map_compile_lamp_wick_store_v0_2",
+        "painted_visual_status": "published",
+        "player_visual_safe": true,
+        "present": true,
+        "quality_gate_count": 7,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_compile_packages/mvp_wick_store_pressure.map_compile_package.json",
+        "validation_gate_status": "warning"
+      },
+      "node_id": "lamp_wick_store",
+      "readiness_gates": [
+        {
+          "gate_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime remains MapRuntimePackage v0.1."
+        },
+        {
+          "gate_id": "v02_preview_semantics_available",
+          "status": "passed",
+          "summary": "MapRuntimePackage v0.2 preview has explicit strong semantic extensions."
+        },
+        {
+          "gate_id": "strong_semantic_counts_nonzero",
+          "status": "passed",
+          "summary": "Resource nodes, hazard zones, defense anchors, and blocked areas are present."
+        },
+        {
+          "gate_id": "v02_render_plan_executable",
+          "status": "passed",
+          "summary": "ProceduralMapRenderPlan v0.2 preview is executable and preserves runtime truth."
+        },
+        {
+          "gate_id": "semantic_visual_consistency_passed",
+          "status": "passed",
+          "summary": "SemanticVisualConsistencyReport passed with no blocking visual-semantic failures."
+        },
+        {
+          "gate_id": "map_compile_package_safe",
+          "status": "warning",
+          "summary": "MapCompilePackage preserves runtime truth and marks player visual layer safe, with MVP warnings if present."
+        },
+        {
+          "gate_id": "published_visual_layer_isolated",
+          "status": "warning",
+          "summary": "Published player layer exists; rejected/review-only candidates remain isolated by the visual promotion gate."
+        },
+        {
+          "gate_id": "activation_gate_required",
+          "status": "blocked",
+          "summary": "No task has explicitly promoted v0.2 preview into the default player runtime."
+        }
+      ],
+      "render_plan_v02": {
+        "debug_layer_count": 1,
+        "plan_id": "render_plan_lamp_wick_store_v0_1",
+        "player_default_layer_count": 11,
+        "player_default_safe": true,
+        "present": true,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json",
+        "target_package_id": "map_pkg_lamp_wick_store_v0_2",
+        "validation_gate_status": "passed"
+      },
+      "runtime_v01": {
+        "build_slot_count": 12,
+        "package_id": "map_pkg_lamp_wick_store_v0_1",
+        "path_route_count": 2,
+        "present": true,
+        "published_visual_layer_count": 1,
+        "schema_version": "map_runtime_package.v0.1",
+        "source_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+        "spawn_point_count": 2
+      },
+      "runtime_v02_preview": {
+        "package_id": "map_pkg_lamp_wick_store_v0_2",
+        "present": true,
+        "runtime_loadable": true,
+        "schema_version": "map_runtime_package.v0.2",
+        "source_path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+        "strong_semantic_counts": {
+          "blocked_areas": 1,
+          "defense_anchors": 1,
+          "hazard_zones": 1,
+          "resource_nodes": 1
+        },
+        "validation_gate_status": "passed"
+      },
+      "semantic_visual_consistency": {
+        "failed_count": 0,
+        "passed_count": 10,
+        "present": true,
+        "report_id": "semantic_visual_lamp_wick_store_v0_1",
+        "source_path": "examples/semantic_visual_consistency_reports_v02/mvp_wick_store_pressure.semantic_visual_consistency_report.json",
+        "status": "passed",
+        "warning_count": 0
+      },
+      "status": "promotion_candidate_activation_required",
+      "visual_promotion_gate": {
+        "blocked_candidate_count": 7,
+        "blocked_reason_counts": {
+          "blocking_findings_present": 4,
+          "promotion_allowed_now:false": 2,
+          "promotion_recommendation:do_not_promote": 2,
+          "review_status:awaiting_provider_or_paintover_output": 1,
+          "review_status:needs_regeneration": 2,
+          "runtime_promotion:blocked_until_explicit_review": 4,
+          "status:needs_path_reprojection": 2
+        },
+        "published_layer_alignment_statuses": [
+          "needs_overlay_correction"
+        ],
+        "published_player_layer_count": 1
+      }
+    },
+    {
+      "activation_policy": {
+        "default_runtime_mutation_allowed": false,
+        "required_next_gate": "explicit_map_runtime_activation_gate",
+        "runtime_activation_allowed": false
+      },
+      "blocking_reasons": [
+        "activation_gate_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "map_compile_package": {
+        "package_id": "map_compile_old_signal_tower_v0_2",
+        "painted_visual_status": "published",
+        "player_visual_safe": true,
+        "present": true,
+        "quality_gate_count": 7,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_compile_packages/mvp_old_signal_tower_pressure.map_compile_package.json",
+        "validation_gate_status": "warning"
+      },
+      "node_id": "old_signal_tower",
+      "readiness_gates": [
+        {
+          "gate_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime remains MapRuntimePackage v0.1."
+        },
+        {
+          "gate_id": "v02_preview_semantics_available",
+          "status": "passed",
+          "summary": "MapRuntimePackage v0.2 preview has explicit strong semantic extensions."
+        },
+        {
+          "gate_id": "strong_semantic_counts_nonzero",
+          "status": "passed",
+          "summary": "Resource nodes, hazard zones, defense anchors, and blocked areas are present."
+        },
+        {
+          "gate_id": "v02_render_plan_executable",
+          "status": "passed",
+          "summary": "ProceduralMapRenderPlan v0.2 preview is executable and preserves runtime truth."
+        },
+        {
+          "gate_id": "semantic_visual_consistency_passed",
+          "status": "passed",
+          "summary": "SemanticVisualConsistencyReport passed with no blocking visual-semantic failures."
+        },
+        {
+          "gate_id": "map_compile_package_safe",
+          "status": "warning",
+          "summary": "MapCompilePackage preserves runtime truth and marks player visual layer safe, with MVP warnings if present."
+        },
+        {
+          "gate_id": "published_visual_layer_isolated",
+          "status": "warning",
+          "summary": "Published player layer exists; rejected/review-only candidates remain isolated by the visual promotion gate."
+        },
+        {
+          "gate_id": "activation_gate_required",
+          "status": "blocked",
+          "summary": "No task has explicitly promoted v0.2 preview into the default player runtime."
+        }
+      ],
+      "render_plan_v02": {
+        "debug_layer_count": 1,
+        "plan_id": "render_plan_old_signal_tower_v0_1",
+        "player_default_layer_count": 11,
+        "player_default_safe": true,
+        "present": true,
+        "runtime_truth_preserved": true,
+        "source_path": "examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+        "target_package_id": "map_pkg_old_signal_tower_v0_2",
+        "validation_gate_status": "passed"
+      },
+      "runtime_v01": {
+        "build_slot_count": 12,
+        "package_id": "map_pkg_old_signal_tower_v0_1",
+        "path_route_count": 2,
+        "present": true,
+        "published_visual_layer_count": 1,
+        "schema_version": "map_runtime_package.v0.1",
+        "source_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+        "spawn_point_count": 2
+      },
+      "runtime_v02_preview": {
+        "package_id": "map_pkg_old_signal_tower_v0_2",
+        "present": true,
+        "runtime_loadable": true,
+        "schema_version": "map_runtime_package.v0.2",
+        "source_path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+        "strong_semantic_counts": {
+          "blocked_areas": 1,
+          "defense_anchors": 1,
+          "hazard_zones": 1,
+          "resource_nodes": 1
+        },
+        "validation_gate_status": "passed"
+      },
+      "semantic_visual_consistency": {
+        "failed_count": 0,
+        "passed_count": 10,
+        "present": true,
+        "report_id": "semantic_visual_old_signal_tower_v0_1",
+        "source_path": "examples/semantic_visual_consistency_reports_v02/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json",
+        "status": "passed",
+        "warning_count": 0
+      },
+      "status": "promotion_candidate_activation_required",
+      "visual_promotion_gate": {
+        "blocked_candidate_count": 8,
+        "blocked_reason_counts": {
+          "blocking_findings_present": 4,
+          "promotion_recommendation:do_not_promote": 4,
+          "review_status:awaiting_provider_or_paintover_output": 1,
+          "review_status:needs_regeneration": 1,
+          "runtime_promotion:blocked_until_explicit_review": 4,
+          "status:needs_layout_reconciliation": 2,
+          "status:needs_prompt_iteration": 2
+        },
+        "published_layer_alignment_statuses": [
+          "needs_overlay_correction"
+        ],
+        "published_player_layer_count": 1
+      }
+    }
+  ],
+  "policy": [
+    "MapRuntimePackage v0.1 remains the default player runtime until a separate activation gate promotes another package.",
+    "MapRuntimePackage v0.2 preview, RenderPlan, and semantic reports can prove readiness but cannot activate runtime by themselves.",
+    "Review-only, rejected, or awaiting-provider visual candidates must stay isolated from published player layers.",
+    "Warnings are acceptable for MVP evidence only when runtime truth is preserved and activation remains blocked."
+  ],
+  "report_id": "mvp_map_runtime_promotion_readiness",
+  "safety_summary": {
+    "player_runtime_update_performed": false,
+    "provider_call_count_by_report": 0,
+    "reads_env_file": false,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count_by_report": 0
+  },
+  "schema_version": "map_runtime_promotion_readiness_report.v0.1",
+  "scope": {
+    "default_runtime_mutation_allowed": false,
+    "player_runtime_update_performed": false,
+    "provider_calls_allowed": false,
+    "read_model_only": true,
+    "review_only_inputs_allowed": true,
+    "runtime_activation_allowed": false,
+    "world_state_mutation_allowed": false
+  },
+  "status": "promotion_candidates_activation_required",
+  "summary": {
+    "activation_allowed_count": 0,
+    "blocked_visual_candidate_count": 22,
+    "blocker_counts": {
+      "activation_gate_required": 3,
+      "published_visual_layer_needs_overlay_correction": 3,
+      "review_only_or_rejected_visual_candidates_present": 3
+    },
+    "default_runtime_v01_count": 3,
+    "gate_status_counts": {
+      "blocked": 3,
+      "passed": 15,
+      "warning": 6
+    },
+    "map_compile_package_count": 3,
+    "node_count": 3,
+    "promotion_candidate_count": 3,
+    "provider_call_count_by_report": 0,
+    "published_player_layer_count": 4,
+    "runtime_mutation_count_by_report": 0,
+    "semantic_report_count": 3,
+    "status_counts": {
+      "promotion_candidate_activation_required": 3
+    },
+    "v02_preview_count": 3,
+    "v02_render_plan_count": 3,
+    "visual_promotion_violation_count": 0,
+    "world_mutation_count_by_report": 0
+  }
+}
