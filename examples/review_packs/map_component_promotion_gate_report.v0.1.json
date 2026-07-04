@@ -1,0 +1,658 @@
+{
+  "blocked_reasons": [
+    "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline."
+  ],
+  "created_at": "2026-07-05T00:00:00Z",
+  "decisions": [
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_oiled_stone",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_terrain_wick_store_ash_crate_detail",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_road_wick_store_old_pipe_track",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_road_edge_wick_chalk_and_oil",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_platform_wick_store_brass_floor_ring",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_objective_wick_store_shelf_foundation",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_spawn_pipe_shadow_leak",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_resource_wick_crate_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_resource_wick_crate_marker",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_hazard_wick_store_oil_shadow_pool",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_blocking_wick_store_crate_wall",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_prop_low_oil_crate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_prop_low_oil_crate",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_lamp_wick_store_decor_ash_and_brass_scraps",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_terrain_signal_tower_glass_shard_detail",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_road_signal_tower_ridge_line.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_road_signal_tower_ridge_line",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_road_edge_copper_resonance_trace",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_platform_signal_tower_copper_ring",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_objective_signal_tower_glass_foundation",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_spawn_return_light_shadow_gate",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_resource_copper_pin_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_resource_copper_pin_marker",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_blocking_signal_tower_machine_wreck",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_prop_broken_signal_pole.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_prop_broken_signal_pole",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_old_signal_tower_decor_resonant_glass_shards.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_old_signal_tower_decor_resonant_glass_shards",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_terrain_wet_ruin_moss",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_terrain_broken_stone_detail.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_terrain_broken_stone_detail",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_road_old_station_track.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_road_old_station_track",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_road_edge_lantern_chalk.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_road_edge_lantern_chalk",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_platform_lantern_foundation_ring",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_objective_gray_lantern_core_foundation",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_spawn_dark_fog_gate.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_spawn_dark_fog_gate",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_resource_lantern_crystal_cluster_marker",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_hazard_lantern_dark_pool_marker",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_blocking_lantern_broken_wall_marker",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_prop_broken_lamp_post.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_prop_broken_lamp_post",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    },
+    {
+      "baseline_preserved": true,
+      "candidate_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones.baseline_fixture_candidate",
+      "candidate_kind": "baseline_fixture_candidate",
+      "component_id": "map_component_gray_lantern_station_decor_cold_ash_and_loose_stones",
+      "decision": "blocked_no_generated_candidate",
+      "promotion_allowed": false,
+      "reason": "Only deterministic SVG baseline fixture is present; no generated candidate may replace baseline.",
+      "required_before_future_promotion": [
+        "generated candidate artifact imported as local reviewed media",
+        "candidate review passed",
+        "visual QA passed",
+        "cutout and normalization passed",
+        "MapStyleComponentBindingReport refreshed with accepted refs",
+        "developer approves explicit manifest replacement build"
+      ]
+    }
+  ],
+  "report_id": "map_component_promotion_gate_report_v0_1",
+  "runtime_effect": {
+    "frontend_default_modified": false,
+    "manifest_replacement_written": false,
+    "render_plan_modified": false,
+    "runtime_map_truth_modified": false,
+    "style_pack_modified": false
+  },
+  "schema_version": "map_component_promotion_gate_report.v0.1",
+  "source_candidate_review_report_path": "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+  "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+  "status": "blocked",
+  "summary": {
+    "baseline_preserved_count": 36,
+    "candidate_count": 36,
+    "decision_counts": {
+      "blocked_no_generated_candidate": 36
+    },
+    "generated_candidate_count": 0,
+    "promotion_allowed_count": 0,
+    "promotion_blocked_count": 36
+  },
+  "usage_policy": [
+    "review_gate_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "baseline_preserved_until_generated_candidate_passes",
+    "no_frontend_default_consumption",
+    "no_manifest_or_style_pack_or_render_plan_mutation",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_promotion_gate_report.py examples/review_packs/map_component_promotion_gate_report.v0.1.json"
+    ],
+    "validator": "tools/media/validate_map_component_promotion_gate_report.py"
+  }
+}

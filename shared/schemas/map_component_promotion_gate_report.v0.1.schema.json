@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_promotion_gate_report.v0.1.schema.json",
+  "title": "MapComponentPromotionGateReport v0.1",
+  "description": "Explicit promotion gate for reviewed MapComponent generated candidates. It reports whether generated components may replace deterministic baseline entries and never mutates MapComponentMediaManifest, StylePack, RenderPlan, frontend defaults, or runtime map truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "source_candidate_review_report_path",
+    "source_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "decisions",
+    "blocked_reasons",
+    "runtime_effect",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_promotion_gate_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_candidate_review_report_path": { "type": "string", "minLength": 1 },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["blocked", "passed"] },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/decision" }
+    },
+    "blocked_reasons": { "$ref": "#/$defs/string_list" },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_replacement_written",
+        "style_pack_modified",
+        "render_plan_modified",
+        "frontend_default_modified",
+        "runtime_map_truth_modified"
+      ],
+      "properties": {
+        "manifest_replacement_written": { "type": "boolean" },
+        "style_pack_modified": { "type": "boolean" },
+        "render_plan_modified": { "type": "boolean" },
+        "frontend_default_modified": { "type": "boolean" },
+        "runtime_map_truth_modified": { "type": "boolean" }
+      }
+    },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "generated_candidate_count",
+        "promotion_allowed_count",
+        "promotion_blocked_count",
+        "baseline_preserved_count",
+        "decision_counts"
+      ],
+      "properties": {
+        "candidate_count": { "type": "integer", "minimum": 0 },
+        "generated_candidate_count": { "type": "integer", "minimum": 0 },
+        "promotion_allowed_count": { "type": "integer", "minimum": 0 },
+        "promotion_blocked_count": { "type": "integer", "minimum": 0 },
+        "baseline_preserved_count": { "type": "integer", "minimum": 0 },
+        "decision_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "candidate_id",
+        "candidate_kind",
+        "decision",
+        "promotion_allowed",
+        "baseline_preserved",
+        "reason",
+        "required_before_future_promotion"
+      ],
+      "properties": {
+        "component_id": { "type": "string", "minLength": 1 },
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "candidate_kind": { "type": "string", "enum": ["baseline_fixture_candidate", "generated_candidate"] },
+        "decision": { "type": "string", "enum": ["blocked_no_generated_candidate", "blocked_review_failed", "allowed"] },
+        "promotion_allowed": { "type": "boolean" },
+        "baseline_preserved": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "required_before_future_promotion": { "$ref": "#/$defs/string_list" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}
