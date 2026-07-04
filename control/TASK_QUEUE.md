@@ -79,6 +79,7 @@ P2：本阶段明确不做
 - 前端战斗地图视觉底座已完成 P0-M 到 P1-D v0.4 改造：默认玩家战斗画面不再预加载或绘制失败整图候选，而是由 `MapRuntimePackage` 驱动 canvas 程序化绘制地形、平滑土路、路肩、车辙、部署基座、目标地标、入口雾潮、暗潮洼地、可玩地块边界、可部署台地、路线方向 cue、目标防御区和世界内废墟 / 补给 / 灯具地标；投影已按 runtime bounds 与 HUD safe area 做 contain fit，移动端不再只看到被裁切的局部路段；静态视觉合约已检查控制图隔离、失败图不得发布、棋盘 helper 不得回归、路径 / 塔位 / 目标 / 出生点仍来自结构化地图包。
 - 前端战斗地图已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。
 - 地图 RenderPlan 已有离线 SVG 预览入口和 report 校验，三张 MVP 地图均可生成 `preview_ready_review_only` 的审查预览；该预览证明 RenderPlan 可执行，但不作为玩家 runtime 或 published visual layer。
+- MapRuntimePackage v0.2 的强语义 preview 已接入 RenderPlan 旁路预览：`examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/` 和 `examples/map_render_previews_v02/` 会用结构化资源点、机关区、防守锚点和阻挡区生成 review-only evidence；统一 demo evidence 会展示 `procedural_map_previews_v02`，但前端/后端默认 runtime 仍使用 v0.1。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -2929,6 +2930,60 @@ assert v02['total_resource_node_count'] == 3
 assert v02['total_hazard_zone_count'] == 3
 assert v02['total_defense_anchor_count'] == 3
 assert v02['total_blocked_area_count'] == 3
+PY
+git diff --check
+```
+
+#### P1-D-13 RenderPlan v0.2 强语义预览
+
+状态：已完成第一版旁路实现。
+
+目标：
+
+```text
+让 ProceduralMapRenderPlan 和离线 SVG 预览消费 MapRuntimePackage v0.2 preview 的资源点、机关区、防守锚点和阻挡区，同时保持该链路为 review-only 旁路，不替换前端/后端默认 v0.1 runtime。
+```
+
+已落地：
+
+- `shared/schemas/procedural_map_render_plan.v0.1.schema.json`：补充 `resource_node`、`hazard_zone`、`defense_anchor`、`blocked_area` semantic kind，以及 `draw_zone`、`draw_blocked_cells`、`draw_anchor_marker` operation。
+- `tools/asset_graph/procedural_map_render_plan.py`：从 v0.2 runtime 包生成 `resource_or_hazard` 与 `blocking_prop` layer，并在 `SemanticVisualConsistencyReport` 中检查四类强语义覆盖。
+- `tools/asset_graph/build_procedural_map_render_plan.py`：自动识别 `map_runtime_package.v0.2`，调用 v0.2 validator。
+- `tools/asset_graph/render_procedural_map_preview.py`：离线 SVG 预览可以绘制资源点、机关区、防守锚点和阻挡区，并在 report 中记录语义计数。
+- `examples/map_style_packs/*.map_style_pack.json`：补齐最小 resource / hazard / blocking procedural prefab。
+- `examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/`、`examples/map_render_previews_v02/`：三张 MVP 地图的 v0.2 review-only 旁路证据。
+- `tools/demo/export_evidence.py`：新增 `procedural_map_previews_v02` evidence 摘要、source files 和 validation commands。
+- `examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端/后端。
+- v0.2 preview SVG 只作为 review-only evidence，不作为玩家 runtime 或 published visual layer。
+- 资源点、机关区、防守锚点和阻挡区必须来自 `MapRuntimePackage v0.2 preview`，不能从图像反推。
+- `MapStylePack` 只提供表现层 prefab / palette，不控制 gameplay truth。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py
+python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json
+python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview_report.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/render_plan_v02_semantics_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/render_plan_v02_semantics_evidence/evidence.json').read_text(encoding='utf-8'))
+summary = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews_v02']
+assert summary['report_count'] == 3
+assert summary['ready_count'] == 3
+for sample in summary['preview_samples']:
+    render = sample['render_summary']
+    assert render['resource_node_count'] == 1
+    assert render['hazard_zone_count'] == 1
+    assert render['defense_anchor_count'] == 1
+    assert render['blocked_area_count'] == 1
 PY
 git diff --check
 ```

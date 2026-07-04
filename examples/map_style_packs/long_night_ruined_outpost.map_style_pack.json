@@ -109,9 +109,42 @@
       }
     }
   ],
-  "resource_prefabs": [],
-  "hazard_prefabs": [],
-  "blocking_props": [],
+  "resource_prefabs": [
+    {
+      "prefab_id": "resource_lantern_crystal_cluster_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "small_pale_green_lantern_crystal_cluster"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "hazard_lantern_dark_pool_marker",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_dark_pool_with_cold_lantern_edge"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "blocking_lantern_broken_wall_marker",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_broken_ruin_wall_chunk"
+      }
+    }
+  ],
   "non_blocking_props": [
     {
       "prefab_id": "prop_broken_lamp_post",

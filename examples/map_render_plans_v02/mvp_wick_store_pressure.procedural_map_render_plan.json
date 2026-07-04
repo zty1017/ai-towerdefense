@@ -1,0 +1,914 @@
+{
+  "schema_version": "procedural_map_render_plan.v0.1",
+  "plan_id": "render_plan_lamp_wick_store_v0_1",
+  "map_runtime_package_id": "map_pkg_lamp_wick_store_v0_2",
+  "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "lamp_wick_store",
+  "created_at": "2026-07-04T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "map_style_pack"
+  },
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "safe_area": {
+      "left": 32,
+      "top": 32,
+      "right": 32,
+      "bottom": 32
+    }
+  },
+  "coordinate_projection": {
+    "projection": "pseudo3d_oblique",
+    "grid": {
+      "width_cells": 18,
+      "height_cells": 10,
+      "cell_size": 64
+    },
+    "mapping": "map_runtime_cell_to_visual_plane"
+  },
+  "layers": [
+    {
+      "layer_id": "terrain_base",
+      "kind": "terrain_base",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "fill_grid_terrain",
+          "op_type": "fill_grid",
+          "semantic_ref": {
+            "kind": "grid",
+            "id": "grid"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "terrain_wick_store_oiled_stone"
+          },
+          "geometry": {
+            "grid": {
+              "projection": "pseudo3d_oblique",
+              "width_cells": 18,
+              "height_cells": 10,
+              "cell_size": 64
+            },
+            "palette_key": "terrain_base"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "road_band",
+      "kind": "road_band",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "road_band_path_wick_store_main_pipe",
+          "op_type": "draw_polyline_band",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_wick_store_main_pipe"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_wick_store_old_pipe_track"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 4
+              },
+              {
+                "x": 13,
+                "y": 4
+              },
+              {
+                "x": 13,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": 6
+              },
+              {
+                "x": 3,
+                "y": 6
+              },
+              {
+                "x": 1,
+                "y": 5
+              }
+            ],
+            "width_cells": 0.85
+          }
+        },
+        {
+          "op_id": "road_band_path_wick_store_service_lane",
+          "op_type": "draw_polyline_band",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_wick_store_service_lane"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_wick_store_old_pipe_track"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 8
+              },
+              {
+                "x": 12,
+                "y": 8
+              },
+              {
+                "x": 10,
+                "y": 7
+              },
+              {
+                "x": 6,
+                "y": 7
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "width_cells": 0.85
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "road_edge",
+      "kind": "road_edge",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "road_edge_path_wick_store_main_pipe",
+          "op_type": "draw_polyline_edge",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_wick_store_main_pipe"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_edge_wick_chalk_and_oil"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 4
+              },
+              {
+                "x": 13,
+                "y": 4
+              },
+              {
+                "x": 13,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": 2
+              },
+              {
+                "x": 8,
+                "y": 6
+              },
+              {
+                "x": 3,
+                "y": 6
+              },
+              {
+                "x": 1,
+                "y": 5
+              }
+            ],
+            "edge_style": "broken_planks",
+            "shoulder_width_cells": 0.28
+          }
+        },
+        {
+          "op_id": "road_edge_path_wick_store_service_lane",
+          "op_type": "draw_polyline_edge",
+          "semantic_ref": {
+            "kind": "path_route",
+            "id": "path_wick_store_service_lane"
+          },
+          "style_ref": {
+            "kind": "material",
+            "id": "road_edge_wick_chalk_and_oil"
+          },
+          "geometry": {
+            "waypoints": [
+              {
+                "x": 17,
+                "y": 8
+              },
+              {
+                "x": 12,
+                "y": 8
+              },
+              {
+                "x": 10,
+                "y": 7
+              },
+              {
+                "x": 6,
+                "y": 7
+              },
+              {
+                "x": 2,
+                "y": 5
+              }
+            ],
+            "edge_style": "broken_planks",
+            "shoulder_width_cells": 0.28
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "build_slot_platform",
+      "kind": "build_slot_platform",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "platform_slot_01",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_01"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_02",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_02"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_03",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_03"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 16,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_04",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_04"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 16,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_05",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_05"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 13,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_06",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_06"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 12,
+              "y": 4
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_07",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_07"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 12,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_08",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_08"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 14,
+              "y": 3
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_09",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_09"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 12,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_10",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_10"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 14,
+              "y": 5
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_11",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_11"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 13,
+              "y": 1
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        },
+        {
+          "op_id": "platform_slot_12",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "build_slot",
+            "id": "slot_12"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "platform_wick_store_brass_floor_ring"
+          },
+          "geometry": {
+            "position": {
+              "x": 14,
+              "y": 2
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "visual_hint": "ground_plate"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "objective_foundation",
+      "kind": "objective_foundation",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "objective_target_wick_store_core",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_wick_store_core"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_wick_store_shelf_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 0,
+              "y": 5
+            },
+            "durability": 14
+          }
+        },
+        {
+          "op_id": "objective_target_supply_line_coupler",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_supply_line_coupler"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_wick_store_shelf_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 2,
+              "y": 7
+            },
+            "durability": 6
+          }
+        },
+        {
+          "op_id": "objective_target_lamp_oil_shelf",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "objective",
+            "id": "target_lamp_oil_shelf"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "objective_wick_store_shelf_foundation"
+          },
+          "geometry": {
+            "position": {
+              "x": 4,
+              "y": 3
+            },
+            "durability": 5
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "spawn_atmosphere",
+      "kind": "spawn_atmosphere",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "spawn_spawn_path_wick_store_main_pipe",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "spawn_point",
+            "id": "spawn_path_wick_store_main_pipe"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "spawn_pipe_shadow_leak"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 4
+            },
+            "route_id": "path_wick_store_main_pipe"
+          }
+        },
+        {
+          "op_id": "spawn_spawn_path_wick_store_service_lane",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "spawn_point",
+            "id": "spawn_path_wick_store_service_lane"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "spawn_pipe_shadow_leak"
+          },
+          "geometry": {
+            "position": {
+              "x": 17,
+              "y": 8
+            },
+            "route_id": "path_wick_store_service_lane"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "resource_or_hazard",
+      "kind": "resource_or_hazard",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "resource_resource_lamp_wick_store_primary",
+          "op_type": "place_prefab",
+          "semantic_ref": {
+            "kind": "resource_node",
+            "id": "resource_lamp_wick_store_primary"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "resource_wick_crate_marker"
+          },
+          "geometry": {
+            "position": {
+              "x": 3,
+              "y": 7
+            },
+            "footprint": {
+              "width_cells": 1,
+              "height_cells": 1
+            },
+            "resource_type": "crystal_vein",
+            "resource_tag": "energy",
+            "blocking": false,
+            "interactable": true,
+            "visual_hint": "crystal_cluster"
+          }
+        },
+        {
+          "op_id": "hazard_hazard_lamp_wick_store_road_pressure",
+          "op_type": "draw_zone",
+          "semantic_ref": {
+            "kind": "hazard_zone",
+            "id": "hazard_lamp_wick_store_road_pressure"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "hazard_wick_store_oil_shadow_pool"
+          },
+          "geometry": {
+            "anchor_route_id": "path_wick_store_main_pipe",
+            "path_t_range": {
+              "start": 0.42,
+              "end": 0.58
+            },
+            "affected_area": "road_band",
+            "effect": {
+              "effect_type": "slow_enemy",
+              "value": 0.18,
+              "duration_ms": 2600
+            },
+            "hazard_type": "shadow_pressure",
+            "visual_hint": "dark_pool"
+          }
+        },
+        {
+          "op_id": "defense_anchor_anchor_lamp_wick_store_mid_choke",
+          "op_type": "draw_anchor_marker",
+          "semantic_ref": {
+            "kind": "defense_anchor",
+            "id": "anchor_lamp_wick_store_mid_choke"
+          },
+          "style_ref": {
+            "kind": "palette",
+            "id": "accent"
+          },
+          "geometry": {
+            "position": {
+              "x": 8,
+              "y": 2
+            },
+            "anchor_type": "choke_point",
+            "influence_radius_cells": 2,
+            "related_route_ids": [
+              "path_wick_store_main_pipe",
+              "path_wick_store_service_lane"
+            ],
+            "recommended_tags": [
+              "control",
+              "aoe",
+              "near_path"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "blocking_prop",
+      "kind": "blocking_prop",
+      "authority": "runtime_semantic",
+      "player_default": true,
+      "source": "map_runtime_package",
+      "operations": [
+        {
+          "op_id": "blocking_blocked_lamp_wick_store_edge_ruin",
+          "op_type": "draw_blocked_cells",
+          "semantic_ref": {
+            "kind": "blocked_area",
+            "id": "blocked_lamp_wick_store_edge_ruin"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "blocking_wick_store_crate_wall"
+          },
+          "geometry": {
+            "cells": [
+              {
+                "x": 0,
+                "y": 0
+              }
+            ],
+            "blocked_type": "ruin_wall",
+            "blocking_policy": "blocks_building",
+            "visual_hint": "broken_wall"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "non_blocking_decoration",
+      "kind": "non_blocking_decoration",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "scatter_edge_decoration",
+          "op_type": "scatter_decoration",
+          "semantic_ref": {
+            "kind": "decoration_zone",
+            "id": "non_semantic_edges"
+          },
+          "style_ref": {
+            "kind": "prefab",
+            "id": "decor_ash_and_brass_scraps"
+          },
+          "geometry": {
+            "allowed_zone": "map_edges_only",
+            "forbidden": [
+              "path_route",
+              "build_slot",
+              "objective"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "fog_light_weather",
+      "kind": "fog_light_weather",
+      "authority": "visual_style",
+      "player_default": true,
+      "source": "map_style_pack",
+      "operations": [
+        {
+          "op_id": "apply_atmosphere",
+          "op_type": "apply_overlay",
+          "semantic_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "style_ref": {
+            "kind": "atmosphere_layer",
+            "id": "oil_smoke_edge_haze"
+          },
+          "geometry": {
+            "placement_policy": "non_semantic_zones"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "runtime_interaction_overlay",
+      "kind": "runtime_interaction_overlay",
+      "authority": "runtime_overlay",
+      "player_default": true,
+      "source": "derived",
+      "operations": [
+        {
+          "op_id": "runtime_drag_overlay",
+          "op_type": "draw_runtime_overlay",
+          "semantic_ref": {
+            "kind": "runtime_overlay",
+            "id": "drag_deploy_and_path_preview"
+          },
+          "style_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "geometry": {
+            "drag_deploy_enabled": true,
+            "show_grid_policy": "hidden_until_drag",
+            "path_preview_policy": "subtle_highlight",
+            "target_marker_policy": "icon_overlay"
+          }
+        }
+      ]
+    },
+    {
+      "layer_id": "debug_control_overlay",
+      "kind": "debug_control_overlay",
+      "authority": "debug_reference",
+      "player_default": false,
+      "source": "derived",
+      "operations": [
+        {
+          "op_id": "debug_grid_and_semantics",
+          "op_type": "draw_runtime_overlay",
+          "semantic_ref": {
+            "kind": "runtime_overlay",
+            "id": "debug_grid_and_semantics"
+          },
+          "style_ref": {
+            "kind": "none",
+            "id": null
+          },
+          "geometry": {
+            "visible_in_player_default": false
+          }
+        }
+      ]
+    }
+  ],
+  "player_default_layer_ids": [
+    "terrain_base",
+    "road_band",
+    "road_edge",
+    "build_slot_platform",
+    "objective_foundation",
+    "spawn_atmosphere",
+    "resource_or_hazard",
+    "blocking_prop",
+    "non_blocking_decoration",
+    "fog_light_weather",
+    "runtime_interaction_overlay"
+  ],
+  "debug_layer_ids": [
+    "debug_control_overlay"
+  ],
+  "validation_report": {
+    "gate_status": "passed",
+    "runtime_truth_preserved": true,
+    "player_default_safe": true,
+    "gates": [
+      {
+        "gate_id": "runtime_truth_source",
+        "status": "passed",
+        "summary": "Strong semantic operations are derived from MapRuntimePackage."
+      },
+      {
+        "gate_id": "style_pack_is_visual_only",
+        "status": "passed",
+        "summary": "MapStylePack contributes materials, prefabs, atmosphere, and readability only."
+      },
+      {
+        "gate_id": "debug_layers_not_player_default",
+        "status": "passed",
+        "summary": "Debug/reference layers are excluded from player_default_layer_ids."
+      }
+    ]
+  }
+}

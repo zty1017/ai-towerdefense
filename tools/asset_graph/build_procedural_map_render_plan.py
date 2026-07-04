@@ -19,12 +19,14 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import map_runtime_package as mrp  # noqa: E402
+import map_runtime_package_v02 as mrp_v02  # noqa: E402
 import procedural_map_render_plan as pmrp  # noqa: E402
 
 
 DEFAULT_RUNTIME_PACKAGE = ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
 DEFAULT_STYLE_PACK = ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
 DEFAULT_RUNTIME_SCHEMA = ROOT / "shared/schemas/map_runtime_package.v0.1.schema.json"
+DEFAULT_RUNTIME_V02_SCHEMA = ROOT / "shared/schemas/map_runtime_package.v0.2.schema.json"
 DEFAULT_STYLE_SCHEMA = ROOT / "shared/schemas/map_style_pack.v0.1.schema.json"
 DEFAULT_PLAN_SCHEMA = ROOT / "shared/schemas/procedural_map_render_plan.v0.1.schema.json"
 DEFAULT_REPORT_SCHEMA = ROOT / "shared/schemas/semantic_visual_consistency_report.v0.1.schema.json"
@@ -102,7 +104,20 @@ def main() -> int:
         print("runtime package and style pack roots must be objects")
         return 1
 
-    runtime_errors = mrp.validate_package(runtime_package, _load_schema(_resolve(args.runtime_schema)))
+    runtime_schema_path = _resolve(args.runtime_schema)
+    if (
+        runtime_package.get("schema_version") == "map_runtime_package.v0.2"
+        and runtime_schema_path.resolve() == DEFAULT_RUNTIME_SCHEMA.resolve()
+    ):
+        runtime_schema_path = DEFAULT_RUNTIME_V02_SCHEMA
+    if runtime_package.get("schema_version") == "map_runtime_package.v0.2":
+        runtime_errors = mrp_v02.validate_package_v02(
+            runtime_package, _load_schema(runtime_schema_path)
+        )
+    else:
+        runtime_errors = mrp.validate_package(
+            runtime_package, _load_schema(runtime_schema_path)
+        )
     style_errors = pmrp.validate_style_pack(style_pack, _load_schema(_resolve(args.style_schema)))
     if runtime_errors or style_errors:
         print("INVALID inputs; not writing render plan")

@@ -108,6 +108,8 @@ shared/schemas/ + tools/ + 专题文档
   - 地图 RenderPlan 的离线审查预览入口：用 RuntimePackage 提供语义坐标、StylePack 提供颜色、RenderPlan 提供表现层几何参数，输出 review-only SVG 和 report；统一 demo evidence 会动态纳入 `*.procedural_map_preview_report.json` 并展示 `procedural_map_previews` 摘要；不得作为 published visual layer 或玩家 runtime 背景。
 - `shared/schemas/map_runtime_package.v0.2.schema.json`、`tools/asset_graph/map_runtime_package_v02.py`、`examples/map_runtime_packages_v02/`
   - MapRuntimePackage v0.2 强语义 preview：在不替换当前 v0.1 正式 runtime 包的前提下，旁路表达资源点、机关区、防守锚点和阻挡区；统一 demo evidence 会纳入 `map_runtime_packages_v02` 摘要，但前端/后端默认路径仍使用 v0.1。
+- `examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/`、`examples/map_render_previews_v02/`
+  - MapRuntimePackage v0.2 强语义的 RenderPlan / SVG preview 旁路证据：资源点、机关区、防守锚点和阻挡区来自 `MapRuntimePackage v0.2 preview`，StylePack 只提供 procedural prefab / palette；统一 demo evidence 会纳入 `procedural_map_previews_v02`，但这些 SVG 仍是 review-only，不是玩家 runtime 或 published visual layer。
 
 ### AI 编译器与 AssetGraph
 

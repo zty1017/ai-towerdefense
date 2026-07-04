@@ -156,6 +156,9 @@
             "draw_polyline_band",
             "draw_polyline_edge",
             "place_prefab",
+            "draw_zone",
+            "draw_blocked_cells",
+            "draw_anchor_marker",
             "scatter_decoration",
             "apply_overlay",
             "draw_runtime_overlay"
@@ -168,7 +171,20 @@
           "properties": {
             "kind": {
               "type": "string",
-              "enum": ["grid", "path_route", "build_slot", "objective", "spawn_point", "decoration_zone", "runtime_overlay", "none"]
+              "enum": [
+                "grid",
+                "path_route",
+                "build_slot",
+                "objective",
+                "spawn_point",
+                "resource_node",
+                "hazard_zone",
+                "defense_anchor",
+                "blocked_area",
+                "decoration_zone",
+                "runtime_overlay",
+                "none"
+              ]
             },
             "id": { "type": ["string", "null"] }
           }

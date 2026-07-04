@@ -194,6 +194,17 @@ def semantic_points(package: dict[str, Any]) -> list[dict[str, Any]]:
     for spawn in as_list(package.get("spawn_points")):
         if isinstance(spawn, dict) and isinstance(spawn.get("position"), dict):
             points.append(spawn["position"])
+    for resource in as_list(package.get("resource_nodes")):
+        if isinstance(resource, dict) and isinstance(resource.get("position"), dict):
+            points.append(resource["position"])
+    for anchor in as_list(package.get("defense_anchors")):
+        if isinstance(anchor, dict) and isinstance(anchor.get("position"), dict):
+            points.append(anchor["position"])
+    for blocked_area in as_list(package.get("blocked_areas")):
+        if isinstance(blocked_area, dict):
+            points.extend(
+                cell for cell in as_list(blocked_area.get("cells")) if isinstance(cell, dict)
+            )
     return points
 
 
@@ -267,6 +278,60 @@ def route_points(route: dict[str, Any], projection: dict[str, float]) -> list[tu
     ]
 
 
+def route_by_id(package: dict[str, Any], route_id: str) -> dict[str, Any] | None:
+    for route in as_list(package.get("path_routes")):
+        if isinstance(route, dict) and route.get("route_id") == route_id:
+            return route
+    return None
+
+
+def interpolate_route_position(route: dict[str, Any], t: float) -> dict[str, float]:
+    waypoints = [point for point in as_list(route.get("waypoints")) if isinstance(point, dict)]
+    if not waypoints:
+        return {"x": 0.0, "y": 0.0}
+    if len(waypoints) == 1:
+        return {
+            "x": float(waypoints[0].get("x") or 0),
+            "y": float(waypoints[0].get("y") or 0),
+        }
+    segments: list[tuple[dict[str, Any], dict[str, Any], float]] = []
+    total = 0.0
+    for start, end in zip(waypoints, waypoints[1:]):
+        length = math.hypot(
+            float(end.get("x") or 0) - float(start.get("x") or 0),
+            float(end.get("y") or 0) - float(start.get("y") or 0),
+        )
+        segments.append((start, end, length))
+        total += length
+    target = clamp(t, 0, 1) * total
+    walked = 0.0
+    for start, end, length in segments:
+        if walked + length >= target or length <= 0:
+            ratio = 0 if length <= 0 else (target - walked) / length
+            return {
+                "x": float(start.get("x") or 0)
+                + (float(end.get("x") or 0) - float(start.get("x") or 0)) * ratio,
+                "y": float(start.get("y") or 0)
+                + (float(end.get("y") or 0) - float(start.get("y") or 0)) * ratio,
+            }
+        walked += length
+    last = waypoints[-1]
+    return {"x": float(last.get("x") or 0), "y": float(last.get("y") or 0)}
+
+
+def hazard_midpoint(package: dict[str, Any], hazard_zone: dict[str, Any]) -> dict[str, float]:
+    route = route_by_id(package, str(hazard_zone.get("anchor_route_id") or ""))
+    if route is None:
+        return {"x": 0.0, "y": 0.0}
+    path_range = as_obj(hazard_zone.get("path_t_range"))
+    try:
+        start = float(path_range.get("start"))
+        end = float(path_range.get("end"))
+    except (TypeError, ValueError):
+        start, end = 0.45, 0.55
+    return interpolate_route_position(route, (start + end) / 2)
+
+
 def render_svg(
     runtime_package: dict[str, Any],
     style_pack: dict[str, Any],
@@ -283,6 +348,7 @@ def render_svg(
     build_slot = palette(style_pack, "build_slot", "#D7C47A")
     objective = palette(style_pack, "objective", "#FFD26A")
     spawn_color = palette(style_pack, "spawn", "#6650A6")
+    resource_color = palette(style_pack, "resource", "#7EC8A5")
     fog = palette(style_pack, "fog", "#87908A")
     accent = palette(style_pack, "accent", "#E5D48A")
     hazard = palette(style_pack, "hazard", "#8C3D4A")
@@ -363,6 +429,85 @@ def render_svg(
         ry = projection["tile_h"] * 0.50 * footprint_y
         lines.append(f'    <ellipse cx="{x:.1f}" cy="{y + projection["tile_h"] * 0.16:.1f}" rx="{rx * 1.08:.1f}" ry="{ry * 0.76:.1f}" fill="#000000" opacity="0.25"/>')
         lines.append(f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="{build_slot}" fill-opacity="0.32" stroke="{build_slot}" stroke-opacity="0.38" stroke-width="{max(1.5, projection["tile_w"] * 0.018):.1f}"/>')
+    lines.extend(['  </g>', '  <g id="runtime-v02-strong-semantics">'])
+    resource_count = 0
+    hazard_count = 0
+    defense_anchor_count = 0
+    blocked_area_count = 0
+    for blocked_area in as_list(runtime_package.get("blocked_areas")):
+        if not isinstance(blocked_area, dict):
+            continue
+        blocked_id = str(blocked_area.get("blocked_area_id") or "")
+        if render_plan_operation(render_plan, "blocking_prop", "blocked_area", blocked_id) is None:
+            continue
+        blocked_area_count += 1
+        for cell in as_list(blocked_area.get("cells")):
+            if not isinstance(cell, dict):
+                continue
+            x, y = project_cell(cell, projection)
+            half_w = projection["tile_w"] * 0.34
+            half_h = projection["tile_h"] * 0.31
+            shadow_y = y + projection["tile_h"] * 0.12
+            points = (
+                f"{x:.1f},{(y - half_h):.1f} "
+                f"{(x + half_w):.1f},{y:.1f} "
+                f"{x:.1f},{(y + half_h):.1f} "
+                f"{(x - half_w):.1f},{y:.1f}"
+            )
+            lines.append(f'    <ellipse cx="{x:.1f}" cy="{shadow_y:.1f}" rx="{half_w * 0.88:.1f}" ry="{half_h * 0.62:.1f}" fill="#000000" opacity="0.24"/>')
+            lines.append(f'    <polygon points="{points}" fill="{mix_hex(terrain_detail, "#10100E", 0.36)}" fill-opacity="0.78" stroke="{mix_hex(road_edge, "#000000", 0.42)}" stroke-width="{max(1.5, projection["tile_w"] * 0.016):.1f}"/>')
+    for hazard_zone in as_list(runtime_package.get("hazard_zones")):
+        if not isinstance(hazard_zone, dict):
+            continue
+        hazard_id = str(hazard_zone.get("hazard_zone_id") or "")
+        if render_plan_operation(render_plan, "resource_or_hazard", "hazard_zone", hazard_id) is None:
+            continue
+        hazard_count += 1
+        x, y = project_cell(hazard_midpoint(runtime_package, hazard_zone), projection)
+        rx = projection["tile_w"] * 0.64
+        ry = projection["tile_h"] * 0.42
+        lines.append(f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="{hazard}" fill-opacity="0.22" stroke="{hazard}" stroke-opacity="0.52" stroke-width="{max(2, projection["tile_w"] * 0.018):.1f}"/>')
+        lines.append(f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx * 0.54:.1f}" ry="{ry * 0.48:.1f}" fill="{mix_hex(hazard, "#050807", 0.22)}" fill-opacity="0.34"/>')
+    for resource in as_list(runtime_package.get("resource_nodes")):
+        if not isinstance(resource, dict):
+            continue
+        resource_id = str(resource.get("resource_node_id") or "")
+        if render_plan_operation(render_plan, "resource_or_hazard", "resource_node", resource_id) is None:
+            continue
+        position = as_obj(resource.get("position"))
+        if not position:
+            continue
+        resource_count += 1
+        x, y = project_cell(position, projection)
+        stem_h = projection["tile_h"] * 0.28
+        crystal_w = projection["tile_w"] * 0.18
+        crystal_h = projection["tile_h"] * 0.48
+        points = (
+            f"{x:.1f},{(y - crystal_h):.1f} "
+            f"{(x + crystal_w):.1f},{(y - stem_h * 0.2):.1f} "
+            f"{x:.1f},{(y + crystal_h * 0.18):.1f} "
+            f"{(x - crystal_w):.1f},{(y - stem_h * 0.2):.1f}"
+        )
+        lines.append(f'    <ellipse cx="{x:.1f}" cy="{y + projection["tile_h"] * 0.16:.1f}" rx="{projection["tile_w"] * 0.30:.1f}" ry="{projection["tile_h"] * 0.20:.1f}" fill="#000000" opacity="0.22"/>')
+        lines.append(f'    <polygon points="{points}" fill="{resource_color}" fill-opacity="0.62" stroke="{mix_hex(resource_color, "#FFFFFF", 0.32)}" stroke-opacity="0.74" stroke-width="{max(1.4, projection["tile_w"] * 0.014):.1f}"/>')
+        lines.append(f'    <ellipse cx="{x:.1f}" cy="{y - crystal_h * 0.18:.1f}" rx="{projection["tile_w"] * 0.36:.1f}" ry="{projection["tile_h"] * 0.22:.1f}" fill="{resource_color}" opacity="0.13"/>')
+    for anchor in as_list(runtime_package.get("defense_anchors")):
+        if not isinstance(anchor, dict):
+            continue
+        anchor_id = str(anchor.get("defense_anchor_id") or "")
+        if render_plan_operation(render_plan, "resource_or_hazard", "defense_anchor", anchor_id) is None:
+            continue
+        position = as_obj(anchor.get("position"))
+        if not position:
+            continue
+        defense_anchor_count += 1
+        x, y = project_cell(position, projection)
+        try:
+            radius_cells = float(anchor.get("influence_radius_cells") or 1)
+        except (TypeError, ValueError):
+            radius_cells = 1
+        lines.append(f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{projection["tile_w"] * radius_cells * 0.34:.1f}" ry="{projection["tile_h"] * radius_cells * 0.30:.1f}" fill="none" stroke="{accent}" stroke-opacity="0.50" stroke-dasharray="6 6" stroke-width="{max(1.6, projection["tile_w"] * 0.015):.1f}"/>')
+        lines.append(f'    <circle cx="{x:.1f}" cy="{y:.1f}" r="{max(3.0, projection["tile_w"] * 0.035):.1f}" fill="{accent}" fill-opacity="0.62"/>')
     lines.extend(['  </g>', '  <g id="runtime-objectives">'])
     objective_count = 0
     for target in objectives(runtime_package):
@@ -405,6 +550,10 @@ def render_svg(
         "build_slot_count": slot_count,
         "objective_count": objective_count,
         "spawn_point_count": spawn_count,
+        "resource_node_count": resource_count,
+        "hazard_zone_count": hazard_count,
+        "defense_anchor_count": defense_anchor_count,
+        "blocked_area_count": blocked_area_count,
         "projection": {
             "type": "pseudo3d_oblique_svg_preview",
             "scale": round(projection["scale"], 4),
@@ -416,8 +565,11 @@ def render_svg(
 
 def validate_inputs(runtime_package: dict[str, Any], style_pack: dict[str, Any], render_plan: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    if runtime_package.get("schema_version") != "map_runtime_package.v0.1":
-        errors.append("runtime package schema_version must be map_runtime_package.v0.1")
+    if runtime_package.get("schema_version") not in {
+        "map_runtime_package.v0.1",
+        "map_runtime_package.v0.2",
+    }:
+        errors.append("runtime package schema_version must be map_runtime_package.v0.1 or map_runtime_package.v0.2")
     if style_pack.get("schema_version") != "map_style_pack.v0.1":
         errors.append("style pack schema_version must be map_style_pack.v0.1")
     if render_plan.get("schema_version") != "procedural_map_render_plan.v0.1":
@@ -462,8 +614,13 @@ def build_report(
             "build_slots": "map_runtime_package",
             "objectives": "map_runtime_package",
             "spawn_points": "map_runtime_package",
+            "resource_nodes": "map_runtime_package",
+            "hazard_zones": "map_runtime_package",
+            "defense_anchors": "map_runtime_package",
+            "blocked_areas": "map_runtime_package",
             "colors": "map_style_pack",
             "road_width_and_slot_footprint": "procedural_map_render_plan",
+            "resource_hazard_and_blocking_style": "procedural_map_render_plan",
         },
         "usage_policy": [
             "review_only",

@@ -1,0 +1,100 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-13-render-plan-v02-semantics",
+  "title": "RenderPlan v0.2 strong semantic preview",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/render-plan-v02-semantics",
+  "worktree": "/tmp/ai-td-task-render-plan-v02-semantics",
+  "objective": "让 ProceduralMapRenderPlan 和离线 SVG 预览消费 MapRuntimePackage v0.2 preview 的资源点、机关区、防守锚点和阻挡区，同时保持该链路为 review-only 旁路，不替换前端/后端默认 v0.1 runtime。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "shared/schemas/procedural_map_render_plan.v0.1.schema.json",
+    "tools/asset_graph/procedural_map_render_plan.py",
+    "tools/asset_graph/build_procedural_map_render_plan.py",
+    "tools/asset_graph/render_procedural_map_preview.py",
+    "tools/asset_graph/validate_procedural_map_preview_report.py",
+    "examples/map_runtime_packages_v02/"
+  ],
+  "allowed_paths": [
+    "shared/schemas/procedural_map_render_plan.v0.1.schema.json",
+    "tools/asset_graph/procedural_map_render_plan.py",
+    "tools/asset_graph/build_procedural_map_render_plan.py",
+    "tools/asset_graph/render_procedural_map_preview.py",
+    "tools/asset_graph/validate_procedural_map_preview_report.py",
+    "tools/demo/export_evidence.py",
+    "examples/map_style_packs/",
+    "examples/map_render_plans_v02/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "examples/map_render_previews_v02/",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_previews/",
+    "examples/semantic_visual_consistency_reports/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py",
+    "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json",
+    "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json",
+    "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+    "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+    "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+    "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_wick_store_pressure.procedural_map_preview_report.json",
+    "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/render_plan_v02_semantics_evidence",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nevidence = json.loads(Path('/tmp/render_plan_v02_semantics_evidence/evidence.json').read_text(encoding='utf-8'))\nsummary = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews_v02']\nassert summary['report_count'] == 3\nassert summary['ready_count'] == 3\nfor sample in summary['preview_samples']:\n    render = sample['render_summary']\n    assert render['resource_node_count'] == 1\n    assert render['hazard_zone_count'] == 1\n    assert render['defense_anchor_count'] == 1\n    assert render['blocked_area_count'] == 1\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务未调用 provider，未读取 .env。",
+    "v0.2 RenderPlan / preview 只证明强地图语义可被 deterministic renderer 消费，不作为玩家 runtime 或 published visual layer。",
+    "资源点、机关区、防守锚点和阻挡区必须来自 MapRuntimePackage v0.2 preview，不得从图片反推。",
+    "multi-agent worker 池此前已满，因此本轮由主代理在隔离 worktree 采用 local_codex_safe_fallback 完成。"
+  ]
+}
