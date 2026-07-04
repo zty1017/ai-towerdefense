@@ -62,12 +62,21 @@ def validate(report: dict[str, Any]) -> list[str]:
     if isinstance(policy, dict):
         for key in ("routes", "build_slots", "objectives", "spawn_points"):
             require(policy.get(key) == "map_runtime_package", f"semantic_source_policy.{key} must be map_runtime_package", errors)
+        for key in ("resource_nodes", "hazard_zones", "defense_anchors", "blocked_areas"):
+            if key in policy:
+                require(policy.get(key) == "map_runtime_package", f"semantic_source_policy.{key} must be map_runtime_package", errors)
         require(policy.get("colors") == "map_style_pack", "semantic_source_policy.colors must be map_style_pack", errors)
         require(
             policy.get("road_width_and_slot_footprint") == "procedural_map_render_plan",
             "semantic_source_policy.road_width_and_slot_footprint must be procedural_map_render_plan",
             errors,
         )
+        if "resource_hazard_and_blocking_style" in policy:
+            require(
+                policy.get("resource_hazard_and_blocking_style") == "procedural_map_render_plan",
+                "semantic_source_policy.resource_hazard_and_blocking_style must be procedural_map_render_plan",
+                errors,
+            )
 
     usage = report.get("usage_policy")
     require(isinstance(usage, list), "usage_policy must be an array", errors)
@@ -82,6 +91,9 @@ def validate(report: dict[str, Any]) -> list[str]:
         require(int(summary.get("build_slot_count") or 0) >= 1, "render_summary.build_slot_count must be >= 1", errors)
         require(int(summary.get("objective_count") or 0) >= 1, "render_summary.objective_count must be >= 1", errors)
         require(int(summary.get("spawn_point_count") or 0) >= 1, "render_summary.spawn_point_count must be >= 1", errors)
+        for key in ("resource_node_count", "hazard_zone_count", "defense_anchor_count", "blocked_area_count"):
+            if key in summary:
+                require(int(summary.get(key) or 0) >= 0, f"render_summary.{key} must be >= 0", errors)
     return errors
 
 

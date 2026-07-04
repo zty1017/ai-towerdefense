@@ -121,8 +121,30 @@
       }
     }
   ],
-  "hazard_prefabs": [],
-  "blocking_props": [],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "hazard_wick_store_oil_shadow_pool",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "dark_oil_pool_with_warm_wick_edges"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "blocking_wick_store_crate_wall",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "low_crate_and_broken_shelf_blocker"
+      }
+    }
+  ],
   "non_blocking_props": [
     {
       "prefab_id": "prop_low_oil_crate",

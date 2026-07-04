@@ -34,9 +34,9 @@ MapCompilePackage v0.2
 | `PathGraph` / `SplinePath` | `MapRuntimePackage.path_routes` | v0.1 仍用结构化 waypoints；后续 v0.2 可增加 sampled spline / road band。 |
 | `PlacementMap` | `MapRuntimePackage.build_slots` | 保留为运行时塔位事实源；后续补距离道路、转角、瓶颈标签。 |
 | `SpawnPoints` / `BasePoints` | `spawn_points` / `objectives.core_target` | 已存在，继续作为事实源。 |
-| `CollisionMap` | 当前 validator 中的 path/build slot/objective 冲突检查 | 后续补显式 blocked areas，但不能从图片反推。 |
-| `ResourceNodeMap` | 尚未进入 MapRuntimePackage | 后续作为 v0.2 或 encounter extension 引入。 |
-| `HazardZoneMap` | 尚未进入 MapRuntimePackage | 后续作为 v0.2 或 environment modifier 引入。 |
+| `CollisionMap` | `MapRuntimePackage v0.2 preview.blocked_areas` 与当前 validator 冲突检查 | 已旁路表达显式阻挡区，但仍不能从图片反推。 |
+| `ResourceNodeMap` | `MapRuntimePackage v0.2 preview.resource_nodes` | 已作为 v0.2 preview 引入，前端默认 runtime 暂不切换。 |
+| `HazardZoneMap` | `MapRuntimePackage v0.2 preview.hazard_zones` | 已作为 v0.2 preview 引入，后续再接环境 modifier / 战斗结算。 |
 | `DecorationZoneMap` | 当前前端程序化地标 / 边缘装饰 | 后续由 renderer/StylePack 管，不成为玩法事实。 |
 
 ### 1.2 采纳：AI 负责风格和组件，不负责运行时语义
@@ -325,7 +325,8 @@ AI 负责风格和组件，程序负责结构和对齐，Validator 负责可信�
   -> 新增 MapStylePack
   -> 新增 ProceduralMapRenderPlan
   -> 新增 SemanticVisualConsistencyReport
-  -> 再逐步扩展资源点、机关、碰撞、spline hints
+  -> v0.2 preview 已扩展资源点、机关、防守锚点和阻挡区
+  -> 后续再评估 spline hints / LevelBundle 聚合
 ```
 
 这条路线能吸收 AI 创造力，同时避免地图运行时语义被图像模型污染。
@@ -382,3 +383,45 @@ v0.2 preview 解决的是：地图中“可被保护或采集的资源点”“�
 - 图片、StylePack 和 RenderPlan 只能表现 v0.2 的资源点、机关区、防守锚点和阻挡区，不能反向决定它们。
 - v0.2 preview 不能自动发布视觉层，不能自动替换 `MapRuntimePackage v0.1`。
 - 只有当前端、后端服务和 semantic visual gate 明确升级后，v0.2 才能进入玩家默认 runtime。
+
+## 9. v0.2 RenderPlan 语义预览落点
+
+截至 2026-07-04，`MapRuntimePackage v0.2 preview` 的强语义已经接入旁路 RenderPlan / preview evidence：
+
+```text
+MapRuntimePackage v0.2 preview
+  + MapStylePack
+  -> ProceduralMapRenderPlan v0.1
+  -> SemanticVisualConsistencyReport v0.1
+  -> ProceduralMapPreviewReport v0.1 / review-only SVG
+```
+
+已新增：
+
+- `examples/map_render_plans_v02/*.procedural_map_render_plan.json`
+- `examples/semantic_visual_consistency_reports_v02/*.semantic_visual_consistency_report.json`
+- `examples/map_render_previews_v02/*.procedural_map_preview.svg`
+- `examples/map_render_previews_v02/*.procedural_map_preview_report.json`
+
+`ProceduralMapRenderPlan v0.1` 现在允许以下 v0.2 强语义 operation：
+
+```text
+resource_node
+hazard_zone
+defense_anchor
+blocked_area
+```
+
+对应层仍是已有表现层：
+
+```text
+resource_or_hazard
+blocking_prop
+```
+
+这不是正式 runtime 升级。当前输出只用于审查和证据：
+
+- `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 必须来自 `MapRuntimePackage v0.2 preview`。
+- `MapStylePack` 只提供 procedural prefab / palette，不决定语义位置。
+- `render_procedural_map_preview.py` 只输出 review-only SVG；不得作为 published visual layer 或玩家 runtime 背景。
+- `tools/demo/export_evidence.py` 会把 `examples/map_render_previews_v02/*.procedural_map_preview_report.json` 汇总到 `procedural_map_previews_v02`，用于评审证明强地图语义可被 deterministic renderer 消费。

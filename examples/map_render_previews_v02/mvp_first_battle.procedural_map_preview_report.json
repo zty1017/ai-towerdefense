@@ -1,0 +1,51 @@
+{
+  "canvas": {
+    "height": 720,
+    "width": 1280
+  },
+  "preview_svg_path": "examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview.svg",
+  "preview_svg_sha256": "65533e133abb955ad9e5fe033e68782ebc4660a58034fd62202342f6ad971742",
+  "render_summary": {
+    "blocked_area_count": 1,
+    "build_slot_count": 12,
+    "defense_anchor_count": 1,
+    "hazard_zone_count": 1,
+    "objective_count": 2,
+    "projection": {
+      "scale": 0.6944,
+      "tile_h": 34.667,
+      "tile_w": 66.667,
+      "type": "pseudo3d_oblique_svg_preview"
+    },
+    "resource_node_count": 1,
+    "route_count": 1,
+    "spawn_point_count": 1
+  },
+  "report_id": "mvp_first_battle.procedural_map_preview_report",
+  "schema_version": "procedural_map_preview_report.v0.1",
+  "semantic_source_policy": {
+    "blocked_areas": "map_runtime_package",
+    "build_slots": "map_runtime_package",
+    "colors": "map_style_pack",
+    "defense_anchors": "map_runtime_package",
+    "hazard_zones": "map_runtime_package",
+    "objectives": "map_runtime_package",
+    "resource_hazard_and_blocking_style": "procedural_map_render_plan",
+    "resource_nodes": "map_runtime_package",
+    "road_width_and_slot_footprint": "procedural_map_render_plan",
+    "routes": "map_runtime_package",
+    "spawn_points": "map_runtime_package"
+  },
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    "procedural_map_render_plan_path": "examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json"
+  },
+  "status": "preview_ready_review_only",
+  "usage_policy": [
+    "review_only",
+    "not_player_runtime",
+    "not_published_visual_layer",
+    "does_not_modify_map_runtime_package"
+  ]
+}

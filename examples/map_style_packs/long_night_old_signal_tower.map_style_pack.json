@@ -121,8 +121,30 @@
       }
     }
   ],
-  "hazard_prefabs": [],
-  "blocking_props": [],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "hazard_signal_tower_static_shadow_pool",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "violet_static_pool_with_copper_trace"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "blocking_signal_tower_machine_wreck",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "collapsed_copper_relay_wreck"
+      }
+    }
+  ],
   "non_blocking_props": [
     {
       "prefab_id": "prop_broken_signal_pole",

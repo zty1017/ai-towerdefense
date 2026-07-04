@@ -149,6 +149,19 @@ def _prefab_id(style_pack: dict[str, Any], key: str, role: str) -> str:
     return role
 
 
+def _prefab_id_any(
+    style_pack: dict[str, Any],
+    key: str,
+    roles: list[str],
+    fallback: str,
+) -> str:
+    role_set = {role for role in roles if role}
+    for item in style_pack.get(key, []):
+        if isinstance(item, dict) and item.get("role") in role_set:
+            return str(item.get("prefab_id") or item.get("role") or fallback)
+    return fallback
+
+
 def _atmosphere_id(style_pack: dict[str, Any]) -> str | None:
     for item in style_pack.get("atmosphere_layers", []):
         if isinstance(item, dict):
@@ -363,6 +376,145 @@ def build_render_plan(
         "map_runtime_package",
         spawn_ops,
     )
+
+    resource_hazard_ops: list[dict[str, Any]] = []
+    for resource in runtime_package.get("resource_nodes", []):
+        if not isinstance(resource, dict):
+            continue
+        resource_id = str(resource.get("resource_node_id") or "resource_node")
+        prefab_id = _prefab_id_any(
+            style_pack,
+            "resource_prefabs",
+            [
+                str(resource.get("visual_hint") or ""),
+                str(resource.get("resource_tag") or ""),
+                str(resource.get("resource_type") or ""),
+                "resource_marker",
+            ],
+            "resource_marker",
+        )
+        resource_hazard_ops.append(
+            _operation(
+                f"resource_{resource_id}",
+                "place_prefab",
+                "resource_node",
+                resource_id,
+                "prefab",
+                prefab_id,
+                {
+                    "position": resource.get("position", {}),
+                    "footprint": resource.get("footprint", {}),
+                    "resource_type": resource.get("resource_type"),
+                    "resource_tag": resource.get("resource_tag"),
+                    "blocking": resource.get("blocking"),
+                    "interactable": resource.get("interactable"),
+                    "visual_hint": resource.get("visual_hint"),
+                },
+            )
+        )
+    for hazard_zone in runtime_package.get("hazard_zones", []):
+        if not isinstance(hazard_zone, dict):
+            continue
+        hazard_id = str(hazard_zone.get("hazard_zone_id") or "hazard_zone")
+        prefab_id = _prefab_id_any(
+            style_pack,
+            "hazard_prefabs",
+            [
+                str(hazard_zone.get("visual_hint") or ""),
+                str(hazard_zone.get("hazard_type") or ""),
+                "hazard_marker",
+            ],
+            "hazard_marker",
+        )
+        resource_hazard_ops.append(
+            _operation(
+                f"hazard_{hazard_id}",
+                "draw_zone",
+                "hazard_zone",
+                hazard_id,
+                "prefab",
+                prefab_id,
+                {
+                    "anchor_route_id": hazard_zone.get("anchor_route_id"),
+                    "path_t_range": hazard_zone.get("path_t_range", {}),
+                    "affected_area": hazard_zone.get("affected_area"),
+                    "effect": hazard_zone.get("effect", {}),
+                    "hazard_type": hazard_zone.get("hazard_type"),
+                    "visual_hint": hazard_zone.get("visual_hint"),
+                },
+            )
+        )
+    for defense_anchor in runtime_package.get("defense_anchors", []):
+        if not isinstance(defense_anchor, dict):
+            continue
+        anchor_id = str(defense_anchor.get("defense_anchor_id") or "defense_anchor")
+        resource_hazard_ops.append(
+            _operation(
+                f"defense_anchor_{anchor_id}",
+                "draw_anchor_marker",
+                "defense_anchor",
+                anchor_id,
+                "palette",
+                "accent",
+                {
+                    "position": defense_anchor.get("position", {}),
+                    "anchor_type": defense_anchor.get("anchor_type"),
+                    "influence_radius_cells": defense_anchor.get("influence_radius_cells"),
+                    "related_route_ids": defense_anchor.get("related_route_ids", []),
+                    "recommended_tags": defense_anchor.get("recommended_tags", []),
+                },
+            )
+        )
+    if resource_hazard_ops:
+        add_layer(
+            "resource_or_hazard",
+            "resource_or_hazard",
+            "runtime_semantic",
+            True,
+            "map_runtime_package",
+            resource_hazard_ops,
+        )
+
+    blocking_ops: list[dict[str, Any]] = []
+    for blocked_area in runtime_package.get("blocked_areas", []):
+        if not isinstance(blocked_area, dict):
+            continue
+        blocked_id = str(blocked_area.get("blocked_area_id") or "blocked_area")
+        prefab_id = _prefab_id_any(
+            style_pack,
+            "blocking_props",
+            [
+                str(blocked_area.get("visual_hint") or ""),
+                str(blocked_area.get("blocked_type") or ""),
+                "blocking_prop",
+            ],
+            "blocking_prop",
+        )
+        blocking_ops.append(
+            _operation(
+                f"blocking_{blocked_id}",
+                "draw_blocked_cells",
+                "blocked_area",
+                blocked_id,
+                "prefab",
+                prefab_id,
+                {
+                    "cells": blocked_area.get("cells", []),
+                    "blocked_type": blocked_area.get("blocked_type"),
+                    "blocking_policy": blocked_area.get("blocking_policy"),
+                    "visual_hint": blocked_area.get("visual_hint"),
+                },
+            )
+        )
+    if blocking_ops:
+        add_layer(
+            "blocking_prop",
+            "blocking_prop",
+            "runtime_semantic",
+            True,
+            "map_runtime_package",
+            blocking_ops,
+        )
 
     decorative_prefab = _prefab_id(
         style_pack, "decorative_props", "non_blocking_decoration"
@@ -621,6 +773,90 @@ def build_consistency_report(
             [f"spawn_point:{item}" for item in sorted(spawn_ids)],
         )
     )
+
+    resource_ids = {
+        str(resource.get("resource_node_id"))
+        for resource in runtime_package.get("resource_nodes", [])
+        if isinstance(resource, dict) and resource.get("resource_node_id")
+    }
+    if resource_ids:
+        rendered_resource_ids = _semantic_ids(
+            _ops_by_kind(render_plan, "resource_or_hazard"), "resource_node"
+        )
+        missing_resources = sorted(resource_ids - rendered_resource_ids)
+        checks.append(
+            _check(
+                "resource_marker_coverage",
+                "failed" if missing_resources else "passed",
+                "Every resource node has a visible runtime-semantic render operation."
+                if not missing_resources
+                else f"Missing resource operations for nodes: {', '.join(missing_resources)}",
+                [f"resource_node:{item}" for item in sorted(resource_ids)],
+            )
+        )
+
+    hazard_ids = {
+        str(hazard.get("hazard_zone_id"))
+        for hazard in runtime_package.get("hazard_zones", [])
+        if isinstance(hazard, dict) and hazard.get("hazard_zone_id")
+    }
+    if hazard_ids:
+        rendered_hazard_ids = _semantic_ids(
+            _ops_by_kind(render_plan, "resource_or_hazard"), "hazard_zone"
+        )
+        missing_hazards = sorted(hazard_ids - rendered_hazard_ids)
+        checks.append(
+            _check(
+                "hazard_zone_coverage",
+                "failed" if missing_hazards else "passed",
+                "Every hazard zone has a visible runtime-semantic render operation."
+                if not missing_hazards
+                else f"Missing hazard operations for zones: {', '.join(missing_hazards)}",
+                [f"hazard_zone:{item}" for item in sorted(hazard_ids)],
+            )
+        )
+
+    anchor_ids = {
+        str(anchor.get("defense_anchor_id"))
+        for anchor in runtime_package.get("defense_anchors", [])
+        if isinstance(anchor, dict) and anchor.get("defense_anchor_id")
+    }
+    if anchor_ids:
+        rendered_anchor_ids = _semantic_ids(
+            _ops_by_kind(render_plan, "resource_or_hazard"), "defense_anchor"
+        )
+        missing_anchors = sorted(anchor_ids - rendered_anchor_ids)
+        checks.append(
+            _check(
+                "defense_anchor_marker_coverage",
+                "failed" if missing_anchors else "passed",
+                "Every defense anchor has a player-default marker operation."
+                if not missing_anchors
+                else f"Missing defense anchor operations for anchors: {', '.join(missing_anchors)}",
+                [f"defense_anchor:{item}" for item in sorted(anchor_ids)],
+            )
+        )
+
+    blocked_ids = {
+        str(blocked.get("blocked_area_id"))
+        for blocked in runtime_package.get("blocked_areas", [])
+        if isinstance(blocked, dict) and blocked.get("blocked_area_id")
+    }
+    if blocked_ids:
+        rendered_blocked_ids = _semantic_ids(
+            _ops_by_kind(render_plan, "blocking_prop"), "blocked_area"
+        )
+        missing_blocked = sorted(blocked_ids - rendered_blocked_ids)
+        checks.append(
+            _check(
+                "blocked_area_visual_coverage",
+                "failed" if missing_blocked else "passed",
+                "Every blocked area has a visible blocking_prop render operation."
+                if not missing_blocked
+                else f"Missing blocking operations for blocked areas: {', '.join(missing_blocked)}",
+                [f"blocked_area:{item}" for item in sorted(blocked_ids)],
+            )
+        )
 
     player_default = set(map(str, render_plan.get("player_default_layer_ids", [])))
     debug_ids = set(map(str, render_plan.get("debug_layer_ids", [])))
