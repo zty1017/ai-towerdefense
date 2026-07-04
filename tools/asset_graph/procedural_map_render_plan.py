@@ -142,11 +142,51 @@ def _material_id(style_pack: dict[str, Any], role: str) -> str:
     return role
 
 
+def _material_style_binding(style_pack: dict[str, Any], role: str) -> dict[str, Any]:
+    for item in style_pack.get("terrain_materials", []) + style_pack.get("road_materials", []):
+        if isinstance(item, dict) and item.get("role") == role:
+            return {
+                "source": "map_style_pack.material",
+                "owner_id": str(item.get("material_id") or role),
+                "role": role,
+                "texture_policy": item.get("texture_policy"),
+                "component_ref": item.get("component_ref"),
+            }
+    return {
+        "source": "map_style_pack.material",
+        "owner_id": role,
+        "role": role,
+        "texture_policy": "procedural_only",
+        "component_ref": None,
+    }
+
+
 def _prefab_id(style_pack: dict[str, Any], key: str, role: str) -> str:
     for item in style_pack.get(key, []):
         if isinstance(item, dict) and item.get("role") == role:
             return str(item.get("prefab_id") or role)
     return role
+
+
+def _prefab_style_binding(style_pack: dict[str, Any], key: str, role: str) -> dict[str, Any]:
+    for item in style_pack.get(key, []):
+        if isinstance(item, dict) and item.get("role") == role:
+            visual_ref = item.get("visual_ref") if isinstance(item.get("visual_ref"), dict) else {}
+            return {
+                "source": "map_style_pack.prefab",
+                "owner_id": str(item.get("prefab_id") or role),
+                "role": role,
+                "visual_ref": {
+                    "kind": visual_ref.get("kind"),
+                    "value": visual_ref.get("value"),
+                },
+            }
+    return {
+        "source": "map_style_pack.prefab",
+        "owner_id": role,
+        "role": role,
+        "visual_ref": {"kind": "procedural_shape", "value": None},
+    }
 
 
 def _prefab_id_any(
@@ -160,6 +200,33 @@ def _prefab_id_any(
         if isinstance(item, dict) and item.get("role") in role_set:
             return str(item.get("prefab_id") or item.get("role") or fallback)
     return fallback
+
+
+def _prefab_style_binding_any(
+    style_pack: dict[str, Any],
+    key: str,
+    roles: list[str],
+    fallback: str,
+) -> dict[str, Any]:
+    role_set = {role for role in roles if role}
+    for item in style_pack.get(key, []):
+        if isinstance(item, dict) and item.get("role") in role_set:
+            visual_ref = item.get("visual_ref") if isinstance(item.get("visual_ref"), dict) else {}
+            return {
+                "source": "map_style_pack.prefab",
+                "owner_id": str(item.get("prefab_id") or item.get("role") or fallback),
+                "role": str(item.get("role") or fallback),
+                "visual_ref": {
+                    "kind": visual_ref.get("kind"),
+                    "value": visual_ref.get("value"),
+                },
+            }
+    return {
+        "source": "map_style_pack.prefab",
+        "owner_id": fallback,
+        "role": fallback,
+        "visual_ref": {"kind": "procedural_shape", "value": None},
+    }
 
 
 def _atmosphere_id(style_pack: dict[str, Any]) -> str | None:
@@ -252,7 +319,11 @@ def build_render_plan(
                 "grid",
                 "material",
                 _material_id(style_pack, "terrain_base"),
-                {"grid": grid, "palette_key": "terrain_base"},
+                {
+                    "grid": grid,
+                    "palette_key": "terrain_base",
+                    "style_component_binding": _material_style_binding(style_pack, "terrain_base"),
+                },
             )
         ],
     )
@@ -272,7 +343,11 @@ def build_render_plan(
                 route_id,
                 "material",
                 _material_id(style_pack, "road_band"),
-                {"waypoints": waypoints, "width_cells": 0.85},
+                {
+                    "waypoints": waypoints,
+                    "width_cells": 0.85,
+                    "style_component_binding": _material_style_binding(style_pack, "road_band"),
+                },
             )
         )
         road_edge_ops.append(
@@ -291,6 +366,7 @@ def build_render_plan(
                     "shoulder_width_cells": (style_pack.get("road_edge_rules") or {}).get(
                         "shoulder_width_cells", 0.25
                     ),
+                    "style_component_binding": _material_style_binding(style_pack, "road_edge"),
                 },
             )
         )
@@ -314,6 +390,9 @@ def build_render_plan(
                     "position": slot.get("position", {}),
                     "footprint": slot.get("footprint", {}),
                     "visual_hint": slot.get("visual_hint"),
+                    "style_component_binding": _prefab_style_binding(
+                        style_pack, "build_slot_platforms", "build_slot_platform"
+                    ),
                 },
             )
         )
@@ -340,7 +419,13 @@ def build_render_plan(
                 target_id,
                 "prefab",
                 _prefab_id(style_pack, "objective_prefabs", "objective_foundation"),
-                {"position": target.get("position", {}), "durability": target.get("durability")},
+                {
+                    "position": target.get("position", {}),
+                    "durability": target.get("durability"),
+                    "style_component_binding": _prefab_style_binding(
+                        style_pack, "objective_prefabs", "objective_foundation"
+                    ),
+                },
             )
         )
     add_layer(
@@ -365,7 +450,13 @@ def build_render_plan(
                 spawn_id,
                 "prefab",
                 _prefab_id(style_pack, "spawn_prefabs", "spawn_marker"),
-                {"position": spawn.get("position", {}), "route_id": spawn.get("route_id")},
+                {
+                    "position": spawn.get("position", {}),
+                    "route_id": spawn.get("route_id"),
+                    "style_component_binding": _prefab_style_binding(
+                        style_pack, "spawn_prefabs", "spawn_marker"
+                    ),
+                },
             )
         )
     add_layer(
@@ -409,6 +500,17 @@ def build_render_plan(
                     "blocking": resource.get("blocking"),
                     "interactable": resource.get("interactable"),
                     "visual_hint": resource.get("visual_hint"),
+                    "style_component_binding": _prefab_style_binding_any(
+                        style_pack,
+                        "resource_prefabs",
+                        [
+                            str(resource.get("visual_hint") or ""),
+                            str(resource.get("resource_tag") or ""),
+                            str(resource.get("resource_type") or ""),
+                            "resource_marker",
+                        ],
+                        "resource_marker",
+                    ),
                 },
             )
         )
@@ -441,6 +543,16 @@ def build_render_plan(
                     "effect": hazard_zone.get("effect", {}),
                     "hazard_type": hazard_zone.get("hazard_type"),
                     "visual_hint": hazard_zone.get("visual_hint"),
+                    "style_component_binding": _prefab_style_binding_any(
+                        style_pack,
+                        "hazard_prefabs",
+                        [
+                            str(hazard_zone.get("visual_hint") or ""),
+                            str(hazard_zone.get("hazard_type") or ""),
+                            "hazard_marker",
+                        ],
+                        "hazard_marker",
+                    ),
                 },
             )
         )
@@ -503,6 +615,16 @@ def build_render_plan(
                     "blocked_type": blocked_area.get("blocked_type"),
                     "blocking_policy": blocked_area.get("blocking_policy"),
                     "visual_hint": blocked_area.get("visual_hint"),
+                    "style_component_binding": _prefab_style_binding_any(
+                        style_pack,
+                        "blocking_props",
+                        [
+                            str(blocked_area.get("visual_hint") or ""),
+                            str(blocked_area.get("blocked_type") or ""),
+                            "blocking_prop",
+                        ],
+                        "blocking_prop",
+                    ),
                 },
             )
         )
@@ -533,7 +655,13 @@ def build_render_plan(
                 "non_semantic_edges",
                 "prefab",
                 decorative_prefab,
-                {"allowed_zone": "map_edges_only", "forbidden": ["path_route", "build_slot", "objective"]},
+                {
+                    "allowed_zone": "map_edges_only",
+                    "forbidden": ["path_route", "build_slot", "objective"],
+                    "style_component_binding": _prefab_style_binding(
+                        style_pack, "decorative_props", "non_blocking_decoration"
+                    ),
+                },
             )
         ],
     )
@@ -929,6 +1057,39 @@ def validate_style_pack(
         errors.append("schema_version must be 'map_style_pack.v0.1'")
     if style_pack.get("source_refs", {}).get("logic_authority") != "map_runtime_package":
         errors.append("source_refs.logic_authority must be 'map_runtime_package'")
+    for collection_name in ("terrain_materials", "road_materials"):
+        for index, material in enumerate(style_pack.get(collection_name, [])):
+            if not isinstance(material, dict):
+                continue
+            if material.get("texture_policy") == "reviewed_component_required":
+                component_ref = material.get("component_ref")
+                if not isinstance(component_ref, str) or not component_ref.strip():
+                    errors.append(
+                        f"{collection_name}[{index}].component_ref must be non-empty when texture_policy is reviewed_component_required"
+                    )
+    prefab_collection_names = (
+        "build_slot_platforms",
+        "objective_prefabs",
+        "spawn_prefabs",
+        "resource_prefabs",
+        "hazard_prefabs",
+        "blocking_props",
+        "non_blocking_props",
+        "decorative_props",
+    )
+    for collection_name in prefab_collection_names:
+        for index, prefab in enumerate(style_pack.get(collection_name, [])):
+            if not isinstance(prefab, dict):
+                continue
+            visual_ref = prefab.get("visual_ref")
+            if not isinstance(visual_ref, dict):
+                continue
+            if visual_ref.get("kind") == "reviewed_component_ref":
+                value = visual_ref.get("value")
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(
+                        f"{collection_name}[{index}].visual_ref.value must be non-empty when visual_ref.kind is reviewed_component_ref"
+                    )
     rules = style_pack.get("readability_rules")
     if isinstance(rules, dict):
         if rules.get("no_baked_ui_text") is not True:
