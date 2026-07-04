@@ -1,0 +1,122 @@
+{
+  "schema_version": "map_v02_preview_api_smoke_report.v0.1",
+  "report_id": "map_v02_preview_api_smoke_report_v0_1",
+  "generated_at": "2026-07-04T00:00:00+00:00",
+  "status": "passed",
+  "endpoint": "GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview",
+  "response_wrapper_mode": "frontend_mock_fixture",
+  "review_only": true,
+  "runtime_activation_allowed": false,
+  "node_count": 3,
+  "node_ids": [
+    "gray_lantern_station",
+    "lamp_wick_store",
+    "old_signal_tower"
+  ],
+  "semantic_totals": {
+    "resource_node_count": 3,
+    "hazard_zone_count": 3,
+    "defense_anchor_count": 3,
+    "blocked_area_count": 3
+  },
+  "default_runtime_v01_preserved_count": 3,
+  "unknown_node_status_code": 404,
+  "safety_summary": {
+    "reads_env_file": false,
+    "provider_call_count": 0,
+    "player_default_runtime_mutation_count": 0,
+    "world_state_mutation_count": 0
+  },
+  "nodes": [
+    {
+      "node_id": "gray_lantern_station",
+      "v02_package_id": "map_pkg_gray_lantern_station_v0_2",
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "preview_svg_ref": "examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview.svg",
+      "source_ref_keys": [
+        "map_runtime_package_v02",
+        "map_style_pack",
+        "procedural_map_preview_report",
+        "procedural_map_preview_svg",
+        "procedural_map_render_plan",
+        "semantic_visual_consistency_report"
+      ],
+      "bundle_status": {
+        "semantic_visual_consistency": "passed",
+        "preview_report": "preview_ready_review_only"
+      },
+      "safety": {
+        "reads_env": false,
+        "provider_call_count": 0,
+        "player_default_runtime_mutation": false
+      },
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0
+    },
+    {
+      "node_id": "lamp_wick_store",
+      "v02_package_id": "map_pkg_lamp_wick_store_v0_2",
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "preview_svg_ref": "examples/map_render_previews_v02/mvp_wick_store_pressure.procedural_map_preview.svg",
+      "source_ref_keys": [
+        "map_runtime_package_v02",
+        "map_style_pack",
+        "procedural_map_preview_report",
+        "procedural_map_preview_svg",
+        "procedural_map_render_plan",
+        "semantic_visual_consistency_report"
+      ],
+      "bundle_status": {
+        "semantic_visual_consistency": "passed",
+        "preview_report": "preview_ready_review_only"
+      },
+      "safety": {
+        "reads_env": false,
+        "provider_call_count": 0,
+        "player_default_runtime_mutation": false
+      },
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0
+    },
+    {
+      "node_id": "old_signal_tower",
+      "v02_package_id": "map_pkg_old_signal_tower_v0_2",
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "preview_svg_ref": "examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview.svg",
+      "source_ref_keys": [
+        "map_runtime_package_v02",
+        "map_style_pack",
+        "procedural_map_preview_report",
+        "procedural_map_preview_svg",
+        "procedural_map_render_plan",
+        "semantic_visual_consistency_report"
+      ],
+      "bundle_status": {
+        "semantic_visual_consistency": "passed",
+        "preview_report": "preview_ready_review_only"
+      },
+      "safety": {
+        "reads_env": false,
+        "provider_call_count": 0,
+        "player_default_runtime_mutation": false
+      },
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0
+    }
+  ]
+}
