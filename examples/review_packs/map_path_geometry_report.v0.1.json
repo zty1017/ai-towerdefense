@@ -2,7 +2,7 @@
   "schema_version": "map_path_geometry_report.v0.1",
   "report_id": "map_path_geometry_report_v0_1",
   "created_at": "2026-07-05T00:00:00Z",
-  "status": "warning",
+  "status": "passed",
   "source_policy": {
     "geometry_source": "MapRuntimePackage.path_routes.waypoints",
     "no_image_or_preview_reverse_inference": true,
@@ -13,7 +13,7 @@
     "route_count": 10,
     "build_slot_count": 72,
     "total_route_length_cells": 177.3476,
-    "warning_count": 6
+    "warning_count": 0
   },
   "maps": [
     {
@@ -1159,40 +1159,42 @@
         {
           "slot_id": "slot_06",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.7071,
+          "road_band_gap_cells": 0.2821,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
           "slot_id": "slot_07",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
           "slot_id": "slot_08",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.7071,
-          "road_band_gap_cells": 0.2821,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
@@ -1214,7 +1216,7 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.4142
+              "distance_cells": 1.0
             }
           ],
           "derived_tags": [
@@ -1242,17 +1244,18 @@
         {
           "slot_id": "slot_11",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
@@ -1260,24 +1263,15 @@
           "nearest_route_id": "path_old_signal_north_ridge",
           "centerline_distance_cells": 0.5,
           "road_band_gap_cells": 0.075,
-          "near_turns": [
-            {
-              "route_id": "path_old_signal_north_ridge",
-              "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
-            }
-          ],
-          "derived_tags": [
-            "near_turn",
-            "good_for_aoe"
-          ]
+          "near_turns": [],
+          "derived_tags": []
         }
       ],
       "slot_distance_stats": {
         "road_band_gap_cells": {
-          "min": -0.425,
+          "min": 0.075,
           "max": 0.2821,
-          "average": -0.0327
+          "average": 0.0923
         }
       },
       "near_turn_slots": [
@@ -1300,13 +1294,14 @@
           "slot_id": "slot_06",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ],
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         },
@@ -1314,13 +1309,14 @@
           "slot_id": "slot_07",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ],
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         },
@@ -1350,7 +1346,7 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.4142
+              "distance_cells": 1.0
             }
           ]
         },
@@ -1373,20 +1369,6 @@
           "slot_id": "slot_11",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
-          ],
-          "near_turns": [
-            {
-              "route_id": "path_old_signal_north_ridge",
-              "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
-            }
-          ]
-        },
-        {
-          "slot_id": "slot_12",
-          "nearest_route_id": "path_old_signal_north_ridge",
-          "derived_tags": [
             "near_turn",
             "good_for_aoe"
           ],
@@ -1394,17 +1376,13 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         }
       ],
-      "warnings": [
-        "build_slots[5] slot_06 footprint overlaps derived road band by 0.4250 cells",
-        "build_slots[6] slot_07 footprint overlaps derived road band by 0.4250 cells",
-        "build_slots[10] slot_11 footprint overlaps derived road band by 0.4250 cells"
-      ],
-      "warning_count": 3
+      "warnings": [],
+      "warning_count": 0
     },
     {
       "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
@@ -3426,40 +3404,42 @@
         {
           "slot_id": "slot_06",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.7071,
+          "road_band_gap_cells": 0.2821,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
           "slot_id": "slot_07",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
           "slot_id": "slot_08",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.7071,
-          "road_band_gap_cells": 0.2821,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
@@ -3481,7 +3461,7 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.4142
+              "distance_cells": 1.0
             }
           ],
           "derived_tags": [
@@ -3509,17 +3489,18 @@
         {
           "slot_id": "slot_11",
           "nearest_route_id": "path_old_signal_north_ridge",
-          "centerline_distance_cells": 0.0,
-          "road_band_gap_cells": -0.425,
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ],
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ]
         },
         {
@@ -3527,24 +3508,15 @@
           "nearest_route_id": "path_old_signal_north_ridge",
           "centerline_distance_cells": 0.5,
           "road_band_gap_cells": 0.075,
-          "near_turns": [
-            {
-              "route_id": "path_old_signal_north_ridge",
-              "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
-            }
-          ],
-          "derived_tags": [
-            "near_turn",
-            "good_for_aoe"
-          ]
+          "near_turns": [],
+          "derived_tags": []
         }
       ],
       "slot_distance_stats": {
         "road_band_gap_cells": {
-          "min": -0.425,
+          "min": 0.075,
           "max": 0.2821,
-          "average": -0.0327
+          "average": 0.0923
         }
       },
       "near_turn_slots": [
@@ -3567,13 +3539,14 @@
           "slot_id": "slot_06",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ],
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         },
@@ -3581,13 +3554,14 @@
           "slot_id": "slot_07",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
+            "near_turn",
+            "good_for_aoe"
           ],
           "near_turns": [
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         },
@@ -3617,7 +3591,7 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.4142
+              "distance_cells": 1.0
             }
           ]
         },
@@ -3640,20 +3614,6 @@
           "slot_id": "slot_11",
           "nearest_route_id": "path_old_signal_north_ridge",
           "derived_tags": [
-            "near_turn"
-          ],
-          "near_turns": [
-            {
-              "route_id": "path_old_signal_north_ridge",
-              "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
-            }
-          ]
-        },
-        {
-          "slot_id": "slot_12",
-          "nearest_route_id": "path_old_signal_north_ridge",
-          "derived_tags": [
             "near_turn",
             "good_for_aoe"
           ],
@@ -3661,17 +3621,13 @@
             {
               "route_id": "path_old_signal_north_ridge",
               "turn_angle_degrees": 45.0,
-              "distance_cells": 1.0
+              "distance_cells": 1.4142
             }
           ]
         }
       ],
-      "warnings": [
-        "build_slots[5] slot_06 footprint overlaps derived road band by 0.4250 cells",
-        "build_slots[6] slot_07 footprint overlaps derived road band by 0.4250 cells",
-        "build_slots[10] slot_11 footprint overlaps derived road band by 0.4250 cells"
-      ],
-      "warning_count": 3
+      "warnings": [],
+      "warning_count": 0
     },
     {
       "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",

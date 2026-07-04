@@ -381,8 +381,8 @@
           },
           "geometry": {
             "position": {
-              "x": 14,
-              "y": 3
+              "x": 13,
+              "y": 1
             },
             "footprint": {
               "width_cells": 1,
@@ -404,8 +404,8 @@
           },
           "geometry": {
             "position": {
-              "x": 13,
-              "y": 2
+              "x": 15,
+              "y": 1
             },
             "footprint": {
               "width_cells": 1,
@@ -427,8 +427,8 @@
           },
           "geometry": {
             "position": {
-              "x": 13,
-              "y": 1
+              "x": 15,
+              "y": 3
             },
             "footprint": {
               "width_cells": 1,
@@ -450,8 +450,8 @@
           },
           "geometry": {
             "position": {
-              "x": 15,
-              "y": 1
+              "x": 12,
+              "y": 5
             },
             "footprint": {
               "width_cells": 1,
@@ -473,7 +473,7 @@
           },
           "geometry": {
             "position": {
-              "x": 15,
+              "x": 11,
               "y": 3
             },
             "footprint": {
@@ -496,8 +496,8 @@
           },
           "geometry": {
             "position": {
-              "x": 12,
-              "y": 3
+              "x": 11,
+              "y": 5
             },
             "footprint": {
               "width_cells": 1,
@@ -519,8 +519,8 @@
           },
           "geometry": {
             "position": {
-              "x": 12,
-              "y": 5
+              "x": 8,
+              "y": 3
             },
             "footprint": {
               "width_cells": 1,

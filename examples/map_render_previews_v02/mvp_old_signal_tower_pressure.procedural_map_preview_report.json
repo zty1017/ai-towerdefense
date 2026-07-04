@@ -4,7 +4,7 @@
     "width": 1280
   },
   "preview_svg_path": "examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview.svg",
-  "preview_svg_sha256": "d2bfce713c12a5d69837b11f97cfa17abaf600760d053605659e949747997805",
+  "preview_svg_sha256": "f227d5b1758e98ead42570986cf980c495f7427fee274c1c55b1c19b0748d830",
   "render_summary": {
     "blocked_area_count": 1,
     "build_slot_count": 12,

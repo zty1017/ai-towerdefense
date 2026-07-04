@@ -306,6 +306,7 @@ def _derive_build_slots(
 
     candidates: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
+    slot_footprint = {"width_cells": 1, "height_cells": 1}
     offsets = [
         (0, -1),
         (0, 1),
@@ -325,6 +326,13 @@ def _derive_build_slots(
                     continue
                 if not _in_grid(candidate, grid):
                     continue
+                _, _, road_band_gap = map_path_geometry.nearest_road_band_gap(
+                    routes,
+                    {"x": candidate[0], "y": candidate[1]},
+                    slot_footprint,
+                )
+                if road_band_gap < -0.001:
+                    continue
                 seen.add(candidate)
                 candidates.append(candidate)
                 if len(candidates) >= max_slots:
@@ -340,7 +348,7 @@ def _derive_build_slots(
             {
                 "slot_id": f"slot_{index:02d}",
                 "position": {"x": x, "y": y},
-                "footprint": {"width_cells": 1, "height_cells": 1},
+                "footprint": dict(slot_footprint),
                 "allowed_asset_kinds": [
                     "tower_blueprint",
                     "temporary_trap_sample",
