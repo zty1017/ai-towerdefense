@@ -1,0 +1,86 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-18-browser-flow-visual-smoke",
+  "title": "Browser frontend flow visual smoke",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/browser-flow-smoke",
+  "worktree": "/tmp/ai-td-task-browser-flow-smoke",
+  "objective": "补浏览器端玩家主链路截图门禁：用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，并输出桌面 / 移动截图和结构化 smoke report。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tools/frontend/capture_battle_visual_smoke.py"
+  ],
+  "allowed_paths": [
+    "frontend/app.js",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/",
+    "game_data/media/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-flow python3 -m py_compile tools/frontend/capture_frontend_flow_visual_smoke.py tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "python3 tools/frontend/validate_battle_visual_contract.py",
+    "python3 tools/frontend/capture_frontend_flow_visual_smoke.py --output-dir /tmp/frontend_flow_visual_smoke --timeout 45",
+    "python3 tools/frontend/validate_frontend_flow_visual_smoke_report.py /tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nreport = json.loads(Path('/tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json').read_text(encoding='utf-8'))\nassert report['status'] == 'captured'\nassert report['captured_screenshot_count'] == report['expected_screenshot_count'] == 14\nassert {item['step_id'] for item in report['screenshots']} == {'profile', 'world_config', 'opening', 'map', 'workshop', 'battle', 'settlement'}\nassert {item['viewport_id'] for item in report['screenshots']} == {'desktop', 'mobile'}\nassert report['safety_summary']['provider_call_count'] == 0\nassert report['safety_summary']['world_mutation_count'] == 0\nfor item in report['screenshots']:\n    assert Path(item['path']).exists(), item['path']\n    assert item['file_size_bytes'] > 5000, item\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider，不读取 .env，不生成新游戏素材。",
+    "flowVisualSmoke 只在 URL query 下启用，用于视觉截图链路加速；正常玩家入口不受影响。",
+    "本任务必须使用真实浏览器截图，不能用手写 JSON 或空 PNG 伪造 evidence。",
+    "若当前执行通道无浏览器或额度不足，应保留任务分支未合并，等可用环境跑过 acceptance_commands 后再合入 develop。"
+  ]
+}
