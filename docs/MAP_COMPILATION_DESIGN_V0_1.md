@@ -104,6 +104,7 @@ MapStylePack material.component_ref / prefab visual_ref
 ```text
 MapComponentMediaManifest deterministic SVG baseline
   -> MapComponentGenerationRequestPack
+  -> MapComponentArtifactStagingManifest
   -> MapComponentCandidateReviewReport
   -> MapComponentPromotionGateReport
   -> future MapComponentMediaManifest replacement build
@@ -111,7 +112,9 @@ MapComponentMediaManifest deterministic SVG baseline
 
 `MapComponentGenerationRequestPack v0.1` 只从现有 manifest 派生每个组件的生成请求摘要：component_id、component_role、style_pack_id、node_id、baseline_local_path、target_size、prompt_profile_id、negative constraints、required gates 和 usage policy。它可以包含 redacted prompt summary / structured prompt tokens，但不得保存 provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 或外部临时 URL。
 
-`MapComponentCandidateReviewReport v0.1` 是真实候选进入后的审查层。当前没有真实生成候选，因此 36 个 baseline SVG 只能作为 `baseline_fixture_candidate` / `no_generated_candidate_yet` 负责任地占位，不能伪装成 AI 生成结果。报告会阻断晋升，并要求后续导入本地生成 artifact、visual QA、cutout / normalization 和 binding refresh。
+`MapComponentArtifactStagingManifest v0.1` 是 request pack 之后、candidate review 之前的 review-only 本地 artifact 导入边界。它把 36 个 request 派生为 36 个 staging slot，声明外部 provider 或人工生成的本地 `png/svg/webp` 候选如何进入候选池；当前没有真实候选，因此所有 slot 都是 `awaiting_local_artifact` / `not_imported`，`imported_count=0`、`awaiting_count=36`。非空 candidate path 只能来自仓库内 `game_data/media/map_components/candidates/` 或 `/tmp/...` 本地文件，并必须通过存在性、sha256 和扩展名校验。staging 只说明“可进入后续审查的导入边界”，不代表 review passed，也不写 manifest、不改 StylePack / RenderPlan / frontend default / runtime map truth。
+
+`MapComponentCandidateReviewReport v0.1` 是本地 artifact staging 之后的审查层。当前没有真实生成候选，因此 36 个 baseline SVG 只能作为 `baseline_fixture_candidate` / `no_generated_candidate_yet` 负责任地占位，不能伪装成 AI 生成结果。报告会阻断晋升，并要求后续导入本地生成 artifact、visual QA、cutout / normalization 和 binding refresh。
 
 `MapComponentPromotionGateReport v0.1` 是显式晋升门。当前 `promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。只有未来 candidate review 真正通过，才允许单独生成新的 MapComponentMediaManifest 或 promotion report。
 
@@ -265,6 +268,7 @@ worldbook + node state + visual identity
   -> component image/video generation
   -> media postprocess
   -> MapComponentGenerationRequestPack
+  -> MapComponentArtifactStagingManifest
   -> MapComponentCandidateReviewReport
   -> MapComponentPromotionGateReport
   -> reviewed component manifest / atlas
@@ -274,7 +278,7 @@ worldbook + node state + visual identity
 
 在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
 
-`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再由 candidate review 和 promotion gate 明确保持阻断；即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
+`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再进入 artifact staging 的 36 个 awaiting slot，然后由 candidate review 和 promotion gate 明确保持阻断；即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
 
 ### 3.2 前端视觉路线确认
 

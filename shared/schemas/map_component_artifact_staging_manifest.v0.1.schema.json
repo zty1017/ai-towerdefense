@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_artifact_staging_manifest.v0.1.schema.json",
+  "title": "MapComponentArtifactStagingManifest v0.1",
+  "description": "Review-only local artifact staging manifest for MapComponent generation requests. It declares how externally or manually generated local files may enter the candidate review pool without provider payloads, prompt bodies, temporary URLs, runtime activation, or manifest/style/render/frontend mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "created_at",
+    "source_request_pack_path",
+    "source_manifest_path",
+    "status",
+    "usage_policy",
+    "summary",
+    "staging_slots",
+    "runtime_effect",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_artifact_staging_manifest.v0.1" },
+    "manifest_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_request_pack_path": { "type": "string", "minLength": 1 },
+    "source_manifest_path": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["awaiting_local_artifacts", "partially_imported", "imported_for_review", "blocked"] },
+    "usage_policy": { "$ref": "#/$defs/string_list" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "staging_slots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/staging_slot" }
+    },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_replacement_written",
+        "style_pack_modified",
+        "render_plan_modified",
+        "frontend_default_modified",
+        "runtime_map_truth_modified"
+      ],
+      "properties": {
+        "manifest_replacement_written": { "type": "boolean", "const": false },
+        "style_pack_modified": { "type": "boolean", "const": false },
+        "render_plan_modified": { "type": "boolean", "const": false },
+        "frontend_default_modified": { "type": "boolean", "const": false },
+        "runtime_map_truth_modified": { "type": "boolean", "const": false }
+      }
+    },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "nullable_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "target_size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_count",
+        "request_count",
+        "component_count",
+        "style_pack_count",
+        "node_count",
+        "imported_count",
+        "awaiting_count",
+        "not_imported_count",
+        "status_counts",
+        "import_status_counts",
+        "review_status_counts",
+        "accepted_input_kind_counts"
+      ],
+      "properties": {
+        "slot_count": { "type": "integer", "minimum": 0 },
+        "request_count": { "type": "integer", "minimum": 0 },
+        "component_count": { "type": "integer", "minimum": 0 },
+        "style_pack_count": { "type": "integer", "minimum": 0 },
+        "node_count": { "type": "integer", "minimum": 0 },
+        "imported_count": { "type": "integer", "minimum": 0 },
+        "awaiting_count": { "type": "integer", "minimum": 0 },
+        "not_imported_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "import_status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "review_status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "accepted_input_kind_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "staging_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_id",
+        "request_id",
+        "component_id",
+        "component_role",
+        "style_pack_id",
+        "node_id",
+        "source_request_pack_path",
+        "expected_size",
+        "accepted_input_kinds",
+        "candidate_local_path",
+        "candidate_sha256",
+        "import_status",
+        "review_status",
+        "required_next_gates",
+        "usage_policy"
+      ],
+      "properties": {
+        "slot_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "request_id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "component_id": { "type": "string", "minLength": 1 },
+        "component_role": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "source_request_pack_path": { "type": "string", "minLength": 1 },
+        "expected_size": { "$ref": "#/$defs/target_size" },
+        "accepted_input_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["png", "svg", "webp"] },
+          "uniqueItems": true
+        },
+        "candidate_local_path": { "type": ["string", "null"] },
+        "candidate_sha256": { "$ref": "#/$defs/nullable_sha256" },
+        "import_status": { "type": "string", "enum": ["awaiting_local_artifact", "imported", "blocked"] },
+        "review_status": { "type": "string", "enum": ["not_imported", "staged_for_review", "blocked"] },
+        "required_next_gates": { "$ref": "#/$defs/string_list" },
+        "usage_policy": { "$ref": "#/$defs/string_list" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": { "$ref": "#/$defs/string_list" }
+      }
+    }
+  }
+}
