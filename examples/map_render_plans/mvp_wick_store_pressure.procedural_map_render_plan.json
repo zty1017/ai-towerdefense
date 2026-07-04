@@ -5,7 +5,7 @@
   "style_pack_id": "style_long_night_lamp_wick_store_v0_1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "lamp_wick_store",
-  "created_at": "2026-07-04T00:00:00Z",
+  "created_at": "2026-07-05T00:00:00Z",
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json",
@@ -62,8 +62,8 @@
               "source": "map_style_pack.material",
               "owner_id": "terrain_wick_store_oiled_stone",
               "role": "terrain_base",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_lamp_wick_store_terrain_wick_store_oiled_stone"
             }
           }
         }
@@ -123,8 +123,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_wick_store_old_pipe_track",
               "role": "road_band",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_lamp_wick_store_road_wick_store_old_pipe_track"
             }
           }
         },
@@ -167,8 +167,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_wick_store_old_pipe_track",
               "role": "road_band",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_lamp_wick_store_road_wick_store_old_pipe_track"
             }
           }
         }
@@ -229,8 +229,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_edge_wick_chalk_and_oil",
               "role": "road_edge",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_lamp_wick_store_road_edge_wick_chalk_and_oil"
             }
           }
         },
@@ -274,8 +274,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_edge_wick_chalk_and_oil",
               "role": "road_edge",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_lamp_wick_store_road_edge_wick_chalk_and_oil"
             }
           }
         }
@@ -314,8 +314,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -346,8 +346,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -378,8 +378,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -410,8 +410,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -442,8 +442,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -474,8 +474,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -506,8 +506,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -538,8 +538,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -570,8 +570,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -602,8 +602,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -634,8 +634,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -666,8 +666,8 @@
               "owner_id": "platform_wick_store_brass_floor_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "brass_floor_ring_with_wick_marks"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_platform_wick_store_brass_floor_ring"
               }
             }
           }
@@ -703,8 +703,8 @@
               "owner_id": "objective_wick_store_shelf_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "stockpile_base_with_oil_lamps"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_objective_wick_store_shelf_foundation"
               }
             }
           }
@@ -731,8 +731,8 @@
               "owner_id": "objective_wick_store_shelf_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "stockpile_base_with_oil_lamps"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_objective_wick_store_shelf_foundation"
               }
             }
           }
@@ -759,8 +759,8 @@
               "owner_id": "objective_wick_store_shelf_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "stockpile_base_with_oil_lamps"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_objective_wick_store_shelf_foundation"
               }
             }
           }
@@ -796,8 +796,8 @@
               "owner_id": "spawn_pipe_shadow_leak",
               "role": "spawn_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "dark_leak_from_broken_pipe"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_spawn_pipe_shadow_leak"
               }
             }
           }
@@ -824,8 +824,8 @@
               "owner_id": "spawn_pipe_shadow_leak",
               "role": "spawn_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "dark_leak_from_broken_pipe"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_spawn_pipe_shadow_leak"
               }
             }
           }
@@ -862,8 +862,8 @@
               "owner_id": "decor_ash_and_brass_scraps",
               "role": "non_blocking_decoration",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "ash_brass_scrap_cluster"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_lamp_wick_store_decor_ash_and_brass_scraps"
               }
             }
           }

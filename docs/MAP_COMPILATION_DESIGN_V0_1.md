@@ -91,12 +91,15 @@ StylePack 不是运行时事实源。它只影响表现层，并且必须服务 
 
 ```text
 MapStylePack material.component_ref / prefab visual_ref
+  -> MapComponentMediaManifest
   -> MapStyleComponentBindingReport
   -> reviewed media / atlas ref 解析证据
   -> ProceduralMapRenderPlan 表现层元数据
 ```
 
-该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。它不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
+`MapComponentMediaManifest v0.1` 只登记 reviewed local component media：local refs、sha256、width/height、component_role、style_pack_id / node_id 和 usage policy。它可以让 `/assets/map_components/...` 的表现层组件 URL 在后端只读静态挂载中可解析，但不表示前端默认会消费这些组件，也不允许组件反向决定任何地图语义。
+
+该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。Manifest 与报告都不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
 
 ### 1.4 采纳：程序化分层渲染
 
@@ -231,6 +234,7 @@ AI 整图不能作为运行时地图，但仍可用于：
 ```text
 MapRuntimePackage
   -> StylePack / component assets
+  -> MapComponentMediaManifest
   -> deterministic procedural render
   -> semantic visual consistency check
   -> published visual layer or runtime canvas style update
@@ -244,12 +248,14 @@ worldbook + node state + visual identity
   -> component prompt pack
   -> component image/video generation
   -> media postprocess
-  -> reviewed component atlas
+  -> reviewed component manifest / atlas
   -> MapStyleComponentBindingReport
   -> procedural renderer consumes reviewed components
 ```
 
 在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
+
+`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
 
 ### 3.2 前端视觉路线确认
 

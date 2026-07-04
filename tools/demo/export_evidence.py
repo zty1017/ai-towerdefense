@@ -156,6 +156,8 @@ PATHS = {
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
     "map_path_geometry_report": ROOT
     / "examples/review_packs/map_path_geometry_report.v0.1.json",
+    "map_component_media_manifest": ROOT
+    / "game_data/media/map_components/map_component_media_manifest.v0.1.json",
     "map_style_component_binding_report": ROOT
     / "examples/review_packs/map_style_component_binding_report.v0.1.json",
     "node_map_candidate_review": ROOT
@@ -488,6 +490,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_map_path_geometry_report.py",
             "examples/review_packs/map_path_geometry_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_media_manifest",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_media_pack.py",
+            "game_data/media/map_components/map_component_media_manifest.v0.1.json",
         ],
     },
     {
@@ -1213,6 +1223,38 @@ def media_manifest_summary(manifest: dict[str, Any]) -> dict[str, Any]:
         "roles": count_by(items, "media_role"),
         "asset_types": count_by(items, "asset_type"),
         "sample_items": sample_items,
+    }
+
+
+def map_component_media_summary(manifest: dict[str, Any]) -> dict[str, Any]:
+    items = [item for item in as_list(manifest.get("items")) if isinstance(item, dict)]
+    summary = as_obj(manifest.get("summary"))
+    return {
+        "schema_version": manifest.get("schema_version"),
+        "media_pack_id": manifest.get("media_pack_id"),
+        "media_layer": manifest.get("media_layer"),
+        "public_url_prefix": manifest.get("public_url_prefix"),
+        "component_count": summary.get("component_count") or len(items),
+        "material_component_count": summary.get("material_component_count"),
+        "prefab_component_count": summary.get("prefab_component_count"),
+        "style_pack_count": summary.get("style_pack_count"),
+        "node_count": summary.get("node_count"),
+        "component_roles": as_obj(summary.get("roles")),
+        "media_roles": count_by(items, "media_role"),
+        "usage_policy": as_list(manifest.get("usage_policy")),
+        "sample_items": [
+            {
+                "stable_internal_id": item.get("stable_internal_id"),
+                "style_pack_id": item.get("style_pack_id"),
+                "node_id": item.get("node_id"),
+                "source_owner_id": item.get("source_owner_id"),
+                "component_role": item.get("component_role"),
+                "url": item.get("url"),
+                "local_path": item.get("local_path"),
+                "sha256": item.get("sha256"),
+            }
+            for item in items[:MAX_SAMPLE_ITEMS]
+        ],
     }
 
 
@@ -3463,6 +3505,7 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_runtime_activation_gate_report"],
         ),
         ("map_path_geometry_report", PATHS["map_path_geometry_report"]),
+        ("map_component_media_manifest", PATHS["map_component_media_manifest"]),
         (
             "map_style_component_binding_report",
             PATHS["map_style_component_binding_report"],
@@ -3666,6 +3709,7 @@ def build_evidence(
         PATHS["map_runtime_activation_gate_report"]
     )
     map_path_geometry_report = load_json(PATHS["map_path_geometry_report"])
+    map_component_media_manifest = load_json(PATHS["map_component_media_manifest"])
     map_style_component_binding_report = load_json(
         PATHS["map_style_component_binding_report"]
     )
@@ -3839,6 +3883,7 @@ def build_evidence(
             map_runtime_activation_gate_report
         ),
         "map_path_geometry": map_path_geometry_summary(map_path_geometry_report),
+        "map_component_media": map_component_media_summary(map_component_media_manifest),
         "map_style_component_bindings": map_style_component_binding_summary(
             map_style_component_binding_report
         ),
@@ -3930,6 +3975,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
+    map_component_media = as_obj(evidence.get("map_component_media"))
     map_style_component_bindings = as_obj(
         evidence.get("map_style_component_bindings")
     )
@@ -4325,6 +4371,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
+        f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",

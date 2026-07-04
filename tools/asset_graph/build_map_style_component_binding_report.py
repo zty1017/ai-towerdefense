@@ -25,6 +25,7 @@ import procedural_map_render_plan as pmrp  # noqa: E402
 
 DEFAULT_STYLE_PACKS = sorted((ROOT / "examples/map_style_packs").glob("*.map_style_pack.json"))
 DEFAULT_MEDIA_MANIFESTS = [
+    ROOT / "game_data/media/map_components/map_component_media_manifest.v0.1.json",
     ROOT / "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json",
 ]
 DEFAULT_ATLAS_MANIFESTS = [

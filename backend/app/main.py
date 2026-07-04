@@ -25,6 +25,7 @@ _STATIC_MEDIA_ROOTS = {
     "frontend_runtime_mock": _REPO_ROOT / "game_data/media/frontend_runtime_mock",
 }
 _STATIC_DIRECT_MEDIA_ROOTS = {
+    "map_components": _REPO_ROOT / "game_data/media/map_components",
     "map_visual_reference": _REPO_ROOT / "game_data/media/map_visual_reference",
 }
 _FRONTEND_DIR = _REPO_ROOT / "frontend"
