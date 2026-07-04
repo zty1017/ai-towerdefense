@@ -1971,11 +1971,18 @@ def map_component_promotion_gate_summary(report: dict[str, Any]) -> dict[str, An
         "schema_version": report.get("schema_version"),
         "report_id": report.get("report_id"),
         "status": report.get("status"),
+        "source_candidate_review_report_path": report.get(
+            "source_candidate_review_report_path"
+        ),
+        "source_visual_quality_report_path": report.get(
+            "source_visual_quality_report_path"
+        ),
         "candidate_count": summary.get("candidate_count"),
         "generated_candidate_count": summary.get("generated_candidate_count"),
         "promotion_allowed_count": summary.get("promotion_allowed_count"),
         "promotion_blocked_count": summary.get("promotion_blocked_count"),
         "baseline_preserved_count": summary.get("baseline_preserved_count"),
+        "visual_quality_report_status": summary.get("visual_quality_report_status"),
         "decision_counts": as_obj(summary.get("decision_counts")),
         "blocked_reasons": as_list(report.get("blocked_reasons")),
         "runtime_effect": as_obj(report.get("runtime_effect")),
@@ -1990,6 +1997,11 @@ def map_component_promotion_gate_summary(report: dict[str, Any]) -> dict[str, An
                 "promotion_allowed": decision.get("promotion_allowed"),
                 "baseline_preserved": decision.get("baseline_preserved"),
                 "reason": decision.get("reason"),
+                "visual_quality_status": decision.get("visual_quality_status"),
+                "visual_quality_item_status": decision.get("visual_quality_item_status"),
+                "visual_quality_checked": decision.get("visual_quality_checked"),
+                "visual_quality_required": decision.get("visual_quality_required"),
+                "visual_quality_blocker": decision.get("visual_quality_blocker"),
             }
             for decision in decisions[:MAX_SAMPLE_ITEMS]
         ],
@@ -4719,7 +4731,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapComponent artifact staging：`{map_component_artifact_staging.get('status')}`，slots `{map_component_artifact_staging.get('slot_count')}`，imported `{map_component_artifact_staging.get('imported_count')}`，awaiting `{map_component_artifact_staging.get('awaiting_count')}`，not imported `{map_component_artifact_staging.get('not_imported_count')}`，runtime/manifest 写入 `{map_component_artifact_staging.get('runtime_effect')}`",
         f"- MapComponent candidate review：`{map_component_candidate_review.get('status')}`，读取 staging `{map_component_candidate_review.get('source_artifact_staging_manifest_path')}`，candidates `{map_component_candidate_review.get('candidate_count')}`，baseline fixtures `{map_component_candidate_review.get('baseline_fixture_candidate_count')}`，generated `{map_component_candidate_review.get('generated_candidate_count')}`，可晋升 `{map_component_candidate_review.get('promotable_count')}`",
         f"- MapComponent visual quality / cutout gate：`{map_component_visual_quality.get('status')}`，读取 candidate review `{map_component_visual_quality.get('source_candidate_review_report_path')}`，generated `{map_component_visual_quality.get('generated_candidate_count')}`，checked `{map_component_visual_quality.get('checked_candidate_count')}`，blocked `{map_component_visual_quality.get('blocked_pending_quality_gates_count')}`，runtime/manifest 写入 `{map_component_visual_quality.get('runtime_effect')}`，promotion effect `{map_component_visual_quality.get('promotion_effect')}`",
-        f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
+        f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，读取 visual quality `{map_component_promotion_gate.get('source_visual_quality_report_path')}` / `{map_component_promotion_gate.get('visual_quality_report_status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -4915,6 +4927,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_component_visual_quality = as_obj(
         map_component_generation_pipeline.get("visual_quality_gate")
+    )
+    map_component_promotion_gate = as_obj(
+        map_component_generation_pipeline.get("promotion_gate")
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
@@ -5242,6 +5257,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">MapComponent Visual Gate</div>
           <div class="metric status-metric">{html_escape(map_component_visual_quality.get("status"))}</div>
           <p class="muted">generated {html_escape(map_component_visual_quality.get("generated_candidate_count"))}；checked {html_escape(map_component_visual_quality.get("checked_candidate_count"))}；runtime 修改 {html_escape(as_obj(map_component_visual_quality.get("runtime_effect")).get("runtime_map_truth_modified"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapComponent Promotion Gate</div>
+          <div class="metric status-metric">{html_escape(map_component_promotion_gate.get("status"))}</div>
+          <p class="muted">读取 visual gate {html_escape(map_component_promotion_gate.get("source_visual_quality_report_path"))}；状态 {html_escape(map_component_promotion_gate.get("visual_quality_report_status"))}；允许 {html_escape(map_component_promotion_gate.get("promotion_allowed_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>

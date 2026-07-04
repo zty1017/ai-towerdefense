@@ -10,6 +10,7 @@
     "report_id",
     "created_at",
     "source_candidate_review_report_path",
+    "source_visual_quality_report_path",
     "source_manifest_path",
     "status",
     "usage_policy",
@@ -24,6 +25,7 @@
     "report_id": { "type": "string", "minLength": 1 },
     "created_at": { "type": "string", "format": "date-time" },
     "source_candidate_review_report_path": { "type": "string", "minLength": 1 },
+    "source_visual_quality_report_path": { "type": "string", "minLength": 1 },
     "source_manifest_path": { "type": "string", "minLength": 1 },
     "status": { "type": "string", "enum": ["blocked", "passed"] },
     "usage_policy": { "$ref": "#/$defs/string_list" },
@@ -70,6 +72,7 @@
         "promotion_allowed_count",
         "promotion_blocked_count",
         "baseline_preserved_count",
+        "visual_quality_report_status",
         "decision_counts"
       ],
       "properties": {
@@ -78,6 +81,10 @@
         "promotion_allowed_count": { "type": "integer", "minimum": 0 },
         "promotion_blocked_count": { "type": "integer", "minimum": 0 },
         "baseline_preserved_count": { "type": "integer", "minimum": 0 },
+        "visual_quality_report_status": {
+          "type": "string",
+          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+        },
         "decision_counts": {
           "type": "object",
           "additionalProperties": { "type": "integer", "minimum": 0 }
@@ -95,16 +102,40 @@
         "promotion_allowed",
         "baseline_preserved",
         "reason",
+        "visual_quality_status",
+        "visual_quality_item_status",
+        "visual_quality_checked",
+        "visual_quality_required",
+        "visual_quality_blocker",
         "required_before_future_promotion"
       ],
       "properties": {
         "component_id": { "type": "string", "minLength": 1 },
         "candidate_id": { "type": "string", "minLength": 1 },
         "candidate_kind": { "type": "string", "enum": ["baseline_fixture_candidate", "generated_candidate"] },
-        "decision": { "type": "string", "enum": ["blocked_no_generated_candidate", "blocked_review_failed", "allowed"] },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "blocked_no_generated_candidate",
+            "blocked_review_failed",
+            "blocked_visual_quality_incomplete",
+            "allowed"
+          ]
+        },
         "promotion_allowed": { "type": "boolean" },
         "baseline_preserved": { "type": "boolean" },
         "reason": { "type": "string", "minLength": 1 },
+        "visual_quality_status": {
+          "type": "string",
+          "enum": ["awaiting_generated_candidates", "blocked_pending_quality_gates", "needs_review"]
+        },
+        "visual_quality_item_status": {
+          "type": ["string", "null"],
+          "enum": [null, "blocked_pending_quality_gates", "needs_review", "needs_review_unsupported_decode"]
+        },
+        "visual_quality_checked": { "type": "boolean" },
+        "visual_quality_required": { "type": "boolean" },
+        "visual_quality_blocker": { "type": ["string", "null"], "minLength": 1 },
         "required_before_future_promotion": { "$ref": "#/$defs/string_list" }
       }
     },

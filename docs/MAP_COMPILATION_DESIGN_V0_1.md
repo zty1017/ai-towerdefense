@@ -119,7 +119,7 @@ MapComponentMediaManifest deterministic SVG baseline
 
 `MapComponentVisualQualityReport v0.1` 是 candidate review 之后、promotion gate 之前的本地文件质量 / cutout normalization gate。它默认读取 `MapComponentCandidateReviewReport`，只对 `candidate_kind == generated_candidate` 的条目执行本地检查；baseline SVG fixture 不进入该 report，也不能被当作 generated candidate。当前默认没有 generated candidate，因此 report 为 `awaiting_generated_candidates`，`generated_candidate_count=0`、`checked_candidate_count=0`，validator 仍通过，表示结构化等待/阻断状态而不是伪造通过。未来 generated candidate 进入该层时，报告会复核 candidate review 提供的 local path / sha，记录文件类型、sha、size；PNG 会检查尺寸、alpha visible ratio、subject bbox、edge contact 和 cutout review 状态；SVG 会检查 `<svg`、script 和远程引用；WebP 在无本地 decode 依赖时只能标记为 `needs_review_unsupported_decode`。v0.1 不允许该层直接宣称可晋升，所有 generated candidate 最多进入 `needs_review` 或 `blocked_pending_quality_gates`，仍必须等待显式 promotion gate。
 
-`MapComponentPromotionGateReport v0.1` 是显式晋升门。当前 `promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。只有未来 candidate review 真正通过，才允许单独生成新的 MapComponentMediaManifest 或 promotion report。
+`MapComponentPromotionGateReport v0.1` 是显式晋升门。它默认读取 `MapComponentVisualQualityReport v0.1`，顶层记录 `source_visual_quality_report_path`，并在每个 decision 中写入 visual quality report 状态、匹配 item 状态、是否已检查、是否必需和阻断原因；baseline fixture 不要求 visual item。当前 visual quality report 为 `awaiting_generated_candidates`，`promotion_allowed_count=0`、`baseline_preserved_count=36`，且不写新的 manifest、不改 StylePack、不改 RenderPlan、不改前端默认消费、不改 runtime map truth。未来 generated candidate 的 promotion 条件必须同时满足 candidate review 自身允许、visual report 中存在匹配 item、该 item 未处于 `blocked_pending_quality_gates` / `needs_review_unsupported_decode`，并且 runtime readiness 仍由更后续发布机制决定；v0.1 不把 visual `runtime_ready` 放宽为晋升条件。
 
 该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。Manifest 与报告都不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
 
@@ -287,7 +287,7 @@ worldbook + node state + visual identity
 
 在该链路中，`MapStyleComponentBindingReport` 只是审查和 evidence gate。Procedural renderer 可以读取其解析过的表现层引用，但路线、塔位、目标、资源、机关和阻挡区域仍只能来自 `MapRuntimePackage` / `MapRuntimePackage v0.2 preview` 的结构化字段。
 
-`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再进入 artifact staging 的 36 个 awaiting slot；candidate review 会读取该 staging manifest，但因为 `imported_count=0`，仍只保留 baseline fixture evidence，并由 promotion gate 明确保持阻断。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
+`MapComponentMediaManifest` 同样只是表现层组件媒体事实：它证明本地组件文件、尺寸、sha 和 style/node 归属，不证明地图玩法事实。当前 deterministic SVG baseline 会先进入 generation request pack，再进入 artifact staging 的 36 个 awaiting slot；candidate review 会读取该 staging manifest，但因为 `imported_count=0`，仍只保留 baseline fixture evidence；visual quality report 因无 generated candidate 保持 `awaiting_generated_candidates`，promotion gate 会显式读取该 visual report 并继续阻断晋升。即使 manifest URL 可解析，前端默认 runtime 是否消费这些组件也必须由后续明确发布 / 前端合同任务决定。
 
 ### 3.2 前端视觉路线确认
 
