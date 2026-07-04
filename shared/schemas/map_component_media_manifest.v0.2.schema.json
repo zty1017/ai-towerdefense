@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_component_media_manifest.v0.2.schema.json",
+  "title": "MapComponentMediaManifest v0.2",
+  "description": "Preview-only MapStylePack component media manifest that keeps v0.1 SVG baseline refs intact while allowing future PNG, WebP, and atlas animation refs. It is never a runtime semantic source and is not consumed by the frontend by default.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "media_pack_id",
+    "created_at",
+    "source_manifest_path",
+    "source_manifest_schema_version",
+    "source_style_pack_paths",
+    "public_url_prefix",
+    "media_layer",
+    "usage_policy",
+    "items",
+    "summary",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_component_media_manifest.v0.2" },
+    "media_pack_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_manifest_path": {
+      "type": "string",
+      "pattern": "^game_data/media/map_components/map_component_media_manifest\\.v0\\.1\\.json$"
+    },
+    "source_manifest_schema_version": {
+      "type": "string",
+      "const": "map_component_media_manifest.v0.1"
+    },
+    "source_style_pack_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "public_url_prefix": { "type": "string", "const": "/assets/map_components" },
+    "media_layer": { "type": "string", "const": "reviewed_map_component_media_preview_v0_2" },
+    "usage_policy": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "review_gate_only",
+          "not_runtime_semantic_source",
+          "no_image_to_map_semantic_inference",
+          "local_reviewed_component_only",
+          "no_frontend_default_consumption",
+          "no_provider_or_prompt_payload",
+          "no_external_temporary_url",
+          "preview_artifact_only"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "asset_id",
+        "asset_type",
+        "media_role",
+        "media_layer",
+        "media_kind",
+        "component_role",
+        "style_pack_id",
+        "node_id",
+        "source_owner_id",
+        "source_binding",
+        "usage_policy",
+        "source_kind"
+      ],
+      "properties": {
+        "stable_internal_id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "asset_id": { "type": "string", "minLength": 1 },
+        "asset_type": { "type": "string", "const": "map_component" },
+        "media_role": {
+          "type": "string",
+          "enum": ["map_component_material", "map_component_prefab"]
+        },
+        "media_layer": { "type": "string", "const": "reviewed_map_component_media_preview_v0_2" },
+        "media_kind": {
+          "type": "string",
+          "enum": ["svg", "png", "webp", "atlas_animation"]
+        },
+        "component_role": { "type": "string", "minLength": 1 },
+        "style_pack_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "source_owner_id": { "type": "string", "minLength": 1 },
+        "source_binding": {
+          "type": "string",
+          "enum": ["material.component_ref", "prefab.visual_ref"]
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^/assets/map_components/[A-Za-z0-9_./-]+\\.(svg|png|webp)$"
+        },
+        "local_path": {
+          "type": "string",
+          "pattern": "^game_data/media/map_components/[A-Za-z0-9_./-]+\\.(svg|png|webp)$"
+        },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "file_type": { "type": "string", "enum": ["svg", "png", "webp"] },
+        "atlas_manifest_path": {
+          "type": "string",
+          "pattern": "^game_data/media/map_components/[A-Za-z0-9_./-]+_atlas_manifest\\.v0\\.1\\.json$"
+        },
+        "animation_id": { "type": "string", "minLength": 1 },
+        "spritesheet_summary": { "$ref": "#/$defs/spritesheet_summary" },
+        "usage_policy": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "source_kind": { "type": "string", "minLength": 1 }
+      },
+      "oneOf": [
+        {
+          "required": ["url", "local_path", "width", "height", "sha256", "file_type"],
+          "properties": {
+            "media_kind": { "enum": ["svg", "png", "webp"] },
+            "atlas_manifest_path": false,
+            "animation_id": false,
+            "spritesheet_summary": false
+          }
+        },
+        {
+          "required": ["atlas_manifest_path", "animation_id"],
+          "properties": {
+            "media_kind": { "const": "atlas_animation" },
+            "url": false,
+            "local_path": false,
+            "width": false,
+            "height": false,
+            "file_type": false
+          }
+        }
+      ]
+    },
+    "spritesheet_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "local_path", "width", "height", "sha256", "file_type"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^/assets/map_components/[A-Za-z0-9_./-]+\\.(png|webp)$"
+        },
+        "local_path": {
+          "type": "string",
+          "pattern": "^game_data/media/map_components/[A-Za-z0-9_./-]+\\.(png|webp)$"
+        },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "file_type": { "type": "string", "enum": ["png", "webp"] }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style_pack_count",
+        "node_count",
+        "component_count",
+        "material_component_count",
+        "prefab_component_count",
+        "roles",
+        "media_kind_counts",
+        "atlas_animation_count",
+        "single_image_count"
+      ],
+      "properties": {
+        "style_pack_count": { "type": "integer", "minimum": 0 },
+        "node_count": { "type": "integer", "minimum": 0 },
+        "component_count": { "type": "integer", "minimum": 0 },
+        "material_component_count": { "type": "integer", "minimum": 0 },
+        "prefab_component_count": { "type": "integer", "minimum": 0 },
+        "roles": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "media_kind_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "atlas_animation_count": { "type": "integer", "minimum": 0 },
+        "single_image_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "const": "tools/media/validate_map_component_media_pack_v02.py" },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

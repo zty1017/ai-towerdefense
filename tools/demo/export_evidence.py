@@ -158,6 +158,8 @@ PATHS = {
     / "examples/review_packs/map_path_geometry_report.v0.1.json",
     "map_component_media_manifest": ROOT
     / "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+    "map_component_media_manifest_v02": ROOT
+    / "game_data/media/map_components/map_component_media_manifest.v0.2.json",
     "map_style_component_binding_report": ROOT
     / "examples/review_packs/map_style_component_binding_report.v0.1.json",
     "map_component_generation_request_pack": ROOT
@@ -512,6 +514,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_component_media_pack.py",
             "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_media_manifest_v02_preview",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_media_pack_v02.py",
+            "game_data/media/map_components/map_component_media_manifest.v0.2.json",
         ],
     },
     {
@@ -1317,6 +1327,9 @@ def map_component_media_summary(manifest: dict[str, Any]) -> dict[str, Any]:
         "style_pack_count": summary.get("style_pack_count"),
         "node_count": summary.get("node_count"),
         "component_roles": as_obj(summary.get("roles")),
+        "media_kind_counts": as_obj(summary.get("media_kind_counts")),
+        "single_image_count": summary.get("single_image_count"),
+        "atlas_animation_count": summary.get("atlas_animation_count"),
         "media_roles": count_by(items, "media_role"),
         "usage_policy": as_list(manifest.get("usage_policy")),
         "sample_items": [
@@ -1326,6 +1339,7 @@ def map_component_media_summary(manifest: dict[str, Any]) -> dict[str, Any]:
                 "node_id": item.get("node_id"),
                 "source_owner_id": item.get("source_owner_id"),
                 "component_role": item.get("component_role"),
+                "media_kind": item.get("media_kind"),
                 "url": item.get("url"),
                 "local_path": item.get("local_path"),
                 "sha256": item.get("sha256"),
@@ -3899,6 +3913,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("map_path_geometry_report", PATHS["map_path_geometry_report"]),
         ("map_component_media_manifest", PATHS["map_component_media_manifest"]),
         (
+            "map_component_media_manifest_v02_preview",
+            PATHS["map_component_media_manifest_v02"],
+        ),
+        (
             "map_style_component_binding_report",
             PATHS["map_style_component_binding_report"],
         ),
@@ -4130,6 +4148,9 @@ def build_evidence(
     )
     map_path_geometry_report = load_json(PATHS["map_path_geometry_report"])
     map_component_media_manifest = load_json(PATHS["map_component_media_manifest"])
+    map_component_media_manifest_v02 = load_json(
+        PATHS["map_component_media_manifest_v02"]
+    )
     map_style_component_binding_report = load_json(
         PATHS["map_style_component_binding_report"]
     )
@@ -4325,6 +4346,9 @@ def build_evidence(
         ),
         "map_path_geometry": map_path_geometry_summary(map_path_geometry_report),
         "map_component_media": map_component_media_summary(map_component_media_manifest),
+        "map_component_media_v02_preview": map_component_media_summary(
+            map_component_media_manifest_v02
+        ),
         "map_style_component_bindings": map_style_component_binding_summary(
             map_style_component_binding_report
         ),
@@ -4440,6 +4464,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_component_media = as_obj(evidence.get("map_component_media"))
+    map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
     map_style_component_bindings = as_obj(
         evidence.get("map_style_component_bindings")
     )
@@ -4860,6 +4885,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
+        f"- MapComponentMediaManifest v0.2 preview：`{map_component_media_v02.get('media_pack_id')}`，components `{map_component_media_v02.get('component_count')}`，single images `{map_component_media_v02.get('single_image_count')}`，atlas animations `{map_component_media_v02.get('atlas_animation_count')}`，media kinds `{map_component_media_v02.get('media_kind_counts')}`，默认前端消费 `{('no_frontend_default_consumption' in as_list(map_component_media_v02.get('usage_policy')))}`",
         f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
         f"- MapComponent generation request pack：`{map_component_generation_request.get('status')}`，requests `{map_component_generation_request.get('request_count')}`，components `{map_component_generation_request.get('component_count')}`，target kinds `{map_component_generation_request.get('target_media_kind_counts')}`",
         f"- MapComponent artifact staging：`{map_component_artifact_staging.get('status')}`，slots `{map_component_artifact_staging.get('slot_count')}`，imported `{map_component_artifact_staging.get('imported_count')}`，awaiting `{map_component_artifact_staging.get('awaiting_count')}`，not imported `{map_component_artifact_staging.get('not_imported_count')}`，runtime/manifest 写入 `{map_component_artifact_staging.get('runtime_effect')}`",
@@ -5058,6 +5084,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
+    map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
     map_component_generation_pipeline = as_obj(
         evidence.get("map_component_generation_pipeline")
     )
@@ -5391,6 +5418,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">地图路径几何审查</div>
           <div class="metric">{html_escape(map_path_geometry.get("status"))}</div>
           <p class="muted">地图 {html_escape(map_path_geometry.get("map_count"))}；路线 {html_escape(map_path_geometry.get("route_count"))}；塔位 {html_escape(map_path_geometry.get("build_slot_count"))}；warning {html_escape(map_path_geometry.get("warning_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapComponent v0.2 Preview</div>
+          <div class="metric">{html_escape(map_component_media_v02.get("component_count"))}</div>
+          <p class="muted">single images {html_escape(map_component_media_v02.get("single_image_count"))}；atlas {html_escape(map_component_media_v02.get("atlas_animation_count"))}；media kinds {html_escape(map_component_media_v02.get("media_kind_counts"))}；默认消费 {html_escape("no_frontend_default_consumption" in as_list(map_component_media_v02.get("usage_policy")))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapComponent Visual Gate</div>

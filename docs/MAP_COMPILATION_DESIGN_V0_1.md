@@ -99,6 +99,8 @@ MapStylePack material.component_ref / prefab visual_ref
 
 `MapComponentMediaManifest v0.1` 只登记 reviewed local component media：local refs、sha256、width/height、component_role、style_pack_id / node_id 和 usage policy。它可以让 `/assets/map_components/...` 的表现层组件 URL 在后端只读静态挂载中可解析，但不表示前端默认会消费这些组件，也不允许组件反向决定任何地图语义。
 
+`MapComponentMediaManifest v0.2` 是旁路 / preview manifest，不替换正式 v0.1 manifest，也不改变默认前端消费。当前 v0.2 从 v0.1 deterministic SVG baseline 迁移，仍保持 36 个 stable component id、sha、StylePack / node / source binding 不变；新增 `media_kind`、`file_type`、`media_kind_counts`、`single_image_count`、`atlas_animation_count` 等字段，以便后续承接 PNG、WebP 和 atlas animation 引用。v0.2 继续声明 `not_runtime_semantic_source`、`no_image_to_map_semantic_inference`、`no_frontend_default_consumption`、`no_provider_or_prompt_payload` 和 `no_external_temporary_url`，并由独立 validator 校验本地路径、sha、文件头、SVG 安全规则和 atlas 引用存在性。
+
 当前真实 AI 组件生成尚未接入 provider。为了让后续图像 / 视频组件候选有可审查入口，组件媒体链路先扩展为 review-only 门禁结构：
 
 ```text
