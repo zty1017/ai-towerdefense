@@ -213,6 +213,8 @@ PATHS = {
     / "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json",
     "map_v02_preview_api_smoke_report": ROOT
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "mvp_demo_readiness_report": ROOT
+    / "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
 }
 
 STATIC_VALIDATION_COMMANDS = [
@@ -869,6 +871,17 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_runtime_package.py",
             "examples/runtime_packages/mvp_demo.runtime_package.json",
+        ],
+    },
+    {
+        "name": "mvp_demo_readiness_report",
+        "command": [
+            "python3",
+            "tools/demo/build_mvp_demo_readiness_report.py",
+            "--output",
+            "/tmp/ai_td_mvp_demo_readiness_report.json",
+            "--generated-at",
+            "2026-07-04T00:00:00+00:00",
         ],
     },
 ]
@@ -2562,6 +2575,60 @@ def collect_core_artifact_alignment_report(report: dict[str, Any]) -> dict[str, 
     }
 
 
+def collect_mvp_demo_readiness_report(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    gates = [
+        {
+            "gate_id": gate.get("gate_id"),
+            "title": gate.get("title"),
+            "status": gate.get("status"),
+            "required_for_mvp_demo": gate.get("required_for_mvp_demo"),
+            "summary": gate.get("summary"),
+            "metrics": as_obj(gate.get("metrics")),
+        }
+        for gate in as_list(report.get("gates"))
+        if isinstance(gate, dict)
+    ]
+    limitations = [
+        {
+            "limitation_id": item.get("limitation_id"),
+            "severity": item.get("severity"),
+            "summary": item.get("summary"),
+        }
+        for item in as_list(report.get("known_limitations"))
+        if isinstance(item, dict)
+    ]
+    return {
+        "report_id": report.get("report_id"),
+        "schema_version": report.get("schema_version"),
+        "overall_status": report.get("overall_status"),
+        "summary": {
+            "required_gate_count": summary.get("required_gate_count"),
+            "required_gate_passed_or_expected_count": summary.get(
+                "required_gate_passed_or_expected_count"
+            ),
+            "blocking_gate_count": summary.get("blocking_gate_count"),
+            "warning_gate_count": summary.get("warning_gate_count"),
+            "expected_block_count": summary.get("expected_block_count"),
+            "evidence_source_count": summary.get("evidence_source_count"),
+            "provider_call_count_by_report": summary.get(
+                "provider_call_count_by_report"
+            ),
+            "world_mutation_count_by_report": summary.get(
+                "world_mutation_count_by_report"
+            ),
+            "runtime_mutation_count_by_report": summary.get(
+                "runtime_mutation_count_by_report"
+            ),
+        },
+        "demo_claim": as_obj(report.get("demo_claim")),
+        "gates": gates,
+        "known_limitations": limitations,
+        "recommended_next_actions": as_list(report.get("recommended_next_actions")),
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
 def collect_world_delta_transaction(transaction: dict[str, Any]) -> dict[str, Any]:
     delta_ref = as_obj(transaction.get("world_state_delta_ref"))
     report = as_obj(transaction.get("validation_report"))
@@ -3027,6 +3094,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_v02_preview_api_smoke_report",
             PATHS["map_v02_preview_api_smoke_report"],
         ),
+        (
+            "mvp_demo_readiness_report",
+            PATHS["mvp_demo_readiness_report"],
+        ),
         ("context_package_example", PATHS["context_package_example"]),
         ("fact_entry_example", PATHS["fact_entry_example"]),
         ("cgop_example", PATHS["cgop_example"]),
@@ -3294,6 +3365,7 @@ def build_evidence() -> dict[str, Any]:
     map_v02_preview_api_smoke_report = load_json(
         PATHS["map_v02_preview_api_smoke_report"]
     )
+    mvp_demo_readiness_report = load_json(PATHS["mvp_demo_readiness_report"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
@@ -3326,6 +3398,9 @@ def build_evidence() -> dict[str, Any]:
             "runtime_mode": "FastAPI + SQLite 后端，前端当前消费 fixture-backed mock API。",
             "player_boundary": "玩家侧只看到世界内研发和战斗结果；本证据包是评审/录屏用内部摘要。",
         },
+        "mvp_demo_readiness": collect_mvp_demo_readiness_report(
+            mvp_demo_readiness_report
+        ),
         "ai_compilation_link": collect_ai_compilation_link(
             frontend_pack, dossier, multistage_pack
         ),
@@ -3451,6 +3526,8 @@ def md_table(headers: list[str], rows: list[list[Any]]) -> str:
 
 def render_summary_markdown(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
+    readiness = as_obj(evidence.get("mvp_demo_readiness"))
+    readiness_summary = as_obj(readiness.get("summary"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     primary_flow_api = as_obj(
         as_obj(evidence.get("backend_api_evidence")).get("mvp_primary_flow")
@@ -3695,6 +3772,23 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for artifact in as_list(provider_image_staging.get("staged_artifacts"))
     ]
+    readiness_rows = [
+        [
+            gate.get("gate_id"),
+            gate.get("status"),
+            gate.get("required_for_mvp_demo"),
+            gate.get("summary"),
+        ]
+        for gate in as_list(readiness.get("gates"))
+    ]
+    limitation_rows = [
+        [
+            item.get("limitation_id"),
+            item.get("severity"),
+            item.get("summary"),
+        ]
+        for item in as_list(readiness.get("known_limitations"))
+    ]
     core_alignment_rows = [
         [
             target.get("target_id"),
@@ -3724,6 +3818,14 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 证据边界：{project.get('player_boundary')}",
         "",
         "## 1. AI 编译链路存在性",
+        "",
+        f"- MVP 演示 readiness：`{readiness.get('overall_status')}`",
+        f"- 必需 gate：`{readiness_summary.get('required_gate_passed_or_expected_count')}` / `{readiness_summary.get('required_gate_count')}`；阻断 `{readiness_summary.get('blocking_gate_count')}`；warning `{readiness_summary.get('warning_gate_count')}`；预期阻断 `{readiness_summary.get('expected_block_count')}`",
+        f"- readiness 报告自身 provider 调用：`{readiness_summary.get('provider_call_count_by_report')}`，世界修改：`{readiness_summary.get('world_mutation_count_by_report')}`，runtime 修改：`{readiness_summary.get('runtime_mutation_count_by_report')}`",
+        "",
+        md_table(["Gate", "状态", "MVP 必需", "摘要"], readiness_rows),
+        "",
+        md_table(["限制", "严重度", "说明"], limitation_rows),
         "",
         f"- 受控链路说明：{ai_link.get('claim')}",
         f"- MVP 主流程 API smoke：`{primary_flow_api.get('status')}`，步骤 `{primary_flow_api.get('passed_step_count')}` / `{primary_flow_api.get('step_count')}`，节点 `{primary_flow_api.get('node_id')}`，transport `{primary_flow_api.get('transport')}`",
@@ -3969,6 +4071,8 @@ def render_asset_samples(samples: list[Any]) -> str:
 
 def render_index_html(evidence: dict[str, Any]) -> str:
     project = as_obj(evidence.get("project_positioning"))
+    readiness = as_obj(evidence.get("mvp_demo_readiness"))
+    readiness_summary = as_obj(readiness.get("summary"))
     ai_link = as_obj(evidence.get("ai_compilation_link"))
     counts = as_obj(ai_link.get("compiled_artifact_counts"))
     primary_flow_api = as_obj(
@@ -4175,6 +4279,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       font-weight: 700;
       color: var(--accent);
     }}
+    .status-metric {{
+      font-size: 18px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }}
     .eyebrow {{
       color: var(--muted);
       font-size: 12px;
@@ -4222,6 +4331,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     <section>
       <h2>核心证据</h2>
       <div class="grid">
+        <article class="card">
+          <div class="eyebrow">MVP Readiness</div>
+          <div class="metric status-metric">{html_escape(readiness.get("overall_status"))}</div>
+          <p class="muted">必需 gate {html_escape(readiness_summary.get("required_gate_passed_or_expected_count"))} / {html_escape(readiness_summary.get("required_gate_count"))}；阻断 {html_escape(readiness_summary.get("blocking_gate_count"))}；warning {html_escape(readiness_summary.get("warning_gate_count"))}。</p>
+        </article>
         <article class="card">
           <div class="eyebrow">可玩资产</div>
           <div class="metric">{html_escape(counts.get("playable_assets"))}</div>
@@ -4426,6 +4540,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     </section>
     <section>
       <h2>AI 编译链路</h2>
+      <p>演示 readiness：<code>{html_escape(readiness.get("overall_status"))}</code>；预期阻断：<code>{html_escape(readiness_summary.get("expected_block_count"))}</code>；报告自身 provider 调用：<code>{html_escape(readiness_summary.get("provider_call_count_by_report"))}</code>。</p>
       <p>{html_escape(ai_link.get("claim"))}</p>
       <p>链路步骤：<code>{html_escape(" -> ".join(as_list(ai_link.get("pipeline_steps"))))}</code></p>
       <p class="muted">本页面只展示摘要、路径和文件指纹；内部生成细节已过滤。</p>
