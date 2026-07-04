@@ -114,6 +114,8 @@ shared/schemas/ + tools/ + 专题文档
   - 后端已暴露 review-only `/api/sessions/{session_id}/battles/{node_id}/map-v02-preview`：聚合 `MapRuntimePackage v0.2 preview`、v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref。该接口只用于审查 / Studio / 录屏证据，`runtime_activation_allowed=false`，不改变默认 `/map-runtime-package` 的 v0.1 玩家运行时路径。
 - `tools/dev/check_map_v02_preview_api.py`、`examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json`
   - 后端 v0.2 地图预览 API 的 TestClient smoke 证据：创建匿名 session，逐节点请求 `/map-v02-preview`，确认 v0.2 强语义可读、默认 `/map-runtime-package` 仍保持 v0.1、unknown node 返回 404，且 provider 调用、`.env` 读取、玩家默认 runtime 修改均为 0。
+- `tools/dev/check_mvp_primary_api_flow.py`、`examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`
+  - MVP 玩家主流程 API smoke 证据：启动本地 `uvicorn` 临时服务和临时 SQLite，走通匿名 session、世界实例、开场、mock pack、大地图、campaign router、预取、节点 briefing、研发 proposal/job、战斗配置、runtime package、MapRuntimePackage、RenderPlan、v0.2 地图预览、战斗结果、latest settlement 和 session evidence；该报告纳入统一 demo evidence，证明主路径可通过真实本地 HTTP 调用完成。
 
 ### AI 编译器与 AssetGraph
 

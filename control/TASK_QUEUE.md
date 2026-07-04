@@ -82,6 +82,7 @@ P2：本阶段明确不做
 - MapRuntimePackage v0.2 的强语义 preview 已接入 RenderPlan 旁路预览：`examples/map_render_plans_v02/`、`examples/semantic_visual_consistency_reports_v02/` 和 `examples/map_render_previews_v02/` 会用结构化资源点、机关区、防守锚点和阻挡区生成 review-only evidence；统一 demo evidence 会展示 `procedural_map_previews_v02`，但前端/后端默认 runtime 仍使用 v0.1。
 - 后端已提供 review-only v0.2 地图预览接口：`GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview` 会聚合 `MapRuntimePackage v0.2 preview`、v0.2 RenderPlan bundle、语义一致性报告、preview report 和 SVG ref；该接口仅供审查 / Studio / 录屏证据使用，不替换默认 `/map-runtime-package` 的 v0.1 玩家运行时包。
 - 后端 v0.2 地图预览 API 已有 TestClient smoke 证据：`tools/dev/check_map_v02_preview_api.py` 会创建匿名 session 并请求三张节点的 `/map-v02-preview`，生成 `examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json`；统一 demo evidence 会展示该接口 smoke 摘要。
+- MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -3067,6 +3068,51 @@ assert api['node_count'] == 3
 assert api['default_runtime_v01_preserved_count'] == 3
 assert api['safety']['provider_call_count'] == 0
 assert api['runtime_activation_allowed'] is False
+PY
+git diff --check
+```
+
+#### P1-D-16 MVP 主流程 API smoke evidence
+
+状态：已完成第一版本地 HTTP smoke 证据。
+
+目标：
+
+```text
+把玩家 MVP 主路径纳入可重复演示证据：通过本地 HTTP 调用走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，证明后端 mock API 足以支撑当前演示闭环。
+```
+
+已落地：
+
+- `tools/dev/check_mvp_primary_api_flow.py`：启动临时 `uvicorn` 服务和临时 SQLite，使用真实 localhost HTTP 请求跑主流程。
+- `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`：固化本轮通过报告，记录 21 个 endpoint step、主节点、研发 job、地图包、结算和安全摘要。
+- `tools/demo/export_evidence.py`：读取 smoke report，新增 `backend_api_evidence.mvp_primary_flow`，并在 `summary.md` / `index.html` 展示主流程 smoke 摘要。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：补充该 evidence 事实源。
+- `examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不改前端玩家默认地图渲染。
+- smoke 工具只绑定 `127.0.0.1` 临时端口，使用临时 SQLite，不写长期 session 数据。
+- 报告不保存玩家输入正文、玩家长文本、provider 原始输出或 trace 文件路径，只保存计数、状态和脱敏 endpoint 模板。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-mvp-api-flow python3 -m py_compile tools/dev/check_mvp_primary_api_flow.py tools/demo/export_evidence.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence-develop UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence-develop uv run --extra dev python tools/dev/check_mvp_primary_api_flow.py --output /tmp/mvp_primary_api_flow_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00
+python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_primary_api_flow_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/mvp_primary_api_flow_evidence/evidence.json').read_text(encoding='utf-8'))
+flow = evidence['backend_api_evidence']['mvp_primary_flow']
+assert flow['status'] == 'passed'
+assert flow['passed_step_count'] == flow['step_count'] == 21
+assert flow['research']['job_status'] == 'completed'
+assert flow['safety']['provider_call_count'] == 0
+assert flow['safety']['runtime_activation_mutation_count'] == 0
 PY
 git diff --check
 ```
