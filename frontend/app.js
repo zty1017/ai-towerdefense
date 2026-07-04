@@ -2659,6 +2659,8 @@
         highlight: rgbaFromStyle("accent", 0.2, "rgba(201,169,103,0.18)"),
         shoulderDark: rgbaFromStyle("terrain_base", 0.58, "rgba(61,69,46,0.62)"),
         shoulderSoft: rgbaFromStyle("terrain_detail", 0.42, "rgba(33,41,32,0.46)"),
+        groundBlend: rgbaFromStyle("terrain_base", 0.36, "rgba(28,34,25,0.36)"),
+        edgeStain: rgbaFromStyle("road_base", 0.22, "rgba(111,77,56,0.22)"),
         pebbleWarm: rgbaFromStyle("road_edge", 0.24, "rgba(196,164,102,0.24)"),
         rut: rgbaFromStyle("road_base", 0.28, "rgba(62,45,27,0.24)"),
         flow: rgbaFromStyle("accent", 0.14, "rgba(255,213,126,0.14)"),
@@ -2784,6 +2786,8 @@
       width: 38 + rng() * 88,
       alpha: 0.035 + rng() * 0.045,
     }));
+    const scenicRidges = buildScenicRidges(rng, grid);
+    const fieldEdgeProps = buildFieldEdgeProps(rng);
     const roadsideProps = buildRoadsideProps(rng, profile);
     const accessTrails = buildSlotAccessTrails();
     const features = {
@@ -2796,12 +2800,62 @@
       debris,
       darkPools,
       landmarks,
+      scenicRidges,
+      fieldEdgeProps,
       wisps,
       roadsideProps,
       accessTrails,
     };
     if (battle) battle.terrainFeatureSet = features;
     return features;
+  }
+
+  function buildScenicRidges(rng, grid) {
+    const ridges = [];
+    const maxX = Math.max(1, grid.width_cells - 1);
+    const maxY = Math.max(1, grid.height_cells - 1);
+    const anchors = [
+      { x: -1.6, y: -0.4, w: 5.8, h: 1.4, side: "top" },
+      { x: maxX * 0.34, y: -1.1, w: 6.2, h: 1.25, side: "top" },
+      { x: maxX - 3.1, y: -0.5, w: 5.6, h: 1.35, side: "top" },
+      { x: maxX + 0.4, y: maxY * 0.18, w: 1.6, h: 4.6, side: "right" },
+      { x: maxX + 0.1, y: maxY * 0.58, w: 1.8, h: 4.2, side: "right" },
+      { x: maxX * 0.2, y: maxY + 0.4, w: 5.8, h: 1.55, side: "bottom" },
+      { x: maxX * 0.62, y: maxY + 0.2, w: 6.4, h: 1.5, side: "bottom" },
+      { x: -1.3, y: maxY * 0.52, w: 1.7, h: 4.4, side: "left" },
+    ];
+    for (const anchor of anchors) {
+      ridges.push({
+        x: anchor.x + (rng() - 0.5) * 0.8,
+        y: anchor.y + (rng() - 0.5) * 0.55,
+        width: anchor.w * (0.86 + rng() * 0.22),
+        height: anchor.h * (0.86 + rng() * 0.26),
+        side: anchor.side,
+        alpha: 0.18 + rng() * 0.16,
+        warm: rng() > 0.56,
+      });
+    }
+    return ridges;
+  }
+
+  function buildFieldEdgeProps(rng) {
+    const props = [];
+    const edgeCount = 8;
+    for (let i = 0; i < edgeCount; i += 1) {
+      const count = 4 + Math.floor(rng() * 3);
+      for (let j = 0; j < count; j += 1) {
+        if (rng() < 0.18) continue;
+        props.push({
+          edgeIndex: i,
+          t: (j + 0.16 + rng() * 0.68) / count,
+          angleJitter: (rng() - 0.5) * 0.5,
+          scale: 0.58 + rng() * 0.92,
+          kind: rng() < 0.42 ? "stone" : rng() < 0.76 ? "timber" : "reed",
+          alpha: 0.18 + rng() * 0.18,
+        });
+      }
+    }
+    return props;
   }
 
   function buildRoadsideProps(rng, profile) {
@@ -2899,8 +2953,10 @@
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, m.width, m.height);
 
+    drawScenicBackplate(ctx, m, features);
     drawTerrainDepthBands(ctx, m, features);
     drawPlayableFieldBoundary(ctx, m);
+    drawFieldEdgeBreakup(ctx, m, features);
 
     for (const patch of features.patches) {
       drawOrganicTerrainPatch(ctx, m, patch);
@@ -2973,7 +3029,7 @@
     ctx.save();
     ctx.translate(0, m.tileH * 0.52);
     traceOrganicClosedShape(ctx, points);
-    ctx.fillStyle = "rgba(0,0,0,0.46)";
+    ctx.fillStyle = "rgba(0,0,0,0.32)";
     ctx.fill();
     ctx.restore();
 
@@ -2986,18 +3042,97 @@
     ctx.fillStyle = fill;
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(7,9,8,0.72)";
-    ctx.lineWidth = Math.max(12, m.tileW * 0.12);
+    ctx.strokeStyle = "rgba(7,9,8,0.44)";
+    ctx.lineWidth = Math.max(8, m.tileW * 0.075);
     traceOrganicClosedShape(ctx, points);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(95,96,64,0.5)";
-    ctx.lineWidth = Math.max(5, m.tileW * 0.046);
+    ctx.strokeStyle = "rgba(95,96,64,0.34)";
+    ctx.lineWidth = Math.max(4, m.tileW * 0.034);
     traceOrganicClosedShape(ctx, points);
     ctx.stroke();
     ctx.strokeStyle = "rgba(224,188,105,0.12)";
     ctx.lineWidth = Math.max(2, m.tileW * 0.018);
     traceOrganicClosedShape(ctx, points);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawScenicBackplate(ctx, m, features) {
+    const soil = features.profile.soil;
+    ctx.save();
+    for (const ridge of features.scenicRidges || []) {
+      const p = projectCell(ridge.x, ridge.y);
+      const rx = Math.max(36, m.tileW * ridge.width * 0.34);
+      const ry = Math.max(18, m.tileH * ridge.height * 0.7);
+      const color = ridge.warm ? "rgba(105,88,59," : "rgba(39,64,58,";
+      ctx.fillStyle = `${color}${ridge.alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx, ry, -0.18, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = alphaColor(soil[1], 0.12);
+      ctx.lineWidth = Math.max(2, m.tileW * 0.018);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - ry * 0.08, rx * 0.74, ry * 0.5, -0.18, 0.18, Math.PI * 1.12);
+      ctx.stroke();
+    }
+
+    const glow = ctx.createRadialGradient(
+      m.safeArea.left + (m.width - m.safeArea.left - m.safeArea.right) * 0.54,
+      m.safeArea.top + (m.height - m.safeArea.top - m.safeArea.bottom) * 0.42,
+      8,
+      m.width * 0.54,
+      m.height * 0.52,
+      Math.max(m.width, m.height) * 0.62,
+    );
+    glow.addColorStop(0, "rgba(236,204,129,0.07)");
+    glow.addColorStop(0.46, "rgba(118,139,109,0.04)");
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, m.width, m.height);
+    ctx.restore();
+  }
+
+  function drawFieldEdgeBreakup(ctx, m, features) {
+    const props = features.fieldEdgeProps || [];
+    if (!props.length) return;
+    const perimeter = fieldPerimeterPoints(1.02);
+    ctx.save();
+    for (const prop of props) {
+      const a = perimeter[prop.edgeIndex % perimeter.length];
+      const b = perimeter[(prop.edgeIndex + 1) % perimeter.length];
+      const x = a.x + (b.x - a.x) * prop.t;
+      const y = a.y + (b.y - a.y) * prop.t;
+      if (x < -80 || y < -80 || x > m.width + 80 || y > m.height + 80) continue;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.atan2(b.y - a.y, b.x - a.x) + prop.angleJitter);
+      ctx.globalAlpha = prop.alpha;
+      const scale = prop.scale * Math.max(0.72, m.scale);
+      if (prop.kind === "timber") {
+        ctx.fillStyle = "rgba(114,87,48,0.72)";
+        ctx.strokeStyle = "rgba(230,190,108,0.2)";
+        ctx.lineWidth = Math.max(1, scale);
+        ctx.fillRect(-18 * scale, -3 * scale, 36 * scale, 6 * scale);
+        ctx.strokeRect(-18 * scale, -3 * scale, 36 * scale, 6 * scale);
+      } else if (prop.kind === "reed") {
+        ctx.strokeStyle = "rgba(142,161,108,0.78)";
+        ctx.lineWidth = Math.max(1, 1.1 * scale);
+        for (let i = 0; i < 3; i += 1) {
+          const x = (i - 1) * 4 * scale;
+          ctx.beginPath();
+          ctx.moveTo(x, 6 * scale);
+          ctx.quadraticCurveTo(x + 5 * scale, -7 * scale, x + 1 * scale, -18 * scale);
+          ctx.stroke();
+        }
+      } else {
+        ctx.fillStyle = "rgba(82,80,62,0.74)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10 * scale, 5 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -3206,6 +3341,7 @@
       const points = (route.waypoints || []).map((p) => projectCell(p.x, p.y));
       if (points.length < 2) continue;
       const roadWidth = Math.max(34, m.tileW * routeRoadWidthCells(route));
+      drawRoadTerrainBlend(ctx, route, points, roadWidth);
       drawRouteShoulders(ctx, route, points, roadWidth);
       ctx.strokeStyle = road.shadow || "rgba(18,13,10,0.54)";
       ctx.lineWidth = roadWidth * 1.18;
@@ -3227,6 +3363,55 @@
       drawRoadRuts(ctx, route, points, roadWidth);
       drawRouteFlowCues(ctx, route, points, roadWidth);
       drawRouteEdgeProps(ctx, route, roadWidth);
+    }
+    ctx.restore();
+  }
+
+  function drawRoadTerrainBlend(ctx, route, points, roadWidth) {
+    const road = battleNodeVisualProfile().road || {};
+    const shoulderScale = routeShoulderWidthScale(route);
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = road.groundBlend || "rgba(28,34,25,0.36)";
+    ctx.lineWidth = roadWidth * (1.55 + shoulderScale * 0.42);
+    traceRoutePath(ctx, points);
+    ctx.stroke();
+    ctx.strokeStyle = road.edgeStain || "rgba(111,77,56,0.22)";
+    ctx.lineWidth = roadWidth * (1.18 + shoulderScale * 0.25);
+    traceRoutePath(ctx, points);
+    ctx.stroke();
+
+    const rng = makeSeededRandom(runtimeMapSeed() ^ hashString(`road-blend:${route.route_id || ""}`));
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const a = points[i];
+      const b = points[i + 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / len;
+      const ny = dx / len;
+      const count = Math.max(2, Math.floor(len / 96));
+      for (let j = 0; j < count; j += 1) {
+        const t = (j + 0.12 + rng() * 0.76) / count;
+        const side = rng() > 0.5 ? -1 : 1;
+        const offset = side * roadWidth * (0.62 + rng() * 0.32);
+        const x = a.x + dx * t + nx * offset;
+        const y = a.y + dy * t + ny * offset;
+        ctx.fillStyle = rng() > 0.45 ? "rgba(33,46,34,0.2)" : "rgba(111,83,52,0.16)";
+        ctx.beginPath();
+        ctx.ellipse(
+          x,
+          y,
+          roadWidth * (0.11 + rng() * 0.12),
+          roadWidth * (0.035 + rng() * 0.055),
+          Math.atan2(dy, dx) + (rng() - 0.5) * 0.7,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -3329,16 +3514,16 @@
     const road = battleNodeVisualProfile().road || {};
     const shoulderScale = routeShoulderWidthScale(route);
     ctx.save();
-    ctx.strokeStyle = "rgba(6,7,6,0.42)";
-    ctx.lineWidth = roadWidth * (1.24 + shoulderScale * 0.46);
+    ctx.strokeStyle = "rgba(6,7,6,0.24)";
+    ctx.lineWidth = roadWidth * (1.16 + shoulderScale * 0.34);
     traceRoutePath(ctx, points);
     ctx.stroke();
-    ctx.strokeStyle = road.shoulderDark || "rgba(61,69,46,0.62)";
-    ctx.lineWidth = roadWidth * (1.08 + shoulderScale * 0.36);
+    ctx.strokeStyle = road.shoulderDark || "rgba(61,69,46,0.52)";
+    ctx.lineWidth = roadWidth * (1.02 + shoulderScale * 0.28);
     traceRoutePath(ctx, points);
     ctx.stroke();
-    ctx.strokeStyle = road.shoulderSoft || "rgba(33,41,32,0.46)";
-    ctx.lineWidth = roadWidth * (0.98 + shoulderScale * 0.3);
+    ctx.strokeStyle = road.shoulderSoft || "rgba(33,41,32,0.4)";
+    ctx.lineWidth = roadWidth * (0.94 + shoulderScale * 0.24);
     traceRoutePath(ctx, points);
     ctx.stroke();
 
@@ -3545,6 +3730,7 @@
     ctx.beginPath();
     ctx.ellipse(p.x, p.y + m.tileH * 0.18, rx * 1.08, ry * 0.78, 0, 0, Math.PI * 2);
     ctx.fill();
+    drawPlatformGroundStitch(ctx, p, m, rx, ry, rng, active);
     const fill = ctx.createLinearGradient(p.x, p.y - ry, p.x, p.y + ry);
     const platform = battleNodeVisualProfile().platform || {};
     fill.addColorStop(0, active ? platform.fillTop || "rgba(115,104,68,0.54)" : "rgba(75,79,55,0.42)");
@@ -3569,6 +3755,44 @@
         p.y + Math.sin(angle) * ry * 0.55,
         Math.max(2, m.tileW * (0.018 + rng() * 0.018)),
         Math.max(1, m.tileH * (0.018 + rng() * 0.018)),
+        angle,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPlatformGroundStitch(ctx, p, m, rx, ry, rng, active) {
+    ctx.save();
+    ctx.strokeStyle = active ? "rgba(255,225,161,0.2)" : "rgba(103,94,64,0.2)";
+    ctx.lineWidth = Math.max(1, m.tileW * 0.01);
+    for (let i = 0; i < 7; i += 1) {
+      const angle = rng() * Math.PI * 2;
+      const inner = 0.74 + rng() * 0.14;
+      const outer = 1.08 + rng() * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(
+        p.x + Math.cos(angle) * rx * inner,
+        p.y + Math.sin(angle) * ry * inner + m.tileH * 0.03,
+      );
+      ctx.lineTo(
+        p.x + Math.cos(angle) * rx * outer,
+        p.y + Math.sin(angle) * ry * outer + m.tileH * 0.03,
+      );
+      ctx.stroke();
+    }
+    ctx.fillStyle = active ? "rgba(255,225,161,0.1)" : "rgba(87,84,60,0.16)";
+    for (let i = 0; i < 5; i += 1) {
+      const angle = rng() * Math.PI * 2;
+      const dist = 0.92 + rng() * 0.34;
+      ctx.beginPath();
+      ctx.ellipse(
+        p.x + Math.cos(angle) * rx * dist,
+        p.y + Math.sin(angle) * ry * dist + m.tileH * 0.04,
+        Math.max(2, m.tileW * (0.014 + rng() * 0.018)),
+        Math.max(1, m.tileH * (0.012 + rng() * 0.016)),
         angle,
         0,
         Math.PI * 2,
