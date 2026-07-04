@@ -1,6 +1,6 @@
 # 地图编译设计采纳审查 v0.1
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 本文用于审查并项目化采纳外部 AI 给出的地图编译方案。该外部方案的核心建议是：
 
@@ -478,3 +478,77 @@ blocking_prop
 - `MapStylePack` 只提供 procedural prefab / palette，不决定语义位置。
 - `render_procedural_map_preview.py` 只输出 review-only SVG；不得作为 published visual layer 或玩家 runtime 背景。
 - `tools/demo/export_evidence.py` 会把 `examples/map_render_previews_v02/*.procedural_map_preview_report.json` 汇总到 `procedural_map_previews_v02`，用于评审证明强地图语义可被 deterministic renderer 消费。
+
+## 10. 外部 v0.3 执行建议复审
+
+2026-07-05 复审的外部 v0.3 文档进一步强调：
+
+```text
+logic-first
+semantic-first
+spline-based path
+stylepack-driven rendering
+validator-gated export
+```
+
+该方向继续采纳，但执行方式必须按本项目现有事实源改写。
+
+### 10.1 继续采纳的部分
+
+- 路线和道路视觉必须同源。当前可先由 `path_routes.waypoints` 采样生成 centerline / road band；后续再补 spline hints，而不是立即重构掉 waypoints。
+- 塔位、资源点、机关区、防守锚点和阻挡区必须来自结构化地图包；图片和 preview 只能表现这些事实，不能反向识别或覆盖这些事实。
+- StylePack 应成为地图视觉一致性的主要入口：道路、路肩、平台、资源点、机关、阻挡物、装饰和氛围都应从 StylePack / component atlas 中取表现素材。
+- Validator 名称可以作为任务语言保留：Reachability、Placement、Resource、Hazard、Collision、SemanticVisualConsistency、StyleConsistency。但字段事实仍以现有 schema 和 tools 为准。
+- 推荐路径模板可以作为开发者侧生成种子保留，例如单路 S 曲线、双路汇合、长折线路、短压迫路、中央环路；这些是 map template candidate，不是玩家自由输入。
+
+### 10.2 不直接采纳的部分
+
+外部 v0.3 中的以下建议不能直接派发给 worker：
+
+- 不新建独立 `PathGraph.schema.json`、`SplinePath.schema.json`、`PlacementMap.schema.json`、`ResourceNodeMap.schema.json`、`HazardZoneMap.schema.json`、`CollisionMap.schema.json`、`DecorationZoneMap.schema.json` 和 `LevelBundle.schema.json` 作为并列事实源。
+- 不把 `PathGraph / PlacementMap / ResourceNodeMap / HazardZoneMap` 作为新运行时合同替换 `MapRuntimePackage`。
+- 不把 `LevelBundle` 作为当前 v0.1 / v0.2 的强制产物；它最多是未来聚合层，应由现有包组合导出。
+- 不把 spline 作为近期强制迁移目标。近期应先在现有 waypoints 上派生 smooth centerline、road band 和塔位距离检查。
+- 不把 preview.png / SVG / AI map candidate 视为 published visual layer。它们仍是 review-only evidence，必须经过 promotion gate。
+
+### 10.3 下一步地图任务应这样拆
+
+后续地图相关 worker 应优先补现有链路，而不是从零铺新体系：
+
+```text
+MapRuntimePackage v0.1 / v0.2 preview
+  -> path sampling / road band geometry
+  -> slot distance and footprint validation
+  -> StylePack component slots
+  -> ProceduralMapRenderPlan
+  -> SemanticVisualConsistencyReport
+  -> review-only preview / evidence
+  -> explicit activation gate
+```
+
+建议任务顺序：
+
+1. `P1-MAP-F path geometry helper`
+   - 在不改 schema 的前提下，从现有 `path_routes.waypoints` 派生 sampled centerline、route length、turn tags、road band envelope。
+   - 供 RenderPlan、塔位评分和 validator 使用。
+2. `P1-MAP-G placement validation upgrade`
+   - 检查 build slot 与 road band、blocked areas、resource nodes、objective、spawn 的距离和重叠。
+   - 给塔位补 near_turn / near_choke / good_for_aoe 这类审查标签，但不改变 runtime 发布路径。
+3. `P1-MAP-H map component style slots`
+   - 扩展 StylePack 的 component 引用粒度，让道路边缘、平台、资源点、机关、阻挡物和氛围可以接 reviewed media atlas。
+   - AI 生成的是 component candidate，不是整图 runtime。
+4. `P1-MAP-I procedural battle backdrop polish`
+   - 前端继续使用 `MapRuntimePackage` 的强语义与 `map_render_plan_bundle` 的表现层参数，打磨全屏战场、自然道路、塔位平台和地形边界。
+   - 不允许默认回退到 battle control sketch、reference board 或失败整图候选。
+
+### 10.4 Worker 派发硬约束补充
+
+地图任务包必须附带以下补充约束：
+
+```text
+1. 不新增与 MapRuntimePackage 并列竞争的运行时地图事实源。
+2. 不从图片、SVG、preview 或 AI candidate 中反推路线、塔位、资源点、机关、碰撞。
+3. 新增 helper / validator 可以读取现有 map package，但不得静默修改 default runtime package。
+4. 所有 preview / generated media 默认 review-only，进入玩家默认视图必须有 promotion / activation evidence。
+5. 玩家侧仍不直接编译战斗地图拓扑；地图模板和关卡池属于开发者侧或系统侧受控编译。
+```

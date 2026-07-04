@@ -99,7 +99,7 @@ shared/schemas/ + tools/ + 专题文档
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
   - 前端战斗视觉运行态审计，记录 P0-M 程序化战场底座、防控制图 / 失败整图回退、静态视觉合约和截图环境缺口。
 - `docs/MAP_COMPILATION_DESIGN_V0_1.md`
-  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。
+  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。2026-07-05 已补充外部 v0.3 执行建议复审：后续地图任务应增强现有 `MapRuntimePackage v0.2 preview -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport -> evidence / activation gate` 链路，而不是新建一组与 `MapRuntimePackage` 竞争的运行时事实源。
 - `shared/schemas/map_style_pack.v0.1.schema.json`、`shared/schemas/procedural_map_render_plan.v0.1.schema.json`、`shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`
   - 地图编译最小链路字段事实源：StylePack 只管表现层，RenderPlan 把 MapRuntimePackage + StylePack 编成分层绘制操作，SemanticVisualConsistencyReport 证明路径、塔位、目标、出生点和 debug/player 边界一致。
 - `frontend/app.js` 与 `tools/frontend/validate_battle_visual_contract.py`
