@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/raw_video_sequence.v0.1.schema.json",
+  "title": "RawVideoSequence v0.1",
+  "description": "Local-only raw video metadata contract for image-to-video outputs before keyframe extraction. The schema defines structure; tools/media/validate_raw_video_sequence.py owns local path, sha, fixture, forbidden payload, and extraction-plan semantic gates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metadata_version",
+    "sequence_id",
+    "source_kind",
+    "review_only",
+    "asset_id",
+    "media_role",
+    "animation_state",
+    "target_animation_id",
+    "video_ref",
+    "extraction_plan",
+    "summary"
+  ],
+  "properties": {
+    "metadata_version": { "type": "string", "const": "raw_video_sequence.v0.1" },
+    "sequence_id": { "type": "string", "minLength": 1 },
+    "source_kind": { "type": "string", "minLength": 1 },
+    "media_layer": {
+      "type": "string",
+      "enum": ["raw_media"]
+    },
+    "review_only": { "type": "boolean" },
+    "fixture_only": { "type": "boolean" },
+    "fixture_notice": { "type": "string", "minLength": 1 },
+    "asset_id": { "type": "string", "minLength": 1 },
+    "source_game_id": { "type": ["string", "null"] },
+    "asset_name": { "type": ["string", "null"] },
+    "asset_type": { "type": ["string", "null"] },
+    "media_role": { "type": "string", "minLength": 1 },
+    "animation_state": { "type": "string", "minLength": 1 },
+    "target_animation_id": { "type": "string", "minLength": 1 },
+    "video_ref": { "$ref": "#/$defs/video_ref" },
+    "extraction_plan": { "$ref": "#/$defs/extraction_plan" },
+    "fixture_frames": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/fixture_frame" }
+    },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "video_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_path", "mime_type", "sha256"],
+      "properties": {
+        "local_path": { "type": "string", "minLength": 1 },
+        "mime_type": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "duration_ms": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "extraction_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fps", "max_frames", "loop"],
+      "properties": {
+        "fps": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "max_frames": { "type": "integer", "minimum": 2, "maximum": 240 },
+        "loop": { "type": "boolean" },
+        "prefer_keyframes": { "type": "boolean" },
+        "reject_blurry_frames": { "type": "boolean" }
+      }
+    },
+    "fixture_frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "frame_index",
+        "timestamp_ms",
+        "local_path",
+        "width",
+        "height",
+        "sha256",
+        "review_only"
+      ],
+      "properties": {
+        "stable_internal_id": { "type": "string", "minLength": 1 },
+        "frame_index": { "type": "integer", "minimum": 0 },
+        "timestamp_ms": { "type": "integer", "minimum": 0 },
+        "local_path": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "source_kind": { "type": "string", "minLength": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture_only": { "type": "boolean" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_only"],
+      "properties": {
+        "frame_count": { "type": "integer", "minimum": 1 },
+        "fps": { "type": "integer", "minimum": 1 },
+        "duration_ms": { "type": "integer", "minimum": 1 },
+        "review_only": { "type": "boolean" },
+        "fixture": { "type": "boolean" }
+      }
+    }
+  }
+}

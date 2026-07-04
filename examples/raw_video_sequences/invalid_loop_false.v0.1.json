@@ -1,0 +1,29 @@
+{
+  "metadata_version": "raw_video_sequence.v0.1",
+  "sequence_id": "invalid_loop_false_v0_1",
+  "source_kind": "local_video",
+  "media_layer": "raw_media",
+  "review_only": true,
+  "asset_id": "enemy_shadow_tide_runner",
+  "source_game_id": "shadow_tide_runner",
+  "asset_name": "Shadow Tide Runner",
+  "asset_type": "enemy_archetype",
+  "media_role": "unit_sprite",
+  "animation_state": "idle",
+  "target_animation_id": "enemy_shadow_tide_runner.unit_sprite.idle",
+  "video_ref": {
+    "local_path": "examples/raw_video_sequences/fixtures/frontend_runtime_raw_video_sequence.review_only_video_placeholder.txt",
+    "mime_type": "video/mp4",
+    "sha256": "247a1d8534dee3c09f0a7319ce868684e0acf6081955cd96a2f99db24e206087",
+    "duration_ms": 835
+  },
+  "extraction_plan": {
+    "fps": 6,
+    "max_frames": 5,
+    "loop": false,
+    "prefer_keyframes": true
+  },
+  "summary": {
+    "review_only": true
+  }
+}
