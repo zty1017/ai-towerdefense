@@ -1,0 +1,321 @@
+{
+  "decisions": [
+    {
+      "activation_decision": "blocked",
+      "blockers": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_approval_missing",
+        "post_activation_evidence_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "checks": [
+        {
+          "check_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime package is still v0.1."
+        },
+        {
+          "check_id": "promotion_readiness_candidate",
+          "status": "passed",
+          "summary": "Readiness report marks this node as a promotion candidate pending activation."
+        },
+        {
+          "check_id": "target_v02_preview_present",
+          "status": "passed",
+          "summary": "Target MapRuntimePackage v0.2 preview exists."
+        },
+        {
+          "check_id": "preview_api_keeps_default_runtime_safe",
+          "status": "passed",
+          "summary": "Map v0.2 preview API proves default v0.1 runtime is preserved."
+        },
+        {
+          "check_id": "visual_blockers_resolved",
+          "status": "blocked",
+          "summary": "Readiness still reports visual blockers that must be resolved before activation."
+        },
+        {
+          "check_id": "rejected_candidates_remain_isolated",
+          "status": "warning",
+          "summary": "Rejected/review-only candidates remain isolated; activation must not reference them."
+        },
+        {
+          "check_id": "explicit_developer_activation_approval",
+          "status": "blocked",
+          "summary": "No explicit developer activation authorization record is present for this node."
+        },
+        {
+          "check_id": "api_frontend_contract_update",
+          "status": "blocked",
+          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+        },
+        {
+          "check_id": "post_activation_evidence_required",
+          "status": "blocked",
+          "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
+        }
+      ],
+      "decision_reason": "blocked_visual_reconciliation_required",
+      "node_id": "gray_lantern_station",
+      "required_next_actions": [
+        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "record_explicit_developer_activation_authorization",
+        "update_backend_api_contract_if_v02_becomes_default",
+        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "default_runtime_mutation_performed": false,
+        "provider_call_count_by_gate": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_gray_lantern_station_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_gray_lantern_station_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_decision": "blocked",
+      "blockers": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_approval_missing",
+        "post_activation_evidence_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "checks": [
+        {
+          "check_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime package is still v0.1."
+        },
+        {
+          "check_id": "promotion_readiness_candidate",
+          "status": "passed",
+          "summary": "Readiness report marks this node as a promotion candidate pending activation."
+        },
+        {
+          "check_id": "target_v02_preview_present",
+          "status": "passed",
+          "summary": "Target MapRuntimePackage v0.2 preview exists."
+        },
+        {
+          "check_id": "preview_api_keeps_default_runtime_safe",
+          "status": "passed",
+          "summary": "Map v0.2 preview API proves default v0.1 runtime is preserved."
+        },
+        {
+          "check_id": "visual_blockers_resolved",
+          "status": "blocked",
+          "summary": "Readiness still reports visual blockers that must be resolved before activation."
+        },
+        {
+          "check_id": "rejected_candidates_remain_isolated",
+          "status": "warning",
+          "summary": "Rejected/review-only candidates remain isolated; activation must not reference them."
+        },
+        {
+          "check_id": "explicit_developer_activation_approval",
+          "status": "blocked",
+          "summary": "No explicit developer activation authorization record is present for this node."
+        },
+        {
+          "check_id": "api_frontend_contract_update",
+          "status": "blocked",
+          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+        },
+        {
+          "check_id": "post_activation_evidence_required",
+          "status": "blocked",
+          "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
+        }
+      ],
+      "decision_reason": "blocked_visual_reconciliation_required",
+      "node_id": "lamp_wick_store",
+      "required_next_actions": [
+        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "record_explicit_developer_activation_authorization",
+        "update_backend_api_contract_if_v02_becomes_default",
+        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "default_runtime_mutation_performed": false,
+        "provider_call_count_by_gate": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_lamp_wick_store_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_lamp_wick_store_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_decision": "blocked",
+      "blockers": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_approval_missing",
+        "post_activation_evidence_required",
+        "published_visual_layer_needs_overlay_correction",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "checks": [
+        {
+          "check_id": "default_runtime_v01_preserved",
+          "status": "passed",
+          "summary": "Default player runtime package is still v0.1."
+        },
+        {
+          "check_id": "promotion_readiness_candidate",
+          "status": "passed",
+          "summary": "Readiness report marks this node as a promotion candidate pending activation."
+        },
+        {
+          "check_id": "target_v02_preview_present",
+          "status": "passed",
+          "summary": "Target MapRuntimePackage v0.2 preview exists."
+        },
+        {
+          "check_id": "preview_api_keeps_default_runtime_safe",
+          "status": "passed",
+          "summary": "Map v0.2 preview API proves default v0.1 runtime is preserved."
+        },
+        {
+          "check_id": "visual_blockers_resolved",
+          "status": "blocked",
+          "summary": "Readiness still reports visual blockers that must be resolved before activation."
+        },
+        {
+          "check_id": "rejected_candidates_remain_isolated",
+          "status": "warning",
+          "summary": "Rejected/review-only candidates remain isolated; activation must not reference them."
+        },
+        {
+          "check_id": "explicit_developer_activation_approval",
+          "status": "blocked",
+          "summary": "No explicit developer activation authorization record is present for this node."
+        },
+        {
+          "check_id": "api_frontend_contract_update",
+          "status": "blocked",
+          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+        },
+        {
+          "check_id": "post_activation_evidence_required",
+          "status": "blocked",
+          "summary": "Activation would require fresh API smoke, browser flow smoke, visual contract, and demo evidence suite."
+        }
+      ],
+      "decision_reason": "blocked_visual_reconciliation_required",
+      "node_id": "old_signal_tower",
+      "required_next_actions": [
+        "resolve_visual_overlay_correction_or_accept_programmatic_runtime_layer",
+        "record_explicit_developer_activation_authorization",
+        "update_backend_api_contract_if_v02_becomes_default",
+        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "default_runtime_mutation_performed": false,
+        "provider_call_count_by_gate": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_old_signal_tower_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_old_signal_tower_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    }
+  ],
+  "generated_at": "2026-07-04T00:00:00Z",
+  "inputs": {
+    "map_runtime_package_dir": "examples/map_runtime_packages",
+    "map_runtime_package_v02_dir": "examples/map_runtime_packages_v02",
+    "map_v02_preview_api_smoke_report": "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "readiness_report": "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+    "visual_promotion_gate_report": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
+  },
+  "next_activation_task_contract": {
+    "must_keep_default_runtime_v01_until_activation_allowed": true,
+    "must_rerun_commands": [
+      "python3 tools/dev/check_map_v02_preview_api.py",
+      "python3 tools/dev/check_mvp_primary_api_flow.py",
+      "python3 tools/frontend/validate_battle_visual_contract.py",
+      "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_evidence_suite_after_map_runtime_activation"
+    ],
+    "must_update_backend_contract": true,
+    "must_update_frontend_contract": true,
+    "required_authorization_kind": "explicit_developer_activation_authorization"
+  },
+  "policy": [
+    "Readiness is not activation.",
+    "A v0.2 preview package can become the default player runtime only after explicit developer authorization and fresh API/frontend/evidence validation.",
+    "This report may block activation but must not mutate MapRuntimePackage, backend routes, frontend runtime behavior, or world state."
+  ],
+  "report_id": "mvp_map_runtime_activation_gate",
+  "safety_summary": {
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_performed": false,
+    "provider_call_count_by_report": 0,
+    "reads_env_file": false,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count_by_report": 0
+  },
+  "schema_version": "map_runtime_activation_gate_report.v0.1",
+  "scope": {
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_allowed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_performed": false,
+    "gate_only": true,
+    "provider_calls_allowed": false,
+    "read_model_only": true,
+    "runtime_activation_allowed": false,
+    "world_state_mutation_allowed": false
+  },
+  "status": "blocked",
+  "summary": {
+    "activation_allowed_count": 0,
+    "activation_blocked_count": 3,
+    "api_default_runtime_v01_preserved_count": 3,
+    "blocker_counts": {
+      "api_frontend_contract_update_required": 3,
+      "explicit_developer_activation_approval_missing": 3,
+      "post_activation_evidence_required": 3,
+      "published_visual_layer_needs_overlay_correction": 3,
+      "review_only_or_rejected_visual_candidates_present": 3
+    },
+    "check_status_counts": {
+      "blocked": 12,
+      "passed": 12,
+      "warning": 3
+    },
+    "decision_counts": {
+      "blocked": 3
+    },
+    "decision_reason_counts": {
+      "blocked_visual_reconciliation_required": 3
+    },
+    "node_count": 3,
+    "provider_call_count_by_report": 0,
+    "readiness_promotion_candidate_count": 3,
+    "readiness_status": "promotion_candidates_activation_required",
+    "runtime_mutation_count_by_report": 0,
+    "visual_promotion_violation_count": 0,
+    "world_mutation_count_by_report": 0
+  }
+}

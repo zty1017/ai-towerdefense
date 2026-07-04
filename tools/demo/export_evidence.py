@@ -152,6 +152,8 @@ PATHS = {
     / "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
     "map_runtime_promotion_readiness_report": ROOT
     / "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+    "map_runtime_activation_gate_report": ROOT
+    / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -466,6 +468,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_runtime_promotion_readiness_report.py",
             "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_runtime_activation_gate",
+        "command": [
+            "python3",
+            "tools/media/validate_map_runtime_activation_gate_report.py",
+            "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
         ],
     },
     {
@@ -1492,6 +1502,77 @@ def map_runtime_promotion_readiness_summary(report: dict[str, Any]) -> dict[str,
                 ).get("published_player_layer_count"),
             }
             for node in nodes[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    decisions = [
+        decision
+        for decision in as_list(report.get("decisions"))
+        if isinstance(decision, dict)
+    ]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "node_count": summary.get("node_count"),
+        "activation_allowed_count": summary.get("activation_allowed_count"),
+        "activation_blocked_count": summary.get("activation_blocked_count"),
+        "decision_counts": as_obj(summary.get("decision_counts")),
+        "decision_reason_counts": as_obj(summary.get("decision_reason_counts")),
+        "check_status_counts": as_obj(summary.get("check_status_counts")),
+        "blocker_counts": as_obj(summary.get("blocker_counts")),
+        "readiness_status": summary.get("readiness_status"),
+        "readiness_promotion_candidate_count": summary.get(
+            "readiness_promotion_candidate_count"
+        ),
+        "api_default_runtime_v01_preserved_count": summary.get(
+            "api_default_runtime_v01_preserved_count"
+        ),
+        "visual_promotion_violation_count": summary.get(
+            "visual_promotion_violation_count"
+        ),
+        "required_authorization_kind": as_obj(
+            report.get("next_activation_task_contract")
+        ).get("required_authorization_kind"),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count_by_report": safety.get(
+                "provider_call_count_by_report"
+            ),
+            "world_mutation_count_by_report": safety.get(
+                "world_mutation_count_by_report"
+            ),
+            "runtime_mutation_count_by_report": safety.get(
+                "runtime_mutation_count_by_report"
+            ),
+            "default_runtime_mutation_performed": safety.get(
+                "default_runtime_mutation_performed"
+            ),
+            "backend_api_contract_mutation_performed": safety.get(
+                "backend_api_contract_mutation_performed"
+            ),
+            "frontend_contract_mutation_performed": safety.get(
+                "frontend_contract_mutation_performed"
+            ),
+        },
+        "decision_samples": [
+            {
+                "node_id": decision.get("node_id"),
+                "activation_decision": decision.get("activation_decision"),
+                "decision_reason": decision.get("decision_reason"),
+                "blockers": as_list(decision.get("blockers")),
+                "from_package_id": as_obj(decision.get("target_candidate")).get(
+                    "from_package_id"
+                ),
+                "to_package_id": as_obj(decision.get("target_candidate")).get(
+                    "to_package_id"
+                ),
+            }
+            for decision in decisions[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -3272,6 +3353,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_runtime_promotion_readiness_report",
             PATHS["map_runtime_promotion_readiness_report"],
         ),
+        (
+            "map_runtime_activation_gate_report",
+            PATHS["map_runtime_activation_gate_report"],
+        ),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
         ("map_candidate_overlay_review", PATHS["map_candidate_overlay_review"]),
@@ -3467,6 +3552,9 @@ def build_evidence(
     map_runtime_promotion_readiness_report = load_json(
         PATHS["map_runtime_promotion_readiness_report"]
     )
+    map_runtime_activation_gate_report = load_json(
+        PATHS["map_runtime_activation_gate_report"]
+    )
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
     map_candidate_overlay_review = load_json(PATHS["map_candidate_overlay_review"])
@@ -3633,6 +3721,9 @@ def build_evidence(
         "map_runtime_promotion_readiness": map_runtime_promotion_readiness_summary(
             map_runtime_promotion_readiness_report
         ),
+        "map_runtime_activation_gate": map_runtime_activation_gate_summary(
+            map_runtime_activation_gate_report
+        ),
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
         "runtime_package": collect_runtime_package(runtime_package),
         "assets_and_media": collect_assets_and_media(
@@ -3719,6 +3810,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_runtime_promotion_readiness = as_obj(
         evidence.get("map_runtime_promotion_readiness")
     )
+    map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_visual_quality = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "quality_audit"
@@ -3933,6 +4025,16 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for node in as_list(map_runtime_promotion_readiness.get("node_samples"))
     ]
+    map_runtime_activation_rows = [
+        [
+            decision.get("node_id"),
+            decision.get("activation_decision"),
+            decision.get("decision_reason"),
+            decision.get("to_package_id"),
+            ", ".join(str(reason) for reason in as_list(decision.get("blockers"))),
+        ]
+        for decision in as_list(map_runtime_activation_gate.get("decision_samples"))
+    ]
     schedule_rows = [
         [
             item.get("schedule_item_id"),
@@ -4099,6 +4201,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapRuntimePackage v0.2 preview：`{map_packages_v02.get('package_count')}`，资源点 `{map_packages_v02.get('total_resource_node_count')}`，机关区 `{map_packages_v02.get('total_hazard_zone_count')}`，防守锚点 `{map_packages_v02.get('total_defense_anchor_count')}`，阻挡区 `{map_packages_v02.get('total_blocked_area_count')}`",
         f"- MapRuntimePackage v0.2 API smoke：`{map_v02_api.get('status')}`，节点 `{map_v02_api.get('node_count')}`，默认 v0.1 保留 `{map_v02_api.get('default_runtime_v01_preserved_count')}`，provider calls `{as_obj(map_v02_api.get('safety')).get('provider_call_count')}`，runtime 激活 `{map_v02_api.get('runtime_activation_allowed')}`",
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
+        f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -4127,6 +4230,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         md_table(["节点", "地图编译包", "发布图状态", "对齐状态", "质量门", "玩法真相保留"], compile_rows),
         "",
         md_table(["节点", "晋升状态", "语义一致性", "发布图层", "阻断原因"], map_runtime_readiness_rows),
+        "",
+        md_table(["节点", "激活决策", "原因", "目标 v0.2 包", "阻断项"], map_runtime_activation_rows),
         "",
         md_table(["节点", "层角色", "权威性", "尺寸", "本地路径"], layer_rows),
         "",
@@ -4285,6 +4390,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     map_runtime_promotion_readiness = as_obj(
         evidence.get("map_runtime_promotion_readiness")
     )
+    map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
     scheduler_run = as_obj(scheduler.get("run_report"))
@@ -4596,6 +4702,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Map Runtime 晋升准备度</div>
           <div class="metric">{html_escape(map_runtime_promotion_readiness.get("promotion_candidate_count"))}/{html_escape(map_runtime_promotion_readiness.get("node_count"))}</div>
           <p class="muted">状态：{html_escape(map_runtime_promotion_readiness.get("status"))}；activation allowed {html_escape(map_runtime_promotion_readiness.get("activation_allowed_count"))}；blockers {html_escape(map_runtime_promotion_readiness.get("blocker_counts"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Map Runtime 激活门</div>
+          <div class="metric">{html_escape(map_runtime_activation_gate.get("status"))}</div>
+          <p class="muted">允许 {html_escape(map_runtime_activation_gate.get("activation_allowed_count"))}；阻断 {html_escape(map_runtime_activation_gate.get("activation_blocked_count"))}；runtime 修改 {html_escape(as_obj(map_runtime_activation_gate.get("safety")).get("default_runtime_mutation_performed"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>
