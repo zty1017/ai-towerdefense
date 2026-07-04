@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_runtime_package.v0.2.schema.json",
+  "title": "MapRuntimePackage v0.2 Preview",
+  "description": "Logic-first tower defense map runtime package preview. v0.2 extends the v0.1 route/build/objective/spawn contract with explicit resource nodes, hazard zones, defense anchors, and blocked areas. Painted images remain presentation only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "worldbook_id",
+    "node_id",
+    "battle_config_version",
+    "created_at",
+    "source_refs",
+    "grid",
+    "path_routes",
+    "build_slots",
+    "objectives",
+    "spawn_points",
+    "resource_nodes",
+    "hazard_zones",
+    "defense_anchors",
+    "blocked_areas",
+    "visual_layers",
+    "runtime_hints",
+    "validation_report"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_runtime_package.v0.2" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "worldbook_id": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "battle_config_version": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_refs": { "type": "object" },
+    "grid": { "type": "object" },
+    "path_routes": { "type": "array", "minItems": 1 },
+    "build_slots": { "type": "array", "minItems": 1 },
+    "objectives": { "type": "object" },
+    "spawn_points": { "type": "array", "minItems": 1 },
+    "resource_nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/resource_node" }
+    },
+    "hazard_zones": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/hazard_zone" }
+    },
+    "defense_anchors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/defense_anchor" }
+    },
+    "blocked_areas": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/blocked_area" }
+    },
+    "visual_layers": { "type": "array" },
+    "runtime_hints": { "type": "object" },
+    "validation_report": { "type": "object" }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" }
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_cells", "height_cells"],
+      "properties": {
+        "width_cells": { "type": "integer", "minimum": 1 },
+        "height_cells": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "resource_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_node_id",
+        "resource_type",
+        "position",
+        "footprint",
+        "resource_tag",
+        "blocking",
+        "interactable",
+        "visual_hint"
+      ],
+      "properties": {
+        "resource_node_id": { "type": "string", "minLength": 1 },
+        "resource_type": {
+          "type": "string",
+          "enum": ["crystal_vein", "scrap_cache", "power_relay"]
+        },
+        "position": { "$ref": "#/$defs/point" },
+        "footprint": { "$ref": "#/$defs/footprint" },
+        "resource_tag": {
+          "type": "string",
+          "enum": ["energy", "material", "power"]
+        },
+        "blocking": { "type": "boolean" },
+        "interactable": { "type": "boolean" },
+        "visual_hint": {
+          "type": "string",
+          "enum": ["crystal_cluster", "scrap_pile", "relay_box"]
+        }
+      }
+    },
+    "hazard_zone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hazard_zone_id",
+        "hazard_type",
+        "anchor_route_id",
+        "path_t_range",
+        "affected_area",
+        "effect",
+        "visual_hint"
+      ],
+      "properties": {
+        "hazard_zone_id": { "type": "string", "minLength": 1 },
+        "hazard_type": {
+          "type": "string",
+          "enum": ["shadow_pressure", "steam_vent", "unstable_current"]
+        },
+        "anchor_route_id": { "type": "string", "minLength": 1 },
+        "path_t_range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "type": "number", "minimum": 0, "maximum": 1 },
+            "end": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "affected_area": {
+          "type": "string",
+          "enum": ["road_band", "roadside", "build_slot_zone"]
+        },
+        "effect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["effect_type", "value", "duration_ms"],
+          "properties": {
+            "effect_type": {
+              "type": "string",
+              "enum": ["slow_enemy", "pulse_damage", "visibility_drop"]
+            },
+            "value": { "type": "number" },
+            "duration_ms": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "visual_hint": {
+          "type": "string",
+          "enum": ["dark_pool", "steam_rift", "electric_arc"]
+        }
+      }
+    },
+    "defense_anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defense_anchor_id",
+        "anchor_type",
+        "position",
+        "influence_radius_cells",
+        "related_route_ids",
+        "recommended_tags"
+      ],
+      "properties": {
+        "defense_anchor_id": { "type": "string", "minLength": 1 },
+        "anchor_type": {
+          "type": "string",
+          "enum": ["choke_point", "route_turn", "target_perimeter"]
+        },
+        "position": { "$ref": "#/$defs/point" },
+        "influence_radius_cells": { "type": "number", "exclusiveMinimum": 0 },
+        "related_route_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "recommended_tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "blocked_area": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocked_area_id",
+        "blocked_type",
+        "cells",
+        "blocking_policy",
+        "visual_hint"
+      ],
+      "properties": {
+        "blocked_area_id": { "type": "string", "minLength": 1 },
+        "blocked_type": {
+          "type": "string",
+          "enum": ["ruin_wall", "dark_growth", "collapsed_device"]
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/point" }
+        },
+        "blocking_policy": {
+          "type": "string",
+          "enum": ["blocks_building", "blocks_decoration"]
+        },
+        "visual_hint": {
+          "type": "string",
+          "enum": ["broken_wall", "dark_brambles", "machine_wreck"]
+        }
+      }
+    }
+  }
+}

@@ -2884,6 +2884,55 @@ PY
 git diff --check
 ```
 
+#### P1-D-12 MapRuntimePackage v0.2 强语义 preview
+
+状态：已完成第一版旁路实现。
+
+目标：
+
+```text
+在不替换现有前端/后端默认 v0.1 地图包的前提下，建立 MapRuntimePackage v0.2 preview：把资源点、机关区、防守锚点和阻挡区变成结构化运行时语义对象，避免继续依赖图片或整图生成反推这些玩法信息。
+```
+
+已落地：
+
+- `shared/schemas/map_runtime_package.v0.2.schema.json`：定义 v0.2 顶层合同和四类新增强语义对象。
+- `tools/asset_graph/map_runtime_package_v02.py`：复用 v0.1 builder，追加 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas`，并做 Python 语义校验。
+- `tools/asset_graph/build_map_runtime_package_v02.py` / `validate_map_runtime_package_v02.py`：提供离线构建和校验入口。
+- `examples/map_runtime_packages_v02/*.map_runtime_package_v02.json`：三张 MVP 战斗节点的 v0.2 preview 包。
+- `tools/demo/export_evidence.py`：新增 `map_runtime_packages_v02` evidence 摘要、source files 和 validation commands；summary / index 会展示资源点、机关区、防守锚点和阻挡区计数。
+- `examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json`：记录本轮边界和验收命令。
+
+边界：
+
+- v0.2 preview 不进入 `backend/app/services/map_runtime_service.py` 的默认节点映射。
+- v0.2 示例放在 `examples/map_runtime_packages_v02/`，不混入 `examples/map_runtime_packages/` 的 v0.1 正式 runtime 包扫描。
+- 本任务不调用 provider、不读取 `.env`、不改前端、不改后端、不发布任何地图视觉层。
+- 资源点、机关区、防守锚点和阻挡区是结构化玩法语义；图像/StylePack/RenderPlan 只能表现这些语义，不能反向决定它们。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-runtime-v02 python3 -m py_compile tools/asset_graph/map_runtime_package_v02.py tools/asset_graph/build_map_runtime_package_v02.py tools/asset_graph/validate_map_runtime_package_v02.py tools/demo/export_evidence.py
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json
+python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+evidence = json.loads(Path('/tmp/map_runtime_v02_evidence/evidence.json').read_text(encoding='utf-8'))
+v02 = evidence['map_runtime_packages_v02']
+assert v02['package_count'] == 3
+assert v02['total_resource_node_count'] == 3
+assert v02['total_hazard_zone_count'] == 3
+assert v02['total_defense_anchor_count'] == 3
+assert v02['total_blocked_area_count'] == 3
+PY
+git diff --check
+```
+
 ### P1-E 手动 CodeBuddy / OpenCode 任务交付包
 
 状态：已完成最小骨架。

@@ -354,3 +354,31 @@ MapRuntimePackage
 当前实现仍不生成图片、不调用 provider，也不让整图候选替换前端默认战场。前端已经开始消费这条分层合同：路径、塔位、目标和出生点来自 `MapRuntimePackage`；材质、平台、氛围和可读性约束来自 `MapStylePack`；道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数来自 `ProceduralMapRenderPlan`；`SemanticVisualConsistencyReport` 负责阻断 debug/reference 层进入玩家默认视图。
 
 同时已新增离线 SVG 预览入口：`tools/asset_graph/render_procedural_map_preview.py` 会用同一组输入生成 review-only 预览图和 `procedural_map_preview_report.v0.1`。该预览只证明 RenderPlan 可执行和可审查，不是 published visual layer，也不是玩家 runtime 背景。
+
+## 8. v0.2 强语义 preview 落点
+
+截至 2026-07-04，地图运行包已经新增旁路 v0.2 preview：
+
+```text
+MapRuntimePackage v0.1
+  -> MapRuntimePackage v0.2 preview
+  -> resource_nodes / hazard_zones / defense_anchors / blocked_areas
+```
+
+已新增：
+
+- `shared/schemas/map_runtime_package.v0.2.schema.json`
+- `tools/asset_graph/map_runtime_package_v02.py`
+- `tools/asset_graph/build_map_runtime_package_v02.py`
+- `tools/asset_graph/validate_map_runtime_package_v02.py`
+- `examples/map_runtime_packages_v02/*.map_runtime_package_v02.json`
+
+v0.2 preview 解决的是：地图中“可被保护或采集的资源点”“影响路线或局部战斗节奏的机关区”“推荐防守锚点”“不可建造 / 不可装饰阻挡区”不再只依赖视觉暗示，而成为结构化玩法语义。
+
+该 preview 仍不替换现有前端 / 后端默认 v0.1 地图包。当前玩家侧正式路径继续消费 `examples/map_runtime_packages/*.map_runtime_package.json`；v0.2 包放在 `examples/map_runtime_packages_v02/`，用于下一阶段 renderer、前端和世界状态编译逐步接入。
+
+硬边界：
+
+- 图片、StylePack 和 RenderPlan 只能表现 v0.2 的资源点、机关区、防守锚点和阻挡区，不能反向决定它们。
+- v0.2 preview 不能自动发布视觉层，不能自动替换 `MapRuntimePackage v0.1`。
+- 只有当前端、后端服务和 semantic visual gate 明确升级后，v0.2 才能进入玩家默认 runtime。

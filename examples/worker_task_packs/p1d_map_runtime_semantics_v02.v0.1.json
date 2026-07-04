@@ -1,0 +1,94 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-12-map-runtime-semantics-v02",
+  "title": "MapRuntimePackage v0.2 strong semantic preview",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/map-runtime-semantics-v02",
+  "worktree": "/tmp/ai-td-task-map-runtime-semantics-v02",
+  "objective": "建立 MapRuntimePackage v0.2 preview 旁路包，把资源点、机关区、防守锚点和阻挡区作为结构化地图运行时语义，同时不替换当前前端/后端默认 v0.1 地图包。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "shared/schemas/map_runtime_package.v0.1.schema.json",
+    "tools/asset_graph/map_runtime_package.py",
+    "tools/asset_graph/build_map_runtime_package.py",
+    "tools/asset_graph/validate_map_runtime_package.py",
+    "game_data/demo/first_battle_config.json",
+    "game_data/demo/wick_store_pressure_battle_config.json",
+    "game_data/demo/old_signal_tower_pressure_battle_config.json"
+  ],
+  "allowed_paths": [
+    "shared/schemas/map_runtime_package.v0.2.schema.json",
+    "tools/asset_graph/map_runtime_package_v02.py",
+    "tools/asset_graph/build_map_runtime_package_v02.py",
+    "tools/asset_graph/validate_map_runtime_package_v02.py",
+    "examples/map_runtime_packages_v02/",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/map_runtime_packages/",
+    "examples/map_compile_packages/",
+    "examples/map_render_plans/",
+    "examples/map_style_packs/",
+    "examples/map_render_previews/",
+    "game_data/media/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-runtime-v02 python3 -m py_compile tools/asset_graph/map_runtime_package_v02.py tools/asset_graph/build_map_runtime_package_v02.py tools/asset_graph/validate_map_runtime_package_v02.py tools/demo/export_evidence.py",
+    "python3 tools/asset_graph/build_map_runtime_package_v02.py --battle-config game_data/demo/first_battle_config.json --output examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json --created-at 2026-07-04T00:00:00Z",
+    "python3 tools/asset_graph/build_map_runtime_package_v02.py --battle-config game_data/demo/wick_store_pressure_battle_config.json --output examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json --created-at 2026-07-04T00:00:00Z",
+    "python3 tools/asset_graph/build_map_runtime_package_v02.py --battle-config game_data/demo/old_signal_tower_pressure_battle_config.json --output examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json --created-at 2026-07-04T00:00:00Z",
+    "python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+    "python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+    "python3 tools/asset_graph/validate_map_runtime_package_v02.py examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_evidence",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nevidence = json.loads(Path('/tmp/map_runtime_v02_evidence/evidence.json').read_text(encoding='utf-8'))\nv02 = evidence['map_runtime_packages_v02']\nassert v02['package_count'] == 3\nassert v02['total_resource_node_count'] == 3\nassert v02['total_hazard_zone_count'] == 3\nassert v02['total_defense_anchor_count'] == 3\nassert v02['total_blocked_area_count'] == 3\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务未调用 provider，未读取 .env。",
+    "multi_agent worker 池此前已满，因此本轮由主代理在隔离 worktree 采用 local_codex_safe_fallback 完成。",
+    "v0.2 preview 包放在 examples/map_runtime_packages_v02/，不进入 backend map_runtime_service 的默认节点映射。",
+    "v0.2 新增语义只能作为后续 renderer / frontend / world state compiler 的输入，不能从图片反推，也不能自动发布视觉层。"
+  ]
+}
