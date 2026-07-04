@@ -5,7 +5,7 @@
   "style_pack_id": "style_long_night_old_signal_tower_v0_1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "old_signal_tower",
-  "created_at": "2026-07-04T00:00:00Z",
+  "created_at": "2026-07-05T00:00:00Z",
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
@@ -62,8 +62,8 @@
               "source": "map_style_pack.material",
               "owner_id": "terrain_signal_tower_cold_ridge_stone",
               "role": "terrain_base",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_old_signal_tower_terrain_signal_tower_cold_ridge_stone"
             }
           }
         }
@@ -119,8 +119,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_signal_tower_ridge_line",
               "role": "road_band",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_old_signal_tower_road_signal_tower_ridge_line"
             }
           }
         },
@@ -167,8 +167,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_signal_tower_ridge_line",
               "role": "road_band",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_old_signal_tower_road_signal_tower_ridge_line"
             }
           }
         }
@@ -225,8 +225,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_edge_copper_resonance_trace",
               "role": "road_edge",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_old_signal_tower_road_edge_copper_resonance_trace"
             }
           }
         },
@@ -274,8 +274,8 @@
               "source": "map_style_pack.material",
               "owner_id": "road_edge_copper_resonance_trace",
               "role": "road_edge",
-              "texture_policy": "procedural_only",
-              "component_ref": null
+              "texture_policy": "reviewed_component_optional",
+              "component_ref": "media:map_component_old_signal_tower_road_edge_copper_resonance_trace"
             }
           }
         }
@@ -314,8 +314,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -346,8 +346,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -378,8 +378,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -410,8 +410,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -442,8 +442,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -474,8 +474,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -506,8 +506,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -538,8 +538,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -570,8 +570,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -602,8 +602,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -634,8 +634,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -666,8 +666,8 @@
               "owner_id": "platform_signal_tower_copper_ring",
               "role": "build_slot_platform",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "copper_resonance_floor_ring"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_platform_signal_tower_copper_ring"
               }
             }
           }
@@ -703,8 +703,8 @@
               "owner_id": "objective_signal_tower_glass_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "old_signal_base_with_resonant_glass"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_objective_signal_tower_glass_foundation"
               }
             }
           }
@@ -731,8 +731,8 @@
               "owner_id": "objective_signal_tower_glass_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "old_signal_base_with_resonant_glass"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_objective_signal_tower_glass_foundation"
               }
             }
           }
@@ -759,8 +759,8 @@
               "owner_id": "objective_signal_tower_glass_foundation",
               "role": "objective_foundation",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "old_signal_base_with_resonant_glass"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_objective_signal_tower_glass_foundation"
               }
             }
           }
@@ -796,8 +796,8 @@
               "owner_id": "spawn_return_light_shadow_gate",
               "role": "spawn_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "violet_shadow_gate_with_signal_noise"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_spawn_return_light_shadow_gate"
               }
             }
           }
@@ -824,8 +824,8 @@
               "owner_id": "spawn_return_light_shadow_gate",
               "role": "spawn_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "violet_shadow_gate_with_signal_noise"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_spawn_return_light_shadow_gate"
               }
             }
           }
@@ -869,8 +869,8 @@
               "owner_id": "resource_copper_pin_marker",
               "role": "resource_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "small_copper_grounding_pin"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_resource_copper_pin_marker"
               }
             }
           }
@@ -905,8 +905,8 @@
               "owner_id": "hazard_signal_tower_static_shadow_pool",
               "role": "hazard_marker",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "violet_static_pool_with_copper_trace"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_hazard_signal_tower_static_shadow_pool"
               }
             }
           }
@@ -975,8 +975,8 @@
               "owner_id": "blocking_signal_tower_machine_wreck",
               "role": "blocking_prop",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "collapsed_copper_relay_wreck"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_blocking_signal_tower_machine_wreck"
               }
             }
           }
@@ -1013,8 +1013,8 @@
               "owner_id": "decor_resonant_glass_shards",
               "role": "non_blocking_decoration",
               "visual_ref": {
-                "kind": "procedural_shape",
-                "value": "low_contrast_glass_shard_cluster"
+                "kind": "reviewed_component_ref",
+                "value": "media:map_component_old_signal_tower_decor_resonant_glass_shards"
               }
             }
           }
