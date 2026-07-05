@@ -1,0 +1,82 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-53-provider-video-handoff-template",
+  "title": "Provider video handoff template",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-video-handoff-template",
+  "worktree": "/tmp/ai-td-task-provider-video-handoff-template",
+  "objective": "把 Generation Scheduler 的 provider adapter runner handoff/outbox 扩展到 video runner 模板，让外部 runner 能看到 tools/provider_adapter/run_provider_adapter.py --mode video 的离线边界命令；后端 handoff/API 不运行 provider adapter，不接入真实 live video provider，不读取 .env，不调用外部 provider，不 staging/promotion，不写世界状态，不激活 runtime。证据脚本中的离线 dry-run 校验只能停在 review-only receipt/envelope 边界。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/services/generation_scheduler_handoff_builders.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
+    "tools/demo/export_evidence.py",
+    "shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_handoff_builders.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/media/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_handoff_template python3 -m compileall backend",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_handoff_template_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+    "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q -k \"provider_adapter_runner_handoff or background_handoff_tick or provider_runner_handoff_outbox\"",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_video_handoff_template_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "video 模板只能是 command_templates.video_boundary，不带 --live。",
+    "video_boundary 必须包含 --mode video，且不得包含 <authorized-dotenv-path>。",
+    "本任务不实现真实 live video provider，也不修改 tools/provider_adapter/run_provider_adapter.py 的 live video 阻断行为。",
+    "现有 live_llm_text / live_image 模板必须保持显式 --live 与 <authorized-dotenv-path> 授权合同。"
+  ]
+}

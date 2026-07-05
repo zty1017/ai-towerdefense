@@ -478,6 +478,7 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-back
 - `runner_inputs.provider_execution_authorization`
 - `suggested_paths`
 - `command_templates.dry_run_fixture`
+- `command_templates.video_boundary`
 - `command_templates.live_llm_text`
 - `command_templates.live_image`
 - `import_after_runner.body`
@@ -492,7 +493,7 @@ shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json
 tools/dev/validate_provider_adapter_runner_handoff_outbox.py
 ```
 
-`ProviderAdapterRunnerHandoffOutbox v0.1` 把本轮 `runner_handoffs[]` 固化为外部 runner 可消费的批量交接单。它只表达 review-only handoff、导入合同和安全边界，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。outbox 可以包含 live 命令模板，但这些模板必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径。
+`ProviderAdapterRunnerHandoffOutbox v0.1` 把本轮 `runner_handoffs[]` 固化为外部 runner 可消费的批量交接单。它只表达 review-only handoff、导入合同和安全边界，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。outbox 可以包含 live text / live image 命令模板，但这些模板必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径；video 只暴露 `command_templates.video_boundary`，命令形态为不带 `--live` 的 `--mode video` 离线边界，不要求 dotenv，也不代表真实图生视频 provider 已接入。
 
 后端还提供只读预取缓存视图：
 
