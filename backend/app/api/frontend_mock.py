@@ -943,6 +943,24 @@ def get_map_v02_preview(session_id: str, node_id: str) -> FrontendMockPayloadRes
     )
 
 
+@router.get(
+    "/api/sessions/{session_id}/battles/{node_id}/map-v02-opt-in-dry-run",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_map_v02_opt_in_dry_run(
+    session_id: str, node_id: str
+) -> FrontendMockPayloadResponse:
+    """Return the review-only v0.2 opt-in contract without activating it."""
+    _require_session(session_id)
+    try:
+        data = map_runtime_service.get_map_runtime_v02_opt_in_contract(
+            session_id, node_id
+        )
+    except MapRuntimePackageNotFoundError as exc:
+        raise _map_runtime_fixture_404(exc) from exc
+    return _payload(session_id, data)
+
+
 @router.post(
     "/api/sessions/{session_id}/battles/{node_id}/results",
     response_model=FrontendMockPayloadResponse,

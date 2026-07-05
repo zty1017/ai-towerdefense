@@ -257,6 +257,8 @@ PATHS = {
     / "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json",
     "map_v02_preview_api_smoke_report": ROOT
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "map_runtime_v02_opt_in_contract_smoke_report": ROOT
+    / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
     "mvp_demo_readiness_report": ROOT
     / "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
 }
@@ -524,6 +526,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_runtime_activation_gate_report.py",
             "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_runtime_v02_opt_in_contract",
+        "command": [
+            "python3",
+            "tools/dev/validate_map_runtime_v02_opt_in_contract_report.py",
+            "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
         ],
     },
     {
@@ -2775,6 +2785,63 @@ def collect_map_v02_preview_api_smoke(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def collect_map_runtime_v02_opt_in_contract_smoke(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "endpoint": report.get("endpoint"),
+        "review_only": report.get("review_only"),
+        "node_count": report.get("node_count"),
+        "node_ids": as_list(report.get("node_ids")),
+        "default_runtime_v01_preserved_count": summary.get(
+            "default_runtime_v01_preserved_count"
+        ),
+        "api_pending_authorization_count": summary.get(
+            "api_pending_authorization_count"
+        ),
+        "approved_candidate_available_count": summary.get(
+            "approved_candidate_available_count"
+        ),
+        "runtime_activation_allowed_count": summary.get(
+            "runtime_activation_allowed_count"
+        ),
+        "unknown_node_status_code": report.get("unknown_node_status_code"),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count": safety.get("provider_call_count"),
+            "world_state_mutation_count": safety.get("world_state_mutation_count"),
+            "default_runtime_mutation_count": safety.get(
+                "default_runtime_mutation_count"
+            ),
+            "backend_default_runtime_endpoint_modified": safety.get(
+                "backend_default_runtime_endpoint_modified"
+            ),
+            "frontend_default_runtime_modified": safety.get(
+                "frontend_default_runtime_modified"
+            ),
+        },
+        "node_samples": [
+            {
+                "node_id": item.get("node_id"),
+                "api_dry_run_authorization_status": item.get(
+                    "api_dry_run_authorization_status"
+                ),
+                "api_dry_run_candidate_available": item.get(
+                    "api_dry_run_candidate_available"
+                ),
+                "default_runtime_v02_field_leak_count": item.get(
+                    "default_runtime_v02_field_leak_count"
+                ),
+            }
+            for item in as_list(report.get("default_api"))
+            if isinstance(item, dict)
+        ],
+    }
+
+
 def collect_mvp_primary_api_flow_smoke(report: dict[str, Any]) -> dict[str, Any]:
     safety = as_obj(report.get("safety_summary"))
     summary = as_obj(report.get("summary"))
@@ -4127,6 +4194,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_v02_preview_api_smoke_report"],
         ),
         (
+            "map_runtime_v02_opt_in_contract_smoke_report",
+            PATHS["map_runtime_v02_opt_in_contract_smoke_report"],
+        ),
+        (
             "mvp_demo_readiness_report",
             PATHS["mvp_demo_readiness_report"],
         ),
@@ -4517,6 +4588,9 @@ def build_evidence(
     map_v02_preview_api_smoke_report = load_json(
         PATHS["map_v02_preview_api_smoke_report"]
     )
+    map_runtime_v02_opt_in_contract_smoke_report = load_json(
+        PATHS["map_runtime_v02_opt_in_contract_smoke_report"]
+    )
     mvp_demo_readiness_report = load_json(PATHS["mvp_demo_readiness_report"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
@@ -4616,6 +4690,9 @@ def build_evidence(
             ),
             "map_v02_preview": collect_map_v02_preview_api_smoke(
                 map_v02_preview_api_smoke_report
+            ),
+            "map_runtime_v02_opt_in_contract": collect_map_runtime_v02_opt_in_contract_smoke(
+                map_runtime_v02_opt_in_contract_smoke_report
             ),
         },
         "map_runtime_promotion_readiness": map_runtime_promotion_readiness_summary(
@@ -4746,6 +4823,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_v02_api = as_obj(
         as_obj(evidence.get("backend_api_evidence")).get("map_v02_preview")
+    )
+    map_runtime_v02_opt_in = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get(
+            "map_runtime_v02_opt_in_contract"
+        )
     )
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_runtime_promotion_readiness = as_obj(
@@ -5185,6 +5267,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapRuntimePackage 数：`{map_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_packages.get('node_ids')))}`",
         f"- MapRuntimePackage v0.2 preview：`{map_packages_v02.get('package_count')}`，资源点 `{map_packages_v02.get('total_resource_node_count')}`，机关区 `{map_packages_v02.get('total_hazard_zone_count')}`，防守锚点 `{map_packages_v02.get('total_defense_anchor_count')}`，阻挡区 `{map_packages_v02.get('total_blocked_area_count')}`",
         f"- MapRuntimePackage v0.2 API smoke：`{map_v02_api.get('status')}`，节点 `{map_v02_api.get('node_count')}`，默认 v0.1 保留 `{map_v02_api.get('default_runtime_v01_preserved_count')}`，provider calls `{as_obj(map_v02_api.get('safety')).get('provider_call_count')}`，runtime 激活 `{map_v02_api.get('runtime_activation_allowed')}`",
+        f"- MapRuntimePackage v0.2 opt-in 合同：`{map_runtime_v02_opt_in.get('status')}`，默认 v0.1 保留 `{map_runtime_v02_opt_in.get('default_runtime_v01_preserved_count')}`，API pending `{map_runtime_v02_opt_in.get('api_pending_authorization_count')}`，approved fixture 候选 `{map_runtime_v02_opt_in.get('approved_candidate_available_count')}`，runtime 激活 `{map_runtime_v02_opt_in.get('runtime_activation_allowed_count')}`",
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 开发者授权：`{map_runtime_activation_authorization.get('status')}`，approved `{map_runtime_activation_authorization.get('approved_count')}`，pending `{map_runtime_activation_authorization.get('pending_count')}`，gate 授权 `{map_runtime_activation_authorization.get('activation_authorized_for_gate_count')}`，runtime 修改 `{as_obj(map_runtime_activation_authorization.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
@@ -5385,6 +5468,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     map_packages_v02 = as_obj(evidence.get("map_runtime_packages_v02"))
     map_v02_api = as_obj(
         as_obj(evidence.get("backend_api_evidence")).get("map_v02_preview")
+    )
+    map_runtime_v02_opt_in = as_obj(
+        as_obj(evidence.get("backend_api_evidence")).get(
+            "map_runtime_v02_opt_in_contract"
+        )
     )
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_runtime_promotion_readiness = as_obj(
@@ -5725,6 +5813,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Map v0.2 API</div>
           <div class="metric">{html_escape(map_v02_api.get("status"))}</div>
           <p class="muted">节点 {html_escape(map_v02_api.get("node_count"))}；默认 v0.1 保留 {html_escape(map_v02_api.get("default_runtime_v01_preserved_count"))}；provider calls {html_escape(as_obj(map_v02_api.get("safety")).get("provider_call_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Map v0.2 Opt-in</div>
+          <div class="metric">{html_escape(map_runtime_v02_opt_in.get("status"))}</div>
+          <p class="muted">默认 v0.1 保留 {html_escape(map_runtime_v02_opt_in.get("default_runtime_v01_preserved_count"))}；API pending {html_escape(map_runtime_v02_opt_in.get("api_pending_authorization_count"))}；approved fixture 候选 {html_escape(map_runtime_v02_opt_in.get("approved_candidate_available_count"))}；runtime 激活 {html_escape(map_runtime_v02_opt_in.get("runtime_activation_allowed_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">Map Runtime 晋升准备度</div>
