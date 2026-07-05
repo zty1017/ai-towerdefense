@@ -21,6 +21,9 @@ APP_JS = ROOT / "frontend/app.js"
 STYLES_CSS = ROOT / "frontend/styles.css"
 MAP_MANIFEST = ROOT / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
 MAP_RUNTIME_PACKAGES = sorted((ROOT / "examples/map_runtime_packages").glob("*.map_runtime_package.json"))
+MAP_RUNTIME_PACKAGES_V02 = sorted(
+    (ROOT / "examples/map_runtime_packages_v02").glob("*.map_runtime_package_v02.json")
+)
 
 
 def load_json(path: Path) -> Any:
@@ -80,6 +83,7 @@ def validate_app_contract(errors: list[str]) -> None:
     build_terrace = js_section(app, "drawBuildableTerrace", "drawDeployHints")
     deploy_base = js_section(app, "drawDeploymentBase", "suggestedSockets")
     spawn_markers = js_section(app, "drawSpawnMarkers", "drawSpawnRift")
+    strong_semantics = js_section(app, "drawMapRuntimeStrongSemantics", "drawWorldObjects")
 
     for name in (
         "battleNodeVisualProfile",
@@ -120,6 +124,17 @@ def validate_app_contract(errors: list[str]) -> None:
         "colorFromStyle",
         "rgbaFromStyle",
         "mapRenderPlanHasLayer",
+        "mapResourceNodes",
+        "mapHazardZones",
+        "mapDefenseAnchors",
+        "mapBlockedAreas",
+        "routePointAtT",
+        "routeSamplesBetween",
+        "drawMapRuntimeStrongSemantics",
+        "drawMapResourceNodes",
+        "drawMapHazardZones",
+        "drawMapDefenseAnchors",
+        "drawMapBlockedAreas",
     ):
         require(f"function {name}" in app, f"missing {name}() procedural battle layer", errors)
 
@@ -154,6 +169,48 @@ def validate_app_contract(errors: list[str]) -> None:
     require("routeShoulderWidthScale(route)" in app, "route shoulders must consume RenderPlan road_edge shoulder geometry", errors)
     require('"shoulder_width_cells"' in app, "frontend must read road_edge geometry.shoulder_width_cells from RenderPlan", errors)
     require("drawSlotAccessTrails(ctx)" in app, "battle view must visually connect deployment bases to runtime roads", errors)
+    require(
+        "drawMapRuntimeStrongSemantics(ctx)" in app,
+        "battle view must render v0.2 strong semantics when present in MapRuntimePackage",
+        errors,
+    )
+    require("mapRuntimePackage().resource_nodes" in app, "resource_nodes must be read only from MapRuntimePackage", errors)
+    require("mapRuntimePackage().hazard_zones" in app, "hazard_zones must be read only from MapRuntimePackage", errors)
+    require("mapRuntimePackage().defense_anchors" in app, "defense_anchors must be read only from MapRuntimePackage", errors)
+    require("mapRuntimePackage().blocked_areas" in app, "blocked_areas must be read only from MapRuntimePackage", errors)
+    require(
+        "drawMapBlockedAreas(ctx)" in strong_semantics,
+        "strong semantic layer must draw blocked areas before gameplay entities",
+        errors,
+    )
+    require(
+        "drawMapHazardZones(ctx)" in strong_semantics,
+        "strong semantic layer must draw hazard zones from runtime fields",
+        errors,
+    )
+    require(
+        "drawMapResourceNodes(ctx)" in strong_semantics,
+        "strong semantic layer must draw resource nodes from runtime fields",
+        errors,
+    )
+    require(
+        "drawMapDefenseAnchors(ctx)" in strong_semantics,
+        "strong semantic layer must draw defense anchors from runtime fields",
+        errors,
+    )
+    require("zone.anchor_route_id" in strong_semantics, "hazard zones must bind to runtime route ids", errors)
+    require(
+        "zone.path_t_range" in strong_semantics and "routeSamplesBetween(route" in app,
+        "hazard zones must render route-t ranges, not image-derived masks",
+        errors,
+    )
+    require(
+        "area.cells" in strong_semantics and "drawCollapsedWall(ctx" in strong_semantics,
+        "blocked areas must render from structured cells",
+        errors,
+    )
+    require("node.position" in strong_semantics, "resource nodes must render from structured positions", errors)
+    require("anchor.position" in strong_semantics, "defense anchors must render from structured positions", errors)
     require("drawBattlefieldLandmarks(ctx)" in app, "battle view must render world-space landmarks", errors)
     require("drawObjectiveDefensiveZone(ctx" in app, "battle view must ground objectives in a defense zone", errors)
     require("drawDeploymentBase" in deploy, "deploy hints must render world-space deployment bases", errors)
@@ -272,6 +329,22 @@ def validate_map_layers(errors: list[str]) -> None:
             layer = roles.get(role)
             require(layer is not None and layer.get("authority") == "reference_only", f"{package_path.name} {role} must stay reference_only", errors)
 
+    require(MAP_RUNTIME_PACKAGES_V02, "no map runtime v0.2 preview packages found", errors)
+    for package_path in MAP_RUNTIME_PACKAGES_V02:
+        package = load_json(package_path)
+        require(
+            package.get("schema_version") == "map_runtime_package.v0.2",
+            f"{package_path.name} must be v0.2 schema",
+            errors,
+        )
+        for key in ("resource_nodes", "hazard_zones", "defense_anchors", "blocked_areas"):
+            value = package.get(key)
+            require(
+                isinstance(value, list) and bool(value),
+                f"{package_path.name} missing v0.2 strong semantic field {key}",
+                errors,
+            )
+
 
 def main() -> int:
     errors: list[str] = []
@@ -287,8 +360,10 @@ def main() -> int:
 
     print("OK battle visual contract")
     print(f"- map runtime packages: {len(MAP_RUNTIME_PACKAGES)}")
+    print(f"- map runtime v0.2 preview packages: {len(MAP_RUNTIME_PACKAGES_V02)}")
     print("- default battle backdrop: MapRuntimePackage-driven procedural terrain")
     print("- map style: optional MapRenderPlan geometry and StylePack colors, runtime semantics stay in MapRuntimePackage")
+    print("- v0.2 strong semantics: consumed from activated runtime package only; review-only endpoints stay isolated")
     return 0
 
 

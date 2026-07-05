@@ -1982,6 +1982,50 @@
     return pathWaypoints(enemy.routeId);
   }
 
+  function routePointAtT(route, t) {
+    const waypoints = (route && route.waypoints) || [];
+    if (!waypoints.length) return null;
+    if (waypoints.length === 1) return { x: waypoints[0].x, y: waypoints[0].y };
+    const clamped = clamp(Number(t) || 0, 0, 1);
+    const segments = [];
+    let total = 0;
+    for (let i = 0; i < waypoints.length - 1; i += 1) {
+      const a = waypoints[i];
+      const b = waypoints[i + 1];
+      const length = Math.hypot((b.x || 0) - (a.x || 0), (b.y || 0) - (a.y || 0));
+      if (length <= 0) continue;
+      segments.push({ a, b, length });
+      total += length;
+    }
+    if (!segments.length || total <= 0) return { x: waypoints[0].x, y: waypoints[0].y };
+    let distance = clamped * total;
+    for (const segment of segments) {
+      if (distance <= segment.length) {
+        const localT = distance / segment.length;
+        return {
+          x: segment.a.x + (segment.b.x - segment.a.x) * localT,
+          y: segment.a.y + (segment.b.y - segment.a.y) * localT,
+        };
+      }
+      distance -= segment.length;
+    }
+    const last = waypoints[waypoints.length - 1];
+    return { x: last.x, y: last.y };
+  }
+
+  function routeSamplesBetween(route, startT, endT, count = 7) {
+    const start = clamp(Number(startT) || 0, 0, 1);
+    const end = clamp(Number(endT) || start, start, 1);
+    const sampleCount = Math.max(2, count);
+    const samples = [];
+    for (let i = 0; i < sampleCount; i += 1) {
+      const t = start + ((end - start) * i) / (sampleCount - 1);
+      const point = routePointAtT(route, t);
+      if (point) samples.push(point);
+    }
+    return samples;
+  }
+
   function onBattleCanvasClick(event) {
     const battle = state.battle;
     if (!battle || battle.dialogueOpen || battle.finishing) return;
@@ -2059,6 +2103,26 @@
 
   function buildSlots() {
     return mapRuntimePackage().build_slots || [];
+  }
+
+  function mapResourceNodes() {
+    const nodes = mapRuntimePackage().resource_nodes;
+    return Array.isArray(nodes) ? nodes : [];
+  }
+
+  function mapHazardZones() {
+    const zones = mapRuntimePackage().hazard_zones;
+    return Array.isArray(zones) ? zones : [];
+  }
+
+  function mapDefenseAnchors() {
+    const anchors = mapRuntimePackage().defense_anchors;
+    return Array.isArray(anchors) ? anchors : [];
+  }
+
+  function mapBlockedAreas() {
+    const areas = mapRuntimePackage().blocked_areas;
+    return Array.isArray(areas) ? areas : [];
   }
 
   function slotAt(cell) {
@@ -2563,6 +2627,7 @@
     drawBuildableTerraces(ctx);
     drawSlotAccessTrails(ctx);
     drawPath(ctx);
+    drawMapRuntimeStrongSemantics(ctx);
     drawDeployHints(ctx);
     drawWorldObjects(ctx);
     drawSpawnMarkers(ctx);
@@ -3904,6 +3969,151 @@
       { position: { x: 6, y: 5 } },
       { position: { x: 3, y: 5 } },
     ];
+  }
+
+  function drawMapRuntimeStrongSemantics(ctx) {
+    drawMapBlockedAreas(ctx);
+    drawMapHazardZones(ctx);
+    drawMapResourceNodes(ctx);
+    drawMapDefenseAnchors(ctx);
+  }
+
+  function drawMapResourceNodes(ctx) {
+    const nodes = mapResourceNodes();
+    if (!nodes.length) return;
+    const m = state.battle.metrics;
+    const profile = battleNodeVisualProfile();
+    const color = (profile.objective || {}).optional || "#9edcff";
+    ctx.save();
+    for (const node of nodes) {
+      if (!node.position) continue;
+      const p = projectCell(node.position.x, node.position.y);
+      const footprint = node.footprint || {};
+      const rx = m.tileW * (0.28 + Math.max(0, Number(footprint.width_cells || 1) - 1) * 0.08);
+      const ry = m.tileH * (0.24 + Math.max(0, Number(footprint.height_cells || 1) - 1) * 0.08);
+      drawGroundGlow(ctx, p.x, p.y, color, 0.2, Math.max(42, m.tileW * 0.38));
+      ctx.fillStyle = "rgba(8,17,19,0.42)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + m.tileH * 0.1, rx * 1.22, ry * 0.72, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(158,220,255,0.38)";
+      ctx.lineWidth = Math.max(1.4, m.tileW * 0.014);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(158,220,255,0.22)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - m.tileH * 0.05, rx * 0.58, ry * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(218,247,255,0.68)";
+      for (let i = 0; i < 5; i += 1) {
+        const angle = (i / 5) * Math.PI * 2;
+        const shardX = p.x + Math.cos(angle) * rx * 0.32;
+        const shardY = p.y + Math.sin(angle) * ry * 0.28;
+        ctx.beginPath();
+        ctx.moveTo(shardX, shardY - m.tileH * 0.2);
+        ctx.lineTo(shardX + m.tileW * 0.06, shardY);
+        ctx.lineTo(shardX - m.tileW * 0.05, shardY + m.tileH * 0.03);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawMapHazardZones(ctx) {
+    const zones = mapHazardZones();
+    if (!zones.length) return;
+    const m = state.battle.metrics;
+    const profile = battleNodeVisualProfile();
+    const hazardColor = (profile.road || {}).shadow || "rgba(18,13,10,0.54)";
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (const zone of zones) {
+      const route = allPathRoutes().find((item) => item.route_id === zone.anchor_route_id);
+      const range = zone.path_t_range || {};
+      if (route && range.start !== undefined && range.end !== undefined) {
+        const samples = routeSamplesBetween(route, range.start, range.end, 8);
+        const points = samples.map((point) => projectCell(point.x, point.y));
+        if (points.length >= 2) {
+          const width = Math.max(26, m.tileW * routeRoadWidthCells(route) * 0.74);
+          ctx.strokeStyle = "rgba(22,11,32,0.42)";
+          ctx.lineWidth = width * 1.28;
+          traceRoutePath(ctx, points);
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(143,124,255,0.2)";
+          ctx.lineWidth = width * 0.78;
+          traceRoutePath(ctx, points);
+          ctx.stroke();
+          points.forEach((p, index) => {
+            if (index % 2 !== 0) return;
+            drawGroundGlow(ctx, p.x, p.y, "#8f7cff", 0.08, Math.max(34, width * 0.88));
+          });
+          continue;
+        }
+      }
+      if (zone.position) {
+        const p = projectCell(zone.position.x, zone.position.y);
+        drawGroundGlow(ctx, p.x, p.y, "#8f7cff", 0.13, Math.max(52, m.tileW * 0.48));
+        ctx.fillStyle = hazardColor;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, m.tileW * 0.36, m.tileH * 0.28, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawMapDefenseAnchors(ctx) {
+    const anchors = mapDefenseAnchors();
+    if (!anchors.length) return;
+    const m = state.battle.metrics;
+    ctx.save();
+    for (const anchor of anchors) {
+      if (!anchor.position) continue;
+      const p = projectCell(anchor.position.x, anchor.position.y);
+      const radiusCells = clamp(Number(anchor.influence_radius_cells) || 1.4, 0.8, 3.5);
+      const rx = m.tileW * radiusCells * 0.34;
+      const ry = m.tileH * radiusCells * 0.28;
+      ctx.fillStyle = "rgba(255,211,122,0.055)";
+      ctx.strokeStyle = "rgba(255,211,122,0.2)";
+      ctx.lineWidth = Math.max(1.2, m.tileW * 0.012);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,225,161,0.32)";
+      ctx.lineWidth = Math.max(1, m.tileW * 0.01);
+      ctx.beginPath();
+      ctx.moveTo(p.x - m.tileW * 0.12, p.y);
+      ctx.lineTo(p.x + m.tileW * 0.12, p.y);
+      ctx.moveTo(p.x, p.y - m.tileH * 0.12);
+      ctx.lineTo(p.x, p.y + m.tileH * 0.12);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawMapBlockedAreas(ctx) {
+    const areas = mapBlockedAreas();
+    if (!areas.length) return;
+    const m = state.battle.metrics;
+    ctx.save();
+    for (const area of areas) {
+      const cells = Array.isArray(area.cells) ? area.cells : area.position ? [area.position] : [];
+      cells.forEach((cell, index) => {
+        if (!isCellInGrid(cell)) return;
+        const p = projectCell(cell.x, cell.y);
+        const scale = 0.72 * Math.max(0.72, m.scale || 1);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(((index % 3) - 1) * 0.12);
+        drawCollapsedWall(ctx, scale);
+        ctx.restore();
+      });
+    }
+    ctx.restore();
   }
 
   function drawWorldObjects(ctx) {
