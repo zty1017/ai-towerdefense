@@ -1,0 +1,156 @@
+{
+  "approved_service_contract": [
+    {
+      "approved_authorization_status": "approved_for_gate_review",
+      "approved_candidate_available": true,
+      "approved_candidate_schema_version": "map_runtime_package.v0.2",
+      "default_runtime_preserved": true,
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "gray_lantern_station",
+      "runtime_activation_allowed": false,
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      }
+    },
+    {
+      "approved_authorization_status": "approved_for_gate_review",
+      "approved_candidate_available": true,
+      "approved_candidate_schema_version": "map_runtime_package.v0.2",
+      "default_runtime_preserved": true,
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "lamp_wick_store",
+      "runtime_activation_allowed": false,
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      }
+    },
+    {
+      "approved_authorization_status": "approved_for_gate_review",
+      "approved_candidate_available": true,
+      "approved_candidate_schema_version": "map_runtime_package.v0.2",
+      "default_runtime_preserved": true,
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "old_signal_tower",
+      "runtime_activation_allowed": false,
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      }
+    }
+  ],
+  "default_api": [
+    {
+      "api_dry_run_authorization_status": "pending",
+      "api_dry_run_candidate_available": false,
+      "api_runtime_activation_allowed": false,
+      "default_runtime_checks": [
+        {
+          "label": "config",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "map-runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        }
+      ],
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "gray_lantern_station"
+    },
+    {
+      "api_dry_run_authorization_status": "pending",
+      "api_dry_run_candidate_available": false,
+      "api_runtime_activation_allowed": false,
+      "default_runtime_checks": [
+        {
+          "label": "config",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "map-runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        }
+      ],
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "lamp_wick_store"
+    },
+    {
+      "api_dry_run_authorization_status": "pending",
+      "api_dry_run_candidate_available": false,
+      "api_runtime_activation_allowed": false,
+      "default_runtime_checks": [
+        {
+          "label": "config",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        },
+        {
+          "label": "map-runtime-package",
+          "schema_version": "map_runtime_package.v0.1",
+          "v02_field_leak_count": 0
+        }
+      ],
+      "default_runtime_schema_version": "map_runtime_package.v0.1",
+      "default_runtime_v02_field_leak_count": 0,
+      "node_id": "old_signal_tower"
+    }
+  ],
+  "endpoint": "GET /api/sessions/{session_id}/battles/{node_id}/map-v02-opt-in-dry-run",
+  "generated_at": "2026-07-05T00:00:00+00:00",
+  "node_count": 3,
+  "node_ids": [
+    "gray_lantern_station",
+    "lamp_wick_store",
+    "old_signal_tower"
+  ],
+  "report_id": "map_runtime_v02_opt_in_contract_smoke_report_v0_1",
+  "review_only": true,
+  "safety": {
+    "backend_default_runtime_endpoint_modified": false,
+    "default_runtime_mutation_count": 0,
+    "frontend_default_runtime_modified": false,
+    "provider_call_count": 0,
+    "reads_env_file": false,
+    "world_state_mutation_count": 0
+  },
+  "schema_version": "map_runtime_v02_opt_in_contract_smoke_report.v0.1",
+  "status": "passed",
+  "summary": {
+    "api_pending_authorization_count": 3,
+    "approved_candidate_available_count": 3,
+    "default_runtime_mutation_count": 0,
+    "default_runtime_v01_preserved_count": 3,
+    "provider_call_count": 0,
+    "runtime_activation_allowed_count": 0,
+    "world_state_mutation_count": 0
+  },
+  "unknown_node_status_code": 404
+}

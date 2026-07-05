@@ -45,6 +45,11 @@ _MAP_RUNTIME_PACKAGE_V02_BY_NODE = {
     ),
 }
 
+_MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT = (
+    _REPO_ROOT
+    / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json"
+)
+
 
 class MapRuntimePackageNotFoundError(LookupError):
     """Raised when a node does not have a reviewed runtime map package."""
@@ -53,6 +58,41 @@ class MapRuntimePackageNotFoundError(LookupError):
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _semantic_counts(map_package: dict[str, Any]) -> dict[str, int]:
+    return {
+        "resource_node_count": len(map_package.get("resource_nodes") or []),
+        "hazard_zone_count": len(map_package.get("hazard_zones") or []),
+        "defense_anchor_count": len(map_package.get("defense_anchors") or []),
+        "blocked_area_count": len(map_package.get("blocked_areas") or []),
+    }
+
+
+def _authorization_for_node(
+    node_id: str, authorization_report_path: Path | None = None
+) -> dict[str, Any] | None:
+    path = authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT
+    if not path.exists():
+        return None
+    report = _load_json(path)
+    for node in report.get("nodes") or []:
+        if isinstance(node, dict) and node.get("node_id") == node_id:
+            return node
+    return None
+
+
+def _runtime_summary(map_package: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "package_id": map_package.get("package_id"),
+        "schema_version": map_package.get("schema_version"),
+        "node_id": map_package.get("node_id"),
+        "path_route_count": len(map_package.get("path_routes") or []),
+        "build_slot_count": len(map_package.get("build_slots") or []),
+        "spawn_point_count": len(map_package.get("spawn_points") or []),
+        "objective_count": len(map_package.get("objectives") or []),
+        "strong_semantic_counts": _semantic_counts(map_package),
+    }
 
 
 def available_map_runtime_node_ids() -> list[str]:
@@ -107,6 +147,80 @@ def load_map_runtime_package_v02_optional(node_id: str) -> dict[str, Any] | None
         return load_map_runtime_package_v02(node_id)
     except MapRuntimePackageNotFoundError:
         return None
+
+
+def get_map_runtime_v02_opt_in_contract(
+    session_id: str,
+    node_id: str,
+    authorization_report_path: Path | None = None,
+) -> dict[str, Any]:
+    default_package = load_map_runtime_package(node_id)
+    candidate_package = load_map_runtime_package_v02(node_id)
+    authorization = _authorization_for_node(node_id, authorization_report_path)
+    candidate_target = (authorization or {}).get("target_candidate") or {}
+    target_matches = (
+        candidate_target.get("to_package_id") == candidate_package.get("package_id")
+        and candidate_target.get("to_schema_version") == candidate_package.get("schema_version")
+    )
+    authorized_for_gate = (
+        authorization is not None
+        and authorization.get("authorization_status") == "approved_for_gate_review"
+        and authorization.get("activation_authorized_for_gate") is True
+        and target_matches
+    )
+    opt_in_candidate: dict[str, Any] = {
+        "candidate_available": authorized_for_gate,
+        "candidate_package_summary": _runtime_summary(candidate_package),
+        "candidate_runtime_package_v02": candidate_package if authorized_for_gate else None,
+    }
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "node_id": node_id,
+        "dry_run_mode": "review_only_map_v02_opt_in_contract",
+        "review_only": True,
+        "runtime_activation_allowed": False,
+        "default_runtime_mutation_performed": False,
+        "usage_policy": [
+            "review_only",
+            "not_player_runtime",
+            "does_not_modify_default_map_runtime_package",
+            "requires_activation_gate_before_default_runtime_use",
+        ],
+        "authorization": {
+            "report_path": (
+                authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT
+            ).relative_to(_REPO_ROOT).as_posix()
+            if (authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT).is_relative_to(_REPO_ROOT)
+            else str(authorization_report_path),
+            "record_present": authorization is not None,
+            "authorization_status": (authorization or {}).get("authorization_status"),
+            "authorization_decision": (authorization or {}).get("authorization_decision"),
+            "activation_authorized_for_gate": authorized_for_gate,
+            "target_matches_candidate": target_matches,
+        },
+        "default_runtime": {
+            "preserved": default_package.get("schema_version") == "map_runtime_package.v0.1",
+            "package_summary": _runtime_summary(default_package),
+            "v02_field_leak_count": sum(
+                1
+                for key in (
+                    "resource_nodes",
+                    "hazard_zones",
+                    "defense_anchors",
+                    "blocked_areas",
+                )
+                if key in default_package
+            ),
+        },
+        "opt_in_candidate": opt_in_candidate,
+        "safety": {
+            "reads_env": False,
+            "provider_call_count": 0,
+            "player_default_runtime_mutation": False,
+            "world_state_mutation": False,
+        },
+    }
 
 
 def get_map_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:

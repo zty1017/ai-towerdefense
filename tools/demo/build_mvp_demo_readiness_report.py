@@ -20,6 +20,8 @@ PATHS = {
     / "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json",
     "map_v02_preview_api": ROOT
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "map_runtime_v02_opt_in_contract": ROOT
+    / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
     "core_artifact_alignment": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
     "map_visual_promotion_gate": ROOT
@@ -177,6 +179,50 @@ def map_v02_api_gate(report: dict[str, Any]) -> dict[str, Any]:
             "default_runtime_v01_preserved_count": default_count,
             "provider_call_count": safety.get("provider_call_count"),
             "runtime_activation_allowed": report.get("runtime_activation_allowed"),
+        },
+    )
+
+
+def map_runtime_v02_opt_in_gate(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety"))
+    node_count = int(report.get("node_count") or 0)
+    ok = (
+        report.get("status") == "passed"
+        and node_count >= 3
+        and int(summary.get("default_runtime_v01_preserved_count") or 0) == node_count
+        and int(summary.get("api_pending_authorization_count") or 0) == node_count
+        and int(summary.get("approved_candidate_available_count") or 0) == node_count
+        and int(summary.get("runtime_activation_allowed_count") or 0) == 0
+        and int(safety.get("provider_call_count") or 0) == 0
+        and int(safety.get("default_runtime_mutation_count") or 0) == 0
+    )
+    return gate(
+        gate_id="map_runtime_v02_opt_in_contract",
+        title="MapRuntimePackage v0.2 opt-in dry-run 合同",
+        status="passed" if ok else "not_ready",
+        required_for_mvp_demo=False,
+        summary="v0.2 强语义地图已有 opt-in dry-run 证据：默认 API 仍 pending/v0.1，临时授权夹具可读取候选，但不会激活 runtime。",
+        evidence_keys=["map_runtime_v02_opt_in_contract"],
+        metrics={
+            "report_status": report.get("status"),
+            "node_count": node_count,
+            "default_runtime_v01_preserved_count": summary.get(
+                "default_runtime_v01_preserved_count"
+            ),
+            "api_pending_authorization_count": summary.get(
+                "api_pending_authorization_count"
+            ),
+            "approved_candidate_available_count": summary.get(
+                "approved_candidate_available_count"
+            ),
+            "runtime_activation_allowed_count": summary.get(
+                "runtime_activation_allowed_count"
+            ),
+            "provider_call_count": safety.get("provider_call_count"),
+            "default_runtime_mutation_count": safety.get(
+                "default_runtime_mutation_count"
+            ),
         },
     )
 
@@ -440,6 +486,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
     gates = [
         primary_api_gate(reports["mvp_primary_api_flow"]),
         map_v02_api_gate(reports["map_v02_preview_api"]),
+        map_runtime_v02_opt_in_gate(reports["map_runtime_v02_opt_in_contract"]),
         core_alignment_gate(reports["core_artifact_alignment"]),
         map_visual_gate(
             reports["map_visual_promotion_gate"],
