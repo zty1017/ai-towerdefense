@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_runtime_v02_semantic_geometry_report.v0.1.schema.json",
+  "title": "MapRuntimeV02SemanticGeometryReport v0.1",
+  "description": "Review-only geometry evidence for MapRuntimePackage v0.2 strong semantics. This report is not a runtime map fact source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "created_at",
+    "status",
+    "source_policy",
+    "runtime_effect",
+    "provider_call_count",
+    "default_runtime_mutation",
+    "summary",
+    "maps",
+    "usage_policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_runtime_v02_semantic_geometry_report.v0.1" },
+    "report_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "status": { "type": "string", "enum": ["passed", "passed_with_warnings", "blocked"] },
+    "runtime_effect": { "type": "boolean", "const": false },
+    "provider_call_count": { "type": "integer", "const": 0 },
+    "default_runtime_mutation": { "type": "boolean", "const": false },
+    "source_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_package_schema_version",
+        "semantic_source",
+        "geometry_source",
+        "no_image_or_preview_reverse_inference",
+        "does_not_modify_runtime_package",
+        "does_not_read_env",
+        "does_not_call_provider"
+      ],
+      "properties": {
+        "runtime_package_schema_version": { "type": "string", "const": "map_runtime_package.v0.2" },
+        "semantic_source": { "type": "string", "const": "MapRuntimePackage.v0.2.resource_nodes/hazard_zones/defense_anchors/blocked_areas" },
+        "geometry_source": { "type": "string", "const": "MapRuntimePackage.path_routes.waypoints" },
+        "no_image_or_preview_reverse_inference": { "type": "boolean", "const": true },
+        "does_not_modify_runtime_package": { "type": "boolean", "const": true },
+        "does_not_read_env": { "type": "boolean", "const": true },
+        "does_not_call_provider": { "type": "boolean", "const": true }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_count",
+        "resource_node_count",
+        "hazard_zone_count",
+        "defense_anchor_count",
+        "blocked_area_count",
+        "error_count",
+        "warning_count",
+        "status_counts"
+      ],
+      "properties": {
+        "map_count": { "type": "integer", "minimum": 1 },
+        "resource_node_count": { "type": "integer", "minimum": 0 },
+        "hazard_zone_count": { "type": "integer", "minimum": 0 },
+        "defense_anchor_count": { "type": "integer", "minimum": 0 },
+        "blocked_area_count": { "type": "integer", "minimum": 0 },
+        "error_count": { "type": "integer", "minimum": 0 },
+        "warning_count": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "maps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/map_review" }
+    },
+    "usage_policy": {
+      "type": "array",
+      "contains": { "const": "not_map_runtime_fact_source" },
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "check_id", "object_ref", "message"],
+      "properties": {
+        "severity": { "type": "string", "enum": ["error", "warning"] },
+        "check_id": { "type": "string", "minLength": 1 },
+        "object_ref": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "map_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_runtime_package_path",
+        "schema_version",
+        "package_id",
+        "node_id",
+        "status",
+        "grid",
+        "counts",
+        "resource_nodes",
+        "hazard_zones",
+        "defense_anchors",
+        "blocked_areas",
+        "findings",
+        "error_count",
+        "warning_count"
+      ],
+      "properties": {
+        "map_runtime_package_path": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "string", "const": "map_runtime_package.v0.2" },
+        "package_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "passed_with_warnings", "blocked"] },
+        "grid": { "type": "object" },
+        "counts": { "type": "object" },
+        "resource_nodes": { "type": "array", "items": { "type": "object" } },
+        "hazard_zones": { "type": "array", "items": { "type": "object" } },
+        "defense_anchors": { "type": "array", "items": { "type": "object" } },
+        "blocked_areas": { "type": "array", "items": { "type": "object" } },
+        "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+        "error_count": { "type": "integer", "minimum": 0 },
+        "warning_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

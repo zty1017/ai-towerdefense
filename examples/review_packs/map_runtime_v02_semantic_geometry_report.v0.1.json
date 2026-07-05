@@ -1,0 +1,273 @@
+{
+  "schema_version": "map_runtime_v02_semantic_geometry_report.v0.1",
+  "report_id": "map_runtime_v02_semantic_geometry_report_v0_1",
+  "created_at": "2026-07-05T00:00:00Z",
+  "status": "passed_with_warnings",
+  "source_policy": {
+    "runtime_package_schema_version": "map_runtime_package.v0.2",
+    "semantic_source": "MapRuntimePackage.v0.2.resource_nodes/hazard_zones/defense_anchors/blocked_areas",
+    "geometry_source": "MapRuntimePackage.path_routes.waypoints",
+    "no_image_or_preview_reverse_inference": true,
+    "does_not_modify_runtime_package": true,
+    "does_not_read_env": true,
+    "does_not_call_provider": true
+  },
+  "runtime_effect": false,
+  "provider_call_count": 0,
+  "default_runtime_mutation": false,
+  "summary": {
+    "map_count": 3,
+    "resource_node_count": 3,
+    "hazard_zone_count": 3,
+    "defense_anchor_count": 3,
+    "blocked_area_count": 3,
+    "error_count": 0,
+    "warning_count": 1,
+    "status_counts": {
+      "passed": 2,
+      "passed_with_warnings": 1
+    }
+  },
+  "maps": [
+    {
+      "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+      "schema_version": "map_runtime_package.v0.2",
+      "package_id": "map_pkg_gray_lantern_station_v0_2",
+      "node_id": "gray_lantern_station",
+      "status": "passed",
+      "grid": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 16,
+        "height_cells": 9,
+        "cell_size": 64
+      },
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "resource_nodes": [
+        {
+          "resource_node_id": "resource_gray_lantern_station_primary",
+          "status": "passed",
+          "position": {
+            "x": 4.0,
+            "y": 2.0
+          },
+          "nearest_route_id": "path_main_road",
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
+          "interactable_area_status": "available",
+          "conflicts": []
+        }
+      ],
+      "hazard_zones": [
+        {
+          "hazard_zone_id": "hazard_gray_lantern_station_road_pressure",
+          "status": "passed",
+          "anchor_route_id": "path_main_road",
+          "path_t_range": {
+            "start": 0.42,
+            "end": 0.58
+          },
+          "affected_area": "road_band",
+          "route_binding_status": "bound"
+        }
+      ],
+      "defense_anchors": [
+        {
+          "defense_anchor_id": "anchor_gray_lantern_station_mid_choke",
+          "status": "passed",
+          "position": {
+            "x": 5.0,
+            "y": 2.0
+          },
+          "related_route_ids": [
+            "path_main_road"
+          ],
+          "nearest_route_id": "path_main_road",
+          "nearest_related_route_distance_cells": 0.0,
+          "route_binding_status": "bound"
+        }
+      ],
+      "blocked_areas": [
+        {
+          "blocked_area_id": "blocked_gray_lantern_station_edge_ruin",
+          "status": "passed",
+          "cell_count": 1,
+          "conflicts": []
+        }
+      ],
+      "findings": [],
+      "error_count": 0,
+      "warning_count": 0
+    },
+    {
+      "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+      "schema_version": "map_runtime_package.v0.2",
+      "package_id": "map_pkg_old_signal_tower_v0_2",
+      "node_id": "old_signal_tower",
+      "status": "passed_with_warnings",
+      "grid": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "cell_size": 64
+      },
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "resource_nodes": [
+        {
+          "resource_node_id": "resource_old_signal_tower_primary",
+          "status": "warning",
+          "position": {
+            "x": 5.0,
+            "y": 4.0
+          },
+          "nearest_route_id": "path_old_signal_north_ridge",
+          "centerline_distance_cells": 0.3162,
+          "road_band_gap_cells": -0.1088,
+          "interactable_area_status": "available",
+          "conflicts": [
+            "derived_road_band"
+          ]
+        }
+      ],
+      "hazard_zones": [
+        {
+          "hazard_zone_id": "hazard_old_signal_tower_road_pressure",
+          "status": "passed",
+          "anchor_route_id": "path_old_signal_north_ridge",
+          "path_t_range": {
+            "start": 0.42,
+            "end": 0.58
+          },
+          "affected_area": "road_band",
+          "route_binding_status": "bound"
+        }
+      ],
+      "defense_anchors": [
+        {
+          "defense_anchor_id": "anchor_old_signal_tower_mid_choke",
+          "status": "passed",
+          "position": {
+            "x": 8.0,
+            "y": 4.0
+          },
+          "related_route_ids": [
+            "path_old_signal_north_ridge",
+            "path_old_signal_copper_trench"
+          ],
+          "nearest_route_id": "path_old_signal_north_ridge",
+          "nearest_related_route_distance_cells": 0.0,
+          "route_binding_status": "bound"
+        }
+      ],
+      "blocked_areas": [
+        {
+          "blocked_area_id": "blocked_old_signal_tower_edge_ruin",
+          "status": "passed",
+          "cell_count": 1,
+          "conflicts": []
+        }
+      ],
+      "findings": [
+        {
+          "severity": "warning",
+          "check_id": "resource_road_band_clearance",
+          "object_ref": "resource_nodes[0]",
+          "message": "resource_old_signal_tower_primary footprint overlaps derived road band by 0.1088 cells"
+        }
+      ],
+      "error_count": 0,
+      "warning_count": 1
+    },
+    {
+      "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+      "schema_version": "map_runtime_package.v0.2",
+      "package_id": "map_pkg_lamp_wick_store_v0_2",
+      "node_id": "lamp_wick_store",
+      "status": "passed",
+      "grid": {
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18,
+        "height_cells": 10,
+        "cell_size": 64
+      },
+      "counts": {
+        "resource_node_count": 1,
+        "hazard_zone_count": 1,
+        "defense_anchor_count": 1,
+        "blocked_area_count": 1
+      },
+      "resource_nodes": [
+        {
+          "resource_node_id": "resource_lamp_wick_store_primary",
+          "status": "passed",
+          "position": {
+            "x": 3.0,
+            "y": 7.0
+          },
+          "nearest_route_id": "path_wick_store_main_pipe",
+          "centerline_distance_cells": 0.5,
+          "road_band_gap_cells": 0.075,
+          "interactable_area_status": "available",
+          "conflicts": []
+        }
+      ],
+      "hazard_zones": [
+        {
+          "hazard_zone_id": "hazard_lamp_wick_store_road_pressure",
+          "status": "passed",
+          "anchor_route_id": "path_wick_store_main_pipe",
+          "path_t_range": {
+            "start": 0.42,
+            "end": 0.58
+          },
+          "affected_area": "road_band",
+          "route_binding_status": "bound"
+        }
+      ],
+      "defense_anchors": [
+        {
+          "defense_anchor_id": "anchor_lamp_wick_store_mid_choke",
+          "status": "passed",
+          "position": {
+            "x": 8.0,
+            "y": 2.0
+          },
+          "related_route_ids": [
+            "path_wick_store_main_pipe",
+            "path_wick_store_service_lane"
+          ],
+          "nearest_route_id": "path_wick_store_main_pipe",
+          "nearest_related_route_distance_cells": 0.0,
+          "route_binding_status": "bound"
+        }
+      ],
+      "blocked_areas": [
+        {
+          "blocked_area_id": "blocked_lamp_wick_store_edge_ruin",
+          "status": "passed",
+          "cell_count": 1,
+          "conflicts": []
+        }
+      ],
+      "findings": [],
+      "error_count": 0,
+      "warning_count": 0
+    }
+  ],
+  "usage_policy": [
+    "review_only",
+    "not_player_runtime",
+    "not_map_runtime_fact_source",
+    "does_not_modify_map_runtime_package",
+    "no_image_or_preview_reverse_inference"
+  ]
+}

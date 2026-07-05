@@ -690,3 +690,33 @@ frontend_contract_mutation_performed = false
 ```
 
 这说明 v0.2 强语义已经是“可读候选”，但还不是“默认玩家 runtime”。后续真正激活时，仍必须另开独立任务，并以该计划为 checklist 更新后端、前端和证据链。
+
+### 10.7 v0.2 强语义几何一致性 report 落点
+
+截至 2026-07-05，`MapRuntimePackage v0.2 preview` 已补齐 review-only 强语义几何证据：
+
+```text
+MapRuntimePackage v0.2 preview
+  -> resource_nodes / hazard_zones / defense_anchors / blocked_areas
+  -> deterministic path geometry helper
+  -> MapRuntimeV02SemanticGeometryReport
+  -> demo evidence summary
+```
+
+已新增：
+
+- `shared/schemas/map_runtime_v02_semantic_geometry_report.v0.1.schema.json`
+- `tools/asset_graph/build_map_runtime_v02_semantic_geometry_report.py`
+- `tools/asset_graph/validate_map_runtime_v02_semantic_geometry_report.py`
+- `examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json`
+
+该报告只读取 `examples/map_runtime_packages_v02/*.json`，先按 `map_runtime_package.v0.2` 校验输入，再复用 `map_path_geometry.py` 的连续路线 / road band 距离逻辑检查强语义几何：
+
+- `resource_nodes`：检查 footprint 是否在 grid 内，是否与 path road band、build slot、objective、spawn 或 blocked area 冲突；`interactable=true` 时记录 `interactable_area_status`。
+- `hazard_zones`：检查 anchor route id、`path_t_range` 和 `affected_area`；`road_band` 会记录绑定 route 与 t span。
+- `defense_anchors`：检查 related route id、grid 内位置和到相关 route 的最近距离。
+- `blocked_areas`：检查 cells 是否在 grid 内，是否与 path / build / resource / objective / spawn 冲突。
+
+报告状态为 `passed` / `passed_with_warnings` / `blocked`，并在 summary 中记录 warning / error counts。当前正式 report 为 `passed_with_warnings`：旧信号塔 v0.2 preview 的 `resource_old_signal_tower_primary` 贴近派生 road band，但没有 blocking resource / 阻挡区 / 塔位 / 目标 / 出生点硬冲突。该 warning 只作为 review evidence，不修改 v0.2 runtime package，也不影响默认 v0.1 玩家 runtime。
+
+安全边界保持显式字段：`runtime_effect=false`、`provider_call_count=0`、`default_runtime_mutation=false`，并声明不读 `.env`、不调用 provider、不读图片、不从 SVG / preview / AI candidate 反推语义。它不是新的 `PathGraph`、`CollisionMap`、`ResourceNodeMap` 或 `LevelBundle` 事实源，只是对现有 `MapRuntimePackage v0.2 preview` 的结构化证据层。
