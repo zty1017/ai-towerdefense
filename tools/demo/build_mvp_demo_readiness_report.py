@@ -30,6 +30,14 @@ PATHS = {
     / "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
     "runtime_loop_continuity": ROOT
     / "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
+    "provider_video_runner_receipt": ROOT
+    / "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json",
+    "provider_video_runner_envelope": ROOT
+    / "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json",
+    "provider_video_adapter_task_pack": ROOT
+    / "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json",
+    "provider_video_handoff_task_pack": ROOT
+    / "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json",
     "controlled_map_candidate_review": ROOT
     / "examples/review_packs/controlled_map_candidate_review.v0.1.json",
     "controlled_map_text_fallback_review": ROOT
@@ -280,6 +288,83 @@ def loop_continuity_gate(report: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def provider_video_boundary_gate(
+    receipt: dict[str, Any],
+    envelope: dict[str, Any],
+    adapter_task_pack: dict[str, Any],
+    handoff_task_pack: dict[str, Any],
+) -> dict[str, Any]:
+    receipt_source = as_obj(receipt.get("source"))
+    receipt_authority = as_obj(receipt.get("authority"))
+    receipt_execution = as_obj(receipt.get("execution"))
+    receipt_safety = as_obj(receipt.get("adapter_safety"))
+    envelope_source = as_obj(envelope.get("source"))
+    envelope_authority = as_obj(envelope.get("authority"))
+    provider_call = as_obj(envelope.get("provider_call"))
+    result_summary = as_obj(envelope.get("redacted_result_summary"))
+    activation_gate = as_obj(envelope.get("activation_gate"))
+    adapter_policy = as_obj(adapter_task_pack.get("provider_policy"))
+    handoff_policy = as_obj(handoff_task_pack.get("provider_policy"))
+    checks = {
+        "receipt_video_mode": receipt_source.get("provider_mode")
+        == "video_boundary_dry_run",
+        "receipt_review_only": receipt_authority.get("review_only") is True,
+        "receipt_provider_call_not_performed": receipt_execution.get(
+            "provider_call_performed_by_receipt_builder"
+        )
+        is False,
+        "receipt_finish_reason": receipt_execution.get("finish_reason")
+        == "video_live_provider_not_implemented",
+        "receipt_safety_no_provider_call": receipt_safety.get("calls_provider")
+        is False,
+        "envelope_video_mode": envelope_source.get("provider_mode")
+        == "video_boundary_dry_run",
+        "envelope_review_only": envelope_authority.get("review_only") is True,
+        "envelope_provider_call_not_performed": provider_call.get("performed")
+        is False,
+        "envelope_result_blocked_before_provider": result_summary.get("status")
+        == "blocked_before_provider_call",
+        "envelope_finish_reason": result_summary.get("finish_reason")
+        == "video_live_provider_not_implemented",
+        "activation_not_allowed": activation_gate.get("activation_allowed") is False,
+        "adapter_task_pack_no_provider_calls": adapter_policy.get(
+            "provider_calls_allowed"
+        )
+        is False,
+        "handoff_task_pack_no_provider_calls": handoff_policy.get(
+            "provider_calls_allowed"
+        )
+        is False,
+    }
+    ok = all(checks.values())
+    return gate(
+        gate_id="provider_video_boundary",
+        title="视频 provider 离线边界",
+        status="passed_with_warnings" if ok else "not_ready",
+        required_for_mvp_demo=False,
+        summary=(
+            "图生视频 provider 尚未接入玩家 runtime；当前只证明 video adapter "
+            "dry boundary、receipt/envelope 和 scheduler handoff 模板可见且不调用 provider。"
+        ),
+        evidence_keys=[
+            "provider_video_runner_receipt",
+            "provider_video_runner_envelope",
+            "provider_video_adapter_task_pack",
+            "provider_video_handoff_task_pack",
+        ],
+        metrics={
+            "checks": checks,
+            "receipt_execution_status": receipt_execution.get("status"),
+            "receipt_finish_reason": receipt_execution.get("finish_reason"),
+            "envelope_result_kind": result_summary.get("result_kind"),
+            "envelope_result_status": result_summary.get("status"),
+            "provider_call_performed": provider_call.get("performed"),
+            "activation_allowed": activation_gate.get("activation_allowed"),
+            "live_video_provider_ready": False,
+        },
+    )
+
+
 def blocked_map_candidate_gate(
     controlled_review: dict[str, Any],
     text_fallback_review: dict[str, Any],
@@ -362,6 +447,12 @@ def build_report(generated_at: str) -> dict[str, Any]:
         ),
         runtime_sprite_gate(reports["runtime_sprite_cutout_quality"]),
         loop_continuity_gate(reports["runtime_loop_continuity"]),
+        provider_video_boundary_gate(
+            reports["provider_video_runner_receipt"],
+            reports["provider_video_runner_envelope"],
+            reports["provider_video_adapter_task_pack"],
+            reports["provider_video_handoff_task_pack"],
+        ),
         blocked_map_candidate_gate(
             reports["controlled_map_candidate_review"],
             reports["controlled_map_text_fallback_review"],
@@ -427,8 +518,14 @@ def build_report(generated_at: str) -> dict[str, Any]:
             {
                 "limitation_id": "video_keyframes",
                 "severity": "low",
-                "summary": "当前循环动画为 deterministic frame sequence；真实图生视频关键帧尚未接入 atlas 晋升流程。",
-                "evidence_refs": [source_ref(PATHS["runtime_loop_continuity"])],
+                "summary": "当前循环动画为 deterministic frame sequence；video provider 只有离线 dry boundary 与 handoff 模板，真实图生视频关键帧尚未接入 atlas 晋升流程。",
+                "evidence_refs": [
+                    source_ref(PATHS["runtime_loop_continuity"]),
+                    source_ref(PATHS["provider_video_runner_receipt"]),
+                    source_ref(PATHS["provider_video_runner_envelope"]),
+                    source_ref(PATHS["provider_video_adapter_task_pack"]),
+                    source_ref(PATHS["provider_video_handoff_task_pack"]),
+                ],
             },
             {
                 "limitation_id": "live_provider_runtime",

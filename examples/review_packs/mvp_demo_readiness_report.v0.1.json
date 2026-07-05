@@ -142,6 +142,55 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json"
+        }
+      ],
+      "gate_id": "provider_video_boundary",
+      "metrics": {
+        "activation_allowed": false,
+        "checks": {
+          "activation_not_allowed": true,
+          "adapter_task_pack_no_provider_calls": true,
+          "envelope_finish_reason": true,
+          "envelope_provider_call_not_performed": true,
+          "envelope_result_blocked_before_provider": true,
+          "envelope_review_only": true,
+          "envelope_video_mode": true,
+          "handoff_task_pack_no_provider_calls": true,
+          "receipt_finish_reason": true,
+          "receipt_provider_call_not_performed": true,
+          "receipt_review_only": true,
+          "receipt_safety_no_provider_call": true,
+          "receipt_video_mode": true
+        },
+        "envelope_result_kind": "video_candidate",
+        "envelope_result_status": "blocked_before_provider_call",
+        "live_video_provider_ready": false,
+        "provider_call_performed": false,
+        "receipt_execution_status": "fixture_output_ready_for_envelope",
+        "receipt_finish_reason": "video_live_provider_not_implemented"
+      },
+      "required_for_mvp_demo": false,
+      "status": "passed_with_warnings",
+      "summary": "图生视频 provider 尚未接入玩家 runtime；当前只证明 video adapter dry boundary、receipt/envelope 和 scheduler handoff 模板可见且不调用 provider。",
+      "title": "视频 provider 离线边界"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/controlled_map_candidate_review.v0.1.json"
         },
         {
@@ -200,7 +249,7 @@
       "title": "浏览器玩家链路截图门禁"
     }
   ],
-  "generated_at": "2026-07-04T00:00:00+00:00",
+  "generated_at": "2026-07-05T00:00:00+00:00",
   "known_limitations": [
     {
       "evidence_refs": [
@@ -233,11 +282,27 @@
         {
           "exists": true,
           "path": "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json"
         }
       ],
       "limitation_id": "video_keyframes",
       "severity": "low",
-      "summary": "当前循环动画为 deterministic frame sequence；真实图生视频关键帧尚未接入 atlas 晋升流程。"
+      "summary": "当前循环动画为 deterministic frame sequence；video provider 只有离线 dry boundary 与 handoff 模板，真实图生视频关键帧尚未接入 atlas 晋升流程。"
     },
     {
       "evidence_refs": [
@@ -305,6 +370,22 @@
     },
     {
       "exists": true,
+      "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json"
+    },
+    {
+      "exists": true,
       "path": "examples/review_packs/controlled_map_candidate_review.v0.1.json"
     },
     {
@@ -330,13 +411,13 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 13,
+    "evidence_source_count": 17,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
     "required_gate_count": 7,
     "required_gate_passed_or_expected_count": 7,
     "runtime_mutation_count_by_report": 0,
-    "warning_gate_count": 2,
+    "warning_gate_count": 3,
     "world_mutation_count_by_report": 0
   }
 }
