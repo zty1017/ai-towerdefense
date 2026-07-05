@@ -23,6 +23,8 @@ ACTIVATION_AUTHORIZATION_REPORT = ROOT / "examples/review_packs/map_runtime_acti
 MAP_V02_API_SMOKE_REPORT = ROOT / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
 MAP_RUNTIME_DIR = ROOT / "examples/map_runtime_packages"
 MAP_RUNTIME_V02_DIR = ROOT / "examples/map_runtime_packages_v02"
+FRONTEND_APP = ROOT / "frontend/app.js"
+FRONTEND_VISUAL_CONTRACT = ROOT / "tools/frontend/validate_battle_visual_contract.py"
 
 
 NODE_SORT_ORDER = {
@@ -57,6 +59,31 @@ def index_by_node(paths: list[Path]) -> dict[str, dict[str, Any]]:
 
 def check(check_id: str, status: str, summary: str) -> dict[str, str]:
     return {"check_id": check_id, "status": status, "summary": summary}
+
+
+def frontend_v02_contract_prepared() -> dict[str, Any]:
+    app = FRONTEND_APP.read_text(encoding="utf-8") if FRONTEND_APP.exists() else ""
+    validator = (
+        FRONTEND_VISUAL_CONTRACT.read_text(encoding="utf-8")
+        if FRONTEND_VISUAL_CONTRACT.exists()
+        else ""
+    )
+    checks = {
+        "resource_nodes_from_runtime": "mapRuntimePackage().resource_nodes" in app,
+        "hazard_zones_from_runtime": "mapRuntimePackage().hazard_zones" in app,
+        "defense_anchors_from_runtime": "mapRuntimePackage().defense_anchors" in app,
+        "blocked_areas_from_runtime": "mapRuntimePackage().blocked_areas" in app,
+        "strong_semantic_draw_hook": "drawMapRuntimeStrongSemantics(ctx)" in app,
+        "hazards_bind_route_t": "zone.anchor_route_id" in app and "zone.path_t_range" in app,
+        "preview_endpoint_forbidden": '"map-v02-preview"' not in app
+        and '"map-v02-preview"' in validator,
+        "opt_in_endpoint_forbidden": '"map-v02-opt-in-dry-run"' not in app
+        and '"map-v02-opt-in-dry-run"' in validator,
+    }
+    return {
+        "status": "pre_activation_ready" if all(checks.values()) else "missing",
+        "checks": checks,
+    }
 
 
 def readiness_index(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -117,6 +144,7 @@ def build_node_decision(
     runtime_v01: dict[str, Any] | None,
     runtime_v02: dict[str, Any] | None,
     authorization_node: dict[str, Any] | None,
+    frontend_contract: dict[str, Any],
 ) -> dict[str, Any]:
     checks: list[dict[str, str]] = []
     blockers: list[str] = []
@@ -295,11 +323,30 @@ def build_node_decision(
         )
         blockers.append("explicit_developer_activation_approval_missing")
 
+    frontend_contract_status = frontend_contract.get("status")
+    if frontend_contract_status == "pre_activation_ready":
+        checks.append(
+            check(
+                "frontend_v02_semantic_consumption_contract",
+                "passed",
+                "Frontend can consume v0.2 strong semantics from an activated MapRuntimePackage while keeping review-only endpoints out of the default player flow.",
+            )
+        )
+    else:
+        checks.append(
+            check(
+                "frontend_v02_semantic_consumption_contract",
+                "blocked",
+                "Frontend has not proven v0.2 strong semantic consumption from activated runtime packages.",
+            )
+        )
+        blockers.append("frontend_v02_semantic_consumption_missing")
+
     checks.append(
         check(
             "api_frontend_contract_update",
             "blocked",
-            "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default.",
+            "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence.",
         )
     )
     blockers.append("api_frontend_contract_update_required")
@@ -336,7 +383,7 @@ def build_node_decision(
         [
             "approve_or_deny_explicit_developer_activation_authorization",
             "update_backend_api_contract_if_v02_becomes_default",
-            "update_frontend_runtime_contract_if_v02_becomes_default",
+            "revalidate_frontend_activated_runtime_contract_after_backend_selector",
             "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes",
         ]
     )
@@ -361,6 +408,7 @@ def build_node_decision(
             "provider_call_count_by_gate": 0,
             "authorization_record_present": bool(authorization_node),
             "authorization_status": authorization_status,
+            "frontend_v02_contract_status": frontend_contract_status,
         },
         "required_next_actions": required_next_actions,
     }
@@ -383,6 +431,7 @@ def build_report() -> dict[str, Any]:
     api_by_node = api_node_index(api_report)
     visual_by_node = visual_gate_index(visual_report)
     authorization_by_node = authorization_index(authorization_report)
+    frontend_contract = frontend_v02_contract_prepared()
 
     node_ids = sorted(
         set(runtime_v01) | set(runtime_v02) | set(readiness_by_node) | set(api_by_node),
@@ -397,6 +446,7 @@ def build_report() -> dict[str, Any]:
             runtime_v01.get(node_id),
             runtime_v02.get(node_id),
             authorization_by_node.get(node_id),
+            frontend_contract,
         )
         for node_id in node_ids
     ]
@@ -480,6 +530,7 @@ def build_report() -> dict[str, Any]:
             "api_default_runtime_v01_preserved_count": api_report.get(
                 "default_runtime_v01_preserved_count"
             ),
+            "frontend_v02_contract_status": frontend_contract.get("status"),
             "provider_call_count_by_report": 0,
             "world_mutation_count_by_report": 0,
             "runtime_mutation_count_by_report": 0,
@@ -488,7 +539,9 @@ def build_report() -> dict[str, Any]:
         "next_activation_task_contract": {
             "required_authorization_kind": "explicit_developer_activation_authorization",
             "must_update_backend_contract": True,
-            "must_update_frontend_contract": True,
+            "frontend_v02_semantic_consumption_prepared": frontend_contract.get("status")
+            == "pre_activation_ready",
+            "must_revalidate_frontend_contract_after_activation": True,
             "must_rerun_commands": [
                 "python3 tools/dev/check_map_v02_preview_api.py",
                 "python3 tools/dev/check_mvp_primary_api_flow.py",

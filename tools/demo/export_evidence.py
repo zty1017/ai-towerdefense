@@ -1812,6 +1812,7 @@ def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any
         "authorization_report_status": summary.get("authorization_report_status"),
         "authorization_status_counts": as_obj(summary.get("authorization_status_counts")),
         "authorization_approved_count": summary.get("authorization_approved_count"),
+        "frontend_v02_contract_status": summary.get("frontend_v02_contract_status"),
         "required_authorization_kind": as_obj(
             report.get("next_activation_task_contract")
         ).get("required_authorization_kind"),
@@ -1847,6 +1848,9 @@ def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any
                 ),
                 "to_package_id": as_obj(decision.get("target_candidate")).get(
                     "to_package_id"
+                ),
+                "frontend_v02_contract_status": as_obj(decision.get("safety")).get(
+                    "frontend_v02_contract_status"
                 ),
             }
             for decision in decisions[:MAX_SAMPLE_ITEMS]
@@ -2882,6 +2886,13 @@ def map_runtime_v02_activation_contract_plan_summary(report: dict[str, Any]) -> 
         ),
         "backend_required_change_count": summary.get("backend_required_change_count"),
         "frontend_required_change_count": summary.get("frontend_required_change_count"),
+        "frontend_contract_status": summary.get("frontend_contract_status"),
+        "frontend_pre_activation_ready_count": summary.get(
+            "frontend_pre_activation_ready_count"
+        ),
+        "frontend_post_activation_evidence_required_count": summary.get(
+            "frontend_post_activation_evidence_required_count"
+        ),
         "post_activation_required_command_count": summary.get(
             "post_activation_required_command_count"
         ),
@@ -5382,7 +5393,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 开发者授权：`{map_runtime_activation_authorization.get('status')}`，approved `{map_runtime_activation_authorization.get('approved_count')}`，pending `{map_runtime_activation_authorization.get('pending_count')}`，gate 授权 `{map_runtime_activation_authorization.get('activation_authorized_for_gate_count')}`，runtime 修改 `{as_obj(map_runtime_activation_authorization.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
-        f"- MapRuntimePackage v0.2 激活合同计划：`{map_runtime_v02_activation_contract_plan.get('status')}`，计划状态 `{map_runtime_v02_activation_contract_plan.get('contract_plan_status')}`，apply-now `{map_runtime_v02_activation_contract_plan.get('activation_apply_now_count')}`，后端步骤 `{map_runtime_v02_activation_contract_plan.get('backend_required_change_count')}`，前端步骤 `{map_runtime_v02_activation_contract_plan.get('frontend_required_change_count')}`，runtime 修改 `{as_obj(map_runtime_v02_activation_contract_plan.get('safety')).get('default_runtime_mutation_performed')}`",
+        f"- MapRuntimePackage v0.2 激活合同计划：`{map_runtime_v02_activation_contract_plan.get('status')}`，计划状态 `{map_runtime_v02_activation_contract_plan.get('contract_plan_status')}`，apply-now `{map_runtime_v02_activation_contract_plan.get('activation_apply_now_count')}`，后端步骤 `{map_runtime_v02_activation_contract_plan.get('backend_required_change_count')}`，前端步骤 `{map_runtime_v02_activation_contract_plan.get('frontend_required_change_count')}`，前端预接入 `{map_runtime_v02_activation_contract_plan.get('frontend_pre_activation_ready_count')}`，runtime 修改 `{as_obj(map_runtime_v02_activation_contract_plan.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapComponentMediaManifest v0.2 preview：`{map_component_media_v02.get('media_pack_id')}`，components `{map_component_media_v02.get('component_count')}`，single images `{map_component_media_v02.get('single_image_count')}`，atlas animations `{map_component_media_v02.get('atlas_animation_count')}`，media kinds `{map_component_media_v02.get('media_kind_counts')}`，默认前端消费 `{('no_frontend_default_consumption' in as_list(map_component_media_v02.get('usage_policy')))}`",
@@ -5952,7 +5963,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         <article class="card">
           <div class="eyebrow">Map v0.2 激活合同计划</div>
           <div class="metric">{html_escape(map_runtime_v02_activation_contract_plan.get("status"))}</div>
-          <p class="muted">计划 {html_escape(map_runtime_v02_activation_contract_plan.get("contract_plan_status"))}；apply-now {html_escape(map_runtime_v02_activation_contract_plan.get("activation_apply_now_count"))}；后端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("backend_required_change_count"))}；前端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("frontend_required_change_count"))}。</p>
+          <p class="muted">计划 {html_escape(map_runtime_v02_activation_contract_plan.get("contract_plan_status"))}；apply-now {html_escape(map_runtime_v02_activation_contract_plan.get("activation_apply_now_count"))}；后端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("backend_required_change_count"))}；前端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("frontend_required_change_count"))}；前端预接入 {html_escape(map_runtime_v02_activation_contract_plan.get("frontend_pre_activation_ready_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">地图路径几何审查</div>
