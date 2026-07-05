@@ -73,6 +73,7 @@ P2：本阶段明确不做
 - `MapTopologyControlSketchPack v0.1` 已把三张 MapRuntimePackage 确定性转成无文字、无 UI、无敌人、无塔的控制构图 PNG，以及带开发者标签的 SVG 审查图；该包只用于 compile-time reference / evidence，不进入玩家 runtime。下一步应基于控制图做受控图像重生、局部清理或视觉模型审查，再重新走 candidate / alignment / overlay / visual / promotion gates。
 - `MapControlledRegenerationRequestPack v0.1` 已把控制构图 PNG、v0.2 prompt repair、负面约束、目标候选目录和 review gates 编译成三张地图的 reference-image request。下一步真实 provider 调用、人工 paintover 或局部清理应消费该 request pack，避免继续从散落 prompt 或截图临时拼输入。
 - `ControlledMapCandidateGenerationRun v0.1` 已提供 `generate_controlled_map_candidates.py`。默认 reference-image handoff 模式会生成三张 review-only sidecar，不调用 provider、不伪造图片；text-fallback 模式只有显式 `--live` 才调用现有图像 provider，但最新真实调用已证明纯文本整图不适合作为地图发布候选路线。下一步应接支持参考图的 provider adapter、人工 paintover，或实现 `MapRuntimePackage` 驱动的分层程序化底图。
+- `ControlledMapCandidateArtifactImportReport v0.1` 已补本地 PNG 导入边界：默认示例为三张候选 `awaiting_local_artifacts`，不复制图片；后续人工 paintover 或 reference-image provider runner 下载本地 PNG 后，必须通过该 import plan / validator / `--copy-files` 显式进入 `node_candidates_controlled_v1` 候选槽，并保持 review-only、promotion blocked。
 - `ControlledMapCandidateReview v0.1` 已把上述 sidecar 纳入 `build_node_map_candidate_review_pack.py`。当前三个受控候选都被审查为 `awaiting_provider_or_paintover_output`，整体 `review_only_not_runtime_ready`；这证明链路接上了，但在真实图片产出前不会进入 alignment 或晋升。
 - `ControlledMapTextFallbackGenerationRun v0.1` 已完成一次真实 Agnes text-fallback 生成，三张图片均有 sidecar 和审查记录；`ControlledMapTextFallbackCandidateReview v0.1` 已全部判定为 `needs_regeneration`，整体 `review_only_not_runtime_ready`。结论是纯文本整图生成会把箭头、控制形状、未授权人物 / 塔位和错误路线烙进背景，不适合作为玩家 runtime 地图底图。后续地图任务应优先改为 reference-image / paintover / MapRuntimePackage 驱动的分层程序化底图。
 - `MapVisualPromotionGateReport v0.1` 已接入 evidence，用确定性规则交叉检查 review-only / do_not_promote / needs_regeneration / awaiting provider 的地图候选是否被误挂到玩家侧 `published_visual_layer`。当前阻断候选 22 个、published 玩家图层 4 个、违规 0 个；这证明差图已被隔离为负样本证据，但不代表地图美术质量已完成。
@@ -3249,6 +3250,45 @@ readiness_gates = {gate['gate_id']: gate for gate in evidence['mvp_demo_readines
 assert readiness_gates['provider_video_boundary']['status'] == 'passed_with_warnings'
 assert evidence['mvp_demo_readiness']['summary']['provider_call_count_by_report'] == 0
 PY
+git diff --check
+```
+
+### P1-D-19 Controlled map candidate artifact import
+
+状态：已完成最小导入边界。
+
+目标：
+
+```text
+建立受控地图候选本地 PNG 导入边界：外部 reference-image provider 或人工 paintover 先产出本地 PNG，再通过 import plan / validator / 显式 --copy-files 进入 node_candidates_controlled_v1 候选槽；默认示例不复制图片，只记录 awaiting_local_artifacts。
+```
+
+已落地：
+
+- `tools/media/import_controlled_map_candidate_artifacts.py`：读取 `MapControlledRegenerationRequestPack` 与 import plan，默认输出 awaiting report；显式 `--copy-files` 时复制本地 PNG 并刷新 review-only sidecar。
+- `tools/media/validate_controlled_map_candidate_artifact_import_report.py`：校验 report、路径边界、PNG sha、provider 调用数和 runtime / published visual layer 修改数。
+- `tools/media/build_node_map_candidate_review_pack.py`：识别 `local_artifact_imported_pending_candidate_review` sidecar，并把它标记为 `candidate_review_ready`，仍阻断 runtime promotion。
+- `tools/demo/export_evidence.py`：纳入统一 demo evidence 的地图受控候选本地 PNG 导入摘要和静态校验命令。
+- `examples/review_packs/controlled_map_candidate_artifact_import_plan.v0.1.json`：默认空 plan，不导入真实图片。
+- `examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json`：默认报告状态为 `awaiting_local_artifacts`，三张节点等待本地 PNG。
+- `examples/worker_task_packs/p1d_controlled_map_candidate_artifact_import.v0.1.json`：记录任务边界。
+
+边界：
+
+- 本任务不调用 provider，不读取 `.env`，不新增真实 PNG，不改 `MapRuntimePackage`，不写 published visual layer，不激活 runtime。
+- 真实导入只接受仓库内或 `/tmp` 下本地 PNG，不接受远程 URL。
+- 导入后的候选仍必须重新走 candidate / alignment / overlay / visual / explicit promotion gates。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_controlled_map_candidate_artifact_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-controlled-map-import python3 -m py_compile tools/media/import_controlled_map_candidate_artifacts.py tools/media/validate_controlled_map_candidate_artifact_import_report.py tools/media/build_node_map_candidate_review_pack.py tools/demo/export_evidence.py
+python3 tools/media/import_controlled_map_candidate_artifacts.py --plan examples/review_packs/controlled_map_candidate_artifact_import_plan.v0.1.json --output /tmp/controlled_map_candidate_artifact_import_report.json
+python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py /tmp/controlled_map_candidate_artifact_import_report.json
+python3 tools/media/import_controlled_map_candidate_artifacts.py --plan examples/review_packs/controlled_map_candidate_artifact_import_plan.v0.1.json --output examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json
+python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/controlled_map_candidate_import_evidence
 git diff --check
 ```
 

@@ -269,6 +269,14 @@ def build_candidate(sidecar_path: Path, review_profile: str) -> dict[str, Any]:
     review_status = notes["status"]
     blocking_findings = list(notes["blocking_findings"])
     recommended_next_action = notes["recommended_next_action"]
+    if (
+        sidecar.get("generation_status") == "local_artifact_imported_pending_candidate_review"
+        and sidecar.get("review_status") == "candidate_needs_candidate_review_first"
+        and file_status == "present_png"
+    ):
+        review_status = "candidate_review_ready"
+        blocking_findings = ["manual_candidate_review_required_before_alignment_or_runtime_promotion"]
+        recommended_next_action = "run candidate review before alignment, overlay, visual, or promotion gates"
     if file_status != "present_png" and review_status == "alignment_review_ready":
         review_status = "awaiting_provider_or_paintover_output"
         blocking_findings = sorted(

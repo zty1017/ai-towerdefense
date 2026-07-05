@@ -1,0 +1,87 @@
+{
+  "copy_files": false,
+  "errors": [],
+  "import_plan_path": "examples/review_packs/controlled_map_candidate_artifact_import_plan.v0.1.json",
+  "items": [
+    {
+      "copied": false,
+      "node_id": "gray_lantern_station",
+      "notes": "no import item supplied",
+      "promotion_allowed_now": false,
+      "provider_called_this_run": false,
+      "request_id": "gray_lantern_station.controlled_map_regeneration_request",
+      "source_kind": null,
+      "source_png_path": null,
+      "source_png_sha256": null,
+      "status": "awaiting_local_artifact",
+      "target_candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png",
+      "target_sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/gray_lantern_station.controlled_reference_candidate.png.candidate.json"
+    },
+    {
+      "copied": false,
+      "node_id": "old_signal_tower",
+      "notes": "no import item supplied",
+      "promotion_allowed_now": false,
+      "provider_called_this_run": false,
+      "request_id": "old_signal_tower.controlled_map_regeneration_request",
+      "source_kind": null,
+      "source_png_path": null,
+      "source_png_sha256": null,
+      "status": "awaiting_local_artifact",
+      "target_candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/old_signal_tower.controlled_reference_candidate.png",
+      "target_sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/old_signal_tower.controlled_reference_candidate.png.candidate.json"
+    },
+    {
+      "copied": false,
+      "node_id": "lamp_wick_store",
+      "notes": "no import item supplied",
+      "promotion_allowed_now": false,
+      "provider_called_this_run": false,
+      "request_id": "lamp_wick_store.controlled_map_regeneration_request",
+      "source_kind": null,
+      "source_png_path": null,
+      "source_png_sha256": null,
+      "status": "awaiting_local_artifact",
+      "target_candidate_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/lamp_wick_store.controlled_reference_candidate.png",
+      "target_sidecar_path": "game_data/media/map_visual_reference/node_candidates_controlled_v1/lamp_wick_store.controlled_reference_candidate.png.candidate.json"
+    }
+  ],
+  "policy": [
+    "This report imports local PNG artifacts into review-only controlled map candidate slots only.",
+    "The importer does not call providers, read .env, publish runtime artifacts, modify MapRuntimePackage, or write a published visual layer.",
+    "Imported candidates remain blocked from runtime promotion until candidate, alignment, overlay, visual, and explicit promotion gates pass."
+  ],
+  "report_id": "mvp_controlled_map_candidate_artifact_import_v0_1",
+  "request_pack_path": "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+  "safety_summary": {
+    "copies_files_only_when_copy_files_true": true,
+    "map_runtime_package_modified": false,
+    "provider_called": false,
+    "published_visual_layer_written": false,
+    "reads_env": false,
+    "runtime_package_activation_changed": false,
+    "runtime_published": false,
+    "source_paths_limited_to_repo_or_tmp": true
+  },
+  "schema_version": "controlled_map_candidate_artifact_import_report.v0.1",
+  "status": "awaiting_local_artifacts",
+  "summary": {
+    "awaiting_count": 3,
+    "imported_count": 0,
+    "invalid_count": 0,
+    "map_runtime_package_write_count": 0,
+    "provider_call_count": 0,
+    "published_visual_layer_write_count": 0,
+    "request_count": 3,
+    "runtime_mutation_count": 0,
+    "status_counts": {
+      "awaiting_local_artifact": 3
+    }
+  },
+  "target_dir": "game_data/media/map_visual_reference/node_candidates_controlled_v1",
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json"
+    ]
+  }
+}
