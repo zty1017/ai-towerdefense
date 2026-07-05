@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-07-05T00:00:00Z",
+  "inputs": {
+    "activation_gate_report": "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+    "approval_plan_supplied": false,
+    "readiness_report": "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json"
+  },
+  "nodes": [
+    {
+      "activation_authorized_for_gate": false,
+      "approval_record": {
+        "approved_at": null,
+        "approved_by": null,
+        "notes": null,
+        "target_match": null
+      },
+      "authorization_decision": "pending",
+      "authorization_record_present": true,
+      "authorization_status": "pending",
+      "blocking_reasons": [
+        "developer_authorization_not_approved"
+      ],
+      "node_id": "gray_lantern_station",
+      "required_next_actions": [
+        "developer_must_explicitly_approve_target_v02_runtime",
+        "activation_gate_must_still_check_visual_candidate_isolation",
+        "activation_gate_must_still_require_backend_frontend_contract_update",
+        "activation_gate_must_still_require_post_activation_evidence"
+      ],
+      "safety": {
+        "authorization_is_not_activation": true,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "provider_call_count_by_report": 0,
+        "runtime_activation_allowed": false,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_gray_lantern_station_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_gray_lantern_station_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_authorized_for_gate": false,
+      "approval_record": {
+        "approved_at": null,
+        "approved_by": null,
+        "notes": null,
+        "target_match": null
+      },
+      "authorization_decision": "pending",
+      "authorization_record_present": true,
+      "authorization_status": "pending",
+      "blocking_reasons": [
+        "developer_authorization_not_approved"
+      ],
+      "node_id": "lamp_wick_store",
+      "required_next_actions": [
+        "developer_must_explicitly_approve_target_v02_runtime",
+        "activation_gate_must_still_check_visual_candidate_isolation",
+        "activation_gate_must_still_require_backend_frontend_contract_update",
+        "activation_gate_must_still_require_post_activation_evidence"
+      ],
+      "safety": {
+        "authorization_is_not_activation": true,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "provider_call_count_by_report": 0,
+        "runtime_activation_allowed": false,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_lamp_wick_store_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_lamp_wick_store_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_authorized_for_gate": false,
+      "approval_record": {
+        "approved_at": null,
+        "approved_by": null,
+        "notes": null,
+        "target_match": null
+      },
+      "authorization_decision": "pending",
+      "authorization_record_present": true,
+      "authorization_status": "pending",
+      "blocking_reasons": [
+        "developer_authorization_not_approved"
+      ],
+      "node_id": "old_signal_tower",
+      "required_next_actions": [
+        "developer_must_explicitly_approve_target_v02_runtime",
+        "activation_gate_must_still_check_visual_candidate_isolation",
+        "activation_gate_must_still_require_backend_frontend_contract_update",
+        "activation_gate_must_still_require_post_activation_evidence"
+      ],
+      "safety": {
+        "authorization_is_not_activation": true,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "provider_call_count_by_report": 0,
+        "runtime_activation_allowed": false,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_old_signal_tower_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_old_signal_tower_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    }
+  ],
+  "policy": [
+    "Developer authorization is required before a v0.2 map runtime can be considered for default activation.",
+    "Authorization is not activation and does not modify MapRuntimePackage, backend API, frontend runtime, or world state.",
+    "Even an approved authorization must still pass activation gate checks, API/frontend contract updates, and post-activation evidence."
+  ],
+  "report_id": "mvp_map_runtime_activation_authorization",
+  "safety_summary": {
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_performed": false,
+    "provider_call_count_by_report": 0,
+    "reads_env_file": false,
+    "runtime_mutation_count_by_report": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count_by_report": 0
+  },
+  "schema_version": "map_runtime_activation_authorization_report.v0.1",
+  "scope": {
+    "authorization_record_only": true,
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_performed": false,
+    "provider_calls_allowed": false,
+    "read_model_only": true,
+    "runtime_activation_allowed": false,
+    "world_state_mutation_allowed": false
+  },
+  "status": "pending_developer_approval",
+  "summary": {
+    "activation_authorized_for_gate_count": 0,
+    "approved_count": 0,
+    "authorization_status_counts": {
+      "pending": 3
+    },
+    "denied_count": 0,
+    "node_count": 3,
+    "pending_count": 3,
+    "provider_call_count_by_report": 0,
+    "runtime_mutation_count_by_report": 0,
+    "world_mutation_count_by_report": 0
+  }
+}

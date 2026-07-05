@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT = ROOT / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json"
 READINESS_REPORT = ROOT / "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json"
 VISUAL_PROMOTION_GATE_REPORT = ROOT / "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
+ACTIVATION_AUTHORIZATION_REPORT = ROOT / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json"
 MAP_V02_API_SMOKE_REPORT = ROOT / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
 MAP_RUNTIME_DIR = ROOT / "examples/map_runtime_packages"
 MAP_RUNTIME_V02_DIR = ROOT / "examples/map_runtime_packages_v02"
@@ -98,6 +99,16 @@ def visual_gate_index(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def authorization_index(report: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    if not report:
+        return {}
+    return {
+        node.get("node_id"): node
+        for node in as_list(report.get("nodes"))
+        if isinstance(node, dict) and isinstance(node.get("node_id"), str)
+    }
+
+
 def build_node_decision(
     node_id: str,
     readiness_node: dict[str, Any] | None,
@@ -105,6 +116,7 @@ def build_node_decision(
     visual_node: dict[str, Any],
     runtime_v01: dict[str, Any] | None,
     runtime_v02: dict[str, Any] | None,
+    authorization_node: dict[str, Any] | None,
 ) -> dict[str, Any]:
     checks: list[dict[str, str]] = []
     blockers: list[str] = []
@@ -236,14 +248,52 @@ def build_node_decision(
             )
         )
 
-    checks.append(
-        check(
-            "explicit_developer_activation_approval",
-            "blocked",
-            "No explicit developer activation authorization record is present for this node.",
-        )
+    authorization_status = (authorization_node or {}).get("authorization_status")
+    authorization_target = as_obj((authorization_node or {}).get("target_candidate"))
+    authorization_matches_target = (
+        authorization_target.get("to_package_id") == (runtime_v02 or {}).get("package_id")
+        and authorization_target.get("to_schema_version") == (runtime_v02 or {}).get("schema_version")
     )
-    blockers.append("explicit_developer_activation_approval_missing")
+    if (
+        authorization_node
+        and authorization_status == "approved_for_gate_review"
+        and authorization_matches_target
+        and authorization_node.get("activation_authorized_for_gate") is True
+    ):
+        checks.append(
+            check(
+                "explicit_developer_activation_approval",
+                "passed",
+                "Explicit developer authorization exists for this v0.2 target; remaining activation gates still apply.",
+            )
+        )
+    elif authorization_node and authorization_status == "denied":
+        checks.append(
+            check(
+                "explicit_developer_activation_approval",
+                "blocked",
+                "Developer authorization record exists and denies this v0.2 activation target.",
+            )
+        )
+        blockers.append("explicit_developer_activation_denied")
+    elif authorization_node:
+        checks.append(
+            check(
+                "explicit_developer_activation_approval",
+                "blocked",
+                "Developer authorization record exists but has not approved this v0.2 activation target.",
+            )
+        )
+        blockers.append("explicit_developer_activation_not_approved")
+    else:
+        checks.append(
+            check(
+                "explicit_developer_activation_approval",
+                "blocked",
+                "No explicit developer activation authorization record is present for this node.",
+            )
+        )
+        blockers.append("explicit_developer_activation_approval_missing")
 
     checks.append(
         check(
@@ -284,7 +334,7 @@ def build_node_decision(
         )
     required_next_actions.extend(
         [
-            "record_explicit_developer_activation_authorization",
+            "approve_or_deny_explicit_developer_activation_authorization",
             "update_backend_api_contract_if_v02_becomes_default",
             "update_frontend_runtime_contract_if_v02_becomes_default",
             "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes",
@@ -309,6 +359,8 @@ def build_node_decision(
             "default_runtime_mutation_performed": False,
             "world_state_mutation_performed": False,
             "provider_call_count_by_gate": 0,
+            "authorization_record_present": bool(authorization_node),
+            "authorization_status": authorization_status,
         },
         "required_next_actions": required_next_actions,
     }
@@ -318,6 +370,11 @@ def build_report() -> dict[str, Any]:
     readiness_report = load_json(READINESS_REPORT)
     visual_report = load_json(VISUAL_PROMOTION_GATE_REPORT)
     api_report = load_json(MAP_V02_API_SMOKE_REPORT)
+    authorization_report = (
+        load_json(ACTIVATION_AUTHORIZATION_REPORT)
+        if ACTIVATION_AUTHORIZATION_REPORT.exists()
+        else None
+    )
     runtime_v01 = index_by_node(sorted(MAP_RUNTIME_DIR.glob("*.map_runtime_package.json")))
     runtime_v02 = index_by_node(
         sorted(MAP_RUNTIME_V02_DIR.glob("*.map_runtime_package_v02.json"))
@@ -325,6 +382,7 @@ def build_report() -> dict[str, Any]:
     readiness_by_node = readiness_index(readiness_report)
     api_by_node = api_node_index(api_report)
     visual_by_node = visual_gate_index(visual_report)
+    authorization_by_node = authorization_index(authorization_report)
 
     node_ids = sorted(
         set(runtime_v01) | set(runtime_v02) | set(readiness_by_node) | set(api_by_node),
@@ -338,6 +396,7 @@ def build_report() -> dict[str, Any]:
             visual_by_node.get(node_id, {}),
             runtime_v01.get(node_id),
             runtime_v02.get(node_id),
+            authorization_by_node.get(node_id),
         )
         for node_id in node_ids
     ]
@@ -367,6 +426,11 @@ def build_report() -> dict[str, Any]:
             "visual_promotion_gate_report": str(
                 VISUAL_PROMOTION_GATE_REPORT.relative_to(ROOT)
             ),
+            "activation_authorization_report": str(
+                ACTIVATION_AUTHORIZATION_REPORT.relative_to(ROOT)
+            )
+            if authorization_report
+            else None,
             "map_v02_preview_api_smoke_report": str(
                 MAP_V02_API_SMOKE_REPORT.relative_to(ROOT)
             ),
@@ -404,6 +468,15 @@ def build_report() -> dict[str, Any]:
             "visual_promotion_violation_count": as_obj(visual_report.get("summary")).get(
                 "violation_count"
             ),
+            "authorization_report_status": (authorization_report or {}).get("status"),
+            "authorization_status_counts": as_obj(
+                as_obj((authorization_report or {}).get("summary")).get(
+                    "authorization_status_counts"
+                )
+            ),
+            "authorization_approved_count": as_obj(
+                (authorization_report or {}).get("summary")
+            ).get("approved_count"),
             "api_default_runtime_v01_preserved_count": api_report.get(
                 "default_runtime_v01_preserved_count"
             ),
