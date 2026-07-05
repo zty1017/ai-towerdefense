@@ -88,6 +88,7 @@ P2：本阶段明确不做
 - MapRuntimeActivationAuthorizationReport v0.1 已作为地图 runtime 激活授权记录层接入 demo evidence：默认状态 `pending_developer_approval`，三张节点均有记录但未批准，且 provider / runtime / backend / frontend / world 修改数均为 0。它不是激活命令，只是 activation gate 的输入。
 - MapRuntimeV02OptInContractSmokeReport v0.1 已作为地图 runtime v0.2 opt-in dry-run 合同证据接入 demo evidence：默认 API 仍 pending 且不返回完整 v0.2 包，临时 approved 授权夹具只在 service 层证明 v0.2 候选包可读；`/config`、`/runtime-package`、`/map-runtime-package` 仍保持 v0.1 且 v0.2 字段泄漏为 0。
 - MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0，阻断项包括显式开发者激活授权未批准、review-only/拒绝候选隔离、API/frontend 合同更新和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
+- MapRuntimeV02ActivationContractPlan v0.1 已作为地图 runtime v0.2 激活前合同计划层接入 demo evidence：它读取 activation gate、authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，列出正式激活前必须完成的后端默认选择器、前端消费合同和复跑证据命令；当前 `contract_plan_status=not_applied`、`activation_allowed_count=0`、`activation_apply_now_count=0`，且默认 runtime / backend API / frontend 合同修改均为 false。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
 - MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`provider_video_boundary` 是非必需 warning gate，只证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
@@ -3363,6 +3364,41 @@ python3 tools/dev/validate_map_runtime_v02_opt_in_contract_report.py examples/re
 python3 tools/frontend/validate_battle_visual_contract.py
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-v02-opt-in-final python3 -m py_compile backend/app/services/map_runtime_service.py backend/app/api/frontend_mock.py tools/dev/check_map_runtime_v02_opt_in_contract.py tools/dev/validate_map_runtime_v02_opt_in_contract_report.py tools/frontend/validate_battle_visual_contract.py tools/demo/export_evidence.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_opt_in_contract_evidence
+git diff --check
+```
+
+### P1-D-22 Map runtime v0.2 activation contract plan
+
+状态：已完成最小激活前合同计划证据。
+
+目标：
+
+```text
+在不激活 MapRuntimePackage v0.2、不修改默认玩家 runtime、不改后端/前端默认行为的前提下，把 activation gate 中“API/frontend 合同更新和激活后证据复跑”的阻断项展开成可审查、可校验的计划层。
+```
+
+已落地：
+
+- `tools/media/build_map_runtime_v02_activation_contract_plan.py`：读取 activation gate、activation authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，生成计划报告。
+- `tools/media/validate_map_runtime_v02_activation_contract_plan.py`：校验计划层必须保持 `plan_only` / `read_model_only`，且 activation allowed、apply-now、runtime/backend/frontend/world/provider 修改均为 0 / false。
+- `examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json`：三节点均记录 v0.1 -> v0.2 目标候选、当前 gate blocker、默认 API v0.1 保留、approved fixture v0.2 语义可读，以及未应用的 backend/frontend/evidence 合同计划。
+- `tools/demo/export_evidence.py`：纳入该计划摘要、校验项、Markdown/HTML 展示，并在导出时断言计划不得激活或修改默认 runtime / backend / frontend 合同。
+
+边界：
+
+- 这不是激活任务，不写 `examples/map_runtime_packages/`，不让默认 `/map-runtime-package` 指向 v0.2。
+- 不让默认前端读取 `map-v02-preview` 或 `map-v02-opt-in-dry-run`。
+- 不新增与 `MapRuntimePackage` 竞争的 `LevelBundle` / `PathGraph` / `PlacementMap` 并列运行时事实源。
+- 不从图片、SVG、preview 或 AI candidate 中反推路线、塔位、资源点、机关、阻挡或碰撞。
+- 不调用 provider，不读取 `.env`，不写世界状态。
+
+验收：
+
+```bash
+python3 tools/media/build_map_runtime_v02_activation_contract_plan.py
+python3 tools/media/validate_map_runtime_v02_activation_contract_plan.py examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json
+python3 -m py_compile tools/media/build_map_runtime_v02_activation_contract_plan.py tools/media/validate_map_runtime_v02_activation_contract_plan.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_activation_contract_plan_evidence
 git diff --check
 ```
 

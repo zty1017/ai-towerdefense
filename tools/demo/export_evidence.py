@@ -166,6 +166,8 @@ PATHS = {
     / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json",
     "map_runtime_activation_gate_report": ROOT
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+    "map_runtime_v02_activation_contract_plan": ROOT
+    / "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json",
     "map_path_geometry_report": ROOT
     / "examples/review_packs/map_path_geometry_report.v0.1.json",
     "map_component_media_manifest": ROOT
@@ -534,6 +536,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/dev/validate_map_runtime_v02_opt_in_contract_report.py",
             "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_runtime_v02_activation_contract_plan",
+        "command": [
+            "python3",
+            "tools/media/validate_map_runtime_v02_activation_contract_plan.py",
+            "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json",
         ],
     },
     {
@@ -2842,6 +2852,77 @@ def collect_map_runtime_v02_opt_in_contract_smoke(report: dict[str, Any]) -> dic
     }
 
 
+def map_runtime_v02_activation_contract_plan_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    plan = as_obj(report.get("contract_update_plan"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "node_count": summary.get("node_count"),
+        "contract_plan_status": summary.get("contract_plan_status"),
+        "activation_apply_now_count": summary.get("activation_apply_now_count"),
+        "activation_allowed_count": summary.get("activation_allowed_count"),
+        "activation_blocked_count_from_gate": summary.get(
+            "activation_blocked_count_from_gate"
+        ),
+        "default_runtime_v01_preserved_count": summary.get(
+            "default_runtime_v01_preserved_count"
+        ),
+        "approved_candidate_available_count": summary.get(
+            "approved_candidate_available_count"
+        ),
+        "authorization_report_status": summary.get("authorization_report_status"),
+        "authorization_approved_count": summary.get("authorization_approved_count"),
+        "gate_status": summary.get("gate_status"),
+        "blocker_counts_from_gate": as_obj(summary.get("blocker_counts_from_gate")),
+        "approved_fixture_strong_semantic_totals": as_obj(
+            summary.get("approved_fixture_strong_semantic_totals")
+        ),
+        "backend_required_change_count": summary.get("backend_required_change_count"),
+        "frontend_required_change_count": summary.get("frontend_required_change_count"),
+        "post_activation_required_command_count": summary.get(
+            "post_activation_required_command_count"
+        ),
+        "plan_id": plan.get("plan_id"),
+        "plan_apply_now": plan.get("apply_now"),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count_by_plan": safety.get("provider_call_count_by_plan"),
+            "world_mutation_count_by_plan": safety.get("world_mutation_count_by_plan"),
+            "runtime_mutation_count_by_plan": safety.get("runtime_mutation_count_by_plan"),
+            "default_runtime_mutation_performed": safety.get(
+                "default_runtime_mutation_performed"
+            ),
+            "backend_api_contract_mutation_performed": safety.get(
+                "backend_api_contract_mutation_performed"
+            ),
+            "frontend_contract_mutation_performed": safety.get(
+                "frontend_contract_mutation_performed"
+            ),
+        },
+        "node_samples": [
+            {
+                "node_id": node.get("node_id"),
+                "activation_contract_status": node.get("activation_contract_status"),
+                "activation_decision_from_gate": node.get(
+                    "activation_decision_from_gate"
+                ),
+                "activation_apply_now": node.get("activation_apply_now"),
+                "remaining_blockers_from_gate": as_list(
+                    node.get("remaining_blockers_from_gate")
+                ),
+                "to_schema_version": as_obj(node.get("target_candidate")).get(
+                    "to_schema_version"
+                ),
+            }
+            for node in as_list(report.get("nodes"))
+            if isinstance(node, dict)
+        ],
+    }
+
+
 def collect_mvp_primary_api_flow_smoke(report: dict[str, Any]) -> dict[str, Any]:
     safety = as_obj(report.get("safety_summary"))
     summary = as_obj(report.get("summary"))
@@ -4223,6 +4304,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_runtime_activation_gate_report",
             PATHS["map_runtime_activation_gate_report"],
         ),
+        (
+            "map_runtime_v02_activation_contract_plan",
+            PATHS["map_runtime_v02_activation_contract_plan"],
+        ),
         ("map_path_geometry_report", PATHS["map_path_geometry_report"]),
         ("map_component_media_manifest", PATHS["map_component_media_manifest"]),
         (
@@ -4483,6 +4568,9 @@ def build_evidence(
     map_runtime_activation_gate_report = load_json(
         PATHS["map_runtime_activation_gate_report"]
     )
+    map_runtime_v02_activation_contract_plan = load_json(
+        PATHS["map_runtime_v02_activation_contract_plan"]
+    )
     map_path_geometry_report = load_json(PATHS["map_path_geometry_report"])
     map_component_media_manifest = load_json(PATHS["map_component_media_manifest"])
     map_component_media_manifest_v02 = load_json(
@@ -4704,6 +4792,9 @@ def build_evidence(
         "map_runtime_activation_gate": map_runtime_activation_gate_summary(
             map_runtime_activation_gate_report
         ),
+        "map_runtime_v02_activation_contract_plan": map_runtime_v02_activation_contract_plan_summary(
+            map_runtime_v02_activation_contract_plan
+        ),
         "map_path_geometry": map_path_geometry_summary(map_path_geometry_report),
         "map_component_media": map_component_media_summary(map_component_media_manifest),
         "map_component_media_v02_preview": map_component_media_summary(
@@ -4794,6 +4885,23 @@ def build_evidence(
         "frontend_entry": collect_frontend_entry(frontend_pack),
         "source_files": collect_source_files(),
     }
+    activation_contract_plan = as_obj(
+        evidence.get("map_runtime_v02_activation_contract_plan")
+    )
+    activation_contract_safety = as_obj(activation_contract_plan.get("safety"))
+    if activation_contract_plan.get("activation_allowed_count") != 0:
+        raise ValueError("map runtime v0.2 activation contract plan must not allow activation")
+    if activation_contract_plan.get("activation_apply_now_count") != 0:
+        raise ValueError("map runtime v0.2 activation contract plan must not apply now")
+    if activation_contract_plan.get("contract_plan_status") != "not_applied":
+        raise ValueError("map runtime v0.2 activation contract plan must remain not_applied")
+    for key in (
+        "default_runtime_mutation_performed",
+        "backend_api_contract_mutation_performed",
+        "frontend_contract_mutation_performed",
+    ):
+        if activation_contract_safety.get(key) is not False:
+            raise ValueError(f"map runtime v0.2 activation contract plan safety {key} must be false")
     assert_no_forbidden_keys(evidence)
     return evidence
 
@@ -4837,6 +4945,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         evidence.get("map_runtime_activation_authorization")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
+    map_runtime_v02_activation_contract_plan = as_obj(
+        evidence.get("map_runtime_v02_activation_contract_plan")
+    )
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_component_media = as_obj(evidence.get("map_component_media"))
     map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
@@ -5271,6 +5382,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
         f"- Map runtime 开发者授权：`{map_runtime_activation_authorization.get('status')}`，approved `{map_runtime_activation_authorization.get('approved_count')}`，pending `{map_runtime_activation_authorization.get('pending_count')}`，gate 授权 `{map_runtime_activation_authorization.get('activation_authorized_for_gate_count')}`，runtime 修改 `{as_obj(map_runtime_activation_authorization.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
+        f"- MapRuntimePackage v0.2 激活合同计划：`{map_runtime_v02_activation_contract_plan.get('status')}`，计划状态 `{map_runtime_v02_activation_contract_plan.get('contract_plan_status')}`，apply-now `{map_runtime_v02_activation_contract_plan.get('activation_apply_now_count')}`，后端步骤 `{map_runtime_v02_activation_contract_plan.get('backend_required_change_count')}`，前端步骤 `{map_runtime_v02_activation_contract_plan.get('frontend_required_change_count')}`，runtime 修改 `{as_obj(map_runtime_v02_activation_contract_plan.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapComponentMediaManifest v0.2 preview：`{map_component_media_v02.get('media_pack_id')}`，components `{map_component_media_v02.get('component_count')}`，single images `{map_component_media_v02.get('single_image_count')}`，atlas animations `{map_component_media_v02.get('atlas_animation_count')}`，media kinds `{map_component_media_v02.get('media_kind_counts')}`，默认前端消费 `{('no_frontend_default_consumption' in as_list(map_component_media_v02.get('usage_policy')))}`",
@@ -5482,6 +5594,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
         evidence.get("map_runtime_activation_authorization")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
+    map_runtime_v02_activation_contract_plan = as_obj(
+        evidence.get("map_runtime_v02_activation_contract_plan")
+    )
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
     map_component_generation_pipeline = as_obj(
@@ -5833,6 +5948,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Map Runtime 激活门</div>
           <div class="metric">{html_escape(map_runtime_activation_gate.get("status"))}</div>
           <p class="muted">允许 {html_escape(map_runtime_activation_gate.get("activation_allowed_count"))}；阻断 {html_escape(map_runtime_activation_gate.get("activation_blocked_count"))}；runtime 修改 {html_escape(as_obj(map_runtime_activation_gate.get("safety")).get("default_runtime_mutation_performed"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Map v0.2 激活合同计划</div>
+          <div class="metric">{html_escape(map_runtime_v02_activation_contract_plan.get("status"))}</div>
+          <p class="muted">计划 {html_escape(map_runtime_v02_activation_contract_plan.get("contract_plan_status"))}；apply-now {html_escape(map_runtime_v02_activation_contract_plan.get("activation_apply_now_count"))}；后端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("backend_required_change_count"))}；前端步骤 {html_escape(map_runtime_v02_activation_contract_plan.get("frontend_required_change_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">地图路径几何审查</div>
