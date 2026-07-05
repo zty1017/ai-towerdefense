@@ -76,6 +76,7 @@ def build_provider_adapter_runner_handoff(
     if note:
         base_args.extend(["--note", str(note)])
     dry_run_args = [*base_args, "--mode", "fixture"]
+    video_boundary_args = [*base_args, "--mode", "video"]
     live_llm_args = [
         *base_args,
         "--mode",
@@ -128,6 +129,7 @@ def build_provider_adapter_runner_handoff(
         "suggested_paths": paths,
         "command_templates": {
             "dry_run_fixture": dry_run_args,
+            "video_boundary": video_boundary_args,
             "live_llm_text": live_llm_args,
             "live_image": live_image_args,
         },
