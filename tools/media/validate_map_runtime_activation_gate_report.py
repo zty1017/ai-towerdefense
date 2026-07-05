@@ -141,6 +141,7 @@ def validate(report: dict[str, Any]) -> list[str]:
                     if isinstance(check_id, str):
                         check_ids.add(check_id)
                 for required_check in (
+                    "frontend_v02_semantic_consumption_contract",
                     "explicit_developer_activation_approval",
                     "api_frontend_contract_update",
                     "post_activation_evidence_required",
@@ -191,6 +192,12 @@ def validate(report: dict[str, Any]) -> list[str]:
         require(
             summary.get("provider_call_count_by_report") == 0,
             "summary.provider_call_count_by_report must be 0",
+            errors,
+        )
+        require(
+            summary.get("frontend_v02_contract_status")
+            in {"pre_activation_ready", "missing", None},
+            "summary.frontend_v02_contract_status invalid",
             errors,
         )
 

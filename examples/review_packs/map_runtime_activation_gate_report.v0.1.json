@@ -45,9 +45,14 @@
           "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
+          "check_id": "frontend_v02_semantic_consumption_contract",
+          "status": "passed",
+          "summary": "Frontend can consume v0.2 strong semantics from an activated MapRuntimePackage while keeping review-only endpoints out of the default player flow."
+        },
+        {
           "check_id": "api_frontend_contract_update",
           "status": "blocked",
-          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -61,7 +66,7 @@
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
-        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
@@ -69,6 +74,7 @@
         "authorization_record_present": true,
         "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
+        "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
       },
@@ -125,9 +131,14 @@
           "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
+          "check_id": "frontend_v02_semantic_consumption_contract",
+          "status": "passed",
+          "summary": "Frontend can consume v0.2 strong semantics from an activated MapRuntimePackage while keeping review-only endpoints out of the default player flow."
+        },
+        {
           "check_id": "api_frontend_contract_update",
           "status": "blocked",
-          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -141,7 +152,7 @@
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
-        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
@@ -149,6 +160,7 @@
         "authorization_record_present": true,
         "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
+        "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
       },
@@ -205,9 +217,14 @@
           "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
+          "check_id": "frontend_v02_semantic_consumption_contract",
+          "status": "passed",
+          "summary": "Frontend can consume v0.2 strong semantics from an activated MapRuntimePackage while keeping review-only endpoints out of the default player flow."
+        },
+        {
           "check_id": "api_frontend_contract_update",
           "status": "blocked",
-          "summary": "Default backend API and frontend player runtime contracts have not been updated to consume v0.2 as default."
+          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -221,7 +238,7 @@
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
-        "update_frontend_runtime_contract_if_v02_becomes_default",
+        "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
@@ -229,6 +246,7 @@
         "authorization_record_present": true,
         "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
+        "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
       },
@@ -251,6 +269,7 @@
     "visual_promotion_gate_report": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
   },
   "next_activation_task_contract": {
+    "frontend_v02_semantic_consumption_prepared": true,
     "must_keep_default_runtime_v01_until_activation_allowed": true,
     "must_rerun_commands": [
       "python3 tools/dev/check_map_v02_preview_api.py",
@@ -258,8 +277,8 @@
       "python3 tools/frontend/validate_battle_visual_contract.py",
       "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_evidence_suite_after_map_runtime_activation"
     ],
+    "must_revalidate_frontend_contract_after_activation": true,
     "must_update_backend_contract": true,
-    "must_update_frontend_contract": true,
     "required_authorization_kind": "explicit_developer_activation_authorization"
   },
   "policy": [
@@ -309,7 +328,7 @@
     },
     "check_status_counts": {
       "blocked": 12,
-      "passed": 12,
+      "passed": 15,
       "warning": 3
     },
     "decision_counts": {
@@ -318,6 +337,7 @@
     "decision_reason_counts": {
       "blocked_review_only_candidate_isolation_required": 3
     },
+    "frontend_v02_contract_status": "pre_activation_ready",
     "node_count": 3,
     "provider_call_count_by_report": 0,
     "readiness_promotion_candidate_count": 3,

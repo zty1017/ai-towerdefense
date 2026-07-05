@@ -674,7 +674,7 @@ MapRuntimePackage v0.2 preview
 该层的职责不是激活 v0.2，而是把 activation gate 中仍阻断的 API/frontend 合同更新和激活后 evidence 复跑，展开为可机器校验的计划：
 
 - 后端必须有显式默认地图 runtime 选择器，不能因为 v0.2 preview 存在就自动替换 `/map-runtime-package`。
-- 前端必须只从 activated default runtime 消费资源点、机关区、防守锚点和阻挡区；review-only preview / opt-in endpoint 仍不能成为玩家默认依赖。
+- 前端必须只从 activated default runtime 消费资源点、机关区、防守锚点和阻挡区；review-only preview / opt-in endpoint 仍不能成为玩家默认依赖。当前前端强语义消费和默认 fetch 隔离已预接入为 `pre_activation_ready`，但激活后仍必须复跑前端静态合同与浏览器证据。
 - 激活后必须重新跑 v0.2 preview API、MVP 主流程 API、前端静态视觉合同、浏览器玩家链路和 demo evidence suite。
 
 当前计划报告保持：
@@ -683,6 +683,7 @@ MapRuntimePackage v0.2 preview
 contract_plan_status = not_applied
 activation_allowed_count = 0
 activation_apply_now_count = 0
+frontend_contract_status = pre_activation_ready
 default_runtime_mutation_performed = false
 backend_api_contract_mutation_performed = false
 frontend_contract_mutation_performed = false

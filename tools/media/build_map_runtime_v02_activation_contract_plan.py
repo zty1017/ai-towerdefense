@@ -35,6 +35,8 @@ READINESS_REPORT = (
 MAP_V02_API_SMOKE_REPORT = (
     ROOT / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
 )
+FRONTEND_APP = ROOT / "frontend/app.js"
+FRONTEND_VISUAL_CONTRACT = ROOT / "tools/frontend/validate_battle_visual_contract.py"
 
 
 NODE_SORT_ORDER = {
@@ -85,6 +87,7 @@ def planned_step(
     path: str,
     action: str,
     reason: str,
+    status: str = "not_applied",
 ) -> dict[str, Any]:
     return {
         "step_id": step_id,
@@ -92,7 +95,7 @@ def planned_step(
         "path": path,
         "action": action,
         "reason": reason,
-        "status": "not_applied",
+        "status": status,
         "apply_now": False,
     }
 
@@ -107,7 +110,31 @@ def command(command_id: str, argv: list[str], reason: str) -> dict[str, Any]:
     }
 
 
-def contract_update_plan() -> dict[str, Any]:
+def frontend_v02_contract_prepared() -> dict[str, Any]:
+    app = FRONTEND_APP.read_text(encoding="utf-8") if FRONTEND_APP.exists() else ""
+    validator = (
+        FRONTEND_VISUAL_CONTRACT.read_text(encoding="utf-8")
+        if FRONTEND_VISUAL_CONTRACT.exists()
+        else ""
+    )
+    checks = {
+        "resource_nodes_from_runtime": "mapRuntimePackage().resource_nodes" in app,
+        "hazard_zones_from_runtime": "mapRuntimePackage().hazard_zones" in app,
+        "defense_anchors_from_runtime": "mapRuntimePackage().defense_anchors" in app,
+        "blocked_areas_from_runtime": "mapRuntimePackage().blocked_areas" in app,
+        "strong_semantic_draw_hook": "drawMapRuntimeStrongSemantics(ctx)" in app,
+        "preview_endpoint_forbidden": '"map-v02-preview"' not in app
+        and '"map-v02-preview"' in validator,
+        "opt_in_endpoint_forbidden": '"map-v02-opt-in-dry-run"' not in app
+        and '"map-v02-opt-in-dry-run"' in validator,
+    }
+    return {
+        "status": "pre_activation_ready" if all(checks.values()) else "not_applied",
+        "checks": checks,
+    }
+
+
+def contract_update_plan(frontend_contract: dict[str, Any]) -> dict[str, Any]:
     backend_steps = [
         planned_step(
             "backend_default_map_runtime_selector",
@@ -138,6 +165,7 @@ def contract_update_plan() -> dict[str, Any]:
             "frontend/app.js",
             "Consume v0.2 resource nodes, hazard zones, defense anchors, and blocked areas only from an activated MapRuntimePackage.",
             "Player rendering must keep path, slots, objective, spawn, resources, hazards, and collision tied to structured runtime truth.",
+            status=frontend_contract.get("status", "not_applied"),
         ),
         planned_step(
             "frontend_default_fetch_contract",
@@ -145,13 +173,15 @@ def contract_update_plan() -> dict[str, Any]:
             "frontend/app.js",
             "Keep preview and opt-in dry-run fetches out of the default player flow; use the default map runtime endpoint only after activation.",
             "Review-only endpoints must remain Studio/evidence surfaces rather than player runtime dependencies.",
+            status=frontend_contract.get("status", "not_applied"),
         ),
         planned_step(
             "frontend_visual_contract_update",
             "frontend",
             "tools/frontend/validate_battle_visual_contract.py",
-            "After activation, replace the current no-v0.2-default assertions with source-of-truth assertions for activated v0.2 semantics.",
-            "The static frontend guard must prove the new default path is intentional.",
+            "After activation, rerun and, if the default schema changes, tighten source-of-truth assertions for activated v0.2 semantics.",
+            "The static frontend guard already proves review-only endpoints are isolated and strong semantics are runtime-sourced; activation still requires fresh evidence.",
+            status="post_activation_evidence_required",
         ),
     ]
     evidence_commands = [
@@ -197,6 +227,7 @@ def contract_update_plan() -> dict[str, Any]:
         "apply_now": False,
         "backend_required_changes": backend_steps,
         "frontend_required_changes": frontend_steps,
+        "frontend_contract_readiness": frontend_contract,
         "post_activation_required_commands": evidence_commands,
         "non_goals": [
             "Do not create a competing PathGraph or LevelBundle runtime source.",
@@ -213,6 +244,7 @@ def build_node(
     default_api_node: dict[str, Any],
     approved_service_node: dict[str, Any],
     readiness_node: dict[str, Any],
+    frontend_contract: dict[str, Any],
 ) -> dict[str, Any]:
     target = as_obj(gate_decision.get("target_candidate"))
     blockers = as_list(gate_decision.get("blockers"))
@@ -279,10 +311,15 @@ def build_node(
             "status": readiness_node.get("status"),
             "blocking_reasons": as_list(readiness_node.get("blocking_reasons")),
         },
+        "frontend_contract": {
+            "status": frontend_contract.get("status"),
+            "checks": as_obj(frontend_contract.get("checks")),
+            "requires_post_activation_revalidation": True,
+        },
         "planned_next_checks": [
             "developer_must_approve_or_deny_activation_authorization",
             "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
-            "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+            "frontend_runtime_contract_must_be_revalidated_after_activation",
             "post_activation_api_browser_and_demo_evidence_must_be_rerun",
         ],
         "safety": {
@@ -310,6 +347,7 @@ def build_report() -> dict[str, Any]:
     default_api_by_node = index_by_node(opt_in_report.get("default_api"))
     approved_service_by_node = index_by_node(opt_in_report.get("approved_service_contract"))
     readiness_by_node = index_by_node(readiness_report.get("nodes"))
+    frontend_contract = frontend_v02_contract_prepared()
 
     node_ids = sorted(
         set(gate_by_node)
@@ -327,10 +365,11 @@ def build_report() -> dict[str, Any]:
             default_api_by_node.get(node_id, {}),
             approved_service_by_node.get(node_id, {}),
             readiness_by_node.get(node_id, {}),
+            frontend_contract,
         )
         for node_id in node_ids
     ]
-    plan = contract_update_plan()
+    plan = contract_update_plan(frontend_contract)
     blocker_counts = Counter(
         blocker
         for node in nodes
@@ -367,6 +406,17 @@ def build_report() -> dict[str, Any]:
         "approved_fixture_strong_semantic_totals": dict(sorted(semantic_counts.items())),
         "backend_required_change_count": len(plan["backend_required_changes"]),
         "frontend_required_change_count": len(plan["frontend_required_changes"]),
+        "frontend_pre_activation_ready_count": sum(
+            1
+            for step in plan["frontend_required_changes"]
+            if step.get("status") == "pre_activation_ready"
+        ),
+        "frontend_post_activation_evidence_required_count": sum(
+            1
+            for step in plan["frontend_required_changes"]
+            if step.get("status") == "post_activation_evidence_required"
+        ),
+        "frontend_contract_status": frontend_contract.get("status"),
         "post_activation_required_command_count": len(
             plan["post_activation_required_commands"]
         ),

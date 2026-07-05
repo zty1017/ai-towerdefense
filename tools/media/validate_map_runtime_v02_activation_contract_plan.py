@@ -40,6 +40,11 @@ REQUIRED_NODE_BLOCKERS = {
     "api_frontend_contract_update_required",
     "post_activation_evidence_required",
 }
+ALLOWED_STEP_STATUSES = {
+    "not_applied",
+    "pre_activation_ready",
+    "post_activation_evidence_required",
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -93,7 +98,11 @@ def validate_step_list(
         if not isinstance(step, dict):
             continue
         require(isinstance(step.get("step_id"), str), f"{step_where}.step_id required", errors)
-        require(step.get("status") == "not_applied", f"{step_where}.status must be not_applied", errors)
+        require(
+            step.get("status") in ALLOWED_STEP_STATUSES,
+            f"{step_where}.status invalid: {step.get('status')}",
+            errors,
+        )
         require(step.get("apply_now") is False, f"{step_where}.apply_now must be false", errors)
         path = step.get("path")
         require(isinstance(path, str) and bool(path), f"{step_where}.path required", errors)
@@ -236,8 +245,30 @@ def validate(report: dict[str, Any]) -> list[str]:
                 require(
                     int(semantics.get(key) or 0) > 0,
                     f"{where}.approved_fixture_contract.strong_semantic_counts.{key} must be > 0",
-                    errors,
-                )
+                        errors,
+                    )
+            frontend_contract = as_obj(node.get("frontend_contract"))
+            require(
+                frontend_contract.get("status") in ALLOWED_STEP_STATUSES,
+                f"{where}.frontend_contract.status invalid",
+                errors,
+            )
+            if frontend_contract.get("status") == "pre_activation_ready":
+                checks = as_obj(frontend_contract.get("checks"))
+                for key in (
+                    "resource_nodes_from_runtime",
+                    "hazard_zones_from_runtime",
+                    "defense_anchors_from_runtime",
+                    "blocked_areas_from_runtime",
+                    "strong_semantic_draw_hook",
+                    "preview_endpoint_forbidden",
+                    "opt_in_endpoint_forbidden",
+                ):
+                    require(
+                        checks.get(key) is True,
+                        f"{where}.frontend_contract.checks.{key} must be true when pre_activation_ready",
+                        errors,
+                    )
             safety = as_obj(node.get("safety"))
             for key in (
                 "activation_allowed",
@@ -269,6 +300,12 @@ def validate(report: dict[str, Any]) -> list[str]:
             plan.get("frontend_required_changes"),
             "contract_update_plan.frontend_required_changes",
             REQUIRED_FRONTEND_PATHS,
+            errors,
+        )
+        readiness = as_obj(plan.get("frontend_contract_readiness"))
+        require(
+            readiness.get("status") in ALLOWED_STEP_STATUSES,
+            "contract_update_plan.frontend_contract_readiness.status invalid",
             errors,
         )
         commands = plan.get("post_activation_required_commands")

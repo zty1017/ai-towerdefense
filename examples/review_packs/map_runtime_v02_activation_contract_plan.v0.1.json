@@ -30,6 +30,18 @@
         "step_id": "backend_runtime_package_aggregation"
       }
     ],
+    "frontend_contract_readiness": {
+      "checks": {
+        "blocked_areas_from_runtime": true,
+        "defense_anchors_from_runtime": true,
+        "hazard_zones_from_runtime": true,
+        "opt_in_endpoint_forbidden": true,
+        "preview_endpoint_forbidden": true,
+        "resource_nodes_from_runtime": true,
+        "strong_semantic_draw_hook": true
+      },
+      "status": "pre_activation_ready"
+    },
     "frontend_required_changes": [
       {
         "action": "Consume v0.2 resource nodes, hazard zones, defense anchors, and blocked areas only from an activated MapRuntimePackage.",
@@ -37,7 +49,7 @@
         "owner": "frontend",
         "path": "frontend/app.js",
         "reason": "Player rendering must keep path, slots, objective, spawn, resources, hazards, and collision tied to structured runtime truth.",
-        "status": "not_applied",
+        "status": "pre_activation_ready",
         "step_id": "frontend_v02_semantic_consumption"
       },
       {
@@ -46,16 +58,16 @@
         "owner": "frontend",
         "path": "frontend/app.js",
         "reason": "Review-only endpoints must remain Studio/evidence surfaces rather than player runtime dependencies.",
-        "status": "not_applied",
+        "status": "pre_activation_ready",
         "step_id": "frontend_default_fetch_contract"
       },
       {
-        "action": "After activation, replace the current no-v0.2-default assertions with source-of-truth assertions for activated v0.2 semantics.",
+        "action": "After activation, rerun and, if the default schema changes, tighten source-of-truth assertions for activated v0.2 semantics.",
         "apply_now": false,
         "owner": "frontend",
         "path": "tools/frontend/validate_battle_visual_contract.py",
-        "reason": "The static frontend guard must prove the new default path is intentional.",
-        "status": "not_applied",
+        "reason": "The static frontend guard already proves review-only endpoints are isolated and strong semantics are runtime-sourced; activation still requires fresh evidence.",
+        "status": "post_activation_evidence_required",
         "step_id": "frontend_visual_contract_update"
       }
     ],
@@ -162,11 +174,24 @@
         "default_runtime_schema_version": "map_runtime_package.v0.1",
         "default_runtime_v02_field_leak_count": 0
       },
+      "frontend_contract": {
+        "checks": {
+          "blocked_areas_from_runtime": true,
+          "defense_anchors_from_runtime": true,
+          "hazard_zones_from_runtime": true,
+          "opt_in_endpoint_forbidden": true,
+          "preview_endpoint_forbidden": true,
+          "resource_nodes_from_runtime": true,
+          "strong_semantic_draw_hook": true
+        },
+        "requires_post_activation_revalidation": true,
+        "status": "pre_activation_ready"
+      },
       "node_id": "gray_lantern_station",
       "planned_next_checks": [
         "developer_must_approve_or_deny_activation_authorization",
         "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
-        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_revalidated_after_activation",
         "post_activation_api_browser_and_demo_evidence_must_be_rerun"
       ],
       "readiness": {
@@ -230,11 +255,24 @@
         "default_runtime_schema_version": "map_runtime_package.v0.1",
         "default_runtime_v02_field_leak_count": 0
       },
+      "frontend_contract": {
+        "checks": {
+          "blocked_areas_from_runtime": true,
+          "defense_anchors_from_runtime": true,
+          "hazard_zones_from_runtime": true,
+          "opt_in_endpoint_forbidden": true,
+          "preview_endpoint_forbidden": true,
+          "resource_nodes_from_runtime": true,
+          "strong_semantic_draw_hook": true
+        },
+        "requires_post_activation_revalidation": true,
+        "status": "pre_activation_ready"
+      },
       "node_id": "lamp_wick_store",
       "planned_next_checks": [
         "developer_must_approve_or_deny_activation_authorization",
         "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
-        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_revalidated_after_activation",
         "post_activation_api_browser_and_demo_evidence_must_be_rerun"
       ],
       "readiness": {
@@ -298,11 +336,24 @@
         "default_runtime_schema_version": "map_runtime_package.v0.1",
         "default_runtime_v02_field_leak_count": 0
       },
+      "frontend_contract": {
+        "checks": {
+          "blocked_areas_from_runtime": true,
+          "defense_anchors_from_runtime": true,
+          "hazard_zones_from_runtime": true,
+          "opt_in_endpoint_forbidden": true,
+          "preview_endpoint_forbidden": true,
+          "resource_nodes_from_runtime": true,
+          "strong_semantic_draw_hook": true
+        },
+        "requires_post_activation_revalidation": true,
+        "status": "pre_activation_ready"
+      },
       "node_id": "old_signal_tower",
       "planned_next_checks": [
         "developer_must_approve_or_deny_activation_authorization",
         "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
-        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_revalidated_after_activation",
         "post_activation_api_browser_and_demo_evidence_must_be_rerun"
       ],
       "readiness": {
@@ -394,6 +445,9 @@
     },
     "contract_plan_status": "not_applied",
     "default_runtime_v01_preserved_count": 3,
+    "frontend_contract_status": "pre_activation_ready",
+    "frontend_post_activation_evidence_required_count": 1,
+    "frontend_pre_activation_ready_count": 2,
     "frontend_required_change_count": 3,
     "gate_status": "blocked",
     "node_count": 3,
