@@ -4,7 +4,7 @@
       "activation_decision": "blocked",
       "blockers": [
         "api_frontend_contract_update_required",
-        "explicit_developer_activation_approval_missing",
+        "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
       ],
@@ -42,7 +42,7 @@
         {
           "check_id": "explicit_developer_activation_approval",
           "status": "blocked",
-          "summary": "No explicit developer activation authorization record is present for this node."
+          "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
           "check_id": "api_frontend_contract_update",
@@ -59,13 +59,15 @@
       "node_id": "gray_lantern_station",
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
-        "record_explicit_developer_activation_authorization",
+        "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
         "activation_allowed": false,
+        "authorization_record_present": true,
+        "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
@@ -82,7 +84,7 @@
       "activation_decision": "blocked",
       "blockers": [
         "api_frontend_contract_update_required",
-        "explicit_developer_activation_approval_missing",
+        "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
       ],
@@ -120,7 +122,7 @@
         {
           "check_id": "explicit_developer_activation_approval",
           "status": "blocked",
-          "summary": "No explicit developer activation authorization record is present for this node."
+          "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
           "check_id": "api_frontend_contract_update",
@@ -137,13 +139,15 @@
       "node_id": "lamp_wick_store",
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
-        "record_explicit_developer_activation_authorization",
+        "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
         "activation_allowed": false,
+        "authorization_record_present": true,
+        "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
@@ -160,7 +164,7 @@
       "activation_decision": "blocked",
       "blockers": [
         "api_frontend_contract_update_required",
-        "explicit_developer_activation_approval_missing",
+        "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
       ],
@@ -198,7 +202,7 @@
         {
           "check_id": "explicit_developer_activation_approval",
           "status": "blocked",
-          "summary": "No explicit developer activation authorization record is present for this node."
+          "summary": "Developer authorization record exists but has not approved this v0.2 activation target."
         },
         {
           "check_id": "api_frontend_contract_update",
@@ -215,13 +219,15 @@
       "node_id": "old_signal_tower",
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
-        "record_explicit_developer_activation_authorization",
+        "approve_or_deny_explicit_developer_activation_authorization",
         "update_backend_api_contract_if_v02_becomes_default",
         "update_frontend_runtime_contract_if_v02_becomes_default",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
       "safety": {
         "activation_allowed": false,
+        "authorization_record_present": true,
+        "authorization_status": "pending",
         "default_runtime_mutation_performed": false,
         "provider_call_count_by_gate": 0,
         "world_state_mutation_performed": false
@@ -237,6 +243,7 @@
   ],
   "generated_at": "2026-07-04T00:00:00Z",
   "inputs": {
+    "activation_authorization_report": "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json",
     "map_runtime_package_dir": "examples/map_runtime_packages",
     "map_runtime_package_v02_dir": "examples/map_runtime_packages_v02",
     "map_v02_preview_api_smoke_report": "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
@@ -289,9 +296,14 @@
     "activation_allowed_count": 0,
     "activation_blocked_count": 3,
     "api_default_runtime_v01_preserved_count": 3,
+    "authorization_approved_count": 0,
+    "authorization_report_status": "pending_developer_approval",
+    "authorization_status_counts": {
+      "pending": 3
+    },
     "blocker_counts": {
       "api_frontend_contract_update_required": 3,
-      "explicit_developer_activation_approval_missing": 3,
+      "explicit_developer_activation_not_approved": 3,
       "post_activation_evidence_required": 3,
       "review_only_or_rejected_visual_candidates_present": 3
     },

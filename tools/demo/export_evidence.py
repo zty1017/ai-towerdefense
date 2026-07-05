@@ -162,6 +162,8 @@ PATHS = {
     / "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
     "map_runtime_promotion_readiness_report": ROOT
     / "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+    "map_runtime_activation_authorization_report": ROOT
+    / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json",
     "map_runtime_activation_gate_report": ROOT
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
     "map_path_geometry_report": ROOT
@@ -506,6 +508,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/media/validate_map_runtime_promotion_readiness_report.py",
             "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_runtime_activation_authorization",
+        "command": [
+            "python3",
+            "tools/media/validate_map_runtime_activation_authorization_report.py",
+            "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json",
         ],
     },
     {
@@ -1779,6 +1789,9 @@ def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any
         "visual_promotion_violation_count": summary.get(
             "visual_promotion_violation_count"
         ),
+        "authorization_report_status": summary.get("authorization_report_status"),
+        "authorization_status_counts": as_obj(summary.get("authorization_status_counts")),
+        "authorization_approved_count": summary.get("authorization_approved_count"),
         "required_authorization_kind": as_obj(
             report.get("next_activation_task_contract")
         ).get("required_authorization_kind"),
@@ -1817,6 +1830,54 @@ def map_runtime_activation_gate_summary(report: dict[str, Any]) -> dict[str, Any
                 ),
             }
             for decision in decisions[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_runtime_activation_authorization_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    nodes = [node for node in as_list(report.get("nodes")) if isinstance(node, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "node_count": summary.get("node_count"),
+        "approved_count": summary.get("approved_count"),
+        "pending_count": summary.get("pending_count"),
+        "denied_count": summary.get("denied_count"),
+        "authorization_status_counts": as_obj(summary.get("authorization_status_counts")),
+        "activation_authorized_for_gate_count": summary.get(
+            "activation_authorized_for_gate_count"
+        ),
+        "safety": {
+            "reads_env_file": safety.get("reads_env_file"),
+            "provider_call_count_by_report": safety.get(
+                "provider_call_count_by_report"
+            ),
+            "world_mutation_count_by_report": safety.get(
+                "world_mutation_count_by_report"
+            ),
+            "runtime_mutation_count_by_report": safety.get(
+                "runtime_mutation_count_by_report"
+            ),
+            "default_runtime_mutation_performed": safety.get(
+                "default_runtime_mutation_performed"
+            ),
+        },
+        "node_samples": [
+            {
+                "node_id": node.get("node_id"),
+                "authorization_status": node.get("authorization_status"),
+                "authorization_decision": node.get("authorization_decision"),
+                "activation_authorized_for_gate": node.get(
+                    "activation_authorized_for_gate"
+                ),
+                "to_package_id": as_obj(node.get("target_candidate")).get(
+                    "to_package_id"
+                ),
+            }
+            for node in nodes[:MAX_SAMPLE_ITEMS]
         ],
     }
 
@@ -4084,6 +4145,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_runtime_promotion_readiness_report"],
         ),
         (
+            "map_runtime_activation_authorization_report",
+            PATHS["map_runtime_activation_authorization_report"],
+        ),
+        (
             "map_runtime_activation_gate_report",
             PATHS["map_runtime_activation_gate_report"],
         ),
@@ -4341,6 +4406,9 @@ def build_evidence(
     map_runtime_promotion_readiness_report = load_json(
         PATHS["map_runtime_promotion_readiness_report"]
     )
+    map_runtime_activation_authorization_report = load_json(
+        PATHS["map_runtime_activation_authorization_report"]
+    )
     map_runtime_activation_gate_report = load_json(
         PATHS["map_runtime_activation_gate_report"]
     )
@@ -4553,6 +4621,9 @@ def build_evidence(
         "map_runtime_promotion_readiness": map_runtime_promotion_readiness_summary(
             map_runtime_promotion_readiness_report
         ),
+        "map_runtime_activation_authorization": map_runtime_activation_authorization_summary(
+            map_runtime_activation_authorization_report
+        ),
         "map_runtime_activation_gate": map_runtime_activation_gate_summary(
             map_runtime_activation_gate_report
         ),
@@ -4679,6 +4750,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_runtime_promotion_readiness = as_obj(
         evidence.get("map_runtime_promotion_readiness")
+    )
+    map_runtime_activation_authorization = as_obj(
+        evidence.get("map_runtime_activation_authorization")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
@@ -5112,6 +5186,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapRuntimePackage v0.2 preview：`{map_packages_v02.get('package_count')}`，资源点 `{map_packages_v02.get('total_resource_node_count')}`，机关区 `{map_packages_v02.get('total_hazard_zone_count')}`，防守锚点 `{map_packages_v02.get('total_defense_anchor_count')}`，阻挡区 `{map_packages_v02.get('total_blocked_area_count')}`",
         f"- MapRuntimePackage v0.2 API smoke：`{map_v02_api.get('status')}`，节点 `{map_v02_api.get('node_count')}`，默认 v0.1 保留 `{map_v02_api.get('default_runtime_v01_preserved_count')}`，provider calls `{as_obj(map_v02_api.get('safety')).get('provider_call_count')}`，runtime 激活 `{map_v02_api.get('runtime_activation_allowed')}`",
         f"- Map runtime 晋升准备度：`{map_runtime_promotion_readiness.get('status')}`，候选 `{map_runtime_promotion_readiness.get('promotion_candidate_count')}` / `{map_runtime_promotion_readiness.get('node_count')}`，activation allowed `{map_runtime_promotion_readiness.get('activation_allowed_count')}`，blockers `{map_runtime_promotion_readiness.get('blocker_counts')}`",
+        f"- Map runtime 开发者授权：`{map_runtime_activation_authorization.get('status')}`，approved `{map_runtime_activation_authorization.get('approved_count')}`，pending `{map_runtime_activation_authorization.get('pending_count')}`，gate 授权 `{map_runtime_activation_authorization.get('activation_authorized_for_gate_count')}`，runtime 修改 `{as_obj(map_runtime_activation_authorization.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- Map runtime 激活门：`{map_runtime_activation_gate.get('status')}`，允许 `{map_runtime_activation_gate.get('activation_allowed_count')}`，阻断 `{map_runtime_activation_gate.get('activation_blocked_count')}`，原因 `{map_runtime_activation_gate.get('decision_reason_counts')}`，runtime 修改 `{as_obj(map_runtime_activation_gate.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
@@ -5314,6 +5389,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     map_compile_packages = as_obj(evidence.get("map_compile_packages"))
     map_runtime_promotion_readiness = as_obj(
         evidence.get("map_runtime_promotion_readiness")
+    )
+    map_runtime_activation_authorization = as_obj(
+        evidence.get("map_runtime_activation_authorization")
     )
     map_runtime_activation_gate = as_obj(evidence.get("map_runtime_activation_gate"))
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
@@ -5652,6 +5730,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">Map Runtime 晋升准备度</div>
           <div class="metric">{html_escape(map_runtime_promotion_readiness.get("promotion_candidate_count"))}/{html_escape(map_runtime_promotion_readiness.get("node_count"))}</div>
           <p class="muted">状态：{html_escape(map_runtime_promotion_readiness.get("status"))}；activation allowed {html_escape(map_runtime_promotion_readiness.get("activation_allowed_count"))}；blockers {html_escape(map_runtime_promotion_readiness.get("blocker_counts"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">Map Runtime 授权</div>
+          <div class="metric">{html_escape(map_runtime_activation_authorization.get("status"))}</div>
+          <p class="muted">approved {html_escape(map_runtime_activation_authorization.get("approved_count"))}；pending {html_escape(map_runtime_activation_authorization.get("pending_count"))}；runtime 修改 {html_escape(as_obj(map_runtime_activation_authorization.get("safety")).get("default_runtime_mutation_performed"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">Map Runtime 激活门</div>
