@@ -124,6 +124,12 @@ def validate_app_contract(errors: list[str]) -> None:
         require(f"function {name}" in app, f"missing {name}() procedural battle layer", errors)
 
     require("playerBattleMapVisualUrl()" not in preload, "default preload must not fetch whole-map player images", errors)
+    require('"map-v02-preview"' not in app, "default frontend must not fetch review-only v0.2 preview endpoint", errors)
+    require(
+        '"map-v02-opt-in-dry-run"' not in app,
+        "default frontend must not fetch review-only v0.2 opt-in dry-run endpoint",
+        errors,
+    )
     require("drawProceduralTerrain(ctx, m)" in backdrop, "drawBackdrop must start from procedural terrain", errors)
     require("drawMapDebugOverlay(ctx, m)" in backdrop, "debug map overlay must be isolated behind its own helper", errors)
     require("playerBattleMapVisualUrl" not in backdrop, "drawBackdrop must not draw whole-map player images by default", errors)

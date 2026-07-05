@@ -50,6 +50,29 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json"
+        }
+      ],
+      "gate_id": "map_runtime_v02_opt_in_contract",
+      "metrics": {
+        "api_pending_authorization_count": 3,
+        "approved_candidate_available_count": 3,
+        "default_runtime_mutation_count": 0,
+        "default_runtime_v01_preserved_count": 3,
+        "node_count": 3,
+        "provider_call_count": 0,
+        "report_status": "passed",
+        "runtime_activation_allowed_count": 0
+      },
+      "required_for_mvp_demo": false,
+      "status": "passed",
+      "summary": "v0.2 强语义地图已有 opt-in dry-run 证据：默认 API 仍 pending/v0.1，临时授权夹具可读取候选，但不会激活 runtime。",
+      "title": "MapRuntimePackage v0.2 opt-in dry-run 合同"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
         }
       ],
@@ -350,6 +373,10 @@
     },
     {
       "exists": true,
+      "path": "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json"
+    },
+    {
+      "exists": true,
       "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
     },
     {
@@ -411,7 +438,7 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 17,
+    "evidence_source_count": 18,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
     "required_gate_count": 7,

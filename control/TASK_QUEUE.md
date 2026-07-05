@@ -86,6 +86,7 @@ P2：本阶段明确不做
 - MapPublishedVisualLayerAlignment v0.1 已把确定性逻辑对齐的 `battle_runtime_background.v0.2` 晋升为玩家可用 `published_visual_layer` fallback，旧 `painted_visual_layer` 保留为 `candidate_visual_layer` / `superseded_requires_overlay_correction` 证据。当前 map visual quality 不再报告 overlay correction blocker，只保留共享底图和非节点专属图层 warning。
 - MapRuntimePromotionReadinessReport v0.1 已作为地图 runtime 晋升读模型接入 demo evidence：三张节点均为 `promotion_candidate_activation_required`，说明 v0.2 强语义、RenderPlan 和语义一致性已经具备候选条件，但 activation allowed 仍为 0，且 review-only/拒绝候选隔离仍是 blocker。后续若要切换玩家默认地图语义，必须另开独立 activation / API / 前端 / 截图验收任务，不能直接从 readiness report 修改 runtime。
 - MapRuntimeActivationAuthorizationReport v0.1 已作为地图 runtime 激活授权记录层接入 demo evidence：默认状态 `pending_developer_approval`，三张节点均有记录但未批准，且 provider / runtime / backend / frontend / world 修改数均为 0。它不是激活命令，只是 activation gate 的输入。
+- MapRuntimeV02OptInContractSmokeReport v0.1 已作为地图 runtime v0.2 opt-in dry-run 合同证据接入 demo evidence：默认 API 仍 pending 且不返回完整 v0.2 包，临时 approved 授权夹具只在 service 层证明 v0.2 候选包可读；`/config`、`/runtime-package`、`/map-runtime-package` 仍保持 v0.1 且 v0.2 字段泄漏为 0。
 - MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0，阻断项包括显式开发者激活授权未批准、review-only/拒绝候选隔离、API/frontend 合同更新和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
 - MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`provider_video_boundary` 是非必需 warning gate，只证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
@@ -3325,6 +3326,43 @@ python3 tools/media/build_map_runtime_activation_gate_report.py --output example
 python3 tools/media/validate_map_runtime_activation_gate_report.py examples/review_packs/map_runtime_activation_gate_report.v0.1.json
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-runtime-auth python3 -m py_compile tools/media/build_map_runtime_activation_authorization_report.py tools/media/validate_map_runtime_activation_authorization_report.py tools/media/build_map_runtime_activation_gate_report.py tools/demo/export_evidence.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_activation_authorization_evidence
+git diff --check
+```
+
+### P1-D-21 Map runtime v0.2 opt-in dry-run contract
+
+状态：已完成最小 opt-in 合同证据。
+
+目标：
+
+```text
+在默认玩家 runtime 仍保持 MapRuntimePackage v0.1 的前提下，补一个 review-only v0.2 opt-in dry-run 合同，证明显式授权后 v0.2 候选包可以被安全读取，但不会自动激活 runtime。
+```
+
+已落地：
+
+- `backend/app/services/map_runtime_service.py`：新增 `get_map_runtime_v02_opt_in_contract()`，默认读取授权报告；只有授权为 `approved_for_gate_review` 且目标匹配时才返回完整 v0.2 候选包。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/battles/{node_id}/map-v02-opt-in-dry-run`，默认仍 pending / review-only / runtime_activation_allowed=false。
+- `tools/dev/check_map_runtime_v02_opt_in_contract.py`：用本地 uvicorn HTTP 检查默认 API pending，并用临时 approved 授权夹具检查 service-level v0.2 候选可读。
+- `tools/dev/validate_map_runtime_v02_opt_in_contract_report.py`：校验 opt-in smoke 报告。
+- `tools/frontend/validate_battle_visual_contract.py`：阻止默认前端拉取 `map-v02-preview` 或 `map-v02-opt-in-dry-run`。
+- `tools/demo/export_evidence.py`：纳入 opt-in 合同 smoke 摘要。
+
+边界：
+
+- 不修改 `examples/map_runtime_packages/`，不把默认 `/map-runtime-package` 指向 v0.2。
+- 不让前端默认消费 v0.2 preview 或 opt-in dry-run endpoint。
+- 不把临时 approved 授权夹具提交为默认授权状态；它只存在于 smoke 的 `/tmp` 临时目录。
+- 不调用 provider，不读取 `.env`，不写世界状态，不激活 runtime。
+
+验收：
+
+```bash
+/home/zty/projects/ai-compiled-towerdefense/.venv/bin/python tools/dev/check_map_runtime_v02_opt_in_contract.py --output examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json --generated-at 2026-07-05T00:00:00+00:00
+python3 tools/dev/validate_map_runtime_v02_opt_in_contract_report.py examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json
+python3 tools/frontend/validate_battle_visual_contract.py
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-v02-opt-in-final python3 -m py_compile backend/app/services/map_runtime_service.py backend/app/api/frontend_mock.py tools/dev/check_map_runtime_v02_opt_in_contract.py tools/dev/validate_map_runtime_v02_opt_in_contract_report.py tools/frontend/validate_battle_visual_contract.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_opt_in_contract_evidence
 git diff --check
 ```
 
