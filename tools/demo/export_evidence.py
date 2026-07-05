@@ -174,8 +174,12 @@ PATHS = {
     / "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
     "map_component_manifest_patch_plan": ROOT
     / "examples/review_packs/map_component_manifest_patch_plan.v0.1.json",
+    "map_component_manifest_patch_plan_v02": ROOT
+    / "examples/review_packs/map_component_manifest_patch_plan.v0.2.json",
     "map_component_manifest_apply_report": ROOT
     / "examples/review_packs/map_component_manifest_apply_report.v0.1.json",
+    "map_component_manifest_apply_report_v02": ROOT
+    / "examples/review_packs/map_component_manifest_apply_report.v0.2.json",
     "node_map_candidate_review": ROOT
     / "examples/review_packs/node_map_painted_candidate_review.v0.2.json",
     "map_candidate_alignment_review": ROOT
@@ -588,11 +592,27 @@ STATIC_VALIDATION_COMMANDS = [
         ],
     },
     {
+        "name": "map_component_manifest_patch_plan_v02",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_manifest_patch_plan_v02.py",
+            "examples/review_packs/map_component_manifest_patch_plan.v0.2.json",
+        ],
+    },
+    {
         "name": "map_component_manifest_apply_report",
         "command": [
             "python3",
             "tools/media/validate_map_component_manifest_apply_report.py",
             "examples/review_packs/map_component_manifest_apply_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_component_manifest_apply_report_v02",
+        "command": [
+            "python3",
+            "tools/media/validate_map_component_manifest_apply_report_v02.py",
+            "examples/review_packs/map_component_manifest_apply_report.v0.2.json",
         ],
     },
     {
@@ -2069,6 +2089,9 @@ def map_component_manifest_patch_plan_summary(plan: dict[str, Any]) -> dict[str,
         "blocked_patch_count": summary.get("blocked_patch_count"),
         "ready_patch_count": summary.get("ready_patch_count"),
         "manifest_item_count": summary.get("manifest_item_count"),
+        "single_image_ready_patch_count": summary.get("single_image_ready_patch_count"),
+        "atlas_blocked_patch_count": summary.get("atlas_blocked_patch_count"),
+        "media_kind_counts": as_obj(summary.get("media_kind_counts")),
         "runtime_effect": as_obj(plan.get("runtime_effect")),
         "usage_policy": as_list(plan.get("usage_policy")),
         "validation_commands": as_list(as_obj(plan.get("validation")).get("commands")),
@@ -2115,6 +2138,7 @@ def map_component_manifest_apply_report_summary(report: dict[str, Any]) -> dict[
         "blocked_patch_count": summary.get("blocked_patch_count"),
         "ready_patch_count": summary.get("ready_patch_count"),
         "manifest_item_count": summary.get("manifest_item_count"),
+        "media_kind_counts": as_obj(summary.get("media_kind_counts")),
         "runtime_effect": as_obj(report.get("runtime_effect")),
         "source_manifest_file_sha256_before": manifest_sha.get(
             "source_manifest_file_sha256_before"
@@ -3945,8 +3969,16 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_component_manifest_patch_plan"],
         ),
         (
+            "map_component_manifest_patch_plan_v02",
+            PATHS["map_component_manifest_patch_plan_v02"],
+        ),
+        (
             "map_component_manifest_apply_report",
             PATHS["map_component_manifest_apply_report"],
+        ),
+        (
+            "map_component_manifest_apply_report_v02",
+            PATHS["map_component_manifest_apply_report_v02"],
         ),
         ("node_map_candidate_review", PATHS["node_map_candidate_review"]),
         ("map_candidate_alignment_review", PATHS["map_candidate_alignment_review"]),
@@ -4172,8 +4204,14 @@ def build_evidence(
     map_component_manifest_patch_plan = load_json(
         PATHS["map_component_manifest_patch_plan"]
     )
+    map_component_manifest_patch_plan_v02 = load_json(
+        PATHS["map_component_manifest_patch_plan_v02"]
+    )
     map_component_manifest_apply_report = load_json(
         PATHS["map_component_manifest_apply_report"]
+    )
+    map_component_manifest_apply_report_v02 = load_json(
+        PATHS["map_component_manifest_apply_report_v02"]
     )
     node_map_candidate_review = load_json(PATHS["node_map_candidate_review"])
     map_candidate_alignment_review = load_json(PATHS["map_candidate_alignment_review"])
@@ -4371,8 +4409,14 @@ def build_evidence(
             "manifest_patch_plan": map_component_manifest_patch_plan_summary(
                 map_component_manifest_patch_plan
             ),
+            "manifest_patch_plan_v02": map_component_manifest_patch_plan_summary(
+                map_component_manifest_patch_plan_v02
+            ),
             "manifest_apply_report": map_component_manifest_apply_report_summary(
                 map_component_manifest_apply_report
+            ),
+            "manifest_apply_report_v02": map_component_manifest_apply_report_summary(
+                map_component_manifest_apply_report_v02
             ),
         },
         "map_compile_packages": collect_map_compile_packages(map_compile_packages),
@@ -4488,6 +4532,12 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     )
     map_component_manifest_patch_plan = as_obj(
         map_component_generation_pipeline.get("manifest_patch_plan")
+    )
+    map_component_manifest_patch_plan_v02 = as_obj(
+        map_component_generation_pipeline.get("manifest_patch_plan_v02")
+    )
+    map_component_manifest_apply_report_v02 = as_obj(
+        map_component_generation_pipeline.get("manifest_apply_report_v02")
     )
     map_component_manifest_apply_report = as_obj(
         map_component_generation_pipeline.get("manifest_apply_report")
@@ -4893,7 +4943,9 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapComponent visual quality / cutout gate：`{map_component_visual_quality.get('status')}`，读取 candidate review `{map_component_visual_quality.get('source_candidate_review_report_path')}`，generated `{map_component_visual_quality.get('generated_candidate_count')}`，checked `{map_component_visual_quality.get('checked_candidate_count')}`，blocked `{map_component_visual_quality.get('blocked_pending_quality_gates_count')}`，runtime/manifest 写入 `{map_component_visual_quality.get('runtime_effect')}`，promotion effect `{map_component_visual_quality.get('promotion_effect')}`",
         f"- MapComponent promotion gate：`{map_component_promotion_gate.get('status')}`，读取 visual quality `{map_component_promotion_gate.get('source_visual_quality_report_path')}` / `{map_component_promotion_gate.get('visual_quality_report_status')}`，允许晋升 `{map_component_promotion_gate.get('promotion_allowed_count')}`，阻断 `{map_component_promotion_gate.get('promotion_blocked_count')}`，baseline 保留 `{map_component_promotion_gate.get('baseline_preserved_count')}`，runtime/manifest 写入 `{map_component_promotion_gate.get('runtime_effect')}`",
         f"- MapComponent manifest patch plan：`{map_component_manifest_patch_plan.get('status')}`，读取 promotion gate `{map_component_manifest_patch_plan.get('source_promotion_gate_report_path')}`，allowed `{map_component_manifest_patch_plan.get('allowed_decision_count')}`，patches `{map_component_manifest_patch_plan.get('patch_count')}`，ready `{map_component_manifest_patch_plan.get('ready_patch_count')}`，runtime/manifest 写入 `{map_component_manifest_patch_plan.get('runtime_effect')}`",
+        f"- MapComponent manifest patch plan v0.2：`{map_component_manifest_patch_plan_v02.get('status')}`，source manifest `{map_component_manifest_patch_plan_v02.get('source_manifest_path')}`，patches `{map_component_manifest_patch_plan_v02.get('patch_count')}`，ready `{map_component_manifest_patch_plan_v02.get('ready_patch_count')}`，media kinds `{map_component_manifest_patch_plan_v02.get('media_kind_counts')}`，默认前端消费 `False`",
         f"- MapComponent manifest apply report：`{map_component_manifest_apply_report.get('status')}`，approval `{map_component_manifest_apply_report.get('approval_id')}`，applied `{map_component_manifest_apply_report.get('applied_patch_count')}`，blocked `{map_component_manifest_apply_report.get('blocked_patch_count')}`，output manifest `{map_component_manifest_apply_report.get('output_manifest_path')}`，runtime/manifest 写入 `{map_component_manifest_apply_report.get('runtime_effect')}`",
+        f"- MapComponent manifest apply report v0.2：`{map_component_manifest_apply_report_v02.get('status')}`，approval `{map_component_manifest_apply_report_v02.get('approval_id')}`，applied `{map_component_manifest_apply_report_v02.get('applied_patch_count')}`，blocked `{map_component_manifest_apply_report_v02.get('blocked_patch_count')}`，output manifest `{map_component_manifest_apply_report_v02.get('output_manifest_path')}`，runtime/manifest 写入 `{map_component_manifest_apply_report_v02.get('runtime_effect')}`",
         f"- MapCompilePackage 数：`{map_compile_packages.get('package_count')}`，节点：`{', '.join(str(node) for node in as_list(map_compile_packages.get('node_ids')))}`",
         f"- 总塔位：`{map_packages.get('total_build_slot_count')}`，总路径：`{map_packages.get('total_path_route_count')}`，出生点：`{map_packages.get('total_spawn_point_count')}`",
         f"- published visual layer 总数：`{map_packages.get('published_visual_layer_count')}`",
@@ -5096,6 +5148,12 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     )
     map_component_manifest_patch_plan = as_obj(
         map_component_generation_pipeline.get("manifest_patch_plan")
+    )
+    map_component_manifest_patch_plan_v02 = as_obj(
+        map_component_generation_pipeline.get("manifest_patch_plan_v02")
+    )
+    map_component_manifest_apply_report_v02 = as_obj(
+        map_component_generation_pipeline.get("manifest_apply_report_v02")
     )
     scheduler = as_obj(evidence.get("generation_scheduler"))
     scheduler_summary = as_obj(scheduler.get("summary"))
@@ -5438,6 +5496,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">MapComponent Patch Plan</div>
           <div class="metric status-metric">{html_escape(map_component_manifest_patch_plan.get("status"))}</div>
           <p class="muted">patches {html_escape(map_component_manifest_patch_plan.get("patch_count"))}；ready {html_escape(map_component_manifest_patch_plan.get("ready_patch_count"))}；manifest 写入 {html_escape(as_obj(map_component_manifest_patch_plan.get("runtime_effect")).get("manifest_replacement_written"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapComponent Patch/Apply v0.2</div>
+          <div class="metric status-metric">{html_escape(map_component_manifest_patch_plan_v02.get("status"))}</div>
+          <p class="muted">patches {html_escape(map_component_manifest_patch_plan_v02.get("patch_count"))}；ready {html_escape(map_component_manifest_patch_plan_v02.get("ready_patch_count"))}；apply {html_escape(map_component_manifest_apply_report_v02.get("status"))}；applied {html_escape(map_component_manifest_apply_report_v02.get("applied_patch_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapCompilePackage</div>
