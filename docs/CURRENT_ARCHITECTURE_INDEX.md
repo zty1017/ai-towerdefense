@@ -155,7 +155,7 @@ shared/schemas/ + tools/ + 专题文档
 - `tools/demo/run_demo_evidence_suite.py`
   - MVP 录屏 / 评审前一键证据套件：串联浏览器玩家链路截图、截图 report 校验和 `export_evidence.py --frontend-flow-smoke-report`，输出本地 suite report；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级，不调用 provider、不读取 `.env`、不提交截图到仓库。
 - `tools/demo/build_mvp_demo_readiness_report.py`、`examples/review_packs/mvp_demo_readiness_report.v0.1.json`
-  - MVP 演示 readiness 总报告：从主流程 API、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、循环动画连续性、视频 provider 离线边界和失败地图候选隔离等已审 evidence 推导 `ready_for_mvp_demo_with_known_limitations`；该报告不调用 provider、不读取 `.env`、不生成新内容，只作为录屏 / 评审 / 合并前的顶层验收摘要。`provider_video_boundary` 是非必需 warning gate，只证明 video adapter dry boundary、receipt/envelope 和 scheduler handoff 模板可见且不调用 provider，不代表 live video provider 或真实图生视频关键帧已经进入玩家 runtime。
+  - MVP 演示 readiness 总报告：从主流程 API、v0.2 地图预览 API、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、循环动画连续性、视频 provider 离线边界和失败地图候选隔离等已审 evidence 推导 `ready_for_mvp_demo_with_known_limitations`；该报告不调用 provider、不读取 `.env`、不生成新内容，只作为录屏 / 评审 / 合并前的顶层验收摘要。`map_runtime_activation_contract` 是非必需 warning gate，证明前端强语义消费已 `pre_activation_ready` 但默认 runtime 仍保持 v0.1；`provider_video_boundary` 也是非必需 warning gate，只证明 video adapter dry boundary、receipt/envelope 和 scheduler handoff 模板可见且不调用 provider，不代表 live video provider 或真实图生视频关键帧已经进入玩家 runtime。
 
 ### AI 编译器与 AssetGraph
 
