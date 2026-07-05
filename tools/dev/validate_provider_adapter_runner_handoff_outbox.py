@@ -65,6 +65,17 @@ def references_dotenv_path(value: str) -> bool:
     return ".env" in Path(value).parts
 
 
+def command_mode(command: list[Any]) -> str | None:
+    try:
+        mode_index = command.index("--mode")
+    except ValueError:
+        return None
+    if mode_index + 1 >= len(command):
+        return None
+    mode = command[mode_index + 1]
+    return mode if isinstance(mode, str) else None
+
+
 def scan_forbidden(value: Any, errors: list[str], path: str = "") -> None:
     if isinstance(value, dict):
         for key, child in value.items():
@@ -167,6 +178,15 @@ def check_handoff(outbox: dict[str, Any], handoff: dict[str, Any], index: int, e
     dry_run = as_list(commands.get("dry_run_fixture"))
     if "--live" in dry_run:
         errors.append(f"{prefix}.command_templates.dry_run_fixture must not include --live")
+    video_boundary = as_list(commands.get("video_boundary"))
+    if command_mode(video_boundary) != "video":
+        errors.append(f"{prefix}.command_templates.video_boundary must include --mode video")
+    if "--live" in video_boundary:
+        errors.append(f"{prefix}.command_templates.video_boundary must not include --live")
+    if "<authorized-dotenv-path>" in video_boundary:
+        errors.append(
+            f"{prefix}.command_templates.video_boundary must not require <authorized-dotenv-path>"
+        )
     for name in ("live_llm_text", "live_image"):
         command = as_list(commands.get(name))
         if "--live" not in command:

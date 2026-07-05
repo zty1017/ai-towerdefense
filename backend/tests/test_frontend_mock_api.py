@@ -2255,6 +2255,17 @@ def test_provider_adapter_runner_handoff_exports_read_only_bundle(
     ]
     assert "--mode" in bundle["command_templates"]["dry_run_fixture"]
     assert "fixture" in bundle["command_templates"]["dry_run_fixture"]
+    assert bundle["command_templates"]["video_boundary"][:2] == [
+        "python3",
+        "tools/provider_adapter/run_provider_adapter.py",
+    ]
+    assert "--mode" in bundle["command_templates"]["video_boundary"]
+    assert "video" in bundle["command_templates"]["video_boundary"]
+    assert "--live" not in bundle["command_templates"]["video_boundary"]
+    assert (
+        "<authorized-dotenv-path>"
+        not in bundle["command_templates"]["video_boundary"]
+    )
     assert "--live" in bundle["command_templates"]["live_llm_text"]
     assert "--live" in bundle["command_templates"]["live_image"]
     assert "<authorized-dotenv-path>" in bundle["command_templates"]["live_llm_text"]
@@ -3896,6 +3907,14 @@ def test_review_only_background_handoff_tick_exports_runner_outbox(
     assert all(
         "--live" in handoff["command_templates"]["live_llm_text"]
         and "--live" in handoff["command_templates"]["live_image"]
+        for handoff in handoffs
+    )
+    assert all(
+        "--mode" in handoff["command_templates"]["video_boundary"]
+        and "video" in handoff["command_templates"]["video_boundary"]
+        and "--live" not in handoff["command_templates"]["video_boundary"]
+        and "<authorized-dotenv-path>"
+        not in handoff["command_templates"]["video_boundary"]
         for handoff in handoffs
     )
     forbidden_keys = {"raw_prompt", "provider_response", "provider_body", "api_key", "secret"}

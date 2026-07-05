@@ -2062,6 +2062,41 @@ rg -n "generation_scheduler_dispatcher_controls|requested_max_items|reject_targe
 git diff --check
 ```
 
+### P1-B-53 Provider video handoff template
+
+状态：已完成最小骨架。
+
+目标：
+
+```text
+把 Generation Scheduler 的 provider adapter runner handoff/outbox 扩展到 video runner 模板，让外部 runner 能看到 tools/provider_adapter/run_provider_adapter.py --mode video 的离线边界命令；后端 handoff/API 不运行 provider adapter，不接入真实 live video provider，不读取 .env，不调用外部 provider，不 staging/promotion，不写世界状态，不激活 runtime。证据脚本中的离线 dry-run 校验只能停在 review-only receipt/envelope 边界。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_handoff_builders.py` 在 `command_templates` 中新增 `video_boundary`。
+- `command_templates.video_boundary` 只包含不带 `--live` 的 `--mode video` dry boundary，不要求 `<authorized-dotenv-path>`。
+- `tools/dev/validate_provider_adapter_runner_handoff_outbox.py` 会校验 video 模板存在、包含 `--mode video`，且不包含 `--live` 或 `<authorized-dotenv-path>`。
+- `backend/tests/test_frontend_mock_api.py` 覆盖 handoff export 与 background handoff tick 中的 video 模板可见性。
+- `tools/demo/export_evidence.py` 在 provider runner handoff / background handoff tick 摘要中展示 `video_dry_boundary_template_visible`。
+- `examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json` 记录本轮任务包。
+
+当前结论：
+
+- video handoff 只是外部 runner 可见的离线边界模板，不是 live video provider 接入。
+- 现有 `live_llm_text` / `live_image` 模板仍保持显式 `--live` 与 `<authorized-dotenv-path>` 授权合同。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_handoff_template python3 -m compileall backend
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_handoff_template_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q -k "provider_adapter_runner_handoff or background_handoff_tick or provider_runner_handoff_outbox"
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_video_handoff_template_evidence
+git diff --check
+```
+
 ### P1-C-1 CoreArtifactAlignmentReport 核心对象对齐审计
 
 状态：已完成并清零当前迁移队列。

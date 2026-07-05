@@ -687,7 +687,7 @@ POST /api/sessions/{session_id}/generation-schedule/workers/run-review-only-back
 
 `run-review-only-background-executor-tick` 是更接近后台 daemon 的稳定外壳：默认 `max_items = 2`，单次上限 8，内部仍复用 dispatcher drain，并额外返回 `background_executor_tick.safety` 与 `generation_prefetch_cache.summary`，方便 Studio / 脚本展示“后台预取 tick 已推进到 review-only envelope 边界”。
 
-`run-review-only-background-handoff-tick` 在同一 tick 之后为本轮 dispatched 项导出 `runner_handoffs[]`，并返回 `provider_adapter_runner_handoff_outbox`。这些 handoff 是外部 runner outbox，包含脱敏 executor request、provider authorization、建议 `/tmp` 路径、dry-run / live text / live image 命令模板和 import 回灌请求体；接口本身不会运行 provider adapter。`provider_adapter_runner_handoff_outbox` 由 `shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json` 和 `tools/dev/validate_provider_adapter_runner_handoff_outbox.py` 校验，只证明可安全交给外部 runner，不代表 provider 输出、staging、promotion 或 runtime activation 已完成。
+`run-review-only-background-handoff-tick` 在同一 tick 之后为本轮 dispatched 项导出 `runner_handoffs[]`，并返回 `provider_adapter_runner_handoff_outbox`。这些 handoff 是外部 runner outbox，包含脱敏 executor request、provider authorization、建议 `/tmp` 路径、dry-run fixture、video 离线边界、live text / live image 命令模板和 import 回灌请求体；接口本身不会运行 provider adapter。video 模板只允许 `command_templates.video_boundary` 这种不带 `--live`、不要求 dotenv 的 `--mode video` dry boundary，不提供真实 live video provider。`provider_adapter_runner_handoff_outbox` 由 `shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json` 和 `tools/dev/validate_provider_adapter_runner_handoff_outbox.py` 校验，只证明可安全交给外部 runner，不代表 provider 输出、staging、promotion 或 runtime activation 已完成。
 
 drain 请求体只使用：
 
