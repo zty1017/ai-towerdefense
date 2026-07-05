@@ -22,6 +22,10 @@ PATHS = {
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
     "map_runtime_v02_opt_in_contract": ROOT
     / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
+    "map_runtime_activation_gate": ROOT
+    / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+    "map_runtime_v02_activation_contract_plan": ROOT
+    / "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json",
     "core_artifact_alignment": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
     "map_visual_promotion_gate": ROOT
@@ -223,6 +227,67 @@ def map_runtime_v02_opt_in_gate(report: dict[str, Any]) -> dict[str, Any]:
             "default_runtime_mutation_count": safety.get(
                 "default_runtime_mutation_count"
             ),
+        },
+    )
+
+
+def map_runtime_activation_contract_gate(
+    activation_gate_report: dict[str, Any],
+    contract_plan_report: dict[str, Any],
+) -> dict[str, Any]:
+    gate_summary = as_obj(activation_gate_report.get("summary"))
+    gate_safety = as_obj(activation_gate_report.get("safety_summary"))
+    plan_summary = as_obj(contract_plan_report.get("summary"))
+    plan_safety = as_obj(contract_plan_report.get("safety_summary"))
+    frontend_status = plan_summary.get("frontend_contract_status") or gate_summary.get(
+        "frontend_v02_contract_status"
+    )
+    activation_allowed_count = int(plan_summary.get("activation_allowed_count") or 0)
+    activation_apply_now_count = int(plan_summary.get("activation_apply_now_count") or 0)
+    runtime_mutation_count = int(plan_summary.get("runtime_mutation_count_by_plan") or 0)
+    ok = (
+        activation_gate_report.get("status") == "blocked"
+        and contract_plan_report.get("status") == "plan_ready_activation_not_applied"
+        and frontend_status == "pre_activation_ready"
+        and activation_allowed_count == 0
+        and activation_apply_now_count == 0
+        and runtime_mutation_count == 0
+        and plan_safety.get("default_runtime_mutation_performed") is False
+        and gate_safety.get("default_runtime_mutation_performed") is False
+    )
+    return gate(
+        gate_id="map_runtime_activation_contract",
+        title="MapRuntimePackage v0.2 激活合同门",
+        status="passed_with_warnings" if ok else "not_ready",
+        required_for_mvp_demo=False,
+        summary=(
+            "v0.2 强语义前端消费已预接入，但默认 runtime 仍保持 v0.1；"
+            "正式激活仍需要开发者授权、后端默认选择器和激活后证据复跑。"
+        ),
+        evidence_keys=[
+            "map_runtime_activation_gate",
+            "map_runtime_v02_activation_contract_plan",
+        ],
+        metrics={
+            "activation_gate_status": activation_gate_report.get("status"),
+            "contract_plan_status": plan_summary.get("contract_plan_status"),
+            "frontend_contract_status": frontend_status,
+            "frontend_pre_activation_ready_count": plan_summary.get(
+                "frontend_pre_activation_ready_count"
+            ),
+            "frontend_post_activation_evidence_required_count": plan_summary.get(
+                "frontend_post_activation_evidence_required_count"
+            ),
+            "activation_allowed_count": activation_allowed_count,
+            "activation_apply_now_count": activation_apply_now_count,
+            "backend_required_change_count": plan_summary.get(
+                "backend_required_change_count"
+            ),
+            "runtime_mutation_count_by_plan": runtime_mutation_count,
+            "default_runtime_mutation_performed": plan_safety.get(
+                "default_runtime_mutation_performed"
+            ),
+            "blocker_counts": as_obj(gate_summary.get("blocker_counts")),
         },
     )
 
@@ -487,6 +552,10 @@ def build_report(generated_at: str) -> dict[str, Any]:
         primary_api_gate(reports["mvp_primary_api_flow"]),
         map_v02_api_gate(reports["map_v02_preview_api"]),
         map_runtime_v02_opt_in_gate(reports["map_runtime_v02_opt_in_contract"]),
+        map_runtime_activation_contract_gate(
+            reports["map_runtime_activation_gate"],
+            reports["map_runtime_v02_activation_contract_plan"],
+        ),
         core_alignment_gate(reports["core_artifact_alignment"]),
         map_visual_gate(
             reports["map_visual_promotion_gate"],
@@ -572,6 +641,15 @@ def build_report(generated_at: str) -> dict[str, Any]:
                     source_ref(PATHS["provider_video_runner_envelope"]),
                     source_ref(PATHS["provider_video_adapter_task_pack"]),
                     source_ref(PATHS["provider_video_handoff_task_pack"]),
+                ],
+            },
+            {
+                "limitation_id": "map_runtime_v02_activation",
+                "severity": "low",
+                "summary": "v0.2 地图强语义已形成候选且前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权、后端选择器和复跑证据。",
+                "evidence_refs": [
+                    source_ref(PATHS["map_runtime_activation_gate"]),
+                    source_ref(PATHS["map_runtime_v02_activation_contract_plan"]),
                 ],
             },
             {

@@ -73,6 +73,41 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/map_runtime_activation_gate_report.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json"
+        }
+      ],
+      "gate_id": "map_runtime_activation_contract",
+      "metrics": {
+        "activation_allowed_count": 0,
+        "activation_apply_now_count": 0,
+        "activation_gate_status": "blocked",
+        "backend_required_change_count": 3,
+        "blocker_counts": {
+          "api_frontend_contract_update_required": 3,
+          "explicit_developer_activation_not_approved": 3,
+          "post_activation_evidence_required": 3,
+          "review_only_or_rejected_visual_candidates_present": 3
+        },
+        "contract_plan_status": "not_applied",
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_status": "pre_activation_ready",
+        "frontend_post_activation_evidence_required_count": 1,
+        "frontend_pre_activation_ready_count": 2,
+        "runtime_mutation_count_by_plan": 0
+      },
+      "required_for_mvp_demo": false,
+      "status": "passed_with_warnings",
+      "summary": "v0.2 强语义前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需要开发者授权、后端默认选择器和激活后证据复跑。",
+      "title": "MapRuntimePackage v0.2 激活合同门"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
         }
       ],
@@ -331,6 +366,21 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/map_runtime_activation_gate_report.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json"
+        }
+      ],
+      "limitation_id": "map_runtime_v02_activation",
+      "severity": "low",
+      "summary": "v0.2 地图强语义已形成候选且前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权、后端选择器和复跑证据。"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json"
         },
         {
@@ -374,6 +424,14 @@
     {
       "exists": true,
       "path": "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_runtime_activation_gate_report.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json"
     },
     {
       "exists": true,
@@ -438,13 +496,13 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 18,
+    "evidence_source_count": 20,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
     "required_gate_count": 7,
     "required_gate_passed_or_expected_count": 7,
     "runtime_mutation_count_by_report": 0,
-    "warning_gate_count": 3,
+    "warning_gate_count": 4,
     "world_mutation_count_by_report": 0
   }
 }
