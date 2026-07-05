@@ -1,0 +1,406 @@
+{
+  "contract_update_plan": {
+    "apply_now": false,
+    "backend_required_changes": [
+      {
+        "action": "Introduce an explicit approved activation selector before v0.2 can become the default map runtime source.",
+        "apply_now": false,
+        "owner": "backend",
+        "path": "backend/app/services/map_runtime_service.py",
+        "reason": "Default `/map-runtime-package` must not switch from v0.1 to v0.2 by accident.",
+        "status": "not_applied",
+        "step_id": "backend_default_map_runtime_selector"
+      },
+      {
+        "action": "Update the default battle map endpoints only after activation is approved, while preserving review-only preview endpoints.",
+        "apply_now": false,
+        "owner": "backend",
+        "path": "backend/app/api/frontend_mock.py",
+        "reason": "The player API contract must make the activated schema version explicit.",
+        "status": "not_applied",
+        "step_id": "backend_frontend_mock_contract"
+      },
+      {
+        "action": "If v0.2 becomes default, aggregate resource nodes, hazard zones, defense anchors, and blocked areas into the battle runtime payload from the activated map package.",
+        "apply_now": false,
+        "owner": "backend",
+        "path": "backend/app/services/frontend_mock_service.py",
+        "reason": "The frontend should not have to infer strong semantics from visual layers.",
+        "status": "not_applied",
+        "step_id": "backend_runtime_package_aggregation"
+      }
+    ],
+    "frontend_required_changes": [
+      {
+        "action": "Consume v0.2 resource nodes, hazard zones, defense anchors, and blocked areas only from an activated MapRuntimePackage.",
+        "apply_now": false,
+        "owner": "frontend",
+        "path": "frontend/app.js",
+        "reason": "Player rendering must keep path, slots, objective, spawn, resources, hazards, and collision tied to structured runtime truth.",
+        "status": "not_applied",
+        "step_id": "frontend_v02_semantic_consumption"
+      },
+      {
+        "action": "Keep preview and opt-in dry-run fetches out of the default player flow; use the default map runtime endpoint only after activation.",
+        "apply_now": false,
+        "owner": "frontend",
+        "path": "frontend/app.js",
+        "reason": "Review-only endpoints must remain Studio/evidence surfaces rather than player runtime dependencies.",
+        "status": "not_applied",
+        "step_id": "frontend_default_fetch_contract"
+      },
+      {
+        "action": "After activation, replace the current no-v0.2-default assertions with source-of-truth assertions for activated v0.2 semantics.",
+        "apply_now": false,
+        "owner": "frontend",
+        "path": "tools/frontend/validate_battle_visual_contract.py",
+        "reason": "The static frontend guard must prove the new default path is intentional.",
+        "status": "not_applied",
+        "step_id": "frontend_visual_contract_update"
+      }
+    ],
+    "non_goals": [
+      "Do not create a competing PathGraph or LevelBundle runtime source.",
+      "Do not infer path, build slots, resources, hazards, anchors, blocked areas, or collision from images, SVG previews, or AI map candidates.",
+      "Do not make review-only `/map-v02-preview` or `/map-v02-opt-in-dry-run` a player default dependency."
+    ],
+    "plan_id": "map_runtime_v02_default_activation_contract_update",
+    "post_activation_required_commands": [
+      {
+        "argv": [
+          "python3",
+          "tools/dev/check_map_v02_preview_api.py"
+        ],
+        "command_id": "preview_api_smoke",
+        "reason": "Preview and default runtime safety must remain visible after contract changes.",
+        "required_after_activation": true,
+        "status": "not_run_by_this_plan"
+      },
+      {
+        "argv": [
+          "python3",
+          "tools/dev/check_mvp_primary_api_flow.py"
+        ],
+        "command_id": "primary_api_flow_smoke",
+        "reason": "The full player API path must pass with the activated/default map contract.",
+        "required_after_activation": true,
+        "status": "not_run_by_this_plan"
+      },
+      {
+        "argv": [
+          "python3",
+          "tools/frontend/validate_battle_visual_contract.py"
+        ],
+        "command_id": "frontend_visual_contract",
+        "reason": "Static frontend contract must prove review-only endpoints are not accidentally used as default runtime.",
+        "required_after_activation": true,
+        "status": "not_run_by_this_plan"
+      },
+      {
+        "argv": [
+          "python3",
+          "tools/frontend/capture_frontend_flow_visual_smoke.py",
+          "--output-root",
+          "/tmp/map_runtime_v02_activation_frontend_flow"
+        ],
+        "command_id": "browser_flow_visual_smoke",
+        "reason": "The player-facing battle must still render correctly after any activation task.",
+        "required_after_activation": true,
+        "status": "not_run_by_this_plan"
+      },
+      {
+        "argv": [
+          "python3",
+          "tools/demo/run_demo_evidence_suite.py",
+          "--output-root",
+          "/tmp/demo_evidence_suite_after_map_runtime_activation"
+        ],
+        "command_id": "demo_evidence_suite",
+        "reason": "Final demo evidence must be rebuilt from fresh API and browser evidence.",
+        "required_after_activation": true,
+        "status": "not_run_by_this_plan"
+      }
+    ],
+    "status": "not_applied"
+  },
+  "generated_at": "2026-07-05T00:00:00Z",
+  "inputs": {
+    "map_runtime_activation_authorization_report": "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json",
+    "map_runtime_activation_gate_report": "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
+    "map_runtime_promotion_readiness_report": "examples/review_packs/map_runtime_promotion_readiness_report.v0.1.json",
+    "map_runtime_v02_opt_in_contract_smoke_report": "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
+    "map_v02_preview_api_smoke_report": "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
+  },
+  "nodes": [
+    {
+      "activation_apply_now": false,
+      "activation_contract_status": "contract_planned_activation_not_applied",
+      "activation_decision_from_gate": "blocked",
+      "approved_fixture_contract": {
+        "approved_candidate_available": true,
+        "approved_candidate_schema_version": "map_runtime_package.v0.2",
+        "default_runtime_preserved": true,
+        "default_runtime_v02_field_leak_count": 0,
+        "runtime_activation_allowed": false,
+        "strong_semantic_counts": {
+          "blocked_areas_count": 1,
+          "defense_anchors_count": 1,
+          "hazard_zones_count": 1,
+          "resource_nodes_count": 1
+        }
+      },
+      "authorization": {
+        "activation_authorized_for_gate": false,
+        "authorization_status": "pending",
+        "record_present": true
+      },
+      "decision_reason_from_gate": "blocked_review_only_candidate_isolation_required",
+      "default_api_contract": {
+        "api_dry_run_authorization_status": "pending",
+        "api_dry_run_candidate_available": false,
+        "api_runtime_activation_allowed": false,
+        "default_runtime_schema_version": "map_runtime_package.v0.1",
+        "default_runtime_v02_field_leak_count": 0
+      },
+      "node_id": "gray_lantern_station",
+      "planned_next_checks": [
+        "developer_must_approve_or_deny_activation_authorization",
+        "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "post_activation_api_browser_and_demo_evidence_must_be_rerun"
+      ],
+      "readiness": {
+        "blocking_reasons": [
+          "activation_gate_required",
+          "review_only_or_rejected_visual_candidates_present"
+        ],
+        "status": "promotion_candidate_activation_required"
+      },
+      "remaining_blockers_from_gate": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_not_approved",
+        "post_activation_evidence_required",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "activation_performed": false,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "plan_only": true,
+        "provider_call_count_by_plan": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_gray_lantern_station_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_gray_lantern_station_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_apply_now": false,
+      "activation_contract_status": "contract_planned_activation_not_applied",
+      "activation_decision_from_gate": "blocked",
+      "approved_fixture_contract": {
+        "approved_candidate_available": true,
+        "approved_candidate_schema_version": "map_runtime_package.v0.2",
+        "default_runtime_preserved": true,
+        "default_runtime_v02_field_leak_count": 0,
+        "runtime_activation_allowed": false,
+        "strong_semantic_counts": {
+          "blocked_areas_count": 1,
+          "defense_anchors_count": 1,
+          "hazard_zones_count": 1,
+          "resource_nodes_count": 1
+        }
+      },
+      "authorization": {
+        "activation_authorized_for_gate": false,
+        "authorization_status": "pending",
+        "record_present": true
+      },
+      "decision_reason_from_gate": "blocked_review_only_candidate_isolation_required",
+      "default_api_contract": {
+        "api_dry_run_authorization_status": "pending",
+        "api_dry_run_candidate_available": false,
+        "api_runtime_activation_allowed": false,
+        "default_runtime_schema_version": "map_runtime_package.v0.1",
+        "default_runtime_v02_field_leak_count": 0
+      },
+      "node_id": "lamp_wick_store",
+      "planned_next_checks": [
+        "developer_must_approve_or_deny_activation_authorization",
+        "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "post_activation_api_browser_and_demo_evidence_must_be_rerun"
+      ],
+      "readiness": {
+        "blocking_reasons": [
+          "activation_gate_required",
+          "review_only_or_rejected_visual_candidates_present"
+        ],
+        "status": "promotion_candidate_activation_required"
+      },
+      "remaining_blockers_from_gate": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_not_approved",
+        "post_activation_evidence_required",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "activation_performed": false,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "plan_only": true,
+        "provider_call_count_by_plan": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_lamp_wick_store_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_lamp_wick_store_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    },
+    {
+      "activation_apply_now": false,
+      "activation_contract_status": "contract_planned_activation_not_applied",
+      "activation_decision_from_gate": "blocked",
+      "approved_fixture_contract": {
+        "approved_candidate_available": true,
+        "approved_candidate_schema_version": "map_runtime_package.v0.2",
+        "default_runtime_preserved": true,
+        "default_runtime_v02_field_leak_count": 0,
+        "runtime_activation_allowed": false,
+        "strong_semantic_counts": {
+          "blocked_areas_count": 1,
+          "defense_anchors_count": 1,
+          "hazard_zones_count": 1,
+          "resource_nodes_count": 1
+        }
+      },
+      "authorization": {
+        "activation_authorized_for_gate": false,
+        "authorization_status": "pending",
+        "record_present": true
+      },
+      "decision_reason_from_gate": "blocked_review_only_candidate_isolation_required",
+      "default_api_contract": {
+        "api_dry_run_authorization_status": "pending",
+        "api_dry_run_candidate_available": false,
+        "api_runtime_activation_allowed": false,
+        "default_runtime_schema_version": "map_runtime_package.v0.1",
+        "default_runtime_v02_field_leak_count": 0
+      },
+      "node_id": "old_signal_tower",
+      "planned_next_checks": [
+        "developer_must_approve_or_deny_activation_authorization",
+        "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "frontend_runtime_contract_must_be_updated_in_dedicated_activation_task",
+        "post_activation_api_browser_and_demo_evidence_must_be_rerun"
+      ],
+      "readiness": {
+        "blocking_reasons": [
+          "activation_gate_required",
+          "review_only_or_rejected_visual_candidates_present"
+        ],
+        "status": "promotion_candidate_activation_required"
+      },
+      "remaining_blockers_from_gate": [
+        "api_frontend_contract_update_required",
+        "explicit_developer_activation_not_approved",
+        "post_activation_evidence_required",
+        "review_only_or_rejected_visual_candidates_present"
+      ],
+      "safety": {
+        "activation_allowed": false,
+        "activation_performed": false,
+        "backend_api_contract_mutation_performed": false,
+        "default_runtime_mutation_performed": false,
+        "frontend_contract_mutation_performed": false,
+        "plan_only": true,
+        "provider_call_count_by_plan": 0,
+        "world_state_mutation_performed": false
+      },
+      "target_candidate": {
+        "from_package_id": "map_pkg_old_signal_tower_v0_1",
+        "from_schema_version": "map_runtime_package.v0.1",
+        "readiness_status": "promotion_candidate_activation_required",
+        "to_package_id": "map_pkg_old_signal_tower_v0_2",
+        "to_schema_version": "map_runtime_package.v0.2"
+      }
+    }
+  ],
+  "policy": [
+    "This plan records the contract delta needed before MapRuntimePackage v0.2 can become a default player runtime.",
+    "This plan must not activate v0.2, mutate default MapRuntimePackage files, update backend routes, or update frontend runtime behavior.",
+    "MapRuntimePackage remains the map runtime truth source; images, SVG previews, StylePack media, and AI candidates cannot backfill path, slot, resource, hazard, anchor, blocked-area, or collision truth."
+  ],
+  "report_id": "mvp_map_runtime_v02_activation_contract_plan",
+  "safety_summary": {
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_performed": false,
+    "provider_call_count_by_plan": 0,
+    "reads_env_file": false,
+    "runtime_mutation_count_by_plan": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count_by_plan": 0
+  },
+  "schema_version": "map_runtime_v02_activation_contract_plan.v0.1",
+  "scope": {
+    "activation_performed": false,
+    "backend_api_contract_mutation_allowed": false,
+    "backend_api_contract_mutation_performed": false,
+    "default_runtime_mutation_allowed": false,
+    "default_runtime_mutation_performed": false,
+    "frontend_contract_mutation_allowed": false,
+    "frontend_contract_mutation_performed": false,
+    "plan_only": true,
+    "provider_calls_allowed": false,
+    "read_model_only": true,
+    "runtime_activation_allowed": false,
+    "world_state_mutation_allowed": false
+  },
+  "status": "plan_ready_activation_not_applied",
+  "summary": {
+    "activation_allowed_count": 0,
+    "activation_apply_now_count": 0,
+    "activation_blocked_count_from_gate": 3,
+    "api_pending_authorization_count": 3,
+    "api_smoke_status": "passed",
+    "approved_candidate_available_count": 3,
+    "approved_fixture_strong_semantic_totals": {
+      "blocked_areas_count": 3,
+      "defense_anchors_count": 3,
+      "hazard_zones_count": 3,
+      "resource_nodes_count": 3
+    },
+    "authorization_approved_count": 0,
+    "authorization_report_status": "pending_developer_approval",
+    "backend_required_change_count": 3,
+    "blocker_counts_from_gate": {
+      "api_frontend_contract_update_required": 3,
+      "explicit_developer_activation_not_approved": 3,
+      "post_activation_evidence_required": 3,
+      "review_only_or_rejected_visual_candidates_present": 3
+    },
+    "contract_plan_status": "not_applied",
+    "default_runtime_v01_preserved_count": 3,
+    "frontend_required_change_count": 3,
+    "gate_status": "blocked",
+    "node_count": 3,
+    "post_activation_required_command_count": 5,
+    "provider_call_count_by_plan": 0,
+    "readiness_status": "promotion_candidates_activation_required",
+    "runtime_mutation_count_by_plan": 0,
+    "world_mutation_count_by_plan": 0
+  }
+}
