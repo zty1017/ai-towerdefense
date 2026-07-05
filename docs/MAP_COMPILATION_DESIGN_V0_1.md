@@ -651,3 +651,41 @@ MapRuntimePackage v0.1 / v0.2 preview
 - v0.2 的 resource / blocked / objective / spawn 与塔位、road band 的冲突同样通过 helper 进入 warning/report；后续如果模板和示例完成迁移，可再把明确重叠升级为硬失败。
 
 硬边界保持不变：不得从图片、SVG、preview 或 AI candidate 反推路线、塔位、资源点、机关或碰撞；StylePack / RenderPlan 仍只表现结构化地图事实。
+
+### 10.6 v0.2 激活前合同计划落点
+
+截至 2026-07-05，地图 runtime v0.2 已补齐激活前合同计划层：
+
+```text
+MapRuntimePackage v0.2 preview
+  -> promotion readiness
+  -> developer authorization record
+  -> opt-in dry-run contract
+  -> activation gate
+  -> activation contract plan
+```
+
+已新增：
+
+- `tools/media/build_map_runtime_v02_activation_contract_plan.py`
+- `tools/media/validate_map_runtime_v02_activation_contract_plan.py`
+- `examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json`
+
+该层的职责不是激活 v0.2，而是把 activation gate 中仍阻断的 API/frontend 合同更新和激活后 evidence 复跑，展开为可机器校验的计划：
+
+- 后端必须有显式默认地图 runtime 选择器，不能因为 v0.2 preview 存在就自动替换 `/map-runtime-package`。
+- 前端必须只从 activated default runtime 消费资源点、机关区、防守锚点和阻挡区；review-only preview / opt-in endpoint 仍不能成为玩家默认依赖。
+- 激活后必须重新跑 v0.2 preview API、MVP 主流程 API、前端静态视觉合同、浏览器玩家链路和 demo evidence suite。
+
+当前计划报告保持：
+
+```text
+contract_plan_status = not_applied
+activation_allowed_count = 0
+activation_apply_now_count = 0
+default_runtime_mutation_performed = false
+backend_api_contract_mutation_performed = false
+frontend_contract_mutation_performed = false
+```
+
+这说明 v0.2 强语义已经是“可读候选”，但还不是“默认玩家 runtime”。后续真正激活时，仍必须另开独立任务，并以该计划为 checklist 更新后端、前端和证据链。
