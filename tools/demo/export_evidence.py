@@ -218,6 +218,8 @@ PATHS = {
     / "examples/review_packs/map_topology_control_sketch_pack.v0.1.json",
     "map_controlled_regeneration_request_pack": ROOT
     / "examples/review_packs/map_controlled_regeneration_request_pack.v0.1.json",
+    "controlled_map_candidate_artifact_import_report": ROOT
+    / "examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json",
     "controlled_map_candidate_generation_run": ROOT
     / "examples/review_packs/controlled_map_candidate_generation_run.v0.1.json",
     "controlled_map_candidate_review": ROOT
@@ -784,6 +786,14 @@ STATIC_VALIDATION_COMMANDS = [
             "/tmp/ai_td_map_controlled_regeneration_requests",
             "--output",
             "/tmp/ai_td_map_controlled_regeneration_request_pack.json",
+        ],
+    },
+    {
+        "name": "controlled_map_candidate_artifact_import_report",
+        "command": [
+            "python3",
+            "tools/media/validate_controlled_map_candidate_artifact_import_report.py",
+            "examples/review_packs/controlled_map_candidate_artifact_import_report.v0.1.json",
         ],
     },
     {
@@ -2562,6 +2572,41 @@ def controlled_map_candidate_generation_summary(report: dict[str, Any]) -> dict[
     }
 
 
+def controlled_map_candidate_artifact_import_summary(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    items = [item for item in as_list(report.get("items")) if isinstance(item, dict)]
+    return {
+        "schema_version": report.get("schema_version"),
+        "report_id": report.get("report_id"),
+        "status": report.get("status"),
+        "copy_files": report.get("copy_files"),
+        "request_count": summary.get("request_count"),
+        "awaiting_count": summary.get("awaiting_count"),
+        "imported_count": summary.get("imported_count"),
+        "invalid_count": summary.get("invalid_count"),
+        "provider_call_count": summary.get("provider_call_count"),
+        "runtime_mutation_count": summary.get("runtime_mutation_count"),
+        "published_visual_layer_write_count": summary.get("published_visual_layer_write_count"),
+        "map_runtime_package_write_count": summary.get("map_runtime_package_write_count"),
+        "status_counts": as_obj(summary.get("status_counts")),
+        "safety_summary": as_obj(report.get("safety_summary")),
+        "source_file": report.get("import_plan_path"),
+        "validation_commands": as_list(as_obj(report.get("validation")).get("commands")),
+        "item_samples": [
+            {
+                "node_id": item.get("node_id"),
+                "status": item.get("status"),
+                "source_kind": item.get("source_kind"),
+                "source_png_path": item.get("source_png_path"),
+                "target_candidate_path": item.get("target_candidate_path"),
+                "copied": item.get("copied"),
+                "review_status": item.get("review_status"),
+            }
+            for item in items[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
 def collect_map_runtime_package(map_package: dict[str, Any]) -> dict[str, Any]:
     visual_layers = as_list(map_package.get("visual_layers"))
     return {
@@ -3623,6 +3668,7 @@ def collect_assets_and_media(
     topology_constrained_map_overlay_visual_review: dict[str, Any],
     map_topology_control_sketch_pack: dict[str, Any],
     map_controlled_regeneration_request_pack: dict[str, Any],
+    controlled_map_candidate_artifact_import_report: dict[str, Any],
     controlled_map_candidate_generation_run: dict[str, Any],
     controlled_map_candidate_review: dict[str, Any],
     controlled_map_text_fallback_generation_run: dict[str, Any],
@@ -3750,6 +3796,9 @@ def collect_assets_and_media(
             ),
             "controlled_regeneration_request_pack": map_controlled_regeneration_request_pack_summary(
                 map_controlled_regeneration_request_pack
+            ),
+            "controlled_candidate_artifact_import": controlled_map_candidate_artifact_import_summary(
+                controlled_map_candidate_artifact_import_report
             ),
             "controlled_candidate_generation_run": controlled_map_candidate_generation_summary(
                 controlled_map_candidate_generation_run
@@ -4120,6 +4169,10 @@ def collect_source_files() -> list[dict[str, Any]]:
             PATHS["map_controlled_regeneration_request_pack"],
         ),
         (
+            "controlled_map_candidate_artifact_import_report",
+            PATHS["controlled_map_candidate_artifact_import_report"],
+        ),
+        (
             "controlled_map_candidate_generation_run",
             PATHS["controlled_map_candidate_generation_run"],
         ),
@@ -4354,6 +4407,9 @@ def build_evidence(
     map_controlled_regeneration_request_pack = load_json(
         PATHS["map_controlled_regeneration_request_pack"]
     )
+    controlled_map_candidate_artifact_import_report = load_json(
+        PATHS["controlled_map_candidate_artifact_import_report"]
+    )
     controlled_map_candidate_generation_run = load_json(
         PATHS["controlled_map_candidate_generation_run"]
     )
@@ -4576,6 +4632,7 @@ def build_evidence(
             topology_constrained_map_overlay_visual_review,
             map_topology_control_sketch_pack,
             map_controlled_regeneration_request_pack,
+            controlled_map_candidate_artifact_import_report,
             controlled_map_candidate_generation_run,
             controlled_map_candidate_review,
             controlled_map_text_fallback_generation_run,
@@ -4748,6 +4805,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     controlled_regeneration_request = as_obj(
         as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
             "controlled_regeneration_request_pack"
+        )
+    )
+    controlled_candidate_artifact_import = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "controlled_candidate_artifact_import"
         )
     )
     controlled_candidate_generation = as_obj(
@@ -5082,6 +5144,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- 地图 RenderPlan 离线预览：report `{procedural_map_previews.get('report_count')}`，ready `{procedural_map_previews.get('ready_count')}`，状态 `{procedural_map_previews.get('status_counts')}`，runtime 策略 `{procedural_map_previews.get('runtime_activation_policy')}`",
         f"- 地图 RenderPlan v0.2 语义预览：report `{procedural_map_previews_v02.get('report_count')}`，ready `{procedural_map_previews_v02.get('ready_count')}`，状态 `{procedural_map_previews_v02.get('status_counts')}`，runtime 策略 `{procedural_map_previews_v02.get('runtime_activation_policy')}`",
         f"- 地图受控重生请求包：`{controlled_regeneration_request.get('status')}`，request `{controlled_regeneration_request.get('request_count')}`，reference image request `{controlled_regeneration_request.get('reference_image_request_count')}`，blocked `{controlled_regeneration_request.get('blocked_count')}`",
+        f"- 地图受控候选本地 PNG 导入：`{controlled_candidate_artifact_import.get('status')}`，awaiting `{controlled_candidate_artifact_import.get('awaiting_count')}`，imported `{controlled_candidate_artifact_import.get('imported_count')}`，provider calls `{controlled_candidate_artifact_import.get('provider_call_count')}`，校验命令 `{controlled_candidate_artifact_import.get('validation_commands')}`",
         f"- 地图受控候选生成 dry-run：`{controlled_candidate_generation.get('status')}`，handoff `{controlled_candidate_generation.get('handoff_ready_count')}`，图片 `{controlled_candidate_generation.get('image_exists_count')}`，provider calls `{controlled_candidate_generation.get('provider_call_count')}`",
         f"- 地图受控候选审查：`{controlled_candidate_review.get('status')}`，候选 `{controlled_candidate_review.get('candidate_count')}`，晋升 runtime `{controlled_candidate_review.get('runtime_promotion_count')}`，状态 `{controlled_candidate_review.get('review_status_counts')}`",
         f"- 地图 text-fallback 真实生成：`{controlled_text_fallback_generation.get('status')}`，图片 `{controlled_text_fallback_generation.get('image_exists_count')}`，provider calls `{controlled_text_fallback_generation.get('provider_call_count')}`，provider `{controlled_text_fallback_generation.get('provider_profile')}`",
@@ -5356,6 +5419,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     controlled_regeneration_request = as_obj(
         as_obj(assets_media.get("map_visual_reference")).get(
             "controlled_regeneration_request_pack"
+        )
+    )
+    controlled_candidate_artifact_import = as_obj(
+        as_obj(assets_media.get("map_visual_reference")).get(
+            "controlled_candidate_artifact_import"
         )
     )
     controlled_candidate_generation = as_obj(
@@ -5699,6 +5767,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">受控重生请求</div>
           <div class="metric">{html_escape(controlled_regeneration_request.get("status"))}</div>
           <p class="muted">request：{html_escape(controlled_regeneration_request.get("request_count"))}；reference image：{html_escape(controlled_regeneration_request.get("reference_image_request_count"))}；blocked：{html_escape(controlled_regeneration_request.get("blocked_count"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">受控 PNG 导入</div>
+          <div class="metric">{html_escape(controlled_candidate_artifact_import.get("status"))}</div>
+          <p class="muted">awaiting：{html_escape(controlled_candidate_artifact_import.get("awaiting_count"))}；imported：{html_escape(controlled_candidate_artifact_import.get("imported_count"))}；provider calls：{html_escape(controlled_candidate_artifact_import.get("provider_call_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">受控候选 Dry-run</div>

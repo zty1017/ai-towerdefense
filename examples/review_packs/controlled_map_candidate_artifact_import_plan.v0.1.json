@@ -1,0 +1,16 @@
+{
+  "approvals": [],
+  "imports": [],
+  "notes": [
+    "默认示例不导入真实图片，只用于生成 awaiting_local_artifacts report。",
+    "真实导入时每个 imports 项需提供 node_id 与本地 PNG source_png_path，路径必须在仓库内或 /tmp 下，并显式运行 --copy-files。"
+  ],
+  "plan_id": "mvp_controlled_map_candidate_artifact_import_plan_v0_1",
+  "policy": [
+    "只接收本地 PNG，不接收远程 URL。",
+    "导入后仍是 review-only candidate，不允许自动晋升 runtime 或 published visual layer。",
+    "该计划不包含 provider prompt、raw response、secret 或 .env 信息。"
+  ],
+  "schema_version": "controlled_map_candidate_artifact_import_plan.v0.1",
+  "status": "awaiting_local_artifacts"
+}
