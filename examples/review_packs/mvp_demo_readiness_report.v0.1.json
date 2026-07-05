@@ -108,6 +108,38 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json"
+        }
+      ],
+      "gate_id": "map_runtime_v02_semantic_geometry",
+      "metrics": {
+        "blocked_area_count": 3,
+        "default_runtime_mutation": false,
+        "defense_anchor_count": 3,
+        "error_count": 0,
+        "geometry_source": "MapRuntimePackage.path_routes.waypoints",
+        "hazard_zone_count": 3,
+        "map_count": 3,
+        "provider_call_count": 0,
+        "report_status": "passed_with_warnings",
+        "resource_node_count": 3,
+        "runtime_effect": false,
+        "semantic_source": "MapRuntimePackage.v0.2.resource_nodes/hazard_zones/defense_anchors/blocked_areas",
+        "status_counts": {
+          "passed": 2,
+          "passed_with_warnings": 1
+        },
+        "warning_count": 1
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed_with_warnings",
+      "summary": "v0.2 资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；warning 只作为 review evidence，不会修改默认 v0.1 runtime。",
+      "title": "MapRuntimePackage v0.2 强语义几何审查"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
         }
       ],
@@ -435,6 +467,10 @@
     },
     {
       "exists": true,
+      "path": "examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json"
+    },
+    {
+      "exists": true,
       "path": "examples/review_packs/core_artifact_alignment_report.v0.1.json"
     },
     {
@@ -496,13 +532,13 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 20,
+    "evidence_source_count": 21,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
-    "required_gate_count": 7,
-    "required_gate_passed_or_expected_count": 7,
+    "required_gate_count": 8,
+    "required_gate_passed_or_expected_count": 8,
     "runtime_mutation_count_by_report": 0,
-    "warning_gate_count": 4,
+    "warning_gate_count": 5,
     "world_mutation_count_by_report": 0
   }
 }

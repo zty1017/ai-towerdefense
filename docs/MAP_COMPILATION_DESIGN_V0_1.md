@@ -720,3 +720,5 @@ MapRuntimePackage v0.2 preview
 报告状态为 `passed` / `passed_with_warnings` / `blocked`，并在 summary 中记录 warning / error counts。当前正式 report 为 `passed_with_warnings`：旧信号塔 v0.2 preview 的 `resource_old_signal_tower_primary` 贴近派生 road band，但没有 blocking resource / 阻挡区 / 塔位 / 目标 / 出生点硬冲突。该 warning 只作为 review evidence，不修改 v0.2 runtime package，也不影响默认 v0.1 玩家 runtime。
 
 安全边界保持显式字段：`runtime_effect=false`、`provider_call_count=0`、`default_runtime_mutation=false`，并声明不读 `.env`、不调用 provider、不读图片、不从 SVG / preview / AI candidate 反推语义。它不是新的 `PathGraph`、`CollisionMap`、`ResourceNodeMap` 或 `LevelBundle` 事实源，只是对现有 `MapRuntimePackage v0.2 preview` 的结构化证据层。
+
+`tools/demo/build_mvp_demo_readiness_report.py` 已把该报告作为 `map_runtime_v02_semantic_geometry` 必需 gate 纳入 MVP demo readiness：当前 gate 为 `passed_with_warnings`，只证明 v0.2 preview 的强语义几何候选足够进入演示证据链，不代表 v0.2 已成为玩家默认 runtime。默认 runtime 切换仍必须经过 activation authorization、activation gate、后端默认选择器、前端合同和激活后 evidence 复跑。

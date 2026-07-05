@@ -26,6 +26,8 @@ PATHS = {
     / "examples/review_packs/map_runtime_activation_gate_report.v0.1.json",
     "map_runtime_v02_activation_contract_plan": ROOT
     / "examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json",
+    "map_runtime_v02_semantic_geometry": ROOT
+    / "examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json",
     "core_artifact_alignment": ROOT
     / "examples/review_packs/core_artifact_alignment_report.v0.1.json",
     "map_visual_promotion_gate": ROOT
@@ -288,6 +290,58 @@ def map_runtime_activation_contract_gate(
                 "default_runtime_mutation_performed"
             ),
             "blocker_counts": as_obj(gate_summary.get("blocker_counts")),
+        },
+    )
+
+
+def map_runtime_v02_semantic_geometry_gate(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    source_policy = as_obj(report.get("source_policy"))
+    map_count = int(summary.get("map_count") or 0)
+    error_count = int(summary.get("error_count") or 0)
+    warning_count = int(summary.get("warning_count") or 0)
+    ok = (
+        report.get("status") in PASSING_STATUSES
+        and map_count >= 3
+        and error_count == 0
+        and int(report.get("provider_call_count") or 0) == 0
+        and report.get("runtime_effect") is False
+        and report.get("default_runtime_mutation") is False
+        and source_policy.get("runtime_package_schema_version")
+        == "map_runtime_package.v0.2"
+        and source_policy.get("no_image_or_preview_reverse_inference") is True
+        and source_policy.get("does_not_modify_runtime_package") is True
+        and source_policy.get("does_not_read_env") is True
+        and source_policy.get("does_not_call_provider") is True
+    )
+    status = "not_ready"
+    if ok:
+        status = "passed_with_warnings" if warning_count else "passed"
+    return gate(
+        gate_id="map_runtime_v02_semantic_geometry",
+        title="MapRuntimePackage v0.2 强语义几何审查",
+        status=status,
+        required_for_mvp_demo=True,
+        summary=(
+            "v0.2 资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；"
+            "warning 只作为 review evidence，不会修改默认 v0.1 runtime。"
+        ),
+        evidence_keys=["map_runtime_v02_semantic_geometry"],
+        metrics={
+            "report_status": report.get("status"),
+            "map_count": map_count,
+            "resource_node_count": summary.get("resource_node_count"),
+            "hazard_zone_count": summary.get("hazard_zone_count"),
+            "defense_anchor_count": summary.get("defense_anchor_count"),
+            "blocked_area_count": summary.get("blocked_area_count"),
+            "warning_count": warning_count,
+            "error_count": error_count,
+            "status_counts": as_obj(summary.get("status_counts")),
+            "provider_call_count": report.get("provider_call_count"),
+            "runtime_effect": report.get("runtime_effect"),
+            "default_runtime_mutation": report.get("default_runtime_mutation"),
+            "semantic_source": source_policy.get("semantic_source"),
+            "geometry_source": source_policy.get("geometry_source"),
         },
     )
 
@@ -555,6 +609,9 @@ def build_report(generated_at: str) -> dict[str, Any]:
         map_runtime_activation_contract_gate(
             reports["map_runtime_activation_gate"],
             reports["map_runtime_v02_activation_contract_plan"],
+        ),
+        map_runtime_v02_semantic_geometry_gate(
+            reports["map_runtime_v02_semantic_geometry"]
         ),
         core_alignment_gate(reports["core_artifact_alignment"]),
         map_visual_gate(
