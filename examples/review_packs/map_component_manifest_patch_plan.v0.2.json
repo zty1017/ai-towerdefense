@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-07-05T00:00:00Z",
+  "patches": [],
+  "plan_id": "map_component_manifest_patch_plan_v0_2",
+  "runtime_effect": {
+    "candidate_file_copied": false,
+    "frontend_default_modified": false,
+    "manifest_replacement_written": false,
+    "render_plan_modified": false,
+    "runtime_map_truth_modified": false,
+    "style_pack_modified": false
+  },
+  "schema_version": "map_component_manifest_patch_plan.v0.2",
+  "source_candidate_review_report_path": "examples/review_packs/map_component_candidate_review_report.v0.1.json",
+  "source_manifest_path": "game_data/media/map_components/map_component_media_manifest.v0.2.json",
+  "source_manifest_schema_version": "map_component_media_manifest.v0.2",
+  "source_promotion_gate_report_path": "examples/review_packs/map_component_promotion_gate_report.v0.1.json",
+  "source_visual_quality_report_path": "examples/review_packs/map_component_visual_quality_report.v0.1.json",
+  "status": "no_allowed_candidates",
+  "summary": {
+    "allowed_decision_count": 0,
+    "atlas_blocked_patch_count": 0,
+    "blocked_patch_count": 0,
+    "manifest_item_count": 36,
+    "media_kind_counts": {},
+    "patch_count": 0,
+    "ready_patch_count": 0,
+    "runtime_effect": {
+      "candidate_file_copied": false,
+      "frontend_default_modified": false,
+      "manifest_replacement_written": false,
+      "render_plan_modified": false,
+      "runtime_map_truth_modified": false,
+      "style_pack_modified": false
+    },
+    "single_image_ready_patch_count": 0
+  },
+  "usage_policy": [
+    "review_only_manifest_patch_proposal",
+    "v0_2_single_image_manifest_replacement_preview",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "no_manifest_write",
+    "no_candidate_file_copy",
+    "no_style_pack_or_render_plan_mutation",
+    "no_frontend_default_consumption",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url",
+    "no_secret_material"
+  ],
+  "validation": {
+    "commands": [
+      "python3 tools/media/validate_map_component_manifest_patch_plan_v02.py examples/review_packs/map_component_manifest_patch_plan.v0.2.json"
+    ],
+    "validator": "tools/media/validate_map_component_manifest_patch_plan_v02.py"
+  }
+}
