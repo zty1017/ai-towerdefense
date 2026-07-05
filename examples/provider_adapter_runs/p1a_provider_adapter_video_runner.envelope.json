@@ -1,0 +1,123 @@
+{
+  "schema_version": "provider_output_envelope.v0.1",
+  "envelope_id": "pout_auth_sched_video_keyframe_atlas_boundary_001_runner_001",
+  "created_at": "2026-07-05T00:00:00Z",
+  "source": {
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_video_keyframe_atlas_background",
+    "object_kind": "animation_seed_to_video_keyframes",
+    "object_ref": "animation_seed_manifest:frontend_runtime_mock",
+    "provider_profile": "video_provider_unimplemented_boundary",
+    "provider_mode": "video_boundary_dry_run",
+    "worker_id": "provider_adapter_runner",
+    "guard_id": "pguard_example_video_keyframe_atlas_001"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_call": {
+    "status": "not_performed_guarded",
+    "performed": false,
+    "authorization_required": true,
+    "authorization_granted": false,
+    "authorization_ref": null,
+    "attempt_count": 0,
+    "max_attempts": 0
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only"
+  },
+  "redacted_request_summary": {
+    "intent_class": "image_to_video_keyframe_atlas_candidate",
+    "input_refs": [
+      {
+        "artifact_id": "animation_seed_manifest",
+        "kind": "animation_seed_manifest",
+        "path": "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json"
+      },
+      {
+        "artifact_id": "video_frame_asset_pipeline",
+        "kind": "pipeline_contract",
+        "path": "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md"
+      },
+      {
+        "artifact_id": "runtime_atlas_manifest",
+        "kind": "media_atlas_manifest",
+        "path": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json"
+      }
+    ],
+    "policy_notes": [
+      "Only local refs, digests, and redacted summaries are retained.",
+      "Prompt bodies and provider response bodies are forbidden."
+    ],
+    "request_digest": null
+  },
+  "redacted_result_summary": {
+    "result_kind": "video_candidate",
+    "status": "blocked_before_provider_call",
+    "summary": "Video mode is accepted only as an offline boundary. Live image-to-video provider execution is blocked until the adapter safely downloads local video refs and emits downstream keyframe evidence.",
+    "result_digest": null,
+    "finish_reason": "video_live_provider_not_implemented"
+  },
+  "artifact_manifest": {
+    "status": "not_created",
+    "output_refs": [],
+    "review_only": true,
+    "notes": [
+      "No provider call or artifact was created in dry-run mode.",
+      "video_live_provider_not_implemented: live image-to-video provider execution is not available."
+    ]
+  },
+  "validation": {
+    "schema_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Schema validation waits for staging and downstream validators."
+      ]
+    },
+    "semantic_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Semantic review is required before promotion."
+      ]
+    },
+    "media_gate": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Media review is required before promotion."
+      ]
+    },
+    "human_review": {
+      "status": "not_run",
+      "required_before_activation": true,
+      "report_ref": null,
+      "notes": [
+        "Human or visual review is required before promotion."
+      ]
+    }
+  },
+  "activation_gate": {
+    "activation_allowed": false,
+    "blocked_reason": "provider_call_not_performed",
+    "required_next_gates": [
+      "artifact_staging_manifest",
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ]
+  }
+}

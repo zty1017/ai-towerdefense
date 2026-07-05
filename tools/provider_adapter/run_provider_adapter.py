@@ -448,6 +448,60 @@ def build_dry_run_artifacts(
     return receipt, envelope
 
 
+def build_video_boundary_artifacts(
+    request: dict[str, Any],
+    authorization: dict[str, Any],
+    *,
+    created_at: str,
+    note: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    request_source, auth_source, auth_ref = require_input_alignment(request, authorization)
+    finish_reason = "video_live_provider_not_implemented"
+    receipt = build_receipt(
+        request_source=request_source,
+        auth_source=auth_source,
+        authorization_ref=auth_ref,
+        status="fixture_output_ready_for_envelope",
+        mode="fixture_backed_no_provider_call",
+        performed=False,
+        created_at=created_at,
+        worker_id="provider_adapter_runner",
+        note=note,
+        request_digest=None,
+        result_digest=None,
+        finish_reason=finish_reason,
+        redacted_summary=(
+            "Video provider adapter boundary recorded as review-only. No provider call "
+            "was performed; live image-to-video execution is awaiting a safe implementation."
+        ),
+    )
+    envelope = build_envelope(
+        request=request,
+        request_source=request_source,
+        auth_source=auth_source,
+        authorization_ref=auth_ref,
+        created_at=created_at,
+        provider_call_status="not_performed_guarded",
+        provider_performed=False,
+        authorization_granted=False,
+        result_status="blocked_before_provider_call",
+        result_summary=(
+            "Video mode is accepted only as an offline boundary. Live image-to-video "
+            "provider execution is blocked until the adapter safely downloads local "
+            "video refs and emits downstream keyframe evidence."
+        ),
+        result_kind="video_candidate",
+        result_digest=None,
+        finish_reason=finish_reason,
+        output_refs=[],
+        request_digest=None,
+    )
+    as_obj(envelope.get("artifact_manifest")).setdefault("notes", []).append(
+        "video_live_provider_not_implemented: live image-to-video provider execution is not available."
+    )
+    return receipt, envelope
+
+
 def run_live_llm(
     request: dict[str, Any],
     authorization: dict[str, Any],
@@ -674,9 +728,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--note", default=None)
     parser.add_argument(
         "--mode",
-        choices=("fixture", "llm_text", "image"),
+        choices=("fixture", "llm_text", "image", "video"),
         default="fixture",
-        help="fixture is offline dry-run; llm_text/image require --live.",
+        help="fixture/video are offline dry-run boundaries; llm_text/image require --live.",
     )
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--llm-profile", default="ark_deepseek_v4_flash")
@@ -696,6 +750,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.mode == "video" and args.live:
+        print(
+            "video_live_provider_not_implemented: live video provider execution is "
+            "blocked; no provider call was made and no output artifacts were written.",
+            file=sys.stderr,
+        )
+        return 2
     request = load_json(args.executor_request)
     authorization = load_json(args.authorization)
     created_at = args.created_at or now_iso()
@@ -703,6 +764,13 @@ def main() -> int:
         if args.live:
             raise ValueError("--live is not meaningful with --mode fixture")
         receipt, envelope = build_dry_run_artifacts(
+            request,
+            authorization,
+            created_at=created_at,
+            note=args.note,
+        )
+    elif args.mode == "video":
+        receipt, envelope = build_video_boundary_artifacts(
             request,
             authorization,
             created_at=created_at,

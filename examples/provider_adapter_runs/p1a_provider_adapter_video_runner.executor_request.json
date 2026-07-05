@@ -1,0 +1,109 @@
+{
+  "schema_version": "generation_executor_run_request.v0.1",
+  "request_id": "gexec_gsrun_example_scheduler_aligned_sched_video_keyframe_atlas_01",
+  "created_at": "2026-07-05T00:00:00Z",
+  "source": {
+    "session_id": "demo_session_redacted",
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_video_keyframe_atlas_background",
+    "object_kind": "animation_seed_to_video_keyframes",
+    "object_ref": "animation_seed_manifest:frontend_runtime_mock",
+    "latency_class": "background",
+    "guard_id": "pguard_example_video_keyframe_atlas_001",
+    "worker_id": "generation_executor_request_video_example",
+    "note": "review-only video runner boundary example; not a provider call"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "provider_call_allowed_by_request_builder": false,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "provider_execution_intent": {
+    "status": "prepared_pending_explicit_authorization",
+    "provider_mode": "video_boundary_dry_run",
+    "provider_profile": "video_provider_unimplemented_boundary",
+    "authorization_required": true,
+    "authorization_granted": false,
+    "authorization_ref": null,
+    "provider_call_performed_by_request_builder": false
+  },
+  "execution_budget": {
+    "attempt_count": 0,
+    "max_attempts": 0,
+    "remaining_attempts": 0,
+    "latency_class": "background",
+    "fallback_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json"
+  },
+  "input_refs": [
+    {
+      "ref_id": "animation_seed_manifest",
+      "kind": "animation_seed_manifest",
+      "path": "game_data/media/frontend_mock/frontend_animation_seed_manifest.v0.1.json",
+      "notes": [
+        "Local reviewed seed references only; no provider call material is stored in this request."
+      ]
+    }
+  ],
+  "context_refs": [
+    {
+      "ref_id": "video_frame_asset_pipeline",
+      "kind": "pipeline_contract",
+      "path": "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md"
+    },
+    {
+      "ref_id": "runtime_atlas_manifest",
+      "kind": "media_atlas_manifest",
+      "path": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json"
+    }
+  ],
+  "requested_output": {
+    "intent_class": "image_to_video_keyframe_atlas_candidate",
+    "result_kind": "video_candidate",
+    "artifact_policy": "review_only_local_refs_required",
+    "activation_policy": "promotion_required_before_runtime_or_world_state",
+    "notes": [
+      "The current runner may only record the video adapter boundary; live image-to-video execution must remain blocked until safely implemented.",
+      "Future successful output must be a local raw video ref followed by keyframe extraction, loop review, and atlas gates."
+    ]
+  },
+  "required_gates": {
+    "before_provider_execution": [
+      "explicit_user_authorization",
+      "provider_adapter_selected",
+      "sanitized_request_materialized_outside_request_record"
+    ],
+    "after_provider_execution": [
+      "provider_output_envelope",
+      "raw_video_sequence_validation",
+      "local_artifact_staging_manifest",
+      "video_keyframe_extraction",
+      "frame_sequence_validation",
+      "loop_continuity_report"
+    ],
+    "before_activation": [
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report",
+      "atlas_runtime_package_gate"
+    ]
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only",
+    "executor_result_storage": "provider_output_envelope_redacted_only"
+  },
+  "request_builder_safety": {
+    "reads_env": false,
+    "calls_provider": false,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "writes_world_state": false,
+    "activates_runtime": false
+  }
+}
