@@ -112,6 +112,10 @@ MapComponentMediaManifest deterministic SVG baseline
   -> MapComponentPromotionGateReport
   -> MapComponentManifestPatchPlan
   -> MapComponentManifestApplyReport / optional replacement manifest artifact
+
+MapComponentMediaManifest v0.2 preview
+  -> MapComponentManifestPatchPlan v0.2
+  -> MapComponentManifestApplyReport v0.2 / optional replacement manifest artifact
 ```
 
 `MapComponentGenerationRequestPack v0.1` 只从现有 manifest 派生每个组件的生成请求摘要：component_id、component_role、style_pack_id、node_id、baseline_local_path、target_size、prompt_profile_id、negative constraints、required gates 和 usage policy。它可以包含 redacted prompt summary / structured prompt tokens，但不得保存 provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 或外部临时 URL。
@@ -127,6 +131,8 @@ MapComponentMediaManifest deterministic SVG baseline
 `MapComponentManifestPatchPlan v0.1` 是 promotion gate 之后、正式 apply 之前的 review-only 计划层。它只把 `MapComponentPromotionGateReport` 中 `allowed` 的 generated candidate decision 映射成 manifest patch proposal，并回查 candidate review、visual quality 和当前 `MapComponentMediaManifest`：默认正式链路没有 allowed candidate，因此输出 `no_allowed_candidates`、`patch_count=0`；approved alternate SVG 链路可以得到 `ready_for_developer_apply` proposal，指向当前 processed SVG 的同名替换目标和 `/assets/map_components/processed/...svg` public URL，但仍不复制文件、不创建 processed 产物、不写正式 manifest、不改 StylePack / RenderPlan / frontend default / runtime map truth。由于 `MapComponentMediaManifest v0.1` 只接受 processed SVG，PNG/WebP generated candidate 即使通过前置 gate，也必须在 patch plan 中标记为 `blocked_manifest_schema_incompatible`，等待 manifest schema 扩展或新版本发布。
 
 `MapComponentManifestApplyReport v0.1` 是 patch plan 之后的 developer-approved replacement build 证据层。它读取 patch plan 和显式 approval plan，只接受 `patch_status == ready_for_developer_apply` 且 `replacement_source.file_type == svg` 的 patch，复核 candidate local path 存在、sha 匹配、proposed processed path / public URL 与当前 manifest item 一致，然后可按调用方传入的 `--output-manifest` 写出 replacement manifest artifact。默认正式 approval plan 为空，因此 report 为 `no_approved_patches`、`applied_patch_count=0`，不会复制 candidate、不会改正式 `MapComponentMediaManifest`；只有额外显式 `--copy-files` 才会把候选 SVG 复制到 processed 目标。无论是否写 replacement artifact，该层都明确 `style_pack_modified=false`、`render_plan_modified=false`、`frontend_default_modified=false`、`runtime_map_truth_modified=false`，并记录 source/output manifest path 与 before/after sha。
+
+`MapComponentManifestPatchPlan v0.2` / `MapComponentManifestApplyReport v0.2` 是 v0.2 preview manifest 的旁路链路，不替换 v0.1 patch/apply，也不让前端默认消费 v0.2。v0.2 patch plan 默认读取 `game_data/media/map_components/map_component_media_manifest.v0.2.json`，让通过前置 gate 的 `svg/png/webp` 单图 generated candidate 可以表达为 `ready_for_developer_apply`，并把 replacement 会改变的 `media_kind/file_type/local_path/url/sha/width/height/source_kind` 写入 proposal；`atlas_animation` 当前只记录为 apply 暂不支持。v0.2 apply 只在显式 approval 后复核候选本地文件、sha、扩展名和 SVG/PNG/WebP 文件规则；若不能保证 replacement manifest 通过正式 v0.2 validator，就只输出 blocked report，不写坏 manifest、不复制正式 processed 文件、不改 StylePack / RenderPlan / frontend default / runtime map truth。默认正式 examples 仍保持 `no_allowed_candidates` / `patch_count=0` 和 `no_approved_patches` / `applied_patch_count=0`。
 
 该报告只证明“这个 StylePack 声称使用的组件媒体是否存在、是否已审、是否仍回退到程序化表现”。Manifest 与报告都不是 runtime semantic source，不得替代 `MapRuntimePackage` 的路径、塔位、目标、出生点、资源、机关、阻挡或碰撞事实，也不得从图片、atlas 或 prefab 外观反向推导地图语义。外部临时 URL、provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content 等字段不能成为通过项。
 
