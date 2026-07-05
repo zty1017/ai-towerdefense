@@ -964,6 +964,47 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/provider_adapter_image_r
 git diff --check
 ```
 
+### P1-A-8 Provider adapter video runner 边界
+
+状态：已完成边界接入，真实 live 图生视频 provider 未接入。
+
+目标：
+
+```text
+让 tools/provider_adapter/run_provider_adapter.py 接受 --mode video，为 P1-A 图片 -> 视频 -> 关键帧 -> atlas 管线生成可验证的 review-only 上游 receipt/envelope；默认不调用 provider，不读取 .env，不联网，不写世界状态，不激活 runtime。
+```
+
+产物：
+
+- `tools/provider_adapter/run_provider_adapter.py`：新增 `--mode video` 离线边界；`--mode video --live` 快速失败为 `video_live_provider_not_implemented`，不写成功产物。
+- `examples/provider_adapter_runs/p1a_provider_adapter_video_runner.executor_request.json`
+- `examples/provider_authorizations/p1a_provider_execution_authorization_video.example.json`
+- `examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json`
+- `examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json`
+- `examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json`
+- `tools/demo/export_evidence.py`：统一 evidence 新增 `provider_adapter_video_runner` 摘要和离线验证命令。
+
+当前结论：
+
+- video runner 只是 provider adapter 边界和 dry-run receipt/envelope，不等于真实图生视频 provider 已接入。
+- receipt 复用既有 `fixture_output_ready_for_envelope` 状态，未实现原因写入 `finish_reason=video_live_provider_not_implemented` 与 envelope 摘要。
+- 默认 video 模式不创建 raw video、frame sequence、atlas 或 staging / promotion 产物。
+- 后续真实 live video 必须先安全下载为本地 video ref，再进入 RawVideoSequence、抽帧、FrameSequence、LoopContinuityReport、media gate、human review 和 promotion gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json
+python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.executor_request.json
+python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1a_provider_execution_authorization_video.example.json
+python3 tools/provider_adapter/run_provider_adapter.py --mode video --executor-request examples/provider_adapter_runs/p1a_provider_adapter_video_runner.executor_request.json --authorization examples/provider_authorizations/p1a_provider_execution_authorization_video.example.json --receipt-output /tmp/p1a_provider_adapter_video_runner.receipt.json --envelope-output /tmp/p1a_provider_adapter_video_runner.envelope.json --created-at 2026-07-05T00:00:00Z
+python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json
+python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_runner python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/provider_video_adapter_boundary_evidence
+git diff --check
+```
+
 ### P1-B-22 Provider image artifact staging 失败闸门
 
 状态：已完成最小闭环。
@@ -2399,6 +2440,7 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/develop_p0m_visual_evide
 要点：
 
 - `virtual_single_frame`、确定性 4 帧 frame sequence、实体 spritesheet atlas 与 LoopContinuityReport 已完成；本任务后续继续推进真实图生视频关键帧。
+- provider adapter runner 已有 `--mode video` 离线边界和 live 阻断，用于服务后续真实图生视频接入前的 request / authorization / receipt / envelope 验收。
 - 首尾帧一致或 end frame 控制优先。
 - 加入 LoopContinuityCheck。
 - 后处理产物需支持透明 PNG、anchor、frame alignment、atlas json。

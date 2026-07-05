@@ -1,0 +1,84 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-A-provider-video-adapter-boundary",
+  "title": "Provider adapter runner video 模式边界",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-video-adapter-boundary",
+  "worktree": "/tmp/ai-td-task-provider-video-adapter-boundary",
+  "objective": "为 provider adapter runner 增加 video 模式的离线边界：argparse 接受 --mode video，默认生成 review-only ProviderAdapterExecutionReceipt 与 ProviderOutputEnvelope，并明确 live 图生视频 provider 尚未实现；不得调用 provider、不得读取 .env、不得写世界状态或激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "shared/schemas/generation_executor_run_request.v0.1.schema.json",
+    "shared/schemas/provider_execution_authorization.v0.1.schema.json",
+    "shared/schemas/provider_adapter_execution_receipt.v0.1.schema.json",
+    "shared/schemas/provider_output_envelope.v0.1.schema.json",
+    "control/TASK_QUEUE.md"
+  ],
+  "allowed_paths": [
+    "tools/provider_adapter/run_provider_adapter.py",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/provider_adapter_runs/",
+    "examples/provider_authorizations/",
+    "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "backend/",
+    "game_data/",
+    "content/worldbooks/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json",
+    "python3 tools/dev/validate_generation_executor_run_request.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.executor_request.json",
+    "python3 tools/dev/validate_provider_execution_authorization.py examples/provider_authorizations/p1a_provider_execution_authorization_video.example.json",
+    "python3 tools/provider_adapter/run_provider_adapter.py --mode video --executor-request examples/provider_adapter_runs/p1a_provider_adapter_video_runner.executor_request.json --authorization examples/provider_authorizations/p1a_provider_execution_authorization_video.example.json --receipt-output /tmp/p1a_provider_adapter_video_runner.receipt.json --envelope-output /tmp/p1a_provider_adapter_video_runner.envelope.json --created-at 2026-07-05T00:00:00Z",
+    "python3 tools/dev/validate_provider_adapter_execution_receipt.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json",
+    "python3 tools/dev/validate_provider_output_envelope.py examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_video_runner python3 -m py_compile tools/provider_adapter/run_provider_adapter.py tools/demo/export_evidence.py",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_video_adapter_boundary_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "video 模式当前只是 provider adapter 边界和 dry-run 产物，不代表真实图生视频 provider 已接入。",
+    "默认 video 运行输出的 receipt 复用 fixture_output_ready_for_envelope，未实现原因只进入 finish_reason 和 envelope 摘要。",
+    "显式 --mode video --live 必须快速失败为 video_live_provider_not_implemented，且不得写伪成功 receipt 或 envelope。"
+  ]
+}

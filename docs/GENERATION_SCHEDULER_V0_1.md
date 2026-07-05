@@ -397,7 +397,7 @@ examples/provider_adapter_runs/p1b_provider_adapter_runner.receipt.json
 examples/provider_adapter_runs/p1b_provider_adapter_runner.envelope.json
 ```
 
-runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片 provider adapter 已在工具层以显式 `--mode image --live` 形式接入；视频、媒体后处理和 media gate 不属于 runner 当前自动能力。
+runner 默认 `fixture` dry-run，不读取 `.env`，不调用 provider。显式 `--mode llm_text --live` 时才允许调用 `tools/llm/adapter.py` 中的 LLM profile，并且仍只写入 redacted summary artifact、`ProviderAdapterExecutionReceipt` 和 `ProviderOutputEnvelope`。图片 provider adapter 已在工具层以显式 `--mode image --live` 形式接入。`--mode video` 当前只是离线边界：它会生成 review-only receipt/envelope，`finish_reason=video_live_provider_not_implemented`，不创建视频候选；`--mode video --live` 必须快速失败，不读取 `.env`、不导入 provider、不写伪成功产物。
 
 后端已提供 runner dry-run bridge：
 
@@ -641,10 +641,12 @@ tools/provider_adapter/run_provider_adapter.py --mode image --live
 - `fixture`：默认 dry-run，不读 `.env`、不联网。
 - `llm_text --live`：显式 live 文本候选，只写 redacted summary ref。
 - `image --live`：显式 live 图片候选，只写本地 review-only image ref。
+- `video`：离线 video adapter 边界，只写 review-only receipt/envelope，声明 live 图生视频尚未实现。
+- `video --live`：明确阻断为 `video_live_provider_not_implemented`，不得调用 provider 或写成功产物。
 
 图片 runner 的自动串接仍未实现，但当前已存在手工 evidence 闭环：image ProviderOutputEnvelope 可以进入 `ProviderArtifactStagingManifest`，再由 `ProviderArtifactPromotionReport` 显式阻断。该闭环目前用于证明低质量图片候选不会直接进入 runtime、published media 或世界状态。
 
-视频 adapter、图片后处理、media gate 自动执行、staging / promotion 自动串接和后端自动后台执行器仍是后续任务。
+真实视频 provider adapter、图片后处理、media gate 自动执行、staging / promotion 自动串接和后端自动后台执行器仍是后续任务。P1-A 图片 -> 视频 -> 关键帧 -> atlas 管线目前只获得 provider adapter runner 的安全边界，不等于真实图生视频 provider 已接入。
 
 ## ProviderOutputEnvelope
 

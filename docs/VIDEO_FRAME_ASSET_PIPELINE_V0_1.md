@@ -151,6 +151,10 @@ MVP 验收路径使用 review-only fixture：`source_kind` 含 `fixture` 或 `fi
 
 真实本地视频路径仍保留为上游合同：非 fixture 输入必须引用存在的本地 video file，mime type 必须是 `video/*`，sha 必须匹配；extractor 只有在 `ffmpeg` 可用时才会解码并生成 PNG 关键帧。当前环境没有 `ffmpeg` 时，该路径必须以 `ffmpeg_not_available` 失败，不能 fallback 伪造 frame_sequence。
 
+当前 `tools/provider_adapter/run_provider_adapter.py --mode video` 只实现 provider adapter runner 的安全边界：它接受 video 模式，默认不读取 `.env`、不访问网络、不调用 provider，只生成 review-only `ProviderAdapterExecutionReceipt` 与 `ProviderOutputEnvelope`。这些产物用于证明 P1-A 图片 -> 视频 -> 关键帧 -> atlas 管线已经有可校验的上游交接点，但不代表真实图生视频 provider 已经接入。
+
+显式 `--mode video --live` 目前必须以 `video_live_provider_not_implemented` 快速失败，并且不得写成功 receipt/envelope。后续真正接入 live 图生视频时，runner 必须先把 provider 结果下载成本地 video ref，再进入 `raw_video_sequence.v0.1`、关键帧抽取、`frame_sequence.v0.1`、LoopContinuityReport 和 atlas gate；任何外部临时地址都不能进入 schema、example 或 evidence。
+
 ## 2. 标准路线
 
 ```text

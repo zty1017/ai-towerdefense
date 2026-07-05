@@ -1,0 +1,68 @@
+{
+  "schema_version": "provider_execution_authorization.v0.1",
+  "authorization_ref": "auth_sched_video_keyframe_atlas_boundary_001",
+  "created_at": "2026-07-05T00:00:00Z",
+  "source": {
+    "session_id": "demo_session_redacted",
+    "run_id": "gsrun_example_scheduler_aligned",
+    "schedule_item_id": "sched_video_keyframe_atlas_background",
+    "object_kind": "animation_seed_to_video_keyframes",
+    "object_ref": "animation_seed_manifest:frontend_runtime_mock",
+    "executor_request_id": "gexec_gsrun_example_scheduler_aligned_sched_video_keyframe_atlas_01",
+    "guard_id": "pguard_example_video_keyframe_atlas_001",
+    "provider_mode": "video_boundary_dry_run",
+    "provider_profile": "video_provider_unimplemented_boundary",
+    "worker_id": "provider_authorization_video_example",
+    "note": "review-only video boundary authorization; live provider execution is not implemented"
+  },
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "provider_execution_authorized": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "authorization": {
+    "status": "granted_for_provider_adapter",
+    "granted": true,
+    "scope": "provider_adapter_execution_only",
+    "requires_provider_output_envelope": true,
+    "expires_at": null,
+    "reason": "Authorize only the offline video provider adapter boundary; live image-to-video remains blocked."
+  },
+  "execution_constraints": {
+    "attempt_count": 0,
+    "max_attempts": 0,
+    "remaining_attempts": 0,
+    "allowed_provider_mode": "video_boundary_dry_run",
+    "allowed_provider_profile": "video_provider_unimplemented_boundary",
+    "required_next_gates": [
+      "provider_output_envelope",
+      "raw_video_sequence_validation",
+      "video_keyframe_extraction",
+      "frame_sequence_validation",
+      "loop_continuity_report",
+      "local_artifact_staging_manifest",
+      "media_gate",
+      "semantic_gate",
+      "human_review",
+      "promotion_report"
+    ]
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "download_then_local_ref_only",
+    "executor_result_storage": "provider_output_envelope_redacted_only"
+  },
+  "authorization_builder_safety": {
+    "reads_env": false,
+    "calls_provider": false,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "writes_world_state": false,
+    "activates_runtime": false
+  }
+}
