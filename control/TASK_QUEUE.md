@@ -86,7 +86,7 @@ P2：本阶段明确不做
 - MapRuntimePromotionReadinessReport v0.1 已作为地图 runtime 晋升读模型接入 demo evidence：三张节点均为 `promotion_candidate_activation_required`，说明 v0.2 强语义、RenderPlan 和语义一致性已经具备候选条件，但 activation allowed 仍为 0，且 review-only/拒绝候选隔离仍是 blocker。后续若要切换玩家默认地图语义，必须另开独立 activation / API / 前端 / 截图验收任务，不能直接从 readiness report 修改 runtime。
 - MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0，阻断项包括显式开发者激活批准缺失、review-only/拒绝候选隔离、API/frontend 合同更新和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
-- MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量和失败地图候选隔离均满足 MVP 演示门禁；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。
+- MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`provider_video_boundary` 是非必需 warning gate，只证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
@@ -3198,6 +3198,56 @@ assert flow['passed_step_count'] == flow['step_count'] == 21
 assert flow['research']['job_status'] == 'completed'
 assert flow['safety']['provider_call_count'] == 0
 assert flow['safety']['runtime_activation_mutation_count'] == 0
+PY
+git diff --check
+```
+
+### P1-D-18 MVP demo readiness video boundary evidence
+
+状态：已完成最小对齐。
+
+目标：
+
+```text
+把 provider video adapter dry boundary 与 Generation Scheduler video handoff template 纳入 MVP demo readiness 顶层报告，证明视频链路已有受控离线边界，同时明确真实 live video provider 和真实图生视频关键帧仍未进入玩家 runtime。
+```
+
+已落地：
+
+- `tools/demo/build_mvp_demo_readiness_report.py`：新增 `provider_video_boundary` 非必需 warning gate。
+- `examples/review_packs/mvp_demo_readiness_report.v0.1.json`：重新生成 readiness 报告，保留 `ready_for_mvp_demo_with_known_limitations`，并把 warning gate 数更新为 3。
+- `provider_video_boundary` 检查 video receipt / envelope / adapter task pack / handoff task pack，确认 `provider_call_performed=false`、`finish_reason=video_live_provider_not_implemented`、`activation_allowed=false`。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：同步 readiness 总报告事实源。
+- `examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json`：记录本轮任务包。
+
+边界：
+
+- 该 gate 不接入真实 live video provider，不触发 provider 调用，不读取 `.env`，不生成新媒体。
+- 该 gate 不是 MVP 必需门禁；它只把“视频链路已有离线边界”放进演示总报告，避免 readiness 停留在旧状态。
+- 真实图生视频关键帧仍需后续接入 RawVideoSequence / FrameSequence / atlas / LoopContinuityReport 门禁。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-readiness-video-boundary python3 -m py_compile tools/demo/build_mvp_demo_readiness_report.py tools/demo/export_evidence.py
+python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/mvp_demo_readiness_video_boundary_report.json --generated-at 2026-07-05T00:00:00+00:00
+python3 tools/demo/build_mvp_demo_readiness_report.py --output examples/review_packs/mvp_demo_readiness_report.v0.1.json --generated-at 2026-07-05T00:00:00+00:00
+python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_demo_readiness_video_boundary_evidence
+python3 - <<'PY'
+import json
+from pathlib import Path
+report = json.loads(Path('/tmp/mvp_demo_readiness_video_boundary_report.json').read_text(encoding='utf-8'))
+assert report['overall_status'] == 'ready_for_mvp_demo_with_known_limitations'
+assert report['summary']['blocking_gate_count'] == 0
+gates = {gate['gate_id']: gate for gate in report['gates']}
+assert gates['provider_video_boundary']['status'] == 'passed_with_warnings'
+assert gates['provider_video_boundary']['required_for_mvp_demo'] is False
+assert gates['provider_video_boundary']['metrics']['provider_call_performed'] is False
+evidence = json.loads(Path('/tmp/mvp_demo_readiness_video_boundary_evidence/evidence.json').read_text(encoding='utf-8'))
+readiness_gates = {gate['gate_id']: gate for gate in evidence['mvp_demo_readiness']['gates']}
+assert readiness_gates['provider_video_boundary']['status'] == 'passed_with_warnings'
+assert evidence['mvp_demo_readiness']['summary']['provider_call_count_by_report'] == 0
 PY
 git diff --check
 ```

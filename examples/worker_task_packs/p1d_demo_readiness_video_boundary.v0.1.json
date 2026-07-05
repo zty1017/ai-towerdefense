@@ -1,0 +1,82 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-18-demo-readiness-video-boundary",
+  "title": "MVP demo readiness video boundary evidence",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/demo-readiness-video-boundary",
+  "worktree": "/tmp/ai-td-task-demo-readiness-video-boundary",
+  "objective": "把 provider video adapter dry boundary 与 Generation Scheduler video handoff template 纳入 MVP demo readiness 顶层报告，证明视频链路已有受控离线边界，同时明确真实 live video provider 和真实图生视频关键帧仍未进入玩家 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/demo/build_mvp_demo_readiness_report.py",
+    "tools/demo/export_evidence.py",
+    "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json",
+    "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.envelope.json",
+    "examples/worker_task_packs/p1a_provider_video_adapter_boundary.v0.1.json",
+    "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json",
+    "examples/review_packs/mvp_demo_readiness_report.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/demo/build_mvp_demo_readiness_report.py",
+    "tools/demo/export_evidence.py",
+    "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
+    "examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "tools/llm/",
+    "tools/media/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-readiness-video-boundary python3 -m py_compile tools/demo/build_mvp_demo_readiness_report.py tools/demo/export_evidence.py",
+    "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/mvp_demo_readiness_video_boundary_report.json --generated-at 2026-07-05T00:00:00+00:00",
+    "python3 tools/demo/build_mvp_demo_readiness_report.py --output examples/review_packs/mvp_demo_readiness_report.v0.1.json --generated-at 2026-07-05T00:00:00+00:00",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_demo_readiness_video_boundary_evidence",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nreport = json.loads(Path('/tmp/mvp_demo_readiness_video_boundary_report.json').read_text(encoding='utf-8'))\nassert report['overall_status'] == 'ready_for_mvp_demo_with_known_limitations'\nassert report['summary']['blocking_gate_count'] == 0\ngates = {gate['gate_id']: gate for gate in report['gates']}\nassert gates['provider_video_boundary']['status'] == 'passed_with_warnings'\nassert gates['provider_video_boundary']['required_for_mvp_demo'] is False\nassert gates['provider_video_boundary']['metrics']['provider_call_performed'] is False\nevidence = json.loads(Path('/tmp/mvp_demo_readiness_video_boundary_evidence/evidence.json').read_text(encoding='utf-8'))\nreadiness_gates = {gate['gate_id']: gate for gate in evidence['mvp_demo_readiness']['gates']}\nassert readiness_gates['provider_video_boundary']['status'] == 'passed_with_warnings'\nassert evidence['mvp_demo_readiness']['summary']['provider_call_count_by_report'] == 0\nPY",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只聚合已有 review-only evidence，不调用 provider，不读取 .env。",
+    "provider_video_boundary 是非必需 readiness gate，用于解释视频链路边界已经受控，但不是 live video provider 完成信号。",
+    "MVP readiness 总状态应保持 ready_for_mvp_demo_with_known_limitations。",
+    "真实图生视频关键帧仍应后续进入 RawVideoSequence / FrameSequence / atlas / LoopContinuityReport 门禁。"
+  ]
+}
