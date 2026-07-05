@@ -1,6 +1,6 @@
 # 任务队列
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
 
@@ -89,6 +89,7 @@ P2：本阶段明确不做
 - MapRuntimeV02OptInContractSmokeReport v0.1 已作为地图 runtime v0.2 opt-in dry-run 合同证据接入 demo evidence：默认 API 仍 pending 且不返回完整 v0.2 包，临时 approved 授权夹具只在 service 层证明 v0.2 候选包可读；`/config`、`/runtime-package`、`/map-runtime-package` 仍保持 v0.1 且 v0.2 字段泄漏为 0。
 - MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0，阻断项包括显式开发者激活授权未批准、review-only/拒绝候选隔离、API/frontend 合同更新和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
 - MapRuntimeV02ActivationContractPlan v0.1 已作为地图 runtime v0.2 激活前合同计划层接入 demo evidence：它读取 activation gate、authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，列出正式激活前必须完成的后端默认选择器、前端消费合同和复跑证据命令；当前 `contract_plan_status=not_applied`、`activation_allowed_count=0`、`activation_apply_now_count=0`，且默认 runtime / backend API / frontend 合同修改均为 false。
+- 前端战斗画面已补 MapRuntimePackage v0.2 强语义消费能力：当被激活的默认地图运行包携带 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 时，玩家战场会从结构化 runtime 字段绘制资源点、沿路线绑定的机关区、防守锚点和阻挡物；默认前端仍不得请求 `map-v02-preview` 或 `map-v02-opt-in-dry-run`，当前正式 runtime 仍保持 v0.1。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
 - MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、核心对象对齐、地图视觉发布安全、运行时 sprite 几何质量、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`provider_video_boundary` 是非必需 warning gate，只证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
@@ -3399,6 +3400,40 @@ python3 tools/media/build_map_runtime_v02_activation_contract_plan.py
 python3 tools/media/validate_map_runtime_v02_activation_contract_plan.py examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json
 python3 -m py_compile tools/media/build_map_runtime_v02_activation_contract_plan.py tools/media/validate_map_runtime_v02_activation_contract_plan.py tools/demo/export_evidence.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_v02_activation_contract_plan_evidence
+git diff --check
+```
+
+### P1-D-23 Frontend v0.2 map strong semantics consumption
+
+状态：已完成最小前端消费合同。
+
+目标：
+
+```text
+在不激活 MapRuntimePackage v0.2、不修改后端默认 runtime、不让玩家前端读取 review-only endpoint 的前提下，让战斗画面具备消费 v0.2 强语义字段的能力。后续一旦默认 runtime 显式切到携带强语义字段的包，前端无需再重写绘制入口。
+```
+
+已落地：
+
+- `frontend/app.js`：新增 `mapResourceNodes()`、`mapHazardZones()`、`mapDefenseAnchors()`、`mapBlockedAreas()`，统一从 `mapRuntimePackage()` 读取可选强语义字段。
+- `frontend/app.js`：新增 `routePointAtT()` 与 `routeSamplesBetween()`，让机关区按 `anchor_route_id` + `path_t_range` 绑定 runtime route，而不是从图片或预览图反推。
+- `frontend/app.js`：新增 `drawMapRuntimeStrongSemantics()`，在道路层之后、部署提示和实体之前绘制阻挡区、机关区、资源点和防守锚点。
+- `tools/frontend/validate_battle_visual_contract.py`：静态合约新增 v0.2 强语义消费检查，并确认默认前端仍不请求 `map-v02-preview` / `map-v02-opt-in-dry-run`。
+
+边界：
+
+- 不改变 `backend/app/services/map_runtime_service.py` 的 v0.1 默认加载路径。
+- 不把 `examples/map_runtime_packages_v02/` 发布为默认玩家 runtime。
+- 不从图片、SVG、preview、AI candidate 或 review-only endpoint 反推资源点、机关区、防守锚点、阻挡或碰撞。
+- 不调用 provider，不读取 `.env`，不写世界状态。
+
+验收：
+
+```bash
+python3 tools/frontend/validate_battle_visual_contract.py
+python3 -c "import py_compile; py_compile.compile('tools/frontend/validate_battle_visual_contract.py', cfile='/tmp/validate_battle_visual_contract.pyc', doraise=True)"
+node --check frontend/app.js
+python3 tools/demo/export_evidence.py --output-dir /tmp/frontend_v02_map_semantics_evidence_develop
 git diff --check
 ```
 
