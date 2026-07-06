@@ -40,6 +40,10 @@ PATHS = {
     / "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
     "runtime_loop_continuity": ROOT
     / "examples/review_packs/frontend_runtime_loop_continuity_report.v0.1.json",
+    "generation_schedule_plan": ROOT
+    / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
+    "generation_schedule_run_report": ROOT
+    / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
     "provider_video_runner_receipt": ROOT
     / "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json",
     "provider_video_runner_envelope": ROOT
@@ -505,6 +509,81 @@ def loop_continuity_gate(report: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def generation_scheduler_gate(
+    plan: dict[str, Any],
+    run_report: dict[str, Any],
+) -> dict[str, Any]:
+    plan_summary = as_obj(plan.get("summary"))
+    run_summary = as_obj(run_report.get("summary"))
+    authority = as_obj(plan.get("authority"))
+    execution_policy = as_obj(run_report.get("execution_policy"))
+    item_count = int(plan_summary.get("item_count") or 0)
+    run_item_count = int(run_summary.get("item_count") or 0)
+    fallback_covered_count = int(plan_summary.get("fallback_covered_count") or 0)
+    ready_reused_count = int(run_summary.get("ready_reused_count") or 0)
+    scheduled_count = int(run_summary.get("scheduled_count") or 0)
+    fallback_selected_count = int(run_summary.get("fallback_selected_count") or 0)
+    ok = (
+        plan.get("schema_version") == "generation_schedule_plan.v0.1"
+        and run_report.get("schema_version") == "generation_schedule_run_report.v0.1"
+        and plan.get("visibility") == "review_only"
+        and run_report.get("visibility") == "review_only"
+        and run_report.get("run_mode") == "dry_run"
+        and item_count >= 8
+        and run_item_count == item_count
+        and fallback_covered_count == item_count
+        and ready_reused_count >= 3
+        and scheduled_count >= 4
+        and fallback_selected_count >= 1
+        and int(run_summary.get("blocked_count") or 0) == 0
+        and int(run_summary.get("provider_call_count") or 0) == 0
+        and int(run_summary.get("world_mutation_count") or 0) == 0
+        and authority.get("schedule_builder_reads_env") is False
+        and authority.get("schedule_builder_calls_provider") is False
+        and authority.get("runtime_world_mutation_allowed") is False
+        and execution_policy.get("reads_env") is False
+        and execution_policy.get("calls_provider") is False
+        and execution_policy.get("mutates_world_state") is False
+        and execution_policy.get("writes_runtime_package") is False
+        and execution_policy.get("activates_prefetch_results") is False
+    )
+    return gate(
+        gate_id="generation_scheduler_review_only",
+        title="Generation Scheduler review-only 调度",
+        status="passed" if ok else "not_ready",
+        required_for_mvp_demo=True,
+        summary=(
+            "AI 编译调度计划与 dry-run 运行报告已覆盖同步内容、后台预取、后台增强、懒加载和静态兜底；"
+            "当前只做 review-only 编排，不调用 provider、不写世界状态、不激活候选。"
+        ),
+        evidence_keys=[
+            "generation_schedule_plan",
+            "generation_schedule_run_report",
+        ],
+        metrics={
+            "plan_schema_version": plan.get("schema_version"),
+            "run_schema_version": run_report.get("schema_version"),
+            "run_mode": run_report.get("run_mode"),
+            "item_count": item_count,
+            "run_item_count": run_item_count,
+            "latency_class_counts": as_obj(plan_summary.get("latency_class_counts")),
+            "action_counts": as_obj(run_summary.get("action_counts")),
+            "ready_reused_count": ready_reused_count,
+            "scheduled_count": scheduled_count,
+            "fallback_selected_count": fallback_selected_count,
+            "fallback_covered_count": fallback_covered_count,
+            "blocked_count": run_summary.get("blocked_count"),
+            "provider_call_count": run_summary.get("provider_call_count"),
+            "world_mutation_count": run_summary.get("world_mutation_count"),
+            "reads_env": execution_policy.get("reads_env"),
+            "calls_provider": execution_policy.get("calls_provider"),
+            "activates_prefetch_results": execution_policy.get(
+                "activates_prefetch_results"
+            ),
+        },
+    )
+
+
 def provider_video_boundary_gate(
     receipt: dict[str, Any],
     envelope: dict[str, Any],
@@ -800,6 +879,10 @@ def build_report(
         battle_visual_contract_gate(reports["battle_visual_contract"]),
         runtime_sprite_gate(reports["runtime_sprite_cutout_quality"]),
         loop_continuity_gate(reports["runtime_loop_continuity"]),
+        generation_scheduler_gate(
+            reports["generation_schedule_plan"],
+            reports["generation_schedule_run_report"],
+        ),
         provider_video_boundary_gate(
             reports["provider_video_runner_receipt"],
             reports["provider_video_runner_envelope"],

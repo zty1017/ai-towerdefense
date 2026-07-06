@@ -92,7 +92,7 @@ P2：本阶段明确不做
 - MapRuntimeV02ActivationContractPlan v0.1 已作为地图 runtime v0.2 激活前合同计划层接入 demo evidence：它读取 activation gate、authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，列出正式激活前必须完成的后端默认选择器、前端预接入状态和复跑证据命令；当前 `contract_plan_status=not_applied`、`activation_allowed_count=0`、`activation_apply_now_count=0`，前端 2 项为 `pre_activation_ready`、1 项为 `post_activation_evidence_required`，且默认 runtime / backend API / frontend 合同修改均为 false。
 - 前端战斗画面已补 MapRuntimePackage v0.2 强语义消费能力：当被激活的默认地图运行包携带 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 时，玩家战场会从结构化 runtime 字段绘制资源点、沿路线绑定的机关区、防守锚点和阻挡物；默认前端仍不得请求 `map-v02-preview` 或 `map-v02-opt-in-dry-run`，当前正式 runtime 仍保持 v0.1。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
-- MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、v0.2 强语义几何审查、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、前端战斗视觉合同、运行时 sprite 几何质量、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、v0.2 默认 runtime 激活、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`map_runtime_v02_semantic_geometry` 是 MVP 必需 warning gate，证明 v0.2 preview 的资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；`battle_visual_contract` 是 MVP 必需 gate，证明默认战斗画面仍是全屏 MapRuntimePackage 驱动的程序化战场，不回退控制图、失败整图、棋盘或虚线调试画面；`frontend_flow_visual_smoke_harness` 默认以 `harness_only` 模式证明浏览器截图工具可用，录屏前通过 `--frontend-flow-smoke-report` 可升级为消费真实 14 张截图的 `actual_report` 模式；`map_runtime_activation_contract` 和 `provider_video_boundary` 都是非必需 warning gate，前者证明前端已预接入但 runtime 仍未激活，后者证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
+- MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、v0.2 强语义几何审查、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、前端战斗视觉合同、运行时 sprite 几何质量、Generation Scheduler review-only 调度、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、v0.2 默认 runtime 激活、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`map_runtime_v02_semantic_geometry` 是 MVP 必需 warning gate，证明 v0.2 preview 的资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；`battle_visual_contract` 是 MVP 必需 gate，证明默认战斗画面仍是全屏 MapRuntimePackage 驱动的程序化战场，不回退控制图、失败整图、棋盘或虚线调试画面；`generation_scheduler_review_only` 是 MVP 必需 gate，证明同步内容、后台预取、后台增强、懒加载和静态兜底都已有 review-only 调度计划和 dry-run 运行证据；`frontend_flow_visual_smoke_harness` 默认以 `harness_only` 模式证明浏览器截图工具可用，录屏前通过 `--frontend-flow-smoke-report` 可升级为消费真实 14 张截图的 `actual_report` 模式；`map_runtime_activation_contract` 和 `provider_video_boundary` 都是非必需 warning gate，前者证明前端已预接入但 runtime 仍未激活，后者证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
@@ -3777,6 +3777,39 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_ge
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_shared_cache_reuse_candidate python3 -m compileall backend
 uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q
 rg -n "record-shared-prefetch-cache-reuse-candidate|shared_prefetch_cache_reuse_candidate|shared_cache_reuse_pending_runtime_build" backend/app backend/tests docs control/TASK_QUEUE.md
+git diff --check
+```
+
+### P1-B Generation Scheduler MVP readiness gate
+
+状态：已完成顶层 readiness 同步。
+
+目标：
+
+```text
+让 MVP demo readiness 顶层报告显式证明 Generation Scheduler 的 review-only 计划和 dry-run 运行报告存在，而不是只在 evidence 详情中间接展示调度能力。
+```
+
+已落地：
+
+- `tools/demo/build_mvp_demo_readiness_report.py`：新增 `generation_scheduler_review_only` MVP 必需 gate，读取 `mvp_generation_schedule_plan.v0.1.json` 和 `mvp_generation_schedule_run_report.v0.1.json`。
+- `examples/review_packs/mvp_demo_readiness_report.v0.1.json`：重新生成，`overall_status` 仍为 `ready_for_mvp_demo_with_known_limitations`；required gate 从 9 增加到 10，新增 gate 当前为 `passed`。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md` 与本任务队列：同步 readiness 报告的新证据边界。
+
+边界：
+
+- 该 gate 只证明 review-only 调度计划和 dry-run 运行报告可用。
+- 不调用 provider，不读取 `.env`，不写世界状态，不写 runtime package，不激活预取结果。
+- 不声明真实后台 provider executor 已完成；真实执行仍必须经过 guard、authorization、adapter receipt / envelope、staging、promotion 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/scheduler/validate_generation_schedule_plan.py examples/review_packs/mvp_generation_schedule_plan.v0.1.json
+python3 tools/scheduler/validate_generation_schedule_run_report.py examples/review_packs/mvp_generation_schedule_run_report.v0.1.json
+python3 tools/demo/build_mvp_demo_readiness_report.py --output examples/review_packs/mvp_demo_readiness_report.v0.1.json --generated-at 2026-07-06T00:00:00+00:00
+python3 -c "import json; r=json.load(open('examples/review_packs/mvp_demo_readiness_report.v0.1.json')); g={x['gate_id']:x for x in r['gates']}; assert r['overall_status']=='ready_for_mvp_demo_with_known_limitations'; assert g['generation_scheduler_review_only']['required_for_mvp_demo'] is True; assert g['generation_scheduler_review_only']['status']=='passed'; assert g['generation_scheduler_review_only']['metrics']['provider_call_count']==0; assert g['generation_scheduler_review_only']['metrics']['world_mutation_count']==0"
+python3 tools/demo/export_evidence.py --output-dir /tmp/generation_scheduler_readiness_evidence
 git diff --check
 ```
 

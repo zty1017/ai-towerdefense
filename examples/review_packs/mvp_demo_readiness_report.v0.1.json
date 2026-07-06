@@ -259,6 +259,54 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+        },
+        {
+          "exists": true,
+          "path": "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
+        }
+      ],
+      "gate_id": "generation_scheduler_review_only",
+      "metrics": {
+        "action_counts": {
+          "reuse_ready": 3,
+          "schedule_background": 1,
+          "schedule_lazy": 1,
+          "schedule_prefetch": 2,
+          "select_fallback": 1
+        },
+        "activates_prefetch_results": false,
+        "blocked_count": 0,
+        "calls_provider": false,
+        "fallback_covered_count": 8,
+        "fallback_selected_count": 1,
+        "item_count": 8,
+        "latency_class_counts": {
+          "background": 1,
+          "background_prefetch": 2,
+          "fallback_static": 1,
+          "lazy": 1,
+          "sync_blocking": 3
+        },
+        "plan_schema_version": "generation_schedule_plan.v0.1",
+        "provider_call_count": 0,
+        "reads_env": false,
+        "ready_reused_count": 3,
+        "run_item_count": 8,
+        "run_mode": "dry_run",
+        "run_schema_version": "generation_schedule_run_report.v0.1",
+        "scheduled_count": 4,
+        "world_mutation_count": 0
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "AI 编译调度计划与 dry-run 运行报告已覆盖同步内容、后台预取、后台增强、懒加载和静态兜底；当前只做 review-only 编排，不调用 provider、不写世界状态、不激活候选。",
+      "title": "Generation Scheduler review-only 调度"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json"
         },
         {
@@ -523,6 +571,14 @@
     },
     {
       "exists": true,
+      "path": "examples/review_packs/mvp_generation_schedule_plan.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json"
+    },
+    {
+      "exists": true,
       "path": "examples/provider_adapter_runs/p1a_provider_adapter_video_runner.receipt.json"
     },
     {
@@ -564,11 +620,11 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 22,
+    "evidence_source_count": 24,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
-    "required_gate_count": 9,
-    "required_gate_passed_or_expected_count": 9,
+    "required_gate_count": 10,
+    "required_gate_passed_or_expected_count": 10,
     "runtime_mutation_count_by_report": 0,
     "warning_gate_count": 5,
     "world_mutation_count_by_report": 0
