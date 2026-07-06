@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import build_mvp_demo_readiness_report as readiness_builder
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -4759,7 +4761,13 @@ def build_evidence(
     map_runtime_v02_opt_in_contract_smoke_report = load_json(
         PATHS["map_runtime_v02_opt_in_contract_smoke_report"]
     )
-    mvp_demo_readiness_report = load_json(PATHS["mvp_demo_readiness_report"])
+    if frontend_flow_visual_smoke_report_path:
+        mvp_demo_readiness_report = readiness_builder.build_report(
+            datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            frontend_flow_visual_smoke_report_path,
+        )
+    else:
+        mvp_demo_readiness_report = load_json(PATHS["mvp_demo_readiness_report"])
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])

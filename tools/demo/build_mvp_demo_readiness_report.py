@@ -620,7 +620,130 @@ def blocked_map_candidate_gate(
     )
 
 
-def frontend_flow_smoke_gate() -> dict[str, Any]:
+EXPECTED_FRONTEND_FLOW_STEPS = {
+    "profile",
+    "world_config",
+    "opening",
+    "map",
+    "workshop",
+    "battle",
+    "settlement",
+}
+EXPECTED_FRONTEND_FLOW_VIEWPORTS = {"desktop", "mobile"}
+
+
+def frontend_flow_smoke_actual_gate(
+    report: dict[str, Any],
+    report_path: Path,
+) -> dict[str, Any]:
+    screenshots = as_list(report.get("screenshots"))
+    safety = as_obj(report.get("safety_summary"))
+    step_ids = set(as_list(report.get("step_ids")))
+    viewport_ids = {
+        item.get("viewport_id")
+        for item in as_list(report.get("viewport_results"))
+        if isinstance(item, dict)
+    }
+    screenshot_matrix = {
+        (item.get("viewport_id"), item.get("step_id"))
+        for item in screenshots
+        if isinstance(item, dict)
+    }
+    missing_screenshot_paths = []
+    invalid_screenshot_items = []
+    battle_canvas_missing_count = 0
+    settlement_title_invalid_count = 0
+    for item in screenshots:
+        if not isinstance(item, dict):
+            invalid_screenshot_items.append("<non-object>")
+            continue
+        path = Path(str(item.get("path") or ""))
+        if not path.exists():
+            missing_screenshot_paths.append(str(path))
+        if (
+            path.suffix.lower() != ".png"
+            or int(item.get("width") or 0) <= 0
+            or int(item.get("height") or 0) <= 0
+            or int(item.get("file_size_bytes") or 0) <= 5000
+            or not item.get("sha256")
+        ):
+            invalid_screenshot_items.append(str(path))
+        if item.get("step_id") == "battle" and int(item.get("canvas_count") or 0) < 1:
+            battle_canvas_missing_count += 1
+        if item.get("step_id") == "settlement" and "结算" not in str(
+            item.get("title") or ""
+        ):
+            settlement_title_invalid_count += 1
+    expected_matrix = {
+        (viewport_id, step_id)
+        for viewport_id in EXPECTED_FRONTEND_FLOW_VIEWPORTS
+        for step_id in EXPECTED_FRONTEND_FLOW_STEPS
+    }
+    captured_count = int(report.get("captured_screenshot_count") or 0)
+    expected_count = int(report.get("expected_screenshot_count") or 0)
+    ok = (
+        report.get("status") == "captured"
+        and report.get("browser_available") is True
+        and captured_count == 14
+        and expected_count == 14
+        and len(screenshots) == 14
+        and step_ids == EXPECTED_FRONTEND_FLOW_STEPS
+        and viewport_ids == EXPECTED_FRONTEND_FLOW_VIEWPORTS
+        and screenshot_matrix == expected_matrix
+        and not missing_screenshot_paths
+        and not invalid_screenshot_items
+        and battle_canvas_missing_count == 0
+        and settlement_title_invalid_count == 0
+        and not as_list(report.get("failures"))
+        and safety.get("reads_env_file") is False
+        and int(safety.get("provider_call_count") or 0) == 0
+        and int(safety.get("world_mutation_count") or 0) == 0
+        and safety.get("runtime_activation_allowed") is False
+    )
+    return gate(
+        gate_id="frontend_flow_visual_smoke_harness",
+        title="浏览器玩家链路截图门禁",
+        status="passed" if ok else "not_ready",
+        required_for_mvp_demo=True,
+        summary=(
+            "已消费真实浏览器玩家链路截图报告：本地档案入口、开局配置、"
+            "开场、大地图、工坊、战斗和结算在 desktop/mobile 两个视口下均有截图证据。"
+        ),
+        evidence_keys=[
+            "frontend_flow_visual_smoke_tool",
+            "frontend_flow_visual_smoke_validator",
+            "frontend_flow_visual_smoke_task_pack",
+        ],
+        metrics={
+            "mode": "actual_report",
+            "report_path": str(report_path),
+            "report_status": report.get("status"),
+            "browser_available": report.get("browser_available"),
+            "viewport_count": report.get("viewport_count"),
+            "captured_screenshot_count": captured_count,
+            "expected_screenshot_count": expected_count,
+            "step_ids": sorted(step_ids),
+            "viewport_ids": sorted(viewport_ids),
+            "failure_count": len(as_list(report.get("failures"))),
+            "missing_screenshot_path_count": len(missing_screenshot_paths),
+            "invalid_screenshot_item_count": len(invalid_screenshot_items),
+            "battle_canvas_missing_count": battle_canvas_missing_count,
+            "settlement_title_invalid_count": settlement_title_invalid_count,
+            "provider_call_count": safety.get("provider_call_count"),
+            "world_mutation_count": safety.get("world_mutation_count"),
+            "runtime_activation_allowed": safety.get("runtime_activation_allowed"),
+        },
+    )
+
+
+def frontend_flow_smoke_gate(
+    frontend_flow_smoke_report_path: Path | None = None,
+) -> dict[str, Any]:
+    if frontend_flow_smoke_report_path:
+        return frontend_flow_smoke_actual_gate(
+            load_json(frontend_flow_smoke_report_path),
+            frontend_flow_smoke_report_path,
+        )
     tool_ready = PATHS["frontend_flow_visual_smoke_tool"].exists()
     validator_ready = PATHS["frontend_flow_visual_smoke_validator"].exists()
     task_pack_ready = PATHS["frontend_flow_visual_smoke_task_pack"].exists()
@@ -637,6 +760,7 @@ def frontend_flow_smoke_gate() -> dict[str, Any]:
             "frontend_flow_visual_smoke_task_pack",
         ],
         metrics={
+            "mode": "harness_only",
             "tool_ready": tool_ready,
             "validator_ready": validator_ready,
             "task_pack_ready": task_pack_ready,
@@ -648,7 +772,10 @@ def frontend_flow_smoke_gate() -> dict[str, Any]:
     )
 
 
-def build_report(generated_at: str) -> dict[str, Any]:
+def build_report(
+    generated_at: str,
+    frontend_flow_smoke_report_path: Path | None = None,
+) -> dict[str, Any]:
     reports = {
         key: load_json(path)
         for key, path in PATHS.items()
@@ -684,7 +811,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
             reports["controlled_map_text_fallback_review"],
             reports["map_candidate_overlay_visual_review"],
         ),
-        frontend_flow_smoke_gate(),
+        frontend_flow_smoke_gate(frontend_flow_smoke_report_path),
     ]
 
     required_gates = [item for item in gates if item["required_for_mvp_demo"]]
@@ -805,12 +932,17 @@ def parse_args() -> argparse.Namespace:
         default=now_iso(),
         help="ISO timestamp to store in the report.",
     )
+    parser.add_argument(
+        "--frontend-flow-smoke-report",
+        type=Path,
+        help="可选：真实浏览器玩家链路截图 smoke report；传入后 readiness gate 使用实际截图证据而不是仅检查 harness。",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    report = build_report(args.generated_at)
+    report = build_report(args.generated_at, args.frontend_flow_smoke_report)
     write_json(args.output, report)
     print(
         "MVP demo readiness report written: "

@@ -355,6 +355,7 @@
           "desktop",
           "mobile"
         ],
+        "mode": "harness_only",
         "provider_call_count": 0,
         "task_pack_ready": true,
         "tool_ready": true,
