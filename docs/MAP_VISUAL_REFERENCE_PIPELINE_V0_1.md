@@ -4,12 +4,14 @@
 
 地图也是可编译对象，但第一版不让图片反过来决定玩法逻辑。
 
+2026-07-06 复审后，本流水线的定位调整为：整图生成不再是地图主路线。AI 整图可以保留为概念图、封面、style reference、negative evidence 或人工 paintover 输入；玩家默认战场应优先来自 `MapRuntimePackage` 的结构化语义与 `MapStylePack` / 组件化程序渲染。发布级整图底图只有在通过显式对齐、质量、promotion 和 activation gate 后，才可作为可选视觉层使用，并且仍不得成为路线、塔位、资源点、机关或碰撞事实源。
+
 当前流水线以 `game_data/demo/initial_map.json` 与 `game_data/demo/first_battle_config.json` 为权威输入，生成或登记五类 PNG：
 
 - `strategic_control_sketch`：战略大地图控制草图，表达主城、节点、补给线、黑暗区域和威胁边界。
 - `battle_control_sketch`：战斗地图控制草图，表达路径、可部署槽位、核心、防守目标和出生方向。
 - `battle_reference_board`：编译参考图，用于给图像模型或审查流程说明路线和塔位关系。它不应直接作为玩家侧最终底图。
-- `painted_visual_layer`：玩家侧优先使用的发布级美术底图。它必须同时满足 `authority=published_visual_layer` 与 `player_visible_quality=passed`，否则前端不得默认消费。
+- `painted_visual_layer`：可选发布级美术底图或 paintover 结果。它必须同时满足 `authority=published_visual_layer` 与 `player_visible_quality=passed`，并通过语义对齐和 activation gate 后，才可进入玩家默认视觉层；它不是地图主路线。
 - `battle_runtime_background`：逻辑对齐的确定性候选 fallback。它使用与前端一致的伪 3D 投影生成，保证路径、塔位、目标和出生点可对齐；但如果视觉质量未通过，只能作为 debug / evidence，不得作为玩家默认 fallback。
 
 这些 PNG 不是最终规则数据。前端仍然以战斗配置和 `MapRuntimePackage` 中的网格、路径、目标、敌人、塔位规则作为运行时真相。
@@ -40,7 +42,7 @@
 
 - `logical_map_layer`：从 `MapRuntimePackage` 复制的运行时真相，包括路径、塔位、目标、出生点和网格。
 - `control_layer`：控制图、参考图、composition sketch 等，只能作为图像模型和审查流程的参考。
-- `painted_visual_layer`：玩家可见发布底图，MVP 默认优先使用。它仍不是玩法真相，战斗路线和塔位必须由 `MapRuntimePackage` 叠层驱动。
+- `painted_visual_layer`：可选玩家可见发布底图或 paintover 结果。它仍不是玩法真相，战斗路线和塔位必须由 `MapRuntimePackage` 叠层驱动；MVP 主路线应优先打磨程序化 / 组件化战场，而不是继续让 AI 生成整张运行时地图。
 - `alignment_layer`：逻辑坐标到视觉平面的回配检查点、误差阈值和叠层修正策略。
 - `quality_gates`：视觉质量门，明确禁止 UI、文字、敌人、已部署防御塔、棋盘感和突兀边框进入玩家底图。
 - `export_refs`：指回最终前端应加载的 `MapRuntimePackage`。
@@ -91,12 +93,12 @@ examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json
 
 ## 前端使用方式
 
-前端通过后端接口读取 `map_runtime_package`，并从其中的 `visual_layers` 选择玩家侧战斗画布底层。默认选择顺序是：
+前端通过后端接口读取 `map_runtime_package`，并从其中的结构化路径、塔位、目标和视觉层引用生成玩家侧战斗画布。目标选择顺序是：
 
 ```text
-painted_visual_layer
-  -> battle_runtime_background
-  -> 程序化大画面背景
+MapRuntimePackage + MapStylePack / component-driven procedural battlefield
+  -> certified painted_visual_layer / paintover layer, only after explicit activation
+  -> reviewed battle_runtime_background / evidence fallback, not the main map route
 ```
 
 默认玩家视图不得回退到 `battle_reference_board` 或 `battle_control_sketch`。若发布底图缺失，前端必须保持中部全屏 / 大画面表达，用程序化背景承托结构化玩法叠层，而不是把控制图、参考图、棋盘图或孤立几何块暴露给玩家。
@@ -115,13 +117,13 @@ painted_visual_layer
 
 - 图片永远不是玩法真相。怪物路线、塔位、目标、出生点以 MapRuntimePackage 的结构化数据为准。
 - 控制图和参考图不进入玩家默认体验，也不作为发布底图缺失时的默认 fallback。
-- 发布底图可以由 AI 生成，但必须进入 manifest，标记为 `published_visual_layer`，设置 `player_visible_quality=passed`，并经过本地路径、hash、尺寸、schema 校验和人工或自动视觉审查。
+- 发布底图可以由 AI 生成或人工 paintover，但只能作为视觉层候选。它必须进入 manifest，标记为 `published_visual_layer`，设置 `player_visible_quality=passed`，并经过本地路径、hash、尺寸、schema、语义对齐、promotion 和 activation gate；不得因为“看起来像地图”而成为默认运行时地图。
 - 若底图与结构化路线不完全对齐，MVP 可以用轻量叠层修正；正式版需要增加对齐审查或回写步骤。
 - `MapCompilePackage` 可以引用控制图和发布底图，但最终导出的玩家战斗数据仍应是 `MapRuntimePackage`。
 
 ## 后续升级方向
 
-下一阶段可以把 `battle_control_sketch`、世界书视觉风格、节点剧情状态、材料/建筑语义一起交给图像模型，生成更完整的地图底图。生成后仍应执行对齐检查：
+下一阶段不再以“把 `battle_control_sketch` 交给图像模型生成整张底图”为默认方向。更稳的路线是：用世界书视觉风格、节点剧情状态、材料/建筑语义生成 StylePack、地表材质、道路边缘、塔位平台、资源点、机关、阻挡物和氛围组件，再由程序化 renderer 从 `MapRuntimePackage` 生成完整战场。若仍生成整图候选，必须作为 concept / paintover / negative evidence 进入审查，并执行对齐检查：
 
 - 路径轮廓是否与逻辑路径一致
 - 核心和防守目标是否落在预期位置

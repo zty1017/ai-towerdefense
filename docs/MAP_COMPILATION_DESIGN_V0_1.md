@@ -1,6 +1,6 @@
 # 地图编译设计采纳审查 v0.1
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 本文用于审查并项目化采纳外部 AI 给出的地图编译方案。该外部方案的核心建议是：
 
@@ -12,6 +12,34 @@ Last updated: 2026-07-05
 审查结论：方向采纳，结构改写。
 
 该方案与本项目当前证据一致：多轮 Agnes / text-fallback / topology-constrained 地图整图候选已经证明，图像模型会重构路径、塔位、目标和装饰布局；即使参考图和 overlay 能帮助审查，也不能让整图成为运行时事实源。因此，正式地图编译应从“AI 画一张地图”转为“结构化地图事实 + AI 生成风格和组件 + 程序确定性渲染”。
+
+## 0. 2026-07-06 外部 v0.3 附件复审结论
+
+本次附件可以作为地图编译方向的参考，但不应直接另存为 `MAP_COMPILATION_DESIGN.md` 后交给 worker 照做。原因是附件中的 `PathGraph`、`PlacementMap`、`LevelBundle` 等概念是通用建模语言；本项目已经有 `MapRuntimePackage`、`MapCompilePackage`、`MapStylePack`、`ProceduralMapRenderPlan`、`SemanticVisualConsistencyReport`、activation gate 和 evidence 导出链路。直接新增并列事实源会制造两套运行时地图真相。
+
+采纳矩阵如下：
+
+| 外部建议 | 本项目结论 | 落点 |
+|---|---|---|
+| 地图不是一张图，而是语义对象 + 视觉资产 + 规则约束 + 渲染结果 | 采纳 | 用 `MapRuntimePackage` 管强语义，`MapStylePack` / component manifest 管表现，RenderPlan / preview / report 管渲染证据。 |
+| AI 不直接生成最终可运行整图 | 采纳并强化 | 整图候选只可作为概念图、封面、style reference、negative evidence 或人工 paintover 输入；不得成为默认玩家战场路线。 |
+| 路线由程序控制形状，风格由 StylePack 控制表现 | 采纳 | 近期从 `path_routes.waypoints` 派生 sampled centerline / road band；后续再补 spline hints。 |
+| 一次性建立 `PathGraph`、`SplinePath`、`PlacementMap`、`LevelBundle` 等新 schema | 不照搬 | 先增强现有 `MapRuntimePackage v0.2 preview -> RenderPlan -> SemanticVisualConsistencyReport -> activation gate` 链路。 |
+| 玩家编译解法，开发者编译关卡，系统编译遭遇 | 采纳 | 普通玩家不直接改地图拓扑；地图模板、组件、关卡池由开发者 / 系统侧在门禁下编译。 |
+| 输出 `preview.png` / `LevelBundle` | 改写采纳 | 预览图是 review-only evidence；未来如需完整关卡包，应由现有包聚合导出，不替换当前字段事实源。 |
+
+因此，后续 worker 任务应从“改进当前可执行地图链路”出发，而不是从外部文档复制一套新目录：
+
+```text
+MapRuntimePackage v0.1 / v0.2 preview
+  -> path geometry helper / road band
+  -> placement and strong semantic validators
+  -> MapStylePack component slots
+  -> ProceduralMapRenderPlan
+  -> SemanticVisualConsistencyReport
+  -> review-only preview / screenshot / evidence
+  -> explicit promotion / activation gate
+```
 
 ## 1. 采纳原则
 

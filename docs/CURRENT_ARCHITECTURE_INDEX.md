@@ -1,6 +1,6 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
@@ -99,7 +99,9 @@ shared/schemas/ + tools/ + 专题文档
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
   - 前端战斗视觉运行态审计，记录 P0-M 程序化战场底座、防控制图 / 失败整图回退、静态视觉合约、结构化视觉合同报告和截图环境缺口。
 - `docs/MAP_COMPILATION_DESIGN_V0_1.md`
-  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。2026-07-05 已补充外部 v0.3 执行建议复审：后续地图任务应增强现有 `MapRuntimePackage v0.2 preview -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport -> evidence / activation gate` 链路，而不是新建一组与 `MapRuntimePackage` 竞争的运行时事实源。
+  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。2026-07-06 复审确认：外部 v0.3 附件只能作为思路参考，后续地图任务应增强现有 `MapRuntimePackage v0.2 preview -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport -> evidence / activation gate` 链路，而不是新建一组与 `MapRuntimePackage` 竞争的运行时事实源。
+- `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
+  - 地图整图候选 / 控制图 / paintover 的边界文档：2026-07-06 起不再把 AI 整图作为地图主路线；玩家默认战场应优先来自 `MapRuntimePackage` 的结构化语义与 `MapStylePack` / component-driven procedural battlefield。`painted_visual_layer` 只能作为显式对齐、质量、promotion 和 activation 之后的可选视觉层，不能反向决定路线、塔位、资源点、机关或碰撞。
 - `shared/schemas/map_style_pack.v0.1.schema.json`、`shared/schemas/procedural_map_render_plan.v0.1.schema.json`、`shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`
   - 地图编译最小链路字段事实源：StylePack 只管表现层，RenderPlan 把 MapRuntimePackage + StylePack 编成分层绘制操作，SemanticVisualConsistencyReport 证明路径、塔位、目标、出生点和 debug/player 边界一致。
 - `shared/schemas/map_style_component_binding_report.v0.1.schema.json`、`tools/asset_graph/build_map_style_component_binding_report.py`、`tools/asset_graph/validate_map_style_component_binding_report.py`、`examples/review_packs/map_style_component_binding_report.v0.1.json`
