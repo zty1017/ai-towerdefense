@@ -1,0 +1,78 @@
+{
+  "contract_claims": {
+    "default_battle_backdrop": "MapRuntimePackage-driven procedural terrain",
+    "full_screen_battle_canvas": true,
+    "no_checkerboard_or_dashed_control_path": true,
+    "no_default_control_or_reference_map": true,
+    "no_default_whole_map_image_preload": true,
+    "review_only_v02_endpoints_isolated": true,
+    "runtime_semantics_source": "MapRuntimePackage",
+    "style_source": "MapStylePack and ProceduralMapRenderPlan presentation geometry",
+    "v02_strong_semantics_source": "activated MapRuntimePackage v0.2 runtime fields only"
+  },
+  "error_groups": {
+    "app_contract": [],
+    "css_contract": [],
+    "map_layers": []
+  },
+  "generated_at": "2026-07-06T00:00:00+00:00",
+  "report_id": "battle_visual_contract_report_v0_1",
+  "safety_summary": {
+    "default_runtime_v02_fetch_allowed": false,
+    "provider_call_count": 0,
+    "reads_env_file": false,
+    "runtime_mutation_count": 0,
+    "stores_prompt_body": false,
+    "stores_provider_body": false,
+    "world_mutation_count": 0
+  },
+  "schema_version": "battle_visual_contract_report.v0.1",
+  "source_files": [
+    {
+      "exists": true,
+      "path": "frontend/app.js"
+    },
+    {
+      "exists": true,
+      "path": "frontend/styles.css"
+    },
+    {
+      "exists": true,
+      "path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json"
+    },
+    {
+      "exists": true,
+      "path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json"
+    }
+  ],
+  "status": "passed",
+  "summary": {
+    "app_contract_error_count": 0,
+    "css_contract_error_count": 0,
+    "error_count": 0,
+    "map_layer_error_count": 0,
+    "map_runtime_package_count": 3,
+    "map_runtime_v02_preview_package_count": 3,
+    "source_file_count": 9
+  }
+}

@@ -8,10 +8,12 @@ painted map layers, and battle canvas layouts that collapse into a small panel.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import struct
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +31,24 @@ MAP_RUNTIME_PACKAGES_V02 = sorted(
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def write_json(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def rel(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def png_dimensions(path: Path) -> tuple[int, int]:
@@ -346,11 +366,88 @@ def validate_map_layers(errors: list[str]) -> None:
             )
 
 
+def build_report(generated_at: str) -> dict[str, Any]:
+    app_errors: list[str] = []
+    css_errors: list[str] = []
+    map_errors: list[str] = []
+    validate_app_contract(app_errors)
+    validate_css_contract(css_errors)
+    validate_map_layers(map_errors)
+    errors = app_errors + css_errors + map_errors
+    status = "passed" if not errors else "failed"
+    source_files = [
+        APP_JS,
+        STYLES_CSS,
+        MAP_MANIFEST,
+        *MAP_RUNTIME_PACKAGES,
+        *MAP_RUNTIME_PACKAGES_V02,
+    ]
+    return {
+        "schema_version": "battle_visual_contract_report.v0.1",
+        "report_id": "battle_visual_contract_report_v0_1",
+        "generated_at": generated_at,
+        "status": status,
+        "summary": {
+            "app_contract_error_count": len(app_errors),
+            "css_contract_error_count": len(css_errors),
+            "map_layer_error_count": len(map_errors),
+            "error_count": len(errors),
+            "map_runtime_package_count": len(MAP_RUNTIME_PACKAGES),
+            "map_runtime_v02_preview_package_count": len(MAP_RUNTIME_PACKAGES_V02),
+            "source_file_count": len(source_files),
+        },
+        "contract_claims": {
+            "default_battle_backdrop": "MapRuntimePackage-driven procedural terrain",
+            "full_screen_battle_canvas": True,
+            "no_default_whole_map_image_preload": True,
+            "no_default_control_or_reference_map": True,
+            "no_checkerboard_or_dashed_control_path": True,
+            "runtime_semantics_source": "MapRuntimePackage",
+            "style_source": "MapStylePack and ProceduralMapRenderPlan presentation geometry",
+            "v02_strong_semantics_source": "activated MapRuntimePackage v0.2 runtime fields only",
+            "review_only_v02_endpoints_isolated": True,
+        },
+        "safety_summary": {
+            "reads_env_file": False,
+            "provider_call_count": 0,
+            "stores_prompt_body": False,
+            "stores_provider_body": False,
+            "world_mutation_count": 0,
+            "runtime_mutation_count": 0,
+            "default_runtime_v02_fetch_allowed": False,
+        },
+        "error_groups": {
+            "app_contract": app_errors,
+            "css_contract": css_errors,
+            "map_layers": map_errors,
+        },
+        "source_files": [
+            {
+                "path": rel(path),
+                "exists": path.exists(),
+            }
+            for path in source_files
+        ],
+    }
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report-output", type=Path)
+    parser.add_argument("--generated-at", default=now_iso())
+    return parser.parse_args()
+
+
 def main() -> int:
-    errors: list[str] = []
-    validate_app_contract(errors)
-    validate_css_contract(errors)
-    validate_map_layers(errors)
+    args = parse_args()
+    report = build_report(args.generated_at)
+    errors = (
+        report["error_groups"]["app_contract"]
+        + report["error_groups"]["css_contract"]
+        + report["error_groups"]["map_layers"]
+    )
+    if args.report_output:
+        write_json(args.report_output, report)
 
     if errors:
         print("INVALID battle visual contract")

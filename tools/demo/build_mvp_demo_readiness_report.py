@@ -34,6 +34,8 @@ PATHS = {
     / "examples/review_packs/map_visual_promotion_gate_report.v0.1.json",
     "map_visual_quality": ROOT
     / "examples/review_packs/map_visual_quality_report.v0.1.json",
+    "battle_visual_contract": ROOT
+    / "examples/review_packs/battle_visual_contract_report.v0.1.json",
     "runtime_sprite_cutout_quality": ROOT
     / "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json",
     "runtime_loop_continuity": ROOT
@@ -408,6 +410,56 @@ def map_visual_gate(
     )
 
 
+def battle_visual_contract_gate(report: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    claims = as_obj(report.get("contract_claims"))
+    safety = as_obj(report.get("safety_summary"))
+    ok = (
+        report.get("status") == "passed"
+        and int(summary.get("error_count") or 0) == 0
+        and int(summary.get("map_runtime_package_count") or 0) >= 3
+        and int(summary.get("map_runtime_v02_preview_package_count") or 0) >= 3
+        and claims.get("full_screen_battle_canvas") is True
+        and claims.get("no_default_whole_map_image_preload") is True
+        and claims.get("no_default_control_or_reference_map") is True
+        and claims.get("no_checkerboard_or_dashed_control_path") is True
+        and claims.get("runtime_semantics_source") == "MapRuntimePackage"
+        and safety.get("reads_env_file") is False
+        and int(safety.get("provider_call_count") or 0) == 0
+        and int(safety.get("runtime_mutation_count") or 0) == 0
+        and safety.get("default_runtime_v02_fetch_allowed") is False
+    )
+    return gate(
+        gate_id="battle_visual_contract",
+        title="前端战斗视觉合同",
+        status="passed" if ok else "not_ready",
+        required_for_mvp_demo=True,
+        summary=(
+            "默认战斗画面必须是全屏 MapRuntimePackage 驱动的程序化战场；"
+            "不得回退到控制图、参考图、失败整图、棋盘或虚线调试画面。"
+        ),
+        evidence_keys=["battle_visual_contract"],
+        metrics={
+            "report_status": report.get("status"),
+            "error_count": summary.get("error_count"),
+            "app_contract_error_count": summary.get("app_contract_error_count"),
+            "css_contract_error_count": summary.get("css_contract_error_count"),
+            "map_layer_error_count": summary.get("map_layer_error_count"),
+            "map_runtime_package_count": summary.get("map_runtime_package_count"),
+            "map_runtime_v02_preview_package_count": summary.get(
+                "map_runtime_v02_preview_package_count"
+            ),
+            "runtime_semantics_source": claims.get("runtime_semantics_source"),
+            "style_source": claims.get("style_source"),
+            "provider_call_count": safety.get("provider_call_count"),
+            "runtime_mutation_count": safety.get("runtime_mutation_count"),
+            "default_runtime_v02_fetch_allowed": safety.get(
+                "default_runtime_v02_fetch_allowed"
+            ),
+        },
+    )
+
+
 def runtime_sprite_gate(report: dict[str, Any]) -> dict[str, Any]:
     summary = as_obj(report.get("summary")) or report
     ok = report.get("status") == "passed" and int(summary.get("failed_count") or 0) == 0
@@ -618,6 +670,7 @@ def build_report(generated_at: str) -> dict[str, Any]:
             reports["map_visual_promotion_gate"],
             reports["map_visual_quality"],
         ),
+        battle_visual_contract_gate(reports["battle_visual_contract"]),
         runtime_sprite_gate(reports["runtime_sprite_cutout_quality"]),
         loop_continuity_gate(reports["runtime_loop_continuity"]),
         provider_video_boundary_gate(

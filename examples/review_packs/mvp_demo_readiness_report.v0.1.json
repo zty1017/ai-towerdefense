@@ -188,6 +188,33 @@
       "evidence_refs": [
         {
           "exists": true,
+          "path": "examples/review_packs/battle_visual_contract_report.v0.1.json"
+        }
+      ],
+      "gate_id": "battle_visual_contract",
+      "metrics": {
+        "app_contract_error_count": 0,
+        "css_contract_error_count": 0,
+        "default_runtime_v02_fetch_allowed": false,
+        "error_count": 0,
+        "map_layer_error_count": 0,
+        "map_runtime_package_count": 3,
+        "map_runtime_v02_preview_package_count": 3,
+        "provider_call_count": 0,
+        "report_status": "passed",
+        "runtime_mutation_count": 0,
+        "runtime_semantics_source": "MapRuntimePackage",
+        "style_source": "MapStylePack and ProceduralMapRenderPlan presentation geometry"
+      },
+      "required_for_mvp_demo": true,
+      "status": "passed",
+      "summary": "默认战斗画面必须是全屏 MapRuntimePackage 驱动的程序化战场；不得回退到控制图、参考图、失败整图、棋盘或虚线调试画面。",
+      "title": "前端战斗视觉合同"
+    },
+    {
+      "evidence_refs": [
+        {
+          "exists": true,
           "path": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json"
         }
       ],
@@ -339,7 +366,7 @@
       "title": "浏览器玩家链路截图门禁"
     }
   ],
-  "generated_at": "2026-07-05T00:00:00+00:00",
+  "generated_at": "2026-07-06T00:00:00+00:00",
   "known_limitations": [
     {
       "evidence_refs": [
@@ -483,6 +510,10 @@
     },
     {
       "exists": true,
+      "path": "examples/review_packs/battle_visual_contract_report.v0.1.json"
+    },
+    {
+      "exists": true,
       "path": "examples/review_packs/frontend_runtime_sprite_cutout_quality_report.v0.1.json"
     },
     {
@@ -532,11 +563,11 @@
   ],
   "summary": {
     "blocking_gate_count": 0,
-    "evidence_source_count": 21,
+    "evidence_source_count": 22,
     "expected_block_count": 1,
     "provider_call_count_by_report": 0,
-    "required_gate_count": 8,
-    "required_gate_passed_or_expected_count": 8,
+    "required_gate_count": 9,
+    "required_gate_passed_or_expected_count": 9,
     "runtime_mutation_count_by_report": 0,
     "warning_gate_count": 5,
     "world_mutation_count_by_report": 0

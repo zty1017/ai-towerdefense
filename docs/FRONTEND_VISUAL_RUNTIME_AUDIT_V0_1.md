@@ -1,6 +1,6 @@
 # 前端视觉运行态审计 v0.1
 
-Last updated: 2026-07-03
+Last updated: 2026-07-06
 
 本文记录 P0-M 前端战斗地图视觉底座改造结果。目标是让默认玩家战斗视图不依赖失败整图候选，而是由 `MapRuntimePackage` 的路径、塔位、目标和出生点驱动 canvas 程序化战场底座。
 
@@ -16,6 +16,7 @@ Last updated: 2026-07-03
 - v0.3 增加节点调色、地貌深度带、道路边缘小物和部署基座接驳痕迹；塔位仍来自 `build_slots`，道路仍来自 `path_routes`，这些表现层细节不新增运行时逻辑事实。
 - v0.4 增加 HUD safe-area contain fit、可玩地块边界、可部署台地、路线方向 cue 和目标防御区；移动端不再以 cover 方式裁掉入口到核心的关卡链路，多路线地图的敌人也会按 `spawn_points.route_id` 绑定路线。
 - 旧 `drawGrid()` / `drawDiamond()` 棋盘绘制入口已移除，静态合约会阻止它们重新出现。
+- 静态视觉合约现在可以输出 `battle_visual_contract_report.v0.1` 结构化报告，并已纳入 MVP demo readiness 的 `battle_visual_contract` 必需 gate。
 - `battle_control_sketch` 与 `battle_reference_board` 仍只允许在 debug / evidence 参数下作为低透明辅助 overlay，不进入默认玩家体验。
 - 侧栏和提示层进一步降低遮挡：左右侧栏宽度收紧到 190px / 198px，背景透明度降低，canvas 继续全屏铺满 battle stage。
 
@@ -24,6 +25,7 @@ Last updated: 2026-07-03
 ```bash
 node --check frontend/app.js
 python3 tools/frontend/validate_battle_visual_contract.py
+python3 tools/frontend/validate_battle_visual_contract.py --report-output examples/review_packs/battle_visual_contract_report.v0.1.json --generated-at 2026-07-06T00:00:00+00:00
 python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke
 python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/p0m_browser_visual_smoke
 python3 tools/frontend/capture_battle_visual_smoke.py --output-dir /tmp/frontend_procedural_map_polish_smoke
@@ -68,6 +70,15 @@ CAPTURED battle visual smoke: /tmp/p0m_browser_visual_smoke/battle_visual_smoke_
 - `drawGrid()` / `drawDiamond()` 不得保留。
 - 失败视觉层不能以 `published_visual_layer` 权限进入 manifest 或 runtime package。
 - 每个 `MapRuntimePackage` 必须具备 grid、path_routes、build_slots、core objective 和 spawn_points。
+- 每个 `MapRuntimePackage v0.2 preview` 必须携带 resource_nodes、hazard_zones、defense_anchors、blocked_areas，且默认前端不得请求 review-only v0.2 endpoint。
+
+结构化报告输出：
+
+```bash
+python3 tools/frontend/validate_battle_visual_contract.py --report-output examples/review_packs/battle_visual_contract_report.v0.1.json --generated-at 2026-07-06T00:00:00+00:00
+```
+
+当前报告状态为 `passed`，app / CSS / 地图层错误数均为 0。该报告只记录静态合同与本地文件覆盖，不调用 provider、不读取 `.env`、不写世界状态、不修改 runtime package；真实截图和人工观感仍由浏览器 smoke 与录屏验收补充。
 
 ## 4. 浏览器验收
 

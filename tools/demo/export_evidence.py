@@ -263,6 +263,8 @@ PATHS = {
     / "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
     "map_runtime_v02_opt_in_contract_smoke_report": ROOT
     / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json",
+    "battle_visual_contract_report": ROOT
+    / "examples/review_packs/battle_visual_contract_report.v0.1.json",
     "mvp_demo_readiness_report": ROOT
     / "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
 }
@@ -1139,6 +1141,17 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_runtime_package.py",
             "examples/runtime_packages/mvp_demo.runtime_package.json",
+        ],
+    },
+    {
+        "name": "battle_visual_contract_report",
+        "command": [
+            "python3",
+            "tools/frontend/validate_battle_visual_contract.py",
+            "--report-output",
+            "/tmp/ai_td_battle_visual_contract_report.json",
+            "--generated-at",
+            "2026-07-06T00:00:00+00:00",
         ],
     },
     {
