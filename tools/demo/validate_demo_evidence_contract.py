@@ -15,10 +15,6 @@ from report_io import load_json_or_raise
 ContractValidator = Callable[[argparse.Namespace], dict[str, Any]]
 
 
-def load_json(path: Path, *, label: str) -> Any:
-    return load_json_or_raise(path, label=label)
-
-
 def load_text(path: Path, *, label: str) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -60,8 +56,8 @@ def require_readiness_report(report: dict[str, Any], *, label: str) -> None:
 
 
 def validate_demo_readiness_video_boundary(args: argparse.Namespace) -> dict[str, Any]:
-    report = load_json(args.readiness_report, label="readiness report")
-    evidence = load_json(args.evidence, label="evidence")
+    report = load_json_or_raise(args.readiness_report, label="readiness report")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(report, dict), "readiness report root must be an object")
     require(isinstance(evidence, dict), "evidence root must be an object")
     require_readiness_report(report, label="readiness_report")
@@ -100,7 +96,7 @@ def validate_demo_readiness_video_boundary(args: argparse.Namespace) -> dict[str
 
 
 def validate_map_runtime_v02(args: argparse.Namespace) -> dict[str, Any]:
-    evidence = load_json(args.evidence, label="evidence")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(evidence, dict), "evidence root must be an object")
     v02 = evidence.get("map_runtime_packages_v02")
     require(isinstance(v02, dict), "evidence.map_runtime_packages_v02 must be an object")
@@ -117,7 +113,7 @@ def validate_map_runtime_v02(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def validate_map_v02_api(args: argparse.Namespace) -> dict[str, Any]:
-    evidence = load_json(args.evidence, label="evidence")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(evidence, dict), "evidence root must be an object")
     backend = evidence.get("backend_api_evidence")
     require(isinstance(backend, dict), "evidence.backend_api_evidence must be an object")
@@ -138,8 +134,8 @@ def validate_map_v02_api(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def validate_mvp_demo_readiness(args: argparse.Namespace) -> dict[str, Any]:
-    report = load_json(args.readiness_report, label="readiness report")
-    evidence = load_json(args.evidence, label="evidence")
+    report = load_json_or_raise(args.readiness_report, label="readiness report")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(report, dict), "readiness report root must be an object")
     require(isinstance(evidence, dict), "evidence root must be an object")
     require_readiness_report(report, label="readiness_report")
@@ -165,7 +161,7 @@ def validate_mvp_demo_readiness(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def validate_mvp_primary_api_flow(args: argparse.Namespace) -> dict[str, Any]:
-    evidence = load_json(args.evidence, label="evidence")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(evidence, dict), "evidence root must be an object")
     backend = evidence.get("backend_api_evidence")
     require(isinstance(backend, dict), "evidence.backend_api_evidence must be an object")
@@ -189,7 +185,7 @@ def validate_mvp_primary_api_flow(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def validate_render_plan_v02_semantics(args: argparse.Namespace) -> dict[str, Any]:
-    evidence = load_json(args.evidence, label="evidence")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     require(isinstance(evidence, dict), "evidence root must be an object")
     assets = evidence.get("assets_and_media")
     require(isinstance(assets, dict), "evidence.assets_and_media must be an object")
@@ -211,7 +207,7 @@ def validate_render_plan_v02_semantics(args: argparse.Namespace) -> dict[str, An
 
 
 def validate_render_preview_export(args: argparse.Namespace) -> dict[str, Any]:
-    evidence = load_json(args.evidence, label="evidence")
+    evidence = load_json_or_raise(args.evidence, label="evidence")
     summary_text = load_text(args.summary, label="summary")
     require(isinstance(evidence, dict), "evidence root must be an object")
     assets = evidence.get("assets_and_media")

@@ -22,10 +22,6 @@ from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
 from tools.demo.report_io import load_json_object  # noqa: E402
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    return load_json_object(path, label="suite report root")
-
-
 def as_obj(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
@@ -455,7 +451,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
-        report = load_json(args.report)
+        report = load_json_object(args.report, label="suite report root")
         failures = validate_report(report, args)
     except Exception as exc:  # noqa: BLE001 - CLI should report concise failures.
         print(f"INVALID demo evidence suite report: {exc}", file=sys.stderr)

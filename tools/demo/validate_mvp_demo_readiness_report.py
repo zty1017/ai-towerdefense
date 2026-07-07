@@ -68,13 +68,6 @@ FORBIDDEN_KEY_FRAGMENTS = (
 )
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    try:
-        return load_json_object(path, label=f"{path}: report")
-    except ValueError as exc:
-        raise ValueError(f"{path}: invalid JSON: {exc}") from exc
-
-
 def as_obj(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
@@ -381,9 +374,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
-        report = load_json(args.report)
+        report = load_json_object(args.report, label=f"{args.report}: report")
     except ValueError as exc:
-        print(f"ERROR {exc}", file=sys.stderr)
+        print(f"ERROR {args.report}: invalid JSON: {exc}", file=sys.stderr)
         return 1
 
     errors = validate_report(report)

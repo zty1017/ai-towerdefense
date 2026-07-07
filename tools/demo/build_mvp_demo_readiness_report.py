@@ -71,10 +71,6 @@ PASSING_STATUSES = {"passed", "passed_with_warnings"}
 NON_BLOCKING_STATUSES = {"passed", "passed_with_warnings", "blocked_as_expected"}
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    return load_json_object(path, label=f"{path}")
-
-
 def as_obj(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
@@ -821,7 +817,10 @@ def frontend_flow_smoke_gate(
 ) -> dict[str, Any]:
     if frontend_flow_smoke_report_path:
         return frontend_flow_smoke_actual_gate(
-            load_json(frontend_flow_smoke_report_path),
+            load_json_object(
+                frontend_flow_smoke_report_path,
+                label=f"{frontend_flow_smoke_report_path}",
+            ),
             frontend_flow_smoke_report_path,
         )
     tool_ready = PATHS["frontend_flow_visual_smoke_tool"].exists()
@@ -857,7 +856,7 @@ def build_report(
     frontend_flow_smoke_report_path: Path | None = None,
 ) -> dict[str, Any]:
     reports = {
-        key: load_json(path)
+        key: load_json_object(path, label=f"{path}")
         for key, path in PATHS.items()
         if path.suffix == ".json"
     }

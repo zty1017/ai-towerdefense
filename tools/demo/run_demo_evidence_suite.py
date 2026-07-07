@@ -69,10 +69,6 @@ def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    return load_json_object(path, label=f"{path}")
-
-
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -946,7 +942,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     if browser_preflight_path.exists():
-        browser_preflight_report = load_json(browser_preflight_path)
+        browser_preflight_report = load_json_object(
+            browser_preflight_path,
+            label=f"{browser_preflight_path}",
+        )
     if (
         (browser_preflight_report or {}).get("status") == "browser_unavailable"
         and not args.allow_missing_browser
@@ -1036,7 +1035,10 @@ def main(argv: list[str] | None = None) -> int:
         ):
             uv_lock_path.unlink()
         if scheduler_report_path.exists():
-            scheduler_pipeline_report = load_json(scheduler_report_path)
+            scheduler_pipeline_report = load_json_object(
+                scheduler_report_path,
+                label=f"{scheduler_report_path}",
+            )
         commands.append(
             run_command(
                 COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR,
@@ -1072,7 +1074,10 @@ def main(argv: list[str] | None = None) -> int:
         ):
             uv_lock_path.unlink()
         if outbox_import_report_path.exists():
-            outbox_import_report = load_json(outbox_import_report_path)
+            outbox_import_report = load_json_object(
+                outbox_import_report_path,
+                label=f"{outbox_import_report_path}",
+            )
         commands.append(
             run_command(
                 COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR,
@@ -1095,7 +1100,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if frontend_report_path.exists():
-        frontend_report = load_json(frontend_report_path)
+        frontend_report = load_json_object(
+            frontend_report_path,
+            label=f"{frontend_report_path}",
+        )
 
     multinode_capture_command = build_multinode_capture_command(
         args,
@@ -1111,7 +1119,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     if frontend_multinode_report_path.exists():
-        frontend_multinode_report = load_json(frontend_multinode_report_path)
+        frontend_multinode_report = load_json_object(
+            frontend_multinode_report_path,
+            label=f"{frontend_multinode_report_path}",
+        )
 
     battle_drag_capture_command = build_battle_drag_capture_command(
         args,
@@ -1127,7 +1138,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     if frontend_battle_drag_report_path.exists():
-        frontend_battle_drag_report = load_json(frontend_battle_drag_report_path)
+        frontend_battle_drag_report = load_json_object(
+            frontend_battle_drag_report_path,
+            label=f"{frontend_battle_drag_report_path}",
+        )
 
     if frontend_report_path.exists():
         validate_command = build_validate_command(
@@ -1187,7 +1201,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         evidence_path = evidence_output / "evidence.json"
         if evidence_path.exists():
-            evidence = load_json(evidence_path)
+            evidence = load_json_object(evidence_path, label=f"{evidence_path}")
 
     status, failures = derive_suite_status(
         commands,
