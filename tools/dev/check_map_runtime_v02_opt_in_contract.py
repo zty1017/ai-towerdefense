@@ -21,6 +21,10 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = ROOT / "backend"
+sys.path.insert(0, str(ROOT))
+
+from tools.dev.report_io import write_json
+
 AUTHORIZATION_REPORT = ROOT / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json"
 NODE_IDS = ("gray_lantern_station", "lamp_wick_store", "old_signal_tower")
 V02_KEYS = ("resource_nodes", "hazard_zones", "defense_anchors", "blocked_areas")
@@ -29,11 +33,6 @@ NO_PROXY_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 def as_obj(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def free_port() -> int:

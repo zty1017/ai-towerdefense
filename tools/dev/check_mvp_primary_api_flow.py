@@ -25,6 +25,10 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = ROOT / "backend"
+sys.path.insert(0, str(ROOT))
+
+from tools.dev.report_io import write_json
+
 NO_PROXY_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 FORBIDDEN_PLAYER_TERMS = (
     "provider",
@@ -51,11 +55,6 @@ def as_obj(value: Any) -> dict[str, Any]:
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def free_port() -> int:
@@ -444,7 +443,7 @@ def main() -> int:
     parser.add_argument("--generated-at")
     args = parser.parse_args()
     report = build_report(args.generated_at)
-    write_json(ROOT / args.output, report)
+    write_json(ROOT / args.output, report, sort_keys=False)
     print(f"mvp primary API flow smoke passed: {args.output}")
     return 0
 
