@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/battle-drag-interaction-contract",
   "worktree": "/tmp/ai-td-task-battle-drag-interaction-contract",
-  "objective": "补战斗部署交互静态合同：锁定底部工具卡拖到战场格位释放部署为主路径，点击放置仅作为 fallback，并把合同纳入 fast / premerge gate。",
+  "objective": "补战斗部署交互静态合同：锁定底部工具卡拖到战场格位释放部署为主路径，点击放置仅作为 fallback，并检查 battleVisualSmoke 专用 probe 只在 smoke 模式暴露且只读，最终把合同纳入 fast / premerge gate。",
   "required_reading": [
     "control/TASK_QUEUE.md",
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
@@ -101,6 +101,7 @@
   "notes": [
     "本任务不调用 provider，不读取 .env，不生成或替换游戏素材。",
     "合同保护玩家侧自然塔防交互：拖动工具卡到战场格位释放部署，点击放置只作为 fallback。",
+    "合同同时保护 battleVisualSmoke 专用 probe：必须 query-gated、从 runtime build slot 派生目标点，并且 snapshot 不得修改战斗状态。",
     "该合同是无浏览器静态门禁，不替代真实浏览器拖拽回放、长时间战斗录像或人工观感审查。",
     "本任务不修改 MapRuntimePackage、RenderPlan、published visual layer 或 v0.2 activation gate。"
   ]

@@ -5006,7 +5006,7 @@ git diff --check
 
 已落地：
 
-- `tools/frontend/validate_battle_interaction_contract.py`：静态检查拖拽状态字段、工具卡 pointerdown、window 级 pointermove / pointerup、战场预览、拖拽 ghost、移动端 touch-action 和玩家侧反馈不泄漏技术词。
+- `tools/frontend/validate_battle_interaction_contract.py`：静态检查拖拽状态字段、工具卡 pointerdown、window 级 pointermove / pointerup、战场预览、拖拽 ghost、移动端 touch-action、玩家侧反馈不泄漏技术词，以及 `battleVisualSmoke` 专用 smoke probe 的 query gating / runtime slot 派生 / 只读 snapshot 边界。
 - `frontend/app.js`：拖拽移动 / 释放阶段阻止浏览器默认手势，提升移动端与浏览器拖拽稳定性。
 - `tools/dev/run_fast_quality_gate.py` 与 `tools/dev/run_premerge_quality_gate.py`：把战斗交互合同纳入 fast / premerge gate。
 - `examples/worker_task_packs/p1d_battle_drag_interaction_contract.v0.1.json`：新增本轮任务包。

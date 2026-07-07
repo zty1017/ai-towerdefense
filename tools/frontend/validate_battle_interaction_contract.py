@@ -90,6 +90,9 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
     draw_battle = js_section(app, "drawBattle", "runtimeMapSeed")
     deploy_hints = js_section(app, "drawDeployHints", "drawDeploymentBase")
     drag_ghost = js_section(app, "drawDragGhost", "drawGroundGlow")
+    install_probe = js_section(app, "installBattleSmokeProbe", "battleSmokeDeploymentPoint")
+    probe_point = js_section(app, "battleSmokeDeploymentPoint", "battleSmokeSnapshot")
+    probe_snapshot = js_section(app, "battleSmokeSnapshot", "stopBattleLoop")
     root_listener_match = re.search(
         r'ROOT\.addEventListener\("pointerdown",\s*\(event\)\s*=>\s*\{(?P<body>.*?)\n  \}\);',
         app,
@@ -233,6 +236,63 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
         "no_technical_terms_in_player_drag_feedback",
         not re.search(r"\b(provider|schema|prompt|json|trace|api|model)\b", compact(begin_drag + update_drag + finish_drag), re.I),
         "player-facing drag feedback must not expose provider/schema/prompt/debug wording.",
+    )
+    add_check(
+        checks,
+        "battle_smoke_probe_installed_after_metrics",
+        "resizeBattleCanvas();\n    installBattleSmokeProbe();" in setup,
+        "battle smoke probe must be installed only after canvas metrics are initialized.",
+    )
+    add_check(
+        checks,
+        "battle_smoke_probe_query_gated",
+        contains_all(
+            install_probe,
+            [
+                "if (!battleVisualSmokeMode()) return;",
+                "window.__AI_TD_BATTLE_SMOKE__ =",
+                "snapshot: battleSmokeSnapshot",
+                "deploymentPoint: battleSmokeDeploymentPoint",
+            ],
+        ),
+        "battle smoke probe must only be exposed in battleVisualSmoke mode.",
+    )
+    add_check(
+        checks,
+        "battle_smoke_probe_uses_runtime_slots",
+        contains_all(
+            probe_point,
+            [
+                "assetKindForTool(tool)",
+                "buildSlots()",
+                "allowed.includes(assetKind)",
+                "!isOccupied(position)",
+                "projectCell(cell.x, cell.y)",
+                "document.elementFromPoint",
+                ".battle-tools",
+                'closest("#battleCanvas, .battle-stage")',
+            ],
+        ),
+        "battle smoke deployment point must derive from runtime build slots and avoid toolbar-covered targets.",
+    )
+    add_check(
+        checks,
+        "battle_smoke_probe_snapshot_is_read_only",
+        contains_all(
+            probe_snapshot,
+            [
+                'mode: "battleVisualSmoke"',
+                "resources: battle.resources",
+                "basicUses: battle.basicUses",
+                "defensesCount: Array.isArray(battle.defenses)",
+                "trapsCount: Array.isArray(battle.traps)",
+                "deploymentPoint: battleSmokeDeploymentPoint",
+            ],
+        )
+        and "deployToolAt(" not in probe_snapshot
+        and "placeBasicDefense(" not in probe_snapshot
+        and "state.view =" not in probe_snapshot,
+        "battle smoke snapshot must expose read-only counters and never mutate battle state.",
     )
     return checks
 
