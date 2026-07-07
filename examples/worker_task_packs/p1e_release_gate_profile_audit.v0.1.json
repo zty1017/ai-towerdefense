@@ -15,11 +15,13 @@
     "docs/WORKER_TASK_PACK_V0_1.md",
     "tools/dev/validate_worker_task_pack.py",
     "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/audit_common.py",
     "tools/dev/audit_worker_acceptance_profiles.py",
     "tools/dev/run_fast_quality_gate.py",
     "tools/dev/run_premerge_quality_gate.py"
   ],
   "allowed_paths": [
+    "tools/dev/audit_common.py",
     "tools/dev/audit_release_gate_profiles.py",
     "tools/dev/run_fast_quality_gate.py",
     "tools/dev/run_premerge_quality_gate.py",
@@ -44,7 +46,7 @@
     "pyproject.toml"
   ],
   "acceptance_commands": [
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
     "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_report.json --max-samples 20",
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
     "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json --profile daily_fast --output /tmp/release_gate_profile_audit_runner.json",
@@ -58,7 +60,7 @@
         "description": "本地交接前的只读 release_gate 配置审计。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_runner python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_runner python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
           "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_runner_report.json --max-samples 20",
           "git diff --check"
         ],
@@ -71,7 +73,7 @@
         "description": "最终审查前的完整证据检查：先审计 release_gate 配置，再运行完整 demo evidence export。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_full python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_full python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
           "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_full_report.json --max-samples 100",
           "python3 tools/demo/export_evidence.py --output-dir /tmp/release_gate_profile_audit_full_evidence",
           "git diff --check"

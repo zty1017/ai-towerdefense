@@ -25,6 +25,7 @@
 - Validator: `tools/dev/validate_worker_task_pack.py`
 - 示例: `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
 - 验收 profile 示例: `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`
+- 审计公共 helper: `tools/dev/audit_common.py`
 - 验收 profile 迁移审计: `tools/dev/audit_worker_acceptance_profiles.py`
 - release gate 降级审计: `tools/dev/audit_release_gate_profiles.py`
 
@@ -194,6 +195,8 @@ python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_accepta
 - batch runner 只负责本地验收编排，不调用 provider、不读取 `.env`，也不替代完整 evidence、demo suite 或最终人工审查。
 
 ### Profile migration audit
+
+`tools/dev/audit_common.py` 提供只读审计工具共享的 `/tmp` 输出路径保护、仓库相对路径显示、JSON 报告写入和命令字符串归一化 helper。它不是全仓通用工具层；新增本地审计脚本时可以复用它，普通内容生成、媒体处理或 runtime builder 不需要为了统一风格而迁移。
 
 `tools/dev/audit_worker_acceptance_profiles.py` 是只读迁移审计入口，用于分析现有 `examples/worker_task_packs/*.json` 是否已经迁移到 `acceptance_profile`，并指出哪些旧包适合迁移、哪些命令需要人工处理：
 

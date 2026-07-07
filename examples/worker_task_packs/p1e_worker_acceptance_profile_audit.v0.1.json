@@ -15,9 +15,11 @@
     "docs/WORKER_TASK_PACK_V0_1.md",
     "tools/dev/validate_worker_task_pack.py",
     "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/audit_common.py",
     "tools/dev/run_fast_quality_gate.py"
   ],
   "allowed_paths": [
+    "tools/dev/audit_common.py",
     "tools/dev/audit_worker_acceptance_profiles.py",
     "tools/dev/run_worker_acceptance_profile.py",
     "tools/dev/run_fast_quality_gate.py",
@@ -41,7 +43,7 @@
     "pyproject.toml"
   ],
   "acceptance_commands": [
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit python3 -m py_compile tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
     "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_audit_report.json --max-samples 8",
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json",
     "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_audit_runner.json",
@@ -55,7 +57,7 @@
         "description": "本地交接前的只读审计快速检查。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit_runner python3 -m py_compile tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit_runner python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
           "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_audit_runner_report.json --max-samples 8",
           "git diff --check"
         ],
@@ -68,7 +70,7 @@
         "description": "最终审查前的完整证据检查：在审计之外运行完整 demo evidence export。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit_full python3 -m py_compile tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_audit_full python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py",
           "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_audit_report.json --max-samples 20",
           "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_profile_audit_full_evidence",
           "git diff --check"

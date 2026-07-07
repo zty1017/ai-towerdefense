@@ -1,0 +1,122 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-dev-audit-common-helpers",
+  "title": "tools/dev 审计公共 helper 收敛",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/dev-audit-common",
+  "worktree": "/tmp/ai-td-task-dev-audit-common",
+  "objective": "把 WorkerTaskPack 相关只读审计脚本中重复的 JSON 输出、/tmp 输出路径保护、相对路径展示和命令归一化 helper 收敛到公共模块，减少后续审计工具漂移。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/audit_release_gate_profiles.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/audit_common.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/audit_release_gate_profiles.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1e_dev_audit_common_helpers.v0.1.json",
+    "examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json",
+    "examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "pyproject.toml"
+  ],
+  "acceptance_commands": [
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_dev_audit_common python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/dev_audit_common_worker_profile_audit.json --max-samples 20",
+    "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/dev_audit_common_release_gate_audit.json --max-samples 20",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_dev_audit_common_helpers.v0.1.json",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_dev_audit_common_helpers.v0.1.json --profile daily_fast --output /tmp/dev_audit_common_runner.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/dev_audit_common_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "本地交接前验证公共 audit helper 与两个审计入口仍然只读可运行。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_dev_audit_common_helpers.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_dev_audit_common_runner python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/dev_audit_common_worker_profile_audit_runner.json --max-samples 20",
+          "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/dev_audit_common_release_gate_audit_runner.json --max-samples 20",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终审查前验证公共 audit helper、两个审计入口和完整 demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_dev_audit_common_helpers.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_dev_audit_common_full python3 -m py_compile tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/dev_audit_common_worker_profile_audit_full.json --max-samples 120",
+          "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/dev_audit_common_release_gate_audit_full.json --max-samples 120",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/dev_audit_common_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只收敛 tools/dev 审计 helper，不扩大到全仓 write_json 机械重构。",
+    "两个审计脚本仍然不执行被扫描任务包的验收命令。",
+    "audit_worker_acceptance_profiles.py 继续导出 display_path 和 require_tmp_output，以兼容 migrate_worker_acceptance_profiles.py。"
+  ]
+}
