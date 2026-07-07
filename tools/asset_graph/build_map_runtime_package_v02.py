@@ -15,6 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import map_runtime_package_v02 as mrp_v02  # noqa: E402
+from validation_common import load_json, write_json  # noqa: E402
 
 
 DEFAULT_BATTLE_CONFIG = ROOT / "game_data/demo/first_battle_config.json"
@@ -22,16 +23,6 @@ DEFAULT_VISUAL_MANIFEST = (
     ROOT / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
 )
 DEFAULT_SCHEMA = ROOT / "shared/schemas/map_runtime_package.v0.2.schema.json"
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def as_repo_relative(path: Path) -> str:
