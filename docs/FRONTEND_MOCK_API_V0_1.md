@@ -408,6 +408,53 @@ shared_cache_reuse_pending_runtime_build
 - 不写世界状态。
 - 不激活 runtime。
 
+### 准备 runtime 构建请求
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/prepare-runtime-build-request
+```
+
+该接口把当前 run 中可进入下一层构建的候选登记为 `generation_artifact_ledger` 的 `generation_runtime_build_request`。候选来源只能是：
+
+- 当前 prefetch item 的 `provider_artifact_promotion_report`，且 promotion 已允许下一步构建。
+- 当前 prefetch item 的 `shared_prefetch_cache_reuse_candidate`。
+
+请求体可选：
+
+```json
+{
+  "worker_id": "studio-runtime-build-preparer",
+  "schedule_item_id": "sched_next_map_visual_prefetch"
+}
+```
+
+未提供 `schedule_item_id` 时，后端选择第一个 eligible 候选。返回包含：
+
+- `worker_step`
+- `generation_runtime_build_request`
+- `generation_prefetch_cache`
+- `generation_activation_gate`
+- `generation_artifact_ledger`
+
+写入后，对应 prefetch item 的 `cache_status` 会变为：
+
+```text
+runtime_build_request_prepared
+```
+
+该状态只表示“构建请求已登记”，不表示 runtime package、WorldStateDeltaTransaction、published media 或玩家 runtime 已经生成。
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不构建 runtime package。
+- 不构建 WorldStateDeltaTransaction。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

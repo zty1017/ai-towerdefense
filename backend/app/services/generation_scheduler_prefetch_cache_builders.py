@@ -16,6 +16,7 @@ PREFETCH_CACHE_REF_KINDS = (
     "provider_artifact_staging_manifest",
     "provider_artifact_promotion_report",
     "shared_prefetch_cache_reuse_candidate",
+    "generation_runtime_build_request",
 )
 
 
@@ -39,6 +40,8 @@ def prefetch_cache_status(
     queue_item: dict[str, Any],
     refs: dict[str, dict[str, Any] | None],
 ) -> str:
+    if refs.get("generation_runtime_build_request") is not None:
+        return "runtime_build_request_prepared"
     promotion_ref = refs.get("provider_artifact_promotion_report")
     if promotion_ref is not None:
         promotion_compact = promotion_ref.get("compact")
@@ -188,6 +191,30 @@ def build_generation_prefetch_cache_payload(
             "runtime_ready": False,
             "activation_allowed": False,
         }
+        runtime_build_ref = refs.get("generation_runtime_build_request")
+        runtime_build_compact = (
+            runtime_build_ref.get("compact")
+            if isinstance(runtime_build_ref, dict)
+            and isinstance(runtime_build_ref.get("compact"), dict)
+            else {}
+        )
+        runtime_build_gate = (
+            runtime_build_compact.get("build_gate")
+            if isinstance(runtime_build_compact.get("build_gate"), dict)
+            else {}
+        )
+        item["runtime_build_request"] = {
+            "request_recorded": runtime_build_ref is not None,
+            "request_id": runtime_build_compact.get("request_id"),
+            "source_candidate_ref": runtime_build_compact.get(
+                "source_candidate_ref", {}
+            ),
+            "blocked_reason": runtime_build_gate.get("blocked_reason"),
+            "required_next_gates": runtime_build_gate.get("required_next_gates", []),
+            "runtime_ready": False,
+            "activation_allowed": False,
+            "world_mutation_allowed": False,
+        }
         item["activation_allowed"] = item["activation_gate"]["activation_allowed"]
         item["promotion_allowed"] = item["promotion_gate"]["promotion_allowed"]
         item["review_only"] = True
@@ -208,6 +235,7 @@ def build_generation_prefetch_cache_payload(
             "promotion_blocked",
             "promotion_allowed_pending_activation",
             "shared_cache_reuse_pending_runtime_build",
+            "runtime_build_request_prepared",
         }
     )
     return {
@@ -236,8 +264,14 @@ def build_generation_prefetch_cache_payload(
                 "shared_cache_reuse_candidate_count": sum(
                     1
                     for item in cache_items
-                    if item.get("cache_status")
-                    == "shared_cache_reuse_pending_runtime_build"
+                    if isinstance(item.get("refs"), dict)
+                    and item["refs"].get("shared_prefetch_cache_reuse_candidate")
+                    is not None
+                ),
+                "runtime_build_request_count": sum(
+                    1
+                    for item in cache_items
+                    if item.get("cache_status") == "runtime_build_request_prepared"
                 ),
             },
             "items": cache_items,

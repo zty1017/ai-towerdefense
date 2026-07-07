@@ -43,6 +43,17 @@ def _activation_status(item: dict[str, Any]) -> tuple[str, str | None, list[str]
                 "explicit_activation_gate",
             ],
         )
+    if cache_status == "runtime_build_request_prepared":
+        return (
+            "blocked_runtime_builder_execution_required",
+            "runtime_build_request_recorded_but_builder_has_not_produced_runtime_artifacts",
+            [
+                "runtime_package_or_world_delta_transaction_builder",
+                "runtime_package_validation",
+                "world_state_delta_transaction_validation",
+                "explicit_activation_gate",
+            ],
+        )
     if cache_status == "promotion_blocked":
         blocked_reason = promotion_gate.get("blocked_reason") or "promotion_blocked"
         return (

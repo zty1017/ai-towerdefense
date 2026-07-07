@@ -54,13 +54,27 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
             "promotion_blocked",
             "promotion_allowed_pending_activation",
             "shared_cache_reuse_pending_runtime_build",
+            "runtime_build_request_prepared",
         }
+    )
+    runtime_build_request_count = sum(
+        1
+        for item in items
+        if item.get("cache_status") == "runtime_build_request_prepared"
+    )
+    shared_cache_reuse_candidate_count = sum(
+        1
+        for item in items
+        if isinstance(item.get("refs"), dict)
+        and item["refs"].get("shared_prefetch_cache_reuse_candidate") is not None
     )
     return {
         "queued_provider_review_required_count": queued_provider_review_required_count,
         "waiting_review_count": waiting_review_count,
         "review_only_envelope_ready_count": review_only_envelope_ready_count,
         "staged_or_reviewed_count": staged_or_reviewed_count,
+        "runtime_build_request_count": runtime_build_request_count,
+        "shared_cache_reuse_candidate_count": shared_cache_reuse_candidate_count,
     }
 
 
@@ -77,10 +91,14 @@ def _manual_tick_status(
         return "ready_to_dispatch_queued_provider_review_items"
     if queue_counts["review_only_envelope_ready_count"] > 0:
         return "waiting_for_external_runner_or_artifact_review"
+    if queue_counts["runtime_build_request_count"] > 0:
+        return "waiting_for_runtime_builder_execution"
+    if queue_counts["shared_cache_reuse_candidate_count"] > 0:
+        return "ready_to_prepare_runtime_build_request"
     if shared_hit_count > 0:
         return "ready_to_record_shared_cache_reuse_candidate"
     if promotion_allowed_count > 0:
-        return "blocked_runtime_package_or_world_delta_build_required"
+        return "ready_to_prepare_runtime_build_request"
     if queue_counts["staged_or_reviewed_count"] > 0:
         return "waiting_for_promotion_or_runtime_followup"
     return "idle_no_eligible_generation_work"
@@ -108,7 +126,7 @@ def _recommended_next_actions(
                 "activation_allowed_count": 0,
             }
         )
-    if shared_hit_count > 0:
+    if shared_hit_count > queue_counts["shared_cache_reuse_candidate_count"]:
         actions.append(
             {
                 "action": "record_shared_prefetch_cache_reuse_candidate",
@@ -136,12 +154,29 @@ def _recommended_next_actions(
                 "activation_allowed_count": 0,
             }
         )
-    if promotion_allowed_count > 0:
+    runtime_build_source_count = (
+        promotion_allowed_count + queue_counts["shared_cache_reuse_candidate_count"]
+    )
+    if queue_counts["runtime_build_request_count"] < runtime_build_source_count:
         actions.append(
             {
-                "action": "build_runtime_package_or_world_delta_transaction",
+                "action": "prepare_runtime_build_request",
+                "endpoint": (
+                    "POST /api/sessions/{session_id}/generation-schedule/"
+                    "workers/prepare-runtime-build-request"
+                ),
+                "reason": "promotion_allowed_candidate_needs_review_only_runtime_build_request",
+                "provider_call_count_by_this_request": 0,
+                "world_mutation_count_by_this_request": 0,
+                "activation_allowed_count": 0,
+            }
+        )
+    if queue_counts["runtime_build_request_count"] > 0:
+        actions.append(
+            {
+                "action": "run_runtime_package_or_world_delta_transaction_builder",
                 "endpoint": None,
-                "reason": "promotion_allowed_candidate_still_requires_runtime_build_and_activation_gate",
+                "reason": "runtime_build_request_recorded_but_builder_is_not_implemented",
                 "provider_call_count_by_this_request": 0,
                 "world_mutation_count_by_this_request": 0,
                 "activation_allowed_count": 0,
@@ -205,6 +240,15 @@ def _readiness_gates(
             "gate": "artifact_promotion",
             "status": "blocked_explicit_review_required",
             "reason": "staging_and_promotion_reports_must_be_imported_or_built_explicitly",
+        },
+        {
+            "gate": "runtime_builder_execution",
+            "status": (
+                "waiting_for_builder"
+                if queue_counts["runtime_build_request_count"] > 0
+                else "blocked_request_required"
+            ),
+            "reason": "runtime_build_request_does_not_build_or_activate_runtime",
         },
         {
             "gate": "runtime_activation",

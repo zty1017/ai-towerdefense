@@ -334,6 +334,27 @@ def record_generation_shared_prefetch_cache_reuse_candidate(
     return _payload(session_id, data)
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/prepare-runtime-build-request",
+    response_model=FrontendMockPayloadResponse,
+)
+def prepare_generation_runtime_build_request(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record a review-only request for a future runtime/world-delta builder."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.prepare_generation_runtime_build_request(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

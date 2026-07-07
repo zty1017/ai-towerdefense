@@ -4657,6 +4657,47 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_daemon_readi
 git diff --check
 ```
 
+### P1-B Generation Scheduler runtime build request bridge
+
+状态：已完成最小 review-only 桥接层。
+
+目标：
+
+```text
+把 promotion allowed 或 shared cache reuse 候选登记为 generation_artifact_ledger 中的 runtime build request，使后续 runtime package / WorldStateDeltaTransaction builder 可以消费统一 evidence chain。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_runtime_build_request_builders.py`：新增 `generation_runtime_build_request.v0.1` builder 与 compact 摘要。
+- `backend/app/services/generation_scheduler_prefetch_cache_builders.py`：新增 `generation_runtime_build_request` ref kind 与 `runtime_build_request_prepared` 状态。
+- `backend/app/services/generation_scheduler_activation_gate_builders.py`：新增 `blocked_runtime_builder_execution_required` 阻断状态。
+- `backend/app/services/generation_scheduler_daemon_readiness_builders.py`：新增 runtime build request 计数、推荐动作和 readiness gate。
+- `backend/app/services/generation_scheduler_service.py`：新增 `prepare_generation_runtime_build_request()`，从 promotion allowed 或 shared reuse candidate 选择来源并幂等写入 ledger。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/prepare-runtime-build-request`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、缺失 session / 无 run / 无 eligible candidate、promotion allowed 路径、shared cache reuse 路径、幂等和安全计数。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 runtime build request 边界。
+- `examples/worker_task_packs/p1b_generation_runtime_build_request.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- runtime build request 不是 runtime package、不是 WorldStateDeltaTransaction、不是 published media，也不是玩家侧可加载资产。
+- 该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不构建 runtime、不 complete queue item、不写世界状态、不激活 runtime。
+- `runtime_build_request_prepared` 只表示候选已经进入下一层 builder 的 review-only 请求；后续仍必须执行 runtime package / WorldStateDeltaTransaction builder、media / semantic gate 和 explicit activation gate。
+- 本轮按当前“main 讨论/决策，task worktree 本地实现，最后主线验收合并”的规范推进，未分发给队友。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_build_request.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_build_request python3 -m py_compile backend/app/services/generation_scheduler_runtime_build_request_builders.py backend/app/services/generation_scheduler_prefetch_cache_builders.py backend/app/services/generation_scheduler_activation_gate_builders.py backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_build_request_fast_gate.json
+python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_build_request_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
+python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_build_request_premerge_gate.json
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_build_request_premerge_gate.json --expect-status passed --expect-failed-count 0
+git diff --check
+```
+
 ### P1-B Generation Scheduler review-only pipeline smoke
 
 状态：已完成本地 HTTP 闭环 smoke。

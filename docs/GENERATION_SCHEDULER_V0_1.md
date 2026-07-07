@@ -642,6 +642,39 @@ shared_cache_reuse_pending_runtime_build
 
 这个状态仍然是 review-only。它只说明当前 run 已经把跨 session 共享候选纳入统一 evidence chain；后续构建器仍必须补齐 runtime package / WorldStateDeltaTransaction build、校验、promotion/activation gate 和世界状态事务。该 worker 不调用 provider、不读取 `.env`、不写 shared cache、不 complete queue item、不写世界状态、不激活 runtime，并且同一 session / run / schedule item / cache key 会幂等更新同一条 ledger。
 
+后端还提供 runtime 构建请求桥接入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/prepare-runtime-build-request
+```
+
+该入口从当前 `prefetch-cache` 中选择一个已经 `promotion_allowed` 的 provider artifact 候选，或一个已经登记到当前 run 的 `shared_prefetch_cache_reuse_candidate`，并把它写入 `generation_artifact_ledger`，artifact kind 为：
+
+```text
+generation_runtime_build_request
+```
+
+对应 `prefetch-cache` 状态为：
+
+```text
+runtime_build_request_prepared
+```
+
+这个状态仍然不是 runtime package、不是 WorldStateDeltaTransaction、不是 published media，也不是玩家侧可加载资产。它只表示当前 run 已经准备好一份 review-only 构建请求，后续仍必须由 runtime package / WorldStateDeltaTransaction builder 消费、重新校验 media / semantic gate、显式 activation gate 才能进入玩家 runtime。
+
+该 worker 的边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 正文或 provider response 正文。
+- 不构建 runtime package。
+- 不构建 WorldStateDeltaTransaction。
+- 不写世界状态。
+- 不 complete queue item。
+- 不激活 runtime。
+
+`daemon-readiness` 会在存在 `promotion_allowed` 或共享复用候选时推荐 `prepare-runtime-build-request`；在请求已登记后，会继续推荐 `run_runtime_package_or_world_delta_transaction_builder`，但该后续 builder 当前仍未实现。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text
