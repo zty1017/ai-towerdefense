@@ -39,6 +39,13 @@ from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     PROFILE_FULL,
     PROFILE_PREMERGE,
 )
+from tools.dev.quality_gate_report_helpers import (  # noqa: E402
+    STATUS_PASSED,
+    collect_command_failures,
+    print_failed_command_details,
+    report_status_from_failures,
+    summarize_command_results,
+)
 from tools.dev.validate_premerge_quality_gate_report import (  # noqa: E402
     validate_report as validate_premerge_quality_gate_report,
 )
@@ -116,6 +123,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/dev/audit_release_gate_profiles.py",
                 "tools/dev/migrate_worker_acceptance_profiles.py",
                 "tools/dev/command_runner.py",
+                "tools/dev/quality_gate_report_helpers.py",
                 "tools/dev/check_worker_acceptance_profile_env_assignments.py",
                 "tools/frontend/validate_battle_interaction_contract.py",
                 "tools/frontend/capture_battle_drag_interaction_smoke.py",
@@ -275,29 +283,31 @@ def main() -> int:
             env=spec.get("env") if isinstance(spec.get("env"), dict) else None,
         )
         results.append(result)
-        status_icon = "OK" if result["status"] == "passed" else "FAIL"
+        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
         print(f"{status_icon} {result['name']} ({result['elapsed_seconds']}s)")
-        if args.fail_fast and result["status"] != "passed":
+        if args.fail_fast and result["status"] != STATUS_PASSED:
             break
 
-    failed = [item for item in results if item.get("status") != "passed"]
+    failed = collect_command_failures(results)
     zero_summary_fields = {field: expected for field, expected in PREMERGE_REQUIRED_ZERO_FIELDS}
     report = {
         "schema_version": PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
         "report_id": PREMERGE_QUALITY_GATE_REPORT_ID,
         "generated_at": now_iso(),
         "started_at": started_at,
-        "status": "passed" if not failed else "failed",
+        "status": report_status_from_failures(failed),
         "profile": args.profile,
-        "summary": {
-            "configured_command_count": len(specs),
-            "executed_command_count": len(results),
-            "passed_count": len(results) - len(failed),
-            "failed_count": len(failed),
-            "fail_fast": bool(args.fail_fast),
-            "full_evidence_included": args.profile == PROFILE_FULL,
-            **zero_summary_fields,
-        },
+        "summary": summarize_command_results(
+            results=results,
+            configured_count=len(specs),
+            fail_fast=bool(args.fail_fast),
+            configured_count_field="configured_command_count",
+            executed_count_field="executed_command_count",
+            extra_fields={
+                "full_evidence_included": args.profile == PROFILE_FULL,
+                **zero_summary_fields,
+            },
+        ),
         "results": results,
         "boundary": {
             **{field: True for field in PREMERGE_REQUIRED_BOUNDARY_FLAGS},
@@ -308,10 +318,7 @@ def main() -> int:
     print(f"premerge quality gate report: {args.output}")
     report_valid = self_validate_report(report, profile=str(args.profile))
     if failed:
-        for item in failed:
-            print(f"failed: {item['name']}", file=sys.stderr)
-            if item.get("stderr_tail"):
-                print(item["stderr_tail"], file=sys.stderr)
+        print_failed_command_details(failed)
         return 1
     if not report_valid:
         return 1

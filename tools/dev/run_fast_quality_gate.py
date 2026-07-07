@@ -33,7 +33,15 @@ from tools.dev.fast_quality_gate_contract import (
     COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
     COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE,
     FAST_QUALITY_GATE_REPORT_ID,
+    FAST_QUALITY_GATE_REQUIRED_ZERO_FIELDS,
     FAST_QUALITY_GATE_SCHEMA_VERSION,
+)
+from tools.dev.quality_gate_report_helpers import (
+    STATUS_PASSED,
+    collect_command_failures,
+    print_failed_command_details,
+    report_status_from_failures,
+    summarize_command_results,
 )
 from tools.dev.validate_fast_quality_gate_report import (
     validate_report as validate_fast_quality_gate_report,
@@ -74,6 +82,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/capture_frontend_multinode_visual_smoke.py",
                 "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
                 "tools/dev/command_runner.py",
+                "tools/dev/quality_gate_report_helpers.py",
                 "tools/dev/fast_quality_gate_contract.py",
                 "tools/dev/audit_common.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
@@ -290,29 +299,26 @@ def main() -> int:
             include_timestamps=False,
         )
         results.append(result)
-        status_icon = "OK" if result["status"] == "passed" else "FAIL"
+        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
         print(f"{status_icon} {result['name']} ({result['elapsed_seconds']}s)")
-        if args.fail_fast and result["status"] != "passed":
+        if args.fail_fast and result["status"] != STATUS_PASSED:
             break
 
-    failed = [item for item in results if item["status"] != "passed"]
+    failed = collect_command_failures(results)
     report = {
         "schema_version": FAST_QUALITY_GATE_SCHEMA_VERSION,
         "report_id": FAST_QUALITY_GATE_REPORT_ID,
         "generated_at": now_iso(),
         "started_at": started_at,
-        "status": "passed" if not failed else "failed",
-        "summary": {
-            "command_count": len(results),
-            "configured_command_count": len(commands),
-            "passed_count": len(results) - len(failed),
-            "failed_count": len(failed),
-            "fail_fast": bool(args.fail_fast),
-            "provider_call_count": 0,
-            "reads_env_file": False,
-            "world_mutation_count": 0,
-            "runtime_activation_allowed": False,
-        },
+        "status": report_status_from_failures(failed),
+        "summary": summarize_command_results(
+            results=results,
+            configured_count=len(commands),
+            fail_fast=bool(args.fail_fast),
+            configured_count_field="configured_command_count",
+            executed_count_field="command_count",
+            extra_fields=dict(FAST_QUALITY_GATE_REQUIRED_ZERO_FIELDS),
+        ),
         "results": results,
         "boundary": {
             "no_browser_automation": True,
@@ -327,10 +333,7 @@ def main() -> int:
     print(f"fast quality gate report: {args.output}")
     report_valid = self_validate_report(report, fail_fast=bool(args.fail_fast))
     if failed:
-        for item in failed:
-            print(f"failed: {item['name']}", file=sys.stderr)
-            if item.get("stderr_tail"):
-                print(item["stderr_tail"], file=sys.stderr)
+        print_failed_command_details(failed)
         return 1
     if not report_valid:
         return 1
