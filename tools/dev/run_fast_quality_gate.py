@@ -81,6 +81,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/check_browser_smoke_environment.py",
                 "tools/frontend/capture_frontend_multinode_visual_smoke.py",
                 "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
+                "tools/dev/report_status_contract.py",
                 "tools/dev/command_runner.py",
                 "tools/dev/quality_gate_report_helpers.py",
                 "tools/dev/fast_quality_gate_contract.py",

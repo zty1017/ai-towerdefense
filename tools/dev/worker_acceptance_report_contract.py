@@ -4,13 +4,12 @@
 from __future__ import annotations
 
 
-STATUS_PASSED = "passed"
-STATUS_DRY_RUN = "dry_run"
-STATUS_FAILED = "failed"
-WORKER_ACCEPTANCE_VALID_STATUSES = frozenset(
-    {
-        STATUS_PASSED,
-        STATUS_DRY_RUN,
-        STATUS_FAILED,
-    }
+from tools.dev.report_status_contract import (
+    REPORT_VALID_STATUSES,
+    STATUS_DRY_RUN,
+    STATUS_FAILED,
+    STATUS_PASSED,
 )
+
+
+WORKER_ACCEPTANCE_VALID_STATUSES = REPORT_VALID_STATUSES

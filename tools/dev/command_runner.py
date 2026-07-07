@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from tools.dev.report_status_contract import STATUS_FAILED, STATUS_PASSED
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -74,7 +76,7 @@ def run_command(
         "command": command_text(command),
         "elapsed_seconds": round(time.monotonic() - started, 3),
         "return_code": return_code,
-        "status": "passed" if return_code == 0 else "failed",
+        "status": STATUS_PASSED if return_code == 0 else STATUS_FAILED,
         "stdout_tail": stdout_tail,
         "stderr_tail": stderr_tail,
     }

@@ -8,9 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
-STATUS_PASSED = "passed"
-STATUS_FAILED = "failed"
+from tools.dev.report_status_contract import STATUS_FAILED, STATUS_PASSED
 
 
 def collect_command_failures(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
