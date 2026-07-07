@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/worker-profile-env-exec",
   "worktree": "/tmp/ai-td-task-worker-profile-env-exec",
-  "objective": "修复 run_worker_acceptance_profile.py 对 KEY=value python3 ... 前置环境变量的解析与执行，避免 py_compile 等命令在 runner 下丢失 PYTHONPYCACHEPREFIX 后写入仓库 __pycache__。",
+  "objective": "修复 run_worker_acceptance_profile.py 对 KEY=value python3 ... 前置环境变量的解析与执行，并把回归 smoke 接入 fast gate，避免 py_compile 等命令在 runner 下丢失 PYTHONPYCACHEPREFIX 后写入仓库 __pycache__。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -115,6 +115,7 @@
   "notes": [
     "本任务不读取 .env；这里只测试命令字符串内显式声明的临时环境变量。",
     "修复前 parse_command 会在第一轮扫描 env token 后丢失 env 字典，导致 runner 执行时 PYTHONPYCACHEPREFIX 不生效。",
+    "fast gate 会实际运行 env assignment smoke；premerge gate 通过 fast gate 继承该回归检查。",
     "smoke 会验证 stdout redirect 与 env assignment 可以组合使用，且输出文件只写到 /tmp。"
   ]
 }

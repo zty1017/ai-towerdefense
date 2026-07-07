@@ -30,6 +30,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
     battle_visual_tmp = "/tmp/ai_td_fast_gate_battle_visual_contract_report.json"
     battle_interaction_tmp = "/tmp/ai_td_fast_gate_battle_interaction_contract_report.json"
     release_gate_audit_tmp = "/tmp/ai_td_fast_gate_release_gate_profile_audit.json"
+    worker_env_smoke_tmp = "/tmp/ai_td_fast_gate_worker_profile_env_assignment_smoke.json"
     pycache_prefix = "/tmp/ai_td_pycache_fast_quality_gate"
     return [
         {
@@ -126,6 +127,16 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 sys.executable,
                 "tools/asset_graph/validate_map_decoration_zone_policy.py",
                 "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+            ],
+        },
+        {
+            "name": "worker_profile_env_assignment_smoke",
+            "timeout_seconds": 10,
+            "command": [
+                sys.executable,
+                "tools/dev/check_worker_acceptance_profile_env_assignments.py",
+                "--output",
+                worker_env_smoke_tmp,
             ],
         },
         {

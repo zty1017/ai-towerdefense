@@ -66,7 +66,7 @@
     "default_profile": "daily_fast",
     "profiles": {
       "daily_fast": {
-        "description": "日常快速 profile：验证 premerge gate 默认 profile、报告 validator、审计工具和 fast gate 编译覆盖。",
+        "description": "日常快速 profile：验证 premerge gate 默认 profile、报告 validator、审计工具和 fast gate 的 runner env smoke 覆盖。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate_daily python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/migrate_worker_acceptance_profiles.py tools/dev/command_runner.py",

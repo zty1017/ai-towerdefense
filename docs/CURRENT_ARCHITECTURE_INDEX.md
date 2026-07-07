@@ -175,7 +175,7 @@ shared/schemas/ + tools/ + 专题文档
 - `tools/demo/export_evidence.py`
   - 统一 demo evidence bundle 导出入口：默认 `--validation-profile full` 会运行完整 validation commands，且只有当前导出校验 `passed` 才返回 0。显式 `--validation-profile summary-only` 只用于日常本地快速查看 summary / HTML，不运行 validation commands，并在 `validation_summary.current_export_validation` 中记录 `status=skipped`、profile、`command_count=0`、`results=[]` 和跳过原因；录屏 / 最终评审仍以默认 full 导出或 `run_demo_evidence_suite.py` 为准。
 - `tools/dev/run_fast_quality_gate.py`
-  - 日常开发快速质量门：串联 Python 编译、前端语法检查、战斗视觉合同、战斗交互合同、campaign router 前端合同、map component 前端合同、release gate profile 降级审计、MVP readiness build 和 readiness validator。该入口不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，只用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以 `run_demo_evidence_suite.py` 或 `export_evidence.py` 为准。
+  - 日常开发快速质量门：串联 Python 编译、前端语法检查、战斗视觉合同、战斗交互合同、campaign router 前端合同、map component 前端合同、WorkerTaskPack runner 前置 env 执行 smoke、release gate profile 降级审计、MVP readiness build 和 readiness validator。该入口不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，只用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以 `run_demo_evidence_suite.py` 或 `export_evidence.py` 为准。
 - `tools/dev/run_premerge_quality_gate.py`、`tools/dev/validate_premerge_quality_gate_report.py`
   - 本地合并前质量门：复用 `run_fast_quality_gate.py`、WorkerTaskPack batch dry-run、batch report validator、profile audit、release gate profile 降级审计、migration dry-run 和 `git diff --check`，把常规合并前本地检查收束成一条命令。默认 `--profile premerge` 不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime；`--profile full` 会在同一报告中追加默认完整 `export_evidence.py` 导出，但仍不替代录屏 / 评审前需要真实浏览器截图时的 `run_demo_evidence_suite.py`。报告 schema 为 `premerge_quality_gate_report.v0.1`。
 - `tools/dev/run_worker_acceptance_profile.py`
