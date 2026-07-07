@@ -4,10 +4,11 @@
 This orchestrator intentionally delegates to existing tools:
 
 1. smoke-check the Generation Scheduler review-only pipeline over local HTTP;
-2. capture the browser player-flow visual smoke report;
-3. validate that report;
-4. export the redacted demo evidence bundle with the browser report attached;
-5. write a compact suite report for recording and judge Q&A.
+2. smoke-check provider runner outbox consume -> import -> prefetch-cache;
+3. capture the browser player-flow visual smoke report;
+4. validate that report;
+5. export the redacted demo evidence bundle with the browser report attached;
+6. write a compact suite report for recording and judge Q&A.
 
 It does not call providers, read .env, mutate world state, or activate runtime
 artifacts. It only produces local review/evidence files under the output root.
@@ -32,6 +33,7 @@ DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
 REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
 SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
+OUTBOX_IMPORT_REPORT_NAME = "provider_runner_handoff_outbox_import_pipeline_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
 SCHEDULER_SMOKE_RUNNERS = ("auto", "uv", "venv", "current-python")
 
@@ -111,6 +113,18 @@ def build_python_scheduler_pipeline_smoke_command(
     ]
 
 
+def build_python_outbox_import_smoke_command(
+    python_path: Path,
+    outbox_import_report_path: Path,
+) -> list[str]:
+    return [
+        str(python_path),
+        "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
+        "--output",
+        str(outbox_import_report_path),
+    ]
+
+
 def build_uv_scheduler_pipeline_smoke_command(
     scheduler_report_path: Path,
 ) -> list[str]:
@@ -123,6 +137,21 @@ def build_uv_scheduler_pipeline_smoke_command(
         "tools/dev/check_generation_scheduler_review_only_pipeline.py",
         "--output",
         str(scheduler_report_path),
+    ]
+
+
+def build_uv_outbox_import_smoke_command(
+    outbox_import_report_path: Path,
+) -> list[str]:
+    return [
+        "uv",
+        "run",
+        "--extra",
+        "dev",
+        "python",
+        "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
+        "--output",
+        str(outbox_import_report_path),
     ]
 
 
@@ -171,6 +200,44 @@ def build_scheduler_pipeline_smoke_invocation(
         "UV_PROJECT_ENVIRONMENT": str(
             output_root / "uv-venv-generation-pipeline-smoke"
         ),
+    }
+    return (
+        command,
+        env,
+        {
+            "mode": runner,
+            "uses_uv": True,
+            "uv_cache_dir": env["UV_CACHE_DIR"],
+            "uv_project_environment": env["UV_PROJECT_ENVIRONMENT"],
+        },
+    )
+
+
+def build_outbox_import_smoke_invocation(
+    args: argparse.Namespace,
+    outbox_import_report_path: Path,
+    output_root: Path,
+) -> tuple[list[str], dict[str, str], dict[str, Any]]:
+    runner, python_path = resolve_scheduler_pipeline_smoke_runner(args)
+    if python_path is not None:
+        command = build_python_outbox_import_smoke_command(
+            python_path,
+            outbox_import_report_path,
+        )
+        return (
+            command,
+            {},
+            {
+                "mode": runner,
+                "uses_uv": False,
+                "python_path": str(python_path),
+            },
+        )
+
+    command = build_uv_outbox_import_smoke_command(outbox_import_report_path)
+    env = {
+        "UV_CACHE_DIR": str(output_root / "uv-cache-outbox-import-smoke"),
+        "UV_PROJECT_ENVIRONMENT": str(output_root / "uv-venv-outbox-import-smoke"),
     }
     return (
         command,
@@ -304,13 +371,53 @@ def scheduler_pipeline_summary(report: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def outbox_import_summary(report: dict[str, Any] | None) -> dict[str, Any]:
+    if report is None:
+        return {
+            "status": "missing",
+            "step_count": 0,
+            "passed_step_count": 0,
+            "external_provider_call_count": None,
+            "runtime_activation_allowed_count": None,
+        }
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "step_count": report.get("step_count"),
+        "passed_step_count": report.get("passed_step_count"),
+        "runner_handoff_count": summary.get("runner_handoff_count"),
+        "consumer_executed_count": summary.get("consumer_executed_count"),
+        "imported_count": summary.get("imported_count"),
+        "pre_import_review_only_envelope_ready_count": summary.get(
+            "pre_import_review_only_envelope_ready_count"
+        ),
+        "prefetch_review_only_envelope_ready_count": summary.get(
+            "prefetch_review_only_envelope_ready_count"
+        ),
+        "activation_allowed_count": summary.get("activation_allowed_count"),
+        "external_provider_call_count": safety.get("external_provider_call_count"),
+        "consumer_reads_env_count": safety.get("consumer_reads_env_count"),
+        "staging_count": safety.get("staging_count"),
+        "promotion_count": safety.get("promotion_count"),
+        "queue_complete_count": safety.get("queue_complete_count"),
+        "world_mutation_count": safety.get("world_mutation_count"),
+        "runtime_activation_allowed_count": safety.get(
+            "runtime_activation_allowed_count"
+        ),
+    }
+
+
 def derive_suite_status(
     commands: list[dict[str, Any]],
     frontend_report: dict[str, Any] | None,
     evidence: dict[str, Any] | None,
     scheduler_pipeline_report: dict[str, Any] | None,
+    outbox_import_report: dict[str, Any] | None,
     allow_missing_browser: bool,
     skip_scheduler_pipeline_smoke: bool,
+    skip_outbox_import_smoke: bool,
 ) -> tuple[str, list[str]]:
     failures: list[str] = [
         f"command_failed:{item['name']}"
@@ -320,6 +427,7 @@ def derive_suite_status(
     frontend_status = (frontend_report or {}).get("status")
     evidence_status = evidence_summary(evidence).get("export_validation_status")
     scheduler_summary = scheduler_pipeline_summary(scheduler_pipeline_report)
+    outbox_summary = outbox_import_summary(outbox_import_report)
 
     if skip_scheduler_pipeline_smoke:
         pass
@@ -337,6 +445,66 @@ def derive_suite_status(
         and int(scheduler_summary.get("runtime_activation_allowed_count") or 0) != 0
     ):
         failures.append("scheduler_pipeline_runtime_activation_not_0")
+
+    if skip_outbox_import_smoke:
+        pass
+    elif outbox_summary.get("status") != "passed":
+        failures.append(f"outbox_import_smoke_status:{outbox_summary.get('status')}")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("external_provider_call_count") or 0) != 0
+    ):
+        failures.append("outbox_import_provider_call_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("consumer_reads_env_count") or 0) != 0
+    ):
+        failures.append("outbox_import_env_read_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("staging_count") or 0) != 0
+    ):
+        failures.append("outbox_import_staging_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("promotion_count") or 0) != 0
+    ):
+        failures.append("outbox_import_promotion_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("queue_complete_count") or 0) != 0
+    ):
+        failures.append("outbox_import_queue_complete_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("world_mutation_count") or 0) != 0
+    ):
+        failures.append("outbox_import_world_mutation_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("runtime_activation_allowed_count") or 0) != 0
+    ):
+        failures.append("outbox_import_runtime_activation_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and (
+            outbox_summary.get("pre_import_review_only_envelope_ready_count") is None
+            or int(outbox_summary.get("pre_import_review_only_envelope_ready_count"))
+            != 0
+        )
+    ):
+        failures.append("outbox_import_pre_import_ready_count_not_0")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("imported_count") or 0) != 2
+    ):
+        failures.append("outbox_import_imported_count_not_2")
+    if (
+        not skip_outbox_import_smoke
+        and int(outbox_summary.get("prefetch_review_only_envelope_ready_count") or 0)
+        != 2
+    ):
+        failures.append("outbox_import_prefetch_ready_count_not_2")
 
     if frontend_status == "captured":
         captured = int((frontend_report or {}).get("captured_screenshot_count") or 0)
@@ -392,6 +560,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="跳过 Generation Scheduler review-only pipeline smoke；仅用于快速调试，不建议录屏前使用。",
     )
     parser.add_argument(
+        "--skip-outbox-import-smoke",
+        action="store_true",
+        help="跳过 provider runner outbox consume/import smoke；仅用于快速调试，不建议录屏前使用。",
+    )
+    parser.add_argument(
         "--scheduler-smoke-runner",
         choices=SCHEDULER_SMOKE_RUNNERS,
         default="auto",
@@ -412,6 +585,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     output_root = args.output_root.expanduser()
     scheduler_report_path = output_root / "generation_scheduler" / SCHEDULER_PIPELINE_REPORT_NAME
+    outbox_import_report_path = output_root / "generation_scheduler" / OUTBOX_IMPORT_REPORT_NAME
     frontend_output = output_root / "frontend_flow_visual_smoke"
     frontend_report_path = frontend_output / FRONTEND_REPORT_NAME
     evidence_output = output_root / "demo_evidence"
@@ -421,6 +595,11 @@ def main(argv: list[str] | None = None) -> int:
     commands: list[dict[str, Any]] = []
     scheduler_pipeline_report: dict[str, Any] | None = None
     scheduler_pipeline_runner: dict[str, Any] = {
+        "mode": "skipped",
+        "uses_uv": False,
+    }
+    outbox_import_report: dict[str, Any] | None = None
+    outbox_import_runner: dict[str, Any] = {
         "mode": "skipped",
         "uses_uv": False,
     }
@@ -455,6 +634,33 @@ def main(argv: list[str] | None = None) -> int:
             uv_lock_path.unlink()
         if scheduler_report_path.exists():
             scheduler_pipeline_report = load_json(scheduler_report_path)
+
+    if not args.skip_outbox_import_smoke:
+        outbox_command, outbox_env, outbox_import_runner = (
+            build_outbox_import_smoke_invocation(
+                args,
+                outbox_import_report_path,
+                output_root,
+            )
+        )
+        commands.append(
+            run_command(
+                "provider_runner_handoff_outbox_import_smoke",
+                outbox_command,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+                env=outbox_env,
+            )
+        )
+        if (
+            outbox_import_runner.get("uses_uv") is True
+            and not uv_lock_existed_before
+            and uv_lock_path.exists()
+        ):
+            uv_lock_path.unlink()
+        if outbox_import_report_path.exists():
+            outbox_import_report = load_json(outbox_import_report_path)
 
     capture_command = build_capture_command(args, frontend_output)
     commands.append(
@@ -504,8 +710,10 @@ def main(argv: list[str] | None = None) -> int:
         frontend_report,
         evidence,
         scheduler_pipeline_report,
+        outbox_import_report,
         args.allow_missing_browser,
         args.skip_scheduler_pipeline_smoke,
+        args.skip_outbox_import_smoke,
     )
     report = {
         "schema_version": "demo_evidence_suite_report.v0.1",
@@ -522,6 +730,10 @@ def main(argv: list[str] | None = None) -> int:
             "generation_scheduler_pipeline_smoke_report": file_ref(
                 scheduler_report_path,
                 "generation_scheduler_review_only_pipeline_smoke_report",
+            ),
+            "provider_runner_handoff_outbox_import_smoke_report": file_ref(
+                outbox_import_report_path,
+                "provider_runner_handoff_outbox_import_pipeline_report",
             ),
             "demo_evidence_json": file_ref(
                 evidence_output / "evidence.json",
@@ -542,8 +754,12 @@ def main(argv: list[str] | None = None) -> int:
             },
         },
         "scheduler_pipeline_smoke_runner": scheduler_pipeline_runner,
+        "outbox_import_smoke_runner": outbox_import_runner,
         "generation_scheduler_review_only_pipeline_smoke": scheduler_pipeline_summary(
             scheduler_pipeline_report
+        ),
+        "provider_runner_handoff_outbox_import_smoke": outbox_import_summary(
+            outbox_import_report
         ),
         "frontend_flow_visual_smoke": browser_flow_summary(frontend_report),
         "demo_evidence": evidence_summary(evidence),
@@ -558,6 +774,7 @@ def main(argv: list[str] | None = None) -> int:
             "scheduler_pipeline_smoke_skipped": bool(
                 args.skip_scheduler_pipeline_smoke
             ),
+            "outbox_import_smoke_skipped": bool(args.skip_outbox_import_smoke),
         },
     }
     write_json(suite_report_path, report)

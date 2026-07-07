@@ -1,0 +1,89 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-36-demo-suite-outbox-import-smoke",
+  "title": "Demo evidence suite outbox import smoke",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/demo-suite-outbox-import-smoke",
+  "worktree": "/tmp/ai-td-task-demo-suite-outbox-import-smoke",
+  "objective": "把 provider runner handoff outbox consume -> import -> prefetch-cache 严格 smoke 纳入默认 demo evidence suite，并在 suite report 中记录报告文件、runner 信息、核心安全计数和导入前后 prefetch-cache 因果断言。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
+    "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+    "tools/demo/export_evidence.py",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "README.md"
+  ],
+  "allowed_paths": [
+    "tools/demo/run_demo_evidence_suite.py",
+    "README.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py",
+    "python3 tools/demo/run_demo_evidence_suite.py --help",
+    "python3 -c \"from pathlib import Path; from tools.demo.run_demo_evidence_suite import build_outbox_import_smoke_invocation, parse_args; args=parse_args(['--scheduler-smoke-runner','uv']); command, env, runner=build_outbox_import_smoke_invocation(args, Path('/tmp/outbox.json'), Path('/tmp/out')); assert command[:4]==['uv','run','--extra','dev']; assert command[-2:]==['--output','/tmp/outbox.json']; assert runner['mode']=='uv' and runner['uses_uv'] is True and 'UV_CACHE_DIR' in env; args=parse_args(['--scheduler-python','/tmp/python']); command, env, runner=build_outbox_import_smoke_invocation(args, Path('/tmp/outbox.json'), Path('/tmp/out')); assert command[0]=='/tmp/python' and command[-2:]==['--output','/tmp/outbox.json']; assert runner['mode']=='explicit-python' and runner['uses_uv'] is False and env=={}\"",
+    "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_outbox_import_check --command-timeout 180",
+    "python3 -c \"import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); outbox=report['provider_runner_handoff_outbox_import_smoke']; command_names=[item['name'] for item in report['commands']]; assert outbox['status']=='passed'; assert outbox['imported_count']==2; assert outbox['pre_import_review_only_envelope_ready_count']==0; assert outbox['prefetch_review_only_envelope_ready_count']==2; assert outbox['external_provider_call_count']==0; assert outbox['consumer_reads_env_count']==0; assert outbox['staging_count']==0; assert outbox['promotion_count']==0; assert outbox['queue_complete_count']==0; assert outbox['world_mutation_count']==0; assert outbox['runtime_activation_allowed_count']==0; assert report['safety_summary']['outbox_import_smoke_skipped'] is False; assert 'provider_runner_handoff_outbox_import_smoke' in command_names\"",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只把已存在的严格本地 outbox import smoke 串入 demo evidence suite，不新增 provider、后端接口、前端 UI 或素材生成能力。",
+    "outbox import smoke 会启动临时本地后端和临时 SQLite，只产生 review-only evidence；provider 调用、env read、world mutation 和 runtime activation 计数必须保持 0。",
+    "`--skip-outbox-import-smoke` 仅用于本地快速调试，不建议录屏 / 评审前使用。",
+    "suite 输出仍写入 /tmp 或调用者指定的 output root；不把截图、evidence bundle、smoke report 或临时 SQLite 提交到仓库。"
+  ]
+}

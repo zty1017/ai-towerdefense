@@ -4383,6 +4383,41 @@ python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/
 git diff --check
 ```
 
+### P1-D-36 Demo evidence suite outbox import smoke
+
+状态：已完成一键套件集成。
+
+目标：
+
+```text
+把已经独立通过的 provider runner outbox consume -> import -> prefetch-cache 严格 smoke 纳入默认 demo evidence suite，避免录屏 / 评审前只跑 scheduler pipeline smoke 而遗漏外部 runner 回灌链路。
+```
+
+已落地：
+
+- `tools/demo/run_demo_evidence_suite.py`：新增默认步骤 `provider_runner_handoff_outbox_import_smoke`，在浏览器玩家链路截图前运行。
+- suite report 新增 `provider_runner_handoff_outbox_import_smoke_report` 文件引用、`outbox_import_smoke_runner` 和 `provider_runner_handoff_outbox_import_smoke` 摘要。
+- suite 状态会检查 outbox import smoke 必须 `passed`，且 provider call、env read、staging、promotion、queue complete、world mutation、runtime activation 都为 0。
+- suite 状态还会检查导入前 `review_only_envelope_ready_count=0`、导入后 `prefetch_review_only_envelope_ready_count=2`、`imported_count=2`。
+- 新增 `--skip-outbox-import-smoke` 快速调试开关；录屏 / 评审前不建议使用。
+- `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步说明完整 suite 默认包含 outbox import smoke。
+- `examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 不调用 provider、不读取 `.env`、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 该 suite 仍只是本地 evidence 编排；它证明外部 runner 回灌链路可重复，不代表 live provider、真实图生视频或 runtime package 构建已完成。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_outbox_import_check --command-timeout 180
+python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); outbox=report['provider_runner_handoff_outbox_import_smoke']; command_names=[item['name'] for item in report['commands']]; assert outbox['status']=='passed'; assert outbox['imported_count']==2; assert outbox['pre_import_review_only_envelope_ready_count']==0; assert outbox['prefetch_review_only_envelope_ready_count']==2; assert outbox['external_provider_call_count']==0; assert outbox['runtime_activation_allowed_count']==0; assert report['safety_summary']['outbox_import_smoke_skipped'] is False; assert 'provider_runner_handoff_outbox_import_smoke' in command_names"
+git diff --check
+```
+
 ### P1-MAP-34 MapTemplateCatalog v0.1
 
 状态：已完成最薄开发者侧候选目录。
