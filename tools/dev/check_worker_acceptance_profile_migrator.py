@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
-import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -18,25 +16,14 @@ from tools.dev.command_runner import now_iso  # noqa: E402
 from tools.dev.migrate_worker_acceptance_profiles import (  # noqa: E402
     build_report,
     candidate_paths,
-    write_json,
 )
+from tools.dev.report_io import load_json_object, write_json  # noqa: E402
 from tools.dev.validate_worker_task_pack import validate  # noqa: E402
 
 
 REPORT_SCHEMA_VERSION = "worker_acceptance_profile_migrator_smoke_report.v0.1"
 DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_migrator_smoke_report.v0.1.json")
 ELIGIBLE_SOURCE = ROOT / "examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json"
-INCOMPATIBLE_SOURCE = (
-    ROOT / "examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json"
-)
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be object")
-    return data
 
 
 def require_tmp_output(path: Path) -> Path:
@@ -51,15 +38,23 @@ def prepare_fixture_dir(root: Path) -> tuple[Path, Path]:
     eligible = root / "eligible.v0.1.json"
     incompatible = root / "incompatible.v0.1.json"
 
-    eligible_data = load_json(ELIGIBLE_SOURCE)
+    eligible_data = load_json_object(ELIGIBLE_SOURCE)
     eligible_data.pop("acceptance_profile", None)
-    write_json(eligible, eligible_data)
-    shutil.copyfile(INCOMPATIBLE_SOURCE, incompatible)
+    write_json(eligible, eligible_data, sort_keys=False)
+
+    incompatible_data = load_json_object(ELIGIBLE_SOURCE)
+    incompatible_data.pop("acceptance_profile", None)
+    incompatible_data["task_id"] = "worker-profile-migrator-smoke-incompatible"
+    incompatible_data["title"] = "Migrator smoke temporary shell-only fixture"
+    incompatible_data["acceptance_commands"] = [
+        "python3 -c \"print('shell-only fixture')\" | tee /tmp/worker_profile_migrator_pipe.txt"
+    ]
+    write_json(incompatible, incompatible_data, sort_keys=False)
     return eligible, incompatible
 
 
 def assert_profile_valid(path: Path) -> None:
-    data = load_json(path)
+    data = load_json_object(path)
     validate(data)
     profile = data.get("acceptance_profile")
     assert isinstance(profile, dict), "eligible fixture was not migrated"
@@ -76,7 +71,7 @@ def assert_profile_valid(path: Path) -> None:
 
 
 def assert_incompatible_unchanged(path: Path) -> None:
-    data = load_json(path)
+    data = load_json_object(path)
     validate(data)
     assert "acceptance_profile" not in data, "incompatible fixture should be skipped"
 
@@ -126,7 +121,7 @@ def main() -> int:
     try:
         output = require_tmp_output(args.output)
         report = run_smoke()
-        write_json(output, report)
+        write_json(output, report, sort_keys=False)
     except Exception as exc:  # noqa: BLE001 - smoke should print concise failure.
         print(f"worker acceptance profile migrator smoke failed: {exc}", file=sys.stderr)
         return 1

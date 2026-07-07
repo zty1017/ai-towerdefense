@@ -92,6 +92,8 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/dev/audit_common.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
                 "tools/dev/audit_release_gate_profiles.py",
+                "tools/dev/migrate_worker_acceptance_profiles.py",
+                "tools/dev/check_worker_acceptance_profile_migrator.py",
                 "tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py",
                 "tools/dev/check_generation_scheduler_review_only_pipeline.py",
                 "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",

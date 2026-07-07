@@ -9,7 +9,6 @@ run_worker_acceptance_profile.py without shell-only syntax.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -24,26 +23,13 @@ from tools.dev.audit_worker_acceptance_profiles import (  # noqa: E402
     require_tmp_output,
 )
 from tools.dev.command_runner import now_iso  # noqa: E402
+from tools.dev.report_io import load_json_object, write_json  # noqa: E402
 from tools.dev.validate_worker_task_pack import validate  # noqa: E402
 
 
 REPORT_SCHEMA_VERSION = "worker_acceptance_profile_migration_report.v0.1"
 DEFAULT_TASK_PACK_DIR = Path("examples/worker_task_packs")
 DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_migration_report.v0.1.json")
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError("WorkerTaskPack root must be an object")
-    return data
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2)
-        handle.write("\n")
 
 
 def resolve_task_pack(path: Path) -> Path:
@@ -157,7 +143,7 @@ def migrate_one(path: Path, *, write: bool) -> dict[str, Any]:
         ]
         return result
 
-    data = load_json(path)
+    data = load_json_object(path)
     commands = data["acceptance_commands"]
     profile = build_acceptance_profile(commands)
     proposed = insert_after_key(data, "acceptance_commands", "acceptance_profile", profile)
@@ -173,7 +159,7 @@ def migrate_one(path: Path, *, write: bool) -> dict[str, Any]:
     )
 
     if write:
-        write_json(path, proposed)
+        write_json(path, proposed, sort_keys=False)
         result["write_applied"] = True
     return result
 
@@ -273,7 +259,7 @@ def main() -> int:
     except Exception as exc:  # noqa: BLE001 - CLI reports concise failure.
         print(f"worker acceptance profile migration failed: {exc}", file=sys.stderr)
         return 2
-    write_json(output_path, report)
+    write_json(output_path, report, sort_keys=False)
     summary = report["summary"]
     action = "migrated" if args.write else "would migrate"
     print(f"worker acceptance profile migration report: {output_path}")
