@@ -25,6 +25,7 @@
 - Validator: `tools/dev/validate_worker_task_pack.py`
 - 示例: `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
 - 验收 profile 示例: `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`
+- 验收 profile 迁移审计: `tools/dev/audit_worker_acceptance_profiles.py`
 
 ## 必读事实源
 
@@ -164,9 +165,28 @@ python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1
 - 不传 `--profile` 时使用 `acceptance_profile.default_profile`；`--list-profiles` 只列出 profile 并退出 0，不执行命令。
 - `--dry-run` 只解析和列出将运行的命令，报告状态为 `dry_run`。
 - runner 不使用 shell。命令字符串通过 `shlex.split` 转成 argv，支持 `PYTHONPYCACHEPREFIX=/tmp/x python3 ...` 这类前置环境变量 token。
-- runner 会拒绝 `|`、`<`、`>`、`&&`、`||`、反引号和 `$(` 等 shell-only 语法；遇到不支持语法时该命令记为 `failed/unsupported_command_syntax`，不会执行。
+- runner 会拒绝 `|`、`<`、`>`、`;`、`&&`、`||`、反引号和 `$(` 等 shell-only 语法；遇到不支持语法时该命令记为 `failed/unsupported_command_syntax`，不会执行。
 - 输出报告默认写入 `/tmp/worker_acceptance_profile_run_report.v0.1.json`，schema 为 `worker_acceptance_profile_run_report.v0.1`。
 - 没有 `acceptance_profile` 的旧任务包会直接失败并提示手动运行 `acceptance_commands`，避免把旧平铺命令误读成 profile。
+
+### Profile migration audit
+
+`tools/dev/audit_worker_acceptance_profiles.py` 是只读迁移审计入口，用于分析现有 `examples/worker_task_packs/*.json` 是否已经迁移到 `acceptance_profile`，并指出哪些旧包适合迁移、哪些命令需要人工处理：
+
+```bash
+python3 tools/dev/audit_worker_acceptance_profiles.py
+python3 tools/dev/audit_worker_acceptance_profiles.py --task-pack-dir examples/worker_task_packs --output /tmp/worker_acceptance_profile_audit_report.json --max-samples 8
+```
+
+规则：
+
+- 审计会扫描 `--task-pack-dir` 下的 `*.json`，默认目录为 `examples/worker_task_packs`。
+- 审计复用 `tools/dev/validate_worker_task_pack.py` 的 `validate()`，但不会执行任何被扫描任务包里的 `acceptance_commands` 或 `acceptance_profile` 命令。
+- 审计复用 `tools/dev/run_worker_acceptance_profile.py` 的 `parse_command()` 判断 runner 兼容性；here-doc、管道、重定向、分号连接、逻辑连接、命令替换等 shell-only 命令只会被标记为需要人工处理，不会让整次 audit 失败。
+- 报告默认写入 `/tmp/worker_acceptance_profile_audit_report.v0.1.json`，schema 为 `worker_acceptance_profile_audit_report.v0.1`。
+- 报告包含 summary、逐包 top-level/profile 命令分类、runner 兼容性计数、迁移建议，以及 `without_profile_samples`、`full_export_samples`、`manual_review_samples`、`migration_candidate_samples`。
+- 无 `acceptance_profile` 且 validator 通过的旧包会被标记为 migration candidate；若顶层含完整 `tools/demo/export_evidence.py --output-dir`，建议拆成 `daily_fast` 的快速/summary-only profile 和 `full_evidence` 的完整证据 profile。
+- 该工具只审计和写仓库外 `/tmp` 报告；`--output` 指向仓库内路径或其他非 `/tmp` 路径时会失败，不修改旧任务包，不替代人工迁移、最终 evidence、demo suite 或合并前审查。
 
 ## 验收
 

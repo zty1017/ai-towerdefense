@@ -24,7 +24,7 @@ DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_run_report.v0.1.json")
 OUTPUT_TAIL_LIMIT = 1200
 ENV_ASSIGNMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 SHELL_ONLY_EXACT_TOKENS = {"&&", "||"}
-SHELL_ONLY_TOKEN_CHARS = {"|", "<", ">"}
+SHELL_ONLY_TOKEN_CHARS = {"|", "<", ">", ";"}
 SHELL_ONLY_SUBSTRINGS = ("`", "$(")
 
 
