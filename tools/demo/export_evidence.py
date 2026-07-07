@@ -113,6 +113,8 @@ PATHS = {
     / "examples/review_packs/mvp_generation_schedule_plan.v0.1.json",
     "generation_schedule_run_report": ROOT
     / "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+    "generation_scheduler_review_only_pipeline_smoke_report": ROOT
+    / "examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json",
     "generation_executor_run_request": ROOT
     / "examples/generation_executor_requests/p1b_generation_executor_run_request.example.json",
     "provider_execution_authorization": ROOT
@@ -910,6 +912,15 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/scheduler/validate_generation_schedule_run_report.py",
             "examples/review_packs/mvp_generation_schedule_run_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "generation_scheduler_review_only_pipeline_smoke_report",
+        "command": [
+            "python3",
+            "-m",
+            "json.tool",
+            "examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json",
         ],
     },
     {
@@ -3429,7 +3440,51 @@ def collect_scheduler_background_handoff_tick_summary() -> dict[str, Any]:
     }
 
 
-def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any]) -> dict[str, Any]:
+def collect_generation_scheduler_review_only_pipeline_smoke(
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    checks = as_obj(report.get("checks"))
+    return {
+        "report_id": report.get("report_id"),
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "transport": report.get("transport"),
+        "step_count": report.get("step_count"),
+        "passed_step_count": report.get("passed_step_count"),
+        "background_handoff_status": summary.get("background_handoff_status"),
+        "background_handoff_dispatched_count": summary.get("background_handoff_dispatched_count"),
+        "background_handoff_runner_handoff_count": summary.get("background_handoff_runner_handoff_count"),
+        "background_handoff_outbox_schema_version": summary.get("background_handoff_outbox_schema_version"),
+        "background_handoff_outbox_mode": summary.get("background_handoff_outbox_mode"),
+        "handoff_prefetch_status_counts": summary.get("handoff_prefetch_status_counts"),
+        "handoff_activation_status_counts": summary.get("handoff_activation_status_counts"),
+        "default_chain_status": summary.get("default_chain_status"),
+        "default_chain_promotion_allowed_count": summary.get("default_chain_promotion_allowed_count"),
+        "image_chain_staging_status": summary.get("image_chain_staging_status"),
+        "image_chain_promotion_decision": summary.get("image_chain_promotion_decision"),
+        "shared_cache_indexed_count_after_blocked_default_chain": summary.get(
+            "shared_cache_indexed_count_after_blocked_default_chain"
+        ),
+        "target_shared_cache_record_count": summary.get("target_shared_cache_record_count"),
+        "target_hit_count": summary.get("target_hit_count"),
+        "positive_shared_cache_reuse_path": summary.get("positive_shared_cache_reuse_path"),
+        "external_provider_call_count": safety.get("external_provider_call_count"),
+        "world_mutation_count": safety.get("world_mutation_count"),
+        "runtime_activation_allowed_count": safety.get("runtime_activation_allowed_count"),
+        "runtime_package_write_count": safety.get("runtime_package_write_count"),
+        "world_delta_transaction_write_count": safety.get("world_delta_transaction_write_count"),
+        "checks": checks,
+        "known_limits": as_list(report.get("known_limits")),
+    }
+
+
+def collect_generation_scheduler(
+    plan: dict[str, Any],
+    run_report: dict[str, Any],
+    pipeline_smoke_report: dict[str, Any],
+) -> dict[str, Any]:
     items = [item for item in as_list(plan.get("items")) if isinstance(item, dict)]
     provider_modes: Counter[str] = Counter()
     for item in items:
@@ -3450,6 +3505,9 @@ def collect_generation_scheduler(plan: dict[str, Any], run_report: dict[str, Any
         "provider_runner_handoff": collect_provider_runner_handoff_summary(),
         "background_executor_tick": collect_scheduler_background_tick_summary(),
         "background_handoff_tick": collect_scheduler_background_handoff_tick_summary(),
+        "review_only_pipeline_smoke": collect_generation_scheduler_review_only_pipeline_smoke(
+            pipeline_smoke_report
+        ),
         "control_plane_only": as_obj(plan.get("authority")).get("control_plane_only"),
         "calls_provider_during_build": as_obj(plan.get("authority")).get("schedule_builder_calls_provider"),
         "reads_env_during_build": as_obj(plan.get("authority")).get("schedule_builder_reads_env"),
@@ -4345,6 +4403,10 @@ def collect_source_files() -> list[dict[str, Any]]:
         ("generation_schedule_plan", PATHS["generation_schedule_plan"]),
         ("generation_schedule_run_report", PATHS["generation_schedule_run_report"]),
         (
+            "generation_scheduler_review_only_pipeline_smoke_report",
+            PATHS["generation_scheduler_review_only_pipeline_smoke_report"],
+        ),
+        (
             "generation_executor_run_request",
             PATHS["generation_executor_run_request"],
         ),
@@ -4690,6 +4752,9 @@ def build_evidence(
     )
     generation_schedule_plan = load_json(PATHS["generation_schedule_plan"])
     generation_schedule_run_report = load_json(PATHS["generation_schedule_run_report"])
+    generation_scheduler_review_only_pipeline_smoke_report = load_json(
+        PATHS["generation_scheduler_review_only_pipeline_smoke_report"]
+    )
     generation_executor_run_request = load_json(
         PATHS["generation_executor_run_request"]
     )
@@ -4910,6 +4975,7 @@ def build_evidence(
         "generation_scheduler": collect_generation_scheduler(
             generation_schedule_plan,
             generation_schedule_run_report,
+            generation_scheduler_review_only_pipeline_smoke_report,
         ),
         "generation_executor_run_request": collect_generation_executor_run_request(
             generation_executor_run_request
@@ -5336,6 +5402,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     background_tick_safety = as_obj(background_tick.get("safety"))
     background_handoff_tick = as_obj(scheduler.get("background_handoff_tick"))
     background_handoff_safety = as_obj(background_handoff_tick.get("safety"))
+    pipeline_smoke = as_obj(scheduler.get("review_only_pipeline_smoke"))
     provider_staging = as_obj(evidence.get("provider_artifact_staging"))
     provider_staging_source = as_obj(provider_staging.get("source"))
     provider_staging_promotion = as_obj(provider_staging.get("promotion_gate"))
@@ -5552,6 +5619,8 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- runner handoff：`{provider_runner_handoff.get('status')}`，video 边界：`{provider_runner_handoff.get('video_boundary_status')}`，roundtrip cache：`{provider_runner_handoff_roundtrip.get('expected_cache_status')}`，runtime 激活：`{provider_runner_handoff_roundtrip.get('runtime_activation_allowed')}`",
         f"- background tick：`{background_tick.get('status')}`，默认预算：`{background_tick.get('default_max_items')}`，provider 调用：`{background_tick_safety.get('api_calls_provider')}`，runtime 激活：`{background_tick_safety.get('api_activates_runtime')}`",
         f"- background handoff tick：`{background_handoff_tick.get('status')}`，outbox：`{background_handoff_tick.get('outbox_status')}`，video 边界：`{background_handoff_tick.get('video_boundary_status')}`，handoff 数：`{background_handoff_tick.get('expected_runner_handoff_count')}`，运行 adapter：`{background_handoff_safety.get('api_runs_provider_adapter')}`",
+        f"- review-only pipeline smoke：`{pipeline_smoke.get('status')}`，HTTP 步骤 `{pipeline_smoke.get('passed_step_count')}` / `{pipeline_smoke.get('step_count')}`，handoff `{pipeline_smoke.get('background_handoff_runner_handoff_count')}` 个，outbox `{pipeline_smoke.get('background_handoff_outbox_schema_version')}`",
+        f"- pipeline safety：provider 调用 `{pipeline_smoke.get('external_provider_call_count')}`，世界修改 `{pipeline_smoke.get('world_mutation_count')}`，runtime 激活 `{pipeline_smoke.get('runtime_activation_allowed_count')}`，shared cache 正向路径 `{pipeline_smoke.get('positive_shared_cache_reuse_path')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),
         "",

@@ -1,0 +1,88 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-58-generation-scheduler-review-only-pipeline-smoke",
+  "title": "Generation Scheduler review-only pipeline smoke",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/generation-scheduler-review-pipeline-smoke",
+  "worktree": "/tmp/ai-td-task-generation-scheduler-review-pipeline-smoke",
+  "objective": "新增一个本地 HTTP smoke 脚本，把 Generation Scheduler 的 fixture-backed executor chain、prefetch-cache、activation gate、shared cache 空命中和 image_failure 负样本串成可重复验收报告，同时不调用 provider、不读取 .env、不写世界状态、不激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "tools/dev/check_mvp_primary_api_flow.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+    "examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json",
+    "examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json",
+    "tools/demo/export_evidence.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/db.py",
+    "shared/schemas/",
+    "tools/provider_adapter/",
+    "tools/llm/",
+    "frontend/",
+    "game_data/",
+    "content/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_scheduler_review_only_pipeline_smoke python3 -m py_compile tools/dev/check_generation_scheduler_review_only_pipeline.py tools/demo/export_evidence.py tools/dev/run_fast_quality_gate.py",
+    "UV_CACHE_DIR=/tmp/ai-td-uv-cache-generation-pipeline-smoke UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-generation-pipeline-smoke uv run --extra dev python tools/dev/check_generation_scheduler_review_only_pipeline.py --output /tmp/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00",
+    "rm -f uv.lock",
+    "python3 -m json.tool examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json",
+    "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/generation_scheduler_review_only_pipeline_smoke_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不新增后端能力，只编排已有 fixture-backed 安全接口。",
+    "脚本主路径必须走 run-review-only-background-handoff-tick，并断言 outbox / runner_handoff / video_boundary / unsafe metadata 负例。",
+    "脚本必须诚实记录 positive_shared_cache_reuse_path=not_exercised_no_approved_promotion_fixture，不能把空 shared cache 当作正向复用成功。",
+    "默认 fixture 与 image_failure fixture 都必须保持 promotion blocked / activation_allowed_count=0。",
+    "该 smoke 使用临时 SQLite 和本地 uvicorn，只用于开发 / 演示证据，不进入玩家体验。"
+  ]
+}

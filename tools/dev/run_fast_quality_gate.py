@@ -45,6 +45,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/validate_map_component_frontend_contract.py",
                 "tools/dev/command_runner.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
+                "tools/dev/check_generation_scheduler_review_only_pipeline.py",
                 "tools/dev/run_fast_quality_gate.py",
                 "tools/dev/run_worker_acceptance_profile.py",
                 "tools/asset_graph/build_map_template_catalog.py",

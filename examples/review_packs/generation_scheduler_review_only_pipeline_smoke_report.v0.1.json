@@ -1,0 +1,276 @@
+{
+  "checks": {
+    "activation_gate_blocks_default_chain": true,
+    "activation_gate_blocks_image_failure_chain": true,
+    "background_handoff_stops_before_provider_execution": true,
+    "background_handoff_tick_exported": true,
+    "blocked_default_chain_not_indexed": true,
+    "default_fixture_chain_promotion_blocked": true,
+    "handoff_activation_gate_blocks_runtime": true,
+    "handoff_artifact_ledger_has_no_staging_or_promotion": true,
+    "handoff_prefetch_has_review_only_envelopes": true,
+    "image_failure_chain_validation_failed": true,
+    "reuse_without_hit_rejected": true,
+    "shared_cache_empty_without_approved_fixture": true,
+    "target_hit_view_empty": true
+  },
+  "endpoint_steps": [
+    {
+      "endpoint_template": "/api/sessions",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_handoff_session"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick",
+      "method": "POST",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "run_background_handoff_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/queue",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "handoff_session_queue_after_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/worker-cache",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "handoff_session_worker_cache_after_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/artifact-ledger",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "handoff_session_artifact_ledger_after_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/prefetch-cache",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "handoff_prefetch_cache_after_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/activation-gate",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "handoff_activation_gate_after_tick"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick",
+      "method": "POST",
+      "passed": true,
+      "status_code": 409,
+      "step_id": "background_handoff_tick_rejects_targeted_metadata"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-review-only-background-handoff-tick",
+      "method": "POST",
+      "passed": true,
+      "status_code": 409,
+      "step_id": "background_handoff_tick_rejects_large_batch"
+    },
+    {
+      "endpoint_template": "/api/sessions",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_fixture_session"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain",
+      "method": "POST",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "run_default_fixture_executor_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/prefetch-cache",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "fixture_prefetch_cache_after_default_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/activation-gate",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "fixture_activation_gate_after_default_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/index-shared-prefetch-cache",
+      "method": "POST",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "index_shared_cache_after_blocked_default_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_image_failure_session"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-fixture-executor-chain",
+      "method": "POST",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "run_image_failure_fixture_executor_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/prefetch-cache",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "image_prefetch_cache_after_failure_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/activation-gate",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "image_activation_gate_after_failure_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_target_session"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/runs",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_target_generation_run"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/shared-prefetch-cache",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "target_shared_prefetch_cache"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/shared-prefetch-cache/hits",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "target_shared_prefetch_cache_hits"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/record-shared-prefetch-cache-reuse-candidate",
+      "method": "POST",
+      "passed": true,
+      "status_code": 409,
+      "step_id": "target_reuse_candidate_rejected_without_hit"
+    }
+  ],
+  "generated_at": "2026-07-07T00:00:00+00:00",
+  "known_limits": [
+    "background handoff tick 只导出外部 runner outbox，不执行真实 runner。",
+    "没有 approved promotion fixture，因此本 smoke 不制造 shared cache 正向命中。",
+    "promotion_allowed 的正向索引仍由后端单元测试覆盖；正式 runtime package / WorldStateDeltaTransaction builder 仍是后续任务。"
+  ],
+  "passed_step_count": 23,
+  "report_id": "generation_scheduler_review_only_pipeline_smoke_report_v0_1",
+  "safety_summary": {
+    "external_provider_call_count": 0,
+    "handoff_outbox_promotes_provider_artifacts": false,
+    "handoff_outbox_runs_provider_adapter": false,
+    "handoff_outbox_stages_provider_artifacts": false,
+    "queue_completion_count": 0,
+    "reads_env_file": false,
+    "runtime_activation_allowed_count": 0,
+    "runtime_package_write_count": 0,
+    "shared_cache_positive_path_not_claimed": true,
+    "world_delta_transaction_write_count": 0,
+    "world_mutation_count": 0,
+    "world_state_write_scope": "temporary_test_sqlite"
+  },
+  "schema_version": "generation_scheduler_review_only_pipeline_smoke_report.v0.1",
+  "sessions": {
+    "fixture_session_id_present": true,
+    "handoff_session_id_present": true,
+    "image_failure_session_id_present": true,
+    "target_session_id_present": true
+  },
+  "status": "passed",
+  "step_count": 23,
+  "summary": {
+    "background_handoff_dispatched_count": 2,
+    "background_handoff_outbox_mode": "external_runner_required",
+    "background_handoff_outbox_schema_version": "provider_adapter_runner_handoff_outbox.v0.1",
+    "background_handoff_review_only": true,
+    "background_handoff_runner_handoff_count": 2,
+    "background_handoff_status": "handoff_tick_exported",
+    "background_handoff_stop_reason": "budget_exhausted",
+    "default_activation_status_counts": {
+      "blocked_promotion_report": 1,
+      "not_applicable_locked_or_fallback_source": 4,
+      "queued_or_not_ready": 3
+    },
+    "default_chain_artifact_profile": "default",
+    "default_chain_ledger_item_count": 6,
+    "default_chain_promotion_allowed_count": 0,
+    "default_chain_status": "completed_review_only_promotion_blocked",
+    "default_prefetch_status_counts": {
+      "completed": 3,
+      "fallback_ready": 1,
+      "promotion_blocked": 1,
+      "queued": 3
+    },
+    "handoff_activation_status_counts": {
+      "blocked_staging_or_promotion_required": 2,
+      "not_applicable_locked_or_fallback_source": 4,
+      "queued_or_not_ready": 2
+    },
+    "handoff_forbidden_key_scan": "passed",
+    "handoff_ledger_item_count": 8,
+    "handoff_prefetch_status_counts": {
+      "completed": 3,
+      "fallback_ready": 1,
+      "queued": 2,
+      "review_only_envelope_ready": 2
+    },
+    "handoff_queue_status_counts": {
+      "completed": 3,
+      "fallback_ready": 1,
+      "queued": 2,
+      "waiting_review": 2
+    },
+    "handoff_worker_cache_item_count": 2,
+    "image_activation_status_counts": {
+      "blocked_promotion_report": 1,
+      "not_applicable_locked_or_fallback_source": 4,
+      "queued_or_not_ready": 3
+    },
+    "image_chain_artifact_profile": "image_failure",
+    "image_chain_promotion_decision": "blocked_validation_failed",
+    "image_chain_staging_status": "validation_failed",
+    "image_chain_status": "completed_review_only_promotion_blocked",
+    "image_prefetch_status_counts": {
+      "completed": 3,
+      "fallback_ready": 1,
+      "promotion_blocked": 1,
+      "queued": 3
+    },
+    "positive_shared_cache_reuse_path": "not_exercised_no_approved_promotion_fixture",
+    "reuse_without_hit_rejected_status": 409,
+    "shared_cache_indexed_count_after_blocked_default_chain": 0,
+    "target_hit_count": 0,
+    "target_shared_cache_record_count": 0
+  },
+  "transport": "local_uvicorn_http"
+}

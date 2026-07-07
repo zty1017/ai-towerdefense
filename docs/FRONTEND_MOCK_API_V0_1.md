@@ -421,6 +421,19 @@ activation_status = blocked_runtime_package_or_world_delta_required
 - 不写世界状态。
 - 不激活 runtime。
 
+### 调度闭环 smoke 脚本
+
+```bash
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-generation-pipeline-smoke \
+UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-generation-pipeline-smoke \
+uv run --extra dev python tools/dev/check_generation_scheduler_review_only_pipeline.py \
+  --output /tmp/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json
+```
+
+该脚本不是玩家侧接口，而是开发 / Studio / 演示证据入口。它会启动临时本地后端和临时 SQLite，通过真实 HTTP 走通 `run-review-only-background-handoff-tick`、queue、worker cache、artifact ledger、prefetch-cache、activation-gate、fixture executor chain、image failure 负样本、shared cache 空命中和 reuse 409 阻断。
+
+报告固定记录：provider 调用 0、世界修改 0、runtime 激活 0、runtime package 写入 0、WorldStateDeltaTransaction 写入 0。它不能证明 live provider、真实图生视频、自动 staging / promotion、玩家侧内容发布或 runtime 激活已经完成。
+
 ### 导出外部 runner handoff
 
 ```http

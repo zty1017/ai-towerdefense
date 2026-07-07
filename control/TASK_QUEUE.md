@@ -3927,6 +3927,49 @@ rg -n "record-shared-prefetch-cache-reuse-candidate|shared_prefetch_cache_reuse_
 git diff --check
 ```
 
+### P1-B Generation Scheduler review-only pipeline smoke
+
+状态：已完成本地 HTTP 闭环 smoke。
+
+目标：
+
+```text
+把已有 review-only scheduler worker 入口串成一份可重复 smoke 证据，减少演示和开发时手动调用多个 endpoint 的成本，同时保持 provider / world / runtime 边界不被放宽。
+```
+
+已落地：
+
+- `tools/dev/check_generation_scheduler_review_only_pipeline.py`：启动临时 uvicorn 与临时 SQLite，使用真实 localhost HTTP 跑调度闭环 smoke。
+- `examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json`：固定示例报告，当前 `status=passed`，23 个 HTTP 步骤通过。
+- `tools/demo/export_evidence.py`：新增 `generation_scheduler.review_only_pipeline_smoke` 摘要，并在 summary.md 展示 handoff outbox、步骤数和安全计数。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步脚本定位与边界。
+- `examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json`：新增本轮 worker task pack。
+
+覆盖：
+
+- 主路径：`run-review-only-background-handoff-tick -> queue / worker-cache / artifact-ledger / prefetch-cache / activation-gate`。
+- 负向边界：handoff tick 拒绝 targeted metadata 与过大 `max_items`。
+- 负样本：默认 fixture executor chain 保持 promotion blocked；`image_failure` 保持 validation failed / blocked validation failed。
+- shared cache：blocked default chain 不会被索引；没有 approved promotion fixture 时，shared cache hit 为空，reuse candidate 返回 409。
+
+边界：
+
+- 不调用 provider、不读取 `.env`、不运行真实 provider adapter、不 staging 自动化、不 promotion 自动化、不 complete queue item、不写世界状态、不激活 runtime。
+- 不声明 live provider、真实图生视频、runtime package builder、WorldStateDeltaTransaction builder 或玩家侧发布已经完成。
+- `positive_shared_cache_reuse_path=not_exercised_no_approved_promotion_fixture` 是刻意保留的诚实限制；正向 promotion_allowed 索引仍由后端单元测试覆盖。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_scheduler_review_only_pipeline_smoke python3 -m py_compile tools/dev/check_generation_scheduler_review_only_pipeline.py tools/demo/export_evidence.py tools/dev/run_fast_quality_gate.py
+UV_CACHE_DIR=/tmp/ai-td-uv-cache-generation-pipeline-smoke UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-generation-pipeline-smoke uv run --extra dev python tools/dev/check_generation_scheduler_review_only_pipeline.py --output /tmp/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00
+rm -f uv.lock
+python3 -m json.tool examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/generation_scheduler_review_only_pipeline_smoke_evidence
+git diff --check
+```
+
 ### P1-B Generation Scheduler MVP readiness gate
 
 状态：已完成顶层 readiness 同步。
