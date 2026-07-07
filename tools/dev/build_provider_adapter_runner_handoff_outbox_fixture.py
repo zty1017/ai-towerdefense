@@ -13,6 +13,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from tools.dev.report_io import write_json  # noqa: E402
+
 from backend.app.services.generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff,
     build_provider_adapter_runner_handoff_outbox,
@@ -32,14 +34,6 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path} root must be an object")
     return data
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
 
 
 def build_fixture(args: argparse.Namespace) -> dict[str, Any]:

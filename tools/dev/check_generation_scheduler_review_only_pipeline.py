@@ -27,6 +27,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = ROOT / "backend"
+sys.path.insert(0, str(ROOT))
 NO_PROXY_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 FORBIDDEN_KEYS = {
     "raw_prompt",
@@ -35,6 +36,8 @@ FORBIDDEN_KEYS = {
     "api_key",
     "secret",
 }
+
+from tools.dev.report_io import write_json  # noqa: E402
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -55,14 +58,6 @@ def walk_keys(value: Any) -> list[str]:
         for item in value:
             keys.extend(walk_keys(item))
     return keys
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
 
 
 def free_port() -> int:

@@ -36,6 +36,7 @@ from validate_provider_adapter_runner_handoff_outbox import (  # noqa: E402
 from validate_provider_output_envelope import (  # noqa: E402
     validate_provider_output_envelope,
 )
+from report_io import write_json  # noqa: E402
 
 
 DEFAULT_OUTPUT_DIR = Path("/tmp/ai_td_provider_runner_handoff_outbox")
@@ -61,14 +62,6 @@ def load_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"{path} root must be an object")
     return data
-
-
-def write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
 
 
 def sha256_file(path: Path) -> str:
