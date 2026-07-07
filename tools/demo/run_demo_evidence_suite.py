@@ -3,13 +3,14 @@
 
 This orchestrator intentionally delegates to existing tools:
 
-1. smoke-check the Generation Scheduler review-only pipeline over local HTTP;
-2. smoke-check provider runner outbox consume -> import -> prefetch-cache;
-3. capture the browser player-flow visual smoke report;
-4. capture the browser multinode battle visual smoke report;
-5. validate those reports;
-6. export the redacted demo evidence bundle with the browser flow report attached;
-7. write a compact suite report for recording and judge Q&A.
+1. preflight-check the local browser smoke environment;
+2. smoke-check the Generation Scheduler review-only pipeline over local HTTP;
+3. smoke-check provider runner outbox consume -> import -> prefetch-cache;
+4. capture the browser player-flow visual smoke report;
+5. capture the browser multinode battle visual smoke report;
+6. validate those reports;
+7. export the redacted demo evidence bundle with the browser flow report attached;
+8. write a compact suite report for recording and judge Q&A.
 
 It does not call providers, read .env, mutate world state, or activate runtime
 artifacts. It only produces local review/evidence files under the output root.
@@ -33,6 +34,7 @@ from tools.dev.command_runner import now_iso, run_command
 
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
 REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
+BROWSER_PREFLIGHT_REPORT_NAME = "browser_smoke_environment_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
 FRONTEND_MULTINODE_REPORT_NAME = "frontend_multinode_visual_smoke_report.v0.1.json"
 SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
@@ -96,6 +98,23 @@ def build_capture_command(args: argparse.Namespace, frontend_output: Path) -> li
         str(frontend_output),
         "--timeout",
         str(args.browser_timeout),
+    ]
+    if args.browser_bin:
+        command.extend(["--browser-bin", str(args.browser_bin)])
+    if args.allow_missing_browser:
+        command.append("--allow-missing-browser")
+    return command
+
+
+def build_browser_preflight_command(
+    args: argparse.Namespace,
+    preflight_output: Path,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "tools/frontend/check_browser_smoke_environment.py",
+        "--output",
+        str(preflight_output),
     ]
     if args.browser_bin:
         command.extend(["--browser-bin", str(args.browser_bin)])
@@ -396,6 +415,26 @@ def browser_multinode_summary(report: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def browser_preflight_summary(report: dict[str, Any] | None) -> dict[str, Any]:
+    if report is None:
+        return {
+            "status": "missing",
+            "browser_available": False,
+            "candidate_count": 0,
+            "candidate_path_count": 0,
+            "safety_summary": {},
+        }
+    return {
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "browser_available": report.get("browser_available"),
+        "browser_executable": report.get("browser_executable"),
+        "candidate_count": report.get("candidate_count"),
+        "candidate_path_count": report.get("candidate_path_count"),
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
 def evidence_summary(evidence: dict[str, Any] | None) -> dict[str, Any]:
     if evidence is None:
         return {
@@ -502,6 +541,7 @@ def outbox_import_summary(report: dict[str, Any] | None) -> dict[str, Any]:
 
 def derive_suite_status(
     commands: list[dict[str, Any]],
+    browser_preflight_report: dict[str, Any] | None,
     frontend_report: dict[str, Any] | None,
     frontend_multinode_report: dict[str, Any] | None,
     evidence: dict[str, Any] | None,
@@ -516,11 +556,17 @@ def derive_suite_status(
         for item in commands
         if item.get("status") != "passed"
     ]
+    preflight_status = (browser_preflight_report or {}).get("status")
     frontend_status = (frontend_report or {}).get("status")
     multinode_status = (frontend_multinode_report or {}).get("status")
     evidence_status = evidence_summary(evidence).get("export_validation_status")
     scheduler_summary = scheduler_pipeline_summary(scheduler_pipeline_report)
     outbox_summary = outbox_import_summary(outbox_import_report)
+
+    if preflight_status == "browser_unavailable" and not allow_missing_browser:
+        failures.append("browser_preflight_unavailable")
+    elif preflight_status not in {"available", "browser_unavailable"}:
+        failures.append(f"browser_preflight_status:{preflight_status or 'missing'}")
 
     if skip_scheduler_pipeline_smoke:
         pass
@@ -696,6 +742,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     output_root = args.output_root.expanduser()
+    browser_preflight_path = output_root / "browser" / BROWSER_PREFLIGHT_REPORT_NAME
     scheduler_report_path = output_root / "generation_scheduler" / SCHEDULER_PIPELINE_REPORT_NAME
     outbox_import_report_path = output_root / "generation_scheduler" / OUTBOX_IMPORT_REPORT_NAME
     frontend_output = output_root / "frontend_flow_visual_smoke"
@@ -707,6 +754,7 @@ def main(argv: list[str] | None = None) -> int:
     output_root.mkdir(parents=True, exist_ok=True)
 
     commands: list[dict[str, Any]] = []
+    browser_preflight_report: dict[str, Any] | None = None
     scheduler_pipeline_report: dict[str, Any] | None = None
     scheduler_pipeline_runner: dict[str, Any] = {
         "mode": "skipped",
@@ -723,6 +771,80 @@ def main(argv: list[str] | None = None) -> int:
 
     uv_lock_path = ROOT / "uv.lock"
     uv_lock_existed_before = uv_lock_path.exists()
+
+    preflight_command = build_browser_preflight_command(args, browser_preflight_path)
+    commands.append(
+        run_command(
+            "browser_smoke_environment_preflight",
+            preflight_command,
+            root=ROOT,
+            timeout_seconds=20,
+            output_tail_limit=MAX_OUTPUT_TAIL,
+        )
+    )
+    if browser_preflight_path.exists():
+        browser_preflight_report = load_json(browser_preflight_path)
+    if (
+        (browser_preflight_report or {}).get("status") == "browser_unavailable"
+        and not args.allow_missing_browser
+    ):
+        report = {
+            "schema_version": "demo_evidence_suite_report.v0.1",
+            "suite_id": "mvp_demo_evidence_suite",
+            "status": "failed",
+            "generated_at": now_iso(),
+            "output_root": str(output_root),
+            "commands": commands,
+            "outputs": {
+                "browser_preflight_report": file_ref(
+                    browser_preflight_path,
+                    "browser_smoke_environment_report",
+                ),
+                "suite_report": {
+                    "path": str(suite_report_path),
+                    "role": "demo_evidence_suite_report",
+                    "exists": True,
+                },
+            },
+            "browser_smoke_environment": browser_preflight_summary(
+                browser_preflight_report
+            ),
+            "scheduler_pipeline_smoke_runner": scheduler_pipeline_runner,
+            "outbox_import_smoke_runner": outbox_import_runner,
+            "generation_scheduler_review_only_pipeline_smoke": scheduler_pipeline_summary(
+                scheduler_pipeline_report
+            ),
+            "provider_runner_handoff_outbox_import_smoke": outbox_import_summary(
+                outbox_import_report
+            ),
+            "frontend_flow_visual_smoke": browser_flow_summary(frontend_report),
+            "frontend_multinode_visual_smoke": browser_multinode_summary(
+                frontend_multinode_report
+            ),
+            "demo_evidence": evidence_summary(evidence),
+            "failures": [
+                "browser_preflight_unavailable",
+                "rerun_with_allow_missing_browser_for_non_release_evidence",
+            ],
+            "safety_summary": {
+                "reads_env_file": False,
+                "provider_call_count_during_suite": 0,
+                "world_mutation_count_during_suite": 0,
+                "runtime_activation_count_during_suite": 0,
+                "stores_provider_body": False,
+                "uses_localhost_browser_only": True,
+                "scheduler_pipeline_smoke_skipped": bool(
+                    args.skip_scheduler_pipeline_smoke
+                ),
+                "outbox_import_smoke_skipped": bool(args.skip_outbox_import_smoke),
+            },
+        }
+        write_json(suite_report_path, report)
+        print(f"demo evidence suite failed: {suite_report_path}")
+        print(f"- browser preflight report: {browser_preflight_path}")
+        print("- browser missing; rerun with --allow-missing-browser for non-release evidence")
+        return 1
+
     if not args.skip_scheduler_pipeline_smoke:
         scheduler_command, scheduler_env, scheduler_pipeline_runner = (
             build_scheduler_pipeline_smoke_invocation(
@@ -854,6 +976,7 @@ def main(argv: list[str] | None = None) -> int:
 
     status, failures = derive_suite_status(
         commands,
+        browser_preflight_report,
         frontend_report,
         frontend_multinode_report,
         evidence,
@@ -871,6 +994,10 @@ def main(argv: list[str] | None = None) -> int:
         "output_root": str(output_root),
         "commands": commands,
         "outputs": {
+            "browser_preflight_report": file_ref(
+                browser_preflight_path,
+                "browser_smoke_environment_report",
+            ),
             "frontend_flow_report": file_ref(
                 frontend_report_path,
                 "frontend_flow_visual_smoke_report",
@@ -907,6 +1034,9 @@ def main(argv: list[str] | None = None) -> int:
         },
         "scheduler_pipeline_smoke_runner": scheduler_pipeline_runner,
         "outbox_import_smoke_runner": outbox_import_runner,
+        "browser_smoke_environment": browser_preflight_summary(
+            browser_preflight_report
+        ),
         "generation_scheduler_review_only_pipeline_smoke": scheduler_pipeline_summary(
             scheduler_pipeline_report
         ),
@@ -934,6 +1064,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     write_json(suite_report_path, report)
     print(f"demo evidence suite {status}: {suite_report_path}")
+    print(f"- browser preflight report: {browser_preflight_path}")
     print(f"- frontend report: {frontend_report_path}")
     print(f"- frontend multinode report: {frontend_multinode_report_path}")
     print(f"- evidence bundle: {evidence_output}")

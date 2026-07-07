@@ -99,7 +99,7 @@ P2：本阶段明确不做
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补前端多节点战斗截图门禁 `tools/frontend/capture_frontend_multinode_visual_smoke.py` 与 `tools/frontend/validate_frontend_multinode_visual_smoke_report.py`：使用 no-build 静态前端直接打开三张 MVP 战斗节点，覆盖 desktop/mobile 共 6 张 battle canvas 截图，并校验节点标题、截图矩阵、canvas 尺寸、文件大小和安全计数。`nodeId` 覆盖只在 `battleVisualSmoke` / `flowVisualSmoke` query 下生效；正常玩家入口、MapRuntimePackage、RenderPlan、published visual layer 和 v0.2 activation gate 均不被修改。
-- 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、多节点战斗截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
+- 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：先跑浏览器视觉 smoke 环境预检，再串联浏览器玩家链路截图、多节点战斗截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py` 与 report validator：默认 profile 复用 fast gate、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；可选 full profile 追加默认完整 evidence export。
 - 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
@@ -4953,6 +4953,42 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_de
 PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-suite-multinode python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/demo_suite_multinode_acceptance --browser-timeout 45 --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/demo_suite_multinode_acceptance/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
+git diff --check
+```
+
+### P1-D-39 Browser smoke environment preflight
+
+状态：已完成一键套件前置预检。
+
+目标：
+
+```text
+在 demo evidence suite 启动 scheduler/outbox 等较慢步骤前，先确认浏览器截图环境是否具备 Chromium 兼容可执行文件；缺浏览器且未显式允许降级时早停，减少无效等待。
+```
+
+已落地：
+
+- `tools/frontend/check_browser_smoke_environment.py`：新增浏览器视觉 smoke 预检，只发现可执行文件并输出 `browser_smoke_environment_report.v0.1`。
+- `tools/demo/run_demo_evidence_suite.py`：suite 开始时运行 `browser_smoke_environment_preflight`；未找到浏览器且未传 `--allow-missing-browser` 时写出 suite report 并早停；允许降级时继续执行 scheduler/outbox、截图降级证据和 full evidence。
+- `tools/demo/validate_demo_evidence_suite_report.py`：校验 suite report 中的 browser preflight 摘要；`--require-browser-captured` 会要求预检状态为 `available`。
+- `tools/dev/run_fast_quality_gate.py` 与 `tools/dev/run_premerge_quality_gate.py`：把新预检脚本纳入 Python 编译清单。
+- `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步一键 suite 预检说明。
+- `examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json`：新增本轮 worker task pack；`p1d_demo_evidence_suite_runner` 同步 required reading 和编译命令。
+
+边界：
+
+- 预检不启动浏览器、不打开 socket、不调用 provider、不读取 `.env`、不写世界状态、不生成素材、不激活 runtime。
+- 预检只证明浏览器可执行文件是否可发现；真实截图仍由 flow / multinode smoke 捕获工具负责。
+- 当前本执行环境无可发现 Chromium，因此 suite 仍需要 `--allow-missing-browser` 才能生成非 release 降级证据；录屏 / release gate 仍要求真实 browser captured。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
+python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180
+python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
 git diff --check
 ```
 

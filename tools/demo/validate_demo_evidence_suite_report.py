@@ -133,6 +133,37 @@ def validate_safety(report: dict[str, Any], failures: list[str]) -> None:
     require(safety.get("stores_provider_body") is False, "suite stores provider body", failures)
 
 
+def validate_browser_preflight(
+    report: dict[str, Any],
+    *,
+    require_browser_captured: bool,
+    allow_browser_unavailable: bool,
+    failures: list[str],
+) -> None:
+    preflight = as_obj(report.get("browser_smoke_environment"))
+    status = preflight.get("status")
+    allowed = {"available"}
+    if allow_browser_unavailable:
+        allowed.add("browser_unavailable")
+    require(status in allowed, f"browser preflight status is {status}", failures)
+    if require_browser_captured:
+        require(status == "available", "browser preflight did not find a browser", failures)
+    safety = as_obj(preflight.get("safety_summary"))
+    if safety:
+        require(safety.get("reads_env_file") is False, "browser preflight reads .env", failures)
+        require(
+            int_value(safety.get("provider_call_count")) == 0,
+            "browser preflight provider call count is not 0",
+            failures,
+        )
+        require(
+            safety.get("launches_browser") is False,
+            "browser preflight should not launch a browser",
+            failures,
+        )
+        require(safety.get("opens_socket") is False, "browser preflight opens a socket", failures)
+
+
 def validate_scheduler(
     report: dict[str, Any],
     *,
@@ -242,6 +273,12 @@ def validate_report(report: dict[str, Any], args: argparse.Namespace) -> list[st
     validate_outputs(report, failures)
     validate_demo_evidence(report, failures)
     validate_safety(report, failures)
+    validate_browser_preflight(
+        report,
+        require_browser_captured=args.require_browser_captured,
+        allow_browser_unavailable=args.allow_browser_unavailable,
+        failures=failures,
+    )
     validate_scheduler(
         report,
         required=args.require_scheduler_pipeline_smoke,

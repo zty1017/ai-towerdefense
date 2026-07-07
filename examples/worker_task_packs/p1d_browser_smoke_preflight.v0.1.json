@@ -1,0 +1,112 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-39-browser-smoke-preflight",
+  "title": "Browser smoke environment preflight",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/browser-smoke-preflight",
+  "worktree": "/tmp/ai-td-task-browser-smoke-preflight",
+  "objective": "补浏览器视觉 smoke 的轻量预检：在 demo evidence suite 启动 scheduler/outbox 等较慢步骤前先确认 Chromium 兼容浏览器是否可发现；无浏览器且未显式允许降级时早停并写结构化报告，允许降级时继续保留 browser_unavailable 证据。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py",
+    "examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json"
+  ],
+  "allowed_paths": [
+    "tools/frontend/check_browser_smoke_environment.py",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
+    "examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
+    "README.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+    "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
+    "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
+    "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，允许无浏览器降级，但要求 suite report 包含 browser preflight、scheduler/outbox 和截图降级证据。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+          "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
+          "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
+          "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "browser preflight 只做可执行文件发现，不启动浏览器、不打开 socket、不调用 provider、不读取 .env。",
+    "无浏览器且未传 --allow-missing-browser 时，suite 会早停；录屏 / release gate 仍要求真实 browser captured。",
+    "允许降级时，suite 继续运行 scheduler/outbox/full evidence，并保留 browser_unavailable 证据。",
+    "本任务不修改前端玩家体验、不生成素材、不改 runtime package 或 readiness gate。"
+  ]
+}
