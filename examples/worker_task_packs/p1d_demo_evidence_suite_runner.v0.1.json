@@ -7,20 +7,25 @@
   "base_branch": "develop",
   "branch": "task/demo-evidence-suite-runner",
   "worktree": "/tmp/ai-td-task-demo-evidence-suite-runner",
-  "objective": "新增一个录屏 / 评审前可重复运行的一键证据套件：串联浏览器玩家链路截图、截图 report 校验、统一 demo evidence 导出，并写出 suite report，降低演示前手动命令遗漏风险。",
+  "objective": "维护录屏 / 评审前可重复运行的一键证据套件：串联浏览器玩家主链路截图、多节点战斗截图、截图 report 校验、统一 demo evidence 导出，并写出 suite report，降低演示前手动命令遗漏风险。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
     "control/TASK_QUEUE.md",
     "tools/frontend/capture_frontend_flow_visual_smoke.py",
     "tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+    "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
     "tools/demo/export_evidence.py",
     "tools/demo/build_mvp_demo_readiness_report.py",
     "examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json"
   ],
   "allowed_paths": [
     "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py",
     "examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
+    "README.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "control/TASK_QUEUE.md"
   ],
@@ -66,7 +71,7 @@
         ]
       },
       "release_gate": {
-        "description": "录屏 / release candidate profile，要求真实浏览器截图完整 captured。",
+        "description": "录屏 / release candidate profile，要求玩家主链路和多节点战斗真实浏览器截图完整 captured。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
@@ -110,7 +115,7 @@
   },
   "notes": [
     "本任务只做本地演示证据编排，不调用 provider，不读取 .env，不生成新素材。",
-    "默认要求本地可用 Chromium 兼容浏览器；只有显式 --allow-missing-browser 才允许生成 browser_unavailable_allowed 套件报告。",
+    "默认要求本地可用 Chromium 兼容浏览器；只有显式 --allow-missing-browser 才允许玩家主链路和多节点战斗截图生成 browser_unavailable_allowed 套件报告。",
     "suite report 只保存子命令摘要、输出文件指纹和安全计数，不保存原始 provider 响应、prompt 或 secret。",
     "输出默认写入 /tmp，不把截图 PNG 或 evidence bundle 提交进仓库。"
   ]

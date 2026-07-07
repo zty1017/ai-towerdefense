@@ -6,9 +6,10 @@ This orchestrator intentionally delegates to existing tools:
 1. smoke-check the Generation Scheduler review-only pipeline over local HTTP;
 2. smoke-check provider runner outbox consume -> import -> prefetch-cache;
 3. capture the browser player-flow visual smoke report;
-4. validate that report;
-5. export the redacted demo evidence bundle with the browser report attached;
-6. write a compact suite report for recording and judge Q&A.
+4. capture the browser multinode battle visual smoke report;
+5. validate those reports;
+6. export the redacted demo evidence bundle with the browser flow report attached;
+7. write a compact suite report for recording and judge Q&A.
 
 It does not call providers, read .env, mutate world state, or activate runtime
 artifacts. It only produces local review/evidence files under the output root.
@@ -19,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,6 +34,7 @@ from tools.dev.command_runner import now_iso, run_command
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
 REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
+FRONTEND_MULTINODE_REPORT_NAME = "frontend_multinode_visual_smoke_report.v0.1.json"
 SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
 OUTBOX_IMPORT_REPORT_NAME = "provider_runner_handoff_outbox_import_pipeline_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
@@ -101,6 +104,25 @@ def build_capture_command(args: argparse.Namespace, frontend_output: Path) -> li
     return command
 
 
+def build_multinode_capture_command(
+    args: argparse.Namespace,
+    multinode_output: Path,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+        "--output-dir",
+        str(multinode_output),
+        "--timeout",
+        str(args.browser_timeout),
+    ]
+    if args.browser_bin:
+        command.extend(["--browser-bin", str(args.browser_bin)])
+    if args.allow_missing_browser:
+        command.append("--allow-missing-browser")
+    return command
+
+
 def build_python_scheduler_pipeline_smoke_command(
     python_path: Path,
     scheduler_report_path: Path,
@@ -155,6 +177,28 @@ def build_uv_outbox_import_smoke_command(
     ]
 
 
+def shared_worktree_venv_python() -> Path | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return None
+    common_dir_text = result.stdout.strip()
+    if not common_dir_text:
+        return None
+    common_dir = Path(common_dir_text)
+    if not common_dir.is_absolute():
+        common_dir = (ROOT / common_dir).resolve()
+    candidate = common_dir.parent / ".venv" / "bin" / "python"
+    return candidate if candidate.exists() else None
+
+
 def resolve_scheduler_pipeline_smoke_runner(
     args: argparse.Namespace,
 ) -> tuple[str, Path | None]:
@@ -170,6 +214,9 @@ def resolve_scheduler_pipeline_smoke_runner(
         return ("venv", venv_python)
     if venv_python.exists():
         return ("venv", venv_python)
+    shared_python = shared_worktree_venv_python()
+    if shared_python:
+        return ("shared-venv", shared_python)
     return ("uv", None)
 
 
@@ -265,6 +312,20 @@ def build_validate_command(
     return command
 
 
+def build_multinode_validate_command(
+    report_path: Path,
+    allow_unavailable: bool,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
+        str(report_path),
+    ]
+    if allow_unavailable:
+        command.append("--allow-unavailable")
+    return command
+
+
 def build_export_command(evidence_output: Path, report_path: Path) -> list[str]:
     return [
         sys.executable,
@@ -297,6 +358,36 @@ def browser_flow_summary(report: dict[str, Any] | None) -> dict[str, Any]:
         "step_ids": as_list(report.get("step_ids")),
         "screenshot_matrix": [
             f"{item.get('viewport_id')}:{item.get('step_id')}"
+            for item in screenshots
+            if isinstance(item, dict)
+        ],
+        "failure_count": len(as_list(report.get("failures"))),
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
+def browser_multinode_summary(report: dict[str, Any] | None) -> dict[str, Any]:
+    if report is None:
+        return {
+            "status": "missing",
+            "captured_screenshot_count": 0,
+            "expected_screenshot_count": 0,
+            "node_count": 0,
+            "viewport_count": 0,
+            "failure_count": 0,
+            "safety_summary": {},
+        }
+    screenshots = as_list(report.get("screenshots"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "browser_available": report.get("browser_available"),
+        "node_count": len(as_list(report.get("node_ids"))),
+        "viewport_count": len(as_list(report.get("viewport_ids"))),
+        "captured_screenshot_count": report.get("captured_screenshot_count"),
+        "expected_screenshot_count": report.get("expected_screenshot_count"),
+        "screenshot_matrix": [
+            f"{item.get('node_id')}:{item.get('viewport_id')}"
             for item in screenshots
             if isinstance(item, dict)
         ],
@@ -412,6 +503,7 @@ def outbox_import_summary(report: dict[str, Any] | None) -> dict[str, Any]:
 def derive_suite_status(
     commands: list[dict[str, Any]],
     frontend_report: dict[str, Any] | None,
+    frontend_multinode_report: dict[str, Any] | None,
     evidence: dict[str, Any] | None,
     scheduler_pipeline_report: dict[str, Any] | None,
     outbox_import_report: dict[str, Any] | None,
@@ -425,6 +517,7 @@ def derive_suite_status(
         if item.get("status") != "passed"
     ]
     frontend_status = (frontend_report or {}).get("status")
+    multinode_status = (frontend_multinode_report or {}).get("status")
     evidence_status = evidence_summary(evidence).get("export_validation_status")
     scheduler_summary = scheduler_pipeline_summary(scheduler_pipeline_report)
     outbox_summary = outbox_import_summary(outbox_import_report)
@@ -512,11 +605,30 @@ def derive_suite_status(
         if captured != 14 or expected != 14:
             failures.append("frontend_flow_screenshot_count_not_14")
     elif frontend_status == "browser_unavailable" and allow_missing_browser:
+        pass
+    else:
+        failures.append(f"frontend_flow_status:{frontend_status or 'missing'}")
+
+    if multinode_status == "captured":
+        captured = int((frontend_multinode_report or {}).get("captured_screenshot_count") or 0)
+        expected = int((frontend_multinode_report or {}).get("expected_screenshot_count") or 0)
+        if captured != 6 or expected != 6:
+            failures.append("frontend_multinode_screenshot_count_not_6")
+    elif multinode_status == "browser_unavailable" and allow_missing_browser:
+        pass
+    else:
+        failures.append(f"frontend_multinode_status:{multinode_status or 'missing'}")
+
+    if (
+        allow_missing_browser
+        and (
+            frontend_status == "browser_unavailable"
+            or multinode_status == "browser_unavailable"
+        )
+    ):
         if evidence_status != "passed":
             failures.append("evidence_export_not_passed")
         return ("browser_unavailable_allowed" if not failures else "failed", failures)
-    else:
-        failures.append(f"frontend_flow_status:{frontend_status or 'missing'}")
 
     if evidence_status != "passed":
         failures.append(f"evidence_export_status:{evidence_status}")
@@ -569,8 +681,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         choices=SCHEDULER_SMOKE_RUNNERS,
         default="auto",
         help=(
-            "scheduler smoke 执行器。auto 会优先使用仓库 .venv/bin/python，"
-            "不存在时回退 uv run。"
+            "scheduler smoke 执行器。auto 会优先使用当前或共享 worktree 的 .venv/bin/python，"
+            "都不存在时回退 uv run。"
         ),
     )
     parser.add_argument(
@@ -588,6 +700,8 @@ def main(argv: list[str] | None = None) -> int:
     outbox_import_report_path = output_root / "generation_scheduler" / OUTBOX_IMPORT_REPORT_NAME
     frontend_output = output_root / "frontend_flow_visual_smoke"
     frontend_report_path = frontend_output / FRONTEND_REPORT_NAME
+    frontend_multinode_output = output_root / "frontend_multinode_visual_smoke"
+    frontend_multinode_report_path = frontend_multinode_output / FRONTEND_MULTINODE_REPORT_NAME
     evidence_output = output_root / "demo_evidence"
     suite_report_path = output_root / REPORT_NAME
     output_root.mkdir(parents=True, exist_ok=True)
@@ -604,6 +718,7 @@ def main(argv: list[str] | None = None) -> int:
         "uses_uv": False,
     }
     frontend_report: dict[str, Any] | None = None
+    frontend_multinode_report: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
 
     uv_lock_path = ROOT / "uv.lock"
@@ -676,6 +791,22 @@ def main(argv: list[str] | None = None) -> int:
     if frontend_report_path.exists():
         frontend_report = load_json(frontend_report_path)
 
+    multinode_capture_command = build_multinode_capture_command(
+        args,
+        frontend_multinode_output,
+    )
+    commands.append(
+        run_command(
+            "frontend_multinode_visual_smoke_capture",
+            multinode_capture_command,
+            root=ROOT,
+            timeout_seconds=args.command_timeout,
+            output_tail_limit=MAX_OUTPUT_TAIL,
+        )
+    )
+    if frontend_multinode_report_path.exists():
+        frontend_multinode_report = load_json(frontend_multinode_report_path)
+
     if frontend_report_path.exists():
         validate_command = build_validate_command(
             frontend_report_path,
@@ -691,6 +822,22 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
 
+    if frontend_multinode_report_path.exists():
+        multinode_validate_command = build_multinode_validate_command(
+            frontend_multinode_report_path,
+            args.allow_missing_browser,
+        )
+        commands.append(
+            run_command(
+                "frontend_multinode_visual_smoke_validate",
+                multinode_validate_command,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+            )
+        )
+
+    if frontend_report_path.exists():
         export_command = build_export_command(evidence_output, frontend_report_path)
         commands.append(
             run_command(
@@ -708,6 +855,7 @@ def main(argv: list[str] | None = None) -> int:
     status, failures = derive_suite_status(
         commands,
         frontend_report,
+        frontend_multinode_report,
         evidence,
         scheduler_pipeline_report,
         outbox_import_report,
@@ -726,6 +874,10 @@ def main(argv: list[str] | None = None) -> int:
             "frontend_flow_report": file_ref(
                 frontend_report_path,
                 "frontend_flow_visual_smoke_report",
+            ),
+            "frontend_multinode_report": file_ref(
+                frontend_multinode_report_path,
+                "frontend_multinode_visual_smoke_report",
             ),
             "generation_scheduler_pipeline_smoke_report": file_ref(
                 scheduler_report_path,
@@ -762,6 +914,9 @@ def main(argv: list[str] | None = None) -> int:
             outbox_import_report
         ),
         "frontend_flow_visual_smoke": browser_flow_summary(frontend_report),
+        "frontend_multinode_visual_smoke": browser_multinode_summary(
+            frontend_multinode_report
+        ),
         "demo_evidence": evidence_summary(evidence),
         "failures": failures,
         "safety_summary": {
@@ -780,6 +935,7 @@ def main(argv: list[str] | None = None) -> int:
     write_json(suite_report_path, report)
     print(f"demo evidence suite {status}: {suite_report_path}")
     print(f"- frontend report: {frontend_report_path}")
+    print(f"- frontend multinode report: {frontend_multinode_report_path}")
     print(f"- evidence bundle: {evidence_output}")
     return 0 if status == "passed" or status == "browser_unavailable_allowed" else 1
 

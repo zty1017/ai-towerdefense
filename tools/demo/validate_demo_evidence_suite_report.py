@@ -75,6 +75,22 @@ def validate_status(
             "expected screenshot count is not 14",
             failures,
         )
+        multinode = as_obj(report.get("frontend_multinode_visual_smoke"))
+        require(
+            multinode.get("status") == "captured",
+            "frontend multinode visual smoke not captured",
+            failures,
+        )
+        require(
+            int_value(multinode.get("captured_screenshot_count")) == 6,
+            "multinode captured screenshot count is not 6",
+            failures,
+        )
+        require(
+            int_value(multinode.get("expected_screenshot_count")) == 6,
+            "multinode expected screenshot count is not 6",
+            failures,
+        )
     report_failures = as_list(report.get("failures"))
     require(not report_failures, f"suite failures not empty: {report_failures}", failures)
 
@@ -252,7 +268,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--require-browser-captured",
         action="store_true",
-        help="Require a fully captured 14-screenshot browser report.",
+        help="Require fully captured frontend browser reports: 14 flow screenshots and 6 multinode battle screenshots.",
     )
     parser.add_argument(
         "--require-scheduler-pipeline-smoke",

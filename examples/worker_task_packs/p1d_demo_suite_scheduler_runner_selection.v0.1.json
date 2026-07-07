@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/demo-suite-python-runner",
   "worktree": "/tmp/ai-td-task-demo-suite-python-runner",
-  "objective": "优化 demo evidence suite 中 Generation Scheduler review-only pipeline smoke 的执行器选择：默认优先复用仓库本地 .venv/bin/python 以加快反复验收；没有 .venv 时保持原 uv run 回退，并在 suite report 中记录实际 runner。",
+  "objective": "优化 demo evidence suite 中 Generation Scheduler review-only pipeline smoke 的执行器选择：默认优先复用当前 worktree 或共享主工作区的 .venv/bin/python 以加快反复验收；没有可用 .venv 时保持原 uv run 回退，并在 suite report 中记录实际 runner。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -101,7 +101,7 @@
   },
   "notes": [
     "本任务只优化本地执行器选择，不改变 scheduler smoke 覆盖范围、gate 条件或 safety count。",
-    "默认 auto 在仓库 .venv/bin/python 存在时使用本地 venv；干净 worktree / CI 没有 .venv 时仍使用 uv run。",
+    "默认 auto 在当前 worktree 或共享主工作区 .venv/bin/python 存在时使用本地 venv；干净环境 / CI 没有可用 .venv 时仍使用 uv run。",
     "`--scheduler-python` 只用于显式本地调试和验收，不读取 `.env`，不绕过 provider / activation 边界。",
     "suite report 必须记录 `scheduler_pipeline_smoke_runner`，方便评审和排障确认实际执行路径。"
   ]

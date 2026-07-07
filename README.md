@@ -192,7 +192,7 @@ python3 -m pytest backend/tests
 python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_demo_evidence_suite
 ```
 
-该套件会先运行 Generation Scheduler review-only pipeline smoke 和 provider runner outbox consume/import smoke，再采集浏览器玩家链路截图并导出 full evidence。scheduler smoke 会启动临时本地后端和临时 SQLite，验证 background handoff outbox、prefetch-cache、activation-gate 与 shared cache 空命中边界；outbox import smoke 会验证外部 runner outbox 经本地 consumer 生成 receipt/envelope 后能显式导回临时后端，并让 prefetch-cache 从 0 个 review-only envelope 变为 2 个。两者都不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。默认 `--scheduler-smoke-runner auto` 会优先复用仓库本地 `.venv/bin/python`，没有 `.venv` 时回退 `uv run`；实际 runner 会写入 suite report。
+该套件会先运行 Generation Scheduler review-only pipeline smoke 和 provider runner outbox consume/import smoke，再采集浏览器玩家主链路截图、多节点战斗截图，并导出 full evidence。scheduler smoke 会启动临时本地后端和临时 SQLite，验证 background handoff outbox、prefetch-cache、activation-gate 与 shared cache 空命中边界；outbox import smoke 会验证外部 runner outbox 经本地 consumer 生成 receipt/envelope 后能显式导回临时后端，并让 prefetch-cache 从 0 个 review-only envelope 变为 2 个。两者都不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。默认 `--scheduler-smoke-runner auto` 会优先复用当前 worktree 或主工作区的 `.venv/bin/python`，没有可用 `.venv` 时回退 `uv run`；实际 runner、14 张玩家主链路截图摘要和 6 张多节点战斗截图摘要都会写入 suite report。
 
 当前环境没有浏览器时，可以显式记录降级证据：
 
