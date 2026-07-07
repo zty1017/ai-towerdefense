@@ -186,6 +186,8 @@ python3 -m pytest backend/tests
 python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_demo_evidence_suite
 ```
 
+该套件会先运行 Generation Scheduler review-only pipeline smoke，再采集浏览器玩家链路截图并导出 full evidence。scheduler smoke 会启动临时本地后端和临时 SQLite，验证 background handoff outbox、prefetch-cache、activation-gate 与 shared cache 空命中边界；它不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+
 当前环境没有浏览器时，可以显式记录降级证据：
 
 ```bash

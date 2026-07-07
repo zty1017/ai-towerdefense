@@ -1,0 +1,86 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-34-demo-suite-scheduler-pipeline-smoke",
+  "title": "Demo evidence suite scheduler pipeline smoke",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/demo-suite-scheduler-pipeline-smoke",
+  "worktree": "/tmp/ai-td-task-demo-suite-scheduler-pipeline-smoke",
+  "objective": "让默认 demo evidence suite 在浏览器玩家链路截图与 evidence 导出之前，先运行 Generation Scheduler review-only pipeline smoke，并把该 smoke 的报告与安全摘要写入 suite report，降低录屏 / 评审前遗漏调度闭环证据的风险。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+    "tools/demo/export_evidence.py",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "README.md"
+  ],
+  "allowed_paths": [
+    "tools/demo/run_demo_evidence_suite.py",
+    "README.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py",
+    "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180",
+    "python3 -c \"import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); scheduler=report['generation_scheduler_review_only_pipeline_smoke']; command_names=[item['name'] for item in report['commands']]; assert scheduler['status']=='passed'; assert scheduler['external_provider_call_count']==0; assert scheduler['runtime_activation_allowed_count']==0; assert report['safety_summary']['scheduler_pipeline_smoke_skipped'] is False; assert 'generation_scheduler_review_only_pipeline_smoke' in command_names\"",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只把已存在的本地 scheduler pipeline smoke 串入 demo evidence suite，不新增 provider、后端接口、前端 UI 或素材生成能力。",
+    "scheduler smoke 会启动临时本地后端和临时 SQLite，只产生 review-only evidence；provider 调用、世界修改和 runtime activation 计数必须保持 0。",
+    "`--skip-scheduler-pipeline-smoke` 仅用于本地快速调试，不建议录屏 / 评审前使用。",
+    "suite 输出仍写入 /tmp 或调用者指定的 output root；不把截图、evidence bundle 或临时 SQLite 提交到仓库。"
+  ]
+}

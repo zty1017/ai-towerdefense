@@ -3,10 +3,11 @@
 
 This orchestrator intentionally delegates to existing tools:
 
-1. capture the browser player-flow visual smoke report;
-2. validate that report;
-3. export the redacted demo evidence bundle with the browser report attached;
-4. write a compact suite report for recording and judge Q&A.
+1. smoke-check the Generation Scheduler review-only pipeline over local HTTP;
+2. capture the browser player-flow visual smoke report;
+3. validate that report;
+4. export the redacted demo evidence bundle with the browser report attached;
+5. write a compact suite report for recording and judge Q&A.
 
 It does not call providers, read .env, mutate world state, or activate runtime
 artifacts. It only produces local review/evidence files under the output root.
@@ -30,6 +31,7 @@ from tools.dev.command_runner import now_iso, run_command
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
 REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
+SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
 
 
@@ -94,6 +96,19 @@ def build_capture_command(args: argparse.Namespace, frontend_output: Path) -> li
     if args.allow_missing_browser:
         command.append("--allow-missing-browser")
     return command
+
+
+def build_scheduler_pipeline_smoke_command(scheduler_report_path: Path) -> list[str]:
+    return [
+        "uv",
+        "run",
+        "--extra",
+        "dev",
+        "python",
+        "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+        "--output",
+        str(scheduler_report_path),
+    ]
 
 
 def build_validate_command(
@@ -177,11 +192,52 @@ def evidence_summary(evidence: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def scheduler_pipeline_summary(report: dict[str, Any] | None) -> dict[str, Any]:
+    if report is None:
+        return {
+            "status": "missing",
+            "step_count": 0,
+            "passed_step_count": 0,
+            "external_provider_call_count": None,
+            "runtime_activation_allowed_count": None,
+        }
+    summary = as_obj(report.get("summary"))
+    safety = as_obj(report.get("safety_summary"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "step_count": report.get("step_count"),
+        "passed_step_count": report.get("passed_step_count"),
+        "background_handoff_status": summary.get("background_handoff_status"),
+        "background_handoff_runner_handoff_count": summary.get(
+            "background_handoff_runner_handoff_count"
+        ),
+        "background_handoff_outbox_schema_version": summary.get(
+            "background_handoff_outbox_schema_version"
+        ),
+        "image_chain_staging_status": summary.get("image_chain_staging_status"),
+        "positive_shared_cache_reuse_path": summary.get(
+            "positive_shared_cache_reuse_path"
+        ),
+        "external_provider_call_count": safety.get("external_provider_call_count"),
+        "world_mutation_count": safety.get("world_mutation_count"),
+        "runtime_activation_allowed_count": safety.get(
+            "runtime_activation_allowed_count"
+        ),
+        "runtime_package_write_count": safety.get("runtime_package_write_count"),
+        "world_delta_transaction_write_count": safety.get(
+            "world_delta_transaction_write_count"
+        ),
+    }
+
+
 def derive_suite_status(
     commands: list[dict[str, Any]],
     frontend_report: dict[str, Any] | None,
     evidence: dict[str, Any] | None,
+    scheduler_pipeline_report: dict[str, Any] | None,
     allow_missing_browser: bool,
+    skip_scheduler_pipeline_smoke: bool,
 ) -> tuple[str, list[str]]:
     failures: list[str] = [
         f"command_failed:{item['name']}"
@@ -190,6 +246,24 @@ def derive_suite_status(
     ]
     frontend_status = (frontend_report or {}).get("status")
     evidence_status = evidence_summary(evidence).get("export_validation_status")
+    scheduler_summary = scheduler_pipeline_summary(scheduler_pipeline_report)
+
+    if skip_scheduler_pipeline_smoke:
+        pass
+    elif scheduler_summary.get("status") != "passed":
+        failures.append(
+            f"scheduler_pipeline_smoke_status:{scheduler_summary.get('status')}"
+        )
+    if (
+        not skip_scheduler_pipeline_smoke
+        and int(scheduler_summary.get("external_provider_call_count") or 0) != 0
+    ):
+        failures.append("scheduler_pipeline_provider_call_count_not_0")
+    if (
+        not skip_scheduler_pipeline_smoke
+        and int(scheduler_summary.get("runtime_activation_allowed_count") or 0) != 0
+    ):
+        failures.append("scheduler_pipeline_runtime_activation_not_0")
 
     if frontend_status == "captured":
         captured = int((frontend_report or {}).get("captured_screenshot_count") or 0)
@@ -199,7 +273,7 @@ def derive_suite_status(
     elif frontend_status == "browser_unavailable" and allow_missing_browser:
         if evidence_status != "passed":
             failures.append("evidence_export_not_passed")
-        return ("browser_unavailable_allowed", failures)
+        return ("browser_unavailable_allowed" if not failures else "failed", failures)
     else:
         failures.append(f"frontend_flow_status:{frontend_status or 'missing'}")
 
@@ -239,12 +313,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="允许没有本地浏览器时生成 browser_unavailable 证据；默认会失败。",
     )
+    parser.add_argument(
+        "--skip-scheduler-pipeline-smoke",
+        action="store_true",
+        help="跳过 Generation Scheduler review-only pipeline smoke；仅用于快速调试，不建议录屏前使用。",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     output_root = args.output_root.expanduser()
+    scheduler_report_path = output_root / "generation_scheduler" / SCHEDULER_PIPELINE_REPORT_NAME
     frontend_output = output_root / "frontend_flow_visual_smoke"
     frontend_report_path = frontend_output / FRONTEND_REPORT_NAME
     evidence_output = output_root / "demo_evidence"
@@ -252,8 +332,33 @@ def main(argv: list[str] | None = None) -> int:
     output_root.mkdir(parents=True, exist_ok=True)
 
     commands: list[dict[str, Any]] = []
+    scheduler_pipeline_report: dict[str, Any] | None = None
     frontend_report: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
+
+    uv_lock_path = ROOT / "uv.lock"
+    uv_lock_existed_before = uv_lock_path.exists()
+    if not args.skip_scheduler_pipeline_smoke:
+        scheduler_command = build_scheduler_pipeline_smoke_command(scheduler_report_path)
+        commands.append(
+            run_command(
+                "generation_scheduler_review_only_pipeline_smoke",
+                scheduler_command,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+                env={
+                    "UV_CACHE_DIR": str(output_root / "uv-cache-generation-pipeline-smoke"),
+                    "UV_PROJECT_ENVIRONMENT": str(
+                        output_root / "uv-venv-generation-pipeline-smoke"
+                    ),
+                },
+            )
+        )
+        if not uv_lock_existed_before and uv_lock_path.exists():
+            uv_lock_path.unlink()
+        if scheduler_report_path.exists():
+            scheduler_pipeline_report = load_json(scheduler_report_path)
 
     capture_command = build_capture_command(args, frontend_output)
     commands.append(
@@ -302,7 +407,9 @@ def main(argv: list[str] | None = None) -> int:
         commands,
         frontend_report,
         evidence,
+        scheduler_pipeline_report,
         args.allow_missing_browser,
+        args.skip_scheduler_pipeline_smoke,
     )
     report = {
         "schema_version": "demo_evidence_suite_report.v0.1",
@@ -315,6 +422,10 @@ def main(argv: list[str] | None = None) -> int:
             "frontend_flow_report": file_ref(
                 frontend_report_path,
                 "frontend_flow_visual_smoke_report",
+            ),
+            "generation_scheduler_pipeline_smoke_report": file_ref(
+                scheduler_report_path,
+                "generation_scheduler_review_only_pipeline_smoke_report",
             ),
             "demo_evidence_json": file_ref(
                 evidence_output / "evidence.json",
@@ -334,6 +445,9 @@ def main(argv: list[str] | None = None) -> int:
                 "exists": True,
             },
         },
+        "generation_scheduler_review_only_pipeline_smoke": scheduler_pipeline_summary(
+            scheduler_pipeline_report
+        ),
         "frontend_flow_visual_smoke": browser_flow_summary(frontend_report),
         "demo_evidence": evidence_summary(evidence),
         "failures": failures,
@@ -344,6 +458,9 @@ def main(argv: list[str] | None = None) -> int:
             "runtime_activation_count_during_suite": 0,
             "stores_provider_body": False,
             "uses_localhost_browser_only": True,
+            "scheduler_pipeline_smoke_skipped": bool(
+                args.skip_scheduler_pipeline_smoke
+            ),
         },
     }
     write_json(suite_report_path, report)

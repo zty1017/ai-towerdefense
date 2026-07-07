@@ -161,7 +161,7 @@ shared/schemas/ + tools/ + 专题文档
 - `tools/frontend/capture_frontend_flow_visual_smoke.py`、`tools/frontend/validate_frontend_flow_visual_smoke_report.py`
   - 浏览器玩家链路截图门禁：用真实 Chromium 与 no-build 静态前端，从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，输出桌面 / 移动 14 张截图和结构化 smoke report。该工具不调用 provider、不读取 `.env`、不写世界状态；`flowVisualSmoke` query 只用于截图时加速战斗，不改变正常玩家入口。
 - `tools/demo/run_demo_evidence_suite.py`
-  - MVP 录屏 / 评审前一键证据套件：串联浏览器玩家链路截图、截图 report 校验和 `export_evidence.py --frontend-flow-smoke-report`，输出本地 suite report；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级，不调用 provider、不读取 `.env`、不提交截图到仓库。传入截图报告后，导出的 `mvp_demo_readiness.frontend_flow_visual_smoke_harness` gate 会从仓库默认的 `harness_only` 升级为 `actual_report`，记录 14 张截图的真实验收摘要。
+  - MVP 录屏 / 评审前一键证据套件：先运行 Generation Scheduler review-only pipeline smoke，再串联浏览器玩家链路截图、截图 report 校验和 `export_evidence.py --frontend-flow-smoke-report`，输出本地 suite report；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级，不调用 provider、不读取 `.env`、不提交截图到仓库。传入截图报告后，导出的 `mvp_demo_readiness.frontend_flow_visual_smoke_harness` gate 会从仓库默认的 `harness_only` 升级为 `actual_report`，记录 14 张截图的真实验收摘要。suite report 会额外记录 `generation_scheduler_review_only_pipeline_smoke` 摘要，确认 background handoff outbox、prefetch-cache、activation-gate、shared cache 空命中和安全计数。
 - `tools/demo/export_evidence.py`
   - 统一 demo evidence bundle 导出入口：默认 `--validation-profile full` 会运行完整 validation commands，且只有当前导出校验 `passed` 才返回 0。显式 `--validation-profile summary-only` 只用于日常本地快速查看 summary / HTML，不运行 validation commands，并在 `validation_summary.current_export_validation` 中记录 `status=skipped`、profile、`command_count=0`、`results=[]` 和跳过原因；录屏 / 最终评审仍以默认 full 导出或 `run_demo_evidence_suite.py` 为准。
 - `tools/dev/run_fast_quality_gate.py`
