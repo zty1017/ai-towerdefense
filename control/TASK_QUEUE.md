@@ -100,7 +100,7 @@ P2：本阶段明确不做
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
-- 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
+- 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - 已补 WorkerTaskPack acceptance profile 迁移审计 `tools/dev/audit_worker_acceptance_profiles.py`：只读扫描 `examples/worker_task_packs/*.json`，复用任务包 validator 和 profile runner 命令解析规则，输出已有 profile、无 profile 旧包、完整 evidence 顶层命令、fast gate、summary-only、迁移候选和 shell-only/manual-review 命令清单；该审计不执行被扫描任务包的验收命令，不修改旧包，并强制 `--output` 写到仓库外 `/tmp` 路径。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
@@ -3775,7 +3775,7 @@ git diff --check
 边界：
 
 - runner 不使用 shell；只用 `shlex.split` 解析 argv，并支持前置环境变量 token。
-- 管道、重定向、逻辑连接、反引号和 `$(` 命令替换会被拒绝为 `unsupported_command_syntax`，不会执行。
+- 管道、非受限重定向、逻辑连接、反引号和 `$(` 命令替换会被拒绝为 `unsupported_command_syntax`，不会执行。
 - 没有 `acceptance_profile` 的旧包直接失败，提示手动运行 `acceptance_commands`。
 - 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或默认 runtime/package 文件。
 
@@ -3811,7 +3811,7 @@ git diff --check
 边界：
 
 - 审计不执行任何被扫描任务包里的 `acceptance_commands` 或 `acceptance_profile` 命令。
-- 复杂 shell 命令、here-doc、管道、重定向、分号连接、逻辑连接和命令替换只会进入 manual review 清单，不会让整次 audit 失败。
+- 复杂 shell 命令、here-doc、管道、非受限重定向、分号连接、逻辑连接和命令替换只会进入 manual review 清单，不会让整次 audit 失败。
 - 迁移候选定义为无 `acceptance_profile` 且 validator 通过的旧包；若顶层含完整 `tools/demo/export_evidence.py --output-dir`，建议拆成 `daily_fast` 的快速 / summary-only profile 与 `full_evidence` 的完整证据 profile。
 - 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或默认 runtime/package 文件。
 
@@ -3847,7 +3847,7 @@ git diff --check
 
 - 迁移器默认不修改仓库；必须显式 `--write` 才会写入。
 - 只迁移 validator 通过且顶层 `acceptance_commands` 全部可由 profile runner 解析的旧任务包。
-- 含 heredoc、分号、管道、重定向、逻辑连接或命令替换的包只进入 skip / manual review，不自动改写。
+- 含 heredoc、分号、管道、非受限重定向、逻辑连接或命令替换的包只进入 skip / manual review，不自动改写。
 - 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或 runtime package。
 
 验收：
@@ -3910,12 +3910,12 @@ git diff --check
 目标：
 
 ```text
-让 acceptance profile runner 允许 `rg "a|b"` 这类安全正则参数，同时继续拒绝真正的 shell 管道、重定向、heredoc、分号连接和命令替换。
+让 acceptance profile runner 允许 `rg "a|b"` 这类安全正则参数，同时继续拒绝真正的 shell 管道、非受限重定向、heredoc、分号连接和命令替换。
 ```
 
 已落地：
 
-- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 不再把参数内部的 `|` 一律视为 shell-only；只拒绝独立管道 token `|` / `|&`，并继续拒绝 `<`、`>`、`;`、反引号和 `$(`。
+- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 不再把参数内部的 `|` 一律视为 shell-only；只拒绝独立管道 token `|` / `|&`，并继续拒绝 `<`、非受限 `>`、`;`、反引号和 `$(`。
 - `tools/dev/audit_worker_acceptance_profiles.py`：移除 raw string 级别的 `|` 预筛，统一以 runner parser 的结果作为兼容性判断。
 - `examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json`：新增本轮任务包。
 
@@ -3923,7 +3923,7 @@ git diff --check
 
 - 审计 manual review 数从 45 降到 21。
 - 24 条 `rg "pattern_a|pattern_b"` 任务命令变成 runner-compatible 迁移候选。
-- 真正的 `cmd | cmd2`、heredoc、重定向和分号连接仍会被拒绝。
+- 真正的 `cmd | cmd2`、heredoc、非受限重定向和分号连接仍会被拒绝。
 
 边界：
 
@@ -3948,12 +3948,12 @@ git diff --check
 目标：
 
 ```text
-让 acceptance profile runner 允许 `python3 -c "import json; print(...)"` 这类安全代码参数，同时继续拒绝真正的 shell 分号连接、重定向、管道、逻辑连接和命令替换。
+让 acceptance profile runner 允许 `python3 -c "import json; print(...)"` 这类安全代码参数，同时继续拒绝真正的 shell 分号连接、非受限重定向、管道、逻辑连接和命令替换。
 ```
 
 已落地：
 
-- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 只在 `python* -c` 的最后一个代码 argv 中允许 `;`，并继续拒绝 `cmd1; cmd2`、非 final argv 分号、重定向、独立管道 token、逻辑连接、反引号和 `$(`。
+- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 只在 `python* -c` 的最后一个代码 argv 中允许 `;`，并继续拒绝 `cmd1; cmd2`、非 final argv 分号、非受限重定向、独立管道 token、逻辑连接、反引号和 `$(`。
 - `tools/dev/check_worker_acceptance_profile_python_c.py`：新增 parser smoke，覆盖安全 `python -c` 代码参数和三个拒绝样例。
 - `examples/worker_task_packs/p1e_worker_acceptance_python_c_semicolon.v0.1.json`：新增本轮任务包。
 
@@ -3961,7 +3961,7 @@ git diff --check
 
 - 审计 manual review 数从 21 降到 19。
 - 2 条 `python3 -c` 临时断言变成 runner-compatible 迁移候选。
-- heredoc、重定向和真实 shell 连接仍留在人工处理清单。
+- heredoc、非受限重定向和真实 shell 连接仍留在人工处理清单。
 
 边界：
 
@@ -3976,6 +3976,48 @@ PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_python_c_semicolon python3 -m py_compile 
 python3 tools/dev/check_worker_acceptance_profile_python_c.py --output /tmp/worker_acceptance_profile_python_c_smoke.json
 python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_python_c_audit.json --max-samples 80
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_python_c_semicolon_fast_gate.json
+git diff --check
+```
+
+### P1-E-9 WorkerTaskPack runner safe stdout redirect
+
+状态：已完成 profile runner / audit 解析修正。
+
+目标：
+
+```text
+让 acceptance profile runner 支持 `python3 -m json.tool schema.json >/tmp/out.json` 这类安全 stdout 重定向，同时继续拒绝 stdin、stderr、append、非 /tmp、非 final 重定向和真实 shell 连接。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 支持最终 token 形式的 `> /tmp/file` 或 `>/tmp/file`，目标必须是仓库外 `/tmp` 下文件；其他重定向仍拒绝。
+- `tools/dev/command_runner.py`：新增可选 `stdout_path`，由 runner 捕获 stdout 后写入目标文件，命令仍不经过 shell。
+- `tools/dev/check_worker_acceptance_profile_stdout_redirect.py`：新增 parser + execution smoke，覆盖 compact / spaced stdout redirect、实际写文件和拒绝样例。
+- 更新 pipe / Python `-c` smoke 的拒绝样例，避免把安全 `/tmp` stdout redirect 继续当成必须失败。
+- `examples/worker_task_packs/p1e_worker_acceptance_stdout_redirect.v0.1.json`：新增本轮任务包。
+
+效果：
+
+- 审计 manual review 数从 19 降到 16。
+- 3 条 `python3 -m json.tool ... >/tmp/...` 旧验收命令变成 runner-compatible 迁移候选。
+- heredoc、多命令脚本、stdin/stderr/append/非 final 重定向仍留在人工处理清单。
+
+边界：
+
+- 本任务不执行被审计任务包的验收命令。
+- 本任务不修改任何历史任务包、不调用 provider、不读取 `.env`、不改 runtime / backend / frontend。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_stdout_redirect.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_stdout_redirect python3 -m py_compile tools/dev/command_runner.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_stdout_redirect.py tools/dev/check_worker_acceptance_profile_pipe_args.py tools/dev/check_worker_acceptance_profile_python_c.py
+python3 tools/dev/check_worker_acceptance_profile_stdout_redirect.py --output /tmp/worker_acceptance_profile_stdout_redirect_smoke.json
+python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/worker_acceptance_profile_pipe_args_after_stdout_redirect_smoke.json
+python3 tools/dev/check_worker_acceptance_profile_python_c.py --output /tmp/worker_acceptance_profile_python_c_after_stdout_redirect_smoke.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_stdout_redirect_audit.json --max-samples 120
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_stdout_redirect_fast_gate.json
 git diff --check
 ```
 

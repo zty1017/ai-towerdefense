@@ -57,7 +57,7 @@ def run_smoke() -> dict[str, Any]:
     rejected = {
         "python_c_then_extra_args": expect_rejected('python3 -c "print(1)"; git status'),
         "standalone_semicolon": expect_rejected("python3 -m compileall tools; git status"),
-        "redirect": expect_rejected("python3 -m json.tool a.json >/tmp/a.json"),
+        "unsafe_redirect": expect_rejected("python3 -m json.tool a.json > out.json"),
     }
     return {
         "schema_version": REPORT_SCHEMA_VERSION,

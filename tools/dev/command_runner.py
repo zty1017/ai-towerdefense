@@ -34,9 +34,11 @@ def run_command(
     output_tail_limit: int,
     env: dict[str, str] | None = None,
     include_timestamps: bool = True,
+    stdout_path: Path | None = None,
 ) -> dict[str, Any]:
     started = time.monotonic()
     started_at = now_iso()
+    stdout_redirect_bytes: int | None = None
     try:
         completed = subprocess.run(
             command,
@@ -48,11 +50,20 @@ def run_command(
             check=False,
         )
         return_code = completed.returncode
+        if stdout_path is not None:
+            stdout_path.parent.mkdir(parents=True, exist_ok=True)
+            stdout_path.write_text(completed.stdout, encoding="utf-8")
+            stdout_redirect_bytes = len(completed.stdout.encode("utf-8"))
         stdout_tail = shorten_output(completed.stdout, root, output_tail_limit)
         stderr_tail = shorten_output(completed.stderr, root, output_tail_limit)
     except subprocess.TimeoutExpired as exc:
         return_code = 124
-        stdout_tail = shorten_output(exc.stdout or "", root, output_tail_limit)
+        stdout_text = exc.stdout or ""
+        if stdout_path is not None:
+            stdout_path.parent.mkdir(parents=True, exist_ok=True)
+            stdout_path.write_text(stdout_text, encoding="utf-8")
+            stdout_redirect_bytes = len(stdout_text.encode("utf-8"))
+        stdout_tail = shorten_output(stdout_text, root, output_tail_limit)
         stderr_tail = shorten_output(
             (exc.stderr or "") + "\ncommand timed out",
             root,
@@ -70,4 +81,7 @@ def run_command(
     if include_timestamps:
         result["started_at"] = started_at
         result["finished_at"] = now_iso()
+    if stdout_path is not None:
+        result["stdout_path"] = str(stdout_path)
+        result["stdout_redirect_bytes"] = stdout_redirect_bytes
     return result

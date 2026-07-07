@@ -33,6 +33,7 @@ SHELL_ONLY_SUBSTRINGS = ("`", "$(")
 class ParsedCommand:
     argv: list[str]
     env: dict[str, str]
+    stdout_path: Path | None = None
 
 
 class UnsupportedCommandSyntax(ValueError):
@@ -55,6 +56,31 @@ def write_json(path: Path, value: dict[str, Any]) -> None:
         handle.write("\n")
 
 
+def require_tmp_stdout_path(path_text: str) -> Path:
+    if not path_text:
+        raise UnsupportedCommandSyntax("stdout redirect target is empty")
+    resolved = Path(path_text).expanduser().resolve(strict=False)
+    tmp_root = Path("/tmp").resolve(strict=False)
+    repo_root = ROOT.resolve(strict=False)
+    if resolved == tmp_root:
+        raise UnsupportedCommandSyntax("stdout redirect target must be a file under /tmp")
+    if tmp_root not in resolved.parents:
+        raise UnsupportedCommandSyntax("stdout redirect target must be under /tmp")
+    if resolved == repo_root or repo_root in resolved.parents:
+        raise UnsupportedCommandSyntax("stdout redirect target must not be inside the repository")
+    if resolved.exists() and resolved.is_dir():
+        raise UnsupportedCommandSyntax("stdout redirect target must be a file, not a directory")
+    return resolved
+
+
+def extract_stdout_redirect(tokens: list[str]) -> tuple[list[str], Path | None]:
+    if len(tokens) >= 2 and tokens[-2] == ">":
+        return tokens[:-2], require_tmp_stdout_path(tokens[-1])
+    if tokens[-1].startswith(">") and tokens[-1] != ">":
+        return tokens[:-1], require_tmp_stdout_path(tokens[-1][1:])
+    return tokens, None
+
+
 def parse_command(command: str) -> ParsedCommand:
     for marker in SHELL_ONLY_SUBSTRINGS:
         if marker in command:
@@ -67,6 +93,10 @@ def parse_command(command: str) -> ParsedCommand:
         raise UnsupportedCommandSyntax(f"unable to parse command with shlex: {exc}") from exc
     if not tokens:
         raise UnsupportedCommandSyntax("command is empty")
+
+    tokens, stdout_path = extract_stdout_redirect(tokens)
+    if not tokens:
+        raise UnsupportedCommandSyntax("command has stdout redirect but no executable")
 
     argv_start = 0
     while argv_start < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[argv_start]):
@@ -108,7 +138,7 @@ def parse_command(command: str) -> ParsedCommand:
     argv = tokens[argv_start:]
     if not argv:
         raise UnsupportedCommandSyntax("command has environment assignments but no executable")
-    return ParsedCommand(argv=argv, env=env)
+    return ParsedCommand(argv=argv, env=env, stdout_path=stdout_path)
 
 
 def empty_report(
@@ -198,6 +228,7 @@ def build_result_for_dry_run(
         "command": command,
         "argv": parsed.argv,
         "env": parsed.env,
+        "stdout_path": str(parsed.stdout_path) if parsed.stdout_path else None,
         "elapsed_seconds": 0,
         "return_code": None,
         "status": "dry_run",
@@ -236,10 +267,12 @@ def run_profile_commands(
             timeout_seconds=timeout_seconds,
             output_tail_limit=OUTPUT_TAIL_LIMIT,
             env=parsed.env,
+            stdout_path=parsed.stdout_path,
         )
         result["command"] = command
         result["argv"] = parsed.argv
         result["env"] = parsed.env
+        result["stdout_path"] = str(parsed.stdout_path) if parsed.stdout_path else None
         results.append(result)
         status_icon = "OK" if result["status"] == "passed" else "FAIL"
         print(f"{status_icon} command_{index} ({result['elapsed_seconds']}s)")

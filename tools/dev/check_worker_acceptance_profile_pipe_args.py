@@ -53,7 +53,7 @@ def run_smoke() -> dict[str, Any]:
     rejected = {
         "standalone_pipe": expect_rejected("rg alpha docs | cat"),
         "heredoc": expect_rejected("python3 - <<'PY'\nprint(1)\nPY"),
-        "redirect": expect_rejected("python3 -m json.tool a.json >/tmp/a.json"),
+        "unsafe_redirect": expect_rejected("python3 -m json.tool a.json > out.json"),
         "semicolon": expect_rejected('python3 -c "print(1)"; git status'),
     }
     return {
