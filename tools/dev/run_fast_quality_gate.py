@@ -35,6 +35,9 @@ from tools.dev.fast_quality_gate_contract import (
     FAST_QUALITY_GATE_REPORT_ID,
     FAST_QUALITY_GATE_SCHEMA_VERSION,
 )
+from tools.dev.validate_fast_quality_gate_report import (
+    validate_report as validate_fast_quality_gate_report,
+)
 
 
 DEFAULT_OUTPUT = Path("/tmp/ai_td_fast_quality_gate_report.v0.1.json")
@@ -224,6 +227,26 @@ def write_json(path: Path, value: dict[str, Any]) -> None:
         handle.write("\n")
 
 
+def self_validate_report(report: dict[str, Any], *, fail_fast: bool) -> bool:
+    failed_count = int(report.get("summary", {}).get("failed_count") or 0)
+    partial_fail_fast = bool(fail_fast and failed_count > 0)
+    try:
+        validate_fast_quality_gate_report(
+            report,
+            expect_status=None,
+            expect_failed_count=None,
+            require_worker_env_smoke=not partial_fail_fast,
+            require_worker_profile_audit=not partial_fail_fast,
+            require_release_gate_audit=not partial_fail_fast,
+            require_complete_command_order=not partial_fail_fast,
+        )
+    except Exception as exc:  # noqa: BLE001 - CLI reports concise failures.
+        print(f"fast quality gate report self-validation failed: {exc}", file=sys.stderr)
+        return False
+    print("fast quality gate report self-validation passed")
+    return True
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -296,11 +319,14 @@ def main() -> int:
     }
     write_json(args.output, report)
     print(f"fast quality gate report: {args.output}")
+    report_valid = self_validate_report(report, fail_fast=bool(args.fail_fast))
     if failed:
         for item in failed:
             print(f"failed: {item['name']}", file=sys.stderr)
             if item.get("stderr_tail"):
                 print(item["stderr_tail"], file=sys.stderr)
+        return 1
+    if not report_valid:
         return 1
     return 0
 

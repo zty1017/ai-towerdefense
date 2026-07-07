@@ -39,6 +39,9 @@ from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     PROFILE_FULL,
     PROFILE_PREMERGE,
 )
+from tools.dev.validate_premerge_quality_gate_report import (  # noqa: E402
+    validate_report as validate_premerge_quality_gate_report,
+)
 
 
 DEFAULT_OUTPUT = Path("/tmp/ai_td_premerge_quality_gate_report.v0.1.json")
@@ -51,6 +54,21 @@ def write_json(path: Path, value: dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def self_validate_report(report: dict[str, Any], *, profile: str) -> bool:
+    try:
+        validate_premerge_quality_gate_report(
+            report,
+            expect_status=None,
+            expect_profile=profile,
+            expect_failed_count=None,
+        )
+    except Exception as exc:  # noqa: BLE001 - CLI reports concise failures.
+        print(f"premerge quality gate report self-validation failed: {exc}", file=sys.stderr)
+        return False
+    print("premerge quality gate report self-validation passed")
+    return True
 
 
 def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
@@ -282,11 +300,14 @@ def main() -> int:
     }
     write_json(args.output, report)
     print(f"premerge quality gate report: {args.output}")
+    report_valid = self_validate_report(report, profile=str(args.profile))
     if failed:
         for item in failed:
             print(f"failed: {item['name']}", file=sys.stderr)
             if item.get("stderr_tail"):
                 print(item["stderr_tail"], file=sys.stderr)
+        return 1
+    if not report_valid:
         return 1
     return 0
 

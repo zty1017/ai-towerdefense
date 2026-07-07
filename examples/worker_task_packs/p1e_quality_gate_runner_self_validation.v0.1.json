@@ -1,0 +1,106 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-15g-quality-gate-runner-self-validation",
+  "title": "Quality gate runner self-validation",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/quality-gate-runner-self-validation",
+  "worktree": "/tmp/ai-td-task-quality-gate-runner-self-validation",
+  "objective": "让 fast/premerge quality gate runner 在写出结构化报告后立即调用各自独立 validator 做自校验，减少日常开发时漏跑 report validator 的风险，同时保留独立 validator 作为任务包和 CI 复核入口。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "README.md",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/validate_fast_quality_gate_report.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "tools/dev/validate_premerge_quality_gate_report.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/validate_fast_quality_gate_report.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "README.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1e_quality_gate_runner_self_validation.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "examples/review_packs/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "tools/llm/",
+    "tools/provider_adapter/run_provider_adapter.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_quality_gate_runner_self_validation.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_quality_gate_runner_self_validation python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/quality_gate_runner_self_validation_fast_report.json",
+    "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/quality_gate_runner_self_validation_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
+    "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/quality_gate_runner_self_validation_premerge_report.json --fail-fast",
+    "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/quality_gate_runner_self_validation_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：验证 fast/premerge runner 自校验、独立 validator 复核和文档同步。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_quality_gate_runner_self_validation.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_quality_gate_runner_self_validation_daily python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/quality_gate_runner_self_validation_fast_report.json",
+          "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/quality_gate_runner_self_validation_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
+          "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/quality_gate_runner_self_validation_premerge_report.json --fail-fast",
+          "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/quality_gate_runner_self_validation_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider、不读取 .env、不跑浏览器、不写世界状态、不激活 runtime。",
+    "runner 自校验不替代独立 validator；任务包和 premerge gate 仍可显式复核报告。",
+    "失败命令仍按原逻辑返回失败；自校验只额外拦截报告结构、命令顺序和安全边界漂移。"
+  ]
+}

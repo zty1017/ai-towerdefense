@@ -104,7 +104,16 @@ def validate_report(
 
     names = command_names(results)
     name_set = set(names)
-    if require_complete_command_order or status == "passed":
+    if fail_fast and status != "passed":
+        expected_prefix = FAST_QUALITY_GATE_COMMAND_ORDER[: len(names)]
+        require(
+            names == expected_prefix,
+            "command order prefix mismatch: expected "
+            + json.dumps(expected_prefix, ensure_ascii=False)
+            + ", got "
+            + json.dumps(names, ensure_ascii=False),
+        )
+    elif require_complete_command_order or status == "passed" or not fail_fast:
         require(
             names == FAST_QUALITY_GATE_COMMAND_ORDER,
             "command order mismatch: expected "

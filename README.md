@@ -154,13 +154,13 @@ uvicorn app.main:app --app-dir backend --reload
 
 ## Tests
 
-日常开发优先跑快速质量门。它串起无浏览器、无 provider、无 `.env` 的关键静态 / 结构检查，用来在几秒级发现常见破坏。
+日常开发优先跑快速质量门。它串起无浏览器、无 provider、无 `.env` 的关键静态 / 结构检查，并会自校验结构化报告，用来在几秒级发现常见破坏。
 
 ```bash
 python3 tools/dev/run_fast_quality_gate.py
 ```
 
-合并前建议跑本地 pre-merge quality gate。它在 fast gate 之外追加 WorkerTaskPack 全量 profile dry-run、profile 审计、迁移 dry-run 和 `git diff --check`，仍然不跑浏览器、不调用 provider、不读取 `.env`。
+合并前建议跑本地 pre-merge quality gate。它在 fast gate 之外追加 WorkerTaskPack 全量 profile dry-run、profile 审计、迁移 dry-run 和 `git diff --check`，并会自校验 premerge 报告；默认仍然不跑浏览器、不调用 provider、不读取 `.env`。
 
 ```bash
 python3 tools/dev/run_premerge_quality_gate.py
