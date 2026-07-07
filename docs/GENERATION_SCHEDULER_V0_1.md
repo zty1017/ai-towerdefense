@@ -717,6 +717,24 @@ runtime_activation_authorization_recorded
 
 这个状态仍然不是玩家侧激活，也不代表队列已完成。它只表示系统已经有一条显式授权记录；后续仍必须通过 `runtime_activation_apply_gate`、激活后证据复跑和必要的队列完成步骤。该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不生成 runtime package 文件、不提交 WorldStateDeltaTransaction、不 complete queue item、不写世界状态、不激活 runtime。
 
+为了减少演示脚本和本地开发时的手动步骤，后端还提供一个受控链式入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-runtime-activation-readiness-chain
+```
+
+该入口只顺序复用已有三步 worker：
+
+```text
+prepare-runtime-build-request
+-> run-runtime-artifact-build-report
+-> record-runtime-activation-authorization
+```
+
+它不新增新的内容事实源，也不跳过任一步的前置条件。调用后会写入同样三类 ledger evidence：`generation_runtime_build_request`、`generation_runtime_artifact_build_report` 和 `generation_runtime_activation_authorization`。如果其中某步已存在，稳定 id 会使 ledger 幂等更新而不是新增重复记录。
+
+该入口的边界与三步 worker 的组合一致：不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不生成 runtime package 文件、不提交 WorldStateDeltaTransaction、不 complete queue item、不写世界状态、不激活 runtime。它的目的只是减少本地受控推进成本；真正玩家 runtime apply 仍必须由后续单独的 apply gate 处理。
+
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 
 ```text

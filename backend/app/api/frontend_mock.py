@@ -400,6 +400,27 @@ def record_generation_runtime_activation_authorization(
     return _payload(session_id, data)
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/run-runtime-activation-readiness-chain",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_runtime_activation_readiness_chain(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Run the bounded review-only runtime readiness chain for one item."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.run_generation_runtime_activation_readiness_chain(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

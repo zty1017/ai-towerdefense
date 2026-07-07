@@ -550,6 +550,64 @@ runtime_activation_authorization_recorded
 - 不写世界状态。
 - 不激活 runtime。
 
+### 运行 runtime activation readiness chain
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/run-runtime-activation-readiness-chain
+```
+
+该接口是开发 / Studio / 演示脚本用的组合入口，用于减少手动调用次数。它顺序复用已有三步：
+
+```text
+prepare-runtime-build-request
+-> run-runtime-artifact-build-report
+-> record-runtime-activation-authorization
+```
+
+请求体与三步 worker 共用，例如：
+
+```json
+{
+  "worker_id": "studio-runtime-readiness-chain",
+  "schedule_item_id": "sched_next_map_visual_prefetch",
+  "activation_decision": "approved_for_manual_apply"
+}
+```
+
+返回包含：
+
+- `worker_step`
+- `chain_steps`
+- `generation_runtime_build_request`
+- `generation_runtime_artifact_build_report`
+- `generation_runtime_activation_authorization`
+- `generation_prefetch_cache`
+- `generation_activation_gate`
+- `generation_artifact_ledger`
+
+该接口不会产生新的内容事实源；它只把三步已有 ledger evidence 串起来。成功后通常会把目标 item 推到：
+
+```text
+runtime_activation_authorization_recorded
+```
+
+并继续被 activation gate 阻断在：
+
+```text
+blocked_runtime_activation_apply_required
+```
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不生成新的 runtime package 文件。
+- 不提交 WorldStateDeltaTransaction。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

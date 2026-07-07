@@ -4781,6 +4781,43 @@ python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runti
 git diff --check
 ```
 
+### P1-B Generation Scheduler runtime activation readiness chain
+
+状态：已完成。
+
+目标：
+
+```text
+把 prepare-runtime-build-request、run-runtime-artifact-build-report、record-runtime-activation-authorization 三个已存在的受控步骤收束为一个链式 worker，减少开发 / Studio / 演示脚本手动调用次数，同时不新增内容事实源、不绕过任何 gate。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_service.py`：新增 `run_generation_runtime_activation_readiness_chain()`，顺序复用三步已有 worker，并返回 `chain_steps` 摘要。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/run-runtime-activation-readiness-chain`。
+- `backend/app/services/generation_scheduler_daemon_readiness_builders.py`：在有 promotion allowed / shared reuse 来源且尚未记录 activation authorization 时，优先推荐该链式入口，同时保留细粒度动作。
+- `backend/tests/test_frontend_mock_api.py`：覆盖缺失 session / 无 run / 无候选、三步 ledger 写入、最终 prefetch-cache / activation-gate 状态、daemon-readiness 推荐动作和幂等。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 readiness chain 的组合边界。
+- `examples/worker_task_packs/p1b_generation_runtime_activation_readiness_chain.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- readiness chain 只是三个已存在 worker 的顺序组合，不新增 runtime / world / media 事实源。
+- 该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不生成 runtime package 文件、不提交 WorldStateDeltaTransaction、不 complete queue item、不写世界状态、不激活 runtime。
+- 成功后仍停在 `runtime_activation_authorization_recorded` / `blocked_runtime_activation_apply_required`，真正玩家 runtime apply 仍必须另开显式 apply gate。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_activation_readiness_chain.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_activation_readiness_chain python3 -m py_compile backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_activation_readiness_chain_fast_gate.json
+python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_activation_readiness_chain_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
+python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_activation_readiness_chain_premerge_gate.json
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_activation_readiness_chain_premerge_gate.json --expect-status passed --expect-failed-count 0
+git diff --check
+```
+
 ### P1-B Generation Scheduler review-only pipeline smoke
 
 状态：已完成本地 HTTP 闭环 smoke。

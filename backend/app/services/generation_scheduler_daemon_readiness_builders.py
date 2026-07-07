@@ -180,6 +180,24 @@ def _recommended_next_actions(
     runtime_build_source_count = (
         promotion_allowed_count + queue_counts["shared_cache_reuse_candidate_count"]
     )
+    if (
+        runtime_build_source_count > 0
+        and queue_counts["runtime_activation_authorization_count"]
+        < runtime_build_source_count
+    ):
+        actions.append(
+            {
+                "action": "run_runtime_activation_readiness_chain",
+                "endpoint": (
+                    "POST /api/sessions/{session_id}/generation-schedule/"
+                    "workers/run-runtime-activation-readiness-chain"
+                ),
+                "reason": "shortcut_prepare_runtime_report_and_activation_authorization_without_bypassing_gates",
+                "provider_call_count_by_this_request": 0,
+                "world_mutation_count_by_this_request": 0,
+                "activation_allowed_count": 0,
+            }
+        )
     if queue_counts["runtime_build_request_count"] < runtime_build_source_count:
         actions.append(
             {

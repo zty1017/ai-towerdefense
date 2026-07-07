@@ -2533,6 +2533,79 @@ def record_generation_runtime_activation_authorization(
     }
 
 
+def _chain_step_summary(
+    name: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    worker_step = payload.get("worker_step")
+    if not isinstance(worker_step, dict):
+        worker_step = {}
+    return {
+        "name": name,
+        "status": worker_step.get("status"),
+        "worker_mode": worker_step.get("worker_mode"),
+        "schedule_item_id": worker_step.get("schedule_item_id"),
+        "provider_call_count": int(worker_step.get("provider_call_count", 0) or 0),
+        "world_mutation_count": int(worker_step.get("world_mutation_count", 0) or 0),
+        "activation_allowed_count": int(
+            worker_step.get("activation_allowed_count", 0) or 0
+        ),
+        "runtime_ready_count": int(worker_step.get("runtime_ready_count", 0) or 0),
+    }
+
+
+def run_generation_runtime_activation_readiness_chain(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Run the bounded review-only runtime readiness chain for one item."""
+
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    prepared = prepare_generation_runtime_build_request(session_id, safe_metadata)
+    built = run_generation_runtime_artifact_build_report(session_id, safe_metadata)
+    authorized = record_generation_runtime_activation_authorization(
+        session_id,
+        safe_metadata,
+    )
+    final_step = authorized.get("worker_step")
+    if not isinstance(final_step, dict):
+        final_step = {}
+    schedule_item_id = final_step.get("schedule_item_id")
+    chain_steps = [
+        _chain_step_summary("prepare_runtime_build_request", prepared),
+        _chain_step_summary("run_runtime_artifact_build_report", built),
+        _chain_step_summary("record_runtime_activation_authorization", authorized),
+    ]
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "completed_review_only",
+            "worker_mode": "generation_runtime_activation_readiness_chain",
+            "schedule_item_id": schedule_item_id,
+            "step_count": len(chain_steps),
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "runtime_ready_count": 0,
+            "activation_allowed_count": 0,
+            "queue_completed_count": 0,
+        },
+        "chain_steps": chain_steps,
+        "generation_runtime_build_request": prepared.get(
+            "generation_runtime_build_request"
+        ),
+        "generation_runtime_artifact_build_report": built.get(
+            "generation_runtime_artifact_build_report"
+        ),
+        "generation_runtime_activation_authorization": authorized.get(
+            "generation_runtime_activation_authorization"
+        ),
+        "generation_prefetch_cache": authorized.get("generation_prefetch_cache"),
+        "generation_activation_gate": authorized.get("generation_activation_gate"),
+        "generation_artifact_ledger": authorized.get("generation_artifact_ledger"),
+    }
+
+
 def stage_provider_artifacts_fixture(
     session_id: str,
     metadata: dict[str, Any] | None = None,

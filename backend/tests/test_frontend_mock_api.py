@@ -4422,6 +4422,138 @@ def test_runtime_activation_authorization_records_review_only_gate(
     ][RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_KIND] == 1
 
 
+def test_runtime_activation_readiness_chain_runs_three_review_only_steps(
+    client,
+    raw_conn,
+):
+    missing = client.post(
+        "/api/sessions/missing-session/generation-schedule/workers/"
+        "run-runtime-activation-readiness-chain"
+    )
+    assert missing.status_code == 404
+
+    sid = _create_session(client)
+    no_run = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "run-runtime-activation-readiness-chain"
+    )
+    assert no_run.status_code == 409
+    assert "generation schedule run is required" in no_run.text
+
+    run_payload = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    run_id = run_payload["generation_schedule_run"]["run_id"]
+    no_candidate = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "run-runtime-activation-readiness-chain"
+    )
+    assert no_candidate.status_code == 409
+    assert "no promotion-allowed or shared-cache reuse candidate" in no_candidate.text
+
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{sid}_provider_artifact_promotion_report_chain",
+            "run_id": run_id,
+            "session_id": sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_runtime_chain",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    chained = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-runtime-activation-readiness-chain",
+            json={
+                "worker_id": "runtime-readiness-chain-test",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+
+    after_counts = _session_state_counts(raw_conn, sid)
+    assert after_counts == {
+        **before_counts,
+        "generation_artifact_ledger": before_counts["generation_artifact_ledger"] + 3,
+    }
+    worker_step = chained["worker_step"]
+    assert worker_step["status"] == "completed_review_only"
+    assert worker_step["worker_mode"] == "generation_runtime_activation_readiness_chain"
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["step_count"] == 3
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+
+    assert [step["name"] for step in chained["chain_steps"]] == [
+        "prepare_runtime_build_request",
+        "run_runtime_artifact_build_report",
+        "record_runtime_activation_authorization",
+    ]
+    assert all(step["provider_call_count"] == 0 for step in chained["chain_steps"])
+    assert all(step["world_mutation_count"] == 0 for step in chained["chain_steps"])
+    assert chained["generation_runtime_build_request"]["request_status"] == (
+        RUNTIME_BUILD_REQUEST_LEDGER_STATUS
+    )
+    assert chained["generation_runtime_artifact_build_report"]["report_status"] == (
+        RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS
+    )
+    assert chained["generation_runtime_activation_authorization"][
+        "authorization_status"
+    ] == RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_STATUS
+
+    ledger_summary = chained["generation_artifact_ledger"]["summary"]
+    assert ledger_summary["artifact_kind_counts"][RUNTIME_BUILD_REQUEST_LEDGER_KIND] == 1
+    assert ledger_summary["artifact_kind_counts"][
+        RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND
+    ] == 1
+    assert ledger_summary["artifact_kind_counts"][
+        RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_KIND
+    ] == 1
+    assert ledger_summary["activation_allowed_count"] == 0
+    item = {
+        cache_item["schedule_item_id"]: cache_item
+        for cache_item in chained["generation_prefetch_cache"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == RUNTIME_ACTIVATION_AUTHORIZATION_CACHE_STATUS
+    gate = {
+        gate_item["schedule_item_id"]: gate_item
+        for gate_item in chained["generation_activation_gate"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert gate["activation_status"] == "blocked_runtime_activation_apply_required"
+    assert gate["activation_allowed"] is False
+
+    daemon = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )["generation_daemon_readiness"]
+    actions = {action["action"] for action in daemon["recommended_next_actions"]}
+    assert "wait_for_runtime_activation_apply_gate" in actions
+    assert "run_runtime_activation_readiness_chain" not in actions
+
+    chained_again = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-runtime-activation-readiness-chain",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    assert _session_state_counts(raw_conn, sid) == after_counts
+    assert chained_again["generation_artifact_ledger"]["summary"]["item_count"] == (
+        ledger_summary["item_count"]
+    )
+
+
 def test_prepare_runtime_build_request_from_shared_cache_reuse_candidate(client):
     source_sid = _create_session(client)
     source_run = _payload(
