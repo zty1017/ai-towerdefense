@@ -202,7 +202,7 @@ def envelope_summary(envelope: dict[str, Any] | None) -> dict[str, Any]:
     authority = as_obj(envelope.get("authority"))
     return {
         "envelope_id": envelope.get("envelope_id"),
-        "provider_call_performed": provider_call.get("provider_call_performed"),
+        "provider_call_performed": provider_call.get("performed"),
         "finish_reason": provider_call.get("finish_reason"),
         "result_kind": result.get("result_kind"),
         "artifact_ref_count": len(as_list(result.get("artifact_refs"))),

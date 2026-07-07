@@ -155,6 +155,8 @@ PATHS = {
     / "examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json",
     "provider_runner_handoff_outbox_consumer_task_pack": ROOT
     / "examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json",
+    "provider_runner_handoff_outbox_import_smoke_task_pack": ROOT
+    / "examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json",
     "provider_video_handoff_template_task_pack": ROOT
     / "examples/worker_task_packs/p1b_provider_video_handoff_template.v0.1.json",
     "provider_runner_handoff_outbox_schema": ROOT
@@ -163,6 +165,8 @@ PATHS = {
     / "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
     "provider_runner_handoff_outbox_consumer": ROOT
     / "tools/dev/run_provider_adapter_runner_handoff_outbox.py",
+    "provider_runner_handoff_outbox_import_smoke": ROOT
+    / "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
     "context_package_example": ROOT
     / "examples/review_packs/mvp_first_battle.context_package.json",
     "fact_entry_example": ROOT
@@ -3274,11 +3278,15 @@ def collect_provider_runner_handoff_summary() -> dict[str, Any]:
     outbox_consumer_task = load_json(
         PATHS["provider_runner_handoff_outbox_consumer_task_pack"]
     )
+    outbox_import_smoke_task = load_json(
+        PATHS["provider_runner_handoff_outbox_import_smoke_task_pack"]
+    )
     video_task = load_json(PATHS["provider_video_handoff_template_task_pack"])
     return {
         "status": "fixture_roundtrip_covered",
         "video_boundary_status": "video_dry_boundary_template_visible",
         "outbox_consumer_status": "local_dry_boundary_consumer_ready",
+        "outbox_import_pipeline_status": "local_consume_import_prefetch_smoke_ready",
         "export_endpoint": (
             "POST /api/sessions/{session_id}/generation-schedule/workers/"
             "export-provider-adapter-runner-handoff"
@@ -3331,6 +3339,25 @@ def collect_provider_runner_handoff_summary() -> dict[str, Any]:
             "runtime_activation_allowed": False,
             "live_provider_execution_supported": False,
         },
+        "outbox_import_pipeline_evidence": {
+            "tool": "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
+            "report_schema_version": (
+                "provider_runner_handoff_outbox_import_pipeline_report.v0.1"
+            ),
+            "transport": "temporary_local_uvicorn_http",
+            "consumer_report_schema_version": (
+                "provider_adapter_runner_handoff_outbox_execution_report.v0.1"
+            ),
+            "expected_runner_handoff_count": 2,
+            "expected_imported_count": 2,
+            "expected_prefetch_status": "review_only_envelope_ready",
+            "imports_to_temporary_backend_ledger": True,
+            "fixture_boundary_only": True,
+            "staging_performed": False,
+            "promotion_performed": False,
+            "queue_completed": False,
+            "runtime_activation_allowed": False,
+        },
         "safety": {
             "api_reads_env": False,
             "api_calls_provider": False,
@@ -3347,6 +3374,10 @@ def collect_provider_runner_handoff_summary() -> dict[str, Any]:
                 PATHS["provider_runner_handoff_outbox_consumer_task_pack"],
                 "worker_task_pack",
             ),
+            file_ref(
+                PATHS["provider_runner_handoff_outbox_import_smoke_task_pack"],
+                "worker_task_pack",
+            ),
             file_ref(PATHS["provider_video_handoff_template_task_pack"], "worker_task_pack"),
         ],
         "tools": [
@@ -3354,11 +3385,16 @@ def collect_provider_runner_handoff_summary() -> dict[str, Any]:
                 PATHS["provider_runner_handoff_outbox_consumer"],
                 "outbox_consumer_tool",
             ),
+            file_ref(
+                PATHS["provider_runner_handoff_outbox_import_smoke"],
+                "outbox_import_pipeline_smoke_tool",
+            ),
         ],
         "acceptance_commands": sorted(
             set(as_list(export_task.get("acceptance_commands")))
             | set(as_list(roundtrip_task.get("acceptance_commands")))
             | set(as_list(outbox_consumer_task.get("acceptance_commands")))
+            | set(as_list(outbox_import_smoke_task.get("acceptance_commands")))
             | set(as_list(video_task.get("acceptance_commands")))
         ),
     }
@@ -5649,7 +5685,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- dry-run 动作分布：`{scheduler_run_summary.get('action_counts')}`",
         f"- dry-run provider 调用：`{scheduler_run.get('provider_call_count')}`，世界修改：`{scheduler_run.get('world_mutation_count')}`",
         f"- 构建期读取环境：`{scheduler.get('reads_env_during_build')}`，构建期调用 provider：`{scheduler.get('calls_provider_during_build')}`",
-        f"- runner handoff：`{provider_runner_handoff.get('status')}`，outbox consumer：`{provider_runner_handoff.get('outbox_consumer_status')}`，video 边界：`{provider_runner_handoff.get('video_boundary_status')}`，roundtrip cache：`{provider_runner_handoff_roundtrip.get('expected_cache_status')}`，runtime 激活：`{provider_runner_handoff_roundtrip.get('runtime_activation_allowed')}`",
+        f"- runner handoff：`{provider_runner_handoff.get('status')}`，outbox consumer：`{provider_runner_handoff.get('outbox_consumer_status')}`，outbox import smoke：`{provider_runner_handoff.get('outbox_import_pipeline_status')}`，video 边界：`{provider_runner_handoff.get('video_boundary_status')}`，roundtrip cache：`{provider_runner_handoff_roundtrip.get('expected_cache_status')}`，runtime 激活：`{provider_runner_handoff_roundtrip.get('runtime_activation_allowed')}`",
         f"- background tick：`{background_tick.get('status')}`，默认预算：`{background_tick.get('default_max_items')}`，provider 调用：`{background_tick_safety.get('api_calls_provider')}`，runtime 激活：`{background_tick_safety.get('api_activates_runtime')}`",
         f"- background handoff tick：`{background_handoff_tick.get('status')}`，outbox：`{background_handoff_tick.get('outbox_status')}`，video 边界：`{background_handoff_tick.get('video_boundary_status')}`，handoff 数：`{background_handoff_tick.get('expected_runner_handoff_count')}`，运行 adapter：`{background_handoff_safety.get('api_runs_provider_adapter')}`",
         f"- review-only pipeline smoke：`{pipeline_smoke.get('status')}`，HTTP 步骤 `{pipeline_smoke.get('passed_step_count')}` / `{pipeline_smoke.get('step_count')}`，handoff `{pipeline_smoke.get('background_handoff_runner_handoff_count')}` 个，outbox `{pipeline_smoke.get('background_handoff_outbox_schema_version')}`",
@@ -6518,7 +6554,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       <h2>Generation Scheduler</h2>
       <p>计划包：<code>{html_escape(scheduler.get("plan_id"))}</code>；延迟分布：<code>{html_escape(scheduler_summary.get("latency_class_counts"))}</code></p>
       <p>dry-run：<code>{html_escape(scheduler_run.get("report_id"))}</code>；动作分布：<code>{html_escape(scheduler_run_summary.get("action_counts"))}</code></p>
-      <p>runner handoff：<code>{html_escape(provider_runner_handoff.get("status"))}</code>；outbox consumer：<code>{html_escape(provider_runner_handoff.get("outbox_consumer_status"))}</code>；video 边界：<code>{html_escape(provider_runner_handoff.get("video_boundary_status"))}</code>；roundtrip cache：<code>{html_escape(provider_runner_handoff_roundtrip.get("expected_cache_status"))}</code>；runtime 激活：<code>{html_escape(provider_runner_handoff_roundtrip.get("runtime_activation_allowed"))}</code></p>
+      <p>runner handoff：<code>{html_escape(provider_runner_handoff.get("status"))}</code>；outbox consumer：<code>{html_escape(provider_runner_handoff.get("outbox_consumer_status"))}</code>；outbox import smoke：<code>{html_escape(provider_runner_handoff.get("outbox_import_pipeline_status"))}</code>；video 边界：<code>{html_escape(provider_runner_handoff.get("video_boundary_status"))}</code>；roundtrip cache：<code>{html_escape(provider_runner_handoff_roundtrip.get("expected_cache_status"))}</code>；runtime 激活：<code>{html_escape(provider_runner_handoff_roundtrip.get("runtime_activation_allowed"))}</code></p>
       <p>background tick：<code>{html_escape(background_tick.get("status"))}</code>；默认预算：<code>{html_escape(background_tick.get("default_max_items"))}</code>；provider 调用：<code>{html_escape(background_tick_safety.get("api_calls_provider"))}</code>；runtime 激活：<code>{html_escape(background_tick_safety.get("api_activates_runtime"))}</code></p>
       <p>background handoff tick：<code>{html_escape(background_handoff_tick.get("status"))}</code>；outbox：<code>{html_escape(background_handoff_tick.get("outbox_status"))}</code>；video 边界：<code>{html_escape(background_handoff_tick.get("video_boundary_status"))}</code>；handoff 数：<code>{html_escape(background_handoff_tick.get("expected_runner_handoff_count"))}</code>；运行 adapter：<code>{html_escape(background_handoff_safety.get("api_runs_provider_adapter"))}</code></p>
       <p class="muted">构建器不读取环境、不调用 provider；预取内容启用前必须重新通过对应校验门。</p>

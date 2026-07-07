@@ -1,0 +1,84 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-60-provider-runner-handoff-outbox-import-smoke",
+  "title": "Provider runner handoff outbox import pipeline smoke",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-outbox-import-smoke",
+  "worktree": "/tmp/ai-td-task-provider-runner-outbox-import-smoke",
+  "objective": "新增严格本地 smoke：用临时后端创建 scheduler run，手动为两个 queued provider-review 调度项准备 executor request、授权并导出 handoff，组装 ProviderAdapterRunnerHandoffOutbox v0.1，调用本地 outbox consumer 生成 receipt/envelope，再显式导回临时后端 ledger，并验证 prefetch-cache 从导入前 0 个 review-only envelope 变为导入后 2 个，同时 runtime activation 仍为 0。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/dev/run_provider_adapter_runner_handoff_outbox.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "tools/demo/export_evidence.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py",
+    "tools/dev/run_provider_adapter_runner_handoff_outbox.py",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "tools/llm/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/provider_adapter_runs/",
+    "examples/provider_authorizations/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_import_smoke python3 -m py_compile tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+    "python3 tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py --output /tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 -c \"import json; from pathlib import Path; report=json.loads(Path('/tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json').read_text(encoding='utf-8')); summary=report['summary']; safety=report['safety_summary']; assert report['status']=='passed'; assert summary['runner_handoff_count']==2; assert summary['consumer_executed_count']==2; assert summary['imported_count']==2; assert summary['pre_import_review_only_envelope_ready_count']==0; assert summary['prefetch_review_only_envelope_ready_count']==2; assert summary['activation_allowed_count']==0; assert safety['external_provider_call_count']==0; assert safety['consumer_reads_env_count']==0; assert safety['staging_count']==0; assert safety['promotion_count']==0; assert safety['queue_complete_count']==0; assert safety['world_mutation_count']==0; assert safety['runtime_activation_allowed_count']==0\"",
+    "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_import_smoke_evidence",
+    "rg -n \"consume_import|outbox import|check_provider_runner_handoff_outbox_import_pipeline|local_consume_import_prefetch_smoke_ready\" /tmp/provider_runner_handoff_outbox_import_smoke_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本 smoke 使用临时 SQLite 与本地 uvicorn；不读取 .env，不调用 live provider。",
+    "脚本先断言 prefetch-cache 导入前没有 review-only envelope，再断言导入后出现 2 个 envelope，避免把 background tick 已生成的 ledger 当作导入因果证据。",
+    "outbox consumer 本身仍不导入后端；导入动作只由本 smoke 对临时后端显式执行。",
+    "该任务不提交生成报告到仓库，验收报告写入 /tmp。"
+  ]
+}

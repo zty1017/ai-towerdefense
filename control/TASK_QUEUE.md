@@ -1650,6 +1650,44 @@ rg -n "outbox consumer|local_dry_boundary_consumer_ready|run_provider_adapter_ru
 git diff --check
 ```
 
+### P1-B-60 Provider adapter runner handoff outbox import pipeline smoke
+
+状态：已完成严格本地 smoke。
+
+目标：
+
+```text
+证明 ProviderAdapterRunnerHandoffOutbox v0.1 不只是能被本地 consumer 消费，也能在不预先运行后端 runner fixture 的情况下，经外部 consumer 生成 receipt/envelope 后显式导回临时后端 ledger，并让 prefetch-cache 出现 review-only envelope；同时保持 provider call、.env read、staging、promotion、queue complete、world mutation 和 runtime activation 全部为 0。
+```
+
+已落地：
+
+- `tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py`：新增严格 smoke 脚本。
+- 脚本启动临时 SQLite / uvicorn，创建 scheduler run，并对 `sched_next_map_visual_prefetch`、`sched_video_frame_background_compile` 分别执行 dry-run、live guard、executor request、provider authorization 和 handoff export。
+- 脚本手动组装 `ProviderAdapterRunnerHandoffOutbox v0.1`，调用 `tools/dev/run_provider_adapter_runner_handoff_outbox.py` 的离线 fixture consumer，再调用 `import-provider-adapter-runner-output` 导入临时后端。
+- smoke 断言导入前 `review_only_envelope_ready_count=0`，导入后为 2，且 `activation_allowed_count=0`。
+- `tools/dev/run_provider_adapter_runner_handoff_outbox.py` 修正 provider call 安全计数字段，读取 `ProviderOutputEnvelope.provider_call.performed`。
+- `tools/demo/export_evidence.py`：provider runner handoff 摘要新增 `outbox_import_pipeline_status=local_consume_import_prefetch_smoke_ready`、tool / task pack 引用和 summary/html 展示。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步该 smoke 的边界和事实源入口。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 只使用本地 fixture provider adapter boundary，不调用 live provider。
+- 不读取 `.env`、不保存 prompt/provider 原文、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- 生成的 smoke report 写入 `/tmp`，不提交到仓库。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_import_smoke python3 -m py_compile tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+python3 tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py --output /tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_import_smoke_evidence
+rg -n "consume_import|outbox import|check_provider_runner_handoff_outbox_import_pipeline|local_consume_import_prefetch_smoke_ready" /tmp/provider_runner_handoff_outbox_import_smoke_evidence
+git diff --check
+```
+
 ### P1-B-39 Architecture fact source freeze
 
 状态：已完成文档治理。
