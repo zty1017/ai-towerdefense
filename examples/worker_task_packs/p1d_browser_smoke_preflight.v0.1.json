@@ -54,7 +54,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py",
     "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
     "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
@@ -67,7 +67,7 @@
         "description": "日常快速 profile，允许无浏览器降级，但要求 suite report 包含 browser preflight、scheduler/outbox、截图降级证据和拖拽部署 smoke 摘要。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py",
           "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
           "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",

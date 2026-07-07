@@ -4016,7 +4016,7 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_de
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_suite_profile_check --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_suite_profile_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
 python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json --profile daily_fast --dry-run --output /tmp/p1d_scheduler_pipeline_profile_dry.json
@@ -4998,7 +4998,7 @@ git diff --check
 验收：
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_export_runner_refactor python3 -m py_compile tools/dev/command_runner.py tools/dev/run_fast_quality_gate.py tools/demo/run_demo_evidence_suite.py tools/demo/export_evidence.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_export_runner_refactor python3 -m py_compile tools/dev/command_runner.py tools/dev/run_fast_quality_gate.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/export_evidence.py
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/ai_td_fast_quality_gate_export_runner_report.v0.1.json
 python3 tools/demo/export_evidence.py --output-dir /tmp/export_runner_refactor_evidence_check
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_export_runner_check --command-timeout 120
@@ -5162,7 +5162,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke
 git diff --check
@@ -5196,7 +5196,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py
 python3 tools/demo/run_demo_evidence_suite.py --help
 python3 -c "from pathlib import Path; from tools.demo.run_demo_evidence_suite import build_scheduler_pipeline_smoke_invocation, parse_args; args=parse_args(['--scheduler-smoke-runner','uv']); command, env, runner=build_scheduler_pipeline_smoke_invocation(args, Path('/tmp/report.json'), Path('/tmp/out')); assert command[:4]==['uv','run','--extra','dev']; assert runner['mode']=='uv' and runner['uses_uv'] is True and 'UV_CACHE_DIR' in env; args=parse_args(['--scheduler-python','/tmp/python']); command, env, runner=build_scheduler_pipeline_smoke_invocation(args, Path('/tmp/report.json'), Path('/tmp/out')); assert command[0]=='/tmp/python' and runner['mode']=='explicit-python' and runner['uses_uv'] is False and env=={}"
 python3 tools/demo/run_demo_evidence_suite.py --scheduler-smoke-runner uv --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_runner_selection_check --command-timeout 180
@@ -5234,7 +5234,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_outbox_import_check --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
 git diff --check
@@ -5303,7 +5303,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-suite-multinode python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-suite-multinode python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/demo_suite_multinode_acceptance --browser-timeout 45 --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/demo_suite_multinode_acceptance/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
 git diff --check
@@ -5338,7 +5338,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py
 python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
@@ -5406,7 +5406,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py
 node --check frontend/app.js
 python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30
 python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable

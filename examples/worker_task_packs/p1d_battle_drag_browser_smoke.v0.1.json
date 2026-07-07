@@ -50,7 +50,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
     "node --check frontend/app.js",
     "python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30",
     "python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable",
@@ -64,7 +64,7 @@
         "description": "日常快速 profile：校验任务包、编译新增 smoke / suite 脚本、检查前端语法、验证无浏览器降级 report 和 fast gate。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
           "node --check frontend/app.js",
           "python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30",
           "python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable",

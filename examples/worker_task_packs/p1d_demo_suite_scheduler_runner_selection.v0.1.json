@@ -46,7 +46,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py",
     "python3 tools/demo/run_demo_evidence_suite.py --help",
     "python3 tools/demo/run_demo_evidence_suite.py --scheduler-smoke-runner uv --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_runner_selection_check --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_runner_selection_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke --require-scheduler-runner-mode uv --require-outbox-runner-mode uv",
@@ -59,7 +59,7 @@
         "description": "日常快速 profile，强制 suite 使用 uv runner，并用标准 validator 校验 scheduler/outbox runner mode 与安全计数。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py",
           "python3 tools/demo/run_demo_evidence_suite.py --help",
           "python3 tools/demo/run_demo_evidence_suite.py --scheduler-smoke-runner uv --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_runner_selection_check --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_runner_selection_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke --require-scheduler-runner-mode uv --require-outbox-runner-mode uv",

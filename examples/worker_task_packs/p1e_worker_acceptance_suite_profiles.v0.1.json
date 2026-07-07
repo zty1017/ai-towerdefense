@@ -45,7 +45,7 @@
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json",
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json",
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py",
     "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_suite_profile_check --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_suite_profile_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
     "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json --profile daily_fast --dry-run --output /tmp/p1d_scheduler_pipeline_profile_dry.json",
@@ -65,7 +65,7 @@
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json",
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json",
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py",
           "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_suite_profile_check --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_suite_profile_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
           "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json --profile daily_fast --dry-run --output /tmp/p1d_scheduler_pipeline_profile_dry.json",
@@ -83,7 +83,7 @@
         "description": "录屏 / release candidate profile，要求一键 suite 真实浏览器截图完整 captured。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_suite_profiles.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py",
           "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_suite_profile_release_check --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_suite_profile_release_check/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
           "git diff --check"

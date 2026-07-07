@@ -58,7 +58,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
     "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/demo_evidence_suite_acceptance --browser-timeout 45 --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/demo_evidence_suite_acceptance/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
     "git diff --check"
@@ -70,7 +70,7 @@
         "description": "日常快速 profile，允许无本地浏览器降级，验证一键 suite 输出、拖拽部署 smoke 摘要、scheduler runtime readiness chain 与 scheduler/outbox 安全计数。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
           "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/demo_evidence_suite_acceptance --browser-timeout 45 --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/demo_evidence_suite_acceptance/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
           "git diff --check"
@@ -84,7 +84,7 @@
         "description": "录屏 / release candidate profile，要求玩家主链路、多节点战斗真实浏览器截图、拖拽部署交互完整 captured，并要求 scheduler runtime readiness chain 证据存在。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/demo_evidence_suite_contract.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
           "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_evidence_suite_acceptance_release --browser-timeout 45 --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/demo_evidence_suite_acceptance_release/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
           "git diff --check"
