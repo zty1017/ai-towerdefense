@@ -9,15 +9,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
-EXPECTED_SCHEMA_VERSION = "demo_evidence_suite_report.v0.1"
-SCHEDULER_SMOKE_COMMAND = "generation_scheduler_review_only_pipeline_smoke"
-SCHEDULER_SMOKE_REPORT_VALIDATOR_COMMAND = (
-    "generation_scheduler_review_only_pipeline_smoke_report_validator"
-)
-OUTBOX_IMPORT_SMOKE_COMMAND = "provider_runner_handoff_outbox_import_smoke"
-OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR_COMMAND = (
-    "provider_runner_handoff_outbox_import_smoke_report_validator"
+from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
+    COMMAND_OUTBOX_IMPORT_SMOKE,
+    COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR,
+    COMMAND_SCHEDULER_PIPELINE_SMOKE,
+    COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR,
+    DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
 )
 
 
@@ -257,12 +257,12 @@ def validate_scheduler(
             failures,
         )
         require(
-            SCHEDULER_SMOKE_COMMAND in names,
+            COMMAND_SCHEDULER_PIPELINE_SMOKE in names,
             "scheduler pipeline smoke command missing",
             failures,
         )
         require(
-            SCHEDULER_SMOKE_REPORT_VALIDATOR_COMMAND in names,
+            COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR in names,
             "scheduler pipeline smoke report validator command missing",
             failures,
         )
@@ -333,12 +333,12 @@ def validate_outbox(
             failures,
         )
         require(
-            OUTBOX_IMPORT_SMOKE_COMMAND in names,
+            COMMAND_OUTBOX_IMPORT_SMOKE in names,
             "outbox import smoke command missing",
             failures,
         )
         require(
-            OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR_COMMAND in names,
+            COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR in names,
             "outbox import smoke report validator command missing",
             failures,
         )
@@ -376,7 +376,7 @@ def validate_outbox(
 def validate_report(report: dict[str, Any], args: argparse.Namespace) -> list[str]:
     failures: list[str] = []
     require(
-        report.get("schema_version") == EXPECTED_SCHEMA_VERSION,
+        report.get("schema_version") == DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
         f"schema_version is {report.get('schema_version')}",
         failures,
     )

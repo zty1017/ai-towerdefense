@@ -30,17 +30,33 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
+    BROWSER_PREFLIGHT_REPORT_NAME,
+    COMMAND_BROWSER_PREFLIGHT,
+    COMMAND_DEMO_EVIDENCE_EXPORT,
+    COMMAND_FRONTEND_BATTLE_DRAG_CAPTURE,
+    COMMAND_FRONTEND_BATTLE_DRAG_VALIDATE,
+    COMMAND_FRONTEND_FLOW_CAPTURE,
+    COMMAND_FRONTEND_FLOW_VALIDATE,
+    COMMAND_FRONTEND_MULTINODE_CAPTURE,
+    COMMAND_FRONTEND_MULTINODE_VALIDATE,
+    COMMAND_OUTBOX_IMPORT_SMOKE,
+    COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR,
+    COMMAND_SCHEDULER_PIPELINE_SMOKE,
+    COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR,
+    DEMO_EVIDENCE_SUITE_ID,
+    DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
+    FRONTEND_BATTLE_DRAG_REPORT_NAME,
+    FRONTEND_FLOW_REPORT_NAME,
+    FRONTEND_MULTINODE_REPORT_NAME,
+    OUTBOX_IMPORT_REPORT_NAME,
+    REPORT_NAME,
+    SCHEDULER_PIPELINE_REPORT_NAME,
+)
 from tools.dev.command_runner import now_iso, run_command
 
 
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
-REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
-BROWSER_PREFLIGHT_REPORT_NAME = "browser_smoke_environment_report.v0.1.json"
-FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
-FRONTEND_MULTINODE_REPORT_NAME = "frontend_multinode_visual_smoke_report.v0.1.json"
-FRONTEND_BATTLE_DRAG_REPORT_NAME = "battle_drag_interaction_smoke_report.v0.1.json"
-SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
-OUTBOX_IMPORT_REPORT_NAME = "provider_runner_handoff_outbox_import_pipeline_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
 SCHEDULER_SMOKE_RUNNERS = ("auto", "uv", "venv", "current-python")
 
@@ -901,7 +917,7 @@ def main(argv: list[str] | None = None) -> int:
     scheduler_report_path = output_root / "generation_scheduler" / SCHEDULER_PIPELINE_REPORT_NAME
     outbox_import_report_path = output_root / "generation_scheduler" / OUTBOX_IMPORT_REPORT_NAME
     frontend_output = output_root / "frontend_flow_visual_smoke"
-    frontend_report_path = frontend_output / FRONTEND_REPORT_NAME
+    frontend_report_path = frontend_output / FRONTEND_FLOW_REPORT_NAME
     frontend_multinode_output = output_root / "frontend_multinode_visual_smoke"
     frontend_multinode_report_path = frontend_multinode_output / FRONTEND_MULTINODE_REPORT_NAME
     frontend_battle_drag_output = output_root / "frontend_battle_drag_interaction_smoke"
@@ -933,7 +949,7 @@ def main(argv: list[str] | None = None) -> int:
     preflight_command = build_browser_preflight_command(args, browser_preflight_path)
     commands.append(
         run_command(
-            "browser_smoke_environment_preflight",
+            COMMAND_BROWSER_PREFLIGHT,
             preflight_command,
             root=ROOT,
             timeout_seconds=20,
@@ -947,8 +963,8 @@ def main(argv: list[str] | None = None) -> int:
         and not args.allow_missing_browser
     ):
         report = {
-            "schema_version": "demo_evidence_suite_report.v0.1",
-            "suite_id": "mvp_demo_evidence_suite",
+            "schema_version": DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
+            "suite_id": DEMO_EVIDENCE_SUITE_ID,
             "status": "failed",
             "generated_at": now_iso(),
             "output_root": str(output_root),
@@ -1016,7 +1032,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         commands.append(
             run_command(
-                "generation_scheduler_review_only_pipeline_smoke",
+                COMMAND_SCHEDULER_PIPELINE_SMOKE,
                 scheduler_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1034,7 +1050,7 @@ def main(argv: list[str] | None = None) -> int:
             scheduler_pipeline_report = load_json(scheduler_report_path)
         commands.append(
             run_command(
-                "generation_scheduler_review_only_pipeline_smoke_report_validator",
+                COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR,
                 build_scheduler_pipeline_smoke_validate_command(scheduler_report_path),
                 root=ROOT,
                 timeout_seconds=20,
@@ -1052,7 +1068,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         commands.append(
             run_command(
-                "provider_runner_handoff_outbox_import_smoke",
+                COMMAND_OUTBOX_IMPORT_SMOKE,
                 outbox_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1070,7 +1086,7 @@ def main(argv: list[str] | None = None) -> int:
             outbox_import_report = load_json(outbox_import_report_path)
         commands.append(
             run_command(
-                "provider_runner_handoff_outbox_import_smoke_report_validator",
+                COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR,
                 build_outbox_import_smoke_validate_command(outbox_import_report_path),
                 root=ROOT,
                 timeout_seconds=20,
@@ -1081,7 +1097,7 @@ def main(argv: list[str] | None = None) -> int:
     capture_command = build_capture_command(args, frontend_output)
     commands.append(
         run_command(
-            "frontend_flow_visual_smoke_capture",
+            COMMAND_FRONTEND_FLOW_CAPTURE,
             capture_command,
             root=ROOT,
             timeout_seconds=args.command_timeout,
@@ -1098,7 +1114,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     commands.append(
         run_command(
-            "frontend_multinode_visual_smoke_capture",
+            COMMAND_FRONTEND_MULTINODE_CAPTURE,
             multinode_capture_command,
             root=ROOT,
             timeout_seconds=args.command_timeout,
@@ -1114,7 +1130,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     commands.append(
         run_command(
-            "frontend_battle_drag_interaction_smoke_capture",
+            COMMAND_FRONTEND_BATTLE_DRAG_CAPTURE,
             battle_drag_capture_command,
             root=ROOT,
             timeout_seconds=args.command_timeout,
@@ -1131,7 +1147,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         commands.append(
             run_command(
-                "frontend_flow_visual_smoke_validate",
+                COMMAND_FRONTEND_FLOW_VALIDATE,
                 validate_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1146,7 +1162,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         commands.append(
             run_command(
-                "frontend_multinode_visual_smoke_validate",
+                COMMAND_FRONTEND_MULTINODE_VALIDATE,
                 multinode_validate_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1161,7 +1177,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         commands.append(
             run_command(
-                "frontend_battle_drag_interaction_smoke_validate",
+                COMMAND_FRONTEND_BATTLE_DRAG_VALIDATE,
                 battle_drag_validate_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1173,7 +1189,7 @@ def main(argv: list[str] | None = None) -> int:
         export_command = build_export_command(evidence_output, frontend_report_path)
         commands.append(
             run_command(
-                "demo_evidence_export",
+                COMMAND_DEMO_EVIDENCE_EXPORT,
                 export_command,
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
@@ -1198,8 +1214,8 @@ def main(argv: list[str] | None = None) -> int:
         args.skip_outbox_import_smoke,
     )
     report = {
-        "schema_version": "demo_evidence_suite_report.v0.1",
-        "suite_id": "mvp_demo_evidence_suite",
+        "schema_version": DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
+        "suite_id": DEMO_EVIDENCE_SUITE_ID,
         "status": status,
         "generated_at": now_iso(),
         "output_root": str(output_root),

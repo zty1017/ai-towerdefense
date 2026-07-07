@@ -121,6 +121,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/frontend/capture_frontend_multinode_visual_smoke.py",
                 "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
                 "tools/demo/run_demo_evidence_suite.py",
+                "tools/demo/demo_evidence_suite_contract.py",
                 "tools/demo/validate_demo_evidence_suite_report.py",
                 "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
                 "tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",

@@ -91,6 +91,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/dev/run_worker_acceptance_batch.py",
                 "tools/dev/validate_worker_acceptance_batch_report.py",
                 "tools/demo/run_demo_evidence_suite.py",
+                "tools/demo/demo_evidence_suite_contract.py",
                 "tools/demo/validate_demo_evidence_suite_report.py",
                 "tools/asset_graph/build_map_template_catalog.py",
                 "tools/asset_graph/validate_map_template_catalog.py",
