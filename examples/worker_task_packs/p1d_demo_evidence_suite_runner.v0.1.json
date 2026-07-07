@@ -63,7 +63,7 @@
     "default_profile": "daily_fast",
     "profiles": {
       "daily_fast": {
-        "description": "日常快速 profile，允许无本地浏览器降级，验证一键 suite 输出、拖拽部署 smoke 摘要与 scheduler/outbox 安全计数。",
+        "description": "日常快速 profile，允许无本地浏览器降级，验证一键 suite 输出、拖拽部署 smoke 摘要、scheduler runtime readiness chain 与 scheduler/outbox 安全计数。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
@@ -77,7 +77,7 @@
         ]
       },
       "release_gate": {
-        "description": "录屏 / release candidate profile，要求玩家主链路、多节点战斗真实浏览器截图和拖拽部署交互完整 captured。",
+        "description": "录屏 / release candidate profile，要求玩家主链路、多节点战斗真实浏览器截图、拖拽部署交互完整 captured，并要求 scheduler runtime readiness chain 证据存在。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-demo-evidence-suite python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",

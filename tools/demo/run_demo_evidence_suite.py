@@ -535,6 +535,10 @@ def scheduler_pipeline_summary(report: dict[str, Any] | None) -> dict[str, Any]:
             "status": "missing",
             "step_count": 0,
             "passed_step_count": 0,
+            "runtime_readiness_chain_status": "missing",
+            "runtime_readiness_chain_step_count": 0,
+            "runtime_readiness_chain_activation_allowed_count": None,
+            "runtime_readiness_chain_post_actions": [],
             "external_provider_call_count": None,
             "runtime_activation_allowed_count": None,
         }
@@ -553,6 +557,24 @@ def scheduler_pipeline_summary(report: dict[str, Any] | None) -> dict[str, Any]:
             "background_handoff_outbox_schema_version"
         ),
         "image_chain_staging_status": summary.get("image_chain_staging_status"),
+        "runtime_readiness_chain_status": summary.get(
+            "runtime_readiness_chain_status"
+        ),
+        "runtime_readiness_chain_step_count": summary.get(
+            "runtime_readiness_chain_step_count"
+        ),
+        "runtime_readiness_chain_schedule_item_id": summary.get(
+            "runtime_readiness_chain_schedule_item_id"
+        ),
+        "runtime_readiness_chain_post_actions": as_list(
+            summary.get("runtime_readiness_chain_post_actions")
+        ),
+        "runtime_readiness_chain_activation_allowed_count": summary.get(
+            "runtime_readiness_chain_activation_allowed_count"
+        ),
+        "runtime_readiness_chain_ledger_kind_counts": summary.get(
+            "runtime_readiness_chain_ledger_kind_counts"
+        ),
         "positive_shared_cache_reuse_path": summary.get(
             "positive_shared_cache_reuse_path"
         ),
@@ -653,6 +675,39 @@ def derive_suite_status(
         and int(scheduler_summary.get("runtime_activation_allowed_count") or 0) != 0
     ):
         failures.append("scheduler_pipeline_runtime_activation_not_0")
+    if (
+        not skip_scheduler_pipeline_smoke
+        and scheduler_summary.get("runtime_readiness_chain_status")
+        != "completed_review_only"
+    ):
+        failures.append(
+            "scheduler_pipeline_runtime_readiness_chain_not_completed"
+        )
+    if (
+        not skip_scheduler_pipeline_smoke
+        and int(scheduler_summary.get("runtime_readiness_chain_step_count") or 0) != 3
+    ):
+        failures.append("scheduler_pipeline_runtime_readiness_step_count_not_3")
+    if (
+        not skip_scheduler_pipeline_smoke
+        and int(
+            scheduler_summary.get(
+                "runtime_readiness_chain_activation_allowed_count"
+            )
+            or 0
+        )
+        != 0
+    ):
+        failures.append("scheduler_pipeline_runtime_readiness_activation_not_0")
+    if not skip_scheduler_pipeline_smoke:
+        readiness_actions = set(
+            str(action)
+            for action in as_list(
+                scheduler_summary.get("runtime_readiness_chain_post_actions")
+            )
+        )
+        if "wait_for_runtime_activation_apply_gate" not in readiness_actions:
+            failures.append("scheduler_pipeline_runtime_readiness_apply_gate_missing")
 
     if skip_outbox_import_smoke:
         pass

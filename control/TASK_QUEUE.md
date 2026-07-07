@@ -5142,14 +5142,14 @@ git diff --check
 
 - `tools/demo/run_demo_evidence_suite.py`：新增套件第 1 步 `generation_scheduler_review_only_pipeline_smoke`，调用 `tools/dev/check_generation_scheduler_review_only_pipeline.py` 并把报告写到 output root 下的 `generation_scheduler/`。
 - suite report 新增 `generation_scheduler_pipeline_smoke_report` 文件引用、`generation_scheduler_review_only_pipeline_smoke` 摘要和 `scheduler_pipeline_smoke_skipped` 安全标记。
-- suite 状态会检查 scheduler smoke 必须 `passed`，且 `external_provider_call_count` 与 `runtime_activation_allowed_count` 必须为 0。
+- suite 状态会检查 scheduler smoke 必须 `passed`，`external_provider_call_count` 与 `runtime_activation_allowed_count` 必须为 0，并要求 runtime activation readiness chain 为 `completed_review_only`、三步完成且后续动作包含 `wait_for_runtime_activation_apply_gate`。
 - `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步说明完整 suite 默认包含 scheduler pipeline smoke。
 - `examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json`：新增本轮 worker task pack。
 
 边界：
 
 - 不调用 provider、不读取 `.env`、不运行真实 provider adapter、不写世界状态、不构建 runtime package、不激活 review-only 结果。
-- 该 suite 仍只是本地 evidence 编排；它证明 scheduler review-only pipeline、handoff outbox、prefetch-cache 和 activation gate 边界可重复，不代表 live provider、真实图生视频、WorldStateDeltaTransaction 写入或玩家侧发布已完成。
+- 该 suite 仍只是本地 evidence 编排；它证明 scheduler review-only pipeline、handoff outbox、prefetch-cache、runtime readiness chain 和 activation gate 阻断边界可重复，不代表 live provider、真实图生视频、WorldStateDeltaTransaction 写入、runtime apply 或玩家侧发布已完成。
 - `--skip-scheduler-pipeline-smoke` 只用于快速调试，不建议录屏 / 评审前使用。
 
 验收：
@@ -5158,7 +5158,7 @@ git diff --check
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180
-python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); scheduler=report['generation_scheduler_review_only_pipeline_smoke']; command_names=[item['name'] for item in report['commands']]; assert scheduler['status']=='passed'; assert scheduler['external_provider_call_count']==0; assert scheduler['runtime_activation_allowed_count']==0; assert report['safety_summary']['scheduler_pipeline_smoke_skipped'] is False; assert 'generation_scheduler_review_only_pipeline_smoke' in command_names"
+python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke
 git diff --check
 ```
 

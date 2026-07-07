@@ -264,6 +264,36 @@ def validate_scheduler(
             "scheduler runtime activation allowed count is not 0",
             failures,
         )
+        require(
+            scheduler.get("runtime_readiness_chain_status")
+            == "completed_review_only",
+            "scheduler runtime readiness chain is not completed_review_only",
+            failures,
+        )
+        require(
+            int_value(scheduler.get("runtime_readiness_chain_step_count")) == 3,
+            "scheduler runtime readiness chain step count is not 3",
+            failures,
+        )
+        require(
+            int_value(
+                scheduler.get("runtime_readiness_chain_activation_allowed_count")
+            )
+            == 0,
+            "scheduler runtime readiness chain activation allowed count is not 0",
+            failures,
+        )
+        post_actions = {
+            str(action)
+            for action in as_list(
+                scheduler.get("runtime_readiness_chain_post_actions")
+            )
+        }
+        require(
+            "wait_for_runtime_activation_apply_gate" in post_actions,
+            "scheduler runtime readiness chain apply gate action missing",
+            failures,
+        )
     if runner_mode:
         runner = as_obj(report.get("scheduler_pipeline_smoke_runner"))
         require(

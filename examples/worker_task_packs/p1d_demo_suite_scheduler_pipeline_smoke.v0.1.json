@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/demo-suite-scheduler-pipeline-smoke",
   "worktree": "/tmp/ai-td-task-demo-suite-scheduler-pipeline-smoke",
-  "objective": "让默认 demo evidence suite 在浏览器玩家链路截图与 evidence 导出之前，先运行 Generation Scheduler review-only pipeline smoke，并把该 smoke 的报告与安全摘要写入 suite report，降低录屏 / 评审前遗漏调度闭环证据的风险。",
+  "objective": "让默认 demo evidence suite 在浏览器玩家链路截图与 evidence 导出之前，先运行 Generation Scheduler review-only pipeline smoke，并把该 smoke 的报告、runtime activation readiness chain 摘要与安全摘要写入 suite report，降低录屏 / 评审前遗漏调度闭环证据的风险。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -20,6 +20,7 @@
   ],
   "allowed_paths": [
     "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py",
     "README.md",
     "docs/MVP_REVIEW_HANDOFF_V0_1.md",
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
@@ -99,6 +100,7 @@
   "notes": [
     "本任务只把已存在的本地 scheduler pipeline smoke 串入 demo evidence suite，不新增 provider、后端接口、前端 UI 或素材生成能力。",
     "scheduler smoke 会启动临时本地后端和临时 SQLite，只产生 review-only evidence；provider 调用、世界修改和 runtime activation 计数必须保持 0。",
+    "suite validator 必须要求 runtime activation readiness chain 为 completed_review_only、三步完成，并且后续动作仍包含 wait_for_runtime_activation_apply_gate。",
     "`--skip-scheduler-pipeline-smoke` 仅用于本地快速调试，不建议录屏 / 评审前使用。",
     "suite 输出仍写入 /tmp 或调用者指定的 output root；不把截图、evidence bundle 或临时 SQLite 提交到仓库。"
   ]
