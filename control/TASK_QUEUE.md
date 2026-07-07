@@ -3887,6 +3887,38 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/fast_quality_gate_eviden
 git diff --check
 ```
 
+### P1-D-30 Shared local command runner
+
+状态：已完成本地 QA / evidence 命令执行去重。
+
+目标：
+
+```text
+把快速质量门和 demo evidence suite 中重复的 subprocess 执行、输出截断、时间戳记录逻辑收束为一个共享 helper，减少后续新增验收脚本时复制粘贴。
+```
+
+已落地：
+
+- `tools/dev/command_runner.py`：新增共享命令执行 helper，提供 `now_iso()`、输出截断、命令文本化和 timeout-safe `run_command()`。
+- `tools/dev/run_fast_quality_gate.py`：复用共享 runner，并把 `command_runner.py` 纳入自身 `py_compile`。
+- `tools/demo/run_demo_evidence_suite.py`：复用共享 runner，保持原 suite report 字段兼容。
+
+边界：
+
+- 只抽取本地命令运行工具函数，不改变 fast gate / demo suite 的业务判断。
+- 不调用 provider，不读取 `.env`，不写世界状态，不激活 runtime。
+- 不改变浏览器缺失时的 `--allow-missing-browser` 语义。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_command_runner_refactor python3 -m py_compile tools/dev/command_runner.py tools/dev/run_fast_quality_gate.py tools/demo/run_demo_evidence_suite.py tools/demo/export_evidence.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/ai_td_fast_quality_gate_command_runner_report.v0.1.json
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_command_runner_check --command-timeout 120
+python3 tools/demo/export_evidence.py --output-dir /tmp/command_runner_refactor_evidence_check
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：

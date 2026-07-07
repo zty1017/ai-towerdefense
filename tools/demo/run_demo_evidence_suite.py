@@ -17,23 +17,20 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
 import sys
-import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from tools.dev.command_runner import now_iso, run_command
+
+
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
 REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -80,54 +77,6 @@ def file_ref(path: Path, role: str) -> dict[str, Any]:
         "exists": True,
         "bytes": path.stat().st_size,
         "sha256": sha256_file(path),
-    }
-
-
-def shorten(value: str, limit: int = MAX_OUTPUT_TAIL) -> str:
-    normalized = value.replace(str(ROOT), "$REPO_ROOT").strip()
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[-limit:]
-
-
-def command_text(command: list[str]) -> str:
-    return " ".join(command)
-
-
-def run_command(
-    name: str,
-    command: list[str],
-    timeout_seconds: int,
-) -> dict[str, Any]:
-    started = time.monotonic()
-    started_at = now_iso()
-    try:
-        completed = subprocess.run(
-            command,
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
-        )
-        return_code = completed.returncode
-        stdout_tail = shorten(completed.stdout)
-        stderr_tail = shorten(completed.stderr)
-    except subprocess.TimeoutExpired as exc:
-        return_code = 124
-        stdout_tail = shorten(exc.stdout or "")
-        stderr_tail = shorten((exc.stderr or "") + "\ncommand timed out")
-    elapsed = round(time.monotonic() - started, 3)
-    return {
-        "name": name,
-        "command": command_text(command),
-        "started_at": started_at,
-        "finished_at": now_iso(),
-        "elapsed_seconds": elapsed,
-        "return_code": return_code,
-        "status": "passed" if return_code == 0 else "failed",
-        "stdout_tail": stdout_tail,
-        "stderr_tail": stderr_tail,
     }
 
 
@@ -308,7 +257,13 @@ def main(argv: list[str] | None = None) -> int:
 
     capture_command = build_capture_command(args, frontend_output)
     commands.append(
-        run_command("frontend_flow_visual_smoke_capture", capture_command, args.command_timeout)
+        run_command(
+            "frontend_flow_visual_smoke_capture",
+            capture_command,
+            root=ROOT,
+            timeout_seconds=args.command_timeout,
+            output_tail_limit=MAX_OUTPUT_TAIL,
+        )
     )
 
     if frontend_report_path.exists():
@@ -323,13 +278,21 @@ def main(argv: list[str] | None = None) -> int:
             run_command(
                 "frontend_flow_visual_smoke_validate",
                 validate_command,
-                args.command_timeout,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
             )
         )
 
         export_command = build_export_command(evidence_output, frontend_report_path)
         commands.append(
-            run_command("demo_evidence_export", export_command, args.command_timeout)
+            run_command(
+                "demo_evidence_export",
+                export_command,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+            )
         )
         evidence_path = evidence_output / "evidence.json"
         if evidence_path.exists():

@@ -10,70 +10,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import subprocess
 import sys
-import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from tools.dev.command_runner import now_iso, run_command
+
+
 DEFAULT_OUTPUT = Path("/tmp/ai_td_fast_quality_gate_report.v0.1.json")
 DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
 OUTPUT_TAIL_LIMIT = 1200
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def shorten(value: str, limit: int = OUTPUT_TAIL_LIMIT) -> str:
-    normalized = value.replace(str(ROOT), "$REPO_ROOT").strip()
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[-limit:]
-
-
-def command_text(command: list[str]) -> str:
-    return " ".join(command)
-
-
-def run_command(
-    name: str,
-    command: list[str],
-    timeout_seconds: int,
-    env: dict[str, str] | None = None,
-) -> dict[str, Any]:
-    started = time.monotonic()
-    try:
-        completed = subprocess.run(
-            command,
-            cwd=ROOT,
-            env={**os.environ, **(env or {})},
-            text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
-        )
-        return_code = completed.returncode
-        stdout_tail = shorten(completed.stdout)
-        stderr_tail = shorten(completed.stderr)
-    except subprocess.TimeoutExpired as exc:
-        return_code = 124
-        stdout_tail = shorten(exc.stdout or "")
-        stderr_tail = shorten((exc.stderr or "") + "\ncommand timed out")
-    elapsed = round(time.monotonic() - started, 3)
-    return {
-        "name": name,
-        "command": command_text(command),
-        "elapsed_seconds": elapsed,
-        "return_code": return_code,
-        "status": "passed" if return_code == 0 else "failed",
-        "stdout_tail": stdout_tail,
-        "stderr_tail": stderr_tail,
-    }
 
 
 def default_commands(generated_at: str) -> list[dict[str, Any]]:
@@ -94,6 +43,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/validate_battle_visual_contract.py",
                 "tools/frontend/validate_campaign_router_frontend_contract.py",
                 "tools/frontend/validate_map_component_frontend_contract.py",
+                "tools/dev/command_runner.py",
                 "tools/dev/run_fast_quality_gate.py",
             ],
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
@@ -201,8 +151,11 @@ def main() -> int:
         result = run_command(
             str(item["name"]),
             list(item["command"]),
-            int(item["timeout_seconds"]),
-            item.get("env") if isinstance(item.get("env"), dict) else None,
+            root=ROOT,
+            timeout_seconds=int(item["timeout_seconds"]),
+            output_tail_limit=OUTPUT_TAIL_LIMIT,
+            env=item.get("env") if isinstance(item.get("env"), dict) else None,
+            include_timestamps=False,
         )
         results.append(result)
         status_icon = "OK" if result["status"] == "passed" else "FAIL"
