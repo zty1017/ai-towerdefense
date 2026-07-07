@@ -88,6 +88,15 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
+            "name": "map_decoration_zone_policy_validator",
+            "timeout_seconds": 10,
+            "command": [
+                sys.executable,
+                "tools/asset_graph/validate_map_decoration_zone_policy.py",
+                "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+            ],
+        },
+        {
             "name": "mvp_demo_readiness_build",
             "timeout_seconds": 20,
             "command": [

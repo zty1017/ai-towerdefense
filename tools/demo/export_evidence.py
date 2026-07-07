@@ -183,6 +183,8 @@ PATHS = {
     / "examples/review_packs/map_path_geometry_report.v0.1.json",
     "map_runtime_v02_semantic_geometry_report": ROOT
     / "examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json",
+    "map_decoration_zone_policy": ROOT
+    / "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
     "map_component_media_manifest": ROOT
     / "game_data/media/map_components/map_component_media_manifest.v0.1.json",
     "map_component_media_manifest_v02": ROOT
@@ -575,6 +577,14 @@ STATIC_VALIDATION_COMMANDS = [
             "python3",
             "tools/asset_graph/validate_map_runtime_v02_semantic_geometry_report.py",
             "examples/review_packs/map_runtime_v02_semantic_geometry_report.v0.1.json",
+        ],
+    },
+    {
+        "name": "map_decoration_zone_policy",
+        "command": [
+            "python3",
+            "tools/asset_graph/validate_map_decoration_zone_policy.py",
+            "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
         ],
     },
     {
@@ -1998,6 +2008,70 @@ def map_runtime_v02_semantic_geometry_summary(report: dict[str, Any]) -> dict[st
                 "findings": as_list(item.get("findings"))[:MAX_SAMPLE_ITEMS],
             }
             for item in finding_maps[:MAX_SAMPLE_ITEMS]
+        ],
+    }
+
+
+def map_decoration_zone_policy_summary(policy: dict[str, Any]) -> dict[str, Any]:
+    summary = as_obj(policy.get("summary"))
+    source_policy = as_obj(policy.get("source_policy"))
+    maps = [item for item in as_list(policy.get("maps")) if isinstance(item, dict)]
+    return {
+        "schema_version": policy.get("schema_version"),
+        "policy_id": policy.get("policy_id"),
+        "map_count": summary.get("map_count"),
+        "reserved_zone_count": summary.get("reserved_zone_count"),
+        "allowed_decoration_zone_count": summary.get(
+            "allowed_decoration_zone_count"
+        ),
+        "source_schema_versions": as_list(summary.get("source_schema_versions")),
+        "strong_semantic_policy": summary.get("strong_semantic_policy"),
+        "source_policy": source_policy,
+        "usage_policy": as_list(policy.get("usage_policy")),
+        "runtime_fact_source": source_policy.get("runtime_fact_source"),
+        "player_default_runtime": source_policy.get("player_default_runtime"),
+        "may_modify_map_runtime_package": source_policy.get(
+            "may_modify_map_runtime_package"
+        ),
+        "provider_call_count": source_policy.get("provider_call_count"),
+        "map_samples": [
+            {
+                "map_id": item.get("map_id"),
+                "node_id": as_obj(item.get("source_package")).get("node_id"),
+                "source_package_id": as_obj(item.get("source_package")).get(
+                    "package_id"
+                ),
+                "source_schema_version": as_obj(item.get("source_package")).get(
+                    "schema_version"
+                ),
+                "reserved_zone_count": len(as_list(item.get("reserved_zones"))),
+                "allowed_decoration_zone_count": len(
+                    as_list(item.get("allowed_decoration_zones"))
+                ),
+                "reserved_zone_type_counts": dict(
+                    sorted(
+                        Counter(
+                            str(as_obj(zone).get("zone_type") or "unknown")
+                            for zone in as_list(item.get("reserved_zones"))
+                        ).items()
+                    )
+                ),
+                "allowed_zone_type_counts": dict(
+                    sorted(
+                        Counter(
+                            str(as_obj(zone).get("zone_type") or "unknown")
+                            for zone in as_list(item.get("allowed_decoration_zones"))
+                        ).items()
+                    )
+                ),
+                "validation_status": as_obj(item.get("validation_report")).get(
+                    "status"
+                ),
+                "warning_count": as_obj(item.get("validation_report")).get(
+                    "warning_count"
+                ),
+            }
+            for item in maps[:5]
         ],
     }
 
@@ -3954,6 +4028,7 @@ def collect_assets_and_media(
     topology_constrained_map_overlay_review: dict[str, Any],
     topology_constrained_map_overlay_visual_review: dict[str, Any],
     map_topology_control_sketch_pack: dict[str, Any],
+    map_decoration_zone_policy: dict[str, Any],
     map_controlled_regeneration_request_pack: dict[str, Any],
     controlled_map_candidate_artifact_import_report: dict[str, Any],
     controlled_map_candidate_generation_run: dict[str, Any],
@@ -4074,6 +4149,9 @@ def collect_assets_and_media(
             ),
             "topology_control_sketch_pack": map_topology_control_sketch_pack_summary(
                 map_topology_control_sketch_pack
+            ),
+            "map_decoration_zone_policy": map_decoration_zone_policy_summary(
+                map_decoration_zone_policy
             ),
             "procedural_map_previews": procedural_map_preview_summary(
                 procedural_map_preview_reports
@@ -4405,6 +4483,7 @@ def collect_source_files() -> list[dict[str, Any]]:
             "map_runtime_v02_semantic_geometry_report",
             PATHS["map_runtime_v02_semantic_geometry_report"],
         ),
+        ("map_decoration_zone_policy", PATHS["map_decoration_zone_policy"]),
         ("map_component_media_manifest", PATHS["map_component_media_manifest"]),
         (
             "map_component_media_manifest_v02_preview",
@@ -4672,6 +4751,7 @@ def build_evidence(
     map_runtime_v02_semantic_geometry_report = load_json(
         PATHS["map_runtime_v02_semantic_geometry_report"]
     )
+    map_decoration_zone_policy = load_json(PATHS["map_decoration_zone_policy"])
     map_component_media_manifest = load_json(PATHS["map_component_media_manifest"])
     map_component_media_manifest_v02 = load_json(
         PATHS["map_component_media_manifest_v02"]
@@ -4979,6 +5059,7 @@ def build_evidence(
             topology_constrained_map_overlay_review,
             topology_constrained_map_overlay_visual_review,
             map_topology_control_sketch_pack,
+            map_decoration_zone_policy,
             map_controlled_regeneration_request_pack,
             controlled_map_candidate_artifact_import_report,
             controlled_map_candidate_generation_run,
@@ -5023,6 +5104,21 @@ def build_evidence(
         raise ValueError("map runtime v0.2 semantic geometry report provider_call_count must be 0")
     if semantic_geometry.get("default_runtime_mutation") is not False:
         raise ValueError("map runtime v0.2 semantic geometry report default_runtime_mutation must be false")
+    decoration_policy = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "map_decoration_zone_policy"
+        )
+    )
+    if decoration_policy.get("runtime_fact_source") is not False:
+        raise ValueError("map decoration zone policy runtime_fact_source must be false")
+    if decoration_policy.get("provider_call_count") != 0:
+        raise ValueError("map decoration zone policy provider_call_count must be 0")
+    if decoration_policy.get("player_default_runtime") is not False:
+        raise ValueError("map decoration zone policy player_default_runtime must be false")
+    if decoration_policy.get("may_modify_map_runtime_package") is not False:
+        raise ValueError(
+            "map decoration zone policy may_modify_map_runtime_package must be false"
+        )
     assert_no_forbidden_keys(evidence)
     return evidence
 
@@ -5072,6 +5168,11 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_runtime_v02_semantic_geometry = as_obj(
         evidence.get("map_runtime_v02_semantic_geometry")
+    )
+    map_decoration_zone_policy = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "map_decoration_zone_policy"
+        )
     )
     map_component_media = as_obj(evidence.get("map_component_media"))
     map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
@@ -5518,6 +5619,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- MapRuntimePackage v0.2 激活合同计划：`{map_runtime_v02_activation_contract_plan.get('status')}`，计划状态 `{map_runtime_v02_activation_contract_plan.get('contract_plan_status')}`，apply-now `{map_runtime_v02_activation_contract_plan.get('activation_apply_now_count')}`，后端 selector `{map_runtime_v02_activation_contract_plan.get('backend_selector_contract_status')}`，后端未完成 `{map_runtime_v02_activation_contract_plan.get('backend_not_applied_change_count')}`，前端步骤 `{map_runtime_v02_activation_contract_plan.get('frontend_required_change_count')}`，前端预接入 `{map_runtime_v02_activation_contract_plan.get('frontend_pre_activation_ready_count')}`，runtime 修改 `{as_obj(map_runtime_v02_activation_contract_plan.get('safety')).get('default_runtime_mutation_performed')}`",
         f"- 地图路径几何审查：`{map_path_geometry.get('status')}`，地图 `{map_path_geometry.get('map_count')}`，路线 `{map_path_geometry.get('route_count')}`，塔位 `{map_path_geometry.get('build_slot_count')}`，总长度 `{map_path_geometry.get('total_route_length_cells')}`，warning `{map_path_geometry.get('warning_count')}`，来源 `{as_obj(map_path_geometry.get('source_policy')).get('geometry_source')}`",
         f"- MapRuntimePackage v0.2 强语义几何审查：`{map_runtime_v02_semantic_geometry.get('status')}`，地图 `{map_runtime_v02_semantic_geometry.get('map_count')}`，资源点 `{map_runtime_v02_semantic_geometry.get('resource_node_count')}`，机关区 `{map_runtime_v02_semantic_geometry.get('hazard_zone_count')}`，防守锚点 `{map_runtime_v02_semantic_geometry.get('defense_anchor_count')}`，阻挡区 `{map_runtime_v02_semantic_geometry.get('blocked_area_count')}`，warning `{map_runtime_v02_semantic_geometry.get('warning_count')}`，error `{map_runtime_v02_semantic_geometry.get('error_count')}`，provider calls `{map_runtime_v02_semantic_geometry.get('provider_call_count')}`，runtime 修改 `{map_runtime_v02_semantic_geometry.get('default_runtime_mutation')}`",
+        f"- MapDecorationZonePolicy：地图 `{map_decoration_zone_policy.get('map_count')}`，强语义保护区 `{map_decoration_zone_policy.get('reserved_zone_count')}`，可装饰区 `{map_decoration_zone_policy.get('allowed_decoration_zone_count')}`，runtime fact source `{map_decoration_zone_policy.get('runtime_fact_source')}`，provider calls `{map_decoration_zone_policy.get('provider_call_count')}`，可修改 MapRuntimePackage `{map_decoration_zone_policy.get('may_modify_map_runtime_package')}`",
         f"- MapComponentMediaManifest：`{map_component_media.get('media_pack_id')}`，components `{map_component_media.get('component_count')}`，materials `{map_component_media.get('material_component_count')}`，prefabs `{map_component_media.get('prefab_component_count')}`，URL prefix `{map_component_media.get('public_url_prefix')}`，策略 `{', '.join(str(item) for item in as_list(map_component_media.get('usage_policy'))[:4])}`",
         f"- MapComponentMediaManifest v0.2 preview：`{map_component_media_v02.get('media_pack_id')}`，components `{map_component_media_v02.get('component_count')}`，single images `{map_component_media_v02.get('single_image_count')}`，atlas animations `{map_component_media_v02.get('atlas_animation_count')}`，media kinds `{map_component_media_v02.get('media_kind_counts')}`，默认前端消费 `{('no_frontend_default_consumption' in as_list(map_component_media_v02.get('usage_policy')))}`",
         f"- MapStylePack component binding gate：`{map_style_component_bindings.get('status')}`，StylePack `{map_style_component_bindings.get('style_pack_count')}`，显式 material refs `{map_style_component_bindings.get('material_component_ref_count')}`，显式 prefab refs `{map_style_component_bindings.get('prefab_reviewed_component_ref_count')}`，resolved `{map_style_component_bindings.get('resolved_ref_count')}`，fallback `{map_style_component_bindings.get('procedural_fallback_count')}`，策略 `{', '.join(str(item) for item in as_list(map_style_component_bindings.get('usage_policy'))[:4])}`",
@@ -5742,6 +5844,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     map_path_geometry = as_obj(evidence.get("map_path_geometry"))
     map_runtime_v02_semantic_geometry = as_obj(
         evidence.get("map_runtime_v02_semantic_geometry")
+    )
+    map_decoration_zone_policy = as_obj(
+        as_obj(as_obj(evidence.get("assets_and_media")).get("map_visual_reference")).get(
+            "map_decoration_zone_policy"
+        )
     )
     map_component_media_v02 = as_obj(evidence.get("map_component_media_v02_preview"))
     map_component_generation_pipeline = as_obj(
@@ -6110,6 +6217,11 @@ def render_index_html(evidence: dict[str, Any]) -> str:
           <div class="eyebrow">v0.2 强语义几何审查</div>
           <div class="metric">{html_escape(map_runtime_v02_semantic_geometry.get("status"))}</div>
           <p class="muted">资源 {html_escape(map_runtime_v02_semantic_geometry.get("resource_node_count"))}；机关 {html_escape(map_runtime_v02_semantic_geometry.get("hazard_zone_count"))}；锚点 {html_escape(map_runtime_v02_semantic_geometry.get("defense_anchor_count"))}；阻挡 {html_escape(map_runtime_v02_semantic_geometry.get("blocked_area_count"))}；error {html_escape(map_runtime_v02_semantic_geometry.get("error_count"))}；runtime 修改 {html_escape(map_runtime_v02_semantic_geometry.get("default_runtime_mutation"))}。</p>
+        </article>
+        <article class="card">
+          <div class="eyebrow">MapDecorationZonePolicy</div>
+          <div class="metric">{html_escape(map_decoration_zone_policy.get("map_count"))}</div>
+          <p class="muted">保护区 {html_escape(map_decoration_zone_policy.get("reserved_zone_count"))}；可装饰区 {html_escape(map_decoration_zone_policy.get("allowed_decoration_zone_count"))}；runtime fact source {html_escape(map_decoration_zone_policy.get("runtime_fact_source"))}；provider calls {html_escape(map_decoration_zone_policy.get("provider_call_count"))}。</p>
         </article>
         <article class="card">
           <div class="eyebrow">MapComponent v0.2 Preview</div>
