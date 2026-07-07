@@ -3,8 +3,9 @@
 
 This orchestrator intentionally reuses existing local tools instead of adding
 new validation logic. The default profile stays offline and browserless:
-fast gate, WorkerTaskPack batch dry-run, profile audit, migration dry-run, and
-git diff checks. The optional full profile adds the normal full evidence export.
+fast gate, fast report validation, WorkerTaskPack batch dry-run, profile audit,
+migration dry-run, and git diff checks. The optional full profile adds the
+normal full evidence export.
 """
 
 from __future__ import annotations
@@ -67,6 +68,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/dev/run_premerge_quality_gate.py",
                 "tools/dev/validate_premerge_quality_gate_report.py",
                 "tools/dev/run_fast_quality_gate.py",
+                "tools/dev/validate_fast_quality_gate_report.py",
                 "tools/dev/run_worker_acceptance_batch.py",
                 "tools/dev/validate_worker_acceptance_batch_report.py",
                 "tools/dev/audit_common.py",
@@ -90,6 +92,22 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             "name": "fast_quality_gate",
             "timeout_seconds": 90,
             "command": fast_gate_command,
+        },
+        {
+            "name": "fast_quality_gate_report_validator",
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/dev/validate_fast_quality_gate_report.py",
+                fast_gate_report,
+                "--expect-status",
+                "passed",
+                "--expect-failed-count",
+                "0",
+                "--require-worker-env-smoke",
+                "--require-release-gate-audit",
+                "--require-complete-command-order",
+            ],
         },
         {
             "name": "worker_acceptance_batch_all_dry_run",

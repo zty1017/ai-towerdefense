@@ -16,6 +16,7 @@ VALID_PROFILES = {"premerge", "full"}
 PREMERGE_REQUIRED_COMMANDS = {
     "python_compile_premerge_tools",
     "fast_quality_gate",
+    "fast_quality_gate_report_validator",
     "worker_acceptance_batch_all_dry_run",
     "worker_acceptance_batch_report_validator",
     "worker_acceptance_profile_audit",
