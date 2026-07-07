@@ -68,19 +68,39 @@ def parse_command(command: str) -> ParsedCommand:
     if not tokens:
         raise UnsupportedCommandSyntax("command is empty")
 
-    for token in tokens:
+    argv_start = 0
+    while argv_start < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[argv_start]):
+        argv_start += 1
+    if argv_start >= len(tokens):
+        raise UnsupportedCommandSyntax("command has environment assignments but no executable")
+
+    python_c_code_index: int | None = None
+    executable_name = Path(tokens[argv_start]).name
+    if (
+        executable_name.startswith("python")
+        and len(tokens) > argv_start + 2
+        and tokens[argv_start + 1] == "-c"
+    ):
+        python_c_code_index = argv_start + 2
+
+    for index, token in enumerate(tokens):
         if token in SHELL_ONLY_EXACT_TOKENS or token in SHELL_ONLY_PIPE_TOKENS:
             raise UnsupportedCommandSyntax(
                 f"unsupported shell-only syntax token {token!r}"
             )
         for marker in SHELL_ONLY_TOKEN_CHARS:
             if marker in token:
+                if (
+                    marker == ";"
+                    and index == python_c_code_index
+                    and len(tokens) == index + 1
+                ):
+                    continue
                 raise UnsupportedCommandSyntax(
                     f"unsupported shell-only syntax token {token!r}"
                 )
 
     env: dict[str, str] = {}
-    argv_start = 0
     while argv_start < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[argv_start]):
         key, value = tokens[argv_start].split("=", 1)
         env[key] = value

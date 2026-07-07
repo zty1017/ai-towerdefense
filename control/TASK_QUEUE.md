@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-07
 
-本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
+本文是交付给本地 worker、自动化执行器和人工审查环节的当前任务来源。
 
 若本文与早期任务文档冲突，以本文为准。字段级事实源仍以 `shared/schemas/`、`tools/`、`examples/` 和对应专题文档为准。
 
@@ -3938,6 +3938,44 @@ PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_pipe_args python3 -m py_compile tools/dev
 python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/worker_acceptance_profile_pipe_args_smoke.json
 python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_pipe_args_audit.json --max-samples 20
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_pipe_args_fast_gate.json
+git diff --check
+```
+
+### P1-E-8 WorkerTaskPack runner Python -c semicolon arguments
+
+状态：已完成 profile runner / audit 解析修正。
+
+目标：
+
+```text
+让 acceptance profile runner 允许 `python3 -c "import json; print(...)"` 这类安全代码参数，同时继续拒绝真正的 shell 分号连接、重定向、管道、逻辑连接和命令替换。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 只在 `python* -c` 的最后一个代码 argv 中允许 `;`，并继续拒绝 `cmd1; cmd2`、非 final argv 分号、重定向、独立管道 token、逻辑连接、反引号和 `$(`。
+- `tools/dev/check_worker_acceptance_profile_python_c.py`：新增 parser smoke，覆盖安全 `python -c` 代码参数和三个拒绝样例。
+- `examples/worker_task_packs/p1e_worker_acceptance_python_c_semicolon.v0.1.json`：新增本轮任务包。
+
+效果：
+
+- 审计 manual review 数从 21 降到 19。
+- 2 条 `python3 -c` 临时断言变成 runner-compatible 迁移候选。
+- heredoc、重定向和真实 shell 连接仍留在人工处理清单。
+
+边界：
+
+- 本任务不执行被审计任务包的验收命令。
+- 本任务不修改任何历史任务包、不调用 provider、不读取 `.env`、不改 runtime / backend / frontend。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_python_c_semicolon.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_python_c_semicolon python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_python_c.py
+python3 tools/dev/check_worker_acceptance_profile_python_c.py --output /tmp/worker_acceptance_profile_python_c_smoke.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_python_c_audit.json --max-samples 80
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_python_c_semicolon_fast_gate.json
 git diff --check
 ```
 
