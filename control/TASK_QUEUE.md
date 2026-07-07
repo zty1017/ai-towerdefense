@@ -3920,6 +3920,33 @@ python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-r
 git diff --check
 ```
 
+### P1-D-31 README and review handoff command simplification
+
+状态：已完成开发 / 审查入口文档收束。
+
+目标：
+
+```text
+去掉 README 中旧的极简环境手动命令长列表，把日常开发、后端测试、录屏评审三类入口明确分层，减少 worker 和队友复制过时命令。
+```
+
+已落地：
+
+- `README.md`：Tests 段改为三层入口：日常 fast gate、后端 pytest、录屏 / 评审 evidence suite 或只导出 evidence bundle。
+- `docs/MVP_REVIEW_HANDOFF_V0_1.md`：一键审查前置 fast gate，并补充浏览器可用 / 浏览器缺失两种 demo evidence suite 命令。
+
+边界：
+
+- 只改文档入口，不改变任何 validator、builder、backend、frontend 行为。
+- fast gate 仍不替代完整 evidence suite；浏览器缺失必须显式 `--allow-missing-browser` 并保留报告。
+
+验收：
+
+```bash
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/readme_simplified_fast_gate_report.v0.1.json
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：

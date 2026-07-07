@@ -4,7 +4,13 @@
 
 ## 一键审查
 
-先检查完整测试环境：
+日常改动先跑快速质量门，确认静态合同、readiness 和前端关键入口没有被破坏：
+
+```bash
+python3 tools/dev/run_fast_quality_gate.py
+```
+
+若要运行后端测试或重新生成审查包，先检查完整测试环境：
 
 ```bash
 python3 tools/dev/check_test_env.py
@@ -32,6 +38,18 @@ examples/review_packs/mvp_handoff_audit_report.v0.1.json
 
 ```bash
 python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/review_packs/mvp_handoff_audit_report.v0.1.json
+```
+
+录屏或评审前运行完整 evidence suite：
+
+```bash
+python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_demo_evidence_suite
+```
+
+当前环境没有浏览器时，必须显式使用降级参数并保留报告：
+
+```bash
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_evidence_suite
 ```
 
 ## 审查顺序
