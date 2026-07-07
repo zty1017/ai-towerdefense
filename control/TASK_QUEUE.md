@@ -3863,6 +3863,46 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_profile_migrator
 git diff --check
 ```
 
+### P1-E-6 Demo suite task pack acceptance profiles
+
+状态：已完成高频 demo suite 包 profile 迁移。
+
+目标：
+
+```text
+把 demo evidence suite 相关任务包里的 shell-only 报告断言收束成标准 validator，并补 acceptance_profile，让 profile runner 能直接运行高频 demo / quality gate 验收。
+```
+
+已落地：
+
+- `tools/demo/validate_demo_evidence_suite_report.py`：新增 suite report validator，只检查报告状态、浏览器降级边界、scheduler/outbox 摘要、安全计数和输出文件存在性，不重新实现 suite 子流程。
+- `p1d_demo_evidence_suite_runner.v0.1.json`、`p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json`、`p1d_demo_suite_scheduler_runner_selection.v0.1.json`、`p1d_demo_suite_outbox_import_smoke.v0.1.json`：将 heredoc / `python3 -c` 断言替换为 validator 命令，并补 `daily_fast` profile；一键 suite runner 额外保留 `release_gate` profile 要求真实浏览器 captured。
+- `examples/worker_task_packs/p1e_worker_acceptance_suite_profiles.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- `daily_fast` 允许 `--allow-missing-browser`，用于日常无浏览器环境；录屏 / release candidate 应运行 `release_gate` 或显式不允许浏览器降级。
+- validator 不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，也不替代 `run_demo_evidence_suite.py`。
+- 本任务不修改 `backend/`、`frontend/`、`game_data/`、`examples/review_packs/` 或 runtime package。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_suite_profiles.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_suite_profiles python3 -m py_compile tools/demo/validate_demo_evidence_suite_report.py tools/demo/run_demo_evidence_suite.py tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_suite_profile_check --command-timeout 180
+python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_suite_profile_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json --profile daily_fast --dry-run --output /tmp/p1d_scheduler_pipeline_profile_dry.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json --profile daily_fast --dry-run --output /tmp/p1d_outbox_import_profile_dry.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_audit_after_suite_profiles.json --max-samples 20
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/suite_profiles_fast_gate.json
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。
