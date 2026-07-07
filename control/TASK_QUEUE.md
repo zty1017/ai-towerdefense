@@ -1611,6 +1611,45 @@ rg -n "provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_ou
 git diff --check
 ```
 
+### P1-B-59 Provider adapter runner handoff outbox consumer
+
+状态：已完成本地 dry boundary consumer。
+
+目标：
+
+```text
+让外部 runner / worker 可以消费 ProviderAdapterRunnerHandoffOutbox v0.1 文件，批量执行 provider adapter runner 的离线 fixture / video boundary，并输出 receipt/envelope 与执行报告；仍不导入后端、不 staging/promotion、不激活 runtime。
+```
+
+已落地：
+
+- `tools/dev/run_provider_adapter_runner_handoff_outbox.py`：新增 outbox consumer CLI。
+- 默认 `--adapter-mode fixture`；可显式 `--adapter-mode video` 验证 video dry boundary。
+- 工具会校验 outbox、写出每个 handoff 的 executor request / authorization、调用 `tools/provider_adapter/run_provider_adapter.py`、校验 receipt/envelope，并生成 `provider_adapter_runner_handoff_outbox_execution_report.v0.1.json`。
+- report 记录每个 handoff 的 receipt/envelope 文件引用、import_after_runner body、安全计数和未执行导入说明。
+- `tools/demo/export_evidence.py`：provider runner handoff 摘要新增 `outbox_consumer_status=local_dry_boundary_consumer_ready` 和 consumer tool / task pack 引用。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步 outbox consumer 边界。
+- `examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- v0.1 consumer 只支持离线 `fixture` / `video` boundary，不接入 live text/image provider。
+- 不读取 `.env`、不调用 provider、不把结果导入后端、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- report 中的 `import_after_runner` 只是后续显式导入合同，不由该工具自动执行。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_consumer python3 -m py_compile tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json
+python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00
+python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_consumer_evidence
+rg -n "outbox consumer|local_dry_boundary_consumer_ready|run_provider_adapter_runner_handoff_outbox" /tmp/provider_runner_handoff_outbox_consumer_evidence
+git diff --check
+```
+
 ### P1-B-39 Architecture fact source freeze
 
 状态：已完成文档治理。

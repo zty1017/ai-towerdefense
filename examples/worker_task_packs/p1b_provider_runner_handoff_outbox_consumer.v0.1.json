@@ -1,0 +1,88 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-59-provider-runner-handoff-outbox-consumer",
+  "title": "Provider runner handoff outbox consumer",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/provider-runner-outbox-consumer",
+  "worktree": "/tmp/ai-td-task-provider-runner-outbox-consumer",
+  "objective": "新增一个本地 outbox consumer CLI，用于消费 ProviderAdapterRunnerHandoffOutbox v0.1 并批量运行 provider adapter runner 的离线 fixture / video boundary，生成 receipt/envelope 与执行报告；默认不调用 provider、不读取 .env、不导入后端、不 staging/promotion、不激活 runtime。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "shared/schemas/provider_adapter_runner_handoff_outbox.v0.1.schema.json",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
+    "tools/provider_adapter/run_provider_adapter.py",
+    "backend/app/services/generation_scheduler_handoff_builders.py",
+    "tools/demo/export_evidence.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/run_provider_adapter_runner_handoff_outbox.py",
+    "tools/demo/export_evidence.py",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "tools/llm/",
+    "tools/provider_adapter/",
+    "shared/schemas/",
+    "game_data/",
+    "content/",
+    "examples/review_packs/",
+    "examples/provider_adapter_runs/",
+    "examples/provider_authorizations/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_consumer python3 -m py_compile tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nfrom backend.app.services.generation_scheduler_handoff_builders import build_provider_adapter_runner_handoff, build_provider_adapter_runner_handoff_outbox\nrequest=json.loads(Path('examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json').read_text())\nauth=json.loads(Path('examples/provider_authorizations/p1b_provider_execution_authorization.example.json').read_text())\nsource=request['source']\nhandoff=build_provider_adapter_runner_handoff(session_id=source['session_id'], run_id=source['run_id'], schedule_item_id=source['schedule_item_id'], authorization_ref=auth['authorization_ref'], executor_request_id=request['request_id'], executor_request=request, authorization=auth, provider_profile=auth['source']['provider_profile'], created_at='2026-07-07T00:00:00+00:00', note='outbox consumer acceptance fixture')\noutbox=build_provider_adapter_runner_handoff_outbox(session_id=source['session_id'], run_id=source['run_id'], worker_id='outbox-consumer-acceptance', max_items=1, dispatched_count=1, stop_reason='acceptance_fixture', runner_handoffs=[handoff], created_at='2026-07-07T00:00:00+00:00')\nPath('/tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json').write_text(json.dumps(outbox, ensure_ascii=False, indent=2)+'\\n', encoding='utf-8')\nPY",
+    "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
+    "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 -c \"import json; from pathlib import Path; paths=[Path('/tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json'), Path('/tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json')];\nfor path in paths:\n    report=json.loads(path.read_text(encoding='utf-8')); assert report['status']=='passed'; assert report['executed_count']==1; assert report['passed_count']==1; assert report['safety_summary']['provider_call_count']==0; assert report['safety_summary']['runtime_activation_allowed_count']==0; assert report['safety_summary']['imports_to_backend_count']==0; assert report['executions'][0]['output_refs']['receipt']['exists'] is True; assert report['executions'][0]['output_refs']['envelope']['exists'] is True; assert report['executions'][0]['import_after_runner']['not_performed_by_this_tool'] is True\"",
+    "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_consumer_evidence",
+    "rg -n \"outbox consumer|local_dry_boundary_consumer_ready|run_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_consumer_evidence",
+    "git diff --check"
+  ],
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只做外部 runner outbox 的本地 dry boundary consumer，不接入 live provider。",
+    "consumer 输出 receipt/envelope 和 report 到 /tmp；导入后端仍需显式使用 handoff 的 import_after_runner 合同。",
+    "video mode 只是离线边界，finish_reason 应表达真实 video live provider 未实现。",
+    "该工具不改变 queue 状态，不 staging，不 promotion，不 runtime activation，不写世界状态。"
+  ]
+}

@@ -495,6 +495,14 @@ tools/dev/validate_provider_adapter_runner_handoff_outbox.py
 
 `ProviderAdapterRunnerHandoffOutbox v0.1` 把本轮 `runner_handoffs[]` 固化为外部 runner 可消费的批量交接单。它只表达 review-only handoff、导入合同和安全边界，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。outbox 可以包含 live text / live image 命令模板，但这些模板必须继续要求外部显式授权、显式 prompt file、显式 artifact output 和显式 `.env` 路径；video 只暴露 `command_templates.video_boundary`，命令形态为不带 `--live` 的 `--mode video` 离线边界，不要求 dotenv，也不代表真实图生视频 provider 已接入。
 
+本地外部 runner 第一版入口：
+
+```text
+tools/dev/run_provider_adapter_runner_handoff_outbox.py
+```
+
+该工具读取一个 `ProviderAdapterRunnerHandoffOutbox v0.1` 文件，逐项写出脱敏 executor request / authorization，并运行 `tools/provider_adapter/run_provider_adapter.py` 的离线 `fixture` 或 `video` boundary，生成 `ProviderAdapterExecutionReceipt`、`ProviderOutputEnvelope` 和 `provider_adapter_runner_handoff_outbox_execution_report.v0.1`。它默认不读取 `.env`、不调用 provider、不导入后端、不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。报告会保留 `import_after_runner` 请求体，但不会自动调用导入 API；外部 runner 输出进入后端 ledger 仍必须由显式导入步骤完成。
+
 当前已有本地 HTTP smoke 证据：
 
 ```text

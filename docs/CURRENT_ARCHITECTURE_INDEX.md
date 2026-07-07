@@ -221,6 +221,8 @@ shared/schemas/ + tools/ + 专题文档
   - ProviderAdapterRunnerHandoffOutbox 字段级事实源：把 background handoff tick 的 `runner_handoffs[]` 固化为外部 runner 可消费的 review-only 批量交接单；它不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。其 `command_templates.video_boundary` 只能是 `--mode video` dry boundary，不能带 `--live` 或 `<authorized-dotenv-path>`。
 - `tools/dev/validate_provider_adapter_runner_handoff_outbox.py`
   - ProviderAdapterRunnerHandoffOutbox 语义校验入口：拒绝 secret、prompt 正文、provider response、raw JSON / trace 等敏感内容，并检查 handoff source、授权 ref、建议 `/tmp` 路径、live 模板显式授权和 import 回灌合同。
+- `tools/dev/run_provider_adapter_runner_handoff_outbox.py`
+  - 外部 runner outbox 本地消费入口：读取 `ProviderAdapterRunnerHandoffOutbox v0.1`，把每个 handoff 的脱敏 executor request / authorization 写到本地输出目录，并批量运行 provider adapter runner 的 `fixture` 或 `video` 离线边界，生成 receipt/envelope 和 `provider_adapter_runner_handoff_outbox_execution_report.v0.1`。该工具不导入后端、不 staging、不 promotion、不 complete queue item、不读取 `.env`、不调用 provider、不写世界状态、不激活 runtime；live text/image 仍必须后续另开显式授权任务。
 - `shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`
   - ProviderArtifactStagingManifest 字段级事实源：把 ProviderOutputEnvelope 中的本地 refs 转入 review-only staging，仍不写世界状态、不激活 runtime、不绕过 media / semantic / human review / promotion gate。
 - `shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`
