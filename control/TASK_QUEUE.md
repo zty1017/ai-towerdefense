@@ -100,6 +100,7 @@ P2：本阶段明确不做
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
+- 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py` 与 report validator：默认 profile 复用 fast gate、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；可选 full profile 追加默认完整 evidence export。
 - 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - 已补 WorkerTaskPack acceptance profile 批量 runner `tools/dev/run_worker_acceptance_batch.py` 与 batch report validator：支持显式 `--task-pack`、`--task-id-prefix`、`--path-contains`、`--all`、`--profile`、`--dry-run`、`--fail-fast` 和 JSON report，默认拒绝隐式全量选择；全量 dry-run 用于快速确认任务包 profile 可解析，日常真实执行仍应缩小到明确任务包或筛选条件。
 - 已补 WorkerTaskPack acceptance profile 迁移审计 `tools/dev/audit_worker_acceptance_profiles.py`：只读扫描 `examples/worker_task_packs/*.json`，复用任务包 validator 和 profile runner 命令解析规则，输出已有 profile、无 profile 旧包、完整 evidence 顶层命令、fast gate、summary-only、迁移候选和 shell-only/manual-review 命令清单；该审计不执行被扫描任务包的验收命令，不修改旧包，并强制 `--output` 写到仓库外 `/tmp` 路径。
@@ -4247,6 +4248,49 @@ python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_accep
 python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_migration_dry.json
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_batch_fast_gate.json
 python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_batch_full_evidence
+git diff --check
+```
+
+### P1-E-15 Pre-merge local quality gate
+
+状态：已完成本地合并前验收入口。
+
+目标：
+
+```text
+新增本地合并前质量门，把 fast gate、WorkerTaskPack 全量 dry-run、profile 审计、迁移 dry-run 和 diff check 收束成一条命令，并保留可选 full evidence profile。
+```
+
+已落地：
+
+- `tools/dev/run_premerge_quality_gate.py`：新增本地 pre-merge gate，默认 `--profile premerge` 依次运行 fast gate、WorkerTaskPack 全量 `daily_fast` dry-run、batch report validator、profile 审计、迁移 dry-run 和 `git diff --check`。
+- `tools/dev/validate_premerge_quality_gate_report.py`：新增 report validator，校验 schema、profile、summary 计数、必需命令、失败数和 no-provider / no-env / no-runtime-activation 边界。
+- `tools/dev/run_fast_quality_gate.py`：把 premerge gate、validator 和 WorkerTaskPack batch runner 纳入快速编译覆盖。
+- `README.md` 与 `docs/CURRENT_ARCHITECTURE_INDEX.md`：新增合并前命令入口和事实源说明。
+- `examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json`：新增本任务包，固化默认 profile 和 full profile 验收。
+
+效果：
+
+- 日常开发继续使用 `python3 tools/dev/run_fast_quality_gate.py`。
+- 合并前使用 `python3 tools/dev/run_premerge_quality_gate.py`，少记多条命令。
+- 需要加重但不跑浏览器时使用 `python3 tools/dev/run_premerge_quality_gate.py --profile full`，会追加默认完整 evidence export。
+- 录屏 / 评审前仍使用 `tools/demo/run_demo_evidence_suite.py`，因为它会采集真实浏览器玩家链路截图。
+
+边界：
+
+- 默认 premerge profile 不调用 provider、不读取 `.env`、不跑浏览器、不写世界状态、不激活 runtime。
+- full profile 只追加现有默认完整 evidence export，不替代 demo evidence suite。
+- 本任务不修改 backend、frontend、runtime package、地图候选或媒体资源。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/command_runner.py
+python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/premerge_quality_gate_report.json --fail-fast
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/premerge_quality_gate_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0
+python3 tools/dev/run_premerge_quality_gate.py --profile full --output /tmp/premerge_quality_gate_full_report.json --fail-fast
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/premerge_quality_gate_full_report.json --expect-status passed --expect-profile full --expect-failed-count 0
 git diff --check
 ```
 

@@ -160,6 +160,12 @@ uvicorn app.main:app --app-dir backend --reload
 python3 tools/dev/run_fast_quality_gate.py
 ```
 
+合并前建议跑本地 pre-merge quality gate。它在 fast gate 之外追加 WorkerTaskPack 全量 profile dry-run、profile 审计、迁移 dry-run 和 `git diff --check`，仍然不跑浏览器、不调用 provider、不读取 `.env`。
+
+```bash
+python3 tools/dev/run_premerge_quality_gate.py
+```
+
 需要改后端服务或数据库行为时，先检查当前环境是否已经具备完整测试依赖：
 
 ```bash
