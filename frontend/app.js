@@ -31,6 +31,39 @@
       "/examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json",
   };
 
+  const STATIC_NODE_PATHS = {
+    gray_lantern_station: {
+      displayName: "灰灯驿站",
+      battleConfig: "/game_data/demo/first_battle_config.json",
+      mapRuntimePackage:
+        "/examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+      mapRenderPlan:
+        "/examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json",
+      mapSemanticVisualConsistencyReport:
+        "/examples/semantic_visual_consistency_reports/mvp_first_battle.semantic_visual_consistency_report.json",
+    },
+    lamp_wick_store: {
+      displayName: "灯芯仓",
+      battleConfig: "/game_data/demo/wick_store_pressure_battle_config.json",
+      mapRuntimePackage:
+        "/examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+      mapRenderPlan:
+        "/examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json",
+      mapSemanticVisualConsistencyReport:
+        "/examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json",
+    },
+    old_signal_tower: {
+      displayName: "旧信号塔",
+      battleConfig: "/game_data/demo/old_signal_tower_pressure_battle_config.json",
+      mapRuntimePackage:
+        "/examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+      mapRenderPlan:
+        "/examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+      mapSemanticVisualConsistencyReport:
+        "/examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json",
+    },
+  };
+
   const STATIC_ASSET_PREFIXES = [
     [
       /^\/assets\/frontend_runtime_mock\/processed\//,
@@ -256,11 +289,11 @@
   }
 
   function fetchStaticJson(key, timeoutMs = 3600) {
-    return fetchJson(STATIC_PATHS[key], {}, timeoutMs);
+    return fetchJson(staticPathFor(key), {}, timeoutMs);
   }
 
   function fetchOptionalStaticJson(key, fallback = null, timeoutMs = 3600) {
-    return fetchOptionalJson(STATIC_PATHS[key], fallback, timeoutMs);
+    return fetchOptionalJson(staticPathFor(key), fallback, timeoutMs);
   }
 
   function queryFlag(name) {
@@ -268,6 +301,11 @@
     if (!params.has(name)) return false;
     const value = String(params.get(name) || "1").toLowerCase();
     return !["0", "false", "no", "off"].includes(value);
+  }
+
+  function queryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
   }
 
   function forceStaticDataMode() {
@@ -280,6 +318,22 @@
 
   function flowVisualSmokeMode() {
     return queryFlag("flowVisualSmoke") || battleVisualSmokeMode();
+  }
+
+  function staticNodeId() {
+    if (!flowVisualSmokeMode()) return NODE_ID;
+    const requested = queryParam("nodeId") || queryParam("node");
+    return Object.prototype.hasOwnProperty.call(STATIC_NODE_PATHS, requested)
+      ? requested
+      : NODE_ID;
+  }
+
+  function staticNodePaths() {
+    return STATIC_NODE_PATHS[staticNodeId()] || STATIC_NODE_PATHS[NODE_ID];
+  }
+
+  function staticPathFor(key) {
+    return staticNodePaths()[key] || STATIC_PATHS[key];
   }
 
   function apiCandidates() {
@@ -446,6 +500,8 @@
     },
     static: {
       async loadInitialData() {
+        const nodeId = staticNodeId();
+        const nodePaths = staticNodePaths();
         const [
           pack,
           runtimeKit,
@@ -484,11 +540,12 @@
         const mapRenderPlanBundle =
           mapRenderPlan && mapStylePack && mapSemanticVisualConsistencyReport
             ? {
-                node_id: NODE_ID,
+                node_id: nodeId,
                 refs: {
                   map_style_pack: STATIC_PATHS.mapStylePack,
-                  procedural_map_render_plan: STATIC_PATHS.mapRenderPlan,
+                  procedural_map_render_plan: nodePaths.mapRenderPlan || STATIC_PATHS.mapRenderPlan,
                   semantic_visual_consistency_report:
+                    nodePaths.mapSemanticVisualConsistencyReport ||
                     STATIC_PATHS.mapSemanticVisualConsistencyReport,
                 },
                 map_style_pack: mapStylePack,
@@ -518,25 +575,29 @@
         return state.data.map;
       },
       async loadCampaignRoute() {
+        const nodeId = staticNodeId();
+        const nodePaths = staticNodePaths();
+        const displayName =
+          (state.data.battleConfig || {}).display_name || nodePaths.displayName || "灰灯驿站";
         state.data.campaignRouter = {
           schema_version: "campaign_router.v0.1",
           router_mode: "static_fallback_route",
           current: {
-            node_id: NODE_ID,
-            display_name: "灰灯驿站",
+            node_id: nodeId,
+            display_name: displayName,
             playable: true,
             asset_handle: {
               status: "ready",
-              map_runtime_package_ref: STATIC_PATHS.mapRuntimePackage,
-              battle_config_ref: STATIC_PATHS.battleConfig,
+              map_runtime_package_ref: nodePaths.mapRuntimePackage || STATIC_PATHS.mapRuntimePackage,
+              battle_config_ref: nodePaths.battleConfig || STATIC_PATHS.battleConfig,
             },
           },
           next: null,
           lookahead: [],
           route: [],
         };
-        state.selectedNodeId = NODE_ID;
-        state.selectedMapNodeId = NODE_ID;
+        state.selectedNodeId = nodeId;
+        state.selectedMapNodeId = nodeId;
         return state.data.campaignRouter;
       },
       async loadBriefing() {

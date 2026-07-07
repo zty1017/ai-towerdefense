@@ -71,6 +71,8 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/dev/audit_worker_acceptance_profiles.py",
                 "tools/dev/migrate_worker_acceptance_profiles.py",
                 "tools/dev/command_runner.py",
+                "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+                "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
             ],
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
         },

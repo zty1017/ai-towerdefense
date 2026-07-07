@@ -1,0 +1,108 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-37-frontend-multinode-visual-smoke",
+  "title": "Frontend multinode visual smoke",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/frontend-multinode-visual-smoke",
+  "worktree": "/tmp/ai-td-task-frontend-multinode-visual-smoke",
+  "objective": "补前端多节点浏览器视觉回归：用 no-build 静态前端直接打开三张 MVP 战斗节点，在桌面 / 移动视口下采集 battle canvas 截图并输出结构化 smoke report，验证前端不只覆盖第一战节点。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "frontend/app.js",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+    "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+    "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+  ],
+  "allowed_paths": [
+    "frontend/app.js",
+    "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+    "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "examples/worker_task_packs/p1d_frontend_multinode_visual_smoke.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/",
+    "game_data/media/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_multinode_visual_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-multinode-smoke python3 -m py_compile tools/frontend/capture_frontend_multinode_visual_smoke.py tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
+    "node --check frontend/app.js",
+    "python3 tools/frontend/capture_frontend_multinode_visual_smoke.py --allow-missing-browser --output-dir /tmp/frontend_multinode_visual_smoke --timeout 45",
+    "python3 tools/frontend/validate_frontend_multinode_visual_smoke_report.py /tmp/frontend_multinode_visual_smoke/frontend_multinode_visual_smoke_report.v0.1.json --allow-unavailable",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：编译脚本、检查前端语法，并在有浏览器时采集三节点截图；无浏览器环境允许结构化降级。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_multinode_visual_smoke.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-multinode-smoke python3 -m py_compile tools/frontend/capture_frontend_multinode_visual_smoke.py tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
+          "node --check frontend/app.js",
+          "python3 tools/frontend/capture_frontend_multinode_visual_smoke.py --allow-missing-browser --output-dir /tmp/frontend_multinode_visual_smoke --timeout 45",
+          "python3 tools/frontend/validate_frontend_multinode_visual_smoke_report.py /tmp/frontend_multinode_visual_smoke/frontend_multinode_visual_smoke_report.v0.1.json --allow-unavailable",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider，不读取 .env，不生成新游戏素材。",
+    "nodeId 覆盖只在 battleVisualSmoke / flowVisualSmoke query 下生效，正常玩家入口不受影响。",
+    "daily_fast 允许无浏览器环境结构化降级；录屏 / 评审前应运行不带 --allow-missing-browser 的 capture 命令，取得真实 6 张截图。",
+    "本任务只验证前端实际渲染矩阵，不修改 MapRuntimePackage、RenderPlan、published visual layer 或 v0.2 activation gate。"
+  ]
+}

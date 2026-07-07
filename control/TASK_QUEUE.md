@@ -98,6 +98,7 @@ P2：本阶段明确不做
 - MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`；`tools/demo/validate_mvp_demo_readiness_report.py` 会独立复算 gate 顺序、必需 gate 数、阻断 / warning / expected block、source file 数、安全计数和整体状态，并已接入 `tools/demo/export_evidence.py` 静态验证。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、v0.2 强语义几何审查、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、前端战斗视觉合同、运行时 sprite 几何质量、Generation Scheduler review-only 调度、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、v0.2 默认 runtime 激活、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`map_runtime_v02_semantic_geometry` 是 MVP 必需 warning gate，证明 v0.2 preview 的资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；`battle_visual_contract` 是 MVP 必需 gate，证明默认战斗画面仍是全屏 MapRuntimePackage 驱动的程序化战场，不回退控制图、失败整图、棋盘或虚线调试画面；`generation_scheduler_review_only` 是 MVP 必需 gate，证明同步内容、后台预取、后台增强、懒加载和静态兜底都已有 review-only 调度计划和 dry-run 运行证据；`frontend_flow_visual_smoke_harness` 默认以 `harness_only` 模式证明浏览器截图工具可用，录屏前通过 `--frontend-flow-smoke-report` 可升级为消费真实 14 张截图的 `actual_report` 模式；`map_runtime_activation_contract` 和 `provider_video_boundary` 都是非必需 warning gate，前者证明前端已预接入但 runtime 仍未激活，后者证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
+- 已补前端多节点战斗截图门禁 `tools/frontend/capture_frontend_multinode_visual_smoke.py` 与 `tools/frontend/validate_frontend_multinode_visual_smoke_report.py`：使用 no-build 静态前端直接打开三张 MVP 战斗节点，覆盖 desktop/mobile 共 6 张 battle canvas 截图，并校验节点标题、截图矩阵、canvas 尺寸、文件大小和安全计数。`nodeId` 覆盖只在 `battleVisualSmoke` / `flowVisualSmoke` query 下生效；正常玩家入口、MapRuntimePackage、RenderPlan、published visual layer 和 v0.2 activation gate 均不被修改。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py` 与 report validator：默认 profile 复用 fast gate、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；可选 full profile 追加默认完整 evidence export。
@@ -4883,6 +4884,41 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_de
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_outbox_import_check --command-timeout 180
 python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); outbox=report['provider_runner_handoff_outbox_import_smoke']; command_names=[item['name'] for item in report['commands']]; assert outbox['status']=='passed'; assert outbox['imported_count']==2; assert outbox['pre_import_review_only_envelope_ready_count']==0; assert outbox['prefetch_review_only_envelope_ready_count']==2; assert outbox['external_provider_call_count']==0; assert outbox['runtime_activation_allowed_count']==0; assert report['safety_summary']['outbox_import_smoke_skipped'] is False; assert 'provider_runner_handoff_outbox_import_smoke' in command_names"
+git diff --check
+```
+
+### P1-D-37 Frontend multinode visual smoke
+
+状态：已完成多节点浏览器视觉回归入口。
+
+目标：
+
+```text
+避免前端视觉验收只覆盖第一战节点：用 no-build 静态前端直接打开三张 MVP 战斗节点，在桌面 / 移动视口采集 battle canvas 截图，并以结构化 report 校验节点标题、canvas、截图矩阵和安全计数。
+```
+
+已落地：
+
+- `frontend/app.js`：新增 smoke-only 静态节点覆盖。`?static=1&battleVisualSmoke=1&nodeId=<node_id>` 会加载对应节点的 battle config、MapRuntimePackage、RenderPlan 与语义一致性报告；正常玩家入口仍使用默认静态 / API 流程。
+- `tools/frontend/capture_frontend_multinode_visual_smoke.py`：新增三节点 x desktop/mobile 浏览器截图入口，默认输出 6 张 PNG 和 `frontend_multinode_visual_smoke_report.v0.1.json`。
+- `tools/frontend/validate_frontend_multinode_visual_smoke_report.py`：校验 report schema、三节点 / 双视口矩阵、PNG 文件、battle canvas 尺寸、节点标题和 provider / `.env` / world mutation / runtime activation 安全计数。
+- `tools/dev/run_fast_quality_gate.py` 与 `tools/dev/run_premerge_quality_gate.py`：把新脚本纳入 Python 编译清单。
+- `examples/worker_task_packs/p1d_frontend_multinode_visual_smoke.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 不调用 provider、不读取 `.env`、不生成素材、不写世界状态、不修改 MapRuntimePackage / RenderPlan / published visual layer。
+- `nodeId` 覆盖只在 `battleVisualSmoke` / `flowVisualSmoke` query 下生效；它是截图与回归测试入口，不是玩家侧导航逻辑。
+- daily fast profile 允许无浏览器环境结构化降级；录屏 / 评审前应运行不带 `--allow-missing-browser` 的 capture 命令，取得真实截图。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_frontend_multinode_visual_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-frontend-multinode-smoke python3 -m py_compile tools/frontend/capture_frontend_multinode_visual_smoke.py tools/frontend/validate_frontend_multinode_visual_smoke_report.py
+node --check frontend/app.js
+python3 tools/frontend/capture_frontend_multinode_visual_smoke.py --allow-missing-browser --output-dir /tmp/frontend_multinode_visual_smoke --timeout 45
+python3 tools/frontend/validate_frontend_multinode_visual_smoke_report.py /tmp/frontend_multinode_visual_smoke/frontend_multinode_visual_smoke_report.v0.1.json --allow-unavailable
 git diff --check
 ```
 
