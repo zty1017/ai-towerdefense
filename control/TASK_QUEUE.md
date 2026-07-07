@@ -5146,6 +5146,7 @@ git diff --check
 - `tools/demo/run_demo_evidence_suite.py`：新增套件第 1 步 `generation_scheduler_review_only_pipeline_smoke`，调用 `tools/dev/check_generation_scheduler_review_only_pipeline.py` 并把报告写到 output root 下的 `generation_scheduler/`。
 - 套件会在 scheduler smoke 后立即运行 `validate_generation_scheduler_review_only_pipeline_smoke_report.py`，先用独立 validator 复核 report 合同，再进入后续截图 / evidence 导出。
 - suite report 新增 `generation_scheduler_pipeline_smoke_report` 文件引用、`generation_scheduler_review_only_pipeline_smoke` 摘要和 `scheduler_pipeline_smoke_skipped` 安全标记。
+- `tools/demo/validate_demo_evidence_suite_report.py --require-scheduler-pipeline-smoke` 会要求 suite command list 里存在 `generation_scheduler_review_only_pipeline_smoke_report_validator`，避免只保留摘要而遗漏独立 report validator。
 - suite 状态会检查 scheduler smoke 必须 `passed`，`external_provider_call_count` 与 `runtime_activation_allowed_count` 必须为 0，并要求 runtime activation readiness chain 为 `completed_review_only`、三步完成且后续动作包含 `wait_for_runtime_activation_apply_gate`。
 - `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步说明完整 suite 默认包含 scheduler pipeline smoke。
 - `examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json`：新增本轮 worker task pack。
@@ -5216,6 +5217,7 @@ git diff --check
 
 - `tools/demo/run_demo_evidence_suite.py`：新增默认步骤 `provider_runner_handoff_outbox_import_smoke`，在浏览器玩家链路截图前运行；outbox smoke 之后立即运行 `validate_provider_runner_handoff_outbox_import_pipeline_report.py` 复核报告合同。
 - suite report 新增 `provider_runner_handoff_outbox_import_smoke_report` 文件引用、`outbox_import_smoke_runner` 和 `provider_runner_handoff_outbox_import_smoke` 摘要。
+- `tools/demo/validate_demo_evidence_suite_report.py --require-outbox-import-smoke` 会要求 suite command list 里存在 `provider_runner_handoff_outbox_import_smoke_report_validator`，避免只保留摘要而遗漏独立 report validator。
 - suite 状态会检查 outbox import smoke 必须 `passed`，且 provider call、env read、staging、promotion、queue complete、world mutation、runtime activation 都为 0。
 - suite 状态还会检查导入前 `review_only_envelope_ready_count=0`、导入后 `prefetch_review_only_envelope_ready_count=2`、`imported_count=2`。
 - 新增 `--skip-outbox-import-smoke` 快速调试开关；录屏 / 评审前不建议使用。

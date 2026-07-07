@@ -104,6 +104,7 @@
   "notes": [
     "本任务只把已存在的严格本地 outbox import smoke 串入 demo evidence suite，不新增 provider、后端接口、前端 UI 或素材生成能力。",
     "outbox import smoke 会启动临时本地后端和临时 SQLite，只产生 review-only evidence；provider 调用、env read、world mutation 和 runtime activation 计数必须保持 0。",
+    "suite validator 必须要求 outbox import smoke report validator 命令存在，避免只保留 suite 摘要而遗漏独立 report 合同复核。",
     "`--skip-outbox-import-smoke` 仅用于本地快速调试，不建议录屏 / 评审前使用。",
     "suite 输出仍写入 /tmp 或调用者指定的 output root；不把截图、evidence bundle、smoke report 或临时 SQLite 提交到仓库。"
   ]

@@ -11,6 +11,14 @@ from typing import Any
 
 
 EXPECTED_SCHEMA_VERSION = "demo_evidence_suite_report.v0.1"
+SCHEDULER_SMOKE_COMMAND = "generation_scheduler_review_only_pipeline_smoke"
+SCHEDULER_SMOKE_REPORT_VALIDATOR_COMMAND = (
+    "generation_scheduler_review_only_pipeline_smoke_report_validator"
+)
+OUTBOX_IMPORT_SMOKE_COMMAND = "provider_runner_handoff_outbox_import_smoke"
+OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR_COMMAND = (
+    "provider_runner_handoff_outbox_import_smoke_report_validator"
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -249,8 +257,13 @@ def validate_scheduler(
             failures,
         )
         require(
-            "generation_scheduler_review_only_pipeline_smoke" in names,
+            SCHEDULER_SMOKE_COMMAND in names,
             "scheduler pipeline smoke command missing",
+            failures,
+        )
+        require(
+            SCHEDULER_SMOKE_REPORT_VALIDATOR_COMMAND in names,
+            "scheduler pipeline smoke report validator command missing",
             failures,
         )
         require(scheduler.get("status") == "passed", "scheduler smoke not passed", failures)
@@ -320,8 +333,13 @@ def validate_outbox(
             failures,
         )
         require(
-            "provider_runner_handoff_outbox_import_smoke" in names,
+            OUTBOX_IMPORT_SMOKE_COMMAND in names,
             "outbox import smoke command missing",
+            failures,
+        )
+        require(
+            OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR_COMMAND in names,
+            "outbox import smoke report validator command missing",
             failures,
         )
         require(outbox.get("status") == "passed", "outbox import smoke not passed", failures)
