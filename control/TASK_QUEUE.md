@@ -4339,14 +4339,14 @@ git diff --check
 目标：
 
 ```text
-新增本地合并前质量门，把 fast gate、WorkerTaskPack 全量 dry-run、profile 审计、迁移 dry-run 和 diff check 收束成一条命令，并保留可选 full evidence profile。
+新增本地合并前质量门，把 fast gate、WorkerTaskPack 全量 dry-run、profile 审计、release gate 降级审计、迁移 dry-run 和 diff check 收束成一条命令，并保留可选 full evidence profile。
 ```
 
 已落地：
 
-- `tools/dev/run_premerge_quality_gate.py`：新增本地 pre-merge gate，默认 `--profile premerge` 依次运行 fast gate、WorkerTaskPack 全量 `daily_fast` dry-run、batch report validator、profile 审计、迁移 dry-run 和 `git diff --check`。
+- `tools/dev/run_premerge_quality_gate.py`：新增本地 pre-merge gate，默认 `--profile premerge` 依次运行 fast gate、WorkerTaskPack 全量 `daily_fast` dry-run、batch report validator、profile 审计、release gate 降级审计、迁移 dry-run 和 `git diff --check`。
 - `tools/dev/validate_premerge_quality_gate_report.py`：新增 report validator，校验 schema、profile、summary 计数、必需命令、失败数和 no-provider / no-env / no-runtime-activation 边界。
-- `tools/dev/run_fast_quality_gate.py`：把 premerge gate、validator 和 WorkerTaskPack batch runner 纳入快速编译覆盖。
+- `tools/dev/run_fast_quality_gate.py`：把 premerge gate、validator、WorkerTaskPack batch runner 和审计工具纳入快速编译覆盖。
 - `README.md` 与 `docs/CURRENT_ARCHITECTURE_INDEX.md`：新增合并前命令入口和事实源说明。
 - `examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json`：新增本任务包，固化默认 profile 和 full profile 验收。
 
@@ -4367,7 +4367,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/command_runner.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/migrate_worker_acceptance_profiles.py tools/dev/command_runner.py
 python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/premerge_quality_gate_report.json --fail-fast
 python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/premerge_quality_gate_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0
 python3 tools/dev/run_premerge_quality_gate.py --profile full --output /tmp/premerge_quality_gate_full_report.json --fail-fast
