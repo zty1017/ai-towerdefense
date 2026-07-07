@@ -4621,6 +4621,42 @@ rg -n "record-shared-prefetch-cache-reuse-candidate|shared_prefetch_cache_reuse_
 git diff --check
 ```
 
+### P1-B Generation Scheduler daemon readiness read-model
+
+状态：已完成最小只读控制面。
+
+目标：
+
+```text
+把 latest run、prefetch cache、activation gate 和 shared cache hits 汇总成后台执行器就绪视图，明确哪些步骤可以用手动受控 tick 推进，哪些步骤仍被自动 daemon、provider dispatch、promotion 或 runtime activation 显式阻断。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_daemon_readiness_builders.py`：新增纯 builder，输出 `generation_daemon_readiness.v0.1`。
+- `backend/app/services/generation_scheduler_service.py`：新增 `get_generation_daemon_readiness()`，复用现有 prefetch cache、activation gate 和 shared cache hit read-model。
+- `backend/app/api/frontend_mock.py`：新增 `GET /api/sessions/{session_id}/generation-schedule/daemon-readiness`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖缺失 session、无 run 初始手动 tick、background handoff tick 后的 queued / envelope 状态，以及跨 session shared cache hit 推荐复用。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步 daemon readiness 边界。
+- `examples/worker_task_packs/p1b_generation_daemon_readiness.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 该接口不创建 run、不推进 worker、不导出 handoff、不调用 provider、不读取 `.env`。
+- 该接口不 staging、不 promotion、不 complete queue item、不写世界状态、不激活 runtime。
+- `automatic_daemon_status=blocked_not_enabled_in_mvp` 是显式状态，不代表正式后台 executor 已实现。
+- `recommended_next_actions` 只能指向现有受控入口或后续外部 review import，不能被解释为自动执行计划。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_daemon_readiness.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_daemon_readiness python3 -m py_compile backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py
+PYTHONPATH=backend python3 -c "import os, tempfile; from app import db; from app.db import db_cursor, now_iso; from app.services import generation_scheduler_service as svc; fd,path=tempfile.mkstemp(suffix='.db'); os.close(fd); os.environ['APP_DB_PATH']=path; db.reset_connection(); db.init_db(path); ts=now_iso(); sid='daemon_smoke'; cur_ctx=db_cursor(); cur=cur_ctx.__enter__(); cur.execute('INSERT INTO sessions (session_id, display_name, created_at, last_active_at) VALUES (?, ?, ?, ?)', (sid, 'smoke', ts, ts)); cur_ctx.__exit__(None, None, None); payload=svc.get_generation_daemon_readiness(sid)['generation_daemon_readiness']; assert payload['manual_tick_status']=='ready_initial_tick_can_create_run'; assert payload['safety']['calls_provider'] is False"
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_daemon_readiness_fast_gate.json
+git diff --check
+```
+
 ### P1-B Generation Scheduler review-only pipeline smoke
 
 状态：已完成本地 HTTP 闭环 smoke。

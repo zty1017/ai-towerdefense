@@ -308,6 +308,24 @@ GET /api/sessions/{session_id}/generation-schedule/activation-gate
   != 可以加载到玩家 runtime
 ```
 
+### 获取后台执行器就绪视图
+
+```http
+GET /api/sessions/{session_id}/generation-schedule/daemon-readiness
+```
+
+该接口只读 `prefetch-cache`、`activation-gate` 和 `shared-prefetch-cache/hits`，用于解释未来后台预生成 daemon 当前能不能安全运行。它不启动常驻循环，不创建 run，不推进 worker，不导出 handoff，不调用 provider，不 staging，不 promotion，不 complete queue item，不写世界状态，也不激活 runtime。
+
+返回：
+
+- `generation_daemon_readiness.automatic_daemon_status`：当前固定为 `blocked_not_enabled_in_mvp`。
+- `generation_daemon_readiness.manual_tick_status`：给出下一步人工 / 脚本可触发的安全状态，例如 `ready_initial_tick_can_create_run`、`ready_to_dispatch_queued_provider_review_items`、`waiting_for_external_runner_or_artifact_review`。
+- `generation_daemon_readiness.recommended_next_actions`：指向已有安全入口，例如 `run-review-only-background-handoff-tick`、`record-shared-prefetch-cache-reuse-candidate` 或外部 artifact review import。
+- `generation_daemon_readiness.readiness_gates`：列出自动 daemon、provider dispatch、artifact promotion 和 runtime activation 仍被哪些显式门阻断。
+- `generation_daemon_readiness.safety`：确认该视图不读取 `.env`、不调用 provider、不保存 prompt / provider 正文、不写世界状态、不激活 runtime。
+
+这个接口是后台执行器的控制面，不是正式后台执行器本身；玩家侧不应消费它。
+
 ### 获取共享预取缓存索引
 
 ```http

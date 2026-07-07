@@ -254,6 +254,19 @@ def get_generation_activation_gate(session_id: str) -> FrontendMockPayloadRespon
 
 
 @router.get(
+    "/api/sessions/{session_id}/generation-schedule/daemon-readiness",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_generation_daemon_readiness(session_id: str) -> FrontendMockPayloadResponse:
+    """Return the safe readiness view for future background executor daemons."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        generation_scheduler_service.get_generation_daemon_readiness(session_id),
+    )
+
+
+@router.get(
     "/api/sessions/{session_id}/generation-schedule/shared-prefetch-cache",
     response_model=FrontendMockPayloadResponse,
 )

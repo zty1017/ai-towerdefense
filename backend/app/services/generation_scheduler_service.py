@@ -107,6 +107,9 @@ from .generation_scheduler_prefetch_cache_builders import (  # noqa: E402
 from .generation_scheduler_activation_gate_builders import (  # noqa: E402
     build_generation_activation_gate_payload as _build_generation_activation_gate_payload,
 )
+from .generation_scheduler_daemon_readiness_builders import (  # noqa: E402
+    build_generation_daemon_readiness_payload as _build_generation_daemon_readiness_payload,
+)
 from .generation_scheduler_shared_prefetch_cache_builders import (  # noqa: E402
     build_shared_prefetch_cache_records as _build_shared_prefetch_cache_records,
     compact_shared_prefetch_cache as _compact_shared_prefetch_cache,
@@ -2005,6 +2008,21 @@ def get_generation_shared_prefetch_cache_hits(session_id: str) -> dict[str, Any]
     return _build_shared_prefetch_cache_hit_payload(
         get_generation_prefetch_cache(session_id),
         _load_shared_prefetch_cache_records(),
+    )
+
+
+def get_generation_daemon_readiness(session_id: str) -> dict[str, Any]:
+    prefetch_payload = get_generation_prefetch_cache(session_id)
+    activation_payload = _build_generation_activation_gate_payload(prefetch_payload)
+    shared_hit_payload = _build_shared_prefetch_cache_hit_payload(
+        prefetch_payload,
+        _load_shared_prefetch_cache_records(),
+    )
+    return _build_generation_daemon_readiness_payload(
+        session_id=session_id,
+        prefetch_payload=prefetch_payload,
+        activation_payload=activation_payload,
+        shared_hit_payload=shared_hit_payload,
     )
 
 

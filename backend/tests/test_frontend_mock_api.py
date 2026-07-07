@@ -3305,6 +3305,182 @@ def test_generation_activation_gate_reflects_staging_review_report(
     assert item["refs_present"]["provider_artifact_promotion_report"] is True
 
 
+def test_generation_daemon_readiness_requires_session(client):
+    missing = client.get(
+        "/api/sessions/missing-session/generation-schedule/daemon-readiness"
+    )
+    assert missing.status_code == 404
+
+
+def test_generation_daemon_readiness_allows_initial_manual_tick_without_run(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    readiness = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )
+
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    assert readiness["generation_schedule_run"] is None
+    daemon = readiness["generation_daemon_readiness"]
+    assert daemon["schema_version"] == "generation_daemon_readiness.v0.1"
+    assert daemon["readiness_mode"] == "review_only_control_plane"
+    assert daemon["automatic_daemon_status"] == "blocked_not_enabled_in_mvp"
+    assert daemon["manual_tick_status"] == "ready_initial_tick_can_create_run"
+    assert daemon["manual_tick_ready"] is True
+    summary = daemon["summary"]
+    assert summary["has_generation_schedule_run"] is False
+    assert summary["schedule_item_count"] == 0
+    assert summary["queued_provider_review_required_count"] == 0
+    assert summary["shared_cache_hit_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    actions = daemon["recommended_next_actions"]
+    assert actions[0]["action"] == "run_review_only_background_handoff_tick"
+    assert "run-review-only-background-handoff-tick" in actions[0]["endpoint"]
+    gates = {gate["gate"]: gate for gate in daemon["readiness_gates"]}
+    assert gates["automatic_daemon_enabled"]["status"] == "blocked"
+    assert gates["session_generation_schedule_run"]["status"] == (
+        "missing_but_manual_tick_can_create"
+    )
+    assert daemon["safety"] == {
+        "reads_env": False,
+        "calls_provider": False,
+        "runs_always_on_loop": False,
+        "auto_provider_dispatch_allowed": False,
+        "external_runner_required_for_provider_calls": True,
+        "stores_raw_prompt": False,
+        "stores_provider_response": False,
+        "stages_artifacts": False,
+        "promotes_artifacts": False,
+        "completes_queue_items": False,
+        "writes_world_state": False,
+        "activates_runtime": False,
+        "source_read_models": [
+            "generation_prefetch_cache",
+            "generation_activation_gate",
+            "generation_shared_prefetch_cache_hits",
+        ],
+    }
+
+
+def test_generation_daemon_readiness_tracks_manual_background_tick(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-review-only-background-handoff-tick",
+            json={"worker_id": "readiness-background-tick", "max_items": 2},
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    readiness = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )
+    second_readiness = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )
+
+    assert second_readiness == readiness
+    assert _session_state_counts(raw_conn, sid) == before_counts
+    daemon = readiness["generation_daemon_readiness"]
+    assert daemon["automatic_daemon_status"] == "blocked_not_enabled_in_mvp"
+    assert daemon["manual_tick_status"] == (
+        "ready_to_dispatch_queued_provider_review_items"
+    )
+    assert daemon["manual_tick_ready"] is True
+    summary = daemon["summary"]
+    assert summary["has_generation_schedule_run"] is True
+    assert summary["schedule_item_count"] == 8
+    assert summary["queued_provider_review_required_count"] == 2
+    assert summary["waiting_review_count"] == 2
+    assert summary["review_only_envelope_ready_count"] == 2
+    assert summary["staged_or_reviewed_count"] == 0
+    assert summary["provider_call_count_by_this_request"] == 0
+    assert summary["world_mutation_count_by_this_request"] == 0
+    assert summary["activation_allowed_count"] == 0
+    assert summary["runtime_ready_count"] == 0
+    actions = [action["action"] for action in daemon["recommended_next_actions"]]
+    assert actions[:2] == [
+        "run_review_only_background_handoff_tick",
+        "import_provider_artifact_review_output",
+    ]
+    gates = {gate["gate"]: gate for gate in daemon["readiness_gates"]}
+    assert gates["queued_provider_review_work"]["status"] == "ready"
+    assert gates["provider_dispatch"]["status"] == "blocked_external_runner_required"
+    assert gates["artifact_promotion"]["status"] == (
+        "blocked_explicit_review_required"
+    )
+    assert gates["runtime_activation"]["status"] == (
+        "blocked_explicit_activation_required"
+    )
+
+
+def test_generation_daemon_readiness_surfaces_shared_cache_hits(client):
+    source_sid = _create_session(client)
+    source_run = _payload(
+        client.post(f"/api/sessions/{source_sid}/generation-schedule/runs")
+    )
+    source_run_id = source_run["generation_schedule_run"]["run_id"]
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{source_sid}_provider_artifact_promotion_readiness",
+            "run_id": source_run_id,
+            "session_id": source_sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_shared_cache_readiness",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    indexed = _payload(
+        client.post(
+            f"/api/sessions/{source_sid}/generation-schedule/workers/"
+            "index-shared-prefetch-cache"
+        )
+    )
+    assert indexed["shared_prefetch_cache_index"]["indexed_count"] == 1
+
+    target_sid = _create_session(client)
+    _payload(client.post(f"/api/sessions/{target_sid}/generation-schedule/runs"))
+
+    readiness = _payload(
+        client.get(f"/api/sessions/{target_sid}/generation-schedule/daemon-readiness")
+    )
+
+    daemon = readiness["generation_daemon_readiness"]
+    assert daemon["summary"]["shared_cache_hit_count"] == 1
+    assert daemon["summary"]["queued_provider_review_required_count"] == 4
+    actions = {action["action"]: action for action in daemon["recommended_next_actions"]}
+    assert "run_review_only_background_handoff_tick" in actions
+    assert "record_shared_prefetch_cache_reuse_candidate" in actions
+    assert actions["record_shared_prefetch_cache_reuse_candidate"][
+        "provider_call_count_by_this_request"
+    ] == 0
+    gates = {gate["gate"]: gate for gate in daemon["readiness_gates"]}
+    assert gates["shared_prefetch_cache_reuse"]["status"] == "ready"
+    assert daemon["safety"]["calls_provider"] is False
+    assert daemon["safety"]["writes_world_state"] is False
+
+
 def test_generation_shared_prefetch_cache_requires_session(client):
     missing = client.get(
         "/api/sessions/missing-session/generation-schedule/shared-prefetch-cache"
