@@ -4831,8 +4831,8 @@ git diff --check
 已落地：
 
 - `tools/dev/check_generation_scheduler_review_only_pipeline.py`：启动临时 uvicorn 与临时 SQLite，使用真实 localhost HTTP 跑调度闭环 smoke。
-- `examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json`：固定示例报告，当前 `status=passed`，23 个 HTTP 步骤通过。
-- `tools/demo/export_evidence.py`：新增 `generation_scheduler.review_only_pipeline_smoke` 摘要，并在 summary.md 展示 handoff outbox、步骤数和安全计数。
+- `examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json`：固定示例报告，当前 `status=passed`，HTTP 步骤数以报告为准。
+- `tools/demo/export_evidence.py`：新增 `generation_scheduler.review_only_pipeline_smoke` 摘要，并在 summary.md 展示 handoff outbox、runtime readiness chain、步骤数和安全计数。
 - `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步脚本定位与边界。
 - `examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json`：新增本轮 worker task pack。
 
@@ -4841,12 +4841,13 @@ git diff --check
 - 主路径：`run-review-only-background-handoff-tick -> queue / worker-cache / artifact-ledger / prefetch-cache / activation-gate`。
 - 负向边界：handoff tick 拒绝 targeted metadata 与过大 `max_items`。
 - 负样本：默认 fixture executor chain 保持 promotion blocked；`image_failure` 保持 validation failed / blocked validation failed。
+- runtime readiness chain：通过临时 SQLite seed 制造仅限 smoke 的 `promotion_allowed` ledger entry，验证 `run-runtime-activation-readiness-chain` 串起 build request、artifact build report 与 activation authorization，并停在 apply gate。
 - shared cache：blocked default chain 不会被索引；没有 approved promotion fixture 时，shared cache hit 为空，reuse candidate 返回 409。
 
 边界：
 
 - 不调用 provider、不读取 `.env`、不运行真实 provider adapter、不 staging 自动化、不 promotion 自动化、不 complete queue item、不写世界状态、不激活 runtime。
-- 不声明 live provider、真实图生视频、runtime package builder、WorldStateDeltaTransaction builder 或玩家侧发布已经完成。
+- 不声明 live provider、真实图生视频、runtime package apply、WorldStateDeltaTransaction apply 或玩家侧发布已经完成。
 - `positive_shared_cache_reuse_path=not_exercised_no_approved_promotion_fixture` 是刻意保留的诚实限制；正向 promotion_allowed 索引仍由后端单元测试覆盖。
 
 验收：

@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/generation-scheduler-review-pipeline-smoke",
   "worktree": "/tmp/ai-td-task-generation-scheduler-review-pipeline-smoke",
-  "objective": "新增一个本地 HTTP smoke 脚本，把 Generation Scheduler 的 fixture-backed executor chain、prefetch-cache、activation gate、shared cache 空命中和 image_failure 负样本串成可重复验收报告，同时不调用 provider、不读取 .env、不写世界状态、不激活 runtime。",
+  "objective": "维护一个本地 HTTP smoke 脚本，把 Generation Scheduler 的 fixture-backed executor chain、prefetch-cache、activation gate、runtime activation readiness chain、shared cache 空命中和 image_failure 负样本串成可重复验收报告，同时不调用 provider、不读取 .env、不写世界状态、不激活 runtime。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -102,6 +102,8 @@
   "notes": [
     "本任务不新增后端能力，只编排已有 fixture-backed 安全接口。",
     "脚本主路径必须走 run-review-only-background-handoff-tick，并断言 outbox / runner_handoff / video_boundary / unsafe metadata 负例。",
+    "脚本可以在临时 SQLite 中 seed 仅限 smoke 的 promotion_allowed ledger entry，用于验证 run-runtime-activation-readiness-chain，但不得把该 seed 写入仓库 fixture 或正式数据库。",
+    "readiness chain 必须只记录 runtime build request、runtime artifact build report 与 activation authorization，并断言停在 apply gate。",
     "脚本必须诚实记录 positive_shared_cache_reuse_path=not_exercised_no_approved_promotion_fixture，不能把空 shared cache 当作正向复用成功。",
     "默认 fixture 与 image_failure fixture 都必须保持 promotion blocked / activation_allowed_count=0。",
     "该 smoke 使用临时 SQLite 和本地 uvicorn，只用于开发 / 演示证据，不进入玩家体验。"

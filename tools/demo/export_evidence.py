@@ -3533,6 +3533,28 @@ def collect_generation_scheduler_review_only_pipeline_smoke(
         "default_chain_promotion_allowed_count": summary.get("default_chain_promotion_allowed_count"),
         "image_chain_staging_status": summary.get("image_chain_staging_status"),
         "image_chain_promotion_decision": summary.get("image_chain_promotion_decision"),
+        "runtime_readiness_chain_status": summary.get("runtime_readiness_chain_status"),
+        "runtime_readiness_chain_step_count": summary.get(
+            "runtime_readiness_chain_step_count"
+        ),
+        "runtime_readiness_chain_schedule_item_id": summary.get(
+            "runtime_readiness_chain_schedule_item_id"
+        ),
+        "runtime_readiness_chain_prefetch_status_counts": summary.get(
+            "runtime_readiness_chain_prefetch_status_counts"
+        ),
+        "runtime_readiness_chain_activation_status_counts": summary.get(
+            "runtime_readiness_chain_activation_status_counts"
+        ),
+        "runtime_readiness_chain_ledger_kind_counts": summary.get(
+            "runtime_readiness_chain_ledger_kind_counts"
+        ),
+        "runtime_readiness_chain_post_actions": summary.get(
+            "runtime_readiness_chain_post_actions"
+        ),
+        "runtime_readiness_chain_activation_allowed_count": summary.get(
+            "runtime_readiness_chain_activation_allowed_count"
+        ),
         "shared_cache_indexed_count_after_blocked_default_chain": summary.get(
             "shared_cache_indexed_count_after_blocked_default_chain"
         ),
@@ -5689,6 +5711,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         f"- background tick：`{background_tick.get('status')}`，默认预算：`{background_tick.get('default_max_items')}`，provider 调用：`{background_tick_safety.get('api_calls_provider')}`，runtime 激活：`{background_tick_safety.get('api_activates_runtime')}`",
         f"- background handoff tick：`{background_handoff_tick.get('status')}`，outbox：`{background_handoff_tick.get('outbox_status')}`，video 边界：`{background_handoff_tick.get('video_boundary_status')}`，handoff 数：`{background_handoff_tick.get('expected_runner_handoff_count')}`，运行 adapter：`{background_handoff_safety.get('api_runs_provider_adapter')}`",
         f"- review-only pipeline smoke：`{pipeline_smoke.get('status')}`，HTTP 步骤 `{pipeline_smoke.get('passed_step_count')}` / `{pipeline_smoke.get('step_count')}`，handoff `{pipeline_smoke.get('background_handoff_runner_handoff_count')}` 个，outbox `{pipeline_smoke.get('background_handoff_outbox_schema_version')}`",
+        f"- runtime readiness chain：`{pipeline_smoke.get('runtime_readiness_chain_status')}`，步骤 `{pipeline_smoke.get('runtime_readiness_chain_step_count')}`，调度项 `{pipeline_smoke.get('runtime_readiness_chain_schedule_item_id')}`，后续动作 `{', '.join(as_list(pipeline_smoke.get('runtime_readiness_chain_post_actions')))}`",
         f"- pipeline safety：provider 调用 `{pipeline_smoke.get('external_provider_call_count')}`，世界修改 `{pipeline_smoke.get('world_mutation_count')}`，runtime 激活 `{pipeline_smoke.get('runtime_activation_allowed_count')}`，shared cache 正向路径 `{pipeline_smoke.get('positive_shared_cache_reuse_path')}`",
         "",
         md_table(["调度项", "延迟等级", "状态", "Provider 模式", "世界提交"], schedule_rows),

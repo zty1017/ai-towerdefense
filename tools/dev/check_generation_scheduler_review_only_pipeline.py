@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -261,6 +262,90 @@ def assert_no_forbidden_keys(value: Any, *, label: str) -> None:
         raise AssertionError(f"{label}: forbidden keys leaked: {present}")
 
 
+def seed_promotion_allowed_ledger(
+    *,
+    db_path: Path,
+    session_id: str,
+    run_id: str,
+    schedule_item_id: str,
+) -> None:
+    """Seed a promotion-allowed ledger entry inside the temporary smoke DB."""
+
+    ts = "2026-07-07T00:00:00+00:00"
+    source_id = "ppromo_pipeline_runtime_readiness_chain"
+    payload = {
+        "schema_version": "generation_artifact_ledger_entry.v0.1",
+        "ledger_id": f"gled_{session_id}_provider_artifact_promotion_report_{source_id}",
+        "run_id": run_id,
+        "session_id": session_id,
+        "schedule_item_id": schedule_item_id,
+        "artifact_kind": "provider_artifact_promotion_report",
+        "source_id": source_id,
+        "status": "promotion_allowed",
+        "worker_id": "pipeline-smoke-promotion-seed",
+        "note": "temporary smoke DB seed for readiness chain coverage",
+        "created_at": ts,
+        "updated_at": ts,
+        "provider_call_performed_by_this_request": False,
+        "world_mutation_performed_by_this_request": False,
+        "activation_allowed_now": False,
+        "ledger_write_policy": {
+            "mode": "fixture_backed_review_only",
+            "reads_env": False,
+            "calls_provider": False,
+            "stores_raw_prompt": False,
+            "stores_provider_response": False,
+            "writes_world_state": False,
+        },
+        "compact": {
+            "promotion_allowed": True,
+            "promotion_decision": "approved_for_runtime_package_build",
+            "required_next_actions": ["runtime_package_build"],
+            "promotion_gate": {
+                "promotion_allowed": True,
+                "blocked_reason": None,
+                "required_next_gates": [],
+            },
+            "promotion_targets": {
+                "target_kind": "map_runtime_package",
+                "runtime_package_ref_count": 0,
+                "world_transaction_ref_count": 0,
+                "published_media_ref_count": 0,
+            },
+            "safety_summary": {
+                "provider_call_count_by_report": 0,
+                "world_mutation_count_by_report": 0,
+                "runtime_mutation_count_by_report": 0,
+                "stores_prompt_body": False,
+                "stores_provider_body": False,
+                "stores_sensitive_value": False,
+                "uses_temporary_url": False,
+            },
+        },
+    }
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute(
+            "INSERT INTO generation_artifact_ledger "
+            "(ledger_id, run_id, session_id, schedule_item_id, artifact_kind, status, "
+            "payload, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(ledger_id) DO UPDATE SET payload = excluded.payload, "
+            "status = excluded.status, updated_at = excluded.updated_at",
+            (
+                payload["ledger_id"],
+                payload["run_id"],
+                payload["session_id"],
+                payload["schedule_item_id"],
+                payload["artifact_kind"],
+                payload["status"],
+                json.dumps(payload, ensure_ascii=False, sort_keys=True),
+                payload["created_at"],
+                payload["updated_at"],
+            ),
+        )
+        conn.commit()
+
+
 def run_background_handoff_tick(
     recorder: ApiRecorder,
     session_id: str,
@@ -415,7 +500,7 @@ def assert_background_handoff_rejects_unsafe_metadata(
         raise AssertionError("large handoff tick rejection detail mismatch")
 
 
-def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
+def build_pipeline_report(base_url: str, db_path: Path, generated_at: str) -> dict[str, Any]:
     recorder = ApiRecorder(base_url)
     handoff_session_id = create_session(
         recorder,
@@ -505,6 +590,59 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
         "image_activation_gate_after_failure_chain",
     )
 
+    readiness_session_id = create_session(
+        recorder,
+        "generation-pipeline-runtime-readiness",
+        "create_runtime_readiness_session",
+    )
+    readiness_run_payload = recorder.request(
+        "POST",
+        f"/api/sessions/{readiness_session_id}/generation-schedule/runs",
+        expected_status=201,
+        step_id="create_runtime_readiness_generation_run",
+    )
+    readiness_run = as_obj(readiness_run_payload.get("generation_schedule_run"))
+    readiness_schedule_item_id = "sched_next_map_visual_prefetch"
+    seed_promotion_allowed_ledger(
+        db_path=db_path,
+        session_id=readiness_session_id,
+        run_id=str(readiness_run.get("run_id") or ""),
+        schedule_item_id=readiness_schedule_item_id,
+    )
+    readiness_before = recorder.request(
+        "GET",
+        f"/api/sessions/{readiness_session_id}/generation-schedule/daemon-readiness",
+        step_id="runtime_readiness_daemon_before_chain",
+    )
+    before_actions = {
+        str(action.get("action"))
+        for action in as_list(
+            as_obj(readiness_before.get("generation_daemon_readiness")).get(
+                "recommended_next_actions"
+            )
+        )
+        if isinstance(action, dict)
+    }
+    if "run_runtime_activation_readiness_chain" not in before_actions:
+        raise AssertionError("runtime readiness chain was not recommended before chain")
+    readiness_chain = recorder.request(
+        "POST",
+        f"/api/sessions/{readiness_session_id}/generation-schedule/workers/"
+        "run-runtime-activation-readiness-chain",
+        body={
+            "worker_id": "pipeline-smoke-runtime-readiness-chain",
+            "schedule_item_id": readiness_schedule_item_id,
+            "activation_decision": "approved_for_manual_apply",
+            "note": "generation scheduler review-only pipeline smoke",
+        },
+        step_id="run_runtime_activation_readiness_chain",
+    )
+    readiness_after = recorder.request(
+        "GET",
+        f"/api/sessions/{readiness_session_id}/generation-schedule/daemon-readiness",
+        step_id="runtime_readiness_daemon_after_chain",
+    )
+
     target_session_id = create_session(
         recorder,
         "generation-pipeline-target",
@@ -564,6 +702,25 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
     image_ledger_summary = as_obj(
         as_obj(image_chain.get("generation_artifact_ledger")).get("summary")
     )
+    readiness_worker_step = as_obj(readiness_chain.get("worker_step"))
+    readiness_ledger_summary = as_obj(
+        as_obj(readiness_chain.get("generation_artifact_ledger")).get("summary")
+    )
+    readiness_prefetch_summary = as_obj(
+        as_obj(readiness_chain.get("generation_prefetch_cache")).get("summary")
+    )
+    readiness_activation_summary = as_obj(
+        as_obj(readiness_chain.get("generation_activation_gate")).get("summary")
+    )
+    readiness_after_actions = {
+        str(action.get("action"))
+        for action in as_list(
+            as_obj(readiness_after.get("generation_daemon_readiness")).get(
+                "recommended_next_actions"
+            )
+        )
+        if isinstance(action, dict)
+    }
     default_activation_summary = as_obj(
         as_obj(default_activation.get("generation_activation_gate")).get("summary")
     )
@@ -617,6 +774,28 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
             image_activation_summary.get("activation_allowed_count") or 0
         )
         == 0,
+        "runtime_readiness_chain_completed": readiness_worker_step.get("status")
+        == "completed_review_only"
+        and readiness_worker_step.get("step_count") == 3,
+        "runtime_readiness_chain_writes_review_only_ledgers": as_obj(
+            readiness_ledger_summary.get("artifact_kind_counts")
+        ).get("generation_runtime_build_request")
+        == 1
+        and as_obj(readiness_ledger_summary.get("artifact_kind_counts")).get(
+            "generation_runtime_artifact_build_report"
+        )
+        == 1
+        and as_obj(readiness_ledger_summary.get("artifact_kind_counts")).get(
+            "generation_runtime_activation_authorization"
+        )
+        == 1,
+        "runtime_readiness_chain_stops_before_apply": int(
+            readiness_activation_summary.get("activation_allowed_count") or 0
+        )
+        == 0
+        and int(readiness_activation_summary.get("runtime_ready_count") or 0) == 0
+        and "wait_for_runtime_activation_apply_gate" in readiness_after_actions
+        and "run_runtime_activation_readiness_chain" not in readiness_after_actions,
         "blocked_default_chain_not_indexed": int(default_index_summary.get("indexed_count") or 0)
         == 0,
         "shared_cache_empty_without_approved_fixture": int(
@@ -633,11 +812,21 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
 
     provider_call_count = sum(
         int(summary.get("provider_call_count_by_this_request") or 0)
-        for summary in (handoff_ledger_summary, default_ledger_summary, image_ledger_summary)
+        for summary in (
+            handoff_ledger_summary,
+            default_ledger_summary,
+            image_ledger_summary,
+            readiness_ledger_summary,
+        )
     )
     world_mutation_count = sum(
         int(summary.get("world_mutation_count_by_this_request") or 0)
-        for summary in (handoff_ledger_summary, default_ledger_summary, image_ledger_summary)
+        for summary in (
+            handoff_ledger_summary,
+            default_ledger_summary,
+            image_ledger_summary,
+            readiness_ledger_summary,
+        )
     )
     activation_allowed_count = sum(
         int(summary.get("activation_allowed_count") or 0)
@@ -648,6 +837,8 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
             default_activation_summary,
             image_ledger_summary,
             image_activation_summary,
+            readiness_ledger_summary,
+            readiness_activation_summary,
         )
     )
 
@@ -664,6 +855,7 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
             "handoff_session_id_present": bool(handoff_session_id),
             "fixture_session_id_present": bool(fixture_session_id),
             "image_failure_session_id_present": bool(image_session_id),
+            "runtime_readiness_session_id_present": bool(readiness_session_id),
             "target_session_id_present": bool(target_session_id),
         },
         "summary": {
@@ -696,6 +888,16 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
                 as_obj(image_prefetch.get("generation_prefetch_cache")).get("summary")
             ).get("cache_status_counts"),
             "image_activation_status_counts": image_activation_summary.get("gate_status_counts"),
+            "runtime_readiness_chain_status": readiness_worker_step.get("status"),
+            "runtime_readiness_chain_step_count": readiness_worker_step.get("step_count"),
+            "runtime_readiness_chain_schedule_item_id": readiness_schedule_item_id,
+            "runtime_readiness_chain_prefetch_status_counts": readiness_prefetch_summary.get("cache_status_counts"),
+            "runtime_readiness_chain_activation_status_counts": readiness_activation_summary.get("gate_status_counts"),
+            "runtime_readiness_chain_ledger_kind_counts": readiness_ledger_summary.get("artifact_kind_counts"),
+            "runtime_readiness_chain_post_actions": sorted(readiness_after_actions),
+            "runtime_readiness_chain_activation_allowed_count": readiness_activation_summary.get(
+                "activation_allowed_count"
+            ),
             "shared_cache_indexed_count_after_blocked_default_chain": default_index_summary.get("indexed_count"),
             "target_shared_cache_record_count": shared_cache_summary.get("record_count"),
             "target_hit_count": hit_summary.get("hit_count"),
@@ -720,7 +922,8 @@ def build_pipeline_report(base_url: str, generated_at: str) -> dict[str, Any]:
         "known_limits": [
             "background handoff tick 只导出外部 runner outbox，不执行真实 runner。",
             "没有 approved promotion fixture，因此本 smoke 不制造 shared cache 正向命中。",
-            "promotion_allowed 的正向索引仍由后端单元测试覆盖；正式 runtime package / WorldStateDeltaTransaction builder 仍是后续任务。",
+            "runtime readiness chain 只用临时 SQLite seed 触发 prepare/build-report/authorization 三步，并停在 apply gate；正式 runtime package / WorldStateDeltaTransaction apply 仍是后续任务。",
+            "promotion_allowed 的正向 shared cache 索引仍由后端单元测试覆盖。",
         ],
     }
 
@@ -768,7 +971,7 @@ def build_report(generated_at: str | None = None) -> dict[str, Any]:
         process = start_server(db_path, port)
         try:
             wait_for_server(base_url, process)
-            return build_pipeline_report(base_url, generated)
+            return build_pipeline_report(base_url, db_path, generated)
         finally:
             process.terminate()
             try:

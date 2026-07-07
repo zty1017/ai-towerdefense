@@ -11,6 +11,9 @@
     "handoff_prefetch_has_review_only_envelopes": true,
     "image_failure_chain_validation_failed": true,
     "reuse_without_hit_rejected": true,
+    "runtime_readiness_chain_completed": true,
+    "runtime_readiness_chain_stops_before_apply": true,
+    "runtime_readiness_chain_writes_review_only_ledgers": true,
     "shared_cache_empty_without_approved_fixture": true,
     "target_hit_view_empty": true
   },
@@ -146,6 +149,41 @@
       "method": "POST",
       "passed": true,
       "status_code": 201,
+      "step_id": "create_runtime_readiness_session"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/runs",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
+      "step_id": "create_runtime_readiness_generation_run"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/daemon-readiness",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "runtime_readiness_daemon_before_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/workers/run-runtime-activation-readiness-chain",
+      "method": "POST",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "run_runtime_activation_readiness_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions/{session_id}/generation-schedule/daemon-readiness",
+      "method": "GET",
+      "passed": true,
+      "status_code": 200,
+      "step_id": "runtime_readiness_daemon_after_chain"
+    },
+    {
+      "endpoint_template": "/api/sessions",
+      "method": "POST",
+      "passed": true,
+      "status_code": 201,
       "step_id": "create_target_session"
     },
     {
@@ -181,9 +219,10 @@
   "known_limits": [
     "background handoff tick 只导出外部 runner outbox，不执行真实 runner。",
     "没有 approved promotion fixture，因此本 smoke 不制造 shared cache 正向命中。",
-    "promotion_allowed 的正向索引仍由后端单元测试覆盖；正式 runtime package / WorldStateDeltaTransaction builder 仍是后续任务。"
+    "runtime readiness chain 只用临时 SQLite seed 触发 prepare/build-report/authorization 三步，并停在 apply gate；正式 runtime package / WorldStateDeltaTransaction apply 仍是后续任务。",
+    "promotion_allowed 的正向 shared cache 索引仍由后端单元测试覆盖。"
   ],
-  "passed_step_count": 23,
+  "passed_step_count": 28,
   "report_id": "generation_scheduler_review_only_pipeline_smoke_report_v0_1",
   "safety_summary": {
     "external_provider_call_count": 0,
@@ -204,10 +243,11 @@
     "fixture_session_id_present": true,
     "handoff_session_id_present": true,
     "image_failure_session_id_present": true,
+    "runtime_readiness_session_id_present": true,
     "target_session_id_present": true
   },
   "status": "passed",
-  "step_count": 23,
+  "step_count": 28,
   "summary": {
     "background_handoff_dispatched_count": 2,
     "background_handoff_outbox_mode": "external_runner_required",
@@ -268,6 +308,31 @@
     },
     "positive_shared_cache_reuse_path": "not_exercised_no_approved_promotion_fixture",
     "reuse_without_hit_rejected_status": 409,
+    "runtime_readiness_chain_activation_allowed_count": 0,
+    "runtime_readiness_chain_activation_status_counts": {
+      "blocked_runtime_activation_apply_required": 1,
+      "not_applicable_locked_or_fallback_source": 4,
+      "queued_or_not_ready": 3
+    },
+    "runtime_readiness_chain_ledger_kind_counts": {
+      "generation_runtime_activation_authorization": 1,
+      "generation_runtime_artifact_build_report": 1,
+      "generation_runtime_build_request": 1,
+      "provider_artifact_promotion_report": 1
+    },
+    "runtime_readiness_chain_post_actions": [
+      "run_review_only_background_handoff_tick",
+      "wait_for_runtime_activation_apply_gate"
+    ],
+    "runtime_readiness_chain_prefetch_status_counts": {
+      "completed": 3,
+      "fallback_ready": 1,
+      "queued": 3,
+      "runtime_activation_authorization_recorded": 1
+    },
+    "runtime_readiness_chain_schedule_item_id": "sched_next_map_visual_prefetch",
+    "runtime_readiness_chain_status": "completed_review_only",
+    "runtime_readiness_chain_step_count": 3,
     "shared_cache_indexed_count_after_blocked_default_chain": 0,
     "target_hit_count": 0,
     "target_shared_cache_record_count": 0
