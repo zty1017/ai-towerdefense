@@ -17,6 +17,7 @@ from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
     COMMAND_OUTBOX_IMPORT_SMOKE_REPORT_VALIDATOR,
     COMMAND_SCHEDULER_PIPELINE_SMOKE,
     COMMAND_SCHEDULER_PIPELINE_SMOKE_REPORT_VALIDATOR,
+    DEMO_EVIDENCE_SUITE_ID,
     DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
 )
 
@@ -378,6 +379,11 @@ def validate_report(report: dict[str, Any], args: argparse.Namespace) -> list[st
     require(
         report.get("schema_version") == DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
         f"schema_version is {report.get('schema_version')}",
+        failures,
+    )
+    require(
+        report.get("suite_id") == DEMO_EVIDENCE_SUITE_ID,
+        f"suite_id is {report.get('suite_id')}",
         failures,
     )
     validate_status(
