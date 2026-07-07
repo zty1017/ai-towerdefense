@@ -14,6 +14,7 @@
     "control/TASK_QUEUE.md",
     "tools/demo/run_demo_evidence_suite.py",
     "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+    "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
     "tools/demo/export_evidence.py",
     "docs/MVP_REVIEW_HANDOFF_V0_1.md",
     "README.md"
@@ -21,6 +22,7 @@
   "allowed_paths": [
     "tools/demo/run_demo_evidence_suite.py",
     "tools/demo/validate_demo_evidence_suite_report.py",
+    "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
     "README.md",
     "docs/MVP_REVIEW_HANDOFF_V0_1.md",
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
@@ -46,7 +48,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
     "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke",
     "git diff --check"
@@ -58,7 +60,7 @@
         "description": "日常快速 profile，运行 demo suite 的 scheduler pipeline smoke 路径，并用标准 validator 校验报告。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
           "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke",
           "git diff --check"

@@ -4831,6 +4831,7 @@ git diff --check
 已落地：
 
 - `tools/dev/check_generation_scheduler_review_only_pipeline.py`：启动临时 uvicorn 与临时 SQLite，使用真实 localhost HTTP 跑调度闭环 smoke。
+- `tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py`：只读校验 smoke report 的 schema / step / checks / runtime readiness chain / safety boundary，不重新启动后端。
 - `examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json`：固定示例报告，当前 `status=passed`，HTTP 步骤数以报告为准。
 - `tools/demo/export_evidence.py`：新增 `generation_scheduler.review_only_pipeline_smoke` 摘要，并在 summary.md 展示 handoff outbox、runtime readiness chain、步骤数和安全计数。
 - `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步脚本定位与边界。
@@ -4854,10 +4855,10 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_scheduler_review_only_pipeline_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_scheduler_review_only_pipeline_smoke python3 -m py_compile tools/dev/check_generation_scheduler_review_only_pipeline.py tools/demo/export_evidence.py tools/dev/run_fast_quality_gate.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_scheduler_review_only_pipeline_smoke python3 -m py_compile tools/dev/check_generation_scheduler_review_only_pipeline.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py tools/demo/export_evidence.py tools/dev/run_fast_quality_gate.py
 UV_CACHE_DIR=/tmp/ai-td-uv-cache-generation-pipeline-smoke UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-generation-pipeline-smoke uv run --extra dev python tools/dev/check_generation_scheduler_review_only_pipeline.py --output /tmp/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00
 rm -f uv.lock
-python3 -m json.tool examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json
+python3 tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json
 python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/generation_scheduler_review_only_pipeline_smoke_evidence
 git diff --check
 ```
@@ -5141,6 +5142,7 @@ git diff --check
 已落地：
 
 - `tools/demo/run_demo_evidence_suite.py`：新增套件第 1 步 `generation_scheduler_review_only_pipeline_smoke`，调用 `tools/dev/check_generation_scheduler_review_only_pipeline.py` 并把报告写到 output root 下的 `generation_scheduler/`。
+- 套件会在 scheduler smoke 后立即运行 `validate_generation_scheduler_review_only_pipeline_smoke_report.py`，先用独立 validator 复核 report 合同，再进入后续截图 / evidence 导出。
 - suite report 新增 `generation_scheduler_pipeline_smoke_report` 文件引用、`generation_scheduler_review_only_pipeline_smoke` 摘要和 `scheduler_pipeline_smoke_skipped` 安全标记。
 - suite 状态会检查 scheduler smoke 必须 `passed`，`external_provider_call_count` 与 `runtime_activation_allowed_count` 必须为 0，并要求 runtime activation readiness chain 为 `completed_review_only`、三步完成且后续动作包含 `wait_for_runtime_activation_apply_gate`。
 - `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步说明完整 suite 默认包含 scheduler pipeline smoke。
@@ -5156,7 +5158,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_pipeline_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_pipeline_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_pipeline_check --command-timeout 180
 python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_scheduler_pipeline_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke
 git diff --check

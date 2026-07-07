@@ -175,6 +175,16 @@ def build_python_scheduler_pipeline_smoke_command(
     ]
 
 
+def build_scheduler_pipeline_smoke_validate_command(
+    scheduler_report_path: Path,
+) -> list[str]:
+    return [
+        sys.executable,
+        "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
+        str(scheduler_report_path),
+    ]
+
+
 def build_python_outbox_import_smoke_command(
     python_path: Path,
     outbox_import_report_path: Path,
@@ -1012,6 +1022,15 @@ def main(argv: list[str] | None = None) -> int:
             uv_lock_path.unlink()
         if scheduler_report_path.exists():
             scheduler_pipeline_report = load_json(scheduler_report_path)
+        commands.append(
+            run_command(
+                "generation_scheduler_review_only_pipeline_smoke_report_validator",
+                build_scheduler_pipeline_smoke_validate_command(scheduler_report_path),
+                root=ROOT,
+                timeout_seconds=20,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+            )
+        )
 
     if not args.skip_outbox_import_smoke:
         outbox_command, outbox_env, outbox_import_runner = (

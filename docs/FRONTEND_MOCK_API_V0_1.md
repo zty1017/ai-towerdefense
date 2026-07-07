@@ -650,7 +650,7 @@ uv run --extra dev python tools/dev/check_generation_scheduler_review_only_pipel
 
 该脚本不是玩家侧接口，而是开发 / Studio / 演示证据入口。它会启动临时本地后端和临时 SQLite，通过真实 HTTP 走通 `run-review-only-background-handoff-tick`、queue、worker cache、artifact ledger、prefetch-cache、activation-gate、fixture executor chain、image failure 负样本、runtime activation readiness chain 三步、shared cache 空命中和 reuse 409 阻断。
 
-报告固定记录：provider 调用 0、世界修改 0、runtime 激活 0、runtime package 写入 0、WorldStateDeltaTransaction 写入 0。readiness chain 只记录 build request、artifact build report 与 activation authorization，仍停在 apply gate。它不能证明 live provider、真实图生视频、自动 staging / promotion、玩家侧内容发布或 runtime 激活已经完成。
+`tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py` 只读复核该报告的 schema、step、runtime readiness chain 和安全边界，不重新启动后端。报告固定记录：provider 调用 0、世界修改 0、runtime 激活 0、runtime package 写入 0、WorldStateDeltaTransaction 写入 0。readiness chain 只记录 build request、artifact build report 与 activation authorization，仍停在 apply gate。它不能证明 live provider、真实图生视频、自动 staging / promotion、玩家侧内容发布或 runtime 激活已经完成。
 
 ### 导出外部 runner handoff
 

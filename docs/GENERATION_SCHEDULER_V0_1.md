@@ -509,12 +509,13 @@ tools/dev/run_provider_adapter_runner_handoff_outbox.py
 
 ```text
 tools/dev/check_generation_scheduler_review_only_pipeline.py
+tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py
 examples/review_packs/generation_scheduler_review_only_pipeline_smoke_report.v0.1.json
 ```
 
 该脚本使用临时 SQLite 和本地 uvicorn，先走 `run-review-only-background-handoff-tick`，再读取 queue / worker-cache / artifact-ledger / prefetch-cache / activation-gate，并额外验证 handoff tick 对 targeted metadata 与过大 `max_items` 的 409 阻断。随后它用 `run-fixture-executor-chain` 覆盖默认 promotion blocked 与 `image_failure` validation failed 两条负样本；再用临时 SQLite seed 制造一个仅限 smoke 的 `promotion_allowed` ledger entry，验证 `run-runtime-activation-readiness-chain` 能串起 runtime build request、runtime artifact build report 和 activation authorization 三步，并停在 `wait_for_runtime_activation_apply_gate`；最后确认 blocked default chain 不会写入 shared cache，且没有 approved promotion fixture 时 shared cache hit / reuse candidate 会保持空或 409。
 
-这份 smoke 只能证明 review-only scheduler pipeline 能通过本地 HTTP 创建 session 级证据链、导出安全 handoff outbox、推进到 activation authorization 记录，并保持 provider / world / runtime 边界为 0。它不能声称 live provider 调用、真实 provider adapter 执行、staging/promotion 自动化、queue complete、runtime package apply、WorldStateDeltaTransaction apply、runtime activation、玩家侧发布或真实图生视频 provider 已完成。
+独立 validator 只读取 smoke report，不重新启动后端；它复核 schema、step、checks、runtime readiness chain、apply gate 后续动作和 safety boundary。该 smoke 只能证明 review-only scheduler pipeline 能通过本地 HTTP 创建 session 级证据链、导出安全 handoff outbox、推进到 activation authorization 记录，并保持 provider / world / runtime 边界为 0。它不能声称 live provider 调用、真实 provider adapter 执行、staging/promotion 自动化、queue complete、runtime package apply、WorldStateDeltaTransaction apply、runtime activation、玩家侧发布或真实图生视频 provider 已完成。
 
 后端还提供只读预取缓存视图：
 
