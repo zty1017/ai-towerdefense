@@ -8,7 +8,6 @@ not infer map semantics from media and does not modify runtime packages.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -21,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import procedural_map_render_plan as pmrp  # noqa: E402
+from validation_common import load_json, write_json  # noqa: E402
 
 
 DEFAULT_STYLE_PACKS = sorted((ROOT / "examples/map_style_packs").glob("*.map_style_pack.json"))
@@ -39,18 +39,6 @@ EXTERNAL_URL_MARKERS = ("http://", "https://")
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2)
-        handle.write("\n")
 
 
 def resolve_path(value: str) -> Path:

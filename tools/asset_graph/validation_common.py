@@ -25,6 +25,14 @@ def load_json(path: Path) -> Any:
         return json.load(f)
 
 
+def load_json_object(path: Path, *, label: str | None = None) -> dict[str, Any]:
+    data = load_json(path)
+    if not isinstance(data, dict):
+        target = label or str(path)
+        raise ValueError(f"{target} root must be an object")
+    return data
+
+
 def write_json(path: Path, data: Any, *, sort_keys: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:

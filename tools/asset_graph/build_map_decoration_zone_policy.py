@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import glob
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -19,6 +18,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 import map_path_geometry  # noqa: E402
 import map_runtime_package as mrp_v01  # noqa: E402
 import map_runtime_package_v02 as mrp_v02  # noqa: E402
+from validation_common import load_json_object, write_json  # noqa: E402
 from tools.asset_graph.validate_map_decoration_zone_policy import validate  # noqa: E402
 
 
@@ -43,21 +43,6 @@ STRONG_PROTECTION_POLICY = [
     "no_visual_mimicry",
     "keep_player_readability",
 ]
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def repo_path(path: Path) -> str:
@@ -496,7 +481,7 @@ def build_policy(package_paths: list[Path]) -> dict[str, Any]:
     maps: list[dict[str, Any]] = []
     versions: set[str] = set()
     for path in package_paths:
-        package = load_json(path)
+        package = load_json_object(path)
         validate_runtime_package(package, path)
         maps.append(build_map_policy(path, package))
         versions.add(str(package.get("schema_version") or ""))
@@ -568,7 +553,7 @@ def main() -> int:
         if args.validate:
             validate(policy)
         output = args.output if args.output.is_absolute() else ROOT / args.output
-        write_json(output, policy)
+        write_json(output, policy, sort_keys=True)
     except Exception as exc:  # noqa: BLE001 - CLI builder should print concise failures.
         print(f"map decoration zone policy build failed: {exc}", file=sys.stderr)
         return 1

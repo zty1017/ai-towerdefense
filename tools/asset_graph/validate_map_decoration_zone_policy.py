@@ -4,10 +4,15 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from validation_common import load_json_object  # noqa: E402
 
 
 SCHEMA_VERSION = "map_decoration_zone_policy.v0.1"
@@ -43,14 +48,6 @@ STRONG_ZONE_TYPES = {
     "defense_anchor_marker",
     "blocked_area",
 }
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError("MapDecorationZonePolicy root must be an object")
-    return data
 
 
 def reject_sensitive_keys(value: Any, path: str = "$") -> None:
@@ -350,7 +347,7 @@ def main() -> int:
     parser.add_argument("policy", type=Path)
     args = parser.parse_args()
     try:
-        validate(load_json(args.policy))
+        validate(load_json_object(args.policy, label="MapDecorationZonePolicy"))
     except Exception as exc:  # noqa: BLE001 - CLI validator should print concise failures.
         print(f"map decoration zone policy validation failed: {exc}", file=sys.stderr)
         return 1
