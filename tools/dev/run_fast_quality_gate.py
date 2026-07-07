@@ -9,7 +9,6 @@ small changes can get a quick signal before the heavier demo evidence export.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -42,6 +41,7 @@ from tools.dev.quality_gate_report_helpers import (
     print_failed_command_details,
     report_status_from_failures,
     summarize_command_results,
+    write_json_report,
 )
 from tools.dev.validate_fast_quality_gate_report import (
     validate_report as validate_fast_quality_gate_report,
@@ -235,13 +235,6 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
     ]
 
 
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
-
-
 def self_validate_report(report: dict[str, Any], *, fail_fast: bool) -> bool:
     failed_count = int(report.get("summary", {}).get("failed_count") or 0)
     partial_fail_fast = bool(fail_fast and failed_count > 0)
@@ -329,7 +322,7 @@ def main() -> int:
             "does_not_replace_full_demo_evidence_export": True,
         },
     }
-    write_json(args.output, report)
+    write_json_report(args.output, report)
     print(f"fast quality gate report: {args.output}")
     report_valid = self_validate_report(report, fail_fast=bool(args.fail_fast))
     if failed:

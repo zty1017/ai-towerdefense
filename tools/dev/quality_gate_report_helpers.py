@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import json
 import sys
+from pathlib import Path
 from typing import Any
 
 
@@ -46,3 +48,10 @@ def print_failed_command_details(failed: list[dict[str, Any]]) -> None:
         print(f"failed: {item['name']}", file=sys.stderr)
         if item.get("stderr_tail"):
             print(item["stderr_tail"], file=sys.stderr)
+
+
+def write_json_report(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        handle.write("\n")

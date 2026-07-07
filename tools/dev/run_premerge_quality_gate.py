@@ -11,7 +11,6 @@ normal full evidence export.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,6 +44,7 @@ from tools.dev.quality_gate_report_helpers import (  # noqa: E402
     print_failed_command_details,
     report_status_from_failures,
     summarize_command_results,
+    write_json_report,
 )
 from tools.dev.validate_premerge_quality_gate_report import (  # noqa: E402
     validate_report as validate_premerge_quality_gate_report,
@@ -54,13 +54,6 @@ from tools.dev.validate_premerge_quality_gate_report import (  # noqa: E402
 DEFAULT_OUTPUT = Path("/tmp/ai_td_premerge_quality_gate_report.v0.1.json")
 DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
 OUTPUT_TAIL_LIMIT = 1800
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def self_validate_report(report: dict[str, Any], *, profile: str) -> bool:
@@ -314,7 +307,7 @@ def main() -> int:
             "default_profile_no_browser_automation": args.profile == PROFILE_PREMERGE,
         },
     }
-    write_json(args.output, report)
+    write_json_report(args.output, report)
     print(f"premerge quality gate report: {args.output}")
     report_valid = self_validate_report(report, profile=str(args.profile))
     if failed:
