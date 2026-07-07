@@ -2123,6 +2123,7 @@
     if (!battle || !battle.draggingTool) return;
     battle.dragPointer = { x: event.clientX, y: event.clientY };
     battle.hoverCell = cellFromCanvasEvent(event);
+    event.preventDefault();
   }
 
   function finishToolDrag(event) {
@@ -2133,6 +2134,7 @@
     battle.draggingTool = null;
     battle.dragPointer = null;
     battle.hoverCell = null;
+    event.preventDefault();
     if (!cell) {
       setBattleToast("拖到战场格位后释放");
       updateBattleDom();

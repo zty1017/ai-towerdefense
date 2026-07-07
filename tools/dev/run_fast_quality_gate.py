@@ -28,6 +28,7 @@ OUTPUT_TAIL_LIMIT = 1200
 def default_commands(generated_at: str) -> list[dict[str, Any]]:
     readiness_tmp = "/tmp/ai_td_fast_gate_mvp_demo_readiness_report.json"
     battle_visual_tmp = "/tmp/ai_td_fast_gate_battle_visual_contract_report.json"
+    battle_interaction_tmp = "/tmp/ai_td_fast_gate_battle_interaction_contract_report.json"
     pycache_prefix = "/tmp/ai_td_pycache_fast_quality_gate"
     return [
         {
@@ -40,6 +41,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/demo/build_mvp_demo_readiness_report.py",
                 "tools/demo/validate_mvp_demo_readiness_report.py",
                 "tools/demo/export_evidence.py",
+                "tools/frontend/validate_battle_interaction_contract.py",
                 "tools/frontend/validate_battle_visual_contract.py",
                 "tools/frontend/validate_campaign_router_frontend_contract.py",
                 "tools/frontend/validate_map_component_frontend_contract.py",
@@ -77,6 +79,18 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/validate_battle_visual_contract.py",
                 "--report-output",
                 battle_visual_tmp,
+                "--generated-at",
+                generated_at,
+            ],
+        },
+        {
+            "name": "battle_interaction_contract",
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_battle_interaction_contract.py",
+                "--report-output",
+                battle_interaction_tmp,
                 "--generated-at",
                 generated_at,
             ],

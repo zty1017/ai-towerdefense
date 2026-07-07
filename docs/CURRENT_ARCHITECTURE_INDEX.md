@@ -132,8 +132,8 @@ shared/schemas/ + tools/ + 专题文档
   - MapComponentManifestPatchPlan v0.2 是 v0.2 preview manifest 的旁路 patch proposal 层，不替换 v0.1 plan，也不让前端默认消费 v0.2。它默认读取 `game_data/media/map_components/map_component_media_manifest.v0.2.json`，允许通过 candidate review、visual quality 和 promotion gate 的 `svg/png/webp` 单图 generated candidate 成为 `ready_for_developer_apply`，并把 replacement 会改变的 `media_kind/file_type/local_path/url/sha/width/height/source_kind` 写入 `proposed_manifest_item`；`atlas_animation` 仍阻断为 apply 暂不支持。默认正式链路仍为 `no_allowed_candidates` / `patch_count=0`。
 - `shared/schemas/map_component_manifest_apply_report.v0.2.schema.json`、`tools/media/apply_map_component_manifest_patch_plan_v02.py`、`tools/media/validate_map_component_manifest_apply_report_v02.py`、`examples/review_packs/map_component_manifest_apply_report.v0.2.json`
   - MapComponentManifestApplyReport v0.2 是 v0.2 patch plan 之后的 developer-approved 单图 replacement report 层。它只接受 `ready_for_developer_apply` 的 `svg/png/webp` patch，复核候选文件存在、sha、扩展名和 SVG/PNG/WebP 文件规则；默认不复制文件、不写正式 v0.2 manifest，approval 为空时即使传 output manifest 也不会生成 replacement artifact。有 approval 时必须传 `--output-manifest`，且只有 replacement manifest 能通过正式 v0.2 validator 时才写出；否则记录 blocked report，保持 StylePack / RenderPlan / frontend / runtime 全 false。
-- `frontend/app.js` 与 `tools/frontend/validate_battle_visual_contract.py`
-  - 前端玩家战斗画面已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。前端已补 `drawMapRuntimeStrongSemantics()`，当被激活的默认 runtime package 携带 v0.2 强语义字段时，可从结构化 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 绘制资源点、机关区、防守锚点和阻挡物；默认前端仍不得请求 review-only `map-v02-preview` / `map-v02-opt-in-dry-run`。
+- `frontend/app.js`、`tools/frontend/validate_battle_visual_contract.py` 与 `tools/frontend/validate_battle_interaction_contract.py`
+  - 前端玩家战斗画面已经消费 `map_render_plan_bundle` / `MapStylePack` 的表现层颜色，并读取 `ProceduralMapRenderPlan` 的道路宽度、路肩宽度和部署基座 footprint 等表现层几何参数；`MapRuntimePackage` 仍是路径、塔位、目标、出生点和碰撞事实源。前端已补 `drawMapRuntimeStrongSemantics()`，当被激活的默认 runtime package 携带 v0.2 强语义字段时，可从结构化 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 绘制资源点、机关区、防守锚点和阻挡物；默认前端仍不得请求 review-only `map-v02-preview` / `map-v02-opt-in-dry-run`。战斗部署交互以底部工具卡拖到战场格位释放为主路径，点击放置只保留为 fallback；静态交互合同会检查拖拽状态、window 级 pointer 生命周期、战场预览、拖拽 ghost、移动端 touch-action 和玩家侧反馈不泄漏技术词。
 - `tools/asset_graph/render_procedural_map_preview.py`、`tools/asset_graph/validate_procedural_map_preview_report.py`、`examples/map_render_previews/`、`tools/demo/export_evidence.py`
   - 地图 RenderPlan 的离线审查预览入口：用 RuntimePackage 提供语义坐标、StylePack 提供颜色、RenderPlan 提供表现层几何参数，输出 review-only SVG 和 report；渲染器会只读消费 `MapDecorationZonePolicy v0.1`，把允许的边界碎片、路肩小物、空格装饰、语义道具肩部标记和氛围遮罩画入 `decoration-policy-layer`，但 report 固定记录 `runtime_fact_source=false`、`may_modify_map_runtime_package=false`、`provider_call_count=0`；统一 demo evidence 会动态纳入 `*.procedural_map_preview_report.json` 并展示 `procedural_map_previews` 摘要；不得作为 published visual layer 或玩家 runtime 背景。
 - `shared/schemas/map_runtime_package.v0.2.schema.json`、`tools/asset_graph/map_runtime_package_v02.py`、`examples/map_runtime_packages_v02/`
@@ -173,7 +173,7 @@ shared/schemas/ + tools/ + 专题文档
 - `tools/demo/export_evidence.py`
   - 统一 demo evidence bundle 导出入口：默认 `--validation-profile full` 会运行完整 validation commands，且只有当前导出校验 `passed` 才返回 0。显式 `--validation-profile summary-only` 只用于日常本地快速查看 summary / HTML，不运行 validation commands，并在 `validation_summary.current_export_validation` 中记录 `status=skipped`、profile、`command_count=0`、`results=[]` 和跳过原因；录屏 / 最终评审仍以默认 full 导出或 `run_demo_evidence_suite.py` 为准。
 - `tools/dev/run_fast_quality_gate.py`
-  - 日常开发快速质量门：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator。该入口不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，只用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以 `run_demo_evidence_suite.py` 或 `export_evidence.py` 为准。
+  - 日常开发快速质量门：串联 Python 编译、前端语法检查、战斗视觉合同、战斗交互合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator。该入口不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，只用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以 `run_demo_evidence_suite.py` 或 `export_evidence.py` 为准。
 - `tools/dev/run_premerge_quality_gate.py`、`tools/dev/validate_premerge_quality_gate_report.py`
   - 本地合并前质量门：复用 `run_fast_quality_gate.py`、WorkerTaskPack batch dry-run、batch report validator、profile audit、migration dry-run 和 `git diff --check`，把常规合并前本地检查收束成一条命令。默认 `--profile premerge` 不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime；`--profile full` 会在同一报告中追加默认完整 `export_evidence.py` 导出，但仍不替代录屏 / 评审前需要真实浏览器截图时的 `run_demo_evidence_suite.py`。报告 schema 为 `premerge_quality_gate_report.v0.1`。
 - `tools/dev/run_worker_acceptance_profile.py`
@@ -430,7 +430,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 新增 WorldStateDelta / review pack / provider artifact 与 ContextPackage、FactEntry、CGOP 字段的持续对齐；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移。CoreArtifactAlignmentReport 当前已清零，未来新增产物若缺核心对象快照、core refs 或显式 not-applicable 边界，会重新进入迁移队列。
 - 正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求持久化预生成产物和 runtime activation；当前 Campaign Router 已能显式触发 review-only dispatcher drain 预取证据，prefetch cache 也只能读取 latest run 的 queue / ledger 派生视图，仍不是真实后台执行器或正式产物缓存。
 - 多世界书选择与长期存档系统。
-- 更深的浏览器交互录屏 / 回放验收；当前已有玩家主链路 14 张截图、多节点战斗 6 张截图和 suite 级浏览器预检，但尚未覆盖拖拽部署细节、长时间战斗录像和人工观感审查。
+- 更深的浏览器交互录屏 / 回放验收；当前已有玩家主链路 14 张截图、多节点战斗 6 张截图、suite 级浏览器预检和拖拽部署静态交互合同，但尚未覆盖真实浏览器拖拽回放、长时间战斗录像和人工观感审查。
 
 ## 5. 历史文档处理规则
 
