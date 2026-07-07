@@ -9,38 +9,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
-SCHEMA_VERSION = "fast_quality_gate_report.v0.1"
+from tools.dev.fast_quality_gate_contract import (  # noqa: E402
+    COMMAND_RELEASE_GATE_PROFILE_AUDIT,
+    COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
+    COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE,
+    FAST_QUALITY_GATE_COMMAND_ORDER,
+    FAST_QUALITY_GATE_REPORT_ID,
+    FAST_QUALITY_GATE_REQUIRED_BOUNDARY_FLAGS,
+    FAST_QUALITY_GATE_REQUIRED_ZERO_FIELDS,
+    FAST_QUALITY_GATE_SCHEMA_VERSION,
+)
+
 VALID_STATUSES = {"passed", "failed"}
-EXPECTED_COMMAND_ORDER = [
-    "python_compile_core_tools",
-    "frontend_app_syntax",
-    "battle_visual_contract",
-    "battle_interaction_contract",
-    "campaign_router_frontend_contract",
-    "map_component_frontend_contract",
-    "map_decoration_zone_policy_validator",
-    "worker_profile_env_assignment_smoke",
-    "worker_acceptance_profile_audit",
-    "release_gate_profile_audit",
-    "mvp_demo_readiness_build",
-    "mvp_demo_readiness_validator_repo_fixture",
-    "mvp_demo_readiness_validator_rebuilt_report",
-]
-REQUIRED_BOUNDARY_FLAGS = (
-    "no_browser_automation",
-    "no_provider_calls",
-    "no_env_file_reads",
-    "no_world_state_writes",
-    "no_runtime_activation",
-    "does_not_replace_full_demo_evidence_export",
-)
-REQUIRED_ZERO_FIELDS = (
-    ("provider_call_count", 0),
-    ("reads_env_file", False),
-    ("world_mutation_count", 0),
-    ("runtime_activation_allowed", False),
-)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -82,8 +65,11 @@ def validate_report(
     require_release_gate_audit: bool,
     require_complete_command_order: bool,
 ) -> dict[str, Any]:
-    require(report.get("schema_version") == SCHEMA_VERSION, "schema_version mismatch")
-    require(report.get("report_id") == "fast_quality_gate_report_v0_1", "report_id mismatch")
+    require(
+        report.get("schema_version") == FAST_QUALITY_GATE_SCHEMA_VERSION,
+        "schema_version mismatch",
+    )
+    require(report.get("report_id") == FAST_QUALITY_GATE_REPORT_ID, "report_id mismatch")
     status = report.get("status")
     require(status in VALID_STATUSES, f"invalid status: {status!r}")
     if expect_status is not None:
@@ -111,49 +97,54 @@ def validate_report(
         require(configured_count == command_count, "non-fail-fast run must execute every command")
 
     boundary = as_obj(report.get("boundary"))
-    for field in REQUIRED_BOUNDARY_FLAGS:
+    for field in FAST_QUALITY_GATE_REQUIRED_BOUNDARY_FLAGS:
         require(boundary.get(field) is True, f"boundary.{field} must be true")
-    for field, expected in REQUIRED_ZERO_FIELDS:
+    for field, expected in FAST_QUALITY_GATE_REQUIRED_ZERO_FIELDS:
         require(summary.get(field) == expected, f"summary.{field} must be {expected!r}")
 
     names = command_names(results)
     name_set = set(names)
     if require_complete_command_order or status == "passed":
         require(
-            names == EXPECTED_COMMAND_ORDER,
+            names == FAST_QUALITY_GATE_COMMAND_ORDER,
             "command order mismatch: expected "
-            + json.dumps(EXPECTED_COMMAND_ORDER, ensure_ascii=False)
+            + json.dumps(FAST_QUALITY_GATE_COMMAND_ORDER, ensure_ascii=False)
             + ", got "
             + json.dumps(names, ensure_ascii=False),
         )
     if require_worker_env_smoke:
         require(
-            "worker_profile_env_assignment_smoke" in name_set,
-            "missing worker_profile_env_assignment_smoke",
+            COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE in name_set,
+            f"missing {COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE}",
         )
         worker_smoke = next(
             item
             for item in results
-            if isinstance(item, dict) and item.get("name") == "worker_profile_env_assignment_smoke"
+            if isinstance(item, dict)
+            and item.get("name") == COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE
         )
         require(worker_smoke.get("status") == "passed", "worker env smoke must pass")
     if require_worker_profile_audit:
         require(
-            "worker_acceptance_profile_audit" in name_set,
-            "missing worker_acceptance_profile_audit",
+            COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT in name_set,
+            f"missing {COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT}",
         )
         worker_audit = next(
             item
             for item in results
-            if isinstance(item, dict) and item.get("name") == "worker_acceptance_profile_audit"
+            if isinstance(item, dict)
+            and item.get("name") == COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT
         )
         require(worker_audit.get("status") == "passed", "worker acceptance profile audit must pass")
     if require_release_gate_audit:
-        require("release_gate_profile_audit" in name_set, "missing release_gate_profile_audit")
+        require(
+            COMMAND_RELEASE_GATE_PROFILE_AUDIT in name_set,
+            f"missing {COMMAND_RELEASE_GATE_PROFILE_AUDIT}",
+        )
         release_audit = next(
             item
             for item in results
-            if isinstance(item, dict) and item.get("name") == "release_gate_profile_audit"
+            if isinstance(item, dict) and item.get("name") == COMMAND_RELEASE_GATE_PROFILE_AUDIT
         )
         require(release_audit.get("status") == "passed", "release gate audit must pass")
 

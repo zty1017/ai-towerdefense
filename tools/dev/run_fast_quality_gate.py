@@ -18,6 +18,23 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso, run_command
+from tools.dev.fast_quality_gate_contract import (
+    COMMAND_BATTLE_INTERACTION_CONTRACT,
+    COMMAND_BATTLE_VISUAL_CONTRACT,
+    COMMAND_CAMPAIGN_ROUTER_FRONTEND_CONTRACT,
+    COMMAND_FRONTEND_APP_SYNTAX,
+    COMMAND_MAP_COMPONENT_FRONTEND_CONTRACT,
+    COMMAND_MAP_DECORATION_ZONE_POLICY_VALIDATOR,
+    COMMAND_MVP_DEMO_READINESS_BUILD,
+    COMMAND_MVP_DEMO_READINESS_VALIDATOR_REBUILT_REPORT,
+    COMMAND_MVP_DEMO_READINESS_VALIDATOR_REPO_FIXTURE,
+    COMMAND_PYTHON_COMPILE_CORE_TOOLS,
+    COMMAND_RELEASE_GATE_PROFILE_AUDIT,
+    COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
+    COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE,
+    FAST_QUALITY_GATE_REPORT_ID,
+    FAST_QUALITY_GATE_SCHEMA_VERSION,
+)
 
 
 DEFAULT_OUTPUT = Path("/tmp/ai_td_fast_quality_gate_report.v0.1.json")
@@ -35,7 +52,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
     pycache_prefix = "/tmp/ai_td_pycache_fast_quality_gate"
     return [
         {
-            "name": "python_compile_core_tools",
+            "name": COMMAND_PYTHON_COMPILE_CORE_TOOLS,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -54,6 +71,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/capture_frontend_multinode_visual_smoke.py",
                 "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
                 "tools/dev/command_runner.py",
+                "tools/dev/fast_quality_gate_contract.py",
                 "tools/dev/audit_common.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
                 "tools/dev/audit_release_gate_profiles.py",
@@ -78,12 +96,12 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
         },
         {
-            "name": "frontend_app_syntax",
+            "name": COMMAND_FRONTEND_APP_SYNTAX,
             "timeout_seconds": 20,
             "command": ["node", "--check", "frontend/app.js"],
         },
         {
-            "name": "battle_visual_contract",
+            "name": COMMAND_BATTLE_VISUAL_CONTRACT,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -95,7 +113,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "battle_interaction_contract",
+            "name": COMMAND_BATTLE_INTERACTION_CONTRACT,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -107,7 +125,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "campaign_router_frontend_contract",
+            "name": COMMAND_CAMPAIGN_ROUTER_FRONTEND_CONTRACT,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -115,7 +133,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "map_component_frontend_contract",
+            "name": COMMAND_MAP_COMPONENT_FRONTEND_CONTRACT,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -123,7 +141,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "map_decoration_zone_policy_validator",
+            "name": COMMAND_MAP_DECORATION_ZONE_POLICY_VALIDATOR,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -132,7 +150,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_profile_env_assignment_smoke",
+            "name": COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -142,7 +160,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_acceptance_profile_audit",
+            "name": COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -154,7 +172,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "release_gate_profile_audit",
+            "name": COMMAND_RELEASE_GATE_PROFILE_AUDIT,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -166,7 +184,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "mvp_demo_readiness_build",
+            "name": COMMAND_MVP_DEMO_READINESS_BUILD,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -178,7 +196,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "mvp_demo_readiness_validator_repo_fixture",
+            "name": COMMAND_MVP_DEMO_READINESS_VALIDATOR_REPO_FIXTURE,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -187,7 +205,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "mvp_demo_readiness_validator_rebuilt_report",
+            "name": COMMAND_MVP_DEMO_READINESS_VALIDATOR_REBUILT_REPORT,
             "timeout_seconds": 10,
             "command": [
                 sys.executable,
@@ -249,8 +267,8 @@ def main() -> int:
 
     failed = [item for item in results if item["status"] != "passed"]
     report = {
-        "schema_version": "fast_quality_gate_report.v0.1",
-        "report_id": "fast_quality_gate_report_v0_1",
+        "schema_version": FAST_QUALITY_GATE_SCHEMA_VERSION,
+        "report_id": FAST_QUALITY_GATE_REPORT_ID,
         "generated_at": now_iso(),
         "started_at": started_at,
         "status": "passed" if not failed else "failed",
