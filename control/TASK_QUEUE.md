@@ -4357,7 +4357,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py
 python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json
 python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json
 python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json
@@ -4406,7 +4406,7 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/migrate_worker_acceptance_profiles.py tools/dev/command_runner.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_quality_gate python3 -m py_compile tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/audit_common.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/audit_release_gate_profiles.py tools/dev/migrate_worker_acceptance_profiles.py tools/dev/command_runner.py
 python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/premerge_quality_gate_report.json --fail-fast
 python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/premerge_quality_gate_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0
 python3 tools/dev/run_premerge_quality_gate.py --profile full --output /tmp/premerge_quality_gate_full_report.json --fail-fast

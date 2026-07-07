@@ -86,6 +86,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/dev/run_premerge_quality_gate.py",
                 "tools/dev/premerge_quality_gate_contract.py",
                 "tools/dev/validate_premerge_quality_gate_report.py",
+                "tools/dev/worker_acceptance_batch_contract.py",
                 "tools/dev/run_worker_acceptance_profile.py",
                 "tools/dev/check_worker_acceptance_profile_env_assignments.py",
                 "tools/dev/run_worker_acceptance_batch.py",

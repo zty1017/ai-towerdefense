@@ -19,11 +19,17 @@ from tools.dev.run_worker_acceptance_profile import (  # noqa: E402
     profile_metadata,
     run_profile_commands,
 )
+from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
+    STATUS_DRY_RUN,
+    STATUS_FAILED,
+    STATUS_PASSED,
+    WORKER_ACCEPTANCE_BATCH_DEFAULT_OUTPUT,
+    WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
+)
 
 
-REPORT_SCHEMA_VERSION = "worker_acceptance_batch_run_report.v0.1"
 DEFAULT_TASK_PACK_DIR = Path("examples/worker_task_packs")
-DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_batch_run_report.v0.1.json")
+DEFAULT_OUTPUT = WORKER_ACCEPTANCE_BATCH_DEFAULT_OUTPUT
 
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
@@ -111,13 +117,13 @@ def profile_report_for_error(
         selected_profile=selected_profile,
         default_profile=None,
         available_profiles=[],
-        status="failed",
+        status=STATUS_FAILED,
         fail_fast=fail_fast,
         results=[
             {
                 "name": "task_pack_batch_selection",
                 "command": display_path(task_pack),
-                "status": "failed",
+                "status": STATUS_FAILED,
                 "error": error,
                 "message": message,
             }
@@ -148,7 +154,7 @@ def run_one_pack(
         return {
             "task_pack": display_path(task_pack),
             "task_id": "",
-            "status": "failed",
+            "status": STATUS_FAILED,
             "profile_report": profile_report,
             "summary": summarize_profile_report(profile_report),
         }
@@ -167,7 +173,7 @@ def run_one_pack(
         return {
             "task_pack": display_path(task_pack),
             "task_id": task_id,
-            "status": "failed",
+            "status": STATUS_FAILED,
             "profile_report": profile_report,
             "summary": summarize_profile_report(profile_report),
         }
@@ -180,8 +186,8 @@ def run_one_pack(
         fail_fast=fail_fast,
         timeout_seconds=timeout_seconds,
     )
-    failed = [item for item in results if item.get("status") == "failed"]
-    status = "failed" if failed else "dry_run" if dry_run else "passed"
+    failed = [item for item in results if item.get("status") == STATUS_FAILED]
+    status = STATUS_FAILED if failed else STATUS_DRY_RUN if dry_run else STATUS_PASSED
     profile_report = empty_report(
         task_pack=task_pack,
         selected_profile=actual_profile,
@@ -213,19 +219,19 @@ def build_batch_report(args: argparse.Namespace) -> dict[str, Any]:
             timeout_seconds=args.timeout,
         )
         pack_results.append(result)
-        if args.fail_fast and result["status"] == "failed":
+        if args.fail_fast and result["status"] == STATUS_FAILED:
             break
 
-    failed_count = sum(1 for item in pack_results if item["status"] == "failed")
-    dry_run_count = sum(1 for item in pack_results if item["status"] == "dry_run")
-    passed_count = sum(1 for item in pack_results if item["status"] == "passed")
-    status = "failed" if failed_count else "dry_run" if args.dry_run else "passed"
+    failed_count = sum(1 for item in pack_results if item["status"] == STATUS_FAILED)
+    dry_run_count = sum(1 for item in pack_results if item["status"] == STATUS_DRY_RUN)
+    passed_count = sum(1 for item in pack_results if item["status"] == STATUS_PASSED)
+    status = STATUS_FAILED if failed_count else STATUS_DRY_RUN if args.dry_run else STATUS_PASSED
     configured_command_count = sum(
         int(item["summary"].get("configured_command_count") or 0) for item in pack_results
     )
     command_count = sum(int(item["summary"].get("command_count") or 0) for item in pack_results)
     return {
-        "schema_version": REPORT_SCHEMA_VERSION,
+        "schema_version": WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
         "generated_at": now_iso(),
         "status": status,
         "selection": {
@@ -274,9 +280,9 @@ def main() -> int:
         report = build_batch_report(args)
     except Exception as exc:  # noqa: BLE001 - CLI reports concise failures.
         report = {
-            "schema_version": REPORT_SCHEMA_VERSION,
+            "schema_version": WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
             "generated_at": now_iso(),
-            "status": "failed",
+            "status": STATUS_FAILED,
             "selection": {
                 "task_pack_dir": str(args.task_pack_dir),
                 "explicit_task_pack_count": len(args.task_pack),
@@ -312,7 +318,7 @@ def main() -> int:
         f"{report['summary']['command_result_count']} command result(s)"
     )
     print(f"worker acceptance batch report: {args.output}")
-    return 0 if report["status"] in {"passed", "dry_run"} else 1
+    return 0 if report["status"] in {STATUS_PASSED, STATUS_DRY_RUN} else 1
 
 
 if __name__ == "__main__":
