@@ -1,0 +1,142 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-14-worker-acceptance-batch-runner",
+  "title": "WorkerTaskPack acceptance profile batch runner",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-batch-runner",
+  "worktree": "/tmp/ai-td-task-worker-profile-batch-runner",
+  "objective": "在所有 WorkerTaskPack 都具备 acceptance_profile 后，新增批量 dry-run / scoped run 入口，减少逐个任务包手动执行验收 profile 的成本。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/run_worker_acceptance_batch.py",
+    "tools/dev/validate_worker_acceptance_batch_report.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/migrate_worker_acceptance_profiles.py",
+    "tools/dev/expect_command_failure.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/run_worker_acceptance_batch.py",
+    "tools/dev/validate_worker_acceptance_batch_report.py",
+    "examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/media/",
+    "content/",
+    "shared/schemas/",
+    "examples/review_packs/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "examples/map_render_plans/",
+    "examples/map_render_previews/",
+    "examples/semantic_visual_consistency_reports/",
+    "tools/llm/",
+    "tools/provider_adapter/run_provider_adapter.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+    "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
+    "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
+    "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",
+    "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_all_dry.json --expect-status dry_run --expect-failed-count 0 --min-pack-count 100",
+    "python3 tools/dev/run_worker_acceptance_batch.py --task-pack examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_batch_profile_audit_run.json --timeout 180",
+    "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_profile_audit_run.json --expect-status passed --expect-failed-count 0 --min-pack-count 1",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_audit.json --max-samples 300",
+    "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_migration_dry.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_batch_fast_gate.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_batch_full_evidence",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：校验批量 runner、负例、全量 dry-run、单包实际执行、profile 审计和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_runner python3 -m py_compile tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+          "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
+          "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
+          "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",
+          "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_all_dry.json --expect-status dry_run --expect-failed-count 0 --min-pack-count 100",
+          "python3 tools/dev/run_worker_acceptance_batch.py --task-pack examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_batch_profile_audit_run.json --timeout 180",
+          "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_profile_audit_run.json --expect-status passed --expect-failed-count 0 --min-pack-count 1",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_audit.json --max-samples 300",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_migration_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_batch_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile：在 daily_fast 基础上导出完整 demo evidence。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_full python3 -m py_compile tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+          "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
+          "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
+          "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",
+          "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_all_dry.json --expect-status dry_run --expect-failed-count 0 --min-pack-count 100",
+          "python3 tools/dev/run_worker_acceptance_batch.py --task-pack examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_batch_profile_audit_run.json --timeout 180",
+          "python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_profile_audit_run.json --expect-status passed --expect-failed-count 0 --min-pack-count 1",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_audit.json --max-samples 300",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_migration_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_batch_fast_gate.json",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_batch_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "批量 runner 默认拒绝隐式全量选择；必须显式传入 --all、--task-pack、--task-id-prefix 或 --path-contains。",
+    "全量 dry-run 用于快速检查所有任务包 profile 是否可解析；日常实际执行应使用显式 task pack 或筛选条件缩小范围。",
+    "本任务不调用 provider、不读取 .env、不修改 runtime、前端、后端或媒体资源。"
+  ]
+}

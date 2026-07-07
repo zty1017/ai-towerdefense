@@ -171,6 +171,25 @@ python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1
 - 输出报告默认写入 `/tmp/worker_acceptance_profile_run_report.v0.1.json`，schema 为 `worker_acceptance_profile_run_report.v0.1`。
 - 没有 `acceptance_profile` 的旧任务包会直接失败并提示手动运行 `acceptance_commands`，避免把旧平铺命令误读成 profile。
 
+### Profile batch runner
+
+`tools/dev/run_worker_acceptance_batch.py` 是批量执行或 dry-run 多个 WorkerTaskPack `acceptance_profile` 的本地入口。它复用单包 profile runner 的任务包校验、profile 解析和命令执行规则，用于全量 dry-run、按前缀抽样或对一组明确任务包跑同一 profile。
+
+```bash
+python3 tools/dev/run_worker_acceptance_batch.py --task-pack examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_dry_run.json
+python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json
+python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_all_dry.json --expect-status dry_run --expect-failed-count 0 --min-pack-count 100
+```
+
+规则：
+
+- runner 默认拒绝隐式选择所有任务包；必须显式传入 `--all`、`--task-pack`、`--task-id-prefix` 或 `--path-contains`。
+- `--all --dry-run` 适合在迁移、审计和合并前快速确认所有任务包 profile 可解析；日常真实执行应使用显式 `--task-pack` 或筛选条件缩小范围。
+- `--profile` 会对所有选中的任务包使用同一个 profile；不传时使用每个任务包自己的 `acceptance_profile.default_profile`。
+- `--fail-fast` 会在首个失败包后停止，但报告仍记录 selected 与 executed 的差异。
+- 输出报告默认写入 `/tmp/worker_acceptance_batch_run_report.v0.1.json`，schema 为 `worker_acceptance_batch_run_report.v0.1`，可由 `tools/dev/validate_worker_acceptance_batch_report.py` 校验。
+- batch runner 只负责本地验收编排，不调用 provider、不读取 `.env`，也不替代完整 evidence、demo suite 或最终人工审查。
+
 ### Profile migration audit
 
 `tools/dev/audit_worker_acceptance_profiles.py` 是只读迁移审计入口，用于分析现有 `examples/worker_task_packs/*.json` 是否已经迁移到 `acceptance_profile`，并指出哪些旧包适合迁移、哪些命令需要人工处理：

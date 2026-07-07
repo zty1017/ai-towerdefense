@@ -101,8 +101,9 @@ P2：本阶段明确不做
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
+- 已补 WorkerTaskPack acceptance profile 批量 runner `tools/dev/run_worker_acceptance_batch.py` 与 batch report validator：支持显式 `--task-pack`、`--task-id-prefix`、`--path-contains`、`--all`、`--profile`、`--dry-run`、`--fail-fast` 和 JSON report，默认拒绝隐式全量选择；全量 dry-run 用于快速确认任务包 profile 可解析，日常真实执行仍应缩小到明确任务包或筛选条件。
 - 已补 WorkerTaskPack acceptance profile 迁移审计 `tools/dev/audit_worker_acceptance_profiles.py`：只读扫描 `examples/worker_task_packs/*.json`，复用任务包 validator 和 profile runner 命令解析规则，输出已有 profile、无 profile 旧包、完整 evidence 顶层命令、fast gate、summary-only、迁移候选和 shell-only/manual-review 命令清单；该审计不执行被扫描任务包的验收命令，不修改旧包，并强制 `--output` 写到仓库外 `/tmp` 路径。
-- 已用 `tools/dev/migrate_worker_acceptance_profiles.py --write` 批量迁移 80 个 runner-compatible 旧 WorkerTaskPack；当前审计剩余 16 个无 profile / manual-review 包，均因 heredoc、多命令脚本或其他 runner-incompatible 命令需要人工处理。
+- 已用迁移器和窄用途 helper 完成所有 WorkerTaskPack 的 `acceptance_profile` 覆盖；当前审计应保持所有任务包 `with_profile`，`without_profile`、`migration_candidates`、`manual_review_required` 均为 0。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -4200,6 +4201,52 @@ python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/final_heredo
 python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/final_heredoc_after_dry.json
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/final_heredoc_fast_gate.json
 python3 tools/demo/export_evidence.py --output-dir /tmp/final_heredoc_full_evidence
+git diff --check
+```
+
+### P1-E-14 WorkerTaskPack acceptance profile batch runner
+
+状态：已完成本地批量验收入口。
+
+目标：
+
+```text
+在所有 WorkerTaskPack 都具备 acceptance_profile 后，新增批量 dry-run / scoped run 入口，减少逐个任务包手动执行验收 profile 的成本。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_batch.py`：新增批量 runner，复用单包 profile runner 的任务包校验、profile 解析和命令执行规则，支持显式 `--task-pack`、`--task-id-prefix`、`--path-contains`、`--all`、`--limit`、`--profile`、`--dry-run`、`--fail-fast`、`--timeout` 和 JSON report。
+- `tools/dev/validate_worker_acceptance_batch_report.py`：新增 batch report validator，校验 schema、整体 status、summary 计数、`packs[]` 状态和嵌套 profile report schema / status。
+- `examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json`：新增本任务包，并用 `daily_fast` / `full_evidence` profile 固化批量 runner 的负例、全量 dry-run、单包实际执行、审计和 evidence 验收。
+- `docs/WORKER_TASK_PACK_V0_1.md` 与 `docs/CURRENT_ARCHITECTURE_INDEX.md`：登记 batch runner 使用方式和事实源入口。
+
+效果：
+
+- runner 默认拒绝隐式全量选择；必须显式传入 `--all`、`--task-pack`、`--task-id-prefix` 或 `--path-contains`。
+- 全量 `--all --dry-run` 可快速确认所有任务包 profile 可解析；日常真实执行应缩小到明确任务包或筛选条件。
+- 新增本任务包后，审计预期为 `115 packs: 115 with profile, 0 without profile, 0 migration candidates, 0 manual review required`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改 schema、runtime package、前端、后端或媒体资源。
+- batch runner 只加速本地验收编排，不替代完整 evidence、demo suite 或最终人工审查。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py
+python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json
+python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json
+python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json
+python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_all_dry.json --expect-status dry_run --expect-failed-count 0 --min-pack-count 100
+python3 tools/dev/run_worker_acceptance_batch.py --task-pack examples/worker_task_packs/p1e_worker_acceptance_profile_audit.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_batch_profile_audit_run.json --timeout 180
+python3 tools/dev/validate_worker_acceptance_batch_report.py /tmp/worker_acceptance_batch_profile_audit_run.json --expect-status passed --expect-failed-count 0 --min-pack-count 1
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_audit.json --max-samples 300
+python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_batch_migration_dry.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_batch_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_batch_full_evidence
 git diff --check
 ```
 
