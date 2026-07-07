@@ -27,8 +27,14 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNTIME_PACKAGE = ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
 DEFAULT_STYLE_PACK = ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
 DEFAULT_RENDER_PLAN = ROOT / "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json"
+DEFAULT_DECORATION_POLICY = ROOT / "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json"
 DEFAULT_OUTPUT = ROOT / "examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg"
 DEFAULT_REPORT = ROOT / "examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json"
+
+try:
+    from validate_map_decoration_zone_policy import validate as validate_decoration_policy
+except ModuleNotFoundError:  # pragma: no cover - supports package-style imports.
+    from tools.asset_graph.validate_map_decoration_zone_policy import validate as validate_decoration_policy  # type: ignore
 
 
 def load_json(path: Path) -> Any:
@@ -167,6 +173,164 @@ def objectives(package: dict[str, Any]) -> list[dict[str, Any]]:
         result.append(core)
     result.extend(target for target in as_list(data.get("optional_targets")) if isinstance(target, dict))
     return result
+
+
+def source_package_matches_runtime(source_package: dict[str, Any], runtime_package: dict[str, Any]) -> bool:
+    if source_package.get("package_id") == runtime_package.get("package_id"):
+        return True
+    return (
+        source_package.get("node_id") == runtime_package.get("node_id")
+        and source_package.get("schema_version") == runtime_package.get("schema_version")
+    )
+
+
+def matching_decoration_map_policy(
+    decoration_policy: dict[str, Any] | None,
+    runtime_package: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not isinstance(decoration_policy, dict):
+        return None
+    for item in as_list(decoration_policy.get("maps")):
+        if not isinstance(item, dict):
+            continue
+        if source_package_matches_runtime(as_obj(item.get("source_package")), runtime_package):
+            return item
+    return None
+
+
+def zone_type_counts(zones: list[Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for zone in zones:
+        if not isinstance(zone, dict):
+            continue
+        zone_type = str(zone.get("zone_type") or "unknown")
+        counts[zone_type] = counts.get(zone_type, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def decoration_policy_summary(
+    decoration_policy: dict[str, Any] | None,
+    map_policy: dict[str, Any] | None,
+    drawn_item_count: int,
+) -> dict[str, Any]:
+    source_policy = as_obj(decoration_policy.get("source_policy") if decoration_policy else {})
+    allowed_zones = as_list(map_policy.get("allowed_decoration_zones") if map_policy else [])
+    reserved_zones = as_list(map_policy.get("reserved_zones") if map_policy else [])
+    return {
+        "decoration_policy_consumed": map_policy is not None,
+        "decoration_policy_match_status": "matched" if map_policy is not None else "not_matched",
+        "decoration_policy_map_id": map_policy.get("map_id") if map_policy else None,
+        "allowed_decoration_zone_count": len(allowed_zones),
+        "reserved_zone_count": len(reserved_zones),
+        "decoration_policy_drawn_item_count": drawn_item_count,
+        "decoration_policy_zone_type_counts": zone_type_counts(allowed_zones),
+        "decoration_policy_runtime_fact_source": source_policy.get("runtime_fact_source"),
+        "decoration_policy_may_modify_map_runtime_package": source_policy.get("may_modify_map_runtime_package"),
+        "decoration_policy_provider_call_count": source_policy.get("provider_call_count"),
+    }
+
+
+def route_point_for_decoration(runtime_package: dict[str, Any], route_index: int, t: float) -> dict[str, float]:
+    routes = [route for route in as_list(runtime_package.get("path_routes")) if isinstance(route, dict)]
+    if not routes:
+        return {"x": 0.0, "y": 0.0}
+    return interpolate_route_position(routes[route_index % len(routes)], t)
+
+
+def render_decoration_policy_layer(
+    runtime_package: dict[str, Any],
+    map_policy: dict[str, Any] | None,
+    projection: dict[str, float],
+    *,
+    width: int,
+    height: int,
+    terrain_detail: str,
+    fog: str,
+    accent: str,
+    hazard: str,
+    rng: random.Random,
+) -> tuple[list[str], int]:
+    if map_policy is None:
+        return [], 0
+    lines = [
+        '  <g id="decoration-policy-layer" data-source="map_decoration_zone_policy_review_only">',
+    ]
+    drawn = 0
+    grid = as_obj(runtime_package.get("grid"))
+    width_cells = max(1, int(grid.get("width_cells") or 1))
+    height_cells = max(1, int(grid.get("height_cells") or 1))
+    zones = [zone for zone in as_list(map_policy.get("allowed_decoration_zones")) if isinstance(zone, dict)]
+    for zone_index, zone in enumerate(zones):
+        zone_type = str(zone.get("zone_type") or "")
+        if zone_type == "map_border_decoration":
+            points = [
+                {"x": 0.35, "y": 0.35},
+                {"x": width_cells - 0.65, "y": 0.45},
+                {"x": width_cells - 0.55, "y": height_cells - 0.65},
+                {"x": 0.45, "y": height_cells - 0.55},
+            ]
+            for point_index, point in enumerate(points):
+                x, y = project_cell(point, projection)
+                rx = projection["tile_w"] * (0.10 + 0.025 * ((zone_index + point_index) % 3))
+                ry = projection["tile_h"] * (0.10 + 0.018 * ((zone_index + point_index) % 2))
+                color = mix_hex(terrain_detail, accent, 0.22)
+                lines.append(
+                    f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="{color}" opacity="0.28"/>'
+                )
+                drawn += 1
+        elif zone_type == "route_shoulder_decoration":
+            for item_index, t in enumerate((0.18, 0.38, 0.62, 0.82)):
+                point = route_point_for_decoration(runtime_package, item_index, t)
+                x, y = project_cell(point, projection)
+                offset_x = projection["tile_w"] * (0.30 if item_index % 2 == 0 else -0.30)
+                offset_y = projection["tile_h"] * (0.18 if item_index % 2 == 0 else -0.12)
+                radius = max(2.2, projection["tile_w"] * 0.026)
+                lines.append(
+                    f'    <circle cx="{x + offset_x:.1f}" cy="{y + offset_y:.1f}" r="{radius:.1f}" fill="{mix_hex(terrain_detail, "#000000", 0.18)}" opacity="0.34"/>'
+                )
+                drawn += 1
+        elif zone_type == "empty_cell_decoration":
+            for item_index in range(4):
+                cell = {
+                    "x": 1 + ((zone_index * 3 + item_index * 5) % max(1, width_cells - 2)),
+                    "y": 1 + ((zone_index * 5 + item_index * 2) % max(1, height_cells - 2)),
+                }
+                x, y = project_cell(cell, projection)
+                w = projection["tile_w"] * 0.08
+                h = projection["tile_h"] * 0.04
+                rotate = rng.uniform(-20, 20)
+                lines.append(
+                    f'    <rect x="{x - w / 2:.1f}" y="{y - h / 2:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{h / 2:.1f}" fill="{mix_hex(terrain_detail, fog, 0.25)}" opacity="0.22" transform="rotate({rotate:.1f} {x:.1f} {y:.1f})"/>'
+                )
+                drawn += 1
+        elif zone_type == "semantic_prop_shoulder":
+            for collection_name, id_key in (
+                ("resource_nodes", "resource_node_id"),
+                ("hazard_zones", "hazard_zone_id"),
+                ("defense_anchors", "defense_anchor_id"),
+            ):
+                for item in as_list(runtime_package.get(collection_name))[:1]:
+                    if not isinstance(item, dict):
+                        continue
+                    position = hazard_midpoint(runtime_package, item) if collection_name == "hazard_zones" else as_obj(item.get("position"))
+                    if not position:
+                        continue
+                    x, y = project_cell(position, projection)
+                    size = max(3.0, projection["tile_w"] * 0.04)
+                    lines.append(
+                        f'    <path d="M {x - size:.1f} {y + size:.1f} L {x:.1f} {y - size:.1f} L {x + size:.1f} {y + size:.1f} Z" fill="{mix_hex(accent, hazard, 0.25)}" opacity="0.28" data-anchor="{svg_escape(item.get(id_key) or collection_name)}"/>'
+                    )
+                    drawn += 1
+        elif zone_type == "atmosphere_overlay":
+            lines.append(
+                f'    <ellipse cx="{width * 0.18:.1f}" cy="{height * 0.22:.1f}" rx="{width * 0.28:.1f}" ry="{height * 0.10:.1f}" fill="{fog}" opacity="0.07"/>'
+            )
+            lines.append(
+                f'    <ellipse cx="{width * 0.82:.1f}" cy="{height * 0.78:.1f}" rx="{width * 0.26:.1f}" ry="{height * 0.09:.1f}" fill="{hazard}" opacity="0.05"/>'
+            )
+            drawn += 2
+    lines.append("  </g>")
+    return lines, drawn
 
 
 def semantic_points(package: dict[str, Any]) -> list[dict[str, Any]]:
@@ -336,6 +500,7 @@ def render_svg(
     runtime_package: dict[str, Any],
     style_pack: dict[str, Any],
     render_plan: dict[str, Any],
+    decoration_policy: dict[str, Any] | None,
     output_path: Path,
     width: int,
     height: int,
@@ -353,6 +518,7 @@ def render_svg(
     accent = palette(style_pack, "accent", "#E5D48A")
     hazard = palette(style_pack, "hazard", "#8C3D4A")
     rng = random.Random(str(runtime_package.get("package_id") or runtime_package.get("node_id") or "map"))
+    map_decoration_policy = matching_decoration_map_policy(decoration_policy, runtime_package)
 
     grid = as_obj(runtime_package.get("grid"))
     corners = [
@@ -395,9 +561,22 @@ def render_svg(
         [
             "  </g>",
             f'  <polygon id="playable-field" points="{island}" fill="url(#terrainWash)" stroke="{mix_hex(terrain_detail, "#000000", 0.45)}" stroke-width="{max(3, projection["tile_w"] * 0.045):.1f}" opacity="0.88"/>',
-            '  <g id="runtime-routes" fill="none" stroke-linecap="round" stroke-linejoin="round">',
         ]
     )
+    decoration_lines, decoration_item_count = render_decoration_policy_layer(
+        runtime_package,
+        map_decoration_policy,
+        projection,
+        width=width,
+        height=height,
+        terrain_detail=terrain_detail,
+        fog=fog,
+        accent=accent,
+        hazard=hazard,
+        rng=rng,
+    )
+    lines.extend(decoration_lines)
+    lines.append('  <g id="runtime-routes" fill="none" stroke-linecap="round" stroke-linejoin="round">')
     route_count = 0
     for route in as_list(runtime_package.get("path_routes")):
         if not isinstance(route, dict):
@@ -560,6 +739,11 @@ def render_svg(
             "tile_w": round(projection["tile_w"], 3),
             "tile_h": round(projection["tile_h"], 3),
         },
+        "decoration_policy": decoration_policy_summary(
+            decoration_policy,
+            map_decoration_policy,
+            decoration_item_count,
+        ),
     }
 
 
@@ -587,15 +771,33 @@ def validate_inputs(runtime_package: dict[str, Any], style_pack: dict[str, Any],
     return errors
 
 
+def validate_optional_decoration_policy(decoration_policy: dict[str, Any] | None) -> list[str]:
+    if decoration_policy is None:
+        return []
+    try:
+        validate_decoration_policy(decoration_policy)
+    except Exception as exc:  # noqa: BLE001 - render CLI should surface concise input errors.
+        return [f"decoration policy validation failed: {exc}"]
+    return []
+
+
 def build_report(
     runtime_path: Path,
     style_path: Path,
     render_plan_path: Path,
+    decoration_policy_path: Path | None,
     output_path: Path,
     summary: dict[str, Any],
     width: int,
     height: int,
 ) -> dict[str, Any]:
+    source_refs = {
+        "map_runtime_package_path": rel(runtime_path),
+        "map_style_pack_path": rel(style_path),
+        "procedural_map_render_plan_path": rel(render_plan_path),
+    }
+    if decoration_policy_path is not None:
+        source_refs["map_decoration_zone_policy_path"] = rel(decoration_policy_path)
     return {
         "schema_version": "procedural_map_preview_report.v0.1",
         "report_id": f"{output_path.stem}_report",
@@ -603,11 +805,7 @@ def build_report(
         "preview_svg_path": rel(output_path),
         "preview_svg_sha256": sha256_file(output_path),
         "canvas": {"width": width, "height": height},
-        "source_refs": {
-            "map_runtime_package_path": rel(runtime_path),
-            "map_style_pack_path": rel(style_path),
-            "procedural_map_render_plan_path": rel(render_plan_path),
-        },
+        "source_refs": source_refs,
         "render_summary": summary,
         "semantic_source_policy": {
             "routes": "map_runtime_package",
@@ -621,6 +819,9 @@ def build_report(
             "colors": "map_style_pack",
             "road_width_and_slot_footprint": "procedural_map_render_plan",
             "resource_hazard_and_blocking_style": "procedural_map_render_plan",
+            "decoration_zones": "map_decoration_zone_policy_review_only",
+            "decoration_policy_runtime_fact_source": False,
+            "decoration_policy_may_modify_map_runtime_package": False,
         },
         "usage_policy": [
             "review_only",
@@ -636,6 +837,11 @@ def main() -> int:
     parser.add_argument("--runtime-package", default=str(DEFAULT_RUNTIME_PACKAGE))
     parser.add_argument("--style-pack", default=str(DEFAULT_STYLE_PACK))
     parser.add_argument("--render-plan", default=str(DEFAULT_RENDER_PLAN))
+    parser.add_argument(
+        "--decoration-policy",
+        default=str(DEFAULT_DECORATION_POLICY),
+        help="Optional MapDecorationZonePolicy v0.1 path. Use 'none' to disable.",
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--report-output", default=str(DEFAULT_REPORT))
     parser.add_argument("--width", type=int, default=1280)
@@ -645,6 +851,7 @@ def main() -> int:
     runtime_path = resolve(args.runtime_package)
     style_path = resolve(args.style_pack)
     render_plan_path = resolve(args.render_plan)
+    decoration_policy_path = None if str(args.decoration_policy).strip().lower() in {"", "none", "null"} else resolve(args.decoration_policy)
     output_path = resolve(args.output)
     report_path = resolve(args.report_output)
 
@@ -652,6 +859,7 @@ def main() -> int:
         runtime_package = load_json(runtime_path)
         style_pack = load_json(style_path)
         render_plan = load_json(render_plan_path)
+        decoration_policy = load_json(decoration_policy_path) if decoration_policy_path is not None else None
     except FileNotFoundError as exc:
         print(f"input file not found: {exc.filename}")
         return 1
@@ -662,16 +870,29 @@ def main() -> int:
     if not isinstance(runtime_package, dict) or not isinstance(style_pack, dict) or not isinstance(render_plan, dict):
         print("runtime package, style pack, and render plan roots must be objects")
         return 1
+    if decoration_policy is not None and not isinstance(decoration_policy, dict):
+        print("decoration policy root must be an object")
+        return 1
 
     errors = validate_inputs(runtime_package, style_pack, render_plan)
+    errors.extend(validate_optional_decoration_policy(decoration_policy))
     if errors:
         print("INVALID procedural map preview inputs")
         for error in errors:
             print(f"- {error}")
         return 1
 
-    summary = render_svg(runtime_package, style_pack, render_plan, output_path, args.width, args.height)
-    report = build_report(runtime_path, style_path, render_plan_path, output_path, summary, args.width, args.height)
+    summary = render_svg(runtime_package, style_pack, render_plan, decoration_policy, output_path, args.width, args.height)
+    report = build_report(
+        runtime_path,
+        style_path,
+        render_plan_path,
+        decoration_policy_path,
+        output_path,
+        summary,
+        args.width,
+        args.height,
+    )
     write_json(report_path, report)
     print(f"OK: wrote {output_path}")
     print(f"OK: wrote {report_path}")

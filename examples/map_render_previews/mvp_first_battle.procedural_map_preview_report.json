@@ -4,10 +4,27 @@
     "width": 1280
   },
   "preview_svg_path": "examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg",
-  "preview_svg_sha256": "a0aef6d4773cc1c26cfccdad0393c35b594651d206acef96f7f1124b21777512",
+  "preview_svg_sha256": "97bacc6b93136d7ef4d4b3082e5504d9ad02ea6b89e86b68d512e74ac44b8dee",
   "render_summary": {
     "blocked_area_count": 0,
     "build_slot_count": 12,
+    "decoration_policy": {
+      "allowed_decoration_zone_count": 4,
+      "decoration_policy_consumed": true,
+      "decoration_policy_drawn_item_count": 14,
+      "decoration_policy_map_id": "gray_lantern_station_map_runtime_package_v0_1_decoration_policy",
+      "decoration_policy_match_status": "matched",
+      "decoration_policy_may_modify_map_runtime_package": false,
+      "decoration_policy_provider_call_count": 0,
+      "decoration_policy_runtime_fact_source": false,
+      "decoration_policy_zone_type_counts": {
+        "atmosphere_overlay": 1,
+        "empty_cell_decoration": 1,
+        "map_border_decoration": 1,
+        "route_shoulder_decoration": 1
+      },
+      "reserved_zone_count": 16
+    },
     "defense_anchor_count": 0,
     "hazard_zone_count": 0,
     "objective_count": 2,
@@ -27,6 +44,9 @@
     "blocked_areas": "map_runtime_package",
     "build_slots": "map_runtime_package",
     "colors": "map_style_pack",
+    "decoration_policy_may_modify_map_runtime_package": false,
+    "decoration_policy_runtime_fact_source": false,
+    "decoration_zones": "map_decoration_zone_policy_review_only",
     "defense_anchors": "map_runtime_package",
     "hazard_zones": "map_runtime_package",
     "objectives": "map_runtime_package",
@@ -37,6 +57,7 @@
     "spawn_points": "map_runtime_package"
   },
   "source_refs": {
+    "map_decoration_zone_policy_path": "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
     "procedural_map_render_plan_path": "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json"

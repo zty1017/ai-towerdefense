@@ -51,6 +51,8 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/asset_graph/validate_map_template_catalog.py",
                 "tools/asset_graph/build_map_decoration_zone_policy.py",
                 "tools/asset_graph/validate_map_decoration_zone_policy.py",
+                "tools/asset_graph/render_procedural_map_preview.py",
+                "tools/asset_graph/validate_procedural_map_preview_report.py",
             ],
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
         },

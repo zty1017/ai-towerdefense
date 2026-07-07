@@ -4,10 +4,28 @@
     "width": 1280
   },
   "preview_svg_path": "examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview.svg",
-  "preview_svg_sha256": "f227d5b1758e98ead42570986cf980c495f7427fee274c1c55b1c19b0748d830",
+  "preview_svg_sha256": "dcd12e4b046cd318574d6ed65f261989e5f5fab2b53d26f4a304fe3383272db4",
   "render_summary": {
     "blocked_area_count": 1,
     "build_slot_count": 12,
+    "decoration_policy": {
+      "allowed_decoration_zone_count": 5,
+      "decoration_policy_consumed": true,
+      "decoration_policy_drawn_item_count": 17,
+      "decoration_policy_map_id": "old_signal_tower_map_runtime_package_v0_2_decoration_policy",
+      "decoration_policy_match_status": "matched",
+      "decoration_policy_may_modify_map_runtime_package": false,
+      "decoration_policy_provider_call_count": 0,
+      "decoration_policy_runtime_fact_source": false,
+      "decoration_policy_zone_type_counts": {
+        "atmosphere_overlay": 1,
+        "empty_cell_decoration": 1,
+        "map_border_decoration": 1,
+        "route_shoulder_decoration": 1,
+        "semantic_prop_shoulder": 1
+      },
+      "reserved_zone_count": 23
+    },
     "defense_anchor_count": 1,
     "hazard_zone_count": 1,
     "objective_count": 3,
@@ -27,6 +45,9 @@
     "blocked_areas": "map_runtime_package",
     "build_slots": "map_runtime_package",
     "colors": "map_style_pack",
+    "decoration_policy_may_modify_map_runtime_package": false,
+    "decoration_policy_runtime_fact_source": false,
+    "decoration_zones": "map_decoration_zone_policy_review_only",
     "defense_anchors": "map_runtime_package",
     "hazard_zones": "map_runtime_package",
     "objectives": "map_runtime_package",
@@ -37,6 +58,7 @@
     "spawn_points": "map_runtime_package"
   },
   "source_refs": {
+    "map_decoration_zone_policy_path": "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
     "map_runtime_package_path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
     "map_style_pack_path": "examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
     "procedural_map_render_plan_path": "examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json"

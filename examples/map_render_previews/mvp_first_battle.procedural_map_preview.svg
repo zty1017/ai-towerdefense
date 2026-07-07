@@ -21,6 +21,22 @@
     <ellipse cx="1254.3" cy="150.7" rx="93.3" ry="82.2" fill="#E5D48A" opacity="0.06" transform="rotate(11.2 1254.3 150.7)"/>
   </g>
   <polygon id="playable-field" points="523.3,140.9 1076.7,428.7 756.7,595.1 203.3,307.3" fill="url(#terrainWash)" stroke="#2B3226" stroke-width="3.0" opacity="0.88"/>
+  <g id="decoration-policy-layer" data-source="map_decoration_zone_policy_review_only">
+    <ellipse cx="523.3" cy="180.8" rx="6.7" ry="3.5" fill="#707554" opacity="0.28"/>
+    <ellipse cx="1020.0" cy="442.5" rx="8.3" ry="4.1" fill="#707554" opacity="0.28"/>
+    <ellipse cx="760.0" cy="581.2" rx="10.0" ry="3.5" fill="#707554" opacity="0.28"/>
+    <ellipse cx="256.7" cy="322.9" rx="6.7" ry="4.1" fill="#707554" opacity="0.28"/>
+    <circle cx="790.0" cy="441.8" r="2.2" fill="#414A39" opacity="0.34"/>
+    <circle cx="750.0" cy="362.1" r="2.2" fill="#414A39" opacity="0.34"/>
+    <circle cx="630.0" cy="303.2" r="2.2" fill="#414A39" opacity="0.34"/>
+    <circle cx="456.7" cy="348.2" r="2.2" fill="#414A39" opacity="0.34"/>
+    <rect x="620.7" y="358.6" width="5.3" height="1.4" rx="0.7" fill="#5D6856" opacity="0.22" transform="rotate(-2.1 623.3 359.3)"/>
+    <rect x="720.7" y="480.0" width="5.3" height="1.4" rx="0.7" fill="#5D6856" opacity="0.22" transform="rotate(10.7 723.3 480.7)"/>
+    <rect x="587.3" y="237.3" width="5.3" height="1.4" rx="0.7" fill="#5D6856" opacity="0.22" transform="rotate(-13.0 590.0 238.0)"/>
+    <rect x="687.3" y="358.6" width="5.3" height="1.4" rx="0.7" fill="#5D6856" opacity="0.22" transform="rotate(-3.2 690.0 359.3)"/>
+    <ellipse cx="230.4" cy="158.4" rx="358.4" ry="72.0" fill="#87908A" opacity="0.07"/>
+    <ellipse cx="1049.6" cy="561.6" rx="332.8" ry="64.8" fill="#8C3D4A" opacity="0.05"/>
+  </g>
   <g id="runtime-routes" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M 890.0 498.0 L 744.7 422.4 Q 723.3 411.3 744.7 400.2 L 768.7 387.8 Q 790.0 376.7 768.7 365.6 L 665.9 312.1 Q 623.3 290.0 580.7 312.1 L 532.6 337.2 Q 490.0 359.3 447.4 337.2 L 356.7 290.0" stroke="#070806" stroke-opacity="0.48" stroke-width="96.3"/>
     <path d="M 890.0 498.0 L 744.7 422.4 Q 723.3 411.3 744.7 400.2 L 768.7 387.8 Q 790.0 376.7 768.7 365.6 L 665.9 312.1 Q 623.3 290.0 580.7 312.1 L 532.6 337.2 Q 490.0 359.3 447.4 337.2 L 356.7 290.0" stroke="#404838" stroke-opacity="0.58" stroke-width="81.6"/>
