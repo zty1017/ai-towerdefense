@@ -40,6 +40,7 @@
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
     "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profiles_runner_daily_fast.json",
     "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profiles_fast_gate.json",
     "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/worker_acceptance_profiles_summary_only_evidence",
     "git diff --check"

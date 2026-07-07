@@ -97,6 +97,7 @@ P2：本阶段明确不做
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
+- 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、重定向、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -3634,6 +3635,41 @@ python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_wo
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profiles_fast_gate.json
 python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/worker_acceptance_profiles_summary_only_evidence
+git diff --check
+```
+
+### P1-E-3 WorkerTaskPack acceptance profile runner
+
+状态：已完成本地 runner。
+
+目标：
+
+```text
+按 WorkerTaskPack 的 acceptance_profile 安全执行验收命令，输出结构化报告，并避免旧任务包或 shell-only 命令被误执行。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_profile.py`：新增 profile runner，复用 `validate_worker_task_pack.py` 的 `validate()`，支持 `--profile`、`--list-profiles`、`--dry-run`、`--output`、`--fail-fast` 和 `--timeout`。
+- `tools/dev/run_fast_quality_gate.py`：把 runner 纳入自身 `py_compile`。
+- `docs/WORKER_TASK_PACK_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补 runner 用法和安全边界。
+- `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`：顶层 `acceptance_commands` 补实际 `daily_fast` runner 命令。
+
+边界：
+
+- runner 不使用 shell；只用 `shlex.split` 解析 argv，并支持前置环境变量 token。
+- 管道、重定向、逻辑连接、反引号和 `$(` 命令替换会被拒绝为 `unsupported_command_syntax`，不会执行。
+- 没有 `acceptance_profile` 的旧包直接失败，提示手动运行 `acceptance_commands`。
+- 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或默认 runtime/package 文件。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_runner python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/validate_worker_task_pack.py
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --list-profiles
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --dry-run --output /tmp/worker_acceptance_runner_dry_run.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_runner_daily_fast.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_runner_fast_gate.json
 git diff --check
 ```
 

@@ -148,6 +148,26 @@ WorkerTaskPack 必须显式表达以下边界：
 
 profile 是验收分层，不是降低质量。日常小改可以默认跑 `daily_fast` 加速反馈，但合并前、最终评审前或录屏前仍应按任务风险运行 `full_evidence` 或 `release_gate`。
 
+### Profile runner
+
+`tools/dev/run_worker_acceptance_profile.py` 是本地执行 `acceptance_profile` 的标准入口：
+
+```bash
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --list-profiles
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --dry-run --output /tmp/worker_acceptance_profile_dry_run.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_daily_fast.json
+```
+
+规则：
+
+- runner 会先复用 `tools/dev/validate_worker_task_pack.py` 的 `validate()` 逻辑；任务包校验失败时不会执行 profile 命令。
+- 不传 `--profile` 时使用 `acceptance_profile.default_profile`；`--list-profiles` 只列出 profile 并退出 0，不执行命令。
+- `--dry-run` 只解析和列出将运行的命令，报告状态为 `dry_run`。
+- runner 不使用 shell。命令字符串通过 `shlex.split` 转成 argv，支持 `PYTHONPYCACHEPREFIX=/tmp/x python3 ...` 这类前置环境变量 token。
+- runner 会拒绝 `|`、`<`、`>`、`&&`、`||`、反引号和 `$(` 等 shell-only 语法；遇到不支持语法时该命令记为 `failed/unsupported_command_syntax`，不会执行。
+- 输出报告默认写入 `/tmp/worker_acceptance_profile_run_report.v0.1.json`，schema 为 `worker_acceptance_profile_run_report.v0.1`。
+- 没有 `acceptance_profile` 的旧任务包会直接失败并提示手动运行 `acceptance_commands`，避免把旧平铺命令误读成 profile。
+
 ## 验收
 
 生成任务包后至少运行：
