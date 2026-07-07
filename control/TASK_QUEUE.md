@@ -4154,6 +4154,43 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_activation_g
 git diff --check
 ```
 
+### P1-MAP-34 MapTemplateCatalog v0.1
+
+状态：已完成最薄开发者侧候选目录。
+
+目标：
+
+```text
+新增 MapTemplateCatalog v0.1，用于记录开发者 / 系统侧地图路径模板候选，帮助后续生成候选 MapRuntimePackage 或 review evidence，但不成为玩家默认 runtime，也不与 MapRuntimePackage 竞争运行时事实源。
+```
+
+已落地：
+
+- `shared/schemas/map_template_catalog.v0.1.schema.json`
+- `tools/asset_graph/build_map_template_catalog.py`
+- `tools/asset_graph/validate_map_template_catalog.py`
+- `examples/map_template_catalogs/mvp_map_template_catalog.v0.1.json`
+- `examples/worker_task_packs/p1map_map_template_catalog.v0.1.json`
+
+边界：
+
+- catalog 只保存 stable template id、中文可读说明、topology kind、推荐节点用途、grid constraints、normalized route blueprint、slot strategy、semantic hook 摘要和 usage policy。
+- catalog 不保存 provider/model/raw prompt/full trace/raw JSON/api key/secret/unreviewed content。
+- catalog 不修改 `examples/map_runtime_packages/`、`examples/map_runtime_packages_v02/`、RenderPlan、后端默认接口或前端默认消费。
+- 任何模板被采用后，仍必须重新生成结构化 `MapRuntimePackage` 并经过现有 validator、RenderPlan、SemanticVisualConsistencyReport、evidence 和 activation gate。
+
+验收：
+
+```bash
+python3 tools/asset_graph/build_map_template_catalog.py --validate
+python3 tools/asset_graph/validate_map_template_catalog.py examples/map_template_catalogs/mvp_map_template_catalog.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1map_map_template_catalog.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_template_catalog python3 -m py_compile tools/asset_graph/build_map_template_catalog.py tools/asset_graph/validate_map_template_catalog.py
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1map_map_template_catalog.v0.1.json --profile daily_fast --output /tmp/map_template_catalog_runner.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_template_catalog_fast_gate.json
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：

@@ -99,7 +99,9 @@ shared/schemas/ + tools/ + 专题文档
 - `docs/FRONTEND_VISUAL_RUNTIME_AUDIT_V0_1.md`
   - 前端战斗视觉运行态审计，记录 P0-M 程序化战场底座、防控制图 / 失败整图回退、静态视觉合约、结构化视觉合同报告和截图环境缺口。
 - `docs/MAP_COMPILATION_DESIGN_V0_1.md`
-  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。2026-07-06 复审确认：外部 v0.3 附件只能作为思路参考，后续地图任务应增强现有 `MapRuntimePackage v0.2 preview -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport -> evidence / activation gate` 链路，而不是新建一组与 `MapRuntimePackage` 竞争的运行时事实源。
+  - 外部地图编译方案的审查采纳文档：采纳 logic-first、StylePack、程序化渲染、权限分层、地图元素语义强度分级和 validator-gated export；不照搬完整 LevelBundle，也不让 AI 整图成为运行时地图事实源。2026-07-06 复审确认：外部 v0.3 附件只能作为思路参考，后续地图任务应增强现有 `MapRuntimePackage v0.2 preview -> ProceduralMapRenderPlan -> SemanticVisualConsistencyReport -> evidence / activation gate` 链路，而不是新建一组与 `MapRuntimePackage` 竞争的运行时事实源。`MapTemplateCatalog v0.1` 只是开发者侧候选种子目录，不能替换 `MapRuntimePackage`，也不能从图片反推逻辑。
+- `shared/schemas/map_template_catalog.v0.1.schema.json`、`tools/asset_graph/build_map_template_catalog.py`、`tools/asset_graph/validate_map_template_catalog.py`、`examples/map_template_catalogs/mvp_map_template_catalog.v0.1.json`
+  - MapTemplateCatalog v0.1 是最薄的地图路径模板候选目录：记录 stable template id、中文 label / description、topology kind、recommended node uses、grid constraints、normalized route blueprint、slot strategy、semantic hook 摘要和 usage policy。它只用于开发者或系统侧生成候选 runtime package / review evidence，不是玩家默认 runtime、不保存 provider/model/raw prompt/full trace/raw JSON/secret/unreviewed content，不修改现有 MapRuntimePackage / RenderPlan 输出；validator 用标准库递归拒绝敏感键并检查模板数量、必需 id、坐标范围、road width 与 runtime 边界 policy。
 - `docs/MAP_VISUAL_REFERENCE_PIPELINE_V0_1.md`
   - 地图整图候选 / 控制图 / paintover 的边界文档：2026-07-06 起不再把 AI 整图作为地图主路线；玩家默认战场应优先来自 `MapRuntimePackage` 的结构化语义与 `MapStylePack` / component-driven procedural battlefield。`painted_visual_layer` 只能作为显式对齐、质量、promotion 和 activation 之后的可选视觉层，不能反向决定路线、塔位、资源点、机关或碰撞。
 - `shared/schemas/map_style_pack.v0.1.schema.json`、`shared/schemas/procedural_map_render_plan.v0.1.schema.json`、`shared/schemas/semantic_visual_consistency_report.v0.1.schema.json`

@@ -1,0 +1,533 @@
+{
+  "catalog_id": "mvp_map_template_catalog_v0_1",
+  "generated_at": "2026-07-07T00:00:00+00:00",
+  "schema_version": "map_template_catalog.v0.1",
+  "source_policy": {
+    "catalog_role": "developer_side_template_candidate_seed_catalog",
+    "image_to_logic_inference_allowed": false,
+    "may_modify_map_runtime_package": false,
+    "player_default_runtime": false,
+    "runtime_fact_source": false
+  },
+  "summary": {
+    "required_template_ids": [
+      "s_curve_single_path",
+      "two_lane_merge",
+      "zigzag_long_path",
+      "short_pressure_path",
+      "central_loop"
+    ],
+    "template_count": 5
+  },
+  "templates": [
+    {
+      "description": "一条从左到右缓慢摆动的主路，适合教学、首战或低压节点。",
+      "display_label": "S 形单路推进",
+      "grid_constraints": {
+        "min_height_cells": 7,
+        "min_width_cells": 10,
+        "notes": "需要横向空间表达两次缓弯，入口和目标端保留安全边。",
+        "preferred_aspect": "wide_16_9_or_4_3"
+      },
+      "id": "s_curve_single_path",
+      "recommended_node_uses": [
+        "tutorial_battle",
+        "early_campaign_node",
+        "readability_first"
+      ],
+      "route_blueprint": {
+        "coordinate_space": "normalized_0_1",
+        "notes": "控制点只表达候选形状；正式 waypoints 必须由 MapRuntimePackage builder/review 生成。",
+        "routes": [
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.05,
+                "y": 0.72
+              },
+              {
+                "x": 0.22,
+                "y": 0.62
+              },
+              {
+                "x": 0.38,
+                "y": 0.32
+              },
+              {
+                "x": 0.58,
+                "y": 0.38
+              },
+              {
+                "x": 0.78,
+                "y": 0.68
+              },
+              {
+                "x": 0.95,
+                "y": 0.48
+              }
+            ],
+            "role": "single_enemy_route",
+            "route_id": "main"
+          }
+        ],
+        "suggested_road_width_normalized": 0.09
+      },
+      "semantic_hooks": {
+        "blocking": {
+          "allowed": false,
+          "rules_summary": "默认禁止阻挡区改变单路可读性；任何阻挡必须在 runtime 包中显式审核。"
+        },
+        "defense": {
+          "allowed": true,
+          "rules_summary": "允许在弯道外侧和终点前设置防守锚点。"
+        },
+        "hazard": {
+          "allowed": true,
+          "rules_summary": "允许低强度沿路减速或雾潮提示，需保持教学可读性。"
+        },
+        "resource": {
+          "allowed": true,
+          "rules_summary": "允许在第二个弯道外侧放小型资源点，但不得压住主路。"
+        }
+      },
+      "slot_strategy": {
+        "avoid_zones": [
+          "route_band",
+          "spawn_clearance",
+          "objective_clearance"
+        ],
+        "preferred_zones": [
+          "outer_curve_shoulders",
+          "midfield_crossfire",
+          "late_route_hold"
+        ],
+        "summary": "塔位沿两个外侧弯道错开布置，让玩家学习覆盖转角和直道。"
+      },
+      "topology_kind": "single_path",
+      "usage_policy": [
+        "developer_side_candidate_only",
+        "not_runtime_fact_source",
+        "requires_map_runtime_package_build_and_review",
+        "no_image_to_logic_inference"
+      ]
+    },
+    {
+      "description": "上下两条入口线在中段汇合为一条主压路线，适合制造选择和汇火点。",
+      "display_label": "双路汇合压力",
+      "grid_constraints": {
+        "min_height_cells": 8,
+        "min_width_cells": 12,
+        "notes": "需要上下入口留白，中段汇合点不能贴近目标区。",
+        "preferred_aspect": "wide"
+      },
+      "id": "two_lane_merge",
+      "recommended_node_uses": [
+        "mid_campaign_pressure",
+        "split_spawn_intro",
+        "merge_crossfire_test"
+      ],
+      "route_blueprint": {
+        "coordinate_space": "normalized_0_1",
+        "notes": "多 route 只表达拓扑候选；正式 spawn、route id 和合流语义必须由 runtime package 审核。",
+        "routes": [
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.04,
+                "y": 0.25
+              },
+              {
+                "x": 0.22,
+                "y": 0.26
+              },
+              {
+                "x": 0.38,
+                "y": 0.42
+              },
+              {
+                "x": 0.52,
+                "y": 0.5
+              }
+            ],
+            "role": "upper_entry_to_merge",
+            "route_id": "upper_lane"
+          },
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.04,
+                "y": 0.78
+              },
+              {
+                "x": 0.24,
+                "y": 0.74
+              },
+              {
+                "x": 0.4,
+                "y": 0.58
+              },
+              {
+                "x": 0.52,
+                "y": 0.5
+              }
+            ],
+            "role": "lower_entry_to_merge",
+            "route_id": "lower_lane"
+          },
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.52,
+                "y": 0.5
+              },
+              {
+                "x": 0.68,
+                "y": 0.48
+              },
+              {
+                "x": 0.82,
+                "y": 0.38
+              },
+              {
+                "x": 0.96,
+                "y": 0.48
+              }
+            ],
+            "role": "merged_route_to_objective",
+            "route_id": "merged_lane"
+          }
+        ],
+        "suggested_road_width_normalized": 0.075
+      },
+      "semantic_hooks": {
+        "blocking": {
+          "allowed": false,
+          "rules_summary": "禁止在合流点中心放阻挡；阻挡只可作为 runtime 审核后的边缘地形。"
+        },
+        "defense": {
+          "allowed": true,
+          "rules_summary": "允许合流点外圈有核心防守锚点。"
+        },
+        "hazard": {
+          "allowed": true,
+          "rules_summary": "允许在合流后短段放 hazard，避免上下入口同时被遮挡。"
+        },
+        "resource": {
+          "allowed": true,
+          "rules_summary": "允许在较弱入口侧放资源诱因，但不得让资源点阻断合流读取。"
+        }
+      },
+      "slot_strategy": {
+        "avoid_zones": [
+          "merge_center",
+          "dual_spawn_clearance",
+          "objective_clearance"
+        ],
+        "preferred_zones": [
+          "merge_crossfire",
+          "upper_lower_balanced_shoulders",
+          "post_merge_hold"
+        ],
+        "summary": "汇合点两侧布置高价值塔位，入口段布置低价值早期减压位。"
+      },
+      "topology_kind": "merge_path",
+      "usage_policy": [
+        "developer_side_candidate_only",
+        "not_runtime_fact_source",
+        "requires_map_runtime_package_build_and_review",
+        "no_image_to_logic_inference"
+      ]
+    },
+    {
+      "description": "长距离折线路径提供更多转角和持续输出窗口，适合耐久战或资源管理节点。",
+      "display_label": "长折线路径",
+      "grid_constraints": {
+        "min_height_cells": 9,
+        "min_width_cells": 11,
+        "notes": "需要足够纵深，折线之间至少留出一格以上的非道路区域。",
+        "preferred_aspect": "wide_or_square"
+      },
+      "id": "zigzag_long_path",
+      "recommended_node_uses": [
+        "attrition_battle",
+        "resource_management",
+        "long_lane_mastery"
+      ],
+      "route_blueprint": {
+        "coordinate_space": "normalized_0_1",
+        "notes": "折线数量应在正式构建时按 grid 和塔位 footprint 复核，避免道路相互贴边。",
+        "routes": [
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.05,
+                "y": 0.18
+              },
+              {
+                "x": 0.28,
+                "y": 0.18
+              },
+              {
+                "x": 0.28,
+                "y": 0.78
+              },
+              {
+                "x": 0.5,
+                "y": 0.78
+              },
+              {
+                "x": 0.5,
+                "y": 0.28
+              },
+              {
+                "x": 0.72,
+                "y": 0.28
+              },
+              {
+                "x": 0.72,
+                "y": 0.7
+              },
+              {
+                "x": 0.95,
+                "y": 0.7
+              }
+            ],
+            "role": "long_zigzag_route",
+            "route_id": "main"
+          }
+        ],
+        "suggested_road_width_normalized": 0.07
+      },
+      "semantic_hooks": {
+        "blocking": {
+          "allowed": false,
+          "rules_summary": "禁止在折线间缝隙放会误读成可建造平台的阻挡物。"
+        },
+        "defense": {
+          "allowed": true,
+          "rules_summary": "允许多个防守锚点分段出现，避免所有锚点集中在终点。"
+        },
+        "hazard": {
+          "allowed": true,
+          "rules_summary": "允许在单个折角绑定机关，禁止全路段高压堆叠。"
+        },
+        "resource": {
+          "allowed": true,
+          "rules_summary": "允许把资源点放在长直道外侧，要求与塔位、道路留出明确间距。"
+        }
+      },
+      "slot_strategy": {
+        "avoid_zones": [
+          "parallel_road_gap",
+          "tight_inner_corners",
+          "spawn_clearance"
+        ],
+        "preferred_zones": [
+          "outer_elbows",
+          "long_straight_shoulders",
+          "late_turn_focus"
+        ],
+        "summary": "每个折角外侧给一个中价值平台，长直道旁给低价值持续输出位。"
+      },
+      "topology_kind": "zigzag_path",
+      "usage_policy": [
+        "developer_side_candidate_only",
+        "not_runtime_fact_source",
+        "requires_map_runtime_package_build_and_review",
+        "no_image_to_logic_inference"
+      ]
+    },
+    {
+      "description": "入口到目标距离短，留给玩家的反应窗口少，适合精英波或限时压力节点。",
+      "display_label": "短线高压推进",
+      "grid_constraints": {
+        "min_height_cells": 6,
+        "min_width_cells": 8,
+        "notes": "目标区、出生点和道路宽度要被强制分离，避免短线变成不可读直冲。",
+        "preferred_aspect": "compact_wide"
+      },
+      "id": "short_pressure_path",
+      "recommended_node_uses": [
+        "elite_wave",
+        "timer_pressure",
+        "compact_arena"
+      ],
+      "route_blueprint": {
+        "coordinate_space": "normalized_0_1",
+        "notes": "适合少量控制点；正式 runtime 应额外检查目标区安全距离。",
+        "routes": [
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.06,
+                "y": 0.58
+              },
+              {
+                "x": 0.24,
+                "y": 0.5
+              },
+              {
+                "x": 0.45,
+                "y": 0.43
+              },
+              {
+                "x": 0.68,
+                "y": 0.46
+              },
+              {
+                "x": 0.94,
+                "y": 0.4
+              }
+            ],
+            "role": "short_pressure_route",
+            "route_id": "main"
+          }
+        ],
+        "suggested_road_width_normalized": 0.1
+      },
+      "semantic_hooks": {
+        "blocking": {
+          "allowed": false,
+          "rules_summary": "禁止阻挡缩短或遮蔽本已很短的路线。"
+        },
+        "defense": {
+          "allowed": true,
+          "rules_summary": "允许目标前防守锚点，作为短线压迫的主要解法。"
+        },
+        "hazard": {
+          "allowed": true,
+          "rules_summary": "允许小范围高压机关，但必须保留清晰反制塔位。"
+        },
+        "resource": {
+          "allowed": true,
+          "rules_summary": "通常不建议资源点；若需要，只允许放在远离目标的一侧。"
+        }
+      },
+      "slot_strategy": {
+        "avoid_zones": [
+          "spawn_to_mid_choke",
+          "objective_core",
+          "route_band"
+        ],
+        "preferred_zones": [
+          "midline_flanks",
+          "objective_approach_shoulders"
+        ],
+        "summary": "塔位数量少但价值高，优先放在中段和目标前的侧翼。"
+      },
+      "topology_kind": "pressure_path",
+      "usage_policy": [
+        "developer_side_candidate_only",
+        "not_runtime_fact_source",
+        "requires_map_runtime_package_build_and_review",
+        "no_image_to_logic_inference"
+      ]
+    },
+    {
+      "description": "路线围绕中央区域形成环形压力，适合表现据点防守或多方向包围感。",
+      "display_label": "中央环绕路线",
+      "grid_constraints": {
+        "min_height_cells": 9,
+        "min_width_cells": 12,
+        "notes": "中央区必须足够大以容纳目标、资源或防守主题，但不得让路线闭环成为 runtime 隐式循环。",
+        "preferred_aspect": "wide_or_square"
+      },
+      "id": "central_loop",
+      "recommended_node_uses": [
+        "hold_the_center",
+        "encirclement_battle",
+        "boss_or_event_node"
+      ],
+      "route_blueprint": {
+        "coordinate_space": "normalized_0_1",
+        "notes": "这是环绕式候选，不表示敌人可无限循环；正式 runtime 仍必须有明确终点。",
+        "routes": [
+          {
+            "normalized_control_points": [
+              {
+                "x": 0.05,
+                "y": 0.52
+              },
+              {
+                "x": 0.22,
+                "y": 0.24
+              },
+              {
+                "x": 0.5,
+                "y": 0.18
+              },
+              {
+                "x": 0.78,
+                "y": 0.28
+              },
+              {
+                "x": 0.84,
+                "y": 0.62
+              },
+              {
+                "x": 0.62,
+                "y": 0.82
+              },
+              {
+                "x": 0.34,
+                "y": 0.72
+              },
+              {
+                "x": 0.92,
+                "y": 0.5
+              }
+            ],
+            "role": "looping_route_to_objective",
+            "route_id": "main"
+          }
+        ],
+        "suggested_road_width_normalized": 0.08
+      },
+      "semantic_hooks": {
+        "blocking": {
+          "allowed": true,
+          "rules_summary": "允许边缘装饰性阻挡候选，但不得把环路视觉误导为碰撞事实。"
+        },
+        "defense": {
+          "allowed": true,
+          "rules_summary": "允许中央防守锚点和环外补位，要求目标可读。"
+        },
+        "hazard": {
+          "allowed": true,
+          "rules_summary": "允许在环路一段设置事件 hazard，不允许整圈持续遮挡。"
+        },
+        "resource": {
+          "allowed": true,
+          "rules_summary": "允许中央区资源或目标主题，但必须由 runtime package 明确语义和 footprint。"
+        }
+      },
+      "slot_strategy": {
+        "avoid_zones": [
+          "central_objective_core",
+          "route_overlap",
+          "loop_exit_choke"
+        ],
+        "preferred_zones": [
+          "central_outer_ring",
+          "late_loop_exit",
+          "entry_arc_shoulders"
+        ],
+        "summary": "中央外缘少量强塔位，环外侧放补充塔位，避免目标被完全包围不可见。"
+      },
+      "topology_kind": "loop_path",
+      "usage_policy": [
+        "developer_side_candidate_only",
+        "not_runtime_fact_source",
+        "requires_map_runtime_package_build_and_review",
+        "no_image_to_logic_inference"
+      ]
+    }
+  ],
+  "usage_policy": [
+    "developer_side_candidate_only",
+    "not_runtime_fact_source",
+    "requires_map_runtime_package_build_and_review",
+    "cannot_replace_map_runtime_package",
+    "no_image_to_logic_inference"
+  ]
+}

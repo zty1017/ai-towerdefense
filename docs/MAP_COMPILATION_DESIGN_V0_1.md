@@ -58,6 +58,15 @@ MapCompilePackage v0.2
 
 外部方案中的 `PathGraph`、`PlacementMap`、`CollisionMap`、`ResourceNodeMap`、`HazardZoneMap` 等概念，不应立即拆成一堆新 schema；第一步应映射到现有包：
 
+`MapTemplateCatalog v0.1` 是更薄的一层开发者侧候选种子目录。它只记录可读的路径模板候选，例如 S 形单路、双路汇合、长折线、短线高压和中央环绕，用 normalized control points / suggested road width / slot strategy / semantic hook 摘要帮助开发者生成后续候选 `MapRuntimePackage` 或 review evidence。它不是 `PathGraph`、`PlacementMap` 或 `LevelBundle`，也不是玩家默认 runtime；模板不能从图片反推路径、塔位、资源、机关、防守或阻挡逻辑。任何模板被采用后，仍必须重新生成结构化 `MapRuntimePackage`，并经过现有 validator、RenderPlan、SemanticVisualConsistencyReport、evidence 和 activation gate。
+
+当前字段级入口：
+
+- `shared/schemas/map_template_catalog.v0.1.schema.json`
+- `tools/asset_graph/build_map_template_catalog.py`
+- `tools/asset_graph/validate_map_template_catalog.py`
+- `examples/map_template_catalogs/mvp_map_template_catalog.v0.1.json`
+
 | 外部概念 | 本项目当前映射 | 采纳方式 |
 |---|---|---|
 | `PathGraph` / `SplinePath` | `MapRuntimePackage.path_routes` | v0.1 仍用结构化 waypoints；后续 v0.2 可增加 sampled spline / road band。 |
