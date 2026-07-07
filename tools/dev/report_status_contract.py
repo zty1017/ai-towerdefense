@@ -14,3 +14,9 @@ REPORT_VALID_STATUSES = frozenset(
         STATUS_FAILED,
     }
 )
+REPORT_TERMINAL_STATUSES = frozenset(
+    {
+        STATUS_PASSED,
+        STATUS_FAILED,
+    }
+)

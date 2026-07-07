@@ -22,8 +22,10 @@ from tools.dev.fast_quality_gate_contract import (  # noqa: E402
     FAST_QUALITY_GATE_REQUIRED_ZERO_FIELDS,
     FAST_QUALITY_GATE_SCHEMA_VERSION,
 )
-
-VALID_STATUSES = {"passed", "failed"}
+from tools.dev.report_status_contract import (  # noqa: E402
+    REPORT_TERMINAL_STATUSES,
+    STATUS_PASSED,
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -71,7 +73,7 @@ def validate_report(
     )
     require(report.get("report_id") == FAST_QUALITY_GATE_REPORT_ID, "report_id mismatch")
     status = report.get("status")
-    require(status in VALID_STATUSES, f"invalid status: {status!r}")
+    require(status in REPORT_TERMINAL_STATUSES, f"invalid status: {status!r}")
     if expect_status is not None:
         require(status == expect_status, f"status must be {expect_status!r}")
 
@@ -83,14 +85,14 @@ def validate_report(
     passed_count = int(summary.get("passed_count") or 0)
     fail_fast = bool(summary.get("fail_fast"))
     actual_failed_count = sum(
-        1 for item in results if isinstance(item, dict) and item.get("status") != "passed"
+        1 for item in results if isinstance(item, dict) and item.get("status") != STATUS_PASSED
     )
     require(configured_count >= 1, "configured_command_count must be positive")
     require(command_count == len(results), "command_count must match results length")
     require(command_count <= configured_count, "command_count cannot exceed configured count")
     require(passed_count + failed_count == command_count, "summary status counts must sum")
     require(failed_count == actual_failed_count, "failed_count must match results")
-    require((status == "passed") == (failed_count == 0), "status must match failed_count")
+    require((status == STATUS_PASSED) == (failed_count == 0), "status must match failed_count")
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_count must be {expect_failed_count}")
     if not fail_fast:
@@ -104,7 +106,7 @@ def validate_report(
 
     names = command_names(results)
     name_set = set(names)
-    if fail_fast and status != "passed":
+    if fail_fast and status != STATUS_PASSED:
         expected_prefix = FAST_QUALITY_GATE_COMMAND_ORDER[: len(names)]
         require(
             names == expected_prefix,
@@ -113,7 +115,7 @@ def validate_report(
             + ", got "
             + json.dumps(names, ensure_ascii=False),
         )
-    elif require_complete_command_order or status == "passed" or not fail_fast:
+    elif require_complete_command_order or status == STATUS_PASSED or not fail_fast:
         require(
             names == FAST_QUALITY_GATE_COMMAND_ORDER,
             "command order mismatch: expected "
@@ -132,7 +134,7 @@ def validate_report(
             if isinstance(item, dict)
             and item.get("name") == COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE
         )
-        require(worker_smoke.get("status") == "passed", "worker env smoke must pass")
+        require(worker_smoke.get("status") == STATUS_PASSED, "worker env smoke must pass")
     if require_worker_profile_audit:
         require(
             COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT in name_set,
@@ -144,7 +146,7 @@ def validate_report(
             if isinstance(item, dict)
             and item.get("name") == COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT
         )
-        require(worker_audit.get("status") == "passed", "worker acceptance profile audit must pass")
+        require(worker_audit.get("status") == STATUS_PASSED, "worker acceptance profile audit must pass")
     if require_release_gate_audit:
         require(
             COMMAND_RELEASE_GATE_PROFILE_AUDIT in name_set,
@@ -155,7 +157,7 @@ def validate_report(
             for item in results
             if isinstance(item, dict) and item.get("name") == COMMAND_RELEASE_GATE_PROFILE_AUDIT
         )
-        require(release_audit.get("status") == "passed", "release gate audit must pass")
+        require(release_audit.get("status") == STATUS_PASSED, "release gate audit must pass")
 
     return {
         "status": status,
@@ -169,7 +171,7 @@ def validate_report(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
-    parser.add_argument("--expect-status", choices=sorted(VALID_STATUSES))
+    parser.add_argument("--expect-status", choices=sorted(REPORT_TERMINAL_STATUSES))
     parser.add_argument("--expect-failed-count", type=int)
     parser.add_argument("--require-worker-env-smoke", action="store_true")
     parser.add_argument("--require-worker-profile-audit", action="store_true")

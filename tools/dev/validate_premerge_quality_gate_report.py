@@ -26,8 +26,10 @@ from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     PROFILE_FULL,
     PROFILE_PREMERGE,
 )
-
-VALID_STATUSES = {"passed", "failed"}
+from tools.dev.report_status_contract import (  # noqa: E402
+    REPORT_TERMINAL_STATUSES,
+    STATUS_PASSED,
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -72,7 +74,7 @@ def validate_report(
     )
     require(report.get("report_id") == PREMERGE_QUALITY_GATE_REPORT_ID, "report_id mismatch")
     status = report.get("status")
-    require(status in VALID_STATUSES, f"invalid status: {status!r}")
+    require(status in REPORT_TERMINAL_STATUSES, f"invalid status: {status!r}")
     if expect_status is not None:
         require(status == expect_status, f"status must be {expect_status!r}")
 
@@ -88,14 +90,14 @@ def validate_report(
     failed_count = int(summary.get("failed_count") or 0)
     passed_count = int(summary.get("passed_count") or 0)
     actual_failed_count = sum(
-        1 for item in results if isinstance(item, dict) and item.get("status") != "passed"
+        1 for item in results if isinstance(item, dict) and item.get("status") != STATUS_PASSED
     )
     require(configured_count >= 1, "configured_command_count must be positive")
     require(executed_count == len(results), "executed_command_count must match results length")
     require(executed_count <= configured_count, "executed_command_count cannot exceed configured count")
     require(passed_count + failed_count == executed_count, "summary status counts must sum")
     require(failed_count == actual_failed_count, "failed_count must match results")
-    require((status == "passed") == (failed_count == 0), "status must match failed_count")
+    require((status == STATUS_PASSED) == (failed_count == 0), "status must match failed_count")
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_count must be {expect_failed_count}")
 
@@ -103,11 +105,11 @@ def validate_report(
     name_set = set(names)
     fail_fast = bool(summary.get("fail_fast"))
     required = FULL_REQUIRED_COMMANDS if profile == PROFILE_FULL else PREMERGE_REQUIRED_COMMANDS
-    if not fail_fast or status == "passed":
+    if not fail_fast or status == STATUS_PASSED:
         missing = sorted(required.difference(name_set))
         require(not missing, f"missing required command results: {missing}")
     expected_order = FULL_COMMAND_ORDER if profile == PROFILE_FULL else PREMERGE_COMMAND_ORDER
-    if fail_fast and status != "passed":
+    if fail_fast and status != STATUS_PASSED:
         expected_prefix = expected_order[: len(names)]
         require(
             names == expected_prefix,
@@ -159,7 +161,7 @@ def validate_report(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
-    parser.add_argument("--expect-status", choices=sorted(VALID_STATUSES))
+    parser.add_argument("--expect-status", choices=sorted(REPORT_TERMINAL_STATUSES))
     parser.add_argument("--expect-profile", choices=sorted(PREMERGE_QUALITY_GATE_PROFILES))
     parser.add_argument("--expect-failed-count", type=int)
     return parser.parse_args()
