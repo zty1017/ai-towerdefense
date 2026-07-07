@@ -39,7 +39,7 @@ HANDOFF_SCHEDULE_ITEM_IDS = (
     "sched_video_frame_background_compile",
 )
 
-from tools.dev.report_io import write_json  # noqa: E402
+from tools.dev.report_io import load_json_object, write_json  # noqa: E402
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -52,14 +52,6 @@ def as_list(value: Any) -> list[Any]:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
 
 
 def free_port() -> int:
@@ -392,7 +384,8 @@ def run_consumer(
     }
     if completed.returncode != 0:
         raise AssertionError(f"outbox consumer failed: {command_result}")
-    report = load_json(output_dir / CONSUMER_REPORT_NAME)
+    consumer_report_path = output_dir / CONSUMER_REPORT_NAME
+    report = load_json_object(consumer_report_path, label=f"{consumer_report_path} root")
     return report, command_result
 
 

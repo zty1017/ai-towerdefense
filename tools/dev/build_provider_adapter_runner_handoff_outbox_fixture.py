@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,7 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from tools.dev.report_io import write_json  # noqa: E402
+from tools.dev.report_io import load_json_object, write_json  # noqa: E402
 
 from backend.app.services.generation_scheduler_handoff_builders import (  # noqa: E402
     build_provider_adapter_runner_handoff,
@@ -28,17 +27,9 @@ DEFAULT_AUTHORIZATION = (
 DEFAULT_OUTPUT = Path("/tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json")
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
-
-
 def build_fixture(args: argparse.Namespace) -> dict[str, Any]:
-    request = load_json(args.executor_request)
-    authorization = load_json(args.authorization)
+    request = load_json_object(args.executor_request, label=f"{args.executor_request} root")
+    authorization = load_json_object(args.authorization, label=f"{args.authorization} root")
     source = request.get("source")
     if not isinstance(source, dict):
         raise ValueError("executor request source must be an object")

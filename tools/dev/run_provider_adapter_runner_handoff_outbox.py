@@ -36,7 +36,7 @@ from validate_provider_adapter_runner_handoff_outbox import (  # noqa: E402
 from validate_provider_output_envelope import (  # noqa: E402
     validate_provider_output_envelope,
 )
-from report_io import write_json  # noqa: E402
+from report_io import load_json_object, write_json  # noqa: E402
 
 
 DEFAULT_OUTPUT_DIR = Path("/tmp/ai_td_provider_runner_handoff_outbox")
@@ -54,14 +54,6 @@ def as_obj(value: Any) -> dict[str, Any]:
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
 
 
 def sha256_file(path: Path) -> str:
@@ -245,7 +237,7 @@ def execute_handoff(
     envelope: dict[str, Any] | None = None
     validation_errors: list[str] = []
     if receipt_path.exists():
-        receipt = load_json(receipt_path)
+        receipt = load_json_object(receipt_path, label=f"{receipt_path} root")
         validation_errors.extend(
             f"receipt:{error}"
             for error in validate_provider_adapter_execution_receipt(receipt)
@@ -253,7 +245,7 @@ def execute_handoff(
     else:
         validation_errors.append("receipt:missing")
     if envelope_path.exists():
-        envelope = load_json(envelope_path)
+        envelope = load_json_object(envelope_path, label=f"{envelope_path} root")
         validation_errors.extend(
             f"envelope:{error}" for error in validate_provider_output_envelope(envelope)
         )
@@ -304,7 +296,7 @@ def execute_handoff(
 
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
-    outbox = load_json(args.outbox)
+    outbox = load_json_object(args.outbox, label=f"{args.outbox} root")
     validate_or_raise(
         "ProviderAdapterRunnerHandoffOutbox",
         validate_provider_adapter_runner_handoff_outbox(outbox),

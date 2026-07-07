@@ -9,16 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from report_io import load_json_object
+
 
 SCHEMA_VERSION = "provider_adapter_runner_handoff_outbox_execution_report.v0.1"
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -94,7 +88,7 @@ def main() -> int:
         for path in args.reports:
             summaries.append(
                 validate_report(
-                    load_json(path),
+                    load_json_object(path, label=f"{path} root"),
                     path=path,
                     expected_executed=args.expected_executed,
                 )

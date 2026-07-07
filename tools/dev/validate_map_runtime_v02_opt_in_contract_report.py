@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import json
+import sys
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json_object
 
 
 REPORT_VERSION = "map_runtime_v02_opt_in_contract_smoke_report.v0.1"
@@ -27,16 +29,6 @@ FORBIDDEN_KEYS = {
     "raw_json",
     "full_trace",
 }
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:  # pragma: no cover - CLI guard
-        raise SystemExit(f"INVALID MapRuntimeV02OptInContractReport: {exc}") from exc
-    if not isinstance(data, dict):
-        raise SystemExit("INVALID MapRuntimeV02OptInContractReport: root must be object")
-    return data
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -249,7 +241,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("report", help="Report JSON path.")
     args = parser.parse_args()
-    report = load_json(Path(args.report))
+    try:
+        report = load_json_object(Path(args.report), label=f"{args.report} root")
+    except Exception as exc:  # noqa: BLE001 - CLI guard.
+        print(f"INVALID MapRuntimeV02OptInContractReport: {exc}", file=sys.stderr)
+        return 1
     errors = validate(report)
     if errors:
         print("INVALID MapRuntimeV02OptInContractReport")

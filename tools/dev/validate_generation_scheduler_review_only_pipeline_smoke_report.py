@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json_object
 
 
 EXPECTED_SCHEMA_VERSION = (
@@ -34,14 +35,6 @@ REQUIRED_SESSION_FLAGS = (
     "runtime_readiness_session_id_present",
     "target_session_id_present",
 )
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -222,7 +215,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
-        report = load_json(args.report)
+        report = load_json_object(args.report, label=f"{args.report} root")
         failures = validate_report(report)
     except Exception as exc:  # noqa: BLE001 - CLI reports concise failures.
         print(f"generation scheduler pipeline smoke report validation failed: {exc}", file=sys.stderr)
