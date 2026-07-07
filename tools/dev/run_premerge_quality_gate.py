@@ -44,7 +44,6 @@ from tools.dev.quality_gate_report_helpers import (  # noqa: E402
     report_status_from_failures,
     run_quality_gate_commands,
     summarize_command_results,
-    write_json_report,
 )
 from tools.dev.quality_gate_compile_targets import (  # noqa: E402
     PREMERGE_QUALITY_GATE_COMPILE_TARGETS,
@@ -53,6 +52,7 @@ from tools.dev.quality_gate_compile_targets import (  # noqa: E402
 from tools.dev.validate_premerge_quality_gate_report import (  # noqa: E402
     validate_report as validate_premerge_quality_gate_report,
 )
+from tools.dev.report_io import write_json  # noqa: E402
 
 
 DEFAULT_OUTPUT = Path("/tmp/ai_td_premerge_quality_gate_report.v0.1.json")
@@ -269,7 +269,7 @@ def main() -> int:
             "default_profile_no_browser_automation": args.profile == PROFILE_PREMERGE,
         },
     }
-    write_json_report(args.output, report)
+    write_json(args.output, report)
     print(f"premerge quality gate report: {args.output}")
     report_valid = self_validate_report(report, profile=str(args.profile))
     if failed:

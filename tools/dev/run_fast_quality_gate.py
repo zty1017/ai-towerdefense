@@ -41,7 +41,6 @@ from tools.dev.quality_gate_report_helpers import (
     report_status_from_failures,
     run_quality_gate_commands,
     summarize_command_results,
-    write_json_report,
 )
 from tools.dev.quality_gate_compile_targets import (
     FAST_QUALITY_GATE_COMPILE_TARGETS,
@@ -50,6 +49,7 @@ from tools.dev.quality_gate_compile_targets import (
 from tools.dev.validate_fast_quality_gate_report import (
     validate_report as validate_fast_quality_gate_report,
 )
+from tools.dev.report_io import write_json
 
 
 DEFAULT_OUTPUT = Path("/tmp/ai_td_fast_quality_gate_report.v0.1.json")
@@ -271,7 +271,7 @@ def main() -> int:
             "does_not_replace_full_demo_evidence_export": True,
         },
     }
-    write_json_report(args.output, report)
+    write_json(args.output, report)
     print(f"fast quality gate report: {args.output}")
     report_valid = self_validate_report(report, fail_fast=bool(args.fail_fast))
     if failed:

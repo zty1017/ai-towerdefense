@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 from tools.dev.command_runner import run_command
-from tools.dev.report_io import write_json
 from tools.dev.report_status_contract import STATUS_FAILED, STATUS_PASSED
 
 
@@ -74,7 +73,3 @@ def print_failed_command_details(failed: list[dict[str, Any]]) -> None:
         print(f"failed: {item['name']}", file=sys.stderr)
         if item.get("stderr_tail"):
             print(item["stderr_tail"], file=sys.stderr)
-
-
-def write_json_report(path: Path, value: dict[str, Any]) -> None:
-    write_json(path, value)
