@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import contextlib
 import http.server
-import json
 import shutil
 import socket
 import struct
@@ -21,6 +20,8 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
+
+from report_io import write_json
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -199,9 +200,8 @@ def build_report(
 
 
 def write_report(output_dir: Path, report: dict[str, Any]) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "battle_visual_smoke_report.v0.1.json"
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_json(report_path, report, sort_keys=False)
     return report_path
 
 
