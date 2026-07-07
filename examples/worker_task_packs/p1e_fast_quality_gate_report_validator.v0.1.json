@@ -17,6 +17,7 @@
     "tools/dev/fast_quality_gate_contract.py",
     "tools/dev/validate_fast_quality_gate_report.py",
     "tools/dev/run_premerge_quality_gate.py",
+    "tools/dev/premerge_quality_gate_contract.py",
     "tools/dev/validate_premerge_quality_gate_report.py",
     "examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json"
   ],
@@ -25,6 +26,7 @@
     "tools/dev/fast_quality_gate_contract.py",
     "tools/dev/validate_fast_quality_gate_report.py",
     "tools/dev/run_premerge_quality_gate.py",
+    "tools/dev/premerge_quality_gate_contract.py",
     "tools/dev/validate_premerge_quality_gate_report.py",
     "examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json",
     "examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json",
@@ -49,7 +51,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/fast_quality_gate_contract.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/fast_quality_gate_contract.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/premerge_quality_gate_contract.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
     "python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast_quality_gate_report_validator_fast_report.json",
     "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
     "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/fast_quality_gate_report_validator_premerge_report.json --fail-fast",
@@ -63,7 +65,7 @@
         "description": "日常快速 profile：验证 fast gate 结构化报告 validator、worker profile 审计覆盖、premerge 接入和任务包定义。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator_daily python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/fast_quality_gate_contract.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator_daily python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/fast_quality_gate_contract.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/premerge_quality_gate_contract.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
           "python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast_quality_gate_report_validator_fast_report.json",
           "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
           "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/fast_quality_gate_report_validator_premerge_report.json --fail-fast",

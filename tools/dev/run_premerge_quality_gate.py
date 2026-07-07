@@ -20,13 +20,30 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso, run_command  # noqa: E402
+from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
+    COMMAND_DEMO_EVIDENCE_FULL_EXPORT,
+    COMMAND_FAST_QUALITY_GATE,
+    COMMAND_FAST_QUALITY_GATE_REPORT_VALIDATOR,
+    COMMAND_GIT_DIFF_CHECK,
+    COMMAND_PYTHON_COMPILE_PREMERGE_TOOLS,
+    COMMAND_RELEASE_GATE_PROFILE_AUDIT,
+    COMMAND_WORKER_ACCEPTANCE_BATCH_ALL_DRY_RUN,
+    COMMAND_WORKER_ACCEPTANCE_BATCH_REPORT_VALIDATOR,
+    COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
+    COMMAND_WORKER_ACCEPTANCE_PROFILE_MIGRATION_DRY_RUN,
+    PREMERGE_QUALITY_GATE_PROFILES,
+    PREMERGE_QUALITY_GATE_REPORT_ID,
+    PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
+    PREMERGE_REQUIRED_BOUNDARY_FLAGS,
+    PREMERGE_REQUIRED_ZERO_FIELDS,
+    PROFILE_FULL,
+    PROFILE_PREMERGE,
+)
 
 
-REPORT_SCHEMA_VERSION = "premerge_quality_gate_report.v0.1"
 DEFAULT_OUTPUT = Path("/tmp/ai_td_premerge_quality_gate_report.v0.1.json")
 DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
 OUTPUT_TAIL_LIMIT = 1800
-PROFILES = {"premerge", "full"}
 
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
@@ -59,13 +76,14 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
 
     specs: list[dict[str, Any]] = [
         {
-            "name": "python_compile_premerge_tools",
+            "name": COMMAND_PYTHON_COMPILE_PREMERGE_TOOLS,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
                 "-m",
                 "py_compile",
                 "tools/dev/run_premerge_quality_gate.py",
+                "tools/dev/premerge_quality_gate_contract.py",
                 "tools/dev/validate_premerge_quality_gate_report.py",
                 "tools/dev/run_fast_quality_gate.py",
                 "tools/dev/fast_quality_gate_contract.py",
@@ -90,12 +108,12 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
         },
         {
-            "name": "fast_quality_gate",
+            "name": COMMAND_FAST_QUALITY_GATE,
             "timeout_seconds": 90,
             "command": fast_gate_command,
         },
         {
-            "name": "fast_quality_gate_report_validator",
+            "name": COMMAND_FAST_QUALITY_GATE_REPORT_VALIDATOR,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -112,7 +130,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_acceptance_batch_all_dry_run",
+            "name": COMMAND_WORKER_ACCEPTANCE_BATCH_ALL_DRY_RUN,
             "timeout_seconds": 60,
             "command": [
                 sys.executable,
@@ -126,7 +144,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_acceptance_batch_report_validator",
+            "name": COMMAND_WORKER_ACCEPTANCE_BATCH_REPORT_VALIDATOR,
             "timeout_seconds": 20,
             "command": [
                 sys.executable,
@@ -141,7 +159,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_acceptance_profile_audit",
+            "name": COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
             "timeout_seconds": 30,
             "command": [
                 sys.executable,
@@ -153,7 +171,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "release_gate_profile_audit",
+            "name": COMMAND_RELEASE_GATE_PROFILE_AUDIT,
             "timeout_seconds": 30,
             "command": [
                 sys.executable,
@@ -165,7 +183,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "worker_acceptance_profile_migration_dry_run",
+            "name": COMMAND_WORKER_ACCEPTANCE_PROFILE_MIGRATION_DRY_RUN,
             "timeout_seconds": 30,
             "command": [
                 sys.executable,
@@ -175,16 +193,16 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "git_diff_check",
+            "name": COMMAND_GIT_DIFF_CHECK,
             "timeout_seconds": 20,
             "command": ["git", "diff", "--check"],
         },
     ]
 
-    if args.profile == "full":
+    if args.profile == PROFILE_FULL:
         specs.append(
             {
-                "name": "demo_evidence_full_export",
+                "name": COMMAND_DEMO_EVIDENCE_FULL_EXPORT,
                 "timeout_seconds": args.full_evidence_timeout,
                 "command": [
                     sys.executable,
@@ -201,7 +219,11 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--profile", choices=sorted(PROFILES), default="premerge")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PREMERGE_QUALITY_GATE_PROFILES),
+        default=PROFILE_PREMERGE,
+    )
     parser.add_argument("--generated-at", default=DEFAULT_GENERATED_AT)
     parser.add_argument("--tmp-prefix", default="/tmp/ai_td_premerge_quality_gate")
     parser.add_argument("--min-pack-count", type=int, default=100)
@@ -235,9 +257,10 @@ def main() -> int:
             break
 
     failed = [item for item in results if item.get("status") != "passed"]
+    zero_summary_fields = {field: expected for field, expected in PREMERGE_REQUIRED_ZERO_FIELDS}
     report = {
-        "schema_version": REPORT_SCHEMA_VERSION,
-        "report_id": "premerge_quality_gate_report_v0_1",
+        "schema_version": PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
+        "report_id": PREMERGE_QUALITY_GATE_REPORT_ID,
         "generated_at": now_iso(),
         "started_at": started_at,
         "status": "passed" if not failed else "failed",
@@ -248,20 +271,13 @@ def main() -> int:
             "passed_count": len(results) - len(failed),
             "failed_count": len(failed),
             "fail_fast": bool(args.fail_fast),
-            "full_evidence_included": args.profile == "full",
-            "provider_call_count": 0,
-            "reads_env_file": False,
-            "world_mutation_count": 0,
-            "runtime_activation_allowed": False,
+            "full_evidence_included": args.profile == PROFILE_FULL,
+            **zero_summary_fields,
         },
         "results": results,
         "boundary": {
-            "no_provider_calls": True,
-            "no_env_file_reads": True,
-            "no_world_state_writes": True,
-            "no_runtime_activation": True,
-            "default_profile_no_browser_automation": args.profile == "premerge",
-            "does_not_replace_demo_evidence_suite": True,
+            **{field: True for field in PREMERGE_REQUIRED_BOUNDARY_FLAGS},
+            "default_profile_no_browser_automation": args.profile == PROFILE_PREMERGE,
         },
     }
     write_json(args.output, report)

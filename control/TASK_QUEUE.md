@@ -101,7 +101,7 @@ P2：本阶段明确不做
 - 已补前端多节点战斗截图门禁 `tools/frontend/capture_frontend_multinode_visual_smoke.py` 与 `tools/frontend/validate_frontend_multinode_visual_smoke_report.py`：使用 no-build 静态前端直接打开三张 MVP 战斗节点，覆盖 desktop/mobile 共 6 张 battle canvas 截图，并校验节点标题、截图矩阵、canvas 尺寸、文件大小和安全计数。`nodeId` 覆盖只在 `battleVisualSmoke` / `flowVisualSmoke` query 下生效；正常玩家入口、MapRuntimePackage、RenderPlan、published visual layer 和 v0.2 activation gate 均不被修改。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：先跑浏览器视觉 smoke 环境预检，再串联浏览器玩家链路截图、多节点战斗截图、战斗拖拽部署交互 smoke、截图 / 交互 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`、`tools/dev/fast_quality_gate_contract.py` 与 report validator：串联 Python 编译、前端语法检查、战斗视觉合同、战斗交互合同、campaign router 前端合同、map component 前端合同、WorkerTaskPack runner 前置 env 执行 smoke、WorkerTaskPack acceptance profile 只读审计、release gate profile 降级审计、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`；contract 模块统一保存 schema、report id、命令顺序和安全边界常量，`tools/dev/validate_fast_quality_gate_report.py` 会独立校验 schema、命令顺序、summary 计数、runner env smoke、WorkerTaskPack profile audit、release gate audit 和安全边界。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
-- 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py` 与 report validator：默认 profile 复用 fast gate、fast gate report validator、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、release gate 降级审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；可选 full profile 追加默认完整 evidence export。
+- 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py`、`tools/dev/premerge_quality_gate_contract.py` 与 report validator：默认 profile 复用 fast gate、fast gate report validator、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、release gate 降级审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；contract 模块统一保存 profile、schema、report id、必需命令集合和安全边界常量，validator 会校验 report id、release gate audit 等必需命令和 no-provider / no-env / no-runtime 边界；可选 full profile 追加默认完整 evidence export。
 - 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，支持前置 `KEY=value` token 并会传入子进程环境，避免 `PYTHONPYCACHEPREFIX` 丢失后写仓库 `__pycache__`；遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - 已补 WorkerTaskPack acceptance profile 批量 runner `tools/dev/run_worker_acceptance_batch.py` 与 batch report validator：支持显式 `--task-pack`、`--task-id-prefix`、`--path-contains`、`--all`、`--profile`、`--dry-run`、`--fail-fast` 和 JSON report，默认拒绝隐式全量选择；全量 dry-run 用于快速确认任务包 profile 可解析，日常真实执行仍应缩小到明确任务包或筛选条件。
 - 已补 `tools/dev/audit_common.py`：收敛 WorkerTaskPack 相关只读审计脚本共享的 JSON 报告写入、仓库相对路径显示、`/tmp` 输出路径保护、字符串数组过滤和命令归一化 helper；当前只服务审计工具，不要求全仓媒体 / 内容生成脚本机械迁移。
@@ -5326,6 +5326,45 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast_gate_contract_modu
 python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_gate_contract_module_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
 python3 tools/dev/run_premerge_quality_gate.py --output /tmp/fast_gate_contract_module_premerge_report.json --fail-fast
 python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/fast_gate_contract_module_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0
+git diff --check
+```
+
+### P1-E-15e PremergeGateContractModule v0.1
+
+状态：已完成 premerge gate 契约常量收敛。
+
+目标：
+
+```text
+把 premerge quality gate 的 schema、profile、命令名、必需命令集合和安全边界常量收敛到共享 contract 模块，减少 runner 与 report validator 的重复维护，并补上 release gate audit 为 premerge validator 必需命令。
+```
+
+已落地：
+
+- `tools/dev/premerge_quality_gate_contract.py`：新增 premerge gate 本地契约常量，包括 report schema、report id、profile、命令名、必需命令集合、安全边界字段和零计数字段。
+- `tools/dev/run_premerge_quality_gate.py`：命令名、profile、schema、report id、summary 零计数和 boundary 字段改为读取 contract 常量，并把 contract 纳入自身 `py_compile` 覆盖。
+- `tools/dev/validate_premerge_quality_gate_report.py`：移除重复硬编码 profile / required command / boundary 列表，改为读取 contract；新增 report id 校验，并把 `release_gate_profile_audit` 纳入必需命令集合。
+- `tools/dev/run_fast_quality_gate.py`：把 premerge contract 纳入快速编译覆盖。
+- `examples/worker_task_packs/p1e_premerge_gate_contract_module.v0.1.json`：固化本轮验收。
+- `examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json`、`examples/worker_task_packs/p1e_fast_gate_contract_module.v0.1.json`、`examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json`、`examples/worker_task_packs/p1e_fast_gate_worker_profile_audit.v0.1.json`、`docs/CURRENT_ARCHITECTURE_INDEX.md`、`control/TASK_QUEUE.md`：同步 contract 事实源。
+
+边界：
+
+- 不改变 premerge 执行命令集合，不放宽 report validator。
+- validator 仍按 contract 检查 runner 产出的报告；release gate audit 是合并前必需命令。
+- 不调用 provider、不读取 `.env`、不跑浏览器、不写世界状态、不激活 runtime。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_gate_contract_module.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_fast_gate_contract_module.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_premerge_gate_contract_module python3 -m py_compile tools/dev/premerge_quality_gate_contract.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/run_fast_quality_gate.py tools/dev/fast_quality_gate_contract.py tools/dev/validate_fast_quality_gate_report.py tools/dev/command_runner.py
+python3 tools/dev/run_premerge_quality_gate.py --output /tmp/premerge_gate_contract_module_premerge_report.json --fail-fast
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/premerge_gate_contract_module_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/premerge_gate_contract_module_fast_report.json
+python3 tools/dev/validate_fast_quality_gate_report.py /tmp/premerge_gate_contract_module_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
 git diff --check
 ```
 

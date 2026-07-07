@@ -9,21 +9,23 @@ import sys
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
-SCHEMA_VERSION = "premerge_quality_gate_report.v0.1"
+from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
+    COMMAND_DEMO_EVIDENCE_FULL_EXPORT,
+    FULL_REQUIRED_COMMANDS,
+    PREMERGE_QUALITY_GATE_PROFILES,
+    PREMERGE_QUALITY_GATE_REPORT_ID,
+    PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
+    PREMERGE_REQUIRED_BOUNDARY_FLAGS,
+    PREMERGE_REQUIRED_COMMANDS,
+    PREMERGE_REQUIRED_ZERO_FIELDS,
+    PROFILE_FULL,
+    PROFILE_PREMERGE,
+)
+
 VALID_STATUSES = {"passed", "failed"}
-VALID_PROFILES = {"premerge", "full"}
-PREMERGE_REQUIRED_COMMANDS = {
-    "python_compile_premerge_tools",
-    "fast_quality_gate",
-    "fast_quality_gate_report_validator",
-    "worker_acceptance_batch_all_dry_run",
-    "worker_acceptance_batch_report_validator",
-    "worker_acceptance_profile_audit",
-    "worker_acceptance_profile_migration_dry_run",
-    "git_diff_check",
-}
-FULL_REQUIRED_COMMANDS = PREMERGE_REQUIRED_COMMANDS | {"demo_evidence_full_export"}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -54,14 +56,18 @@ def validate_report(
     expect_profile: str | None,
     expect_failed_count: int | None,
 ) -> dict[str, Any]:
-    require(report.get("schema_version") == SCHEMA_VERSION, "schema_version mismatch")
+    require(
+        report.get("schema_version") == PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
+        "schema_version mismatch",
+    )
+    require(report.get("report_id") == PREMERGE_QUALITY_GATE_REPORT_ID, "report_id mismatch")
     status = report.get("status")
     require(status in VALID_STATUSES, f"invalid status: {status!r}")
     if expect_status is not None:
         require(status == expect_status, f"status must be {expect_status!r}")
 
     profile = report.get("profile")
-    require(profile in VALID_PROFILES, f"invalid profile: {profile!r}")
+    require(profile in PREMERGE_QUALITY_GATE_PROFILES, f"invalid profile: {profile!r}")
     if expect_profile is not None:
         require(profile == expect_profile, f"profile must be {expect_profile!r}")
 
@@ -81,19 +87,19 @@ def validate_report(
         require(failed_count == expect_failed_count, f"failed_count must be {expect_failed_count}")
 
     names = {str(item.get("name")) for item in results if isinstance(item, dict)}
-    required = FULL_REQUIRED_COMMANDS if profile == "full" else PREMERGE_REQUIRED_COMMANDS
+    required = FULL_REQUIRED_COMMANDS if profile == PROFILE_FULL else PREMERGE_REQUIRED_COMMANDS
     missing = sorted(required.difference(names))
     require(not missing, f"missing required command results: {missing}")
-    if profile == "premerge":
+    if profile == PROFILE_PREMERGE:
         require(
-            "demo_evidence_full_export" not in names,
+            COMMAND_DEMO_EVIDENCE_FULL_EXPORT not in names,
             "premerge profile must not run full evidence export",
         )
         require(
             summary.get("full_evidence_included") is False,
             "premerge profile must mark full_evidence_included=false",
         )
-    if profile == "full":
+    if profile == PROFILE_FULL:
         require(
             summary.get("full_evidence_included") is True,
             "full profile must mark full_evidence_included=true",
@@ -102,20 +108,9 @@ def validate_report(
         require(configured_count == executed_count, "non-fail-fast run must execute every command")
 
     boundary = as_obj(report.get("boundary"))
-    for field in (
-        "no_provider_calls",
-        "no_env_file_reads",
-        "no_world_state_writes",
-        "no_runtime_activation",
-        "does_not_replace_demo_evidence_suite",
-    ):
+    for field in PREMERGE_REQUIRED_BOUNDARY_FLAGS:
         require(boundary.get(field) is True, f"boundary.{field} must be true")
-    for field, expected in (
-        ("provider_call_count", 0),
-        ("reads_env_file", False),
-        ("world_mutation_count", 0),
-        ("runtime_activation_allowed", False),
-    ):
+    for field, expected in PREMERGE_REQUIRED_ZERO_FIELDS:
         require(summary.get(field) == expected, f"summary.{field} must be {expected!r}")
 
     return {
@@ -131,7 +126,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
     parser.add_argument("--expect-status", choices=sorted(VALID_STATUSES))
-    parser.add_argument("--expect-profile", choices=sorted(VALID_PROFILES))
+    parser.add_argument("--expect-profile", choices=sorted(PREMERGE_QUALITY_GATE_PROFILES))
     parser.add_argument("--expect-failed-count", type=int)
     return parser.parse_args()
 
