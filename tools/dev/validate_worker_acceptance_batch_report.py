@@ -49,6 +49,7 @@ def validate_report(
         require(status == expect_status, f"status must be {expect_status!r}")
 
     summary = as_obj(report.get("summary"))
+    selection = as_obj(report.get("selection"))
     packs = as_list(report.get("packs"))
     selected_count = int(summary.get("selected_pack_count") or 0)
     executed_count = int(summary.get("executed_pack_count") or 0)
@@ -60,6 +61,7 @@ def validate_report(
     actual_dry_run_count = sum(1 for pack in packs if isinstance(pack, dict) and pack.get("status") == "dry_run")
     require(selected_count >= min_pack_count, f"selected_pack_count must be >= {min_pack_count}")
     require(executed_count == len(packs), "executed_pack_count must match packs length")
+    require(executed_count <= selected_count, "executed_pack_count cannot exceed selected_pack_count")
     require(
         failed_count + passed_count + dry_run_count == executed_count,
         "pack status counts must sum to executed_pack_count",
@@ -67,6 +69,10 @@ def validate_report(
     require(failed_count == actual_failed_count, "failed_pack_count must match packs statuses")
     require(passed_count == actual_passed_count, "passed_pack_count must match packs statuses")
     require(dry_run_count == actual_dry_run_count, "dry_run_pack_count must match packs statuses")
+    expected_status = "failed" if failed_count else "dry_run" if selection.get("dry_run") is True else "passed"
+    require(status == expected_status, f"status must be {expected_status!r}")
+    if selection.get("dry_run") is not True:
+        require(dry_run_count == 0, "dry_run_pack_count must be 0 when selection.dry_run is not true")
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_pack_count must be {expect_failed_count}")
     for index, pack in enumerate(packs):
