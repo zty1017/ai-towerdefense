@@ -96,6 +96,7 @@ P2：本阶段明确不做
 - 已补浏览器视觉烟测入口 `tools/frontend/capture_battle_visual_smoke.py`：打开 `frontend/index.html?static=1&battleVisualSmoke=1`，采集桌面与移动视口截图并输出 JSON 证据。本轮已通过临时 Playwright Chromium 生成 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_desktop.png` 与 `/tmp/p0m_browser_visual_smoke/battle_visual_smoke_mobile.png`，并据截图修复移动端 HUD / 工具栏溢出。
 - 已补浏览器玩家主链路截图门禁 `tools/frontend/capture_frontend_flow_visual_smoke.py` 与 `tools/frontend/validate_frontend_flow_visual_smoke_report.py`：使用真实 Chromium 通过 no-build 前端从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，覆盖 desktop/mobile 共 14 张截图。当前 develop 已验证 `/tmp/frontend_flow_visual_smoke_develop/frontend_flow_visual_smoke_report.v0.1.json` 为 `captured`，battle 截图包含 canvas，settlement 截图到达结算页；该工具不调用 provider、不读取 `.env`、不写世界状态。
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：串联浏览器玩家链路截图、截图 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
+- 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -3843,6 +3844,46 @@ python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/mvp_demo_rea
 python3 tools/demo/validate_mvp_demo_readiness_report.py /tmp/mvp_demo_readiness_validator_rebuild.json
 PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_mvp_demo_readiness_validator python3 -m py_compile tools/demo/build_mvp_demo_readiness_report.py tools/demo/validate_mvp_demo_readiness_report.py tools/demo/export_evidence.py
 python3 tools/demo/export_evidence.py --output-dir /tmp/mvp_demo_readiness_validator_evidence
+git diff --check
+```
+
+### P1-D-29 Daily fast quality gate
+
+状态：已完成日常开发验收入口简化。
+
+目标：
+
+```text
+在不放宽质量门禁的前提下，把日常开发最常用的无浏览器 / 无 provider 检查收束成一个快速入口，减少每次小改动都跑完整 evidence export 的等待。
+```
+
+已落地：
+
+- `tools/dev/run_fast_quality_gate.py`：新增快速质量门 CLI，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。
+- `README.md`：Tests 段新增日常开发优先命令。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`、`control/TASK_QUEUE.md`：同步该入口的定位和边界。
+
+默认检查：
+
+- `py_compile` 核心 demo / frontend validator / fast gate 脚本，缓存写入 `/tmp`。
+- `node --check frontend/app.js`。
+- `tools/frontend/validate_battle_visual_contract.py --report-output /tmp/...`。
+- `tools/frontend/validate_campaign_router_frontend_contract.py`。
+- `tools/frontend/validate_map_component_frontend_contract.py`。
+- `tools/demo/build_mvp_demo_readiness_report.py --output /tmp/...`。
+- `tools/demo/validate_mvp_demo_readiness_report.py` 校验仓库 fixture 和临时重建 report。
+
+边界：
+
+- 不调用 provider，不读取 `.env`，不跑浏览器，不写世界状态，不写 runtime package，不激活 runtime。
+- 不替代完整 `tools/demo/export_evidence.py` 或 `tools/demo/run_demo_evidence_suite.py`；只作为日常开发快速反馈。
+
+验收：
+
+```bash
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/ai_td_fast_quality_gate_report.v0.1.json
+python3 -m json.tool /tmp/ai_td_fast_quality_gate_report.v0.1.json >/tmp/ai_td_fast_quality_gate_report.pretty.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/fast_quality_gate_evidence_check
 git diff --check
 ```
 

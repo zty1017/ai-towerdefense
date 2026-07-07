@@ -154,6 +154,12 @@ uvicorn app.main:app --app-dir backend --reload
 
 ## Tests
 
+日常开发优先跑快速质量门。它只串起无浏览器、无 provider、无 `.env` 的关键静态 / 结构检查，用来在几秒级发现常见破坏；录屏或评审前仍需要跑完整 evidence 套件。
+
+```bash
+python3 tools/dev/run_fast_quality_gate.py
+```
+
 先检查当前环境是否已经具备完整测试依赖：
 
 ```bash
