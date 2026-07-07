@@ -1,0 +1,3500 @@
+{
+  "generated_at": "2026-07-07T00:00:00+00:00",
+  "maps": [
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "gray_lantern_station_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "gray_lantern_station_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "gray_lantern_station_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "gray_lantern_station_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 9,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 16
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "gray_lantern_station_map_runtime_package_v0_1_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 15.675,
+            "max_y": 6.675,
+            "min_x": 0.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_main_road",
+          "zone_id": "gray_lantern_station_route_path_main_road_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 3.6,
+            "min_x": 14.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "gray_lantern_station_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 5.6,
+            "min_x": 14.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "gray_lantern_station_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 3.6,
+            "min_x": 13.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "gray_lantern_station_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 5.6,
+            "min_x": 13.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "gray_lantern_station_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.6,
+            "max_y": 5.6,
+            "min_x": 9.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "gray_lantern_station_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 4.6,
+            "min_x": 8.4,
+            "min_y": 3.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "gray_lantern_station_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 3.6,
+            "min_x": 8.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "gray_lantern_station_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 3.6,
+            "min_x": 10.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "gray_lantern_station_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 5.6,
+            "min_x": 8.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "gray_lantern_station_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 5.6,
+            "min_x": 10.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "gray_lantern_station_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.6,
+            "max_y": 1.6,
+            "min_x": 9.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "gray_lantern_station_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 2.6,
+            "min_x": 10.4,
+            "min_y": 1.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "gray_lantern_station_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.0,
+            "max_y": 5.0,
+            "min_x": 14.0,
+            "min_y": 3.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_main_road",
+          "zone_id": "gray_lantern_station_spawn_spawn_path_main_road",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 1.15,
+            "max_y": 7.15,
+            "min_x": -1.15,
+            "min_y": 4.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_node_core",
+          "zone_id": "gray_lantern_station_objective_target_node_core",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 3.9,
+            "max_y": 2.9,
+            "min_x": 2.1,
+            "min_y": 1.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_signal_beacon",
+          "zone_id": "gray_lantern_station_objective_target_signal_beacon",
+          "zone_type": "objective_clearance"
+        }
+      ],
+      "source_package": {
+        "node_id": "gray_lantern_station",
+        "package_id": "map_pkg_gray_lantern_station_v0_1",
+        "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+        "schema_version": "map_runtime_package.v0.1"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 4,
+        "reserved_zone_count": 16,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    },
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "old_signal_tower_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "old_signal_tower_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "old_signal_tower_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "old_signal_tower_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 10,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "old_signal_tower_map_runtime_package_v0_1_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 5.675,
+            "min_x": 1.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_old_signal_north_ridge",
+          "zone_id": "old_signal_tower_route_path_old_signal_north_ridge_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.675,
+            "max_y": 8.675,
+            "min_x": 1.325,
+            "min_y": 4.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_old_signal_copper_trench",
+          "zone_id": "old_signal_tower_route_path_old_signal_copper_trench_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 1.6,
+            "min_x": 16.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "old_signal_tower_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 3.6,
+            "min_x": 16.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "old_signal_tower_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 1.6,
+            "min_x": 15.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "old_signal_tower_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 3.6,
+            "min_x": 15.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "old_signal_tower_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 1.6,
+            "min_x": 13.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "old_signal_tower_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 1.6,
+            "min_x": 12.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "old_signal_tower_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 1.6,
+            "min_x": 14.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "old_signal_tower_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 3.6,
+            "min_x": 14.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "old_signal_tower_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 5.6,
+            "min_x": 11.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "old_signal_tower_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 3.6,
+            "min_x": 10.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "old_signal_tower_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 5.6,
+            "min_x": 10.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "old_signal_tower_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 8.6,
+            "max_y": 3.6,
+            "min_x": 7.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "old_signal_tower_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 3.0,
+            "min_x": 16.0,
+            "min_y": 1.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_old_signal_north_ridge",
+          "zone_id": "old_signal_tower_spawn_spawn_path_old_signal_north_ridge",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.0,
+            "max_y": 9.0,
+            "min_x": 15.0,
+            "min_y": 7.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_old_signal_copper_trench",
+          "zone_id": "old_signal_tower_spawn_spawn_path_old_signal_copper_trench",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 2.15,
+            "max_y": 6.15,
+            "min_x": -0.15,
+            "min_y": 3.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_old_signal_tower_base",
+          "zone_id": "old_signal_tower_objective_target_old_signal_tower_base",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 4.9,
+            "max_y": 4.9,
+            "min_x": 3.1,
+            "min_y": 3.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_resonant_glass_fixture",
+          "zone_id": "old_signal_tower_objective_target_resonant_glass_fixture",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 6.9,
+            "max_y": 7.9,
+            "min_x": 5.1,
+            "min_y": 6.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_copper_grounding_pin",
+          "zone_id": "old_signal_tower_objective_target_copper_grounding_pin",
+          "zone_type": "objective_clearance"
+        }
+      ],
+      "source_package": {
+        "node_id": "old_signal_tower",
+        "package_id": "map_pkg_old_signal_tower_v0_1",
+        "path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+        "schema_version": "map_runtime_package.v0.1"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 4,
+        "reserved_zone_count": 19,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    },
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "lamp_wick_store_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "lamp_wick_store_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "lamp_wick_store_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "lamp_wick_store_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 10,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "lamp_wick_store_map_runtime_package_v0_1_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 6.675,
+            "min_x": 0.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_wick_store_main_pipe",
+          "zone_id": "lamp_wick_store_route_path_wick_store_main_pipe_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 8.675,
+            "min_x": 1.325,
+            "min_y": 4.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_wick_store_service_lane",
+          "zone_id": "lamp_wick_store_route_path_wick_store_service_lane_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 3.6,
+            "min_x": 16.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "lamp_wick_store_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 5.6,
+            "min_x": 16.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "lamp_wick_store_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 3.6,
+            "min_x": 15.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "lamp_wick_store_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 5.6,
+            "min_x": 15.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "lamp_wick_store_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 5.6,
+            "min_x": 12.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "lamp_wick_store_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 4.6,
+            "min_x": 11.4,
+            "min_y": 3.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "lamp_wick_store_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 3.6,
+            "min_x": 11.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "lamp_wick_store_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 3.6,
+            "min_x": 13.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "lamp_wick_store_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 5.6,
+            "min_x": 11.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "lamp_wick_store_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 5.6,
+            "min_x": 13.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "lamp_wick_store_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 1.6,
+            "min_x": 12.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "lamp_wick_store_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 2.6,
+            "min_x": 13.4,
+            "min_y": 1.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "lamp_wick_store_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 5.0,
+            "min_x": 16.0,
+            "min_y": 3.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_wick_store_main_pipe",
+          "zone_id": "lamp_wick_store_spawn_spawn_path_wick_store_main_pipe",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 9.0,
+            "min_x": 16.0,
+            "min_y": 7.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_wick_store_service_lane",
+          "zone_id": "lamp_wick_store_spawn_spawn_path_wick_store_service_lane",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 1.15,
+            "max_y": 6.15,
+            "min_x": -1.15,
+            "min_y": 3.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_wick_store_core",
+          "zone_id": "lamp_wick_store_objective_target_wick_store_core",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 2.9,
+            "max_y": 7.9,
+            "min_x": 1.1,
+            "min_y": 6.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_supply_line_coupler",
+          "zone_id": "lamp_wick_store_objective_target_supply_line_coupler",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 4.9,
+            "max_y": 3.9,
+            "min_x": 3.1,
+            "min_y": 2.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_lamp_oil_shelf",
+          "zone_id": "lamp_wick_store_objective_target_lamp_oil_shelf",
+          "zone_type": "objective_clearance"
+        }
+      ],
+      "source_package": {
+        "node_id": "lamp_wick_store",
+        "package_id": "map_pkg_lamp_wick_store_v0_1",
+        "path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+        "schema_version": "map_runtime_package.v0.1"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 4,
+        "reserved_zone_count": 19,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    },
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "gray_lantern_station_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "gray_lantern_station_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "gray_lantern_station_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "gray_lantern_station_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        },
+        {
+          "allowed_prefab_tags": [
+            "warning_marker",
+            "resource_crate",
+            "anchor_rubble",
+            "hazard_sign"
+          ],
+          "anchor_ref": "resource_nodes|hazard_zones|defense_anchors|blocked_areas",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "strong_semantic_adjacent_ring_without_overlap",
+          "placement_rules": [
+            "attach_to_v02_semantic_anchor",
+            "never_change_blocking_or_interaction_truth",
+            "keep_resource_and_hazard_icons_distinct"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "gray_lantern_station_semantic_prop_shoulder",
+          "zone_type": "semantic_prop_shoulder"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 9,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 16
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "gray_lantern_station_map_runtime_package_v0_2_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 15.675,
+            "max_y": 6.675,
+            "min_x": 0.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_main_road",
+          "zone_id": "gray_lantern_station_route_path_main_road_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 3.6,
+            "min_x": 14.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "gray_lantern_station_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 5.6,
+            "min_x": 14.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "gray_lantern_station_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 3.6,
+            "min_x": 13.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "gray_lantern_station_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 5.6,
+            "min_x": 13.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "gray_lantern_station_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.6,
+            "max_y": 5.6,
+            "min_x": 9.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "gray_lantern_station_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 4.6,
+            "min_x": 8.4,
+            "min_y": 3.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "gray_lantern_station_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 3.6,
+            "min_x": 8.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "gray_lantern_station_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 3.6,
+            "min_x": 10.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "gray_lantern_station_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 9.6,
+            "max_y": 5.6,
+            "min_x": 8.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "gray_lantern_station_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 5.6,
+            "min_x": 10.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "gray_lantern_station_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.6,
+            "max_y": 1.6,
+            "min_x": 9.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "gray_lantern_station_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 2.6,
+            "min_x": 10.4,
+            "min_y": 1.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "gray_lantern_station_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.0,
+            "max_y": 5.0,
+            "min_x": 14.0,
+            "min_y": 3.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_main_road",
+          "zone_id": "gray_lantern_station_spawn_spawn_path_main_road",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 1.15,
+            "max_y": 7.15,
+            "min_x": -1.15,
+            "min_y": 4.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_node_core",
+          "zone_id": "gray_lantern_station_objective_target_node_core",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 3.9,
+            "max_y": 2.9,
+            "min_x": 2.1,
+            "min_y": 1.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_signal_beacon",
+          "zone_id": "gray_lantern_station_objective_target_signal_beacon",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 4.8,
+            "max_y": 2.8,
+            "min_x": 3.2,
+            "min_y": 1.2
+          },
+          "clearance_cells": 0.5,
+          "geometry_kind": "footprint_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "resource_nodes.resource_gray_lantern_station_primary",
+          "zone_id": "gray_lantern_station_resource_resource_gray_lantern_station_primary",
+          "zone_type": "resource_node_clearance"
+        },
+        {
+          "clearance_cells": 0.35,
+          "geometry_kind": "route_path_t_range",
+          "path_t_range": {
+            "end": 0.58,
+            "start": 0.42
+          },
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "hazard_zones.hazard_gray_lantern_station_road_pressure",
+          "zone_id": "gray_lantern_station_hazard_hazard_gray_lantern_station_road_pressure",
+          "zone_type": "hazard_zone"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 7.0,
+            "max_y": 4.0,
+            "min_x": 3.0,
+            "min_y": 0.0
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "influence_radius_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "defense_anchors.anchor_gray_lantern_station_mid_choke",
+          "zone_id": "gray_lantern_station_defense_anchor_anchor_gray_lantern_station_mid_choke",
+          "zone_type": "defense_anchor_marker"
+        },
+        {
+          "cells": [
+            {
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "clearance_cells": 0.2,
+          "geometry_kind": "blocked_cells",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "blocked_areas.blocked_gray_lantern_station_edge_ruin",
+          "zone_id": "gray_lantern_station_blocked_blocked_gray_lantern_station_edge_ruin",
+          "zone_type": "blocked_area"
+        }
+      ],
+      "source_package": {
+        "node_id": "gray_lantern_station",
+        "package_id": "map_pkg_gray_lantern_station_v0_2",
+        "path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+        "schema_version": "map_runtime_package.v0.2"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 5,
+        "reserved_zone_count": 20,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    },
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "old_signal_tower_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "old_signal_tower_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "old_signal_tower_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "old_signal_tower_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        },
+        {
+          "allowed_prefab_tags": [
+            "warning_marker",
+            "resource_crate",
+            "anchor_rubble",
+            "hazard_sign"
+          ],
+          "anchor_ref": "resource_nodes|hazard_zones|defense_anchors|blocked_areas",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "strong_semantic_adjacent_ring_without_overlap",
+          "placement_rules": [
+            "attach_to_v02_semantic_anchor",
+            "never_change_blocking_or_interaction_truth",
+            "keep_resource_and_hazard_icons_distinct"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "old_signal_tower_semantic_prop_shoulder",
+          "zone_type": "semantic_prop_shoulder"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 10,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "old_signal_tower_map_runtime_package_v0_2_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 5.675,
+            "min_x": 1.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_old_signal_north_ridge",
+          "zone_id": "old_signal_tower_route_path_old_signal_north_ridge_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.675,
+            "max_y": 8.675,
+            "min_x": 1.325,
+            "min_y": 4.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_old_signal_copper_trench",
+          "zone_id": "old_signal_tower_route_path_old_signal_copper_trench_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 1.6,
+            "min_x": 16.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "old_signal_tower_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 3.6,
+            "min_x": 16.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "old_signal_tower_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 1.6,
+            "min_x": 15.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "old_signal_tower_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 3.6,
+            "min_x": 15.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "old_signal_tower_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 1.6,
+            "min_x": 13.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "old_signal_tower_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 1.6,
+            "min_x": 12.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "old_signal_tower_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 1.6,
+            "min_x": 14.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "old_signal_tower_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 15.6,
+            "max_y": 3.6,
+            "min_x": 14.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "old_signal_tower_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 5.6,
+            "min_x": 11.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "old_signal_tower_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 3.6,
+            "min_x": 10.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "old_signal_tower_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 11.6,
+            "max_y": 5.6,
+            "min_x": 10.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "old_signal_tower_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 8.6,
+            "max_y": 3.6,
+            "min_x": 7.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "old_signal_tower_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 3.0,
+            "min_x": 16.0,
+            "min_y": 1.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_old_signal_north_ridge",
+          "zone_id": "old_signal_tower_spawn_spawn_path_old_signal_north_ridge",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.0,
+            "max_y": 9.0,
+            "min_x": 15.0,
+            "min_y": 7.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_old_signal_copper_trench",
+          "zone_id": "old_signal_tower_spawn_spawn_path_old_signal_copper_trench",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 2.15,
+            "max_y": 6.15,
+            "min_x": -0.15,
+            "min_y": 3.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_old_signal_tower_base",
+          "zone_id": "old_signal_tower_objective_target_old_signal_tower_base",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 4.9,
+            "max_y": 4.9,
+            "min_x": 3.1,
+            "min_y": 3.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_resonant_glass_fixture",
+          "zone_id": "old_signal_tower_objective_target_resonant_glass_fixture",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 6.9,
+            "max_y": 7.9,
+            "min_x": 5.1,
+            "min_y": 6.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_copper_grounding_pin",
+          "zone_id": "old_signal_tower_objective_target_copper_grounding_pin",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 5.8,
+            "max_y": 4.8,
+            "min_x": 4.2,
+            "min_y": 3.2
+          },
+          "clearance_cells": 0.5,
+          "geometry_kind": "footprint_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "resource_nodes.resource_old_signal_tower_primary",
+          "zone_id": "old_signal_tower_resource_resource_old_signal_tower_primary",
+          "zone_type": "resource_node_clearance"
+        },
+        {
+          "clearance_cells": 0.35,
+          "geometry_kind": "route_path_t_range",
+          "path_t_range": {
+            "end": 0.58,
+            "start": 0.42
+          },
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "hazard_zones.hazard_old_signal_tower_road_pressure",
+          "zone_id": "old_signal_tower_hazard_hazard_old_signal_tower_road_pressure",
+          "zone_type": "hazard_zone"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.0,
+            "max_y": 6.0,
+            "min_x": 6.0,
+            "min_y": 2.0
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "influence_radius_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "defense_anchors.anchor_old_signal_tower_mid_choke",
+          "zone_id": "old_signal_tower_defense_anchor_anchor_old_signal_tower_mid_choke",
+          "zone_type": "defense_anchor_marker"
+        },
+        {
+          "cells": [
+            {
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "clearance_cells": 0.2,
+          "geometry_kind": "blocked_cells",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "blocked_areas.blocked_old_signal_tower_edge_ruin",
+          "zone_id": "old_signal_tower_blocked_blocked_old_signal_tower_edge_ruin",
+          "zone_type": "blocked_area"
+        }
+      ],
+      "source_package": {
+        "node_id": "old_signal_tower",
+        "package_id": "map_pkg_old_signal_tower_v0_2",
+        "path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+        "schema_version": "map_runtime_package.v0.2"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 5,
+        "reserved_zone_count": 23,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    },
+    {
+      "allowed_decoration_zones": [
+        {
+          "allowed_prefab_tags": [
+            "background_ruin",
+            "tree_line",
+            "broken_wall",
+            "distant_light"
+          ],
+          "anchor_ref": "grid.outer_margin",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_grid_border_band",
+          "placement_rules": [
+            "prefer_outer_two_cells",
+            "never_create_walkable_road_shape",
+            "keep_hud_safe_area_clear"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "lamp_wick_store_map_border_decoration",
+          "zone_type": "map_border_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "roadside_pebble",
+            "fence_fragment",
+            "mud_track",
+            "small_lamp"
+          ],
+          "anchor_ref": "path_routes.*",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "derived_route_shoulder_without_reserved_overlap",
+          "placement_rules": [
+            "attach_to_route_band_edge",
+            "stay_outside_derived_road_band",
+            "do_not_hide_enemy_centerline"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "lamp_wick_store_route_shoulder_decoration",
+          "zone_type": "route_shoulder_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "ground_stain",
+            "small_scrap",
+            "grass_patch",
+            "nonblocking_stone"
+          ],
+          "anchor_ref": "grid.cells_minus_reserved_zones",
+          "density_hint": "medium",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "rule_based_empty_cell_fill",
+          "placement_rules": [
+            "avoid_platform_like_silhouette",
+            "avoid_resource_like_color",
+            "use_low_contrast_against_ground"
+          ],
+          "semantic_class": "C_decoration",
+          "zone_id": "lamp_wick_store_empty_cell_decoration",
+          "zone_type": "empty_cell_decoration"
+        },
+        {
+          "allowed_prefab_tags": [
+            "fog_soft",
+            "embers_small",
+            "light_falloff",
+            "shadow_vignette"
+          ],
+          "anchor_ref": "viewport_and_world_theme",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "screen_space_overlay_with_runtime_mask",
+          "placement_rules": [
+            "mask_out_objective_and_build_slots",
+            "keep_route_readability",
+            "no_full_screen_opaque_overlay"
+          ],
+          "semantic_class": "D_atmosphere",
+          "zone_id": "lamp_wick_store_atmosphere_overlay",
+          "zone_type": "atmosphere_overlay"
+        },
+        {
+          "allowed_prefab_tags": [
+            "warning_marker",
+            "resource_crate",
+            "anchor_rubble",
+            "hazard_sign"
+          ],
+          "anchor_ref": "resource_nodes|hazard_zones|defense_anchors|blocked_areas",
+          "density_hint": "low",
+          "forbidden_overlap": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ],
+          "geometry_kind": "strong_semantic_adjacent_ring_without_overlap",
+          "placement_rules": [
+            "attach_to_v02_semantic_anchor",
+            "never_change_blocking_or_interaction_truth",
+            "keep_resource_and_hazard_icons_distinct"
+          ],
+          "semantic_class": "B_weak_semantic",
+          "zone_id": "lamp_wick_store_semantic_prop_shoulder",
+          "zone_type": "semantic_prop_shoulder"
+        }
+      ],
+      "grid": {
+        "cell_size": 64,
+        "height_cells": 10,
+        "projection": "pseudo3d_oblique",
+        "width_cells": 18
+      },
+      "layer_rules": [
+        {
+          "description": "路径、出生点、目标、塔位、资源点、机关区、防守锚点和阻挡区只来自 MapRuntimePackage。",
+          "must_obey": [
+            "render_from_structured_anchor",
+            "no_decoration_overlap",
+            "no_image_reverse_inference"
+          ],
+          "rule_id": "strong_semantics_are_protected",
+          "semantic_class": "A_strong_semantic"
+        },
+        {
+          "description": "路边护栏、塔位碎石和资源点附属物可以随机，但必须依附结构化 anchor。",
+          "must_obey": [
+            "anchor_ref_required",
+            "obey_allowed_and_forbidden_zones",
+            "do_not_hide_strong_semantics"
+          ],
+          "rule_id": "weak_semantics_attach_to_anchors",
+          "semantic_class": "B_weak_semantic"
+        },
+        {
+          "description": "远景、污渍和非阻挡杂物不能看起来像道路、塔位、资源点或阻挡物。",
+          "must_obey": [
+            "no_road_mimicry",
+            "no_build_slot_mimicry",
+            "no_resource_mimicry"
+          ],
+          "rule_id": "decoration_must_not_mislead",
+          "semantic_class": "C_decoration"
+        },
+        {
+          "description": "雾、火花、光照和天气只能增强气质，不能遮挡核心交互信息。",
+          "must_obey": [
+            "keep_route_readable",
+            "keep_build_slots_readable",
+            "keep_objective_readable"
+          ],
+          "rule_id": "atmosphere_preserves_readability",
+          "semantic_class": "D_atmosphere"
+        }
+      ],
+      "map_id": "lamp_wick_store_map_runtime_package_v0_2_decoration_policy",
+      "reserved_zones": [
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 6.675,
+            "min_x": 0.325,
+            "min_y": 1.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_wick_store_main_pipe",
+          "zone_id": "lamp_wick_store_route_path_wick_store_main_pipe_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.675,
+            "max_y": 8.675,
+            "min_x": 1.325,
+            "min_y": 4.325
+          },
+          "clearance_cells": 0.675,
+          "geometry_kind": "derived_road_band_envelope",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "path_routes.path_wick_store_service_lane",
+          "zone_id": "lamp_wick_store_route_path_wick_store_service_lane_band",
+          "zone_type": "route_band"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 3.6,
+            "min_x": 16.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_01",
+          "zone_id": "lamp_wick_store_build_slot_slot_01",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 17.6,
+            "max_y": 5.6,
+            "min_x": 16.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_02",
+          "zone_id": "lamp_wick_store_build_slot_slot_02",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 3.6,
+            "min_x": 15.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_03",
+          "zone_id": "lamp_wick_store_build_slot_slot_03",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 16.6,
+            "max_y": 5.6,
+            "min_x": 15.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_04",
+          "zone_id": "lamp_wick_store_build_slot_slot_04",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 5.6,
+            "min_x": 12.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_05",
+          "zone_id": "lamp_wick_store_build_slot_slot_05",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 4.6,
+            "min_x": 11.4,
+            "min_y": 3.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_06",
+          "zone_id": "lamp_wick_store_build_slot_slot_06",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 3.6,
+            "min_x": 11.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_07",
+          "zone_id": "lamp_wick_store_build_slot_slot_07",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 3.6,
+            "min_x": 13.4,
+            "min_y": 2.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_08",
+          "zone_id": "lamp_wick_store_build_slot_slot_08",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 12.6,
+            "max_y": 5.6,
+            "min_x": 11.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_09",
+          "zone_id": "lamp_wick_store_build_slot_slot_09",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 5.6,
+            "min_x": 13.4,
+            "min_y": 4.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_10",
+          "zone_id": "lamp_wick_store_build_slot_slot_10",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 13.6,
+            "max_y": 1.6,
+            "min_x": 12.4,
+            "min_y": 0.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_11",
+          "zone_id": "lamp_wick_store_build_slot_slot_11",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 14.6,
+            "max_y": 2.6,
+            "min_x": 13.4,
+            "min_y": 1.4
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "footprint_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "build_slots.slot_12",
+          "zone_id": "lamp_wick_store_build_slot_slot_12",
+          "zone_type": "build_slot_footprint"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 5.0,
+            "min_x": 16.0,
+            "min_y": 3.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_wick_store_main_pipe",
+          "zone_id": "lamp_wick_store_spawn_spawn_path_wick_store_main_pipe",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 18.0,
+            "max_y": 9.0,
+            "min_x": 16.0,
+            "min_y": 7.0
+          },
+          "clearance_cells": 1.0,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "spawn_points.spawn_path_wick_store_service_lane",
+          "zone_id": "lamp_wick_store_spawn_spawn_path_wick_store_service_lane",
+          "zone_type": "spawn_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 1.15,
+            "max_y": 6.15,
+            "min_x": -1.15,
+            "min_y": 3.85
+          },
+          "clearance_cells": 1.15,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.core_target.target_wick_store_core",
+          "zone_id": "lamp_wick_store_objective_target_wick_store_core",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 2.9,
+            "max_y": 7.9,
+            "min_x": 1.1,
+            "min_y": 6.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_supply_line_coupler",
+          "zone_id": "lamp_wick_store_objective_target_supply_line_coupler",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 4.9,
+            "max_y": 3.9,
+            "min_x": 3.1,
+            "min_y": 2.1
+          },
+          "clearance_cells": 0.9,
+          "geometry_kind": "point_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "objectives.optional_targets.target_lamp_oil_shelf",
+          "zone_id": "lamp_wick_store_objective_target_lamp_oil_shelf",
+          "zone_type": "objective_clearance"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 3.8,
+            "max_y": 7.8,
+            "min_x": 2.2,
+            "min_y": 6.2
+          },
+          "clearance_cells": 0.5,
+          "geometry_kind": "footprint_clearance_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "resource_nodes.resource_lamp_wick_store_primary",
+          "zone_id": "lamp_wick_store_resource_resource_lamp_wick_store_primary",
+          "zone_type": "resource_node_clearance"
+        },
+        {
+          "clearance_cells": 0.35,
+          "geometry_kind": "route_path_t_range",
+          "path_t_range": {
+            "end": 0.58,
+            "start": 0.42
+          },
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "hazard_zones.hazard_lamp_wick_store_road_pressure",
+          "zone_id": "lamp_wick_store_hazard_hazard_lamp_wick_store_road_pressure",
+          "zone_type": "hazard_zone"
+        },
+        {
+          "bbox_cells": {
+            "max_x": 10.0,
+            "max_y": 4.0,
+            "min_x": 6.0,
+            "min_y": 0.0
+          },
+          "clearance_cells": 0.25,
+          "geometry_kind": "influence_radius_bbox",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "defense_anchors.anchor_lamp_wick_store_mid_choke",
+          "zone_id": "lamp_wick_store_defense_anchor_anchor_lamp_wick_store_mid_choke",
+          "zone_type": "defense_anchor_marker"
+        },
+        {
+          "cells": [
+            {
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "clearance_cells": 0.2,
+          "geometry_kind": "blocked_cells",
+          "protection_policy": [
+            "no_decoration_overlap",
+            "no_visual_mimicry",
+            "keep_player_readability"
+          ],
+          "semantic_class": "A_strong_semantic",
+          "source_ref": "blocked_areas.blocked_lamp_wick_store_edge_ruin",
+          "zone_id": "lamp_wick_store_blocked_blocked_lamp_wick_store_edge_ruin",
+          "zone_type": "blocked_area"
+        }
+      ],
+      "source_package": {
+        "node_id": "lamp_wick_store",
+        "package_id": "map_pkg_lamp_wick_store_v0_2",
+        "path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+        "schema_version": "map_runtime_package.v0.2"
+      },
+      "validation_report": {
+        "allowed_decoration_zone_count": 5,
+        "reserved_zone_count": 23,
+        "status": "passed",
+        "warning_count": 0,
+        "warnings": []
+      }
+    }
+  ],
+  "policy_id": "mvp_map_decoration_zone_policy_v0_1",
+  "schema_version": "map_decoration_zone_policy.v0.1",
+  "source_policy": {
+    "geometry_source": "MapRuntimePackage.path_routes.waypoints",
+    "image_to_logic_inference_allowed": false,
+    "may_modify_map_runtime_package": false,
+    "player_default_runtime": false,
+    "policy_role": "review_only_renderer_helper",
+    "provider_call_count": 0,
+    "runtime_fact_source": false,
+    "semantic_source": "MapRuntimePackage v0.1/v0.2"
+  },
+  "summary": {
+    "allowed_decoration_zone_count": 27,
+    "map_count": 6,
+    "reserved_zone_count": 120,
+    "source_schema_versions": [
+      "map_runtime_package.v0.1",
+      "map_runtime_package.v0.2"
+    ],
+    "strong_semantic_policy": "强语义来自 MapRuntimePackage；装饰和氛围只能在派生 allowed zones 中表现，不能反向决定路径、塔位、资源、机关、防守或阻挡事实。"
+  },
+  "usage_policy": [
+    "review_only",
+    "renderer_helper",
+    "not_player_runtime",
+    "not_map_runtime_fact_source",
+    "does_not_modify_map_runtime_package",
+    "no_image_to_logic_inference"
+  ]
+}

@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_decoration_zone_policy.v0.1.schema.json",
+  "title": "MapDecorationZonePolicy v0.1",
+  "description": "Review-only decoration and weak-semantic placement policy derived from MapRuntimePackage geometry. It is a renderer/helper constraint layer, not a runtime map fact source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "generated_at",
+    "source_policy",
+    "summary",
+    "maps",
+    "usage_policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "map_decoration_zone_policy.v0.1" },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "source_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_role",
+        "semantic_source",
+        "geometry_source",
+        "runtime_fact_source",
+        "player_default_runtime",
+        "image_to_logic_inference_allowed",
+        "may_modify_map_runtime_package",
+        "provider_call_count"
+      ],
+      "properties": {
+        "policy_role": { "type": "string", "const": "review_only_renderer_helper" },
+        "semantic_source": { "type": "string", "const": "MapRuntimePackage v0.1/v0.2" },
+        "geometry_source": { "type": "string", "const": "MapRuntimePackage.path_routes.waypoints" },
+        "runtime_fact_source": { "type": "boolean", "const": false },
+        "player_default_runtime": { "type": "boolean", "const": false },
+        "image_to_logic_inference_allowed": { "type": "boolean", "const": false },
+        "may_modify_map_runtime_package": { "type": "boolean", "const": false },
+        "provider_call_count": { "type": "integer", "const": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_count",
+        "reserved_zone_count",
+        "allowed_decoration_zone_count",
+        "source_schema_versions",
+        "strong_semantic_policy"
+      ],
+      "properties": {
+        "map_count": { "type": "integer", "minimum": 1 },
+        "reserved_zone_count": { "type": "integer", "minimum": 1 },
+        "allowed_decoration_zone_count": { "type": "integer", "minimum": 1 },
+        "source_schema_versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "strong_semantic_policy": { "type": "string", "minLength": 1 }
+      }
+    },
+    "maps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/map_policy" }
+    },
+    "usage_policy": {
+      "type": "array",
+      "minItems": 4,
+      "allOf": [
+        { "contains": { "const": "review_only" } },
+        { "contains": { "const": "not_map_runtime_fact_source" } },
+        { "contains": { "const": "does_not_modify_map_runtime_package" } },
+        { "contains": { "const": "no_image_to_logic_inference" } }
+      ],
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "bbox_cells": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_x", "min_y", "max_x", "max_y"],
+      "properties": {
+        "min_x": { "type": "number" },
+        "min_y": { "type": "number" },
+        "max_x": { "type": "number" },
+        "max_y": { "type": "number" }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection", "width_cells", "height_cells", "cell_size"],
+      "properties": {
+        "projection": { "type": "string", "minLength": 1 },
+        "width_cells": { "type": "integer", "minimum": 1 },
+        "height_cells": { "type": "integer", "minimum": 1 },
+        "cell_size": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "source_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "package_id", "node_id", "schema_version"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "package_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "string", "enum": ["map_runtime_package.v0.1", "map_runtime_package.v0.2"] }
+      }
+    },
+    "path_t_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "number", "minimum": 0, "maximum": 1 },
+        "end": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "reserved_zone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zone_id",
+        "zone_type",
+        "semantic_class",
+        "source_ref",
+        "geometry_kind",
+        "clearance_cells",
+        "protection_policy"
+      ],
+      "properties": {
+        "zone_id": { "type": "string", "minLength": 1 },
+        "zone_type": {
+          "type": "string",
+          "enum": [
+            "route_band",
+            "spawn_clearance",
+            "objective_clearance",
+            "build_slot_footprint",
+            "resource_node_clearance",
+            "hazard_zone",
+            "defense_anchor_marker",
+            "blocked_area"
+          ]
+        },
+        "semantic_class": { "type": "string", "const": "A_strong_semantic" },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "geometry_kind": { "type": "string", "minLength": 1 },
+        "bbox_cells": { "$ref": "#/$defs/bbox_cells" },
+        "cells": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cell" }
+        },
+        "path_t_range": { "$ref": "#/$defs/path_t_range" },
+        "clearance_cells": { "type": "number", "minimum": 0 },
+        "protection_policy": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "anyOf": [
+        { "required": ["bbox_cells"] },
+        { "required": ["cells"] },
+        { "required": ["path_t_range"] }
+      ]
+    },
+    "allowed_decoration_zone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zone_id",
+        "zone_type",
+        "semantic_class",
+        "anchor_ref",
+        "geometry_kind",
+        "allowed_prefab_tags",
+        "forbidden_overlap",
+        "placement_rules",
+        "density_hint"
+      ],
+      "properties": {
+        "zone_id": { "type": "string", "minLength": 1 },
+        "zone_type": {
+          "type": "string",
+          "enum": [
+            "map_border_decoration",
+            "route_shoulder_decoration",
+            "empty_cell_decoration",
+            "semantic_prop_shoulder",
+            "atmosphere_overlay"
+          ]
+        },
+        "semantic_class": {
+          "type": "string",
+          "enum": ["B_weak_semantic", "C_decoration", "D_atmosphere"]
+        },
+        "anchor_ref": { "type": "string", "minLength": 1 },
+        "geometry_kind": { "type": "string", "minLength": 1 },
+        "allowed_prefab_tags": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "forbidden_overlap": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "placement_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "density_hint": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    },
+    "layer_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semantic_class", "rule_id", "description", "must_obey"],
+      "properties": {
+        "semantic_class": {
+          "type": "string",
+          "enum": ["A_strong_semantic", "B_weak_semantic", "C_decoration", "D_atmosphere"]
+        },
+        "rule_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "must_obey": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reserved_zone_count",
+        "allowed_decoration_zone_count",
+        "warning_count",
+        "warnings"
+      ],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "passed_with_warnings"] },
+        "reserved_zone_count": { "type": "integer", "minimum": 1 },
+        "allowed_decoration_zone_count": { "type": "integer", "minimum": 1 },
+        "warning_count": { "type": "integer", "minimum": 0 },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "map_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_id",
+        "source_package",
+        "grid",
+        "reserved_zones",
+        "allowed_decoration_zones",
+        "layer_rules",
+        "validation_report"
+      ],
+      "properties": {
+        "map_id": { "type": "string", "minLength": 1 },
+        "source_package": { "$ref": "#/$defs/source_package" },
+        "grid": { "$ref": "#/$defs/grid" },
+        "reserved_zones": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/reserved_zone" }
+        },
+        "allowed_decoration_zones": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/allowed_decoration_zone" }
+        },
+        "layer_rules": {
+          "type": "array",
+          "minItems": 4,
+          "items": { "$ref": "#/$defs/layer_rule" }
+        },
+        "validation_report": { "$ref": "#/$defs/validation_report" }
+      }
+    }
+  }
+}

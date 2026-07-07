@@ -67,6 +67,15 @@ MapCompilePackage v0.2
 - `tools/asset_graph/validate_map_template_catalog.py`
 - `examples/map_template_catalogs/mvp_map_template_catalog.v0.1.json`
 
+`MapDecorationZonePolicy v0.1` 是对 `DecorationZoneMap` 思路的最小工程化采纳。它不新建与 `MapRuntimePackage` 竞争的地图事实源，而是从现有 `MapRuntimePackage v0.1 / v0.2 preview` 与 `path_routes.waypoints` 几何派生强语义保护区、弱语义可附着区、纯装饰区和氛围层约束，供 renderer / StylePack / 后续组件化地图使用。它的职责是告诉程序化渲染器“哪里不能放装饰、哪里可以低风险放装饰、氛围层不能遮挡什么”，不能反向修改路径、塔位、目标、出生点、资源、机关、防守锚点或阻挡区。
+
+当前字段级入口：
+
+- `shared/schemas/map_decoration_zone_policy.v0.1.schema.json`
+- `tools/asset_graph/build_map_decoration_zone_policy.py`
+- `tools/asset_graph/validate_map_decoration_zone_policy.py`
+- `examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json`
+
 | 外部概念 | 本项目当前映射 | 采纳方式 |
 |---|---|---|
 | `PathGraph` / `SplinePath` | `MapRuntimePackage.path_routes` | v0.1 仍用结构化 waypoints；后续 v0.2 可增加 sampled spline / road band。 |
@@ -75,7 +84,7 @@ MapCompilePackage v0.2
 | `CollisionMap` | `MapRuntimePackage v0.2 preview.blocked_areas` 与当前 validator 冲突检查 | 已旁路表达显式阻挡区，但仍不能从图片反推。 |
 | `ResourceNodeMap` | `MapRuntimePackage v0.2 preview.resource_nodes` | 已作为 v0.2 preview 引入，前端默认 runtime 暂不切换。 |
 | `HazardZoneMap` | `MapRuntimePackage v0.2 preview.hazard_zones` | 已作为 v0.2 preview 引入，后续再接环境 modifier / 战斗结算。 |
-| `DecorationZoneMap` | 当前前端程序化地标 / 边缘装饰 | 后续由 renderer/StylePack 管，不成为玩法事实。 |
+| `DecorationZoneMap` | `MapDecorationZonePolicy v0.1` + 当前前端程序化地标 / 边缘装饰 | 作为 review-only renderer helper 采纳；不成为玩法事实，不从图片反推。 |
 
 ### 1.2 采纳：AI 负责风格和组件，不负责运行时语义
 

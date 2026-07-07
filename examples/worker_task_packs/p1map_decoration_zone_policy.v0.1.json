@@ -1,0 +1,121 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-MAP-decoration-zone-policy",
+  "title": "MapDecorationZonePolicy v0.1 review-only decoration constraints",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/map-decoration-zone-policy",
+  "worktree": "/tmp/ai-td-task-map-decoration-zone-policy",
+  "objective": "实现一个从 MapRuntimePackage v0.1/v0.2 派生的 MapDecorationZonePolicy v0.1，用于约束弱语义、装饰和氛围层；它只能作为 renderer/helper 的 review-only 策略，不能替代 MapRuntimePackage，也不能从图片反推运行时逻辑。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "shared/schemas/map_runtime_package.v0.1.schema.json",
+    "shared/schemas/map_runtime_package.v0.2.schema.json",
+    "tools/asset_graph/map_path_geometry.py",
+    "tools/asset_graph/validate_map_runtime_package.py",
+    "tools/asset_graph/validate_map_runtime_package_v02.py"
+  ],
+  "allowed_paths": [
+    "shared/schemas/map_decoration_zone_policy.v0.1.schema.json",
+    "tools/asset_graph/build_map_decoration_zone_policy.py",
+    "tools/asset_graph/validate_map_decoration_zone_policy.py",
+    "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+    "docs/MAP_COMPILATION_DESIGN_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1map_decoration_zone_policy.v0.1.json",
+    "tools/dev/run_fast_quality_gate.py"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_runtime_packages",
+    "examples/map_runtime_packages_v02"
+  ],
+  "acceptance_commands": [
+    "python3 tools/asset_graph/build_map_decoration_zone_policy.py --validate",
+    "python3 tools/asset_graph/validate_map_decoration_zone_policy.py examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1map_decoration_zone_policy.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_decoration_zone_policy python3 -m py_compile tools/asset_graph/build_map_decoration_zone_policy.py tools/asset_graph/validate_map_decoration_zone_policy.py",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1map_decoration_zone_policy.v0.1.json --profile daily_fast --output /tmp/map_decoration_zone_policy_runner.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_decoration_zone_policy_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，只验证 decoration zone policy、worker task pack、Python 编译和 fast gate，不跑完整 demo evidence。",
+        "commands": [
+          "python3 tools/asset_graph/build_map_decoration_zone_policy.py --validate",
+          "python3 tools/asset_graph/validate_map_decoration_zone_policy.py examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1map_decoration_zone_policy.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_decoration_zone_policy python3 -m py_compile tools/asset_graph/build_map_decoration_zone_policy.py tools/asset_graph/validate_map_decoration_zone_policy.py",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_decoration_zone_policy_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，在 policy 快速验收之后运行完整 evidence export，证明没有绕过现有 runtime/evidence 链。",
+        "commands": [
+          "python3 tools/asset_graph/build_map_decoration_zone_policy.py --validate",
+          "python3 tools/asset_graph/validate_map_decoration_zone_policy.py examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1map_decoration_zone_policy.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_decoration_zone_policy python3 -m py_compile tools/asset_graph/build_map_decoration_zone_policy.py tools/asset_graph/validate_map_decoration_zone_policy.py",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/map_decoration_zone_policy_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "MapDecorationZonePolicy 只约束弱语义、装饰和氛围层的放置，不是玩家默认 runtime。",
+    "强语义仍由 MapRuntimePackage / MapRuntimePackage v0.2 preview 决定；policy 只能派生保护区和 allowed zones。",
+    "daily_fast 不运行完整 evidence；full_evidence profile 才运行 tools/demo/export_evidence.py --output-dir。"
+  ]
+}
