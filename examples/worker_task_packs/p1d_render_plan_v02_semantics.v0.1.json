@@ -18,7 +18,8 @@
     "tools/asset_graph/build_procedural_map_render_plan.py",
     "tools/asset_graph/render_procedural_map_preview.py",
     "tools/asset_graph/validate_procedural_map_preview_report.py",
-    "examples/map_runtime_packages_v02/"
+    "examples/map_runtime_packages_v02/",
+    "tools/demo/validate_demo_evidence_contract.py"
   ],
   "allowed_paths": [
     "shared/schemas/procedural_map_render_plan.v0.1.schema.json",
@@ -50,7 +51,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
     "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json",
     "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json",
     "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
@@ -61,9 +62,59 @@
     "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_wick_store_pressure.procedural_map_preview_report.json",
     "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
     "python3 tools/demo/export_evidence.py --output-dir /tmp/render_plan_v02_semantics_evidence",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nevidence = json.loads(Path('/tmp/render_plan_v02_semantics_evidence/evidence.json').read_text(encoding='utf-8'))\nsummary = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews_v02']\nassert summary['report_count'] == 3\nassert summary['ready_count'] == 3\nfor sample in summary['preview_samples']:\n    render = sample['render_summary']\n    assert render['resource_node_count'] == 1\n    assert render['hazard_zone_count'] == 1\n    assert render['defense_anchor_count'] == 1\n    assert render['blocked_area_count'] == 1\nPY",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/render_plan_v02_semantics_evidence/evidence.json",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_wick_store_pressure.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/render_plan_v02_semantics_evidence/evidence.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-v02-semantics python3 -m py_compile tools/asset_graph/procedural_map_render_plan.py tools/asset_graph/build_procedural_map_render_plan.py tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_first_battle.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_first_battle.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports_v02/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans_v02/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_first_battle.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_wick_store_pressure.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews_v02/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/render_plan_v02_semantics_evidence",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/render_plan_v02_semantics_evidence/evidence.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

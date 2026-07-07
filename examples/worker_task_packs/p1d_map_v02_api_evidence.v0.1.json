@@ -17,7 +17,8 @@
     "backend/app/services/map_runtime_service.py",
     "backend/app/services/map_render_plan_service.py",
     "tools/demo/export_evidence.py",
-    "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json"
+    "examples/review_packs/map_v02_preview_api_smoke_report.v0.1.json",
+    "tools/demo/validate_demo_evidence_contract.py"
   ],
   "allowed_paths": [
     "tools/dev/check_map_v02_preview_api.py",
@@ -46,12 +47,46 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
     "UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence uv run --extra dev python tools/dev/check_map_v02_preview_api.py --output /tmp/map_v02_preview_api_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00",
     "python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_api_evidence",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nevidence = json.loads(Path('/tmp/map_v02_api_evidence/evidence.json').read_text(encoding='utf-8'))\napi = evidence['backend_api_evidence']['map_v02_preview']\nassert api['status'] == 'passed'\nassert api['node_count'] == 3\nassert api['default_runtime_v01_preserved_count'] == 3\nassert api['safety']['provider_call_count'] == 0\nassert api['runtime_activation_allowed'] is False\nPY",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/map_v02_api_evidence/evidence.json",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence uv run --extra dev python tools/dev/check_map_v02_preview_api.py --output /tmp/map_v02_preview_api_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/map_v02_api_evidence/evidence.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-v02-api-evidence python3 -m py_compile tools/dev/check_map_v02_preview_api.py tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "UV_CACHE_DIR=/tmp/ai-td-uv-cache-map-v02-api-evidence UV_PROJECT_ENVIRONMENT=/tmp/ai-td-uv-venv-map-v02-api-evidence uv run --extra dev python tools/dev/check_map_v02_preview_api.py --output /tmp/map_v02_preview_api_smoke_report.json --generated-at 2026-07-04T00:00:00+00:00",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/map_v02_api_evidence",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/map_v02_api_evidence/evidence.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

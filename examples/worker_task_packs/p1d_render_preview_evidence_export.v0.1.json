@@ -18,7 +18,8 @@
     "tools/asset_graph/validate_procedural_map_preview_report.py",
     "examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json",
     "examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json",
-    "examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json"
+    "examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+    "tools/demo/validate_demo_evidence_contract.py"
   ],
   "allowed_paths": [
     "tools/demo/export_evidence.py",
@@ -43,11 +44,43 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
     "python3 tools/demo/export_evidence.py --output-dir /tmp/render_preview_evidence_export",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nroot = Path('/tmp/render_preview_evidence_export')\nevidence = json.loads((root / 'evidence.json').read_text(encoding='utf-8'))\npreviews = evidence['assets_and_media']['map_visual_reference']['procedural_map_previews']\nassert previews['report_count'] == 3\nassert previews['ready_count'] == 3\nassert previews['runtime_activation_policy'] == 'review_only_not_player_runtime'\nsummary = (root / 'summary.md').read_text(encoding='utf-8')\nassert '地图 RenderPlan 离线预览' in summary\nPY",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/render_preview_evidence_export/evidence.json --summary /tmp/render_preview_evidence_export/summary.md",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/render_preview_evidence_export/evidence.json --summary /tmp/render_preview_evidence_export/summary.md",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-preview-evidence python3 -m py_compile tools/demo/export_evidence.py tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/render_preview_evidence_export",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/render_preview_evidence_export/evidence.json --summary /tmp/render_preview_evidence_export/summary.md",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

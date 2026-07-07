@@ -1,0 +1,179 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-12-worker-acceptance-evidence-assertions",
+  "title": "WorkerTaskPack demo evidence assertions without heredoc",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-evidence-assertions",
+  "worktree": "/tmp/ai-td-task-worker-profile-evidence-assertions",
+  "objective": "把 P1-D demo evidence 任务包中的 heredoc JSON 断言替换为窄用途标准 validator，使这些任务包可以迁移到 acceptance_profile，并继续保持不调用 provider、不读取 .env、不激活 runtime 的边界。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/demo/validate_demo_evidence_contract.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/migrate_worker_acceptance_profiles.py"
+  ],
+  "allowed_paths": [
+    "tools/demo/validate_demo_evidence_contract.py",
+    "examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+    "examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json",
+    "examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+    "examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+    "examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json",
+    "examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+    "examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+    "examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "examples/review_packs/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_evidence_contract python3 -m py_compile tools/demo/validate_demo_evidence_contract.py",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+    "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_report.json --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/evidence_assertions_summary",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract demo_readiness_video_boundary --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract map_runtime_v02 --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_demo_readiness --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_primary_api_flow --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/evidence_assertions_summary/evidence.json",
+    "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/evidence_assertions_summary/evidence.json --summary /tmp/evidence_assertions_summary/summary.md",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/evidence_assertions_audit_after_migrate.json --max-samples 200",
+    "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/evidence_assertions_after_dry.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/evidence_assertions_fast_gate.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/evidence_assertions_full_evidence",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，验证 P1-D evidence 断言 validator、7 个已迁移任务包、审计统计和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_evidence_contract python3 -m py_compile tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+          "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_report.json --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/evidence_assertions_summary",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract demo_readiness_video_boundary --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_runtime_v02 --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_demo_readiness --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_primary_api_flow --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/evidence_assertions_summary/evidence.json --summary /tmp/evidence_assertions_summary/summary.md",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/evidence_assertions_audit_after_migrate.json --max-samples 200",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/evidence_assertions_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/evidence_assertions_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，在 daily_fast 基础上导出完整 demo evidence。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_evidence_contract python3 -m py_compile tools/demo/validate_demo_evidence_contract.py",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json",
+          "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_report.json --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/evidence_assertions_summary",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract demo_readiness_video_boundary --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_video_boundary_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_runtime_v02 --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract map_v02_api --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_demo_readiness --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_report.json --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_primary_api_flow --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_plan_v02_semantics --evidence /tmp/evidence_assertions_summary/evidence.json",
+          "python3 tools/demo/validate_demo_evidence_contract.py --contract render_preview_export --evidence /tmp/evidence_assertions_summary/evidence.json --summary /tmp/evidence_assertions_summary/summary.md",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/evidence_assertions_audit_after_migrate.json --max-samples 200",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/evidence_assertions_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/evidence_assertions_fast_gate.json",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/evidence_assertions_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只标准化 demo evidence JSON 断言，不修改前端、后端、schema、runtime 或 review pack。",
+    "tools/demo/validate_demo_evidence_contract.py 是窄用途 validator，只覆盖已有 P1-D evidence 合同，不执行任意表达式。",
+    "迁移 7 个 P1-D 任务包后，审计从 112 packs: 99 with profile, 13 without profile, 13 migration candidates, 13 manual review required 变为 112 packs: 106 with profile, 6 without profile, 6 migration candidates, 6 manual review required；新增本任务包后预期为 113 packs: 107 with profile, 6 without profile, 6 migration candidates, 6 manual review required。"
+  ]
+}

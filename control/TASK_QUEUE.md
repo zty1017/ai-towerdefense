@@ -4106,6 +4106,55 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/media_negative_checks_fu
 git diff --check
 ```
 
+### P1-E-12 WorkerTaskPack demo evidence assertions without heredoc
+
+状态：已完成 P1-D evidence 断言任务包迁移。
+
+目标：
+
+```text
+把 P1-D demo evidence 任务包中的 heredoc JSON 断言替换为窄用途标准 validator，使这些任务包可以纳入 acceptance_profile runner。
+```
+
+已落地：
+
+- 新增 `tools/demo/validate_demo_evidence_contract.py`，用于校验已有 demo evidence 分区的固定合同。
+- 更新并迁移以下 7 个任务包到 `acceptance_profile`：
+  - `examples/worker_task_packs/p1d_demo_readiness_video_boundary.v0.1.json`
+  - `examples/worker_task_packs/p1d_map_runtime_semantics_v02.v0.1.json`
+  - `examples/worker_task_packs/p1d_map_v02_api_evidence.v0.1.json`
+  - `examples/worker_task_packs/p1d_mvp_demo_readiness_report.v0.1.json`
+  - `examples/worker_task_packs/p1d_mvp_primary_api_flow_evidence.v0.1.json`
+  - `examples/worker_task_packs/p1d_render_plan_v02_semantics.v0.1.json`
+  - `examples/worker_task_packs/p1d_render_preview_evidence_export.v0.1.json`
+- 新增 `examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json` 记录本轮验收任务。
+
+效果：
+
+- 迁移 7 个原本需要人工审查的 P1-D demo evidence 任务包。
+- 审计从 `112 packs: 99 with profile, 13 without profile, 13 migration candidates, 13 manual review required` 先变为 `112 packs: 106 with profile, 6 without profile, 6 migration candidates, 6 manual review required`。
+- 新增本任务包后，预期审计为 `113 packs: 107 with profile, 6 without profile, 6 migration candidates, 6 manual review required`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改 schema、runtime package、前端或后端。
+- 新 validator 是窄用途合同检查器，不支持任意 Python 表达式，也不重新运行 evidence 子流程。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_evidence_assertions.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_evidence_contract python3 -m py_compile tools/demo/validate_demo_evidence_contract.py
+python3 tools/demo/build_mvp_demo_readiness_report.py --output /tmp/evidence_assertions_mvp_demo_readiness_report.json --generated-at 2026-07-07T00:00:00+00:00
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/evidence_assertions_summary
+python3 tools/demo/validate_demo_evidence_contract.py --contract mvp_demo_readiness --readiness-report /tmp/evidence_assertions_mvp_demo_readiness_report.json --evidence /tmp/evidence_assertions_summary/evidence.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/evidence_assertions_audit_after_migrate.json --max-samples 200
+python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/evidence_assertions_after_dry.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/evidence_assertions_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/evidence_assertions_full_evidence
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。
