@@ -1,4 +1,54 @@
 {
+  "approved_activation_selector": [
+    {
+      "activation_applied": true,
+      "authorization_status": "approved_for_gate_review",
+      "node_id": "gray_lantern_station",
+      "provider_call_count": 0,
+      "reads_env": false,
+      "selected_package_id": "map_pkg_gray_lantern_station_v0_2",
+      "selected_schema_version": "map_runtime_package.v0.2",
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      },
+      "target_matches_candidate": true
+    },
+    {
+      "activation_applied": true,
+      "authorization_status": "approved_for_gate_review",
+      "node_id": "lamp_wick_store",
+      "provider_call_count": 0,
+      "reads_env": false,
+      "selected_package_id": "map_pkg_lamp_wick_store_v0_2",
+      "selected_schema_version": "map_runtime_package.v0.2",
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      },
+      "target_matches_candidate": true
+    },
+    {
+      "activation_applied": true,
+      "authorization_status": "approved_for_gate_review",
+      "node_id": "old_signal_tower",
+      "provider_call_count": 0,
+      "reads_env": false,
+      "selected_package_id": "map_pkg_old_signal_tower_v0_2",
+      "selected_schema_version": "map_runtime_package.v0.2",
+      "strong_semantic_counts": {
+        "blocked_areas_count": 1,
+        "defense_anchors_count": 1,
+        "hazard_zones_count": 1,
+        "resource_nodes_count": 1
+      },
+      "target_matches_candidate": true
+    }
+  ],
   "approved_service_contract": [
     {
       "approved_authorization_status": "approved_for_gate_review",
@@ -124,7 +174,7 @@
     }
   ],
   "endpoint": "GET /api/sessions/{session_id}/battles/{node_id}/map-v02-opt-in-dry-run",
-  "generated_at": "2026-07-05T00:00:00+00:00",
+  "generated_at": "2026-07-06T00:00:00+00:00",
   "node_count": 3,
   "node_ids": [
     "gray_lantern_station",
@@ -146,6 +196,8 @@
   "summary": {
     "api_pending_authorization_count": 3,
     "approved_candidate_available_count": 3,
+    "approved_selector_activation_applied_count": 3,
+    "approved_selector_selected_v02_count": 3,
     "default_runtime_mutation_count": 0,
     "default_runtime_v01_preserved_count": 3,
     "provider_call_count": 0,

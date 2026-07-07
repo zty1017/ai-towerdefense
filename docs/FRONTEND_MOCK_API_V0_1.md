@@ -796,6 +796,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/map-runtime-package
 返回：
 
 - `map_runtime_package`
+- `runtime_selection`：默认地图运行包选择摘要，记录是否由显式开发者授权把 v0.2 强语义包选为玩家默认 runtime。
 
 当前 MVP 首战节点支持：
 
@@ -805,12 +806,15 @@ lamp_wick_store
 old_signal_tower
 ```
 
-`MapRuntimePackage v0.1` 的边界：
+`MapRuntimePackage` 默认选择边界：
 
 - 路径、塔位、出生点和目标来自结构化逻辑数据。
 - `visual_layers` 只引用本地 `/assets/map_visual_reference/...` 视觉参考层。
 - 视觉参考层不是玩法真值，不决定碰撞、伤害、资源、部署或任务条件。
 - 后续 AI 生成 painted map 时，也必须重新对齐到同一个 map runtime package。
+- 当前仓库默认授权报告仍为 pending，因此玩家默认响应仍选择 `MapRuntimePackage v0.1`。
+- 当本地显式开发者授权报告批准对应 v0.2 目标且 target 匹配时，服务层 selector 可以把 `/map-runtime-package`、`/config` 和 `/runtime-package` 聚合响应切到 `MapRuntimePackage v0.2`，并同步使用匹配的 v0.2 RenderPlan bundle。
+- 该 selector 不读取 `.env`、不调用 provider、不消费 review-only/失败整图候选；v0.2 强语义只能来自结构化 `MapRuntimePackage` 字段。
 
 ### 获取 v0.2 地图审查预览包
 
@@ -833,7 +837,8 @@ GET /api/sessions/{session_id}/battles/{node_id}/map-v02-preview
 边界：
 
 - 该接口只服务开发审查、Studio 证据和演示录屏，不是玩家默认战斗地图接口。
-- 默认玩家战斗仍使用 `/map-runtime-package` 返回的 `MapRuntimePackage v0.1`。
+- 默认授权报告 pending 时，玩家战斗仍使用 `/map-runtime-package` 返回的 `MapRuntimePackage v0.1`。
+- v0.2 进入默认玩家 runtime 只能经 developer-approved selector，不能通过调用本 review-only endpoint 间接激活。
 - v0.2 包和 SVG 预览不得被当作 `published_visual_layer`，也不得绕过地图视觉晋升门禁。
 - 返回的 `mode` 仍是 `frontend_mock_fixture`，便于前端 mock 客户端复用现有响应包装；review-only 语义在 payload 内表达。
 
@@ -845,7 +850,7 @@ GET /api/sessions/{session_id}/battles/{node_id}/runtime-package
 
 返回当前节点对应 reviewed runtime package，同时附带当前可用的样品展示资产、媒体清单和战斗运行时美术包。
 
-若该节点已经生成 `MapRuntimePackage v0.1`，响应中也会附带 `map_runtime_package`，便于战斗运行时在同一个请求中拿到资产包与地图包。
+若该节点已经生成 `MapRuntimePackage`，响应中也会附带 `map_runtime_package` 与 `runtime_selection`，便于战斗运行时在同一个请求中拿到资产包与当前被批准的地图包。默认 pending 授权下该包仍为 v0.1；临时 approved 授权夹具用于测试 selector 是否能一致切到 v0.2。
 
 ### 提交战斗结果
 

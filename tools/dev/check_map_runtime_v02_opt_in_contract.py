@@ -240,6 +240,44 @@ def check_approved_service_contract(
     }
 
 
+def check_approved_activation_selector(
+    service: Any, node_id: str, approved_report_path: Path
+) -> dict[str, Any]:
+    selection = service.map_runtime_activation_selection(
+        node_id, authorization_report_path=approved_report_path
+    )
+    selected_package = service.load_selected_map_runtime_package(
+        node_id, authorization_report_path=approved_report_path
+    )
+    if selection.get("activation_applied") is not True:
+        raise AssertionError(f"{node_id}: approved selector did not apply activation")
+    if selection.get("selected_schema_version") != "map_runtime_package.v0.2":
+        raise AssertionError(f"{node_id}: approved selector did not choose v0.2")
+    if selected_package.get("schema_version") != "map_runtime_package.v0.2":
+        raise AssertionError(f"{node_id}: selected package is not v0.2")
+    if selected_package.get("package_id") != selection.get("selected_package_id"):
+        raise AssertionError(f"{node_id}: selected package does not match selection summary")
+    counts = semantic_counts(selected_package)
+    if any(value < 1 for value in counts.values()):
+        raise AssertionError(f"{node_id}: selector selected v0.2 without strong semantics {counts}")
+    authorization = as_obj(selection.get("authorization"))
+    if authorization.get("authorization_status") != "approved_for_gate_review":
+        raise AssertionError(f"{node_id}: selector authorization status mismatch")
+    if authorization.get("target_matches_candidate") is not True:
+        raise AssertionError(f"{node_id}: selector target did not match candidate")
+    return {
+        "node_id": node_id,
+        "activation_applied": selection.get("activation_applied"),
+        "selected_schema_version": selection.get("selected_schema_version"),
+        "selected_package_id": selection.get("selected_package_id"),
+        "strong_semantic_counts": counts,
+        "authorization_status": authorization.get("authorization_status"),
+        "target_matches_candidate": authorization.get("target_matches_candidate"),
+        "provider_call_count": as_obj(selection.get("safety")).get("provider_call_count"),
+        "reads_env": as_obj(selection.get("safety")).get("reads_env"),
+    }
+
+
 def start_server(db_path: Path, port: int) -> subprocess.Popen[str]:
     env = os.environ.copy()
     env["APP_DB_PATH"] = str(db_path)
@@ -299,6 +337,12 @@ def build_report(generated_at: str | None = None) -> dict[str, Any]:
                 )
                 for node_id in NODE_IDS
             ]
+            approved_selector = [
+                check_approved_activation_selector(
+                    map_runtime_service, node_id, approved_report_path
+                )
+                for node_id in NODE_IDS
+            ]
             unknown_response = request_json(
                 base_url,
                 "GET",
@@ -324,6 +368,7 @@ def build_report(generated_at: str | None = None) -> dict[str, Any]:
         "node_ids": list(NODE_IDS),
         "default_api": default_api,
         "approved_service_contract": approved_service,
+        "approved_activation_selector": approved_selector,
         "summary": {
             "default_runtime_v01_preserved_count": sum(
                 1
@@ -340,6 +385,16 @@ def build_report(generated_at: str | None = None) -> dict[str, Any]:
                 1
                 for item in approved_service
                 if item.get("approved_candidate_available") is True
+            ),
+            "approved_selector_selected_v02_count": sum(
+                1
+                for item in approved_selector
+                if item.get("selected_schema_version") == "map_runtime_package.v0.2"
+            ),
+            "approved_selector_activation_applied_count": sum(
+                1
+                for item in approved_selector
+                if item.get("activation_applied") is True
             ),
             "runtime_activation_allowed_count": sum(
                 1

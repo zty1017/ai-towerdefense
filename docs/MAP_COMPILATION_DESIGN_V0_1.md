@@ -39,6 +39,7 @@ MapRuntimePackage v0.1 / v0.2 preview
   -> SemanticVisualConsistencyReport
   -> review-only preview / screenshot / evidence
   -> explicit promotion / activation gate
+  -> developer-approved runtime selector
 ```
 
 ## 1. 采纳原则
@@ -177,6 +178,8 @@ MapRuntimePackage
   -> preview.png / runtime canvas layers
   -> SemanticVisualConsistencyReport
 ```
+
+当前实现已经补上最小 runtime selector：默认授权记录 pending 时，后端玩家默认路径仍返回 `MapRuntimePackage v0.1`；当本地显式开发者授权报告批准某个 v0.2 目标且 target 匹配时，`/map-runtime-package`、`/config`、`/runtime-package` 和 `/map-render-plan` 会在同一选择摘要下切到 `MapRuntimePackage v0.2` 与匹配的 v0.2 RenderPlan bundle。该 selector 不是绕过 gate 的快捷开关，它只消费本地授权记录和已审结构化包，不读取 `.env`、不调用 provider、不使用 review-only 整图候选作为运行时真相。
 
 渲染层建议固定为：
 

@@ -95,6 +95,103 @@ def _runtime_summary(map_package: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _path_ref(path: Path) -> str:
+    return (
+        path.relative_to(_REPO_ROOT).as_posix()
+        if path.is_relative_to(_REPO_ROOT)
+        else str(path)
+    )
+
+
+def _authorization_report_ref(authorization_report_path: Path | None = None) -> str:
+    return _path_ref(authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT)
+
+
+def _authorization_matches_candidate(
+    authorization: dict[str, Any] | None,
+    candidate_package: dict[str, Any] | None,
+) -> bool:
+    if not authorization or not candidate_package:
+        return False
+    candidate_target = authorization.get("target_candidate") or {}
+    if not isinstance(candidate_target, dict):
+        return False
+    return (
+        candidate_target.get("to_package_id") == candidate_package.get("package_id")
+        and candidate_target.get("to_schema_version") == candidate_package.get("schema_version")
+    )
+
+
+def _authorization_activates_candidate(
+    authorization: dict[str, Any] | None,
+    candidate_package: dict[str, Any] | None,
+) -> bool:
+    return (
+        _authorization_matches_candidate(authorization, candidate_package)
+        and authorization is not None
+        and authorization.get("authorization_status") == "approved_for_gate_review"
+        and authorization.get("activation_authorized_for_gate") is True
+    )
+
+
+def map_runtime_activation_selection(
+    node_id: str,
+    authorization_report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Return the developer-controlled default runtime selection for a node."""
+    default_package = load_map_runtime_package(node_id)
+    candidate_package = load_map_runtime_package_v02_optional(node_id)
+    authorization = _authorization_for_node(node_id, authorization_report_path)
+    target_matches = _authorization_matches_candidate(authorization, candidate_package)
+    use_v02 = _authorization_activates_candidate(authorization, candidate_package)
+    selected_package = candidate_package if use_v02 and candidate_package else default_package
+    fallback_reasons: list[str] = []
+    if not candidate_package:
+        fallback_reasons.append("v02_candidate_missing")
+    if authorization is None:
+        fallback_reasons.append("developer_authorization_record_missing")
+    elif authorization.get("authorization_status") != "approved_for_gate_review":
+        fallback_reasons.append("developer_authorization_not_approved")
+    elif not target_matches:
+        fallback_reasons.append("developer_authorization_target_mismatch")
+
+    return {
+        "node_id": node_id,
+        "selection_mode": "developer_authorization_selector",
+        "selected_schema_version": selected_package.get("schema_version"),
+        "selected_package_id": selected_package.get("package_id"),
+        "selected_runtime_family": "v0.2"
+        if selected_package.get("schema_version") == "map_runtime_package.v0.2"
+        else "v0.1",
+        "activation_applied": bool(use_v02),
+        "fallback_reasons": fallback_reasons,
+        "authorization": {
+            "report_path": _authorization_report_ref(authorization_report_path),
+            "record_present": authorization is not None,
+            "authorization_status": (authorization or {}).get("authorization_status"),
+            "authorization_decision": (authorization or {}).get("authorization_decision"),
+            "activation_authorized_for_gate": (authorization or {}).get(
+                "activation_authorized_for_gate"
+            )
+            is True,
+            "target_matches_candidate": target_matches,
+        },
+        "selected_runtime_summary": _runtime_summary(selected_package),
+        "candidate_runtime_summary": _runtime_summary(candidate_package)
+        if candidate_package
+        else None,
+        "safety": {
+            "reads_env": False,
+            "provider_call_count": 0,
+            "world_state_mutation": False,
+            "review_only_visual_candidate_consumed": False,
+            "strong_semantic_source": "MapRuntimePackage"
+            if use_v02
+            else "MapRuntimePackage v0.1",
+        },
+    }
+
+
 def available_map_runtime_node_ids() -> list[str]:
     return sorted(_MAP_RUNTIME_PACKAGE_BY_NODE)
 
@@ -138,6 +235,26 @@ def load_map_runtime_package_v02(node_id: str) -> dict[str, Any]:
 def load_map_runtime_package_optional(node_id: str) -> dict[str, Any] | None:
     try:
         return load_map_runtime_package(node_id)
+    except MapRuntimePackageNotFoundError:
+        return None
+
+
+def load_selected_map_runtime_package(
+    node_id: str,
+    authorization_report_path: Path | None = None,
+) -> dict[str, Any]:
+    selection = map_runtime_activation_selection(node_id, authorization_report_path)
+    if selection.get("selected_schema_version") == "map_runtime_package.v0.2":
+        return load_map_runtime_package_v02(node_id)
+    return load_map_runtime_package(node_id)
+
+
+def load_selected_map_runtime_package_optional(
+    node_id: str,
+    authorization_report_path: Path | None = None,
+) -> dict[str, Any] | None:
+    try:
+        return load_selected_map_runtime_package(node_id, authorization_report_path)
     except MapRuntimePackageNotFoundError:
         return None
 
@@ -188,11 +305,7 @@ def get_map_runtime_v02_opt_in_contract(
             "requires_activation_gate_before_default_runtime_use",
         ],
         "authorization": {
-            "report_path": (
-                authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT
-            ).relative_to(_REPO_ROOT).as_posix()
-            if (authorization_report_path or _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT).is_relative_to(_REPO_ROOT)
-            else str(authorization_report_path),
+            "report_path": _authorization_report_ref(authorization_report_path),
             "record_present": authorization is not None,
             "authorization_status": (authorization or {}).get("authorization_status"),
             "authorization_decision": (authorization or {}).get("authorization_decision"),
@@ -224,9 +337,11 @@ def get_map_runtime_v02_opt_in_contract(
 
 
 def get_map_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
+    selection = map_runtime_activation_selection(node_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
-        "map_runtime_package": load_map_runtime_package(node_id),
+        "map_runtime_package": load_selected_map_runtime_package(node_id),
+        "runtime_selection": selection,
     }

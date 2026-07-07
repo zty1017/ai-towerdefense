@@ -1,6 +1,6 @@
 # 任务队列
 
-Last updated: 2026-07-05
+Last updated: 2026-07-07
 
 本文是交付给 CodeBuddy / OpenCode / Codex worker / 人类队友的当前任务来源。
 
@@ -3947,6 +3947,41 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/readme_simplified_fast_
 git diff --check
 ```
 
+### P1-D-32 Map runtime v0.2 activation selector
+
+状态：已完成受控 selector 与测试夹具证明。
+
+目标：
+
+```text
+在不改变默认 pending 授权行为的前提下，补齐 developer-approved selector：当显式开发者授权报告批准并匹配目标 v0.2 包时，后端默认地图运行时表面可以一致选择 MapRuntimePackage v0.2 与匹配 RenderPlan bundle。
+```
+
+已落地：
+
+- `backend/app/services/map_runtime_service.py`：新增 `map_runtime_activation_selection()`、`load_selected_map_runtime_package()` 和响应中的 `runtime_selection`。
+- `backend/app/services/map_render_plan_service.py`：新增按 runtime schema 选择 RenderPlan bundle 的入口；v0.2 被批准为默认 runtime 时，返回激活后的 v0.2 bundle 元数据。
+- `backend/app/services/frontend_mock_service.py` 与 `backend/app/api/frontend_mock.py`：`/map-runtime-package`、`/map-render-plan`、`/config`、`/runtime-package` 聚合响应使用同一个 selector，避免地图包与表现计划版本漂移。
+- `backend/tests/test_frontend_mock_api.py`：新增临时 approved 授权夹具测试，证明三张节点在授权匹配时可一致切到 v0.2，默认 pending 测试仍保持 v0.1。
+- `tools/dev/check_map_runtime_v02_opt_in_contract.py` 与 validator：opt-in smoke 继续证明 endpoint review-only，同时新增 approved selector 选择 v0.2 的 service-level 证据。
+
+边界：
+
+- 默认仓库授权报告仍为 `pending_developer_approval`，因此正常玩家 API 仍选择 v0.1。
+- selector 只消费本地授权报告和已审结构化包，不读取 `.env`、不调用 provider、不读取 review-only / 失败整图候选。
+- 该任务不把 activation gate 改成 allowed；正式默认切换仍需要显式授权文件、后端/前端证据复跑和 demo evidence 更新。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_runtime_v02_activation_selector python3 -m py_compile backend/app/services/map_runtime_service.py backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py tools/dev/check_map_runtime_v02_opt_in_contract.py tools/dev/validate_map_runtime_v02_opt_in_contract_report.py
+/home/zty/projects/ai-compiled-towerdefense/.venv/bin/python -m pytest backend/tests/test_frontend_mock_api.py -k "map_v02 or map_runtime_and_render_plan or approved_map_v02_activation_selector" -q
+/home/zty/projects/ai-compiled-towerdefense/.venv/bin/python tools/dev/check_map_runtime_v02_opt_in_contract.py --output examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json --generated-at 2026-07-06T00:00:00+00:00
+python3 tools/dev/validate_map_runtime_v02_opt_in_contract_report.py examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_runtime_v02_activation_selector_fast_gate.json
+git diff --check
+```
+
 ## 6. P2 暂不做
 
 本阶段明确不做：
@@ -3965,10 +4000,11 @@ git diff --check
 
 1. 确认是否执行 `docs/MAIN_SYNC_PLAN_2026_07_02.md`，并在执行前保护 `main` 工作区草稿。
 2. 新增 WorldStateDelta / review pack / provider artifact 继续按 CoreArtifactAlignmentReport 口径进入原生产物字段、core refs 或显式 not-applicable 边界；当前已扫描范围的 migration task 已清零。
-3. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新正式 MapRuntimePackage 或发布底图。
-4. 扩展地图补丁后的 overlay / 视觉模型复核，并在新增战斗节点后复跑 `tools/frontend/capture_battle_visual_smoke.py`。
-5. `P1-A` 真实视频关键帧增强。
-6. `P1-B` Generation Scheduler 正式后台执行器、真实 provider 调度、跨请求缓存和 activation / promotion gate；Campaign Router v0.1 dry-run 预取胶水已落地，不应重复实现。
+3. 地图 runtime v0.2 若要正式成为玩家默认路径，应先准备显式 approved 授权文件，再复跑 API smoke、前端视觉合同、浏览器玩家链路和 demo evidence；不得从 review-only preview endpoint 间接激活。
+4. 地图补丁后 overlay 人工/视觉模型复核，以及基于 ControlledMapCandidateGenerationRun 的真实参考图 provider / paintover / 分层程序化底图路线；只有通过 promotion gate 后才允许更新发布底图。
+5. 扩展地图补丁后的 overlay / 视觉模型复核，并在新增战斗节点后复跑 `tools/frontend/capture_battle_visual_smoke.py`。
+6. `P1-A` 真实视频关键帧增强。
+7. `P1-B` Generation Scheduler 正式后台执行器、真实 provider 调度、跨请求缓存和 activation / promotion gate；Campaign Router v0.1 dry-run 预取胶水已落地，不应重复实现。
 
 若需要并行，优先组合：
 

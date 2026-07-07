@@ -391,9 +391,13 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
     except battle_content_service.BattleContentNotFoundError as exc:
         raise FixtureNotFoundError(node_id) from exc
     pack = _load_frontend_pack()
-    map_runtime_package = map_runtime_service.load_map_runtime_package_optional(node_id)
+    map_runtime_payload = map_runtime_service.get_map_runtime_package(session_id, node_id)
+    map_runtime_package = map_runtime_payload["map_runtime_package"]
+    runtime_selection = map_runtime_payload["runtime_selection"]
     map_render_plan_bundle = (
-        map_render_plan_service.load_map_render_plan_bundle_optional(node_id)
+        map_render_plan_service.load_map_render_plan_bundle_for_runtime_optional(
+            node_id, runtime_selection.get("selected_schema_version")
+        )
     )
     return {
         "session_id": session_id,
@@ -401,6 +405,7 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
         "node_id": node_id,
         "battle_config": config,
         "map_runtime_package": map_runtime_package,
+        "runtime_selection": runtime_selection,
         "map_render_plan_bundle": map_render_plan_bundle,
         "toolbar_assets": _battle_toolbar_assets(pack),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
@@ -415,14 +420,19 @@ def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
     except battle_content_service.BattleContentNotFoundError as exc:
         raise FixtureNotFoundError(node_id) from exc
     pack = _load_frontend_pack()
+    map_runtime_payload = map_runtime_service.get_map_runtime_package(session_id, node_id)
+    runtime_selection = map_runtime_payload["runtime_selection"]
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
         "runtime_package": runtime_package,
-        "map_runtime_package": map_runtime_service.load_map_runtime_package_optional(node_id),
+        "map_runtime_package": map_runtime_payload["map_runtime_package"],
+        "runtime_selection": runtime_selection,
         "map_render_plan_bundle": (
-            map_render_plan_service.load_map_render_plan_bundle_optional(node_id)
+            map_render_plan_service.load_map_render_plan_bundle_for_runtime_optional(
+                node_id, runtime_selection.get("selected_schema_version")
+            )
         ),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
         **frontend_media_service.frontend_media_payload(),

@@ -76,9 +76,20 @@ def validate(report: dict[str, Any]) -> list[str]:
         for item in as_list(report.get("approved_service_contract"))
         if isinstance(item, dict)
     ]
+    approved_selector = [
+        item
+        for item in as_list(report.get("approved_activation_selector"))
+        if isinstance(item, dict)
+    ]
     require(isinstance(node_count, int) and node_count > 0, "node_count must be positive", errors)
     require(len(default_api) == node_count, "default_api length must match node_count", errors)
     require(len(approved_service) == node_count, "approved_service_contract length must match node_count", errors)
+    if "approved_activation_selector" in report:
+        require(
+            len(approved_selector) == node_count,
+            "approved_activation_selector length must match node_count",
+            errors,
+        )
 
     for index, item in enumerate(default_api):
         where = f"default_api[{index}]"
@@ -144,6 +155,34 @@ def validate(report: dict[str, Any]) -> list[str]:
         for key in V02_COUNT_KEYS:
             require(int(counts.get(key) or 0) > 0, f"{where}.{key} must be positive", errors)
 
+    for index, item in enumerate(approved_selector):
+        where = f"approved_activation_selector[{index}]"
+        require(
+            item.get("activation_applied") is True,
+            f"{where}.activation_applied must be true",
+            errors,
+        )
+        require(
+            item.get("selected_schema_version") == "map_runtime_package.v0.2",
+            f"{where}.selected_schema_version must be v0.2",
+            errors,
+        )
+        require(
+            item.get("authorization_status") == "approved_for_gate_review",
+            f"{where}.authorization_status must be approved_for_gate_review",
+            errors,
+        )
+        require(
+            item.get("target_matches_candidate") is True,
+            f"{where}.target_matches_candidate must be true",
+            errors,
+        )
+        require(item.get("provider_call_count") == 0, f"{where}.provider_call_count must be 0", errors)
+        require(item.get("reads_env") is False, f"{where}.reads_env must be false", errors)
+        counts = as_obj(item.get("strong_semantic_counts"))
+        for key in V02_COUNT_KEYS:
+            require(int(counts.get(key) or 0) > 0, f"{where}.{key} must be positive", errors)
+
     summary = as_obj(report.get("summary"))
     require(
         summary.get("default_runtime_v01_preserved_count") == node_count,
@@ -160,6 +199,17 @@ def validate(report: dict[str, Any]) -> list[str]:
         "summary.approved_candidate_available_count mismatch",
         errors,
     )
+    if approved_selector:
+        require(
+            summary.get("approved_selector_selected_v02_count") == node_count,
+            "summary.approved_selector_selected_v02_count mismatch",
+            errors,
+        )
+        require(
+            summary.get("approved_selector_activation_applied_count") == node_count,
+            "summary.approved_selector_activation_applied_count mismatch",
+            errors,
+        )
     require(
         summary.get("runtime_activation_allowed_count") == 0,
         "summary.runtime_activation_allowed_count must be 0",

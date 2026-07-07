@@ -9,6 +9,7 @@ checked. This service never reads `.env` and never calls providers.
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -223,6 +224,28 @@ def load_map_render_plan_bundle_v02(node_id: str) -> dict[str, Any]:
     }
 
 
+def _activate_v02_render_plan_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+    activated = deepcopy(bundle)
+    activated["review_only"] = False
+    activated["runtime_activation_allowed"] = True
+    activated["usage_policy"] = [
+        "player_runtime_after_developer_authorization",
+        "semantics_from_activated_map_runtime_package_v02",
+        "does_not_use_review_only_visual_candidates_as_runtime_truth",
+    ]
+    activated["activation_surface"] = "developer_authorized_default_runtime_selector"
+    return activated
+
+
+def load_map_render_plan_bundle_for_runtime(
+    node_id: str,
+    runtime_schema_version: str | None,
+) -> dict[str, Any]:
+    if runtime_schema_version == "map_runtime_package.v0.2":
+        return _activate_v02_render_plan_bundle(load_map_render_plan_bundle_v02(node_id))
+    return load_map_render_plan_bundle(node_id)
+
+
 def load_map_render_plan_bundle_optional(node_id: str) -> dict[str, Any] | None:
     try:
         return load_map_render_plan_bundle(node_id)
@@ -237,11 +260,27 @@ def load_map_render_plan_bundle_v02_optional(node_id: str) -> dict[str, Any] | N
         return None
 
 
-def get_map_render_plan_bundle(session_id: str, node_id: str) -> dict[str, Any]:
-    bundle = load_map_render_plan_bundle(node_id)
+def load_map_render_plan_bundle_for_runtime_optional(
+    node_id: str,
+    runtime_schema_version: str | None,
+) -> dict[str, Any] | None:
+    try:
+        return load_map_render_plan_bundle_for_runtime(node_id, runtime_schema_version)
+    except MapRenderPlanNotFoundError:
+        return None
+
+
+def get_map_render_plan_bundle(
+    session_id: str,
+    node_id: str,
+    runtime_schema_version: str | None = None,
+    runtime_selection: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    bundle = load_map_render_plan_bundle_for_runtime(node_id, runtime_schema_version)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "node_id": node_id,
         "map_render_plan_bundle": bundle,
+        "runtime_selection": runtime_selection,
     }

@@ -142,6 +142,39 @@ def _load_json(path: Path):
         return json.load(handle)
 
 
+def _write_approved_map_runtime_authorization_report(tmp_path: Path) -> Path:
+    report = _load_json(
+        _ROOT / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json"
+    )
+    report["status"] = "authorized_for_gate_review"
+    report["inputs"]["approval_plan_supplied"] = True
+    for node in report["nodes"]:
+        node["authorization_decision"] = "approved"
+        node["authorization_status"] = "approved_for_gate_review"
+        node["activation_authorized_for_gate"] = True
+        node["blocking_reasons"] = []
+        node["approval_record"] = {
+            "approved_by": "pytest_map_runtime_v02_activation_selector",
+            "approved_at": "2026-07-05T00:00:00Z",
+            "notes": "temporary approved fixture for activation selector tests",
+            "target_match": True,
+        }
+    node_count = len(report["nodes"])
+    report["summary"]["approved_count"] = node_count
+    report["summary"]["pending_count"] = 0
+    report["summary"]["denied_count"] = 0
+    report["summary"]["authorization_status_counts"] = {
+        "approved_for_gate_review": node_count
+    }
+    report["summary"]["activation_authorized_for_gate_count"] = node_count
+    output = tmp_path / "approved_map_runtime_activation_authorization_report.json"
+    output.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output
+
+
 def _rel(path: Path) -> str:
     return path.relative_to(_ROOT).as_posix()
 
@@ -5064,6 +5097,76 @@ def test_all_battle_nodes_expose_review_only_map_v02_preview(client):
             "map_runtime_package.v0.1"
         )
         assert "resource_nodes" not in runtime["map_runtime_package"]
+
+
+def test_approved_map_v02_activation_selector_updates_default_surfaces(
+    client, tmp_path, monkeypatch
+):
+    approved_report = _write_approved_map_runtime_authorization_report(tmp_path)
+    from app.services import map_runtime_service as app_map_runtime_service
+    from backend.app.services import map_runtime_service as backend_map_runtime_service
+
+    monkeypatch.setattr(
+        app_map_runtime_service,
+        "_MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT",
+        approved_report,
+    )
+    monkeypatch.setattr(
+        backend_map_runtime_service,
+        "_MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT",
+        approved_report,
+        raising=False,
+    )
+
+    sid = _create_session(client)
+    expected = {
+        "gray_lantern_station": "map_pkg_gray_lantern_station_v0_2",
+        "lamp_wick_store": "map_pkg_lamp_wick_store_v0_2",
+        "old_signal_tower": "map_pkg_old_signal_tower_v0_2",
+    }
+    for node_id, package_id in expected.items():
+        config = _payload(client.get(f"/api/sessions/{sid}/battles/{node_id}/config"))
+        runtime = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/runtime-package")
+        )
+        direct = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-runtime-package")
+        )
+        render = _payload(
+            client.get(f"/api/sessions/{sid}/battles/{node_id}/map-render-plan")
+        )
+
+        for payload in (config, runtime, direct):
+            map_package = payload["map_runtime_package"]
+            selection = payload["runtime_selection"]
+            assert map_package["schema_version"] == "map_runtime_package.v0.2"
+            assert map_package["package_id"] == package_id
+            assert map_package["node_id"] == node_id
+            assert len(map_package["resource_nodes"]) == 1
+            assert len(map_package["hazard_zones"]) == 1
+            assert len(map_package["defense_anchors"]) == 1
+            assert len(map_package["blocked_areas"]) == 1
+            assert selection["selection_mode"] == "developer_authorization_selector"
+            assert selection["selected_schema_version"] == "map_runtime_package.v0.2"
+            assert selection["activation_applied"] is True
+            assert selection["authorization"]["authorization_status"] == (
+                "approved_for_gate_review"
+            )
+            assert selection["authorization"]["target_matches_candidate"] is True
+            assert selection["safety"]["provider_call_count"] == 0
+            assert selection["safety"]["reads_env"] is False
+
+        plan_bundle = render["map_render_plan_bundle"]
+        assert render["runtime_selection"]["activation_applied"] is True
+        assert plan_bundle["review_only"] is False
+        assert plan_bundle["runtime_activation_allowed"] is True
+        assert plan_bundle["activation_surface"] == (
+            "developer_authorized_default_runtime_selector"
+        )
+        assert plan_bundle["semantic_visual_consistency_report"]["status"] == "passed"
+        assert plan_bundle["procedural_map_preview_report"]["render_summary"][
+            "resource_node_count"
+        ] == 1
 
 
 def test_map_v02_preview_unknown_node_returns_404(client):
