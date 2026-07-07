@@ -18,7 +18,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from tools.dev.command_runner import now_iso, run_command  # noqa: E402
+from tools.dev.command_runner import now_iso  # noqa: E402
 from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     COMMAND_DEMO_EVIDENCE_FULL_EXPORT,
     COMMAND_FAST_QUALITY_GATE,
@@ -39,10 +39,10 @@ from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     PROFILE_PREMERGE,
 )
 from tools.dev.quality_gate_report_helpers import (  # noqa: E402
-    STATUS_PASSED,
     collect_command_failures,
     print_failed_command_details,
     report_status_from_failures,
+    run_quality_gate_commands,
     summarize_command_results,
     write_json_report,
 )
@@ -266,21 +266,12 @@ def main() -> int:
 
     specs = command_specs(args)
     started_at = now_iso()
-    results: list[dict[str, Any]] = []
-    for spec in specs:
-        result = run_command(
-            str(spec["name"]),
-            list(spec["command"]),
-            root=ROOT,
-            timeout_seconds=int(spec["timeout_seconds"]),
-            output_tail_limit=OUTPUT_TAIL_LIMIT,
-            env=spec.get("env") if isinstance(spec.get("env"), dict) else None,
-        )
-        results.append(result)
-        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
-        print(f"{status_icon} {result['name']} ({result['elapsed_seconds']}s)")
-        if args.fail_fast and result["status"] != STATUS_PASSED:
-            break
+    results = run_quality_gate_commands(
+        specs,
+        root=ROOT,
+        output_tail_limit=OUTPUT_TAIL_LIMIT,
+        fail_fast=bool(args.fail_fast),
+    )
 
     failed = collect_command_failures(results)
     zero_summary_fields = {field: expected for field, expected in PREMERGE_REQUIRED_ZERO_FIELDS}

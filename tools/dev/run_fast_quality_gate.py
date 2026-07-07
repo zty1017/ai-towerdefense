@@ -16,7 +16,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from tools.dev.command_runner import now_iso, run_command
+from tools.dev.command_runner import now_iso
 from tools.dev.fast_quality_gate_contract import (
     COMMAND_BATTLE_INTERACTION_CONTRACT,
     COMMAND_BATTLE_VISUAL_CONTRACT,
@@ -36,10 +36,10 @@ from tools.dev.fast_quality_gate_contract import (
     FAST_QUALITY_GATE_SCHEMA_VERSION,
 )
 from tools.dev.quality_gate_report_helpers import (
-    STATUS_PASSED,
     collect_command_failures,
     print_failed_command_details,
     report_status_from_failures,
+    run_quality_gate_commands,
     summarize_command_results,
     write_json_report,
 )
@@ -280,23 +280,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     commands = default_commands(args.generated_at)
-    results: list[dict[str, Any]] = []
     started_at = now_iso()
-    for item in commands:
-        result = run_command(
-            str(item["name"]),
-            list(item["command"]),
-            root=ROOT,
-            timeout_seconds=int(item["timeout_seconds"]),
-            output_tail_limit=OUTPUT_TAIL_LIMIT,
-            env=item.get("env") if isinstance(item.get("env"), dict) else None,
-            include_timestamps=False,
-        )
-        results.append(result)
-        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
-        print(f"{status_icon} {result['name']} ({result['elapsed_seconds']}s)")
-        if args.fail_fast and result["status"] != STATUS_PASSED:
-            break
+    results = run_quality_gate_commands(
+        commands,
+        root=ROOT,
+        output_tail_limit=OUTPUT_TAIL_LIMIT,
+        fail_fast=bool(args.fail_fast),
+        include_timestamps=False,
+    )
 
     failed = collect_command_failures(results)
     report = {

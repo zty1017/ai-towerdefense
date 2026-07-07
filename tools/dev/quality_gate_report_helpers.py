@@ -8,7 +8,35 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from tools.dev.command_runner import run_command
 from tools.dev.report_status_contract import STATUS_FAILED, STATUS_PASSED
+
+
+def run_quality_gate_commands(
+    specs: list[dict[str, Any]],
+    *,
+    root: Path,
+    output_tail_limit: int,
+    fail_fast: bool,
+    include_timestamps: bool = True,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for spec in specs:
+        result = run_command(
+            str(spec["name"]),
+            list(spec["command"]),
+            root=root,
+            timeout_seconds=int(spec["timeout_seconds"]),
+            output_tail_limit=output_tail_limit,
+            env=spec.get("env") if isinstance(spec.get("env"), dict) else None,
+            include_timestamps=include_timestamps,
+        )
+        results.append(result)
+        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
+        print(f"{status_icon} {result['name']} ({result['elapsed_seconds']}s)")
+        if fail_fast and result["status"] != STATUS_PASSED:
+            break
+    return results
 
 
 def collect_command_failures(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
