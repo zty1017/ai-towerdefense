@@ -90,9 +90,12 @@ def validate_report(
     actual_failed_count = sum(
         1 for item in results if isinstance(item, dict) and item.get("status") != "passed"
     )
+    require(configured_count >= 1, "configured_command_count must be positive")
     require(executed_count == len(results), "executed_command_count must match results length")
+    require(executed_count <= configured_count, "executed_command_count cannot exceed configured count")
     require(passed_count + failed_count == executed_count, "summary status counts must sum")
     require(failed_count == actual_failed_count, "failed_count must match results")
+    require((status == "passed") == (failed_count == 0), "status must match failed_count")
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_count must be {expect_failed_count}")
 
