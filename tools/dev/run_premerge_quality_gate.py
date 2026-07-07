@@ -41,6 +41,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
     fast_gate_report = f"{prefix}_fast_quality_gate.json"
     batch_report = f"{prefix}_worker_acceptance_batch_all_dry.json"
     audit_report = f"{prefix}_worker_acceptance_profile_audit.json"
+    release_gate_audit_report = f"{prefix}_release_gate_profile_audit.json"
     migration_report = f"{prefix}_worker_acceptance_profile_migration_dry.json"
     pycache_prefix = f"{prefix}_pycache"
 
@@ -69,6 +70,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/dev/run_worker_acceptance_batch.py",
                 "tools/dev/validate_worker_acceptance_batch_report.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
+                "tools/dev/audit_release_gate_profiles.py",
                 "tools/dev/migrate_worker_acceptance_profiles.py",
                 "tools/dev/command_runner.py",
                 "tools/frontend/validate_battle_interaction_contract.py",
@@ -126,6 +128,18 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 audit_report,
                 "--max-samples",
                 "300",
+            ],
+        },
+        {
+            "name": "release_gate_profile_audit",
+            "timeout_seconds": 30,
+            "command": [
+                sys.executable,
+                "tools/dev/audit_release_gate_profiles.py",
+                "--output",
+                release_gate_audit_report,
+                "--max-samples",
+                "100",
             ],
         },
         {

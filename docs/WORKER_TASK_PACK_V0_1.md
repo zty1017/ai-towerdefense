@@ -26,6 +26,7 @@
 - 示例: `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
 - 验收 profile 示例: `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`
 - 验收 profile 迁移审计: `tools/dev/audit_worker_acceptance_profiles.py`
+- release gate 降级审计: `tools/dev/audit_release_gate_profiles.py`
 
 ## 必读事实源
 
@@ -146,6 +147,8 @@ WorkerTaskPack 必须显式表达以下边界：
 - profile 内的命令和顶层 `acceptance_commands` 一样，都会被 validator 检查 forbidden command fragment。
 - `daily_fast` 不得包含默认完整 `tools/demo/export_evidence.py --output-dir`；它可以使用 `tools/dev/run_fast_quality_gate.py`，也可以使用 `tools/demo/export_evidence.py --validation-profile summary-only --output-dir ...`。
 - `full_evidence` 和 `release_gate` 用于最终评审、录屏或发布候选，可以包含默认完整 `export_evidence.py` 或 `run_demo_evidence_suite.py`。
+- `release_gate` 不得包含 `--allow-missing-browser`、`--allow-browser-unavailable` 或 `--validation-profile summary-only`；如果运行 `run_demo_evidence_suite.py`，必须配套 `validate_demo_evidence_suite_report.py --require-browser-captured`。
+- 通用 `release_gate` 不应硬编码 `--require-scheduler-runner-mode` 或 `--require-outbox-runner-mode`；runner mode 专项选择任务包可以作为例外，普通发布门应允许 suite 的 `auto` runner 选择可用环境。
 
 profile 是验收分层，不是降低质量。日常小改可以默认跑 `daily_fast` 加速反馈，但合并前、最终评审前或录屏前仍应按任务风险运行 `full_evidence` 或 `release_gate`。
 
@@ -208,6 +211,24 @@ python3 tools/dev/audit_worker_acceptance_profiles.py --task-pack-dir examples/w
 - 报告包含 summary、逐包 top-level/profile 命令分类、runner 兼容性计数、迁移建议，以及 `without_profile_samples`、`full_export_samples`、`manual_review_samples`、`migration_candidate_samples`。
 - 无 `acceptance_profile` 且 validator 通过的旧包会被标记为 migration candidate；若顶层含完整 `tools/demo/export_evidence.py --output-dir`，建议拆成 `daily_fast` 的快速/summary-only profile 和 `full_evidence` 的完整证据 profile。
 - 该工具只审计和写仓库外 `/tmp` 报告；`--output` 指向仓库内路径或其他非 `/tmp` 路径时会失败，不修改旧任务包，不替代人工迁移、最终 evidence、demo suite 或合并前审查。
+
+### Release gate profile audit
+
+`tools/dev/audit_release_gate_profiles.py` 是只读发布门配置审计入口，用于扫描已声明 `acceptance_profile.profiles.release_gate` 的任务包，避免录屏 / 发布候选验收命令混入日常快速反馈的降级开关：
+
+```bash
+python3 tools/dev/audit_release_gate_profiles.py
+python3 tools/dev/audit_release_gate_profiles.py --task-pack-dir examples/worker_task_packs --output /tmp/release_gate_profile_audit_report.json --max-samples 20
+```
+
+规则：
+
+- 审计只扫描 WorkerTaskPack JSON，不执行任何被扫描任务包里的 `release_gate`、`daily_fast` 或 `acceptance_commands`。
+- 没有 `release_gate` 的任务包不会失败；工具只检查已经声明 release gate 的任务包是否保持发布级证据要求。
+- `release_gate` 中出现 `--allow-missing-browser`、`--allow-browser-unavailable` 或 `--validation-profile summary-only` 会失败。
+- `release_gate` 中运行 `run_demo_evidence_suite.py` 时，应同时运行 `validate_demo_evidence_suite_report.py`，并至少包含 `--require-browser-captured`；当前默认还要求 scheduler pipeline smoke 与 outbox import smoke 证据被 validator 看见。
+- 通用 `release_gate` 中出现 scheduler / outbox runner mode 锁定会失败；只有 runner 选择专项任务包允许用该类断言验证 suite 的 runner mode 报告。
+- 报告默认写入 `/tmp/release_gate_profile_audit_report.v0.1.json`，schema 为 `release_gate_profile_audit_report.v0.1`；`--output` 指向仓库内路径或其他非 `/tmp` 路径时会失败。
 
 ## 验收
 

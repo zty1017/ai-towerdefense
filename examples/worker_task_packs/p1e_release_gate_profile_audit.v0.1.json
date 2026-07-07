@@ -1,0 +1,117 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-release-gate-profile-audit",
+  "title": "WorkerTaskPack release_gate profile 降级审计",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/release-gate-profile-audit",
+  "worktree": "/tmp/ai-td-task-release-gate-profile-audit",
+  "objective": "新增只读审计工具，扫描 WorkerTaskPack release_gate profile，阻止录屏 / 发布候选验收命令混入浏览器降级、summary-only evidence 或通用 runner mode 锁定。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "tools/dev/validate_worker_task_pack.py",
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/audit_release_gate_profiles.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
+    "examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "pyproject.toml"
+  ],
+  "acceptance_commands": [
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_report.json --max-samples 20",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json --profile daily_fast --output /tmp/release_gate_profile_audit_runner.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/release_gate_profile_audit_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "本地交接前的只读 release_gate 配置审计。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_runner python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_runner_report.json --max-samples 20",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终审查前的完整证据检查：先审计 release_gate 配置，再运行完整 demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_release_gate_profile_audit.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_release_gate_profile_audit_full python3 -m py_compile tools/dev/audit_release_gate_profiles.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/audit_release_gate_profiles.py --output /tmp/release_gate_profile_audit_full_report.json --max-samples 100",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/release_gate_profile_audit_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "审计工具只读运行，绝不执行被扫描任务包的 release_gate 命令。",
+    "release_gate profile 不是必填；工具只对已声明 release_gate 的任务包拦截明显降级项。",
+    "通用 release_gate 不允许 --allow-missing-browser、--allow-browser-unavailable、summary-only evidence 或 runner mode 锁定；runner mode 选择任务包可作为专项例外。"
+  ]
+}

@@ -29,6 +29,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
     readiness_tmp = "/tmp/ai_td_fast_gate_mvp_demo_readiness_report.json"
     battle_visual_tmp = "/tmp/ai_td_fast_gate_battle_visual_contract_report.json"
     battle_interaction_tmp = "/tmp/ai_td_fast_gate_battle_interaction_contract_report.json"
+    release_gate_audit_tmp = "/tmp/ai_td_fast_gate_release_gate_profile_audit.json"
     pycache_prefix = "/tmp/ai_td_pycache_fast_quality_gate"
     return [
         {
@@ -52,6 +53,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
                 "tools/dev/command_runner.py",
                 "tools/dev/audit_worker_acceptance_profiles.py",
+                "tools/dev/audit_release_gate_profiles.py",
                 "tools/dev/check_generation_scheduler_review_only_pipeline.py",
                 "tools/dev/run_fast_quality_gate.py",
                 "tools/dev/run_premerge_quality_gate.py",
@@ -122,6 +124,18 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 sys.executable,
                 "tools/asset_graph/validate_map_decoration_zone_policy.py",
                 "examples/map_decoration_zone_policies/mvp_map_decoration_zone_policy.v0.1.json",
+            ],
+        },
+        {
+            "name": "release_gate_profile_audit",
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/dev/audit_release_gate_profiles.py",
+                "--output",
+                release_gate_audit_tmp,
+                "--max-samples",
+                "20",
             ],
         },
         {

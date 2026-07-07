@@ -81,6 +81,7 @@
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
           "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/worker_acceptance_profiles_demo_suite --browser-timeout 45 --command-timeout 180",
+          "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/worker_acceptance_profiles_demo_suite/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
           "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_profiles_release_evidence",
           "git diff --check"
         ],
