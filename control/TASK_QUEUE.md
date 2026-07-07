@@ -4060,6 +4060,52 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_bulk_m
 git diff --check
 ```
 
+### P1-E-11 WorkerTaskPack media negative checks without heredoc
+
+状态：已完成媒体负例任务包迁移。
+
+目标：
+
+```text
+把媒体帧序列、原始视频序列和视频关键帧 atlas 导入任务包里的 heredoc / inline JSON 负例断言替换为标准工具命令，使这些任务包可以纳入 acceptance_profile runner。
+```
+
+已落地：
+
+- 新增 `tools/dev/expect_command_failure.py`，用于运行预期失败命令，并可断言仓库外 `/tmp` 输出文件没有被写出。
+- 新增 `tools/media/validate_video_keyframe_import_result.py`，用于校验视频关键帧 atlas 导入结果与 LoopContinuityReport 一致。
+- 更新并迁移以下 3 个任务包到 `acceptance_profile`：
+  - `examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json`
+  - `examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json`
+  - `examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json`
+- 新增 `examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json` 记录本轮验收任务。
+
+效果：
+
+- 迁移 3 个原本需要人工审查的媒体任务包。
+- 审计从 `111 packs: 95 with profile, 16 without profile, 16 migration candidates, 16 manual review required` 先变为 `111 packs: 98 with profile, 13 without profile, 13 migration candidates, 13 manual review required`。
+- 新增本任务包后，预期审计为 `112 packs: 99 with profile, 13 without profile, 13 migration candidates, 13 manual review required`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改 schema、runtime package、前端或后端。
+- 本任务只验证负例失败和候选输出缺失，不把 review-only 视频帧素材激活为玩家 runtime。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_media_negative_checks python3 -m py_compile tools/dev/expect_command_failure.py tools/media/validate_video_keyframe_import_result.py
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/media_negative_checks_audit_after_migrate.json --max-samples 200
+python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/media_negative_checks_after_dry.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/media_negative_checks_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/media_negative_checks_full_evidence
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。

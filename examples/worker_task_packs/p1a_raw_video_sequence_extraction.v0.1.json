@@ -46,18 +46,81 @@
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
     "python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json",
-    "python3 - <<'PY'\nimport subprocess\nfrom pathlib import Path\ninvalids = sorted(Path('examples/raw_video_sequences').glob('invalid_*.json'))\nassert invalids, 'no invalid raw video fixtures found'\nfor path in invalids:\n    result = subprocess.run(['python3', 'tools/media/validate_raw_video_sequence.py', path.as_posix()], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\n    assert result.returncode != 0, f'{path} unexpectedly passed\\n{result.stdout}'\nprint('invalid raw_video_sequence fixtures rejected')\nPY",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_provider_metadata -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_provider_metadata.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extraction_fps -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_extraction_fps.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_remote_url -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_remote_url.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_fixture_missing_review_only -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_fixture_missing_review_only.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_loop_false -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_loop_false.v0.1.json",
     "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-raw-video-sequence python3 -m py_compile tools/media/validate_raw_video_sequence.py tools/media/extract_video_keyframes.py",
     "python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json --output-frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --frames-output-dir /tmp/frontend_runtime_raw_video_extracted_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_extracted_frames",
     "python3 tools/media/validate_frame_sequence.py /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json",
     "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json --spritesheet-output-dir /tmp/frontend_runtime_raw_video_extraction_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/raw_video_extraction_atlas_sheets",
     "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
     "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
-    "python3 - <<'PY'\nimport subprocess\nfrom pathlib import Path\nout = Path('/tmp/raw_video_extractor_negative_frame_sequence.json')\nif out.exists():\n    out.unlink()\nresult = subprocess.run([\n    'python3', 'tools/media/extract_video_keyframes.py',\n    '--raw-video-sequence', 'examples/raw_video_sequences/invalid_missing_local_video.v0.1.json',\n    '--output-frame-sequence', str(out),\n    '--frames-output-dir', '/tmp/raw_video_extractor_negative_frames',\n    '--frames-url-prefix', '/assets/frontend_runtime_mock/raw_video_negative_frames',\n], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)\nassert result.returncode != 0, result.stdout\nassert not out.exists(), 'negative extractor wrote output frame_sequence'\nprint('invalid raw video extraction rejected without output')\nPY",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
     "python3 tools/frontend/validate_battle_visual_contract.py",
     "python3 tools/demo/export_evidence.py --output-dir /tmp/raw_video_sequence_extraction_evidence",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+          "python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_provider_metadata -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_provider_metadata.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extraction_fps -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_extraction_fps.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_remote_url -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_remote_url.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_fixture_missing_review_only -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_fixture_missing_review_only.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_loop_false -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_loop_false.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-raw-video-sequence python3 -m py_compile tools/media/validate_raw_video_sequence.py tools/media/extract_video_keyframes.py",
+          "python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json --output-frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --frames-output-dir /tmp/frontend_runtime_raw_video_extracted_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_extracted_frames",
+          "python3 tools/media/validate_frame_sequence.py /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json",
+          "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json --spritesheet-output-dir /tmp/frontend_runtime_raw_video_extraction_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/raw_video_extraction_atlas_sheets",
+          "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+          "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
+          "python3 tools/frontend/validate_battle_visual_contract.py",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+          "python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_provider_metadata -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_provider_metadata.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extraction_fps -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_extraction_fps.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_remote_url -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_remote_url.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_fixture_missing_review_only -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_fixture_missing_review_only.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_loop_false -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_loop_false.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-raw-video-sequence python3 -m py_compile tools/media/validate_raw_video_sequence.py tools/media/extract_video_keyframes.py",
+          "python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/frontend_runtime_raw_video_sequence.fixture.v0.1.json --output-frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --frames-output-dir /tmp/frontend_runtime_raw_video_extracted_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_extracted_frames",
+          "python3 tools/media/validate_frame_sequence.py /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json",
+          "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence /tmp/frontend_runtime_frame_sequence_from_raw_video_fixture.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json --spritesheet-output-dir /tmp/frontend_runtime_raw_video_extraction_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/raw_video_extraction_atlas_sheets",
+          "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+          "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.raw_video_extraction_import.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
+          "python3 tools/frontend/validate_battle_visual_contract.py",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/raw_video_sequence_extraction_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "schema_validator_rules",

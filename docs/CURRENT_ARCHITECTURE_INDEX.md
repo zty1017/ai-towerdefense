@@ -176,6 +176,8 @@ shared/schemas/ + tools/ + 专题文档
   - WorkerTaskPack `acceptance_profile` 安全迁移入口：默认 report-only，只输出哪些 runner-compatible 旧包可迁移；只有显式 `--write` 才向目标任务包写入 `daily_fast` / `full_evidence` profile，且含 heredoc、分号、管道、非受限重定向、逻辑连接或命令替换的 shell-only 包会被跳过并留给人工处理。迁移器不执行任务包验收命令、不调用 provider、不读取 `.env`、不修改 runtime / backend / frontend；smoke 工具在 `/tmp` 临时目录验证 eligible 包迁移与 shell-only 包跳过。`examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json` 是首个 runner-compatible 样例迁移包。
 - `tools/dev/command_runner.py`
   - 本地 QA / evidence 脚本共享命令执行 helper：`run_fast_quality_gate.py`、`run_demo_evidence_suite.py` 和 `export_evidence.py` 共用它处理 timeout、输出截断和时间戳，后续本地验收脚本应优先复用，避免复制 subprocess 包装。
+- `tools/dev/expect_command_failure.py`
+  - 标准负例命令检查 helper：用于替代 WorkerTaskPack 中的 heredoc / inline JSON 临时断言，执行一个预期失败的命令，并可检查仓库外 `/tmp` 输出文件没有被写出。该工具复用 `command_runner.py`，不调用 provider、不读取 `.env`、不写仓库文件；媒体帧序列和原始视频负例包已用它迁移到 `acceptance_profile`。
 - `tools/demo/build_mvp_demo_readiness_report.py`、`tools/demo/validate_mvp_demo_readiness_report.py`、`examples/review_packs/mvp_demo_readiness_report.v0.1.json`
   - MVP 演示 readiness 总报告：从主流程 API、v0.2 地图预览 API、v0.2 强语义几何审查、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、前端战斗视觉合同、运行时 sprite 几何质量、Generation Scheduler review-only 调度、循环动画连续性、视频 provider 离线边界和失败地图候选隔离等已审 evidence 推导 `ready_for_mvp_demo_with_known_limitations`；builder 不调用 provider、不读取 `.env`、不生成新内容，只作为录屏 / 评审 / 合并前的顶层验收摘要。独立 validator 会复算 14 个 gate 的固定顺序、必需 gate 数、阻断 / warning / expected block、source file 数、整体状态和 safety summary，并已接入 `export_evidence.py` 静态验证。`map_runtime_v02_semantic_geometry` 是 MVP 必需 warning gate，证明 v0.2 preview 的资源点、机关区、防守锚点和阻挡区已通过结构化几何审查，warning 只保留为 review evidence，不激活 v0.2 默认 runtime；`battle_visual_contract` 是 MVP 必需 gate，证明默认战斗画面保持全屏 MapRuntimePackage 驱动的程序化战场，不回退控制图、失败整图、棋盘或虚线调试画面；`generation_scheduler_review_only` 是 MVP 必需 gate，证明调度计划和 dry-run 运行报告覆盖同步内容、后台预取、后台增强、懒加载和静态兜底，同时不调用 provider、不写世界状态、不激活候选；`frontend_flow_visual_smoke_harness` 默认是 `harness_only`，但 `--frontend-flow-smoke-report` 可让它消费真实浏览器截图报告并变为 `actual_report`；`map_runtime_activation_contract` 是非必需 warning gate，证明前端强语义消费已 `pre_activation_ready` 但默认 runtime 仍保持 v0.1；`provider_video_boundary` 也是非必需 warning gate，只证明 video adapter dry boundary、receipt/envelope 和 scheduler handoff 模板可见且不调用 provider，不代表 live video provider 或真实图生视频关键帧已经进入玩家 runtime。
 
@@ -271,6 +273,8 @@ shared/schemas/ + tools/ + 专题文档
   - FrameSequence v0.1 字段级事实源和语义门：结构由 schema 固化；validator 拒绝 remote URL、provider / raw prompt / secret 等敏感键，检查 fixture review-only 标记，并验证 runtime sprite import 所需的 loop、fps、帧数、唯一 frame_index、本地 PNG 尺寸 / sha / 统一画布和 `/assets/` URL 合同。
 - `shared/schemas/raw_video_sequence.v0.1.schema.json`、`tools/media/validate_raw_video_sequence.py` 与 `tools/media/extract_video_keyframes.py`
   - RawVideoSequence v0.1 字段级事实源和抽帧入口：只允许本地 raw video / review-only fixture metadata，不保存 provider 临时 URL、公网 URL、raw response、prompt、secret 或未审 payload；validator 拒绝 remote URL 与 provider / model / raw prompt / raw JSON / full trace / secret / unreviewed content 等敏感键，验证本地 video_ref sha、extraction fps / max_frames / loop；extractor 在 fixture 模式下只从 review-only `fixture_frames[]` 生成 `frame_sequence.v0.1`，真实视频模式必须依赖本地 `ffmpeg`，缺失时明确失败而不伪造帧。
+- `tools/media/validate_video_keyframe_import_result.py`
+  - 视频关键帧 atlas 导入结果 validator：检查输出 atlas 至少包含 `video_keyframe_sequence` item，并确认对应 `LoopContinuityReport` 覆盖这些 item 且 `failed_count=0`。它替代旧任务包里的 heredoc JSON 断言，不重新生成素材、不调用 provider、不写 runtime。
 
 当前状态：
 

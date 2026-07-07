@@ -120,6 +120,8 @@ loop_continuity_ref: examples/review_packs/...#animation_id
 
 当前 deterministic frame sequence 的机械循环连续性通过，但报告会保留 `deterministic_placeholder_not_real_video_keyframes` warning。后续真实图生视频关键帧进入 atlas 时，应把 `frame_source_kind` 改为 `video_keyframe_sequence` 并重新跑同一报告。
 
+`tools/media/validate_video_keyframe_import_result.py` 是视频关键帧导入后的标准验收 helper：它读取候选 atlas 和 LoopContinuityReport，确认 atlas 中存在 `video_keyframe_sequence` item、报告中的 `summary.frame_source_counts.video_keyframe_sequence` 覆盖导入数量，并要求 `summary.failed_count=0`。该工具只做结果校验，不生成素材、不调用 provider、不激活 runtime；WorkerTaskPack 中的视频关键帧导入验收应优先使用它，避免在任务包里写 heredoc / inline JSON 断言。
+
 当前已补充 `FrameSequence v0.1` 字段级事实源：
 
 ```text

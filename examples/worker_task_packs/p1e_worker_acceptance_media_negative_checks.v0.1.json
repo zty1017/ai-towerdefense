@@ -1,0 +1,141 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-11-worker-acceptance-media-negative-checks",
+  "title": "WorkerTaskPack media negative checks without heredoc",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-media-negative-checks",
+  "worktree": "/tmp/ai-td-task-worker-profile-media-negative-checks",
+  "objective": "把媒体帧序列、原始视频序列和视频关键帧 atlas 导入任务包中的 heredoc 负例断言替换为标准工具命令，使这些任务包可以迁移到 acceptance_profile，并继续保持不调用 provider、不读取 .env、不写 runtime 的边界。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/dev/expect_command_failure.py",
+    "tools/media/validate_video_keyframe_import_result.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/migrate_worker_acceptance_profiles.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/expect_command_failure.py",
+    "tools/media/validate_video_keyframe_import_result.py",
+    "examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json",
+    "examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+    "examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+    "examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/VIDEO_FRAME_ASSET_PIPELINE_V0_1.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/runtime_packages/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_media_negative_checks python3 -m py_compile tools/dev/expect_command_failure.py tools/media/validate_video_keyframe_import_result.py",
+    "python3 tools/dev/expect_command_failure.py --name invalid_frame_sequence_loop_false -- python3 tools/media/validate_frame_sequence.py examples/media_frame_sequences/invalid_loop_false.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+    "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/media_negative_checks_audit_after_migrate.json --max-samples 200",
+    "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/media_negative_checks_after_dry.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/media_negative_checks_fast_gate.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/media_negative_checks_full_evidence",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，验证媒体负例标准工具、三个已迁移任务包、迁移审计和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_media_negative_checks python3 -m py_compile tools/dev/expect_command_failure.py tools/media/validate_video_keyframe_import_result.py",
+          "python3 tools/dev/expect_command_failure.py --name invalid_frame_sequence_loop_false -- python3 tools/media/validate_frame_sequence.py examples/media_frame_sequences/invalid_loop_false.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/media_negative_checks_audit_after_migrate.json --max-samples 200",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/media_negative_checks_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/media_negative_checks_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，在 daily_fast 基础上导出完整 demo evidence。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_media_negative_checks.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_frame_sequence_schema_validator.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_raw_video_sequence_extraction.v0.1.json",
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_media_negative_checks python3 -m py_compile tools/dev/expect_command_failure.py tools/media/validate_video_keyframe_import_result.py",
+          "python3 tools/dev/expect_command_failure.py --name invalid_frame_sequence_loop_false -- python3 tools/media/validate_frame_sequence.py examples/media_frame_sequences/invalid_loop_false.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_missing_local_video -- python3 tools/media/validate_raw_video_sequence.py examples/raw_video_sequences/invalid_missing_local_video.v0.1.json",
+          "python3 tools/dev/expect_command_failure.py --name invalid_raw_video_extractor_missing_local_video --expect-output-absent /tmp/raw_video_extractor_negative_frame_sequence.json -- python3 tools/media/extract_video_keyframes.py --raw-video-sequence examples/raw_video_sequences/invalid_missing_local_video.v0.1.json --output-frame-sequence /tmp/raw_video_extractor_negative_frame_sequence.json --frames-output-dir /tmp/raw_video_extractor_negative_frames --frames-url-prefix /assets/frontend_runtime_mock/raw_video_negative_frames",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/media_negative_checks_audit_after_migrate.json --max-samples 200",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/media_negative_checks_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/media_negative_checks_fast_gate.json",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/media_negative_checks_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只把媒体负例断言从 heredoc / inline JSON 检查迁移到标准工具命令，不修改媒体 schema、runtime package、前端或后端。",
+    "tools/dev/expect_command_failure.py 用于可复用的预期失败检查，可选断言仓库外 /tmp 输出文件不存在。",
+    "tools/media/validate_video_keyframe_import_result.py 用于检查视频关键帧 atlas 导入结果和 LoopContinuityReport 的一致性。",
+    "迁移后审计应从 111 packs: 98 with profile, 13 without profile, 13 migration candidates, 13 manual review required 变为新增本任务包后的 112 packs: 99 with profile, 13 without profile, 13 migration candidates, 13 manual review required。"
+  ]
+}

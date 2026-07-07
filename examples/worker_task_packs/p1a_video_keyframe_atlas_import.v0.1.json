@@ -66,11 +66,55 @@
     "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json",
     "python3 tools/media/build_loop_continuity_report.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --output /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json --report-id frontend_runtime_loop_continuity_video_keyframe_import_v0_1",
     "python3 tools/media/validate_loop_continuity_report.py /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\natlas=json.loads(Path('/tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json').read_text(encoding='utf-8'))\nreport=json.loads(Path('/tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json').read_text(encoding='utf-8'))\nassert any(item.get('frame_source_kind') == 'video_keyframe_sequence' for item in atlas.get('items', []))\nassert report['summary']['frame_source_counts'].get('video_keyframe_sequence', 0) >= 1\nassert report['summary']['failed_count'] == 0\nPY",
+    "python3 tools/media/validate_video_keyframe_import_result.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --loop-report /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
     "python3 tools/frontend/validate_battle_visual_contract.py",
     "python3 tools/demo/export_evidence.py --output-dir /tmp/video_keyframe_atlas_import_evidence",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-video-keyframe-atlas-import python3 -m py_compile tools/media/import_video_keyframe_sequence.py tools/media/build_multiframe_atlas_manifest.py tools/media/build_loop_continuity_report.py tools/media/validate_multiframe_atlas_contract.py tools/media/validate_loop_continuity_report.py",
+          "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --spritesheet-output-dir /tmp/frontend_runtime_video_keyframe_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/video_keyframe_atlas_sheets",
+          "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json",
+          "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json",
+          "python3 tools/media/build_loop_continuity_report.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --output /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json --report-id frontend_runtime_loop_continuity_video_keyframe_import_v0_1",
+          "python3 tools/media/validate_loop_continuity_report.py /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
+          "python3 tools/media/validate_video_keyframe_import_result.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --loop-report /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
+          "python3 tools/frontend/validate_battle_visual_contract.py",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1a_video_keyframe_atlas_import.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-video-keyframe-atlas-import python3 -m py_compile tools/media/import_video_keyframe_sequence.py tools/media/build_multiframe_atlas_manifest.py tools/media/build_loop_continuity_report.py tools/media/validate_multiframe_atlas_contract.py tools/media/validate_loop_continuity_report.py",
+          "python3 tools/media/import_video_keyframe_sequence.py --source-atlas game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json --frame-sequence examples/media_frame_sequences/frontend_runtime_video_keyframe_sequence.fixture.v0.1.json --output-atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --spritesheet-output-dir /tmp/frontend_runtime_video_keyframe_atlas_sheets --spritesheet-url-prefix /assets/frontend_runtime_mock/video_keyframe_atlas_sheets",
+          "python3 tools/media/validate_media_atlas_manifest.py /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json",
+          "python3 tools/media/validate_multiframe_atlas_contract.py /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json",
+          "python3 tools/media/build_loop_continuity_report.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --output /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json --report-id frontend_runtime_loop_continuity_video_keyframe_import_v0_1",
+          "python3 tools/media/validate_loop_continuity_report.py /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
+          "python3 tools/media/validate_video_keyframe_import_result.py --atlas /tmp/frontend_runtime_art_atlas_manifest.video_keyframe_import.json --loop-report /tmp/frontend_runtime_loop_continuity_report.video_keyframe_import.json",
+          "python3 tools/frontend/validate_battle_visual_contract.py",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/video_keyframe_atlas_import_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",
