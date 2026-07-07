@@ -80,7 +80,7 @@
         "description": "录屏 / 评审前 profile：运行完整 demo evidence suite，并要求 scheduler/outbox smoke 与 battle drag report 被 suite validator 看见。",
         "commands": [
           "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/battle_drag_demo_suite_release --command-timeout 180",
-          "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/battle_drag_demo_suite_release/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke --require-scheduler-runner-mode shared-venv --require-outbox-runner-mode shared-venv"
+          "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/battle_drag_demo_suite_release/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke"
         ],
         "required_for": [
           "release_candidate_review",
@@ -120,6 +120,7 @@
     "本任务不调用 provider，不读取 .env，不生成或替换游戏素材。",
     "window.__AI_TD_BATTLE_SMOKE__ 只在 battleVisualSmoke query 下挂载，用于浏览器 smoke，不是玩家侧 debug UI。",
     "当前执行环境没有可发现 Chromium，daily_fast 只验证 browser_unavailable 降级；真实评审环境应运行 release_gate，最好不带 --allow-missing-browser 取得真实拖拽截图。",
+    "release_gate 不锁定 scheduler/outbox runner mode；auto 可在不同机器上选择 venv、shared-venv 或 uv。只有专门的 runner selection 任务包才应该断言 runner mode。",
     "本任务不修改 MapRuntimePackage、RenderPlan、published visual layer 或 v0.2 activation gate。"
   ]
 }
