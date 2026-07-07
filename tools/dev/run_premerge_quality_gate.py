@@ -123,6 +123,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/demo/run_demo_evidence_suite.py",
                 "tools/demo/validate_demo_evidence_suite_report.py",
                 "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
+                "tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
             ],
             "env": {"PYTHONPYCACHEPREFIX": pycache_prefix},
         },

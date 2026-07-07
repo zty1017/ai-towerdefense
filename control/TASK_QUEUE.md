@@ -1671,6 +1671,7 @@ git diff --check
 已落地：
 
 - `tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py`：新增严格 smoke 脚本。
+- `tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py`：只读校验 outbox import report 的 schema / step / handoff 数 / consumer 执行数 / import 数 / prefetch 因果 / safety boundary，不重新启动后端。
 - 脚本启动临时 SQLite / uvicorn，创建 scheduler run，并对 `sched_next_map_visual_prefetch`、`sched_video_frame_background_compile` 分别执行 dry-run、live guard、executor request、provider authorization 和 handoff export。
 - 脚本手动组装 `ProviderAdapterRunnerHandoffOutbox v0.1`，调用 `tools/dev/run_provider_adapter_runner_handoff_outbox.py` 的离线 fixture consumer，再调用 `import-provider-adapter-runner-output` 导入临时后端。
 - smoke 断言导入前 `review_only_envelope_ready_count=0`，导入后为 2，且 `activation_allowed_count=0`。
@@ -1689,8 +1690,9 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_import_smoke python3 -m py_compile tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_import_smoke python3 -m py_compile tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py
 python3 tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py --output /tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00
+python3 tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py /tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json
 python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_import_smoke_evidence
 rg -n "consume_import|outbox import|check_provider_runner_handoff_outbox_import_pipeline|local_consume_import_prefetch_smoke_ready" /tmp/provider_runner_handoff_outbox_import_smoke_evidence
 git diff --check
@@ -5212,7 +5214,7 @@ git diff --check
 
 已落地：
 
-- `tools/demo/run_demo_evidence_suite.py`：新增默认步骤 `provider_runner_handoff_outbox_import_smoke`，在浏览器玩家链路截图前运行。
+- `tools/demo/run_demo_evidence_suite.py`：新增默认步骤 `provider_runner_handoff_outbox_import_smoke`，在浏览器玩家链路截图前运行；outbox smoke 之后立即运行 `validate_provider_runner_handoff_outbox_import_pipeline_report.py` 复核报告合同。
 - suite report 新增 `provider_runner_handoff_outbox_import_smoke_report` 文件引用、`outbox_import_smoke_runner` 和 `provider_runner_handoff_outbox_import_smoke` 摘要。
 - suite 状态会检查 outbox import smoke 必须 `passed`，且 provider call、env read、staging、promotion、queue complete、world mutation、runtime activation 都为 0。
 - suite 状态还会检查导入前 `review_only_envelope_ready_count=0`、导入后 `prefetch_review_only_envelope_ready_count=2`、`imported_count=2`。
@@ -5229,9 +5231,9 @@ git diff --check
 
 ```bash
 python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_outbox_import_smoke.v0.1.json
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_outbox_import_smoke python3 -m py_compile tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py
 python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_outbox_import_check --command-timeout 180
-python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); outbox=report['provider_runner_handoff_outbox_import_smoke']; command_names=[item['name'] for item in report['commands']]; assert outbox['status']=='passed'; assert outbox['imported_count']==2; assert outbox['pre_import_review_only_envelope_ready_count']==0; assert outbox['prefetch_review_only_envelope_ready_count']==2; assert outbox['external_provider_call_count']==0; assert outbox['runtime_activation_allowed_count']==0; assert report['safety_summary']['outbox_import_smoke_skipped'] is False; assert 'provider_runner_handoff_outbox_import_smoke' in command_names"
+python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/ai_td_demo_suite_outbox_import_check/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke
 git diff --check
 ```
 

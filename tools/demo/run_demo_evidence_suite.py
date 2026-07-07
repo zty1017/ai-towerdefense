@@ -197,6 +197,16 @@ def build_python_outbox_import_smoke_command(
     ]
 
 
+def build_outbox_import_smoke_validate_command(
+    outbox_import_report_path: Path,
+) -> list[str]:
+    return [
+        sys.executable,
+        "tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
+        str(outbox_import_report_path),
+    ]
+
+
 def build_uv_scheduler_pipeline_smoke_command(
     scheduler_report_path: Path,
 ) -> list[str]:
@@ -1058,6 +1068,15 @@ def main(argv: list[str] | None = None) -> int:
             uv_lock_path.unlink()
         if outbox_import_report_path.exists():
             outbox_import_report = load_json(outbox_import_report_path)
+        commands.append(
+            run_command(
+                "provider_runner_handoff_outbox_import_smoke_report_validator",
+                build_outbox_import_smoke_validate_command(outbox_import_report_path),
+                root=ROOT,
+                timeout_seconds=20,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+            )
+        )
 
     capture_command = build_capture_command(args, frontend_output)
     commands.append(

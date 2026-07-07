@@ -80,6 +80,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/dev/audit_release_gate_profiles.py",
                 "tools/dev/check_generation_scheduler_review_only_pipeline.py",
                 "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
+                "tools/dev/validate_provider_runner_handoff_outbox_import_pipeline_report.py",
                 "tools/dev/run_fast_quality_gate.py",
                 "tools/dev/validate_fast_quality_gate_report.py",
                 "tools/dev/run_premerge_quality_gate.py",
