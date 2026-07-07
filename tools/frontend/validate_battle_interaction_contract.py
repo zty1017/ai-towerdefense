@@ -9,12 +9,13 @@ primary deployment gesture; click-to-place can remain as a fallback.
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from report_io import write_json
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,14 +27,6 @@ DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
-
 
 def js_section(source: str, start_name: str, end_name: str | None = None) -> str:
     start = source.find(f"function {start_name}")

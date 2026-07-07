@@ -9,13 +9,14 @@ painted map layers, and battle canvas layouts that collapse into a small panel.
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import struct
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json, write_json
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,19 +27,6 @@ MAP_RUNTIME_PACKAGES = sorted((ROOT / "examples/map_runtime_packages").glob("*.m
 MAP_RUNTIME_PACKAGES_V02 = sorted(
     (ROOT / "examples/map_runtime_packages_v02").glob("*.map_runtime_package_v02.json")
 )
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
-
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()

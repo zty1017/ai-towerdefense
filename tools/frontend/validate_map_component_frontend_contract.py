@@ -8,10 +8,11 @@ or draw it until a separate runtime publication contract exists.
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,12 +29,6 @@ REQUIRED_USAGE_POLICY = {
     "no_provider_or_prompt_payload",
     "no_external_temporary_url",
 }
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
 
 def require(condition: bool, message: str, errors: list[str]) -> None:
     if not condition:

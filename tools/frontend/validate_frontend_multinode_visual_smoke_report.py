@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json_object
 
 
 SCHEMA_VERSION = "frontend_multinode_visual_smoke_report.v0.1"
@@ -17,15 +18,6 @@ EXPECTED_NODES = {
     "old_signal_tower": "旧信号塔",
 }
 EXPECTED_VIEWPORTS = {"desktop", "mobile"}
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError("report root must be a JSON object")
-    return data
-
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
@@ -155,7 +147,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
-        validate(load_json(args.report), args.allow_unavailable)
+        validate(load_json_object(args.report, label="report root"), args.allow_unavailable)
     except Exception as exc:  # noqa: BLE001 - CLI validator should be concise.
         print(f"frontend multinode visual smoke report validation failed: {exc}", file=sys.stderr)
         return 1

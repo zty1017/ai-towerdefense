@@ -9,7 +9,6 @@ artifacts. The heavier screenshot tools still perform the real browser run.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -22,16 +21,10 @@ from tools.frontend.capture_frontend_flow_visual_smoke import (  # noqa: E402
     browser_candidates,
     find_browser,
 )
+from tools.frontend.report_io import write_json  # noqa: E402
 
 
 SCHEMA_VERSION = "browser_smoke_environment_report.v0.1"
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def build_report(browser_bin: str | None) -> dict[str, Any]:
