@@ -59,14 +59,14 @@ shared/schemas/ + tools/ + 专题文档
 
 ## 2. 先读顺序
 
-新代理、新队友或评审应按以下顺序阅读：
+新代理、项目主控或评审应按以下顺序阅读：
 
 1. `README.md`
    - 项目运行入口、后端 API、验证命令。
 2. `docs/CURRENT_ARCHITECTURE_INDEX.md`
    - 当前文档导航和有效性说明。
 3. `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
-   - 产品定位、架构分层、协作治理基线。
+   - 产品定位、架构分层、执行与审查治理基线。
 4. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
    - AI 编译系统总架构：Context Engine、Object Compiler、World Transaction System，以及作为横切控制面的 Generation Scheduler。
 5. `docs/GENERATION_SCHEDULER_V0_1.md`

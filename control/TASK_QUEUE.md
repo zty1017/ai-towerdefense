@@ -4443,6 +4443,38 @@ rg -n "effects\\[\\]|operations\\[\\]|WorldStateDeltaTransaction|横切控制面
 git diff --check
 ```
 
+### P1-F-02 GovernanceDocSimplification v0.1
+
+状态：已完成治理文档执行模式收敛。
+
+目标：
+
+```text
+把 PROJECT_ARCHITECTURE_AND_GOVERNANCE 中过时的 Gate 0 / 队友分工 / 早期骨架下一步，收敛为当前主控执行、task worktree、fast/premerge/demo evidence 质量门和真实下一步路线，避免后续继续按旧流程推进。
+```
+
+已落地：
+
+- `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`：更新时间到 2026-07-07；把旧 Gate 0-5 手动阶段清单替换为当前 fast gate、premerge gate、demo evidence suite 三层入口；把团队协作段落改为执行与审查模式，默认不再按队友角色分发工作。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`：把先读对象从“新代理、新队友或评审”收敛为“新代理、项目主控或评审”，并同步治理文档说明。
+- `examples/worker_task_packs/p1f_governance_doc_simplification.v0.1.json`：固化本轮文档收敛验收。
+
+边界：
+
+- 不修改代码、schema、后端、前端、媒体、runtime package 或 review pack。
+- 不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime。
+- 不删除历史文档，只把当前治理基线从早期骨架阶段收敛到当前事实源。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_governance_doc_simplification.v0.1.json
+python3 -c "from pathlib import Path; text=Path('docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md').read_text(encoding='utf-8'); forbidden=['Gate 0：项目能启动','## 8. 团队协作','计算机专业队友','文科类队友','--output-dir /tmp/ai_td_demo_evidence_suite']; bad=[term for term in forbidden if term in text]; raise SystemExit(('stale governance text: '+', '.join(bad)) if bad else 0)"
+rg -n "执行与审查模式|run_fast_quality_gate.py|run_premerge_quality_gate.py|--output-root /tmp/ai_td_demo_evidence_suite|当前执行顺序" docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md docs/CURRENT_ARCHITECTURE_INDEX.md control/TASK_QUEUE.md
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/governance_doc_simplification_fast_gate.json
+git diff --check
+```
+
 ### P1-B Generation Scheduler activation gate read-model
 
 状态：已完成最小后端读模型。

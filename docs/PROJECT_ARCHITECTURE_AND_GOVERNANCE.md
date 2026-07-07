@@ -1,6 +1,6 @@
 # AI 编译塔防：架构与治理基线
 
-Last updated: 2026-07-01
+Last updated: 2026-07-07
 
 当前文档入口见：
 
@@ -414,25 +414,39 @@ locked: 可被正式游戏读取
 - validation commands
 - stop condition
 
-worker 一次只执行一个 ready 任务。
+自动化 worker 或本地主控一次只执行一个 ready 任务。当前阶段不再默认按队友角色分发工作；需要人工参与时，应把人工输入限定为试玩、审查或明确授权，而不是让非主控人员改动核心事实源。
 
 ### 7.5 质量门
 
-Gate 0：项目能启动。
+当前质量门以可运行脚本为事实源，旧 Gate 0-5 只保留为历史阶段描述。
 
-Gate 1：最小塔防可玩。
+日常开发优先运行：
 
-Gate 2：蓝图闭环可用。
+```bash
+python3 tools/dev/run_fast_quality_gate.py
+```
 
-Gate 3：内容生命周期可用。
+合并前运行：
 
-Gate 4：真实 AI 与 fallback 稳定。
+```bash
+python3 tools/dev/run_premerge_quality_gate.py
+```
 
-Gate 5：Demo 路径可重复。
+录屏 / 评审前运行：
 
-## 8. 团队协作
+```bash
+python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_demo_evidence_suite
+```
 
-### 8.1 你：项目与技术主控
+边界：
+
+- fast gate 和 premerge gate 默认不调用 provider、不读取 `.env`、不跑浏览器、不写世界状态、不激活 runtime。
+- demo evidence suite 会使用真实浏览器截图；浏览器缺失时不能把降级结果当作最终录屏证据。
+- 字段级检查以 `shared/schemas/`、`tools/`、`examples/` 和 `docs/CURRENT_ARCHITECTURE_INDEX.md` 指向的专题文档为准。
+
+## 8. 执行与审查模式
+
+### 8.1 项目与技术主控
 
 负责：
 
@@ -444,7 +458,7 @@ Gate 5：Demo 路径可重复。
 - 部署
 - 最终 Demo 判断
 
-不应投入过多时间在：
+应避免把时间耗在：
 
 - 反复润色文案
 - 美术候选初筛
@@ -452,51 +466,31 @@ Gate 5：Demo 路径可重复。
 - 第一轮试玩记录
 - PPT 初稿排版
 
-### 8.2 计算机专业队友
+### 8.2 自动化 worker / 本地 agent
 
-定位：初级技术执行、QA、数据与工具协助。
+CodeBuddy、OpenCode、Codex headless 或本地脚本可以作为 worker，但必须受任务包和路径边界约束。
 
-适合任务：
+默认规则：
 
-- 按 README 跑环境并记录报错
-- 整理 mock JSON 数据
-- 实现简单静态 UI 组件
-- 写简单校验脚本
-- 维护 fixture 数据
-- 复现 bug
-- 测试战斗场景
-- 维护简单文档
+- 在 `task/*` worktree 中工作。
+- 只修改任务包允许的路径。
+- 不读取或打印 `.env`、API key、secret、token。
+- 不把 provider 原始响应、raw prompt、未审 JSON 直接写入 runtime。
+- 完成后必须报告修改文件、验证命令、结果、风险和未解决问题。
 
-初期不建议负责：
+当前 Codex 受控执行通道不依赖把整个仓库上下文发送给外部 agent 的方式；需要仓库上下文的实现任务，优先由本地 worktree 直接完成。
 
-- 编译器核心架构
-- Schema 和模块库最终设计
-- 部署密钥
-- 复杂战斗引擎逻辑
-- 合并和集成决策
+### 8.3 人工审查输入
 
-### 8.3 文科类队友
+人工输入主要用于：
 
-定位：世界书、内容、可读性、美术审查、试玩、路演表达。
+- 产品和架构取舍。
+- 游戏体验试玩。
+- 地图 / sprite / UI 截图审查。
+- 世界书、剧情、NPC 气质审查。
+- 真实 provider 输出是否晋升的最终判断。
 
-适合任务：
-
-- 审查世界书气质
-- 压缩节点 UI 文案
-- 评价 NPC 是否清晰
-- 给蓝图命名打分
-- 审查美术候选
-- 做第一玩家试玩
-- 准备 Demo 脚本
-- 协助 PPT 和路演叙事
-
-不建议负责：
-
-- 代码修改
-- Schema 编辑
-- Prompt approval
-- locked 内容升级
-- 数值平衡最终判断
+人工审查结论需要通过 review pack、promotion report、activation gate 或任务队列记录下来，不能直接绕过 schema / semantic gate / runtime activation。
 
 ## 9. Worktree 策略
 
@@ -508,24 +502,20 @@ develop: 集成开发
 task/<task-id>-<slug>: 单任务分支
 ```
 
-早期阶段：
+当前阶段：
 
-- P0-001 和 P0-002 低并行
-- 避免并行修改 Schema、compiler、budget rules
-
-Schema v0.1 后：
-
-- 允许 2-4 个 active worktree
-- 可拆分 UI、内容管线、参考库、QA/eval
-- 高耦合系统串行集成
+- `main` 保持稳定可演示基线。
+- `develop` 保持集成事实源。
+- 小修补仍优先从 `develop` 派生 `task/*` worktree，验证后快进合回 `develop` 和 `main`。
+- 高耦合系统串行集成；地图 runtime、provider runner、activation / promotion gate 不并行改同一事实源。
+- 本地日常验证使用 fast gate，合并前使用 premerge gate，录屏 / 评审前使用 demo evidence suite。
 
 ## 10. 近期下一步
 
-1. 用通用系统定位创建修正版项目骨架。
-2. 导入或重写 handoff 文档，让《长夜灯火》成为 MVP 世界书，而不是项目本体。
-3. 完成 Gate 0：
-   - 前端占位可启动
-   - 后端 health check 可启动
-   - README 写明启动方式
-   - 验证命令可运行
-4. 进入 Schema / Module Registry / Budget Rules v0.1。
+当前执行顺序以 `control/TASK_QUEUE.md` 第 7 节和 `docs/CURRENT_ARCHITECTURE_INDEX.md` 为准。高层顺序如下：
+
+1. 继续保持 AI 可编译对象、WorldStateDeltaTransaction、ProviderOutputEnvelope、staging、promotion、runtime package 和地图 runtime 的事实源一致，不新增平行口径。
+2. 地图 visual / runtime 下一步优先走受控参考图、人工 paintover 或 MapRuntimePackage 驱动的分层程序化底图；不要再把纯文本整图生图作为发布候选路线。
+3. 若要把 `MapRuntimePackage v0.2` 设为玩家默认地图语义，必须先准备显式 approved 授权，再复跑 API smoke、前端视觉合同、浏览器玩家链路和 demo evidence。
+4. Provider / 真实 AI 调度继续通过 runner handoff、output envelope、staging、promotion 和 activation gate 进入系统，不直接写 runtime。
+5. 日常小改先跑 fast gate；合并前跑 premerge gate；演示前跑 demo evidence suite。

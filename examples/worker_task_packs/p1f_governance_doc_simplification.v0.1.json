@@ -1,0 +1,92 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-F-02-governance-doc-simplification",
+  "title": "Governance doc simplification 治理文档执行模式收敛",
+  "task_type": "docs",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/governance-doc-simplification",
+  "worktree": "/tmp/ai-td-task-governance-doc-simplification",
+  "objective": "把 PROJECT_ARCHITECTURE_AND_GOVERNANCE 中过时的 Gate 0 / 队友分工 / 早期骨架下一步，收敛为当前主控执行、task worktree、fast/premerge/demo evidence 质量门和真实下一步路线，避免后续继续按旧流程推进。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md",
+    "control/TASK_QUEUE.md",
+    "README.md"
+  ],
+  "allowed_paths": [
+    "docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1f_governance_doc_simplification.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "game_data/",
+    "shared/schemas/",
+    "tools/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "examples/review_packs/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_governance_doc_simplification.v0.1.json",
+    "python3 -c \"from pathlib import Path; text=Path('docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md').read_text(encoding='utf-8'); forbidden=['Gate 0：项目能启动','## 8. 团队协作','计算机专业队友','文科类队友','--output-dir /tmp/ai_td_demo_evidence_suite']; bad=[term for term in forbidden if term in text]; raise SystemExit(('stale governance text: '+', '.join(bad)) if bad else 0)\"",
+    "rg -n \"执行与审查模式|run_fast_quality_gate.py|run_premerge_quality_gate.py|--output-root /tmp/ai_td_demo_evidence_suite|当前执行顺序\" docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md docs/CURRENT_ARCHITECTURE_INDEX.md control/TASK_QUEUE.md",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/governance_doc_simplification_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：验证治理文档不再指向早期 Gate0 / 队友分工，并确认 fast gate 仍通过。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1f_governance_doc_simplification.v0.1.json",
+          "python3 -c \"from pathlib import Path; text=Path('docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md').read_text(encoding='utf-8'); forbidden=['Gate 0：项目能启动','## 8. 团队协作','计算机专业队友','文科类队友','--output-dir /tmp/ai_td_demo_evidence_suite']; bad=[term for term in forbidden if term in text]; raise SystemExit(('stale governance text: '+', '.join(bad)) if bad else 0)\"",
+          "rg -n \"执行与审查模式|run_fast_quality_gate.py|run_premerge_quality_gate.py|--output-root /tmp/ai_td_demo_evidence_suite|当前执行顺序\" docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md docs/CURRENT_ARCHITECTURE_INDEX.md control/TASK_QUEUE.md",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/governance_doc_simplification_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "governance_alignment_summary",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只收敛文档治理边界，不修改代码、schema、前端、后端、媒体、runtime package 或 review pack。",
+    "当前阶段不再默认按队友角色分发工作；人工输入主要作为审查、试玩或授权。",
+    "质量门命令必须使用现有 fast/premerge/demo evidence 入口，不恢复旧 Gate 0 手动清单。"
+  ]
+}
