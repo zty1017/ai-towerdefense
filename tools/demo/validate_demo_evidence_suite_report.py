@@ -91,15 +91,42 @@ def validate_status(
             "multinode expected screenshot count is not 6",
             failures,
         )
+        battle_drag = as_obj(report.get("frontend_battle_drag_interaction_smoke"))
+        require(
+            battle_drag.get("status") == "captured",
+            "frontend battle drag interaction smoke not captured",
+            failures,
+        )
+        require(
+            int_value(battle_drag.get("passed_interaction_count")) == 2,
+            "battle drag passed interaction count is not 2",
+            failures,
+        )
+        require(
+            int_value(battle_drag.get("expected_interaction_count")) == 2,
+            "battle drag expected interaction count is not 2",
+            failures,
+        )
     report_failures = as_list(report.get("failures"))
     require(not report_failures, f"suite failures not empty: {report_failures}", failures)
 
 
 def validate_outputs(report: dict[str, Any], failures: list[str]) -> None:
     outputs = as_obj(report.get("outputs"))
+    safety = as_obj(report.get("safety_summary"))
+    optional_when_skipped = {
+        "generation_scheduler_pipeline_smoke_report": bool(
+            safety.get("scheduler_pipeline_smoke_skipped")
+        ),
+        "provider_runner_handoff_outbox_import_smoke_report": bool(
+            safety.get("outbox_import_smoke_skipped")
+        ),
+    }
     require(bool(outputs), "outputs missing", failures)
     for name, output in outputs.items():
         output_obj = as_obj(output)
+        if optional_when_skipped.get(name) and output_obj.get("exists") is False:
+            continue
         require(output_obj.get("exists") is True, f"output missing: {name}", failures)
 
 
@@ -162,6 +189,47 @@ def validate_browser_preflight(
             failures,
         )
         require(safety.get("opens_socket") is False, "browser preflight opens a socket", failures)
+
+
+def validate_browser_battle_drag(
+    report: dict[str, Any],
+    *,
+    require_browser_captured: bool,
+    allow_browser_unavailable: bool,
+    failures: list[str],
+) -> None:
+    battle_drag = as_obj(report.get("frontend_battle_drag_interaction_smoke"))
+    status = battle_drag.get("status")
+    allowed = {"captured"}
+    if allow_browser_unavailable:
+        allowed.add("browser_unavailable")
+    require(status in allowed, f"battle drag smoke status is {status}", failures)
+    if require_browser_captured:
+        require(status == "captured", "battle drag smoke was not captured", failures)
+    if status == "captured":
+        require(
+            int_value(battle_drag.get("passed_interaction_count")) == 2,
+            "battle drag passed interaction count is not 2",
+            failures,
+        )
+        require(
+            int_value(battle_drag.get("expected_interaction_count")) == 2,
+            "battle drag expected interaction count is not 2",
+            failures,
+        )
+    safety = as_obj(battle_drag.get("safety_summary"))
+    if safety:
+        require(safety.get("reads_env_file") is False, "battle drag smoke reads .env", failures)
+        require(
+            int_value(safety.get("provider_call_count")) == 0,
+            "battle drag smoke provider call count is not 0",
+            failures,
+        )
+        require(
+            safety.get("runtime_activation_allowed") is False,
+            "battle drag smoke activates runtime",
+            failures,
+        )
 
 
 def validate_scheduler(
@@ -279,6 +347,12 @@ def validate_report(report: dict[str, Any], args: argparse.Namespace) -> list[st
         allow_browser_unavailable=args.allow_browser_unavailable,
         failures=failures,
     )
+    validate_browser_battle_drag(
+        report,
+        require_browser_captured=args.require_browser_captured,
+        allow_browser_unavailable=args.allow_browser_unavailable,
+        failures=failures,
+    )
     validate_scheduler(
         report,
         required=args.require_scheduler_pipeline_smoke,
@@ -305,7 +379,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--require-browser-captured",
         action="store_true",
-        help="Require fully captured frontend browser reports: 14 flow screenshots and 6 multinode battle screenshots.",
+        help="Require fully captured frontend browser reports: 14 flow screenshots, 6 multinode screenshots, and 2 drag interactions.",
     )
     parser.add_argument(
         "--require-scheduler-pipeline-smoke",

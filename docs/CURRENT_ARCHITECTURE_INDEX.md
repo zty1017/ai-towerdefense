@@ -162,12 +162,14 @@ shared/schemas/ + tools/ + 专题文档
   - 浏览器玩家链路截图门禁：用真实 Chromium 与 no-build 静态前端，从本地档案入口、开局配置、开场叙事、大地图、现场试作、塔防战斗走到战后结算，输出桌面 / 移动 14 张截图和结构化 smoke report。该工具不调用 provider、不读取 `.env`、不写世界状态；`flowVisualSmoke` query 只用于截图时加速战斗，不改变正常玩家入口。
 - `tools/frontend/capture_frontend_multinode_visual_smoke.py`、`tools/frontend/validate_frontend_multinode_visual_smoke_report.py`
   - 浏览器多节点战斗截图门禁：用 no-build 静态前端直接打开三张 MVP 战斗节点，覆盖桌面 / 移动共 6 张 battle canvas 截图，并校验节点标题、截图矩阵、canvas 尺寸和安全计数。`nodeId` 覆盖只在 `battleVisualSmoke` / `flowVisualSmoke` query 下生效；正常玩家入口、MapRuntimePackage、RenderPlan、published visual layer 和 v0.2 activation gate 均不被修改。
+- `tools/frontend/capture_battle_drag_interaction_smoke.py`、`tools/frontend/validate_battle_drag_interaction_smoke_report.py`
+  - 浏览器战斗拖拽交互门禁：用 no-build 静态前端打开首战 battle smoke 页面，桌面 / 移动各执行一次“基础灯栏工具卡拖到可部署格位释放”的真实浏览器输入，并通过 smoke-only `window.__AI_TD_BATTLE_SMOKE__` probe 验证防御件数量、基础工具次数和资源变化。probe 只在 `battleVisualSmoke` query 下挂载，不影响正常玩家入口；当前无 Chromium 环境可用时会输出 `browser_unavailable` 报告。
 - `tools/frontend/check_browser_smoke_environment.py`
   - 浏览器视觉 smoke 环境预检：只发现 Chromium 兼容可执行文件并输出 `browser_smoke_environment_report.v0.1`，不启动浏览器、不打开 socket、不读取 `.env`、不调用 provider。`run_demo_evidence_suite.py` 会先运行该预检；未找到浏览器且未显式 `--allow-missing-browser` 时早停，避免先跑完 scheduler/outbox 才失败。
 - `tools/demo/run_demo_evidence_suite.py`
-  - MVP 录屏 / 评审前一键证据套件：先运行浏览器预检，再运行 Generation Scheduler review-only pipeline smoke 和 provider runner outbox consume/import smoke，再串联浏览器玩家主链路截图、多节点战斗截图、截图 report 校验和 `export_evidence.py --frontend-flow-smoke-report`，输出本地 suite report；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级，不调用 provider、不读取 `.env`、不提交截图到仓库。scheduler / outbox smoke 默认 `--scheduler-smoke-runner auto`：当前 worktree `.venv/bin/python` 或 git common dir 对应主工作区 `.venv/bin/python` 存在时优先复用本地 venv，都不存在时回退 `uv run`；suite report 会记录浏览器预检结果、`scheduler_pipeline_smoke_runner`、`outbox_import_smoke_runner`、14 张玩家主链路截图摘要和 6 张多节点战斗截图摘要。传入主链路截图报告后，导出的 `mvp_demo_readiness.frontend_flow_visual_smoke_harness` gate 会从仓库默认的 `harness_only` 升级为 `actual_report`。suite report 会额外记录 `generation_scheduler_review_only_pipeline_smoke` 与 `provider_runner_handoff_outbox_import_smoke` 摘要，确认 background handoff outbox、prefetch-cache、activation-gate、shared cache 空命中、外部 outbox consume/import 因果和安全计数。
+  - MVP 录屏 / 评审前一键证据套件：先运行浏览器预检，再运行 Generation Scheduler review-only pipeline smoke 和 provider runner outbox consume/import smoke，再串联浏览器玩家主链路截图、多节点战斗截图、战斗拖拽部署交互 smoke、截图 / 交互 report 校验和 `export_evidence.py --frontend-flow-smoke-report`，输出本地 suite report；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级，不调用 provider、不读取 `.env`、不提交截图到仓库。scheduler / outbox smoke 默认 `--scheduler-smoke-runner auto`：当前 worktree `.venv/bin/python` 或 git common dir 对应主工作区 `.venv/bin/python` 存在时优先复用本地 venv，都不存在时回退 `uv run`；suite report 会记录浏览器预检结果、`scheduler_pipeline_smoke_runner`、`outbox_import_smoke_runner`、14 张玩家主链路截图摘要、6 张多节点战斗截图摘要和 2 个拖拽部署交互摘要。传入主链路截图报告后，导出的 `mvp_demo_readiness.frontend_flow_visual_smoke_harness` gate 会从仓库默认的 `harness_only` 升级为 `actual_report`。suite report 会额外记录 `generation_scheduler_review_only_pipeline_smoke` 与 `provider_runner_handoff_outbox_import_smoke` 摘要，确认 background handoff outbox、prefetch-cache、activation-gate、shared cache 空命中、外部 outbox consume/import 因果和安全计数。
 - `tools/demo/validate_demo_evidence_suite_report.py`
-  - Demo evidence suite report 标准 validator：替代旧任务包里的 heredoc / `python3 -c` 临时断言，只读取 `demo_evidence_suite_report.v0.1.json`，检查 suite 状态、浏览器降级是否被允许、scheduler/outbox smoke 摘要、runner mode、输出文件存在性和 provider / `.env` / world mutation / runtime activation 安全计数。它不重新跑 suite、不调用 provider、不读取 `.env`、不写 runtime；`p1d_demo_evidence_suite_runner`、`p1d_demo_suite_scheduler_pipeline_smoke`、`p1d_demo_suite_scheduler_runner_selection` 和 `p1d_demo_suite_outbox_import_smoke` 任务包已迁移到该 validator 与 `acceptance_profile`。
+  - Demo evidence suite report 标准 validator：替代旧任务包里的 heredoc / `python3 -c` 临时断言，只读取 `demo_evidence_suite_report.v0.1.json`，检查 suite 状态、浏览器降级是否被允许、scheduler/outbox smoke 摘要、runner mode、浏览器拖拽部署交互摘要、输出文件存在性和 provider / `.env` / world mutation / runtime activation 安全计数。它不重新跑 suite、不调用 provider、不读取 `.env`、不写 runtime；`p1d_demo_evidence_suite_runner`、`p1d_demo_suite_scheduler_pipeline_smoke`、`p1d_demo_suite_scheduler_runner_selection` 和 `p1d_demo_suite_outbox_import_smoke` 任务包已迁移到该 validator 与 `acceptance_profile`。
 - `tools/demo/validate_demo_evidence_contract.py`
   - P1-D demo evidence 合同 validator：替代任务包中的 heredoc JSON 断言，覆盖 MVP readiness、map v0.2 API、map runtime v0.2、primary API flow、RenderPlan v0.2 和 RenderPlan preview export 等已存在 evidence 分区。它只读取指定 report / evidence / summary，不执行任意表达式、不调用 provider、不读取 `.env`、不写 runtime；相关 7 个 P1-D 任务包已迁移到该 validator 与 `acceptance_profile`。
 - `tools/demo/export_evidence.py`
@@ -422,7 +424,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 演示证据导出脚本：可生成 `summary.md / evidence.json / index.html`。
 - Runtime sprite live regeneration 候选：已为信标、基础灯栏与驿站核心生成 review-only PNG，并接入 cutout quality report 与 demo evidence。
 - Runtime sprite 显式晋升：已把通过审查的信标、基础灯栏与驿站核心候选晋升到 published runtime media，重建 runtime atlas，并接入 promotion report。
-- 前端 MVP 页面：已有本地可运行 mock 体验入口，已补玩家主链路桌面 / 移动浏览器截图烟测、多节点战斗截图矩阵和一键 suite 预检；当前执行环境无可发现 Chromium，真实 release 截图仍需在具备浏览器的环境复跑。
+- 前端 MVP 页面：已有本地可运行 mock 体验入口，已补玩家主链路桌面 / 移动浏览器截图烟测、多节点战斗截图矩阵、战斗拖拽部署交互 smoke 和一键 suite 预检；当前执行环境无可发现 Chromium，真实 release 截图与拖拽回放仍需在具备浏览器的环境复跑。
 
 当前尚未完成：
 
@@ -430,7 +432,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - 新增 WorldStateDelta / review pack / provider artifact 与 ContextPackage、FactEntry、CGOP 字段的持续对齐；Research Job、battle settlement evidence、多节点 battle settlement、frontend mock pack 和 stage01-stage07 WorldStateDeltaTransaction 链已完成第一层原生快照 / 事务迁移。CoreArtifactAlignmentReport 当前已清零，未来新增产物若缺核心对象快照、core refs 或显式 not-applicable 边界，会重新进入迁移队列。
 - 正式 Generation Scheduler 后台执行器、真实 provider 调度、跨请求持久化预生成产物和 runtime activation；当前 Campaign Router 已能显式触发 review-only dispatcher drain 预取证据，prefetch cache 也只能读取 latest run 的 queue / ledger 派生视图，仍不是真实后台执行器或正式产物缓存。
 - 多世界书选择与长期存档系统。
-- 更深的浏览器交互录屏 / 回放验收；当前已有玩家主链路 14 张截图、多节点战斗 6 张截图、suite 级浏览器预检和拖拽部署静态交互合同，但尚未覆盖真实浏览器拖拽回放、长时间战斗录像和人工观感审查。
+- 更深的浏览器交互录屏 / 回放验收；当前已有玩家主链路 14 张截图、多节点战斗 6 张截图、suite 级浏览器预检、拖拽部署静态交互合同和可在 Chromium 环境执行的拖拽部署 smoke，但本机尚未捕获真实拖拽截图，仍缺长时间战斗录像和人工观感审查。
 
 ## 5. 历史文档处理规则
 

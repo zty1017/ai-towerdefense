@@ -8,9 +8,10 @@ This orchestrator intentionally delegates to existing tools:
 3. smoke-check provider runner outbox consume -> import -> prefetch-cache;
 4. capture the browser player-flow visual smoke report;
 5. capture the browser multinode battle visual smoke report;
-6. validate those reports;
-7. export the redacted demo evidence bundle with the browser flow report attached;
-8. write a compact suite report for recording and judge Q&A.
+6. capture the browser battle drag interaction smoke report;
+7. validate those reports;
+8. export the redacted demo evidence bundle with the browser flow report attached;
+9. write a compact suite report for recording and judge Q&A.
 
 It does not call providers, read .env, mutate world state, or activate runtime
 artifacts. It only produces local review/evidence files under the output root.
@@ -37,6 +38,7 @@ REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 BROWSER_PREFLIGHT_REPORT_NAME = "browser_smoke_environment_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
 FRONTEND_MULTINODE_REPORT_NAME = "frontend_multinode_visual_smoke_report.v0.1.json"
+FRONTEND_BATTLE_DRAG_REPORT_NAME = "battle_drag_interaction_smoke_report.v0.1.json"
 SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
 OUTBOX_IMPORT_REPORT_NAME = "provider_runner_handoff_outbox_import_pipeline_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
@@ -132,6 +134,25 @@ def build_multinode_capture_command(
         "tools/frontend/capture_frontend_multinode_visual_smoke.py",
         "--output-dir",
         str(multinode_output),
+        "--timeout",
+        str(args.browser_timeout),
+    ]
+    if args.browser_bin:
+        command.extend(["--browser-bin", str(args.browser_bin)])
+    if args.allow_missing_browser:
+        command.append("--allow-missing-browser")
+    return command
+
+
+def build_battle_drag_capture_command(
+    args: argparse.Namespace,
+    battle_drag_output: Path,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "tools/frontend/capture_battle_drag_interaction_smoke.py",
+        "--output-dir",
+        str(battle_drag_output),
         "--timeout",
         str(args.browser_timeout),
     ]
@@ -345,6 +366,20 @@ def build_multinode_validate_command(
     return command
 
 
+def build_battle_drag_validate_command(
+    report_path: Path,
+    allow_unavailable: bool,
+) -> list[str]:
+    command = [
+        sys.executable,
+        "tools/frontend/validate_battle_drag_interaction_smoke_report.py",
+        str(report_path),
+    ]
+    if allow_unavailable:
+        command.append("--allow-unavailable")
+    return command
+
+
 def build_export_command(evidence_output: Path, report_path: Path) -> list[str]:
     return [
         sys.executable,
@@ -408,6 +443,38 @@ def browser_multinode_summary(report: dict[str, Any] | None) -> dict[str, Any]:
         "screenshot_matrix": [
             f"{item.get('node_id')}:{item.get('viewport_id')}"
             for item in screenshots
+            if isinstance(item, dict)
+        ],
+        "failure_count": len(as_list(report.get("failures"))),
+        "safety_summary": as_obj(report.get("safety_summary")),
+    }
+
+
+def browser_battle_drag_summary(report: dict[str, Any] | None) -> dict[str, Any]:
+    if report is None:
+        return {
+            "status": "missing",
+            "passed_interaction_count": 0,
+            "expected_interaction_count": 0,
+            "captured_screenshot_count": 0,
+            "viewport_count": 0,
+            "failure_count": 0,
+            "safety_summary": {},
+        }
+    interactions = as_list(report.get("interactions"))
+    return {
+        "schema_version": report.get("schema_version"),
+        "status": report.get("status"),
+        "browser_available": report.get("browser_available"),
+        "node_id": report.get("node_id"),
+        "tool": report.get("tool"),
+        "viewport_count": len(as_list(report.get("viewport_ids"))),
+        "passed_interaction_count": report.get("passed_interaction_count"),
+        "expected_interaction_count": report.get("expected_interaction_count"),
+        "captured_screenshot_count": report.get("captured_screenshot_count"),
+        "interaction_matrix": [
+            f"{item.get('viewport_id')}:{item.get('status')}"
+            for item in interactions
             if isinstance(item, dict)
         ],
         "failure_count": len(as_list(report.get("failures"))),
@@ -544,6 +611,7 @@ def derive_suite_status(
     browser_preflight_report: dict[str, Any] | None,
     frontend_report: dict[str, Any] | None,
     frontend_multinode_report: dict[str, Any] | None,
+    frontend_battle_drag_report: dict[str, Any] | None,
     evidence: dict[str, Any] | None,
     scheduler_pipeline_report: dict[str, Any] | None,
     outbox_import_report: dict[str, Any] | None,
@@ -559,6 +627,7 @@ def derive_suite_status(
     preflight_status = (browser_preflight_report or {}).get("status")
     frontend_status = (frontend_report or {}).get("status")
     multinode_status = (frontend_multinode_report or {}).get("status")
+    battle_drag_status = (frontend_battle_drag_report or {}).get("status")
     evidence_status = evidence_summary(evidence).get("export_validation_status")
     scheduler_summary = scheduler_pipeline_summary(scheduler_pipeline_report)
     outbox_summary = outbox_import_summary(outbox_import_report)
@@ -665,11 +734,22 @@ def derive_suite_status(
     else:
         failures.append(f"frontend_multinode_status:{multinode_status or 'missing'}")
 
+    if battle_drag_status == "captured":
+        passed = int((frontend_battle_drag_report or {}).get("passed_interaction_count") or 0)
+        expected = int((frontend_battle_drag_report or {}).get("expected_interaction_count") or 0)
+        if passed != 2 or expected != 2:
+            failures.append("frontend_battle_drag_interaction_count_not_2")
+    elif battle_drag_status == "browser_unavailable" and allow_missing_browser:
+        pass
+    else:
+        failures.append(f"frontend_battle_drag_status:{battle_drag_status or 'missing'}")
+
     if (
         allow_missing_browser
         and (
             frontend_status == "browser_unavailable"
             or multinode_status == "browser_unavailable"
+            or battle_drag_status == "browser_unavailable"
         )
     ):
         if evidence_status != "passed":
@@ -749,6 +829,8 @@ def main(argv: list[str] | None = None) -> int:
     frontend_report_path = frontend_output / FRONTEND_REPORT_NAME
     frontend_multinode_output = output_root / "frontend_multinode_visual_smoke"
     frontend_multinode_report_path = frontend_multinode_output / FRONTEND_MULTINODE_REPORT_NAME
+    frontend_battle_drag_output = output_root / "frontend_battle_drag_interaction_smoke"
+    frontend_battle_drag_report_path = frontend_battle_drag_output / FRONTEND_BATTLE_DRAG_REPORT_NAME
     evidence_output = output_root / "demo_evidence"
     suite_report_path = output_root / REPORT_NAME
     output_root.mkdir(parents=True, exist_ok=True)
@@ -767,6 +849,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     frontend_report: dict[str, Any] | None = None
     frontend_multinode_report: dict[str, Any] | None = None
+    frontend_battle_drag_report: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
 
     uv_lock_path = ROOT / "uv.lock"
@@ -820,6 +903,9 @@ def main(argv: list[str] | None = None) -> int:
             "frontend_flow_visual_smoke": browser_flow_summary(frontend_report),
             "frontend_multinode_visual_smoke": browser_multinode_summary(
                 frontend_multinode_report
+            ),
+            "frontend_battle_drag_interaction_smoke": browser_battle_drag_summary(
+                frontend_battle_drag_report
             ),
             "demo_evidence": evidence_summary(evidence),
             "failures": [
@@ -929,6 +1015,22 @@ def main(argv: list[str] | None = None) -> int:
     if frontend_multinode_report_path.exists():
         frontend_multinode_report = load_json(frontend_multinode_report_path)
 
+    battle_drag_capture_command = build_battle_drag_capture_command(
+        args,
+        frontend_battle_drag_output,
+    )
+    commands.append(
+        run_command(
+            "frontend_battle_drag_interaction_smoke_capture",
+            battle_drag_capture_command,
+            root=ROOT,
+            timeout_seconds=args.command_timeout,
+            output_tail_limit=MAX_OUTPUT_TAIL,
+        )
+    )
+    if frontend_battle_drag_report_path.exists():
+        frontend_battle_drag_report = load_json(frontend_battle_drag_report_path)
+
     if frontend_report_path.exists():
         validate_command = build_validate_command(
             frontend_report_path,
@@ -959,6 +1061,21 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
 
+    if frontend_battle_drag_report_path.exists():
+        battle_drag_validate_command = build_battle_drag_validate_command(
+            frontend_battle_drag_report_path,
+            args.allow_missing_browser,
+        )
+        commands.append(
+            run_command(
+                "frontend_battle_drag_interaction_smoke_validate",
+                battle_drag_validate_command,
+                root=ROOT,
+                timeout_seconds=args.command_timeout,
+                output_tail_limit=MAX_OUTPUT_TAIL,
+            )
+        )
+
     if frontend_report_path.exists():
         export_command = build_export_command(evidence_output, frontend_report_path)
         commands.append(
@@ -979,6 +1096,7 @@ def main(argv: list[str] | None = None) -> int:
         browser_preflight_report,
         frontend_report,
         frontend_multinode_report,
+        frontend_battle_drag_report,
         evidence,
         scheduler_pipeline_report,
         outbox_import_report,
@@ -1005,6 +1123,10 @@ def main(argv: list[str] | None = None) -> int:
             "frontend_multinode_report": file_ref(
                 frontend_multinode_report_path,
                 "frontend_multinode_visual_smoke_report",
+            ),
+            "frontend_battle_drag_report": file_ref(
+                frontend_battle_drag_report_path,
+                "battle_drag_interaction_smoke_report",
             ),
             "generation_scheduler_pipeline_smoke_report": file_ref(
                 scheduler_report_path,
@@ -1047,6 +1169,9 @@ def main(argv: list[str] | None = None) -> int:
         "frontend_multinode_visual_smoke": browser_multinode_summary(
             frontend_multinode_report
         ),
+        "frontend_battle_drag_interaction_smoke": browser_battle_drag_summary(
+            frontend_battle_drag_report
+        ),
         "demo_evidence": evidence_summary(evidence),
         "failures": failures,
         "safety_summary": {
@@ -1067,6 +1192,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"- browser preflight report: {browser_preflight_path}")
     print(f"- frontend report: {frontend_report_path}")
     print(f"- frontend multinode report: {frontend_multinode_report_path}")
+    print(f"- frontend battle drag report: {frontend_battle_drag_report_path}")
     print(f"- evidence bundle: {evidence_output}")
     return 0 if status == "passed" or status == "browser_unavailable_allowed" else 1
 

@@ -14,6 +14,8 @@
     "control/TASK_QUEUE.md",
     "tools/frontend/capture_frontend_flow_visual_smoke.py",
     "tools/frontend/capture_frontend_multinode_visual_smoke.py",
+    "tools/frontend/capture_battle_drag_interaction_smoke.py",
+    "tools/frontend/validate_battle_drag_interaction_smoke_report.py",
     "tools/demo/run_demo_evidence_suite.py",
     "tools/demo/validate_demo_evidence_suite_report.py",
     "examples/worker_task_packs/p1d_demo_evidence_suite_runner.v0.1.json"
@@ -22,6 +24,8 @@
     "tools/frontend/check_browser_smoke_environment.py",
     "tools/demo/run_demo_evidence_suite.py",
     "tools/demo/validate_demo_evidence_suite_report.py",
+    "tools/frontend/capture_battle_drag_interaction_smoke.py",
+    "tools/frontend/validate_battle_drag_interaction_smoke_report.py",
     "tools/dev/run_fast_quality_gate.py",
     "tools/dev/run_premerge_quality_gate.py",
     "examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
@@ -50,7 +54,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
     "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
     "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
     "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
@@ -60,10 +64,10 @@
     "default_profile": "daily_fast",
     "profiles": {
       "daily_fast": {
-        "description": "日常快速 profile，允许无浏览器降级，但要求 suite report 包含 browser preflight、scheduler/outbox 和截图降级证据。",
+        "description": "日常快速 profile，允许无浏览器降级，但要求 suite report 包含 browser preflight、scheduler/outbox、截图降级证据和拖拽部署 smoke 摘要。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_smoke_preflight.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-smoke-preflight python3 -m py_compile tools/frontend/check_browser_smoke_environment.py tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py",
           "python3 tools/frontend/check_browser_smoke_environment.py --output /tmp/browser_smoke_preflight_report.json --allow-missing-browser",
           "python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/browser_smoke_preflight_suite --browser-timeout 45 --command-timeout 180",
           "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_preflight_suite/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke",
@@ -106,7 +110,7 @@
   "notes": [
     "browser preflight 只做可执行文件发现，不启动浏览器、不打开 socket、不调用 provider、不读取 .env。",
     "无浏览器且未传 --allow-missing-browser 时，suite 会早停；录屏 / release gate 仍要求真实 browser captured。",
-    "允许降级时，suite 继续运行 scheduler/outbox/full evidence，并保留 browser_unavailable 证据。",
+    "允许降级时，suite 继续运行 scheduler/outbox/full evidence，并保留 flow / multinode / battle drag 的 browser_unavailable 证据。",
     "本任务不修改前端玩家体验、不生成素材、不改 runtime package 或 readiness gate。"
   ]
 }

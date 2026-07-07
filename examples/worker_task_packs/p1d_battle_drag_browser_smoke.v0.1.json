@@ -1,0 +1,125 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-D-41-battle-drag-browser-smoke",
+  "title": "Battle drag browser smoke",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/battle-drag-browser-smoke",
+  "worktree": "/tmp/ai-td-task-battle-drag-browser-smoke",
+  "objective": "补浏览器拖拽部署回放入口：在 battleVisualSmoke 模式下用真实浏览器输入拖动基础灯栏工具卡到可部署格位释放，并把 report 接入 demo evidence suite。",
+  "required_reading": [
+    "control/TASK_QUEUE.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "frontend/app.js",
+    "tools/frontend/validate_battle_interaction_contract.py",
+    "tools/frontend/capture_frontend_flow_visual_smoke.py",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py"
+  ],
+  "allowed_paths": [
+    "frontend/app.js",
+    "tools/frontend/capture_battle_drag_interaction_smoke.py",
+    "tools/frontend/validate_battle_drag_interaction_smoke_report.py",
+    "tools/demo/run_demo_evidence_suite.py",
+    "tools/demo/validate_demo_evidence_suite_report.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json",
+    "README.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/MVP_REVIEW_HANDOFF_V0_1.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/app/",
+    "game_data/media/",
+    "examples/review_packs/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/map_render_plans/",
+    "examples/map_render_plans_v02/",
+    "examples/map_render_previews/",
+    "examples/map_render_previews_v02/",
+    "examples/semantic_visual_consistency_reports/",
+    "examples/semantic_visual_consistency_reports_v02/",
+    "shared/schemas/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "node --check frontend/app.js",
+    "python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30",
+    "python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/battle_drag_browser_smoke_fast_gate_report.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：校验任务包、编译新增 smoke / suite 脚本、检查前端语法、验证无浏览器降级 report 和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "node --check frontend/app.js",
+          "python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30",
+          "python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/battle_drag_browser_smoke_fast_gate_report.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "release_gate": {
+        "description": "录屏 / 评审前 profile：运行完整 demo evidence suite，并要求 scheduler/outbox smoke 与 battle drag report 被 suite validator 看见。",
+        "commands": [
+          "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/battle_drag_demo_suite_release --command-timeout 180",
+          "python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/battle_drag_demo_suite_release/demo_evidence_suite_report.v0.1.json --require-browser-captured --require-scheduler-pipeline-smoke --require-outbox-import-smoke --require-scheduler-runner-mode shared-venv --require-outbox-runner-mode shared-venv"
+        ],
+        "required_for": [
+          "release_candidate_review",
+          "recording_environment_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不调用 provider，不读取 .env，不生成或替换游戏素材。",
+    "window.__AI_TD_BATTLE_SMOKE__ 只在 battleVisualSmoke query 下挂载，用于浏览器 smoke，不是玩家侧 debug UI。",
+    "当前执行环境没有可发现 Chromium，daily_fast 只验证 browser_unavailable 降级；真实评审环境应运行 release_gate，最好不带 --allow-missing-browser 取得真实拖拽截图。",
+    "本任务不修改 MapRuntimePackage、RenderPlan、published visual layer 或 v0.2 activation gate。"
+  ]
+}

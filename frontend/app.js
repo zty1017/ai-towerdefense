@@ -1697,6 +1697,7 @@
     canvas.addEventListener("pointerleave", onBattleCanvasPointerLeave);
     window.addEventListener("resize", resizeBattleCanvas);
     resizeBattleCanvas();
+    installBattleSmokeProbe();
     preloadBattleImages();
     if (!flowVisualSmokeMode()) {
       showDialogue(
@@ -1706,6 +1707,83 @@
       );
     }
     requestAnimationFrame(battleFrame);
+  }
+
+  function installBattleSmokeProbe() {
+    if (!battleVisualSmokeMode()) return;
+    window.__AI_TD_BATTLE_SMOKE__ = {
+      snapshot: battleSmokeSnapshot,
+      deploymentPoint: battleSmokeDeploymentPoint,
+    };
+  }
+
+  function battleSmokeDeploymentPoint(tool = "basic") {
+    const battle = state.battle;
+    if (!battle || !battle.canvas || !battle.metrics) return null;
+    const rect = battle.canvas.getBoundingClientRect();
+    const toolbar = document.querySelector(".battle-tools");
+    const assetKind = assetKindForTool(tool);
+    const candidates = buildSlots()
+      .filter((slot) => {
+        const position = slot.position || slot;
+        const allowed = slot.allowed_asset_kinds || [];
+        return position && allowed.includes(assetKind) && !isOccupied(position);
+      })
+      .map((slot) => {
+        const cell = slot.position || slot;
+        const point = projectCell(cell.x, cell.y);
+        const clientX = rect.left + point.x;
+        const clientY = rect.top + point.y;
+        return {
+          slot_id: slot.slot_id || slot.id || null,
+          cell: { x: cell.x, y: cell.y },
+          canvas_x: Math.round(point.x),
+          canvas_y: Math.round(point.y),
+          client_x: Math.round(clientX),
+          client_y: Math.round(clientY),
+        };
+      });
+    const visible = candidates.find((candidate) => {
+      const hit = document.elementFromPoint(candidate.client_x, candidate.client_y);
+      if (!hit) return false;
+      if (toolbar && toolbar.contains(hit)) return false;
+      return Boolean(hit.closest("#battleCanvas, .battle-stage"));
+    });
+    return visible || candidates[0] || null;
+  }
+
+  function battleSmokeSnapshot() {
+    const battle = state.battle || {};
+    const canvas = battle.canvas;
+    const rect = canvas ? canvas.getBoundingClientRect() : null;
+    return {
+      ok: Boolean(canvas && battle.metrics),
+      view: state.view,
+      mode: "battleVisualSmoke",
+      selectedTool: battle.selectedTool || null,
+      draggingTool: battle.draggingTool || null,
+      hoverCell: battle.hoverCell || null,
+      resources: battle.resources ?? null,
+      basicUses: battle.basicUses ?? null,
+      sampleDelivered: Boolean(battle.sampleDelivered),
+      sampleUses: battle.sampleUses ?? null,
+      supportUses: battle.supportUses ?? null,
+      defensesCount: Array.isArray(battle.defenses) ? battle.defenses.length : 0,
+      trapsCount: Array.isArray(battle.traps) ? battle.traps.length : 0,
+      effectsCount: Array.isArray(battle.effects) ? battle.effects.length : 0,
+      toast: battle.toast || "",
+      deploymentPoint: battleSmokeDeploymentPoint(battle.selectedTool || "basic"),
+      canvas: rect
+        ? {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            bitmapWidth: canvas.width,
+            bitmapHeight: canvas.height,
+          }
+        : null,
+    };
   }
 
   function stopBattleLoop() {

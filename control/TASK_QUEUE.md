@@ -4994,6 +4994,76 @@ python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/browser_smoke_pre
 git diff --check
 ```
 
+### P1-D-40 Battle drag interaction contract
+
+状态：已完成静态战斗交互合同。
+
+目标：
+
+```text
+锁定玩家侧塔防部署主交互：底部工具卡拖到战场格位释放部署；点击放置只作为 fallback，避免前端回退到调试式点选流程。
+```
+
+已落地：
+
+- `tools/frontend/validate_battle_interaction_contract.py`：静态检查拖拽状态字段、工具卡 pointerdown、window 级 pointermove / pointerup、战场预览、拖拽 ghost、移动端 touch-action 和玩家侧反馈不泄漏技术词。
+- `frontend/app.js`：拖拽移动 / 释放阶段阻止浏览器默认手势，提升移动端与浏览器拖拽稳定性。
+- `tools/dev/run_fast_quality_gate.py` 与 `tools/dev/run_premerge_quality_gate.py`：把战斗交互合同纳入 fast / premerge gate。
+- `examples/worker_task_packs/p1d_battle_drag_interaction_contract.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- 这是无浏览器静态合同，不替代真实浏览器拖拽回放。
+- 不调用 provider、不读取 `.env`、不生成素材、不写世界状态、不修改 MapRuntimePackage / RenderPlan / published visual layer。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_interaction_contract.v0.1.json
+python3 tools/frontend/validate_battle_interaction_contract.py --report-output /tmp/battle_interaction_contract_report.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/battle_drag_interaction_fast_gate_report.json
+git diff --check
+```
+
+### P1-D-41 Battle drag browser smoke
+
+状态：已完成浏览器拖拽部署回放入口与 suite 集成。
+
+目标：
+
+```text
+在具备 Chromium 的评审 / 录屏环境中，用真实浏览器输入执行“基础灯栏工具卡拖到可部署格位释放”，并用结构化 report 证明防御件、资源和工具次数发生了符合玩家动作的变化。
+```
+
+已落地：
+
+- `frontend/app.js`：仅在 `battleVisualSmoke` query 下挂载 `window.__AI_TD_BATTLE_SMOKE__` 只读 probe，提供当前战斗计数和可部署格位坐标；正常玩家入口不暴露。
+- `tools/frontend/capture_battle_drag_interaction_smoke.py`：新增桌面 / 移动浏览器拖拽部署 smoke；无 Chromium 时输出 `browser_unavailable`。
+- `tools/frontend/validate_battle_drag_interaction_smoke_report.py`：校验 report schema、截图、工具卡起点、部署目标、前后 battle probe 快照、资源 / 次数 / 防御件数量变化和安全计数。
+- `tools/demo/run_demo_evidence_suite.py`：suite 在多节点截图后运行 `frontend_battle_drag_interaction_smoke_capture` 与对应 validator。
+- `tools/demo/validate_demo_evidence_suite_report.py`：`--require-browser-captured` 现在同时要求 14 张玩家主链路截图、6 张多节点战斗截图和 2 个拖拽部署交互。
+- `tools/dev/run_fast_quality_gate.py` 与 `tools/dev/run_premerge_quality_gate.py`：把新增 capture / validator / suite 脚本纳入 Python 编译清单。
+- `examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- 不调用 provider、不读取 `.env`、不生成素材、不写世界状态、不激活 runtime。
+- smoke probe 只在 `battleVisualSmoke` 下存在；它是验收辅助，不是玩家侧 debug UI。
+- 当前执行环境没有可发现 Chromium，因此本轮只验证了 `browser_unavailable` 降级报告和 suite 集成；真实 release gate 仍需在具备浏览器的环境运行不带 `--allow-missing-browser` 的 suite。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_battle_drag_browser_smoke.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-battle-drag-browser-smoke python3 -m py_compile tools/frontend/capture_battle_drag_interaction_smoke.py tools/frontend/validate_battle_drag_interaction_smoke_report.py tools/demo/run_demo_evidence_suite.py tools/demo/validate_demo_evidence_suite_report.py
+node --check frontend/app.js
+python3 tools/frontend/capture_battle_drag_interaction_smoke.py --allow-missing-browser --output-dir /tmp/battle_drag_interaction_smoke --timeout 30
+python3 tools/frontend/validate_battle_drag_interaction_smoke_report.py /tmp/battle_drag_interaction_smoke/battle_drag_interaction_smoke_report.v0.1.json --allow-unavailable
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/battle_drag_demo_suite_full --command-timeout 180
+python3 tools/demo/validate_demo_evidence_suite_report.py /tmp/battle_drag_demo_suite_full/demo_evidence_suite_report.v0.1.json --allow-browser-unavailable --require-scheduler-pipeline-smoke --require-outbox-import-smoke --require-scheduler-runner-mode shared-venv --require-outbox-runner-mode shared-venv
+git diff --check
+```
+
 ### P1-MAP-34 MapTemplateCatalog v0.1
 
 状态：已完成最薄开发者侧候选目录。
