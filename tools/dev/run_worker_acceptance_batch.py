@@ -19,6 +19,10 @@ from tools.dev.run_worker_acceptance_profile import (  # noqa: E402
     profile_metadata,
     run_profile_commands,
 )
+from tools.dev.worker_acceptance_profile_contract import (  # noqa: E402
+    profile_status_from_summary,
+    summarize_profile_results,
+)
 from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
     STATUS_DRY_RUN,
     STATUS_FAILED,
@@ -188,8 +192,12 @@ def run_one_pack(
         fail_fast=fail_fast,
         timeout_seconds=timeout_seconds,
     )
-    failed = [item for item in results if item.get("status") == STATUS_FAILED]
-    status = STATUS_FAILED if failed else STATUS_DRY_RUN if dry_run else STATUS_PASSED
+    summary = summarize_profile_results(
+        results,
+        fail_fast=fail_fast,
+        configured_command_count=len(command_strings),
+    )
+    status = profile_status_from_summary(summary, dry_run=dry_run)
     profile_report = empty_report(
         task_pack=task_pack,
         selected_profile=actual_profile,
@@ -198,8 +206,8 @@ def run_one_pack(
         status=status,
         fail_fast=fail_fast,
         results=results,
+        configured_command_count=len(command_strings),
     )
-    profile_report["summary"]["configured_command_count"] = len(command_strings)
     return {
         "task_pack": display_path(task_pack),
         "task_id": task_id,

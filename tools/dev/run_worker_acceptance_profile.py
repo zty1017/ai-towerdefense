@@ -20,6 +20,8 @@ from tools.dev.validate_worker_task_pack import validate
 from tools.dev.worker_acceptance_profile_contract import (
     WORKER_ACCEPTANCE_PROFILE_DEFAULT_OUTPUT,
     WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
+    profile_status_from_summary,
+    summarize_profile_results,
 )
 from tools.dev.worker_acceptance_report_contract import (  # noqa: E402
     STATUS_DRY_RUN,
@@ -158,11 +160,9 @@ def empty_report(
     status: str,
     fail_fast: bool,
     results: list[dict[str, Any]] | None = None,
+    configured_command_count: int | None = None,
 ) -> dict[str, Any]:
     actual_results = results or []
-    passed = sum(1 for item in actual_results if item.get("status") == STATUS_PASSED)
-    failed = sum(1 for item in actual_results if item.get("status") == STATUS_FAILED)
-    dry_run = sum(1 for item in actual_results if item.get("status") == STATUS_DRY_RUN)
     return {
         "schema_version": WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
         "generated_at": now_iso(),
@@ -171,13 +171,11 @@ def empty_report(
         "default_profile": default_profile,
         "available_profiles": available_profiles,
         "status": status,
-        "summary": {
-            "command_count": len(actual_results),
-            "pass": passed,
-            "fail": failed,
-            "dry_run": dry_run,
-            "fail_fast": bool(fail_fast),
-        },
+        "summary": summarize_profile_results(
+            actual_results,
+            fail_fast=fail_fast,
+            configured_command_count=configured_command_count,
+        ),
         "results": actual_results,
     }
 
@@ -396,8 +394,13 @@ def main() -> int:
         fail_fast=bool(args.fail_fast),
         timeout_seconds=int(args.timeout),
     )
+    summary = summarize_profile_results(
+        results,
+        fail_fast=bool(args.fail_fast),
+        configured_command_count=len(command_strings),
+    )
     failed = [item for item in results if item.get("status") == STATUS_FAILED]
-    status = STATUS_FAILED if failed else STATUS_DRY_RUN if args.dry_run else STATUS_PASSED
+    status = profile_status_from_summary(summary, dry_run=bool(args.dry_run))
     report = empty_report(
         task_pack=task_pack,
         selected_profile=selected_profile,
@@ -406,8 +409,8 @@ def main() -> int:
         status=status,
         fail_fast=args.fail_fast,
         results=results,
+        configured_command_count=len(command_strings),
     )
-    report["summary"]["configured_command_count"] = len(command_strings)
     write_json(args.output, report)
     print(f"worker acceptance profile report: {args.output}")
     if failed:
