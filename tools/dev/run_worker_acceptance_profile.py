@@ -17,10 +17,18 @@ sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso, run_command
 from tools.dev.validate_worker_task_pack import validate
+from tools.dev.worker_acceptance_profile_contract import (
+    WORKER_ACCEPTANCE_PROFILE_DEFAULT_OUTPUT,
+    WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
+)
+from tools.dev.worker_acceptance_report_contract import (  # noqa: E402
+    STATUS_DRY_RUN,
+    STATUS_FAILED,
+    STATUS_PASSED,
+)
 
 
-REPORT_SCHEMA_VERSION = "worker_acceptance_profile_run_report.v0.1"
-DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_run_report.v0.1.json")
+DEFAULT_OUTPUT = WORKER_ACCEPTANCE_PROFILE_DEFAULT_OUTPUT
 OUTPUT_TAIL_LIMIT = 1200
 ENV_ASSIGNMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 SHELL_ONLY_EXACT_TOKENS = {"&&", "||"}
@@ -152,11 +160,11 @@ def empty_report(
     results: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     actual_results = results or []
-    passed = sum(1 for item in actual_results if item.get("status") == "passed")
-    failed = sum(1 for item in actual_results if item.get("status") == "failed")
-    dry_run = sum(1 for item in actual_results if item.get("status") == "dry_run")
+    passed = sum(1 for item in actual_results if item.get("status") == STATUS_PASSED)
+    failed = sum(1 for item in actual_results if item.get("status") == STATUS_FAILED)
+    dry_run = sum(1 for item in actual_results if item.get("status") == STATUS_DRY_RUN)
     return {
-        "schema_version": REPORT_SCHEMA_VERSION,
+        "schema_version": WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
         "generated_at": now_iso(),
         "task_pack": str(task_pack),
         "selected_profile": selected_profile,
@@ -211,7 +219,7 @@ def build_result_for_unsupported(
         "env": {},
         "elapsed_seconds": 0,
         "return_code": None,
-        "status": "failed",
+        "status": STATUS_FAILED,
         "error": "unsupported_command_syntax",
         "message": str(error),
     }
@@ -231,7 +239,7 @@ def build_result_for_dry_run(
         "stdout_path": str(parsed.stdout_path) if parsed.stdout_path else None,
         "elapsed_seconds": 0,
         "return_code": None,
-        "status": "dry_run",
+        "status": STATUS_DRY_RUN,
     }
 
 
@@ -274,9 +282,9 @@ def run_profile_commands(
         result["env"] = parsed.env
         result["stdout_path"] = str(parsed.stdout_path) if parsed.stdout_path else None
         results.append(result)
-        status_icon = "OK" if result["status"] == "passed" else "FAIL"
+        status_icon = "OK" if result["status"] == STATUS_PASSED else "FAIL"
         print(f"{status_icon} command_{index} ({result['elapsed_seconds']}s)")
-        if fail_fast and result["status"] != "passed":
+        if fail_fast and result["status"] != STATUS_PASSED:
             break
     return results
 
@@ -330,13 +338,13 @@ def main() -> int:
             selected_profile=args.profile,
             default_profile=None,
             available_profiles=[],
-            status="failed",
+            status=STATUS_FAILED,
             fail_fast=args.fail_fast,
             results=[
                 {
                     "name": "task_pack_validation",
                     "command": str(task_pack),
-                    "status": "failed",
+                    "status": STATUS_FAILED,
                     "error": "task_pack_validation_failed",
                     "message": str(exc),
                 }
@@ -363,13 +371,13 @@ def main() -> int:
             selected_profile=selected_profile,
             default_profile=default_profile,
             available_profiles=available_profiles,
-            status="failed",
+            status=STATUS_FAILED,
             fail_fast=args.fail_fast,
             results=[
                 {
                     "name": "profile_selection",
                     "command": selected_profile,
-                    "status": "failed",
+                    "status": STATUS_FAILED,
                     "error": "profile_not_found",
                     "message": message,
                 }
@@ -388,8 +396,8 @@ def main() -> int:
         fail_fast=bool(args.fail_fast),
         timeout_seconds=int(args.timeout),
     )
-    failed = [item for item in results if item.get("status") == "failed"]
-    status = "failed" if failed else "dry_run" if args.dry_run else "passed"
+    failed = [item for item in results if item.get("status") == STATUS_FAILED]
+    status = STATUS_FAILED if failed else STATUS_DRY_RUN if args.dry_run else STATUS_PASSED
     report = empty_report(
         task_pack=task_pack,
         selected_profile=selected_profile,

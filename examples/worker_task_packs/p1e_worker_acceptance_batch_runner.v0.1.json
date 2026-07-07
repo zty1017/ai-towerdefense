@@ -46,7 +46,7 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch python3 -m py_compile tools/dev/worker_acceptance_report_contract.py tools/dev/worker_acceptance_profile_contract.py tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
     "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
     "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
     "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",
@@ -66,7 +66,7 @@
         "description": "日常快速 profile：校验批量 runner、负例、全量 dry-run、单包实际执行、profile 审计和 fast gate。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_runner python3 -m py_compile tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_runner python3 -m py_compile tools/dev/worker_acceptance_report_contract.py tools/dev/worker_acceptance_profile_contract.py tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
           "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
           "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
           "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",
@@ -87,7 +87,7 @@
         "description": "最终评审 profile：在 daily_fast 基础上导出完整 demo evidence。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_batch_runner.v0.1.json",
-          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_full python3 -m py_compile tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_batch_full python3 -m py_compile tools/dev/worker_acceptance_report_contract.py tools/dev/worker_acceptance_profile_contract.py tools/dev/worker_acceptance_batch_contract.py tools/dev/run_worker_acceptance_batch.py tools/dev/validate_worker_acceptance_batch_report.py tools/dev/run_worker_acceptance_profile.py tools/dev/expect_command_failure.py",
           "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_explicit_selection --output /tmp/worker_acceptance_batch_requires_explicit_selection.json -- python3 tools/dev/run_worker_acceptance_batch.py --output /tmp/worker_acceptance_batch_implicit_selection_report.json",
           "python3 tools/dev/expect_command_failure.py --name worker_acceptance_batch_requires_positive_limit --output /tmp/worker_acceptance_batch_requires_positive_limit.json -- python3 tools/dev/run_worker_acceptance_batch.py --all --limit 0 --output /tmp/worker_acceptance_batch_limit_zero_report.json",
           "python3 tools/dev/run_worker_acceptance_batch.py --all --profile daily_fast --dry-run --output /tmp/worker_acceptance_batch_all_dry.json",

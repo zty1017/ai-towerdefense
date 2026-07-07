@@ -19,6 +19,9 @@ from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
     WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
     WORKER_ACCEPTANCE_BATCH_VALID_STATUSES,
 )
+from tools.dev.worker_acceptance_profile_contract import (  # noqa: E402
+    WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -110,7 +113,11 @@ def validate_report(
             f"packs[{index}].status invalid",
         )
         profile_report = as_obj(pack.get("profile_report"))
-        require(profile_report.get("schema_version") == "worker_acceptance_profile_run_report.v0.1", f"packs[{index}] profile schema mismatch")
+        require(
+            profile_report.get("schema_version")
+            == WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
+            f"packs[{index}] profile schema mismatch",
+        )
         require(profile_report.get("status") == pack.get("status"), f"packs[{index}] status mismatch")
     return {
         "status": status,
