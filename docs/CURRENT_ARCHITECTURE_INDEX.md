@@ -170,6 +170,8 @@ shared/schemas/ + tools/ + 专题文档
   - WorkerTaskPack `acceptance_profile` 本地 runner：先复用 `validate_worker_task_pack.py` 校验任务包，再按 `default_profile` 或显式 `--profile` 执行 profile 命令，支持 `--list-profiles`、`--dry-run`、`--fail-fast` 和 JSON report。命令执行不经过 shell，只支持 shlex argv 和前置 env token；遇到管道、重定向、分号连接、逻辑连接或命令替换语法会记录 failed/unsupported，不执行该命令。旧任务包没有 `acceptance_profile` 时应手动运行 `acceptance_commands`。
 - `tools/dev/audit_worker_acceptance_profiles.py`
   - WorkerTaskPack `acceptance_profile` 只读迁移审计入口：扫描 `examples/worker_task_packs/*.json`，复用 `validate_worker_task_pack.py` 的 `validate()` 和 `run_worker_acceptance_profile.py` 的命令解析规则，统计已有 profile、无 profile 旧包、完整 evidence 导出、summary-only、fast gate、runner 不兼容命令、迁移候选和需要人工处理的命令。该工具不执行被审计任务包的验收命令，不修改旧任务包，只允许把 JSON 审计报告写到仓库外 `/tmp` 路径。
+- `tools/dev/migrate_worker_acceptance_profiles.py`、`tools/dev/check_worker_acceptance_profile_migrator.py`
+  - WorkerTaskPack `acceptance_profile` 安全迁移入口：默认 report-only，只输出哪些 runner-compatible 旧包可迁移；只有显式 `--write` 才向目标任务包写入 `daily_fast` / `full_evidence` profile，且含 heredoc、分号、管道、重定向、逻辑连接或命令替换的 shell-only 包会被跳过并留给人工处理。迁移器不执行任务包验收命令、不调用 provider、不读取 `.env`、不修改 runtime / backend / frontend；smoke 工具在 `/tmp` 临时目录验证 eligible 包迁移与 shell-only 包跳过。`examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json` 是首个 runner-compatible 样例迁移包。
 - `tools/dev/command_runner.py`
   - 本地 QA / evidence 脚本共享命令执行 helper：`run_fast_quality_gate.py`、`run_demo_evidence_suite.py` 和 `export_evidence.py` 共用它处理 timeout、输出截断和时间戳，后续本地验收脚本应优先复用，避免复制 subprocess 包装。
 - `tools/demo/build_mvp_demo_readiness_report.py`、`tools/demo/validate_mvp_demo_readiness_report.py`、`examples/review_packs/mvp_demo_readiness_report.v0.1.json`

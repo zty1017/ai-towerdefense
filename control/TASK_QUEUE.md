@@ -3826,6 +3826,43 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profi
 git diff --check
 ```
 
+### P1-E-5 WorkerTaskPack acceptance profile migrator
+
+状态：已完成安全迁移工具与首个样例迁移。
+
+目标：
+
+```text
+在只读审计之后补一个安全迁移器：默认只输出报告，只有显式 --write 才给 runner-compatible 的 WorkerTaskPack 写入 acceptance_profile，并跳过 shell-only 命令包。
+```
+
+已落地：
+
+- `tools/dev/migrate_worker_acceptance_profiles.py`：新增迁移器 CLI，默认 report-only，输出 `/tmp/worker_acceptance_profile_migration_report.v0.1.json`。
+- `tools/dev/check_worker_acceptance_profile_migrator.py`：新增临时目录 smoke，验证 eligible 包会迁移，shell-only 包会跳过，且不执行验收命令、不调用 provider。
+- `examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json`：作为首个 runner-compatible 样例，新增 `daily_fast` / `full_evidence` profile；原 `acceptance_commands` 保留。
+- `examples/worker_task_packs/p1e_worker_acceptance_profile_migrator.v0.1.json`：新增本轮任务包。
+
+边界：
+
+- 迁移器默认不修改仓库；必须显式 `--write` 才会写入。
+- 只迁移 validator 通过且顶层 `acceptance_commands` 全部可由 profile runner 解析的旧任务包。
+- 含 heredoc、分号、管道、重定向、逻辑连接或命令替换的包只进入 skip / manual review，不自动改写。
+- 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或 runtime package。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_profile_migrator.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_profile_migrator python3 -m py_compile tools/dev/migrate_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_migrator.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/run_worker_acceptance_profile.py
+python3 tools/dev/check_worker_acceptance_profile_migrator.py --output /tmp/worker_profile_migrator_smoke.json
+python3 tools/dev/migrate_worker_acceptance_profiles.py --task-pack examples/worker_task_packs/p1b_campaign_router_dispatcher_prefetch.v0.1.json --output /tmp/worker_profile_migrator_campaign_router_dry.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1d_map_v02_preview_api.v0.1.json --profile daily_fast --dry-run --output /tmp/map_v02_preview_api_profile_dry_run.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_profile_migrator_fast_gate.json
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。
