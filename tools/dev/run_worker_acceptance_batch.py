@@ -25,6 +25,8 @@ from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
     STATUS_PASSED,
     WORKER_ACCEPTANCE_BATCH_DEFAULT_OUTPUT,
     WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
+    batch_status_from_summary,
+    summarize_batch_packs,
 )
 
 
@@ -222,14 +224,11 @@ def build_batch_report(args: argparse.Namespace) -> dict[str, Any]:
         if args.fail_fast and result["status"] == STATUS_FAILED:
             break
 
-    failed_count = sum(1 for item in pack_results if item["status"] == STATUS_FAILED)
-    dry_run_count = sum(1 for item in pack_results if item["status"] == STATUS_DRY_RUN)
-    passed_count = sum(1 for item in pack_results if item["status"] == STATUS_PASSED)
-    status = STATUS_FAILED if failed_count else STATUS_DRY_RUN if args.dry_run else STATUS_PASSED
-    configured_command_count = sum(
-        int(item["summary"].get("configured_command_count") or 0) for item in pack_results
+    summary = summarize_batch_packs(
+        pack_results,
+        selected_pack_count=len(selected_paths),
     )
-    command_count = sum(int(item["summary"].get("command_count") or 0) for item in pack_results)
+    status = batch_status_from_summary(summary, dry_run=bool(args.dry_run))
     return {
         "schema_version": WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
         "generated_at": now_iso(),
@@ -245,15 +244,7 @@ def build_batch_report(args: argparse.Namespace) -> dict[str, Any]:
             "dry_run": bool(args.dry_run),
             "fail_fast": bool(args.fail_fast),
         },
-        "summary": {
-            "selected_pack_count": len(selected_paths),
-            "executed_pack_count": len(pack_results),
-            "passed_pack_count": passed_count,
-            "failed_pack_count": failed_count,
-            "dry_run_pack_count": dry_run_count,
-            "configured_command_count": configured_command_count,
-            "command_result_count": command_count,
-        },
+        "summary": summary,
         "packs": pack_results,
     }
 

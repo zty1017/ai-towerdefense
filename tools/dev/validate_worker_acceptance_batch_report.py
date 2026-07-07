@@ -13,11 +13,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
-    STATUS_DRY_RUN,
-    STATUS_FAILED,
-    STATUS_PASSED,
     WORKER_ACCEPTANCE_BATCH_REPORT_SCHEMA_VERSION,
     WORKER_ACCEPTANCE_BATCH_VALID_STATUSES,
+    batch_status_from_summary,
+    summarize_batch_packs,
 )
 from tools.dev.worker_acceptance_profile_contract import (  # noqa: E402
     WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
@@ -69,21 +68,11 @@ def validate_report(
     failed_count = int(summary.get("failed_pack_count") or 0)
     passed_count = int(summary.get("passed_pack_count") or 0)
     dry_run_count = int(summary.get("dry_run_pack_count") or 0)
-    actual_failed_count = sum(
-        1
-        for pack in packs
-        if isinstance(pack, dict) and pack.get("status") == STATUS_FAILED
-    )
-    actual_passed_count = sum(
-        1
-        for pack in packs
-        if isinstance(pack, dict) and pack.get("status") == STATUS_PASSED
-    )
-    actual_dry_run_count = sum(
-        1
-        for pack in packs
-        if isinstance(pack, dict) and pack.get("status") == STATUS_DRY_RUN
-    )
+    typed_packs: list[dict[str, Any]] = []
+    for index, pack in enumerate(packs):
+        require(isinstance(pack, dict), f"packs[{index}] must be an object")
+        typed_packs.append(pack)
+    expected_summary = summarize_batch_packs(typed_packs, selected_pack_count=selected_count)
     require(selected_count >= min_pack_count, f"selected_pack_count must be >= {min_pack_count}")
     require(executed_count == len(packs), "executed_pack_count must match packs length")
     require(executed_count <= selected_count, "executed_pack_count cannot exceed selected_pack_count")
@@ -91,23 +80,37 @@ def validate_report(
         failed_count + passed_count + dry_run_count == executed_count,
         "pack status counts must sum to executed_pack_count",
     )
-    require(failed_count == actual_failed_count, "failed_pack_count must match packs statuses")
-    require(passed_count == actual_passed_count, "passed_pack_count must match packs statuses")
-    require(dry_run_count == actual_dry_run_count, "dry_run_pack_count must match packs statuses")
-    expected_status = (
-        STATUS_FAILED
-        if failed_count
-        else STATUS_DRY_RUN
-        if selection.get("dry_run") is True
-        else STATUS_PASSED
+    require(
+        failed_count == expected_summary["failed_pack_count"],
+        "failed_pack_count must match packs statuses",
+    )
+    require(
+        passed_count == expected_summary["passed_pack_count"],
+        "passed_pack_count must match packs statuses",
+    )
+    require(
+        dry_run_count == expected_summary["dry_run_pack_count"],
+        "dry_run_pack_count must match packs statuses",
+    )
+    require(
+        int(summary.get("configured_command_count") or 0)
+        == expected_summary["configured_command_count"],
+        "configured_command_count must match pack summaries",
+    )
+    require(
+        int(summary.get("command_result_count") or 0) == expected_summary["command_result_count"],
+        "command_result_count must match pack summaries",
+    )
+    expected_status = batch_status_from_summary(
+        expected_summary,
+        dry_run=selection.get("dry_run") is True,
     )
     require(status == expected_status, f"status must be {expected_status!r}")
     if selection.get("dry_run") is not True:
         require(dry_run_count == 0, "dry_run_pack_count must be 0 when selection.dry_run is not true")
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_pack_count must be {expect_failed_count}")
-    for index, pack in enumerate(packs):
-        require(isinstance(pack, dict), f"packs[{index}] must be an object")
+    for index, pack in enumerate(typed_packs):
         require(
             pack.get("status") in WORKER_ACCEPTANCE_BATCH_VALID_STATUSES,
             f"packs[{index}].status invalid",
