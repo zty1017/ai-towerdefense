@@ -46,7 +46,7 @@ python3 tools/content_pipeline/validate_mvp_handoff_audit_report.py examples/rev
 python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/ai_td_demo_evidence_suite
 ```
 
-完整 suite 默认先执行 `tools/dev/check_generation_scheduler_review_only_pipeline.py`，再执行浏览器玩家链路截图和统一 evidence 导出。scheduler smoke 只产生本地 review-only 证据：provider 调用、世界修改和 runtime 激活计数都必须为 0；它不代表 live provider、真实图生视频、runtime package 构建或 WorldStateDeltaTransaction 写入已经完成。
+完整 suite 默认先执行 `tools/dev/check_generation_scheduler_review_only_pipeline.py`，再执行浏览器玩家链路截图和统一 evidence 导出。scheduler smoke 只产生本地 review-only 证据：provider 调用、世界修改和 runtime 激活计数都必须为 0；它不代表 live provider、真实图生视频、runtime package 构建或 WorldStateDeltaTransaction 写入已经完成。默认 `--scheduler-smoke-runner auto` 会优先使用仓库 `.venv/bin/python` 加快本地复跑；没有 `.venv` 时自动回退 `uv run`，suite report 会记录实际 runner。
 
 当前环境没有浏览器时，必须显式使用降级参数并保留报告：
 

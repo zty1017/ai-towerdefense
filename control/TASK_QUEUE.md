@@ -4270,6 +4270,42 @@ python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/
 git diff --check
 ```
 
+### P1-D-35 Demo evidence suite scheduler runner selection
+
+状态：已完成一键套件执行器选择优化。
+
+目标：
+
+```text
+减少录屏 / 评审前反复运行 demo evidence suite 的等待时间：scheduler pipeline smoke 默认优先复用仓库本地 .venv/bin/python；没有 .venv 的干净 worktree / CI 继续使用 uv run 回退。
+```
+
+已落地：
+
+- `tools/demo/run_demo_evidence_suite.py`：新增 `--scheduler-smoke-runner {auto,uv,venv,current-python}` 与 `--scheduler-python`。
+- 默认 `auto` 在 `.venv/bin/python` 存在时使用本地 venv；不存在时保持原来的 `uv run --extra dev` 隔离执行。
+- suite report 新增 `scheduler_pipeline_smoke_runner`，记录实际 runner、是否使用 uv，以及相关本地路径 / uv cache 路径。
+- `README.md`、`docs/MVP_REVIEW_HANDOFF_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：同步执行器选择说明。
+- `examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- 不改变 scheduler smoke 覆盖范围和通过条件；仍要求 provider 调用、世界修改和 runtime activation 计数为 0。
+- 不读取 `.env`、不调用 provider、不写世界状态、不构建 runtime package、不激活 review-only 结果。
+- `--scheduler-python` 只用于显式本地调试 / 验收；没有显式指定时，干净环境仍可通过 uv 回退复现。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_demo_suite_scheduler_runner_selection.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_demo_suite_scheduler_runner_selection python3 -m py_compile tools/demo/run_demo_evidence_suite.py
+python3 tools/demo/run_demo_evidence_suite.py --help
+python3 -c "from pathlib import Path; from tools.demo.run_demo_evidence_suite import build_scheduler_pipeline_smoke_invocation, parse_args; args=parse_args(['--scheduler-smoke-runner','uv']); command, env, runner=build_scheduler_pipeline_smoke_invocation(args, Path('/tmp/report.json'), Path('/tmp/out')); assert command[:4]==['uv','run','--extra','dev']; assert runner['mode']=='uv' and runner['uses_uv'] is True and 'UV_CACHE_DIR' in env; args=parse_args(['--scheduler-python','/tmp/python']); command, env, runner=build_scheduler_pipeline_smoke_invocation(args, Path('/tmp/report.json'), Path('/tmp/out')); assert command[0]=='/tmp/python' and runner['mode']=='explicit-python' and runner['uses_uv'] is False and env=={}"
+python3 tools/demo/run_demo_evidence_suite.py --scheduler-smoke-runner uv --allow-missing-browser --output-root /tmp/ai_td_demo_suite_scheduler_runner_selection_check --command-timeout 180
+python3 -c "import json; from pathlib import Path; report=json.loads(Path('/tmp/ai_td_demo_suite_scheduler_runner_selection_check/demo_evidence_suite_report.v0.1.json').read_text(encoding='utf-8')); runner=report['scheduler_pipeline_smoke_runner']; scheduler=report['generation_scheduler_review_only_pipeline_smoke']; assert runner['mode']=='uv' and runner['uses_uv'] is True; assert scheduler['status']=='passed'; assert scheduler['external_provider_call_count']==0; assert scheduler['runtime_activation_allowed_count']==0"
+git diff --check
+```
+
 ### P1-MAP-34 MapTemplateCatalog v0.1
 
 状态：已完成最薄开发者侧候选目录。

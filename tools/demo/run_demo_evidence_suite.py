@@ -33,6 +33,7 @@ REPORT_NAME = "demo_evidence_suite_report.v0.1.json"
 FRONTEND_REPORT_NAME = "frontend_flow_visual_smoke_report.v0.1.json"
 SCHEDULER_PIPELINE_REPORT_NAME = "generation_scheduler_review_only_pipeline_smoke_report.v0.1.json"
 MAX_OUTPUT_TAIL = 1800
+SCHEDULER_SMOKE_RUNNERS = ("auto", "uv", "venv", "current-python")
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -98,7 +99,21 @@ def build_capture_command(args: argparse.Namespace, frontend_output: Path) -> li
     return command
 
 
-def build_scheduler_pipeline_smoke_command(scheduler_report_path: Path) -> list[str]:
+def build_python_scheduler_pipeline_smoke_command(
+    python_path: Path,
+    scheduler_report_path: Path,
+) -> list[str]:
+    return [
+        str(python_path),
+        "tools/dev/check_generation_scheduler_review_only_pipeline.py",
+        "--output",
+        str(scheduler_report_path),
+    ]
+
+
+def build_uv_scheduler_pipeline_smoke_command(
+    scheduler_report_path: Path,
+) -> list[str]:
     return [
         "uv",
         "run",
@@ -109,6 +124,64 @@ def build_scheduler_pipeline_smoke_command(scheduler_report_path: Path) -> list[
         "--output",
         str(scheduler_report_path),
     ]
+
+
+def resolve_scheduler_pipeline_smoke_runner(
+    args: argparse.Namespace,
+) -> tuple[str, Path | None]:
+    if args.scheduler_python:
+        return ("explicit-python", args.scheduler_python.expanduser())
+    if args.scheduler_smoke_runner == "uv":
+        return ("uv", None)
+    if args.scheduler_smoke_runner == "current-python":
+        return ("current-python", Path(sys.executable))
+
+    venv_python = ROOT / ".venv" / "bin" / "python"
+    if args.scheduler_smoke_runner == "venv":
+        return ("venv", venv_python)
+    if venv_python.exists():
+        return ("venv", venv_python)
+    return ("uv", None)
+
+
+def build_scheduler_pipeline_smoke_invocation(
+    args: argparse.Namespace,
+    scheduler_report_path: Path,
+    output_root: Path,
+) -> tuple[list[str], dict[str, str], dict[str, Any]]:
+    runner, python_path = resolve_scheduler_pipeline_smoke_runner(args)
+    if python_path is not None:
+        command = build_python_scheduler_pipeline_smoke_command(
+            python_path,
+            scheduler_report_path,
+        )
+        return (
+            command,
+            {},
+            {
+                "mode": runner,
+                "uses_uv": False,
+                "python_path": str(python_path),
+            },
+        )
+
+    command = build_uv_scheduler_pipeline_smoke_command(scheduler_report_path)
+    env = {
+        "UV_CACHE_DIR": str(output_root / "uv-cache-generation-pipeline-smoke"),
+        "UV_PROJECT_ENVIRONMENT": str(
+            output_root / "uv-venv-generation-pipeline-smoke"
+        ),
+    }
+    return (
+        command,
+        env,
+        {
+            "mode": runner,
+            "uses_uv": True,
+            "uv_cache_dir": env["UV_CACHE_DIR"],
+            "uv_project_environment": env["UV_PROJECT_ENVIRONMENT"],
+        },
+    )
 
 
 def build_validate_command(
@@ -318,6 +391,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="跳过 Generation Scheduler review-only pipeline smoke；仅用于快速调试，不建议录屏前使用。",
     )
+    parser.add_argument(
+        "--scheduler-smoke-runner",
+        choices=SCHEDULER_SMOKE_RUNNERS,
+        default="auto",
+        help=(
+            "scheduler smoke 执行器。auto 会优先使用仓库 .venv/bin/python，"
+            "不存在时回退 uv run。"
+        ),
+    )
+    parser.add_argument(
+        "--scheduler-python",
+        type=Path,
+        help="显式指定 scheduler smoke 使用的 Python；设置后优先于 --scheduler-smoke-runner。",
+    )
     return parser.parse_args(argv)
 
 
@@ -333,13 +420,23 @@ def main(argv: list[str] | None = None) -> int:
 
     commands: list[dict[str, Any]] = []
     scheduler_pipeline_report: dict[str, Any] | None = None
+    scheduler_pipeline_runner: dict[str, Any] = {
+        "mode": "skipped",
+        "uses_uv": False,
+    }
     frontend_report: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
 
     uv_lock_path = ROOT / "uv.lock"
     uv_lock_existed_before = uv_lock_path.exists()
     if not args.skip_scheduler_pipeline_smoke:
-        scheduler_command = build_scheduler_pipeline_smoke_command(scheduler_report_path)
+        scheduler_command, scheduler_env, scheduler_pipeline_runner = (
+            build_scheduler_pipeline_smoke_invocation(
+                args,
+                scheduler_report_path,
+                output_root,
+            )
+        )
         commands.append(
             run_command(
                 "generation_scheduler_review_only_pipeline_smoke",
@@ -347,15 +444,14 @@ def main(argv: list[str] | None = None) -> int:
                 root=ROOT,
                 timeout_seconds=args.command_timeout,
                 output_tail_limit=MAX_OUTPUT_TAIL,
-                env={
-                    "UV_CACHE_DIR": str(output_root / "uv-cache-generation-pipeline-smoke"),
-                    "UV_PROJECT_ENVIRONMENT": str(
-                        output_root / "uv-venv-generation-pipeline-smoke"
-                    ),
-                },
+                env=scheduler_env,
             )
         )
-        if not uv_lock_existed_before and uv_lock_path.exists():
+        if (
+            scheduler_pipeline_runner.get("uses_uv") is True
+            and not uv_lock_existed_before
+            and uv_lock_path.exists()
+        ):
             uv_lock_path.unlink()
         if scheduler_report_path.exists():
             scheduler_pipeline_report = load_json(scheduler_report_path)
@@ -445,6 +541,7 @@ def main(argv: list[str] | None = None) -> int:
                 "exists": True,
             },
         },
+        "scheduler_pipeline_smoke_runner": scheduler_pipeline_runner,
         "generation_scheduler_review_only_pipeline_smoke": scheduler_pipeline_summary(
             scheduler_pipeline_report
         ),
