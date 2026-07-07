@@ -455,6 +455,50 @@ runtime_build_request_prepared
 - 不写世界状态。
 - 不激活 runtime。
 
+### 记录 runtime artifact build report
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/run-runtime-artifact-build-report
+```
+
+该接口消费当前 run 中已经存在的 `generation_runtime_build_request`，解析可用的 runtime / map runtime / world delta / media target refs，并把结果登记为 `generation_artifact_ledger` 的 `generation_runtime_artifact_build_report`。
+
+请求体可选：
+
+```json
+{
+  "worker_id": "studio-runtime-artifact-report-builder",
+  "schedule_item_id": "sched_next_map_visual_prefetch"
+}
+```
+
+未提供 `schedule_item_id` 时，后端选择第一个已有 runtime build request 的调度项。返回包含：
+
+- `worker_step`
+- `generation_runtime_artifact_build_report`
+- `generation_prefetch_cache`
+- `generation_activation_gate`
+- `generation_artifact_ledger`
+
+写入后，对应 prefetch item 的 `cache_status` 会变为：
+
+```text
+runtime_artifact_build_report_ready
+```
+
+该状态只表示“目标解析报告已登记”，不表示玩家 runtime 已激活。
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不生成新的 runtime package 文件。
+- 不提交 WorldStateDeltaTransaction。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

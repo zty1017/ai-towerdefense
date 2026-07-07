@@ -54,6 +54,16 @@ def _activation_status(item: dict[str, Any]) -> tuple[str, str | None, list[str]
                 "explicit_activation_gate",
             ],
         )
+    if cache_status == "runtime_artifact_build_report_ready":
+        return (
+            "blocked_explicit_activation_required",
+            "runtime_artifact_build_report_is_review_only_and_requires_activation_gate",
+            [
+                "runtime_artifact_validation_review",
+                "media_or_semantic_gate_if_applicable",
+                "explicit_activation_gate",
+            ],
+        )
     if cache_status == "promotion_blocked":
         blocked_reason = promotion_gate.get("blocked_reason") or "promotion_blocked"
         return (

@@ -673,7 +673,29 @@ runtime_build_request_prepared
 - 不 complete queue item。
 - 不激活 runtime。
 
-`daemon-readiness` 会在存在 `promotion_allowed` 或共享复用候选时推荐 `prepare-runtime-build-request`；在请求已登记后，会继续推荐 `run_runtime_package_or_world_delta_transaction_builder`，但该后续 builder 当前仍未实现。
+`daemon-readiness` 会在存在 `promotion_allowed` 或共享复用候选时推荐 `prepare-runtime-build-request`；在请求已登记后，会继续推荐 `run-runtime-artifact-build-report`。
+
+后端还提供 runtime artifact build report 入口：
+
+```text
+POST /api/sessions/{session_id}/generation-schedule/workers/run-runtime-artifact-build-report
+```
+
+该入口只消费已经登记到当前 run 的 `generation_runtime_build_request`，并把可解析的目标引用写成 `generation_runtime_artifact_build_report` ledger evidence。它支持第一版确定性 target resolution：
+
+- `runtime_package:*`：解析到已有 `RuntimePackage v0.1` fixture。
+- `map_runtime_package:*`：解析到已有 `MapRuntimePackage v0.1` fixture。
+- `map_compile_package:*`：解析到 `MapCompilePackage v0.2` 与其 `export_refs.map_runtime_package_path`。
+- `compilable_object_plan:*`：解析到已审查的 `WorldStateDeltaTransaction v0.1` fixture。
+- `media_atlas:*`：解析到已有 media atlas manifest。
+
+对应 `prefetch-cache` 状态为：
+
+```text
+runtime_artifact_build_report_ready
+```
+
+这个状态仍然不是玩家侧激活。它只表示后端已经为该调度项记录了 review-only 目标解析报告；后续仍必须通过 runtime artifact validation review、media / semantic gate 和 explicit activation gate。该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不生成新 runtime package 文件、不提交 WorldStateDeltaTransaction、不 complete queue item、不写世界状态、不激活 runtime。
 
 后端也允许导入外部 runner 已经生成好的本地 receipt/envelope：
 

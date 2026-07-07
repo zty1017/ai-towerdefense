@@ -355,6 +355,27 @@ def prepare_generation_runtime_build_request(
     return _payload(session_id, data)
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/run-runtime-artifact-build-report",
+    response_model=FrontendMockPayloadResponse,
+)
+def run_generation_runtime_artifact_build_report(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record review-only resolved runtime artifact targets for a build request."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.run_generation_runtime_artifact_build_report(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

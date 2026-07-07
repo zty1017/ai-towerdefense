@@ -55,12 +55,20 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
             "promotion_allowed_pending_activation",
             "shared_cache_reuse_pending_runtime_build",
             "runtime_build_request_prepared",
+            "runtime_artifact_build_report_ready",
         }
     )
     runtime_build_request_count = sum(
         1
         for item in items
-        if item.get("cache_status") == "runtime_build_request_prepared"
+        if isinstance(item.get("refs"), dict)
+        and item["refs"].get("generation_runtime_build_request") is not None
+    )
+    runtime_artifact_build_report_count = sum(
+        1
+        for item in items
+        if isinstance(item.get("refs"), dict)
+        and item["refs"].get("generation_runtime_artifact_build_report") is not None
     )
     shared_cache_reuse_candidate_count = sum(
         1
@@ -74,6 +82,7 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
         "review_only_envelope_ready_count": review_only_envelope_ready_count,
         "staged_or_reviewed_count": staged_or_reviewed_count,
         "runtime_build_request_count": runtime_build_request_count,
+        "runtime_artifact_build_report_count": runtime_artifact_build_report_count,
         "shared_cache_reuse_candidate_count": shared_cache_reuse_candidate_count,
     }
 
@@ -91,6 +100,8 @@ def _manual_tick_status(
         return "ready_to_dispatch_queued_provider_review_items"
     if queue_counts["review_only_envelope_ready_count"] > 0:
         return "waiting_for_external_runner_or_artifact_review"
+    if queue_counts["runtime_artifact_build_report_count"] > 0:
+        return "waiting_for_explicit_runtime_activation_gate"
     if queue_counts["runtime_build_request_count"] > 0:
         return "waiting_for_runtime_builder_execution"
     if queue_counts["shared_cache_reuse_candidate_count"] > 0:
@@ -171,12 +182,29 @@ def _recommended_next_actions(
                 "activation_allowed_count": 0,
             }
         )
-    if queue_counts["runtime_build_request_count"] > 0:
+    if (
+        queue_counts["runtime_build_request_count"]
+        > queue_counts["runtime_artifact_build_report_count"]
+    ):
         actions.append(
             {
-                "action": "run_runtime_package_or_world_delta_transaction_builder",
+                "action": "run_runtime_artifact_build_report",
+                "endpoint": (
+                    "POST /api/sessions/{session_id}/generation-schedule/"
+                    "workers/run-runtime-artifact-build-report"
+                ),
+                "reason": "runtime_build_request_needs_review_only_target_resolution",
+                "provider_call_count_by_this_request": 0,
+                "world_mutation_count_by_this_request": 0,
+                "activation_allowed_count": 0,
+            }
+        )
+    if queue_counts["runtime_artifact_build_report_count"] > 0:
+        actions.append(
+            {
+                "action": "wait_for_explicit_runtime_activation_gate",
                 "endpoint": None,
-                "reason": "runtime_build_request_recorded_but_builder_is_not_implemented",
+                "reason": "runtime_artifact_build_report_is_review_only",
                 "provider_call_count_by_this_request": 0,
                 "world_mutation_count_by_this_request": 0,
                 "activation_allowed_count": 0,
@@ -244,7 +272,9 @@ def _readiness_gates(
         {
             "gate": "runtime_builder_execution",
             "status": (
-                "waiting_for_builder"
+                "resolved_review_only"
+                if queue_counts["runtime_artifact_build_report_count"] > 0
+                else "waiting_for_builder"
                 if queue_counts["runtime_build_request_count"] > 0
                 else "blocked_request_required"
             ),

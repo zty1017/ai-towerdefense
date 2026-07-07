@@ -130,6 +130,16 @@ from .generation_scheduler_runtime_build_request_builders import (  # noqa: E402
     build_runtime_build_request as _build_runtime_build_request,
     compact_runtime_build_request as _compact_runtime_build_request,
 )
+from .generation_scheduler_runtime_artifact_build_report_builders import (  # noqa: E402
+    RUNTIME_ARTIFACT_BUILD_REPORT_CACHE_STATUS,
+    RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND,
+    RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS,
+    build_runtime_artifact_build_report as _build_runtime_artifact_build_report,
+    compact_runtime_artifact_build_report as _compact_runtime_artifact_build_report,
+)
+from .generation_scheduler_runtime_artifact_target_resolver import (  # noqa: E402
+    resolve_runtime_artifact_targets as _resolve_runtime_artifact_targets_base,
+)
 from .generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records as _load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records as _upsert_shared_prefetch_cache_records,
@@ -2251,6 +2261,131 @@ def prepare_generation_runtime_build_request(
             "queue_completed_count": 0,
         },
         "generation_runtime_build_request": compact,
+        "generation_prefetch_cache": refreshed_prefetch,
+        "generation_activation_gate": refreshed_activation,
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(
+            ledger_items
+        ),
+    }
+
+
+def _runtime_artifact_build_request_ref(
+    item: dict[str, Any],
+) -> dict[str, Any] | None:
+    refs = item.get("refs")
+    if not isinstance(refs, dict):
+        return None
+    request_ref = refs.get(RUNTIME_BUILD_REQUEST_LEDGER_KIND)
+    return request_ref if isinstance(request_ref, dict) else None
+
+
+def run_generation_runtime_artifact_build_report(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ts = now_iso()
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    worker_id = str(
+        safe_metadata.get("worker_id") or "generation_runtime_artifact_report_builder"
+    )
+    note = safe_metadata.get("note")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    if latest_run is None:
+        raise InvalidQueueTransitionError(
+            "generation schedule run is required before runtime artifact build report"
+        )
+    run_id = str(latest_run.get("run_id"))
+    requested_schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    prefetch_payload = get_generation_prefetch_cache(session_id)
+    prefetch_cache = prefetch_payload.get("generation_prefetch_cache")
+    if not isinstance(prefetch_cache, dict):
+        raise InvalidQueueTransitionError("generation prefetch cache is unavailable")
+    prefetch_items = prefetch_cache.get("items")
+    if not isinstance(prefetch_items, list):
+        prefetch_items = []
+
+    selected_item: dict[str, Any] | None = None
+    selected_request_ref: dict[str, Any] | None = None
+    for item in prefetch_items:
+        if not isinstance(item, dict):
+            continue
+        schedule_item_id = str(item.get("schedule_item_id") or "")
+        if requested_schedule_item_id and schedule_item_id != requested_schedule_item_id:
+            continue
+        request_ref = _runtime_artifact_build_request_ref(item)
+        if request_ref is None:
+            continue
+        selected_item = item
+        selected_request_ref = request_ref
+        break
+
+    if selected_item is None or selected_request_ref is None:
+        if requested_schedule_item_id:
+            raise InvalidQueueTransitionError(
+                "no runtime build request for "
+                f"schedule item {requested_schedule_item_id}"
+            )
+        raise InvalidQueueTransitionError("no runtime build request is available")
+
+    schedule_item_id = str(selected_item.get("schedule_item_id") or "")
+    queue_row = _load_generation_queue_item_row(session_id, schedule_item_id)
+    queue_item = queue_row["payload"]
+    resolved_targets = _resolve_runtime_artifact_targets_base(
+        queue_item,
+        repo_root=_REPO_ROOT,
+    )
+    report = _build_runtime_artifact_build_report(
+        session_id=session_id,
+        latest_run=latest_run,
+        queue_item=queue_item,
+        runtime_build_request_ref=selected_request_ref,
+        resolved_targets=resolved_targets,
+        ts=ts,
+        worker_id=worker_id,
+        note=str(note) if note is not None else None,
+    )
+    compact = _compact_runtime_artifact_build_report(report)
+    ledger_entry = _build_artifact_ledger_payload(
+        session_id=session_id,
+        artifact_kind=RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND,
+        source_id=str(report.get("report_id")),
+        status=RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS,
+        compact=compact,
+        ts=ts,
+        latest_run=latest_run,
+        schedule_item_id=schedule_item_id,
+        worker_id=worker_id,
+        note=str(note) if note is not None else None,
+    )
+    _upsert_generation_artifact_ledger(ledger_entry)
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    refreshed_prefetch = get_generation_prefetch_cache(session_id)[
+        "generation_prefetch_cache"
+    ]
+    refreshed_activation = get_generation_activation_gate(session_id)[
+        "generation_activation_gate"
+    ]
+    target_summary = compact.get("resolved_targets", {})
+    if not isinstance(target_summary, dict):
+        target_summary = {}
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": "recorded_review_only",
+            "worker_mode": "generation_runtime_artifact_report_builder",
+            "schedule_item_id": schedule_item_id,
+            "runtime_artifact_build_report_cache_status": (
+                RUNTIME_ARTIFACT_BUILD_REPORT_CACHE_STATUS
+            ),
+            "target_count": int(target_summary.get("target_count", 0) or 0),
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "runtime_ready_count": 0,
+            "activation_allowed_count": 0,
+            "queue_completed_count": 0,
+        },
+        "generation_runtime_artifact_build_report": compact,
         "generation_prefetch_cache": refreshed_prefetch,
         "generation_activation_gate": refreshed_activation,
         "generation_artifact_ledger": _compact_generation_artifact_ledger(

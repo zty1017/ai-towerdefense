@@ -91,6 +91,16 @@ from backend.app.services.generation_scheduler_runtime_build_request_builders im
     build_runtime_build_request,
     compact_runtime_build_request,
 )
+from backend.app.services.generation_scheduler_runtime_artifact_build_report_builders import (  # noqa: E402
+    RUNTIME_ARTIFACT_BUILD_REPORT_CACHE_STATUS,
+    RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND,
+    RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS,
+    build_runtime_artifact_build_report,
+    compact_runtime_artifact_build_report,
+)
+from backend.app.services.generation_scheduler_runtime_artifact_target_resolver import (  # noqa: E402
+    resolve_runtime_artifact_targets,
+)
 from backend.app.services.generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records,
@@ -3254,6 +3264,88 @@ def test_runtime_build_request_builder_records_review_only_source():
     assert compact["safety"]["activates_runtime"] is False
 
 
+def test_runtime_artifact_build_report_resolves_review_only_targets():
+    request = build_runtime_build_request(
+        session_id="sess_runtime_artifacts",
+        latest_run={"run_id": "gsrun_runtime_artifacts"},
+        queue_item={
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map_compile_package:old_signal_tower_pressure",
+            "latency_class": "background_prefetch",
+        },
+        source_ref={
+            "ledger_id": "gled_reuse",
+            "artifact_kind": REUSE_CANDIDATE_LEDGER_KIND,
+            "source_id": "greuse_test",
+            "status": REUSE_CANDIDATE_LEDGER_STATUS,
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "reuse_gate": {
+                    "required_next_gates": ["runtime_package_validation"],
+                },
+            },
+        },
+        ts="2026-07-03T00:01:00Z",
+        worker_id="runtime-build-preparer",
+        note=None,
+    )
+    resolved = resolve_runtime_artifact_targets(
+        {
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map_compile_package:old_signal_tower_pressure",
+        },
+        repo_root=_ROOT,
+    )
+    report = build_runtime_artifact_build_report(
+        session_id="sess_runtime_artifacts",
+        latest_run={"run_id": "gsrun_runtime_artifacts"},
+        queue_item={
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "object_kind": "map_visual_prefetch",
+            "object_ref": "map_compile_package:old_signal_tower_pressure",
+            "latency_class": "background_prefetch",
+        },
+        runtime_build_request_ref={
+            "ledger_id": "gled_runtime_request",
+            "artifact_kind": RUNTIME_BUILD_REQUEST_LEDGER_KIND,
+            "source_id": request["request_id"],
+            "status": RUNTIME_BUILD_REQUEST_LEDGER_STATUS,
+            "updated_at": "2026-07-03T00:01:00Z",
+            "compact": compact_runtime_build_request(request),
+        },
+        resolved_targets=resolved,
+        ts="2026-07-03T00:02:00Z",
+        worker_id="runtime-artifact-report-builder",
+        note="resolve targets",
+    )
+
+    assert report["schema_version"] == (
+        "generation_runtime_artifact_build_report.v0.1"
+    )
+    assert report["report_id"].startswith("gruntime_artifacts_")
+    assert report["report_status"] == RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS
+    assert report["resolved_targets"]["build_status"] == "resolved_review_only"
+    assert report["resolved_targets"]["target_count"] == 2
+    assert report["resolved_targets"]["map_runtime_package_refs"][0][
+        "artifact_id"
+    ] == "map_pkg_old_signal_tower_v0_1"
+    assert report["resolved_targets"]["published_media_update_refs"][0][
+        "ref_kind"
+    ] == "map_compile_package"
+    assert report["build_gate"]["runtime_ready"] is False
+    assert report["build_gate"]["activation_allowed"] is False
+    assert report["build_gate"]["world_mutation_allowed"] is False
+    assert "explicit_activation_gate" in report["build_gate"][
+        "required_next_gates"
+    ]
+    compact = compact_runtime_artifact_build_report(report)
+    assert compact["report_id"] == report["report_id"]
+    assert compact["safety"]["calls_provider"] is False
+    assert compact["safety"]["writes_world_state"] is False
+    assert compact["safety"]["activates_runtime"] is False
+
+
 def test_generation_activation_gate_requires_session(client):
     missing = client.get(
         "/api/sessions/missing-session/generation-schedule/activation-gate"
@@ -4024,6 +4116,152 @@ def test_prepare_runtime_build_request_from_promotion_allowed_report(
     ][RUNTIME_BUILD_REQUEST_LEDGER_KIND] == 1
 
 
+def test_runtime_artifact_build_report_requires_runtime_build_request(client):
+    missing = client.post(
+        "/api/sessions/missing-session/generation-schedule/workers/"
+        "run-runtime-artifact-build-report"
+    )
+    assert missing.status_code == 404
+
+    sid = _create_session(client)
+    no_run = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "run-runtime-artifact-build-report"
+    )
+    assert no_run.status_code == 409
+    assert "generation schedule run is required" in no_run.text
+
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    no_request = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "run-runtime-artifact-build-report"
+    )
+    assert no_request.status_code == 409
+    assert "no runtime build request" in no_request.text
+
+
+def test_runtime_artifact_build_report_from_runtime_build_request(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    run_payload = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    run_id = run_payload["generation_schedule_run"]["run_id"]
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{sid}_provider_artifact_promotion_report_artifact_build",
+            "run_id": run_id,
+            "session_id": sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_artifact_build",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "prepare-runtime-build-request",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    built = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-runtime-artifact-build-report",
+            json={
+                "worker_id": "runtime-artifact-report-test",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+            },
+        )
+    )
+
+    after_counts = _session_state_counts(raw_conn, sid)
+    assert after_counts == {
+        **before_counts,
+        "generation_artifact_ledger": before_counts["generation_artifact_ledger"] + 1,
+    }
+    worker_step = built["worker_step"]
+    assert worker_step["status"] == "recorded_review_only"
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["runtime_artifact_build_report_cache_status"] == (
+        RUNTIME_ARTIFACT_BUILD_REPORT_CACHE_STATUS
+    )
+    assert worker_step["target_count"] == 2
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+
+    report = built["generation_runtime_artifact_build_report"]
+    assert report["report_status"] == RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS
+    assert report["source_request_ref"]["artifact_kind"] == (
+        RUNTIME_BUILD_REQUEST_LEDGER_KIND
+    )
+    assert report["resolved_targets"]["build_status"] == "resolved_review_only"
+    assert report["resolved_targets"]["target_count"] == 2
+    assert report["resolved_targets"]["map_runtime_package_refs"][0][
+        "artifact_id"
+    ] == "map_pkg_old_signal_tower_v0_1"
+    assert report["build_gate"]["activation_allowed"] is False
+    assert report["build_gate"]["world_mutation_allowed"] is False
+    assert report["safety"]["writes_runtime_package"] is False
+    assert report["safety"]["writes_world_state"] is False
+
+    ledger = built["generation_artifact_ledger"]
+    assert ledger["summary"]["artifact_kind_counts"][
+        RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND
+    ] == 1
+    assert ledger["summary"]["status_counts"][
+        RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_STATUS
+    ] == 1
+    item = {
+        cache_item["schedule_item_id"]: cache_item
+        for cache_item in built["generation_prefetch_cache"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == RUNTIME_ARTIFACT_BUILD_REPORT_CACHE_STATUS
+    assert item["runtime_artifact_build_report"]["report_recorded"] is True
+    assert item["runtime_artifact_build_report"]["target_count"] == 2
+    assert item["refs"][RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND][
+        "artifact_kind"
+    ] == RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND
+    gate = {
+        gate_item["schedule_item_id"]: gate_item
+        for gate_item in built["generation_activation_gate"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert gate["activation_status"] == "blocked_explicit_activation_required"
+    assert gate["activation_allowed"] is False
+
+    daemon = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )["generation_daemon_readiness"]
+    actions = {action["action"] for action in daemon["recommended_next_actions"]}
+    assert "wait_for_explicit_runtime_activation_gate" in actions
+    assert "run_runtime_artifact_build_report" not in actions
+
+    built_again = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-runtime-artifact-build-report",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    assert _session_state_counts(raw_conn, sid) == after_counts
+    assert built_again["generation_artifact_ledger"]["summary"][
+        "artifact_kind_counts"
+    ][RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND] == 1
+
+
 def test_prepare_runtime_build_request_from_shared_cache_reuse_candidate(client):
     source_sid = _create_session(client)
     source_run = _payload(
@@ -4099,7 +4337,7 @@ def test_prepare_runtime_build_request_from_shared_cache_reuse_candidate(client)
         )
     )["generation_daemon_readiness"]
     assert daemon["manual_tick_status"] == "ready_to_dispatch_queued_provider_review_items"
-    assert "run_runtime_package_or_world_delta_transaction_builder" in {
+    assert "run_runtime_artifact_build_report" in {
         action["action"] for action in daemon["recommended_next_actions"]
     }
 

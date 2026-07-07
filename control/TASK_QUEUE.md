@@ -4698,6 +4698,48 @@ python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runti
 git diff --check
 ```
 
+### P1-B Generation Scheduler runtime artifact build report
+
+状态：已完成最小 review-only 目标解析报告层。
+
+目标：
+
+```text
+消费 generation_runtime_build_request，把可解析的 RuntimePackage / MapRuntimePackage / MapCompilePackage / WorldStateDeltaTransaction / media atlas fixture refs 登记为 generation_artifact_ledger 中的 runtime artifact build report，使 activation gate 能从“等待构建器”推进到“等待显式激活”。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_runtime_artifact_build_report_builders.py`：新增 `generation_runtime_artifact_build_report.v0.1` builder 与 compact 摘要。
+- `backend/app/services/generation_scheduler_runtime_artifact_target_resolver.py`：新增 object_ref 到本地 review-only target refs 的解析器。
+- `backend/app/services/generation_scheduler_prefetch_cache_builders.py`：新增 `generation_runtime_artifact_build_report` ref kind 与 `runtime_artifact_build_report_ready` 状态。
+- `backend/app/services/generation_scheduler_activation_gate_builders.py`：新增 `blocked_explicit_activation_required` 状态。
+- `backend/app/services/generation_scheduler_daemon_readiness_builders.py`：新增 runtime artifact build report 计数、推荐动作和 readiness gate。
+- `backend/app/services/generation_scheduler_service.py`：新增 `run_generation_runtime_artifact_build_report()`，只消费已有 runtime build request 并幂等写入 ledger。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/run-runtime-artifact-build-report`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖 builder、target resolver、缺失 session / 无 run / 无 request、map visual target resolution、幂等和安全计数。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 runtime artifact build report 边界。
+- `examples/worker_task_packs/p1b_generation_runtime_artifact_build_report.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- runtime artifact build report 不是 runtime activation，不是玩家侧发布，不生成新的 runtime package 文件，也不提交 WorldStateDeltaTransaction。
+- 该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不 complete queue item、不写世界状态、不激活 runtime。
+- `runtime_artifact_build_report_ready` 只表示目标解析报告已登记；后续仍必须通过 runtime artifact validation review、media / semantic gate 和 explicit activation gate。
+- 当前 target resolver 是 MVP fixture 映射层，不是泛化内容寻址系统；不认识的 object_ref 会进入 `unresolved_targets`。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_artifact_build_report.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_artifact_build_report python3 -m py_compile backend/app/services/generation_scheduler_runtime_artifact_build_report_builders.py backend/app/services/generation_scheduler_runtime_artifact_target_resolver.py backend/app/services/generation_scheduler_prefetch_cache_builders.py backend/app/services/generation_scheduler_activation_gate_builders.py backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_artifact_build_report_fast_gate.json
+python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_artifact_build_report_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
+python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_artifact_build_report_premerge_gate.json
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_artifact_build_report_premerge_gate.json --expect-status passed --expect-failed-count 0
+git diff --check
+```
+
 ### P1-B Generation Scheduler review-only pipeline smoke
 
 状态：已完成本地 HTTP 闭环 smoke。
