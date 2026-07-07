@@ -3903,6 +3903,44 @@ python3 tools/dev/run_fast_quality_gate.py --output /tmp/suite_profiles_fast_gat
 git diff --check
 ```
 
+### P1-E-7 WorkerTaskPack runner regex pipe arguments
+
+状态：已完成 profile runner / audit 解析修正。
+
+目标：
+
+```text
+让 acceptance profile runner 允许 `rg "a|b"` 这类安全正则参数，同时继续拒绝真正的 shell 管道、重定向、heredoc、分号连接和命令替换。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_profile.py`：`parse_command()` 不再把参数内部的 `|` 一律视为 shell-only；只拒绝独立管道 token `|` / `|&`，并继续拒绝 `<`、`>`、`;`、反引号和 `$(`。
+- `tools/dev/audit_worker_acceptance_profiles.py`：移除 raw string 级别的 `|` 预筛，统一以 runner parser 的结果作为兼容性判断。
+- `examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json`：新增本轮任务包。
+
+效果：
+
+- 审计 manual review 数从 45 降到 21。
+- 24 条 `rg "pattern_a|pattern_b"` 任务命令变成 runner-compatible 迁移候选。
+- 真正的 `cmd | cmd2`、heredoc、重定向和分号连接仍会被拒绝。
+
+边界：
+
+- 本任务不执行被审计任务包的验收命令。
+- 本任务不修改任何历史任务包、不调用 provider、不读取 `.env`、不改 runtime / backend / frontend。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_pipe_args python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_pipe_args.py
+python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/worker_acceptance_profile_pipe_args_smoke.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_pipe_args_audit.json --max-samples 20
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_pipe_args_fast_gate.json
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -26,7 +25,6 @@ from tools.dev.validate_worker_task_pack import validate
 REPORT_SCHEMA_VERSION = "worker_acceptance_profile_audit_report.v0.1"
 DEFAULT_TASK_PACK_DIR = Path("examples/worker_task_packs")
 DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_audit_report.v0.1.json")
-SHELL_SEPARATOR_RE = re.compile(r";|\n")
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -93,22 +91,7 @@ def is_fast_gate(command: str) -> bool:
     return "tools/dev/run_fast_quality_gate.py" in normalize_command(command)
 
 
-def shell_like_marker(command: str) -> str | None:
-    for marker in ("&&", "||", "|", "<", ">", "`", "$("):
-        if marker in command:
-            return marker
-    if SHELL_SEPARATOR_RE.search(command):
-        return "; or newline"
-    return None
-
-
 def runner_compatibility(command: str) -> dict[str, Any]:
-    marker = shell_like_marker(command)
-    if marker is not None:
-        return {
-            "runner_compatible": False,
-            "reason": f"shell_only_syntax:{marker}",
-        }
     try:
         parsed = parse_command(command)
     except Exception as exc:  # noqa: BLE001 - audit should keep scanning all packs.

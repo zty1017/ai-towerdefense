@@ -1,0 +1,99 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-7-worker-acceptance-pipe-args",
+  "title": "WorkerTaskPack runner regex pipe arguments",
+  "task_type": "fix",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-pipe-args",
+  "worktree": "/tmp/ai-td-task-worker-profile-pipe-args",
+  "objective": "修正 acceptance profile runner / audit 对正则参数中竖线的过度保守判断：允许 rg \"a|b\" 这类安全 argv 参数，同时继续拒绝真实 shell 管道、重定向、heredoc 和分号连接。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/audit_worker_acceptance_profiles.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/check_worker_acceptance_profile_pipe_args.py",
+    "examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "examples/runtime_packages/"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_pipe_args python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_pipe_args.py",
+    "python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/worker_acceptance_profile_pipe_args_smoke.json",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_pipe_args_audit.json --max-samples 20",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_pipe_args_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，验证 parser smoke、审计降噪和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_pipe_args.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_pipe_args python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/audit_worker_acceptance_profiles.py tools/dev/check_worker_acceptance_profile_pipe_args.py",
+          "python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/worker_acceptance_profile_pipe_args_smoke.json",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_pipe_args_audit.json --max-samples 20",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_pipe_args_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只调整本地 runner / audit 的命令解析，不执行被审计任务包验收命令。",
+    "允许参数内部的 | 是为了支持 rg 正则 alternation；独立 | / |& 仍被拒绝。",
+    "本任务不调用 provider，不读取 .env，不修改 runtime 包、后端、前端或 review evidence。"
+  ]
+}
