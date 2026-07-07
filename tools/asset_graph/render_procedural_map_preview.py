@@ -32,19 +32,11 @@ DEFAULT_OUTPUT = ROOT / "examples/map_render_previews/mvp_first_battle.procedura
 DEFAULT_REPORT = ROOT / "examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json"
 
 try:
+    from validation_common import load_json, write_json
     from validate_map_decoration_zone_policy import validate as validate_decoration_policy
 except ModuleNotFoundError:  # pragma: no cover - supports package-style imports.
+    from tools.asset_graph.validation_common import load_json, write_json  # type: ignore
     from tools.asset_graph.validate_map_decoration_zone_policy import validate as validate_decoration_policy  # type: ignore
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def rel(path: Path) -> str:
@@ -893,7 +885,7 @@ def main() -> int:
         args.width,
         args.height,
     )
-    write_json(report_path, report)
+    write_json(report_path, report, sort_keys=True)
     print(f"OK: wrote {output_path}")
     print(f"OK: wrote {report_path}")
     print(f"- status: {report['status']}")

@@ -18,14 +18,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 
 try:
+    from validation_common import load_json
     from validate_map_decoration_zone_policy import validate as validate_decoration_policy
 except ModuleNotFoundError:  # pragma: no cover - supports package-style imports.
+    from tools.asset_graph.validation_common import load_json  # type: ignore
     from tools.asset_graph.validate_map_decoration_zone_policy import validate as validate_decoration_policy  # type: ignore
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
 
 
 def resolve_repo_path(value: Any) -> Path | None:

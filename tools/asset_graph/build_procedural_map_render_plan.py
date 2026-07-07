@@ -21,6 +21,7 @@ if str(SCRIPT_DIR) not in sys.path:
 import map_runtime_package as mrp  # noqa: E402
 import map_runtime_package_v02 as mrp_v02  # noqa: E402
 import procedural_map_render_plan as pmrp  # noqa: E402
+from validation_common import load_json, write_json  # noqa: E402
 
 
 DEFAULT_RUNTIME_PACKAGE = ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
@@ -30,17 +31,6 @@ DEFAULT_RUNTIME_V02_SCHEMA = ROOT / "shared/schemas/map_runtime_package.v0.2.sch
 DEFAULT_STYLE_SCHEMA = ROOT / "shared/schemas/map_style_pack.v0.1.schema.json"
 DEFAULT_PLAN_SCHEMA = ROOT / "shared/schemas/procedural_map_render_plan.v0.1.schema.json"
 DEFAULT_REPORT_SCHEMA = ROOT / "shared/schemas/semantic_visual_consistency_report.v0.1.schema.json"
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, ensure_ascii=False, indent=2)
-    path.write_text(payload + "\n", encoding="utf-8")
 
 
 def as_repo_relative(path: Path) -> str:
