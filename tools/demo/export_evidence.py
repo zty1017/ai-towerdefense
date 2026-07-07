@@ -12,17 +12,18 @@ import argparse
 import hashlib
 import html
 import json
-import subprocess
 import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import build_mvp_demo_readiness_report as readiness_builder
-
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+import build_mvp_demo_readiness_report as readiness_builder
+from tools.dev.command_runner import run_command
+
 
 DEFAULT_OUTPUT_DIR = ROOT / "demo_evidence"
 MAX_VALIDATION_OUTPUT_CHARS = 1400
@@ -1272,23 +1273,12 @@ def external_file_ref(path: Path, role: str) -> dict[str, Any]:
     }
 
 
-def shorten(value: str, limit: int = MAX_VALIDATION_OUTPUT_CHARS) -> str:
-    normalized = value.replace(str(ROOT), "$REPO_ROOT").strip()
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[-limit:]
-
-
 def count_by(items: list[Any], key: str) -> dict[str, int]:
     counter: Counter[str] = Counter()
     for item in items:
         if isinstance(item, dict) and item.get(key):
             counter[str(item[key])] += 1
     return dict(sorted(counter.items()))
-
-
-def command_text(command: list[str]) -> str:
-    return " ".join(command)
 
 
 def map_runtime_package_paths() -> list[Path]:
@@ -1374,32 +1364,15 @@ def validation_commands() -> list[dict[str, Any]]:
 def run_validation_commands() -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for entry in validation_commands():
-        command = entry["command"]
-        try:
-            completed = subprocess.run(
-                command,
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
-                timeout=45,
-                check=False,
-            )
-            return_code = completed.returncode
-            stdout = shorten(completed.stdout)
-            stderr = shorten(completed.stderr)
-        except subprocess.TimeoutExpired as exc:
-            return_code = 124
-            stdout = shorten(exc.stdout or "")
-            stderr = shorten((exc.stderr or "") + "\n命令超时。")
         results.append(
-            {
-                "name": entry["name"],
-                "command": command_text(command),
-                "return_code": return_code,
-                "status": "passed" if return_code == 0 else "failed",
-                "stdout_tail": stdout,
-                "stderr_tail": stderr,
-            }
+            run_command(
+                str(entry["name"]),
+                list(entry["command"]),
+                root=ROOT,
+                timeout_seconds=45,
+                output_tail_limit=MAX_VALIDATION_OUTPUT_CHARS,
+                include_timestamps=False,
+            )
         )
     return results
 

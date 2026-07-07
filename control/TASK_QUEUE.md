@@ -3902,6 +3902,7 @@ git diff --check
 - `tools/dev/command_runner.py`：新增共享命令执行 helper，提供 `now_iso()`、输出截断、命令文本化和 timeout-safe `run_command()`。
 - `tools/dev/run_fast_quality_gate.py`：复用共享 runner，并把 `command_runner.py` 纳入自身 `py_compile`。
 - `tools/demo/run_demo_evidence_suite.py`：复用共享 runner，保持原 suite report 字段兼容。
+- `tools/demo/export_evidence.py`：静态验证命令执行复用共享 runner，保持 validation summary 字段兼容。
 
 边界：
 
@@ -3912,10 +3913,10 @@ git diff --check
 验收：
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_command_runner_refactor python3 -m py_compile tools/dev/command_runner.py tools/dev/run_fast_quality_gate.py tools/demo/run_demo_evidence_suite.py tools/demo/export_evidence.py
-python3 tools/dev/run_fast_quality_gate.py --output /tmp/ai_td_fast_quality_gate_command_runner_report.v0.1.json
-python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_command_runner_check --command-timeout 120
-python3 tools/demo/export_evidence.py --output-dir /tmp/command_runner_refactor_evidence_check
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_export_runner_refactor python3 -m py_compile tools/dev/command_runner.py tools/dev/run_fast_quality_gate.py tools/demo/run_demo_evidence_suite.py tools/demo/export_evidence.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/ai_td_fast_quality_gate_export_runner_report.v0.1.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/export_runner_refactor_evidence_check
+python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-root /tmp/ai_td_demo_suite_export_runner_check --command-timeout 120
 git diff --check
 ```
 
