@@ -102,7 +102,7 @@ P2：本阶段明确不做
 - 已补演示前一键证据套件 `tools/demo/run_demo_evidence_suite.py`：先跑浏览器视觉 smoke 环境预检，再串联浏览器玩家链路截图、多节点战斗截图、战斗拖拽部署交互 smoke、截图 / 交互 report 校验和统一 demo evidence 导出，输出 `/tmp/.../demo_evidence_suite_report.v0.1.json`；默认要求真实 Chromium 可用，显式 `--allow-missing-browser` 才允许降级；不调用 provider、不读取 `.env`、不写世界状态、不提交截图到仓库。
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、战斗交互合同、campaign router 前端合同、map component 前端合同、release gate profile 降级审计、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - 已补本地合并前质量门 `tools/dev/run_premerge_quality_gate.py` 与 report validator：默认 profile 复用 fast gate、WorkerTaskPack 全量 dry-run、batch report validator、profile 审计、release gate 降级审计、迁移 dry-run 和 `git diff --check`，不跑浏览器、不调用 provider、不读取 `.env`；可选 full profile 追加默认完整 evidence export。
-- 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
+- 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，支持前置 `KEY=value` token 并会传入子进程环境，避免 `PYTHONPYCACHEPREFIX` 丢失后写仓库 `__pycache__`；遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - 已补 WorkerTaskPack acceptance profile 批量 runner `tools/dev/run_worker_acceptance_batch.py` 与 batch report validator：支持显式 `--task-pack`、`--task-id-prefix`、`--path-contains`、`--all`、`--profile`、`--dry-run`、`--fail-fast` 和 JSON report，默认拒绝隐式全量选择；全量 dry-run 用于快速确认任务包 profile 可解析，日常真实执行仍应缩小到明确任务包或筛选条件。
 - 已补 `tools/dev/audit_common.py`：收敛 WorkerTaskPack 相关只读审计脚本共享的 JSON 报告写入、仓库相对路径显示、`/tmp` 输出路径保护、字符串数组过滤和命令归一化 helper；当前只服务审计工具，不要求全仓媒体 / 内容生成脚本机械迁移。
 - 已补 WorkerTaskPack acceptance profile 迁移审计 `tools/dev/audit_worker_acceptance_profiles.py`：只读扫描 `examples/worker_task_packs/*.json`，复用任务包 validator、profile runner 命令解析规则和 `audit_common.py`，输出已有 profile、无 profile 旧包、完整 evidence 顶层命令、fast gate、summary-only、迁移候选和 shell-only/manual-review 命令清单；该审计不执行被扫描任务包的验收命令，不修改旧包，并强制 `--output` 写到仓库外 `/tmp` 路径。
@@ -3782,7 +3782,7 @@ git diff --check
 
 边界：
 
-- runner 不使用 shell；只用 `shlex.split` 解析 argv，并支持前置环境变量 token。
+- runner 不使用 shell；只用 `shlex.split` 解析 argv，并支持前置环境变量 token；前置 env 会传入子进程，不只是出现在 dry-run 报告中。
 - 管道、非受限重定向、逻辑连接、反引号和 `$(` 命令替换会被拒绝为 `unsupported_command_syntax`，不会执行。
 - 没有 `acceptance_profile` 的旧包直接失败，提示手动运行 `acceptance_commands`。
 - 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或默认 runtime/package 文件。
@@ -3795,6 +3795,42 @@ python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1
 python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --dry-run --output /tmp/worker_acceptance_runner_dry_run.json
 python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_runner_daily_fast.json
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_runner_fast_gate.json
+git diff --check
+```
+
+### P1-E-3b WorkerTaskPack runner env assignments
+
+状态：已完成 runner 前置环境变量执行修复。
+
+目标：
+
+```text
+修复 run_worker_acceptance_profile.py 对 KEY=value python3 ... 前置环境变量的解析与执行，避免 py_compile 等命令在 runner 下丢失 PYTHONPYCACHEPREFIX 后写入仓库 __pycache__。
+```
+
+已落地：
+
+- `tools/dev/run_worker_acceptance_profile.py`：修复 `parse_command()` 中前置 env token 扫描后未保留 env 字典的问题，`ParsedCommand.env` 现在会正确包含 `PYTHONPYCACHEPREFIX=/tmp/...` 等赋值。
+- `tools/dev/check_worker_acceptance_profile_env_assignments.py`：新增 smoke，验证 `KEY=value python3 ... >/tmp/out` 的解析、实际执行、stdout redirect 和拒绝样例。
+- `tools/dev/run_fast_quality_gate.py`、`tools/dev/run_premerge_quality_gate.py`：把 env assignment smoke 纳入 Python 编译覆盖。
+- `examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json`：新增本轮任务包，并用 `p1e_premerge_quality_gate` daily profile 作为回归覆盖。
+- `docs/WORKER_TASK_PACK_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 runner env assignment 执行边界。
+
+边界：
+
+- 本任务不读取 `.env`；只测试命令字符串内显式声明的临时环境变量。
+- runner 仍不使用 shell；env assignment 只支持最前面的 `KEY=value` token。
+- smoke 输出只写 `/tmp`，不修改 runtime、后端、前端、媒体或世界状态。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_env python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/check_worker_acceptance_profile_env_assignments.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py
+python3 tools/dev/check_worker_acceptance_profile_env_assignments.py --output /tmp/worker_acceptance_profile_env_assignment_smoke.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_runner.json
+python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_premerge_runner.json --timeout 240
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profile_env_assignment_fast_gate.json
 git diff --check
 ```
 

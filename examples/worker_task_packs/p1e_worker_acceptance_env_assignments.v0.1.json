@@ -1,0 +1,120 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-worker-acceptance-env-assignments",
+  "title": "WorkerTaskPack profile runner 前置 env 执行修复",
+  "task_type": "fix",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-env-exec",
+  "worktree": "/tmp/ai-td-task-worker-profile-env-exec",
+  "objective": "修复 run_worker_acceptance_profile.py 对 KEY=value python3 ... 前置环境变量的解析与执行，避免 py_compile 等命令在 runner 下丢失 PYTHONPYCACHEPREFIX 后写入仓库 __pycache__。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/command_runner.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/run_worker_acceptance_profile.py",
+    "tools/dev/check_worker_acceptance_profile_env_assignments.py",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/dev/run_premerge_quality_gate.py",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json",
+    "examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "package.json",
+    "package-lock.json",
+    "requirements.txt",
+    "pyproject.toml"
+  ],
+  "acceptance_commands": [
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_env python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/check_worker_acceptance_profile_env_assignments.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+    "python3 tools/dev/check_worker_acceptance_profile_env_assignments.py --output /tmp/worker_acceptance_profile_env_assignment_smoke.json",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_runner.json",
+    "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_premerge_runner.json --timeout 240",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profile_env_assignment_fast_gate.json",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "本地交接前验证前置环境变量解析、实际执行和 premerge 任务包 daily profile。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_env_runner python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/check_worker_acceptance_profile_env_assignments.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/check_worker_acceptance_profile_env_assignments.py --output /tmp/worker_acceptance_profile_env_assignment_runner_smoke.json",
+          "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_premerge_runner.json --timeout 240",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终审查前验证 env assignment 修复、premerge profile 和完整 demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_env_assignments.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_env_full python3 -m py_compile tools/dev/run_worker_acceptance_profile.py tools/dev/check_worker_acceptance_profile_env_assignments.py tools/dev/run_fast_quality_gate.py tools/dev/run_premerge_quality_gate.py",
+          "python3 tools/dev/check_worker_acceptance_profile_env_assignments.py --output /tmp/worker_acceptance_profile_env_assignment_full_smoke.json",
+          "python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json --profile daily_fast --output /tmp/worker_acceptance_profile_env_assignment_premerge_runner_full.json --timeout 240",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_profile_env_assignment_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务不读取 .env；这里只测试命令字符串内显式声明的临时环境变量。",
+    "修复前 parse_command 会在第一轮扫描 env token 后丢失 env 字典，导致 runner 执行时 PYTHONPYCACHEPREFIX 不生效。",
+    "smoke 会验证 stdout redirect 与 env assignment 可以组合使用，且输出文件只写到 /tmp。"
+  ]
+}

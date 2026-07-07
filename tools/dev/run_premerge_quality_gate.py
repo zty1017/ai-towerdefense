@@ -74,6 +74,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "tools/dev/audit_release_gate_profiles.py",
                 "tools/dev/migrate_worker_acceptance_profiles.py",
                 "tools/dev/command_runner.py",
+                "tools/dev/check_worker_acceptance_profile_env_assignments.py",
                 "tools/frontend/validate_battle_interaction_contract.py",
                 "tools/frontend/capture_battle_drag_interaction_smoke.py",
                 "tools/frontend/validate_battle_drag_interaction_smoke_report.py",

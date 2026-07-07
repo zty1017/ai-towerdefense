@@ -98,13 +98,14 @@ def parse_command(command: str) -> ParsedCommand:
     if not tokens:
         raise UnsupportedCommandSyntax("command has stdout redirect but no executable")
 
-    argv_start = 0
-    while argv_start < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[argv_start]):
-        argv_start += 1
-    if argv_start >= len(tokens):
+    env_token_count = 0
+    while env_token_count < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[env_token_count]):
+        env_token_count += 1
+    if env_token_count >= len(tokens):
         raise UnsupportedCommandSyntax("command has environment assignments but no executable")
 
     python_c_code_index: int | None = None
+    argv_start = env_token_count
     executable_name = Path(tokens[argv_start]).name
     if (
         executable_name.startswith("python")
@@ -131,11 +132,10 @@ def parse_command(command: str) -> ParsedCommand:
                 )
 
     env: dict[str, str] = {}
-    while argv_start < len(tokens) and ENV_ASSIGNMENT_RE.match(tokens[argv_start]):
-        key, value = tokens[argv_start].split("=", 1)
+    for token in tokens[:env_token_count]:
+        key, value = token.split("=", 1)
         env[key] = value
-        argv_start += 1
-    argv = tokens[argv_start:]
+    argv = tokens[env_token_count:]
     if not argv:
         raise UnsupportedCommandSyntax("command has environment assignments but no executable")
     return ParsedCommand(argv=argv, env=env, stdout_path=stdout_path)

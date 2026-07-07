@@ -169,6 +169,7 @@ python3 tools/dev/run_worker_acceptance_profile.py examples/worker_task_packs/p1
 - 不传 `--profile` 时使用 `acceptance_profile.default_profile`；`--list-profiles` 只列出 profile 并退出 0，不执行命令。
 - `--dry-run` 只解析和列出将运行的命令，报告状态为 `dry_run`。
 - runner 不使用 shell。命令字符串通过 `shlex.split` 转成 argv，支持 `PYTHONPYCACHEPREFIX=/tmp/x python3 ...` 这类前置环境变量 token。
+- 前置环境变量 token 会进入子进程环境，而不只是 dry-run 报告字段；`tools/dev/check_worker_acceptance_profile_env_assignments.py` 会验证 `KEY=value python3 ...` 与受限 stdout redirect 可以组合使用。
 - runner 会拒绝独立管道、`<`、任意非受限重定向、`;` shell 连接、`&&`、`||`、反引号和 `$(` 等 shell-only 语法；遇到不支持语法时该命令记为 `failed/unsupported_command_syntax`，不会执行。
 - runner 只支持一种受限 stdout 重定向：最终 token 为 `> /tmp/file` 或 `>/tmp/file`。该路径必须是仓库外 `/tmp` 下的文件，runner 会捕获 stdout 后自行写文件，命令仍不经过 shell。
 - 参数内部的 `|` 可作为普通 argv 内容，例如 `rg "a|b"`；`;` 只允许出现在 `python* -c` 的最后一个代码 argv 内。
