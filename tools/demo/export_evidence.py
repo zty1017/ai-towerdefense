@@ -1167,6 +1167,14 @@ STATIC_VALIDATION_COMMANDS = [
             "2026-07-04T00:00:00+00:00",
         ],
     },
+    {
+        "name": "mvp_demo_readiness_report_validator",
+        "command": [
+            "python3",
+            "tools/demo/validate_mvp_demo_readiness_report.py",
+            "examples/review_packs/mvp_demo_readiness_report.v0.1.json",
+        ],
+    },
 ]
 
 REVIEWED_WORKFLOW_FILES = [
