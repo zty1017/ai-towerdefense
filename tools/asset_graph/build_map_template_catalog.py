@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from tools.asset_graph.validation_common import write_json
 from tools.asset_graph.validate_map_template_catalog import validate
 
 
@@ -272,13 +272,6 @@ def build_catalog() -> dict[str, Any]:
     }
 
 
-def write_json(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(data, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -291,7 +284,7 @@ def main() -> int:
     catalog = build_catalog()
     if args.validate:
         validate(catalog)
-    write_json(args.output, catalog)
+    write_json(args.output, catalog, sort_keys=True)
     print(f"map template catalog written: {args.output}")
     if args.validate:
         print("map template catalog validation passed")
