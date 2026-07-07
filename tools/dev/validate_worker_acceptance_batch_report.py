@@ -21,14 +21,7 @@ from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
 from tools.dev.worker_acceptance_profile_contract import (  # noqa: E402
     WORKER_ACCEPTANCE_PROFILE_REPORT_SCHEMA_VERSION,
 )
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
+from tools.dev.report_io import load_json_object  # noqa: E402
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -143,7 +136,7 @@ def main() -> int:
     args = parse_args()
     try:
         summary = validate_report(
-            load_json(args.report),
+            load_json_object(args.report, label=f"{args.report} root"),
             expect_status=args.expect_status,
             expect_failed_count=args.expect_failed_count,
             min_pack_count=args.min_pack_count,

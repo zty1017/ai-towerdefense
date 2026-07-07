@@ -34,9 +34,9 @@ DEFAULT_TASK_PACK_DIR = Path("examples/worker_task_packs")
 DEFAULT_OUTPUT = Path("/tmp/worker_acceptance_profile_audit_report.v0.1.json")
 
 
-def load_json(path: Path) -> dict[str, Any]:
+def load_task_pack(path: Path) -> dict[str, Any]:
     try:
-        return load_json_object(path)
+        return load_json_object(path, label=f"{path} root")
     except ValueError as exc:
         raise ValueError("WorkerTaskPack root must be an object") from exc
 
@@ -179,7 +179,7 @@ def analyze_pack(path: Path) -> dict[str, Any]:
     validation_error: str | None = None
     data: dict[str, Any] = {}
     try:
-        data = load_json(path)
+        data = load_task_pack(path)
         validate(data)
         validation_status = "passed"
     except Exception as exc:  # noqa: BLE001 - audit report should include invalid packs.

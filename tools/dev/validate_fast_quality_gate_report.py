@@ -26,14 +26,7 @@ from tools.dev.report_status_contract import (  # noqa: E402
     REPORT_TERMINAL_STATUSES,
     STATUS_PASSED,
 )
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} root must be an object")
-    return data
+from tools.dev.report_io import load_json_object  # noqa: E402
 
 
 def as_obj(value: Any) -> dict[str, Any]:
@@ -188,7 +181,7 @@ def main() -> int:
     args = parse_args()
     try:
         summary = validate_report(
-            load_json(args.report),
+            load_json_object(args.report, label=f"{args.report} root"),
             expect_status=args.expect_status,
             expect_failed_count=args.expect_failed_count,
             require_worker_env_smoke=args.require_worker_env_smoke,

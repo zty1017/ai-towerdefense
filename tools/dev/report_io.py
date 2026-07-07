@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import Any
 
 
-def load_json_object(path: Path) -> dict[str, Any]:
+def load_json_object(path: Path, *, label: str = "JSON root") -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         data = json.load(handle)
     if not isinstance(data, dict):
-        raise ValueError("JSON root must be an object")
+        raise ValueError(f"{label} must be an object")
     return data
 
 
