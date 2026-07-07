@@ -1,0 +1,124 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-worker-acceptance-command-profiles",
+  "title": "WorkerTaskPack acceptance command profiles",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-acceptance-command-profiles",
+  "worktree": "/tmp/ai-td-task-worker-acceptance-profiles",
+  "objective": "给 WorkerTaskPack v0.1 增加可选验收命令 profile 机制：日常小改默认使用快速反馈，最终评审、录屏或 release gate 仍显式运行完整 evidence 或 demo suite，避免把快速 profile 误当成质量降级。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "tools/dev/run_fast_quality_gate.py",
+    "tools/demo/export_evidence.py",
+    "tools/demo/run_demo_evidence_suite.py"
+  ],
+  "allowed_paths": [
+    "shared/schemas/worker_task_pack.v0.1.schema.json",
+    "tools/dev/validate_worker_task_pack.py",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "backend/",
+    "frontend/",
+    "examples/review_packs/",
+    "game_data/",
+    "content/",
+    "examples/map_runtime_packages/",
+    "examples/map_runtime_packages_v02/",
+    "package.json",
+    "package-lock.json"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profiles_fast_gate.json",
+    "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/worker_acceptance_profiles_summary_only_evidence",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常小改默认 profile，用快速质量门和 summary-only evidence 检查常见破坏，不替代最终评审。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profiles_fast_gate.json",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/worker_acceptance_profiles_summary_only_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审前 profile，保留完整 demo evidence export，用于证明快速 profile 没有降低合并质量。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_profiles_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      },
+      "release_gate": {
+        "description": "录屏或发布候选 profile，运行浏览器链路 demo suite，并可追加完整 evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py",
+          "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/worker_acceptance_profiles_demo_suite --browser-timeout 45 --command-timeout 180",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_profiles_release_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "recording",
+          "release_candidate_review"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "acceptance_profile 是验收分层，不是降低质量；daily_fast 只为日常反馈加速。",
+    "final_review 或 release_candidate_review 仍必须使用 full_evidence 或 release_gate profile。",
+    "本任务不修改后端、前端、review packs、game_data、.env 或默认 package/runtime 文件。"
+  ]
+}

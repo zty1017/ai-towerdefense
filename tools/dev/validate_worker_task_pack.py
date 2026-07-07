@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -67,6 +68,9 @@ FORBIDDEN_COMMAND_FRAGMENTS = {
     "source .env",
     "printenv",
 }
+ACCEPTANCE_PROFILE_FIELDS = {"default_profile", "profiles"}
+ACCEPTANCE_PROFILE_ENTRY_FIELDS = {"description", "commands", "required_for"}
+PROFILE_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 SAFETY_FALSE_FIELDS = {
     "may_read_env",
     "may_print_secrets",
@@ -90,8 +94,7 @@ def _load(path: Path) -> dict[str, Any]:
     return data
 
 
-def _as_string_list(data: dict[str, Any], field: str) -> list[str]:
-    value = data.get(field)
+def _validate_string_list(value: Any, field: str) -> list[str]:
     if not isinstance(value, list) or not value:
         raise ValueError(f"{field} must be a non-empty array")
     if any(not isinstance(item, str) or not item.strip() for item in value):
@@ -99,6 +102,10 @@ def _as_string_list(data: dict[str, Any], field: str) -> list[str]:
     if len(set(value)) != len(value):
         raise ValueError(f"{field} must not contain duplicates")
     return value
+
+
+def _as_string_list(data: dict[str, Any], field: str) -> list[str]:
+    return _validate_string_list(data.get(field), field)
 
 
 def _contains_forbidden_path(path: str) -> bool:
@@ -118,13 +125,90 @@ def _validate_paths(data: dict[str, Any]) -> None:
         raise ValueError(f"allowed_paths and forbidden_paths overlap: {sorted(overlap)}")
 
 
-def _validate_commands(data: dict[str, Any]) -> None:
-    commands = _as_string_list(data, "acceptance_commands")
+def _validate_command_list(commands: list[str], field: str) -> None:
     for command in commands:
         lowered = command.lower()
         for fragment in FORBIDDEN_COMMAND_FRAGMENTS:
             if fragment in lowered:
-                raise ValueError(f"acceptance_commands contains forbidden command fragment: {fragment}")
+                raise ValueError(f"{field} contains forbidden command fragment: {fragment}")
+
+
+def _has_summary_only_validation_profile(command: str) -> bool:
+    normalized = " ".join(command.lower().split())
+    return (
+        "--validation-profile summary-only" in normalized
+        or "--validation-profile=summary-only" in normalized
+    )
+
+
+def _is_full_evidence_export(command: str) -> bool:
+    normalized = " ".join(command.lower().split())
+    return (
+        "tools/demo/export_evidence.py" in normalized
+        and "--output-dir" in normalized
+        and not _has_summary_only_validation_profile(normalized)
+    )
+
+
+def _validate_acceptance_profile(data: dict[str, Any]) -> None:
+    if "acceptance_profile" not in data:
+        return
+
+    acceptance_profile = data["acceptance_profile"]
+    if not isinstance(acceptance_profile, dict):
+        raise ValueError("acceptance_profile must be an object")
+    unexpected = sorted(set(acceptance_profile).difference(ACCEPTANCE_PROFILE_FIELDS))
+    if unexpected:
+        raise ValueError(f"acceptance_profile contains unexpected fields: {unexpected}")
+
+    default_profile = acceptance_profile.get("default_profile")
+    if not isinstance(default_profile, str) or not default_profile.strip():
+        raise ValueError("acceptance_profile.default_profile must be a non-empty string")
+    profiles = acceptance_profile.get("profiles")
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError("acceptance_profile.profiles must be a non-empty object")
+    if default_profile not in profiles:
+        raise ValueError("acceptance_profile.default_profile must exist in profiles")
+
+    for profile_id, profile in profiles.items():
+        if not isinstance(profile_id, str) or not PROFILE_ID_RE.fullmatch(profile_id):
+            raise ValueError("acceptance_profile profile ids must match ^[A-Za-z0-9._-]+$")
+        if not isinstance(profile, dict):
+            raise ValueError(f"acceptance_profile.profiles.{profile_id} must be an object")
+        missing = sorted(ACCEPTANCE_PROFILE_ENTRY_FIELDS.difference(profile))
+        if missing:
+            raise ValueError(f"acceptance_profile.profiles.{profile_id} missing fields: {missing}")
+        unexpected_profile_fields = sorted(set(profile).difference(ACCEPTANCE_PROFILE_ENTRY_FIELDS))
+        if unexpected_profile_fields:
+            raise ValueError(
+                f"acceptance_profile.profiles.{profile_id} contains unexpected fields: "
+                f"{unexpected_profile_fields}"
+            )
+        if not isinstance(profile.get("description"), str) or not profile["description"].strip():
+            raise ValueError(f"acceptance_profile.profiles.{profile_id}.description must be non-empty")
+
+        command_field = f"acceptance_profile.profiles.{profile_id}.commands"
+        commands = _validate_string_list(profile.get("commands"), command_field)
+        _validate_string_list(
+            profile.get("required_for"),
+            f"acceptance_profile.profiles.{profile_id}.required_for",
+        )
+        _validate_command_list(commands, command_field)
+        if profile_id == "daily_fast":
+            for command in commands:
+                if _is_full_evidence_export(command):
+                    raise ValueError(
+                        "acceptance_profile.profiles.daily_fast.commands must not include "
+                        "full tools/demo/export_evidence.py --output-dir; use "
+                        "tools/dev/run_fast_quality_gate.py or "
+                        "tools/demo/export_evidence.py --validation-profile summary-only instead"
+                    )
+
+
+def _validate_commands(data: dict[str, Any]) -> None:
+    commands = _as_string_list(data, "acceptance_commands")
+    _validate_command_list(commands, "acceptance_commands")
+    _validate_acceptance_profile(data)
 
 
 def _validate_safety(data: dict[str, Any]) -> None:

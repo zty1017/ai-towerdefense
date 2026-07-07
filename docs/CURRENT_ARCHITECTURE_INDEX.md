@@ -307,7 +307,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - `docs/MVP_REVIEW_HANDOFF_V0_1.md`
   - 一键审查入口。
 - `docs/WORKER_TASK_PACK_V0_1.md`
-  - WorkerTaskPack v0.1 任务包协议，约束 worker 的必读事实源、允许修改范围、安全规则、验收命令和汇报格式。
+  - WorkerTaskPack v0.1 任务包协议，约束 worker 的必读事实源、允许修改范围、安全规则、验收命令和汇报格式；可选 `acceptance_profile` 用 `daily_fast`、`full_evidence`、`release_gate` 分层表达日常快速反馈、最终 evidence 和录屏 / release gate。
 - `docs/MVP_COMPILER_REVIEW_DOSSIER_V0_1.md`
   - 总审查交付包说明。
 - `docs/MULTISTAGE_CONTENT_PACK_V0_1.md`
@@ -377,7 +377,7 @@ ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 sch
 - ProviderOutputEnvelope v0.1：`shared/schemas/provider_output_envelope.v0.1.schema.json`、`tools/dev/validate_provider_output_envelope.py`、`docs/PROVIDER_OUTPUT_ENVELOPE_V0_1.md` 和 `examples/provider_output_envelopes/` 已作为真实 provider 输出安全信封入口。后续真实 executor 只能保存 redacted summary、本地 artifact refs、validation 状态和 activation gate，不能保存 prompt 正文、provider 响应正文或 runtime-ready 声明。
 - ProviderArtifactStagingManifest v0.1：`shared/schemas/provider_artifact_staging_manifest.v0.1.schema.json`、`tools/dev/validate_provider_artifact_staging_manifest.py`、`docs/PROVIDER_ARTIFACT_STAGING_V0_1.md` 和 `examples/provider_artifact_staging/` 已作为 ProviderOutputEnvelope 后的本地候选 artifact 暂存入口。它只登记 review-only local refs、gate 状态和 promotion 阻断，不能替代 runtime package、WorldStateDeltaTransaction、media gate 或人工 review。
 - ProviderArtifactPromotionReport v0.1：`shared/schemas/provider_artifact_promotion_report.v0.1.schema.json`、`tools/dev/validate_provider_artifact_promotion_report.py`、`docs/PROVIDER_ARTIFACT_PROMOTION_REPORT_V0_1.md` 和 `examples/provider_artifact_staging/p1b_provider_artifact_promotion_report.example.json` 已作为 staging 之后的显式晋升/阻断入口。报告本身不修改 runtime、published media 或世界状态。
-- WorkerTaskPack v0.1：`shared/schemas/worker_task_pack.v0.1.schema.json`、`tools/dev/validate_worker_task_pack.py`、`docs/WORKER_TASK_PACK_V0_1.md` 和 `examples/worker_task_packs/` 已作为 worker 委派任务包入口。后续 CodeBuddy / OpenCode / Codex headless / 人类 worker 的任务应先声明必读事实源、允许路径、禁止路径、安全规则、provider policy、验收命令和汇报字段。
+- WorkerTaskPack v0.1：`shared/schemas/worker_task_pack.v0.1.schema.json`、`tools/dev/validate_worker_task_pack.py`、`docs/WORKER_TASK_PACK_V0_1.md` 和 `examples/worker_task_packs/` 已作为 worker 委派任务包入口。后续 CodeBuddy / OpenCode / Codex headless / 人类 worker 的任务应先声明必读事实源、允许路径、禁止路径、安全规则、provider policy、验收命令和汇报字段。可选 `acceptance_profile` 已支持 `default_profile` 与 `profiles`，用于把日常 `daily_fast`、最终 `full_evidence` 和录屏 / 发布候选 `release_gate` 分层；该机制只加速反馈，不替代完整 evidence、demo suite 或人工最终审查。
 - Campaign Router v0.1：`backend/app/services/campaign_router_service.py` 是当前最薄运行时游标入口；它根据 `RunWorldState.progress.phase` 返回当前节点、下一节点、前视窗口、已审资产 handle 和 scheduler 信号，并可触发一次 fixture-backed dry-run 预取步，或显式触发一次 review-only dispatcher drain 预取 tick。no-build 前端已在 API 模式消费该 route，静态模式保留灰灯驿站首战兜底；dispatcher drain 入口暂作为 Studio / evidence 和后台执行器前置胶水，不自动替换前端旧 dry-run 调用。
 - 多节点战斗结算桥：`backend/app/services/frontend_mock_service.py` 当前支持 `gray_lantern_station`、`lamp_wick_store`、`old_signal_tower` 三个路由节点的战斗结果提交。前两个节点使用 `battle_result` transaction；`old_signal_tower` 使用 stage06 `research_job` after-state 作为 `fixture_bridge`，并在 API 返回中显式标注来源，避免把研究任务基线误当战斗结果。
 - AI 编译核心对象 schema：ContextPackage v0.1、FactEntry v0.1、CompiledGameObjectPackage v0.1 已有 schema、示例和统一 validator；`backend/app/services/ai_core_artifact_service.py` 是当前后端 refs / 示例加载入口，也是 Research Job proposal / job metadata 与 battle settlement evidence 原生快照构造入口。

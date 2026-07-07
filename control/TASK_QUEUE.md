@@ -3603,6 +3603,40 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/worker_task_pack_evidenc
 git diff --check
 ```
 
+### P1-E-2 WorkerTaskPack acceptance command profiles
+
+状态：已完成小范围协议扩展。
+
+目标：
+
+```text
+给 WorkerTaskPack v0.1 增加可选验收命令 profile 机制，让日常小改可默认运行快速质量门和 summary-only evidence，同时保留最终评审 / 录屏 / release gate 的完整 evidence 或 demo suite 命令。
+```
+
+已落地：
+
+- `shared/schemas/worker_task_pack.v0.1.schema.json`：新增可选 `acceptance_profile`，包含 `default_profile` 和 `profiles`。
+- `tools/dev/validate_worker_task_pack.py`：在 profile 存在时校验默认 profile 指向、profile 字段、命令禁用片段复用，以及 `daily_fast` 不得包含默认完整 `tools/demo/export_evidence.py --output-dir`。
+- `docs/WORKER_TASK_PACK_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：说明 `daily_fast`、`full_evidence`、`release_gate` 的推荐语义和边界。
+- `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`：新增示例任务包，默认 `daily_fast`，最终评审使用 `full_evidence`，录屏 / release candidate 使用 `release_gate`。
+
+边界：
+
+- `acceptance_commands` 仍保持必填和兼容；旧任务包不需要新增 profile。
+- profile 是验收分层，不是降低质量；`daily_fast` 只用于日常快速反馈，合并前 / 最终评审 / 录屏前仍需按风险运行完整 evidence 或 demo suite。
+- 本任务不修改 `backend/`、`frontend/`、`examples/review_packs/`、`game_data/`、`.env` 或默认 runtime/package 文件。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_worker_acceptance_profiles python3 -m py_compile tools/dev/validate_worker_task_pack.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_profiles_fast_gate.json
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/worker_acceptance_profiles_summary_only_evidence
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。

@@ -66,6 +66,43 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
+    "acceptance_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_profile", "profiles"],
+      "properties": {
+        "default_profile": { "type": "string", "minLength": 1 },
+        "profiles": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["description", "commands", "required_for"],
+            "properties": {
+              "description": { "type": "string", "minLength": 1 },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              },
+              "required_for": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              }
+            }
+          }
+        }
+      }
+    },
     "reporting_requirements": {
       "type": "array",
       "minItems": 1,

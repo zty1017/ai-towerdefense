@@ -24,6 +24,7 @@
 - Schema: `shared/schemas/worker_task_pack.v0.1.schema.json`
 - Validator: `tools/dev/validate_worker_task_pack.py`
 - 示例: `examples/worker_task_packs/p1e_worker_task_pack_protocol.v0.1.json`
+- 验收 profile 示例: `examples/worker_task_packs/p1e_worker_acceptance_command_profiles.v0.1.json`
 
 ## 必读事实源
 
@@ -95,6 +96,57 @@ WorkerTaskPack 必须显式表达以下边界：
 - 玩家侧文案继续保持沉浸式，不暴露 provider、prompt、schema、raw trace 等技术词。
 
 真实 provider 调用不是一概禁止，但必须在 `provider_policy` 中显式开启，并写明授权、允许 profiles 和最大调用次数。即使允许真实调用，也不能保存 raw response，产物仍必须进入对应 manifest、validator 和 promotion gate。
+
+## 验收命令 profile
+
+`acceptance_commands` 保持必填，用于兼容旧任务包和只理解平铺命令的 worker。新任务包可以额外提供可选的 `acceptance_profile`，把日常快速反馈、最终 evidence 和录屏 / release gate 分层表达：
+
+```json
+{
+  "acceptance_commands": ["python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast.json"],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常小改的快速反馈。",
+        "commands": [
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast.json",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/summary_evidence",
+          "git diff --check"
+        ],
+        "required_for": ["daily_small_changes"]
+      },
+      "full_evidence": {
+        "description": "最终评审前完整 evidence。",
+        "commands": [
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/full_evidence",
+          "git diff --check"
+        ],
+        "required_for": ["final_review"]
+      },
+      "release_gate": {
+        "description": "录屏或发布候选验收。",
+        "commands": [
+          "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_suite",
+          "git diff --check"
+        ],
+        "required_for": ["recording", "release_candidate_review"]
+      }
+    }
+  }
+}
+```
+
+规则：
+
+- `default_profile` 必须存在于 `profiles`。
+- 推荐 profile id 为 `daily_fast`、`full_evidence`、`release_gate`；也可以按任务需要增加其他简单 id。
+- 每个 profile 使用 `description`、`commands`、`required_for` 三个字段，不嵌套更复杂的策略结构。
+- profile 内的命令和顶层 `acceptance_commands` 一样，都会被 validator 检查 forbidden command fragment。
+- `daily_fast` 不得包含默认完整 `tools/demo/export_evidence.py --output-dir`；它可以使用 `tools/dev/run_fast_quality_gate.py`，也可以使用 `tools/demo/export_evidence.py --validation-profile summary-only --output-dir ...`。
+- `full_evidence` 和 `release_gate` 用于最终评审、录屏或发布候选，可以包含默认完整 `export_evidence.py` 或 `run_demo_evidence_suite.py`。
+
+profile 是验收分层，不是降低质量。日常小改可以默认跑 `daily_fast` 加速反馈，但合并前、最终评审前或录屏前仍应按任务风险运行 `full_evidence` 或 `release_gate`。
 
 ## 验收
 
