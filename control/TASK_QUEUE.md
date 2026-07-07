@@ -3920,6 +3920,36 @@ python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-r
 git diff --check
 ```
 
+### P1-D-30a Export evidence validation profile
+
+状态：已完成 demo evidence 导出快速预览 profile。
+
+目标：
+
+```text
+给 export_evidence.py 增加显式 validation profile，让日常开发可快速导出 summary / HTML，同时保持默认正式 evidence 导出质量不变。
+```
+
+已落地：
+
+- `tools/demo/export_evidence.py`：新增 `--validation-profile {full,summary-only}`，默认 `full` 保持完整 validation commands 和返回码规则；`summary-only` 不运行 validation commands，仍构建 `evidence.json`、`summary.md` 和 `index.html`。
+- `summary-only` 的 `validation_summary.current_export_validation` 显式记录 `status=skipped`、profile、`command_count=0`、`results=[]` 和跳过原因；console / summary / HTML 均展示 skipped，不把快速预览误称为 passed。
+- `README.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`、`control/TASK_QUEUE.md`：说明 `summary-only` 只用于本地快速查看；最终评审、录屏或合并前仍使用默认 `full` 导出或完整 demo evidence suite。
+
+边界：
+
+- 不放宽默认质量门；未传参的 `python3 tools/demo/export_evidence.py --output-dir ...` 仍跑完整 validation，只有 `passed` 返回 0。
+- 不修改 backend、frontend、examples/review_packs、game_data、`.env` 或默认 runtime/package 文件。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_evidence_validation_profile python3 -m py_compile tools/demo/export_evidence.py
+python3 tools/demo/export_evidence.py --output-dir /tmp/ai_td_evidence_validation_profile_full
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/ai_td_evidence_validation_profile_summary_only
+python3 -c "import json; from pathlib import Path; v=json.loads(Path('/tmp/ai_td_evidence_validation_profile_summary_only/evidence.json').read_text())['validation_summary']['current_export_validation']; assert v['status']=='skipped' and v['profile']=='summary-only' and v['command_count']==0 and v['results']==[]"
+```
+
 ### P1-D-31 README and review handoff command simplification
 
 状态：已完成开发 / 审查入口文档收束。

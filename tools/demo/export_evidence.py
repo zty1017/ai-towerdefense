@@ -28,6 +28,14 @@ from tools.dev.command_runner import run_command
 DEFAULT_OUTPUT_DIR = ROOT / "demo_evidence"
 MAX_VALIDATION_OUTPUT_CHARS = 1400
 MAX_SAMPLE_ITEMS = 12
+VALIDATION_PROFILE_FULL = "full"
+VALIDATION_PROFILE_SUMMARY_ONLY = "summary-only"
+VALIDATION_PROFILES = (VALIDATION_PROFILE_FULL, VALIDATION_PROFILE_SUMMARY_ONLY)
+SUMMARY_ONLY_VALIDATION_REASON = (
+    "Validation commands were skipped because --validation-profile summary-only "
+    "is intended only for local bundle inspection; final review must use full "
+    "validation or tools/demo/run_demo_evidence_suite.py."
+)
 MAP_RUNTIME_PACKAGE_DIR = ROOT / "examples/map_runtime_packages"
 MAP_RUNTIME_PACKAGE_V02_DIR = ROOT / "examples/map_runtime_packages_v02"
 MAP_COMPILE_PACKAGE_DIR = ROOT / "examples/map_compile_packages"
@@ -1361,7 +1369,11 @@ def validation_commands() -> list[dict[str, Any]]:
     return commands
 
 
-def run_validation_commands() -> list[dict[str, Any]]:
+def run_validation_commands(profile: str = VALIDATION_PROFILE_FULL) -> list[dict[str, Any]]:
+    if profile == VALIDATION_PROFILE_SUMMARY_ONLY:
+        return []
+    if profile != VALIDATION_PROFILE_FULL:
+        raise ValueError(f"unknown validation profile: {profile}")
     results: list[dict[str, Any]] = []
     for entry in validation_commands():
         results.append(
@@ -4152,17 +4164,31 @@ def collect_validation_summary(
     dossier: dict[str, Any],
     map_packages: list[dict[str, Any]],
     map_compile_packages: list[dict[str, Any]],
+    validation_profile: str = VALIDATION_PROFILE_FULL,
 ) -> dict[str, Any]:
     command_results = as_list(audit_report.get("command_results"))
     coverage_checks = as_list(audit_report.get("coverage_checks"))
     known_risks = as_list(audit_report.get("known_risks"))
-    all_passed = all(result.get("status") == "passed" for result in validation_results)
-    return {
-        "current_export_validation": {
+    if validation_profile == VALIDATION_PROFILE_SUMMARY_ONLY:
+        current_export_validation = {
+            "status": "skipped",
+            "profile": validation_profile,
+            "command_count": 0,
+            "results": [],
+            "reason": SUMMARY_ONLY_VALIDATION_REASON,
+        }
+    else:
+        all_passed = bool(validation_results) and all(
+            result.get("status") == "passed" for result in validation_results
+        )
+        current_export_validation = {
             "status": "passed" if all_passed else "failed",
+            "profile": validation_profile,
             "command_count": len(validation_results),
             "results": validation_results,
-        },
+        }
+    return {
+        "current_export_validation": current_export_validation,
         "handoff_audit_report": {
             "report_id": audit_report.get("report_id"),
             "overall_status": audit_report.get("overall_status"),
@@ -4526,6 +4552,7 @@ def assert_no_forbidden_keys(value: Any, path: str = "") -> None:
 
 def build_evidence(
     frontend_flow_visual_smoke_report_path: Path | None = None,
+    validation_profile: str = VALIDATION_PROFILE_FULL,
 ) -> dict[str, Any]:
     frontend_pack = load_json(PATHS["frontend_mock_pack"])
     runtime_art_kit = load_json(PATHS["runtime_art_kit"])
@@ -4762,7 +4789,7 @@ def build_evidence(
     audit_report = load_json(PATHS["handoff_audit"])
     dossier = load_json(PATHS["compiler_dossier"])
     multistage_pack = load_json(PATHS["multistage_content_pack"])
-    validation_results = run_validation_commands()
+    validation_results = run_validation_commands(validation_profile)
 
     evidence = {
         "schema_version": "demo_evidence_bundle.v0.1",
@@ -4962,7 +4989,12 @@ def build_evidence(
             procedural_map_preview_v02_reports,
         ),
         "validation_summary": collect_validation_summary(
-            validation_results, audit_report, dossier, map_packages, map_compile_packages
+            validation_results,
+            audit_report,
+            dossier,
+            map_packages,
+            map_compile_packages,
+            validation_profile,
         ),
         "frontend_entry": collect_frontend_entry(frontend_pack),
         "source_files": collect_source_files(),
@@ -5253,6 +5285,15 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         ]
         for item in as_list(export_validation.get("results"))
     ]
+    validation_detail_lines = [
+        f"- 本次导出校验状态：`{export_validation.get('status')}`",
+        f"- 本次导出校验 profile：`{export_validation.get('profile')}`",
+        f"- 本次导出校验命令数：`{export_validation.get('command_count')}`",
+    ]
+    if export_validation.get("reason"):
+        validation_detail_lines.append(
+            f"- 本次导出校验说明：{export_validation.get('reason')}"
+        )
     package_rows = [
         [
             package.get("node_id"),
@@ -5543,7 +5584,7 @@ def render_summary_markdown(evidence: dict[str, Any]) -> str:
         "",
         "## 5. 校验摘要",
         "",
-        f"- 本次导出校验状态：`{export_validation.get('status')}`",
+        *validation_detail_lines,
         f"- 历史 handoff audit：`{as_obj(validation.get('handoff_audit_report')).get('overall_status')}`",
         "",
         md_table(["校验项", "状态", "返回码", "命令"], validation_rows),
@@ -5585,6 +5626,14 @@ def render_validation_cards(results: list[Any]) -> str:
             </article>
             """
         )
+    if not cards:
+        return """
+            <article class="card">
+              <div class="eyebrow">Validation Commands</div>
+              <h3 class="skipped">skipped</h3>
+              <p class="muted">本次导出未运行 validation commands；详见 profile 和说明。</p>
+            </article>
+            """
     return "\n".join(cards)
 
 
@@ -5856,6 +5905,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
       --accent: #2f6f6d;
       --good: #237044;
       --bad: #a5362f;
+      --warn: #8a5a00;
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -5942,6 +5992,7 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     tr:last-child td {{ border-bottom: 0; }}
     .passed {{ color: var(--good); }}
     .failed {{ color: var(--bad); }}
+    .skipped {{ color: var(--warn); }}
     .links a {{
       color: var(--accent);
       margin-right: 16px;
@@ -6317,6 +6368,8 @@ def render_index_html(evidence: dict[str, Any]) -> str:
     <section>
       <h2>校验结果</h2>
       <p>本次导出校验状态：<strong class="{html_escape(export_validation.get("status"))}">{html_escape(export_validation.get("status"))}</strong></p>
+      <p>校验 profile：<code>{html_escape(export_validation.get("profile"))}</code>；命令数：<code>{html_escape(export_validation.get("command_count"))}</code></p>
+      <p class="muted">{html_escape(export_validation.get("reason") or "")}</p>
       <div class="grid">{render_validation_cards(as_list(export_validation.get("results")))}</div>
     </section>
     <section>
@@ -6338,8 +6391,9 @@ def render_index_html(evidence: dict[str, Any]) -> str:
 def export_bundle(
     output_dir: Path,
     frontend_flow_visual_smoke_report_path: Path | None = None,
+    validation_profile: str = VALIDATION_PROFILE_FULL,
 ) -> dict[str, Any]:
-    evidence = build_evidence(frontend_flow_visual_smoke_report_path)
+    evidence = build_evidence(frontend_flow_visual_smoke_report_path, validation_profile)
     output_dir.mkdir(parents=True, exist_ok=True)
     write_json(output_dir / "evidence.json", evidence)
     write_text(output_dir / "summary.md", render_summary_markdown(evidence))
@@ -6361,6 +6415,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         type=Path,
         help="可选：浏览器玩家链路截图 smoke report 路径；传入后纳入 evidence 摘要。",
     )
+    parser.add_argument(
+        "--validation-profile",
+        choices=VALIDATION_PROFILES,
+        default=VALIDATION_PROFILE_FULL,
+        help=(
+            "校验 profile：full 会运行完整 validation commands；summary-only "
+            "只导出摘要并显式标记当前导出校验为 skipped。默认 full。"
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -6372,16 +6435,28 @@ def main(argv: list[str] | None = None) -> int:
         if args.frontend_flow_smoke_report
         else None
     )
-    evidence = export_bundle(output_dir, frontend_flow_report)
+    evidence = export_bundle(output_dir, frontend_flow_report, args.validation_profile)
     validation = as_obj(evidence.get("validation_summary"))
     export_validation = as_obj(validation.get("current_export_validation"))
+    validation_status = export_validation.get("status")
+    validation_profile = export_validation.get("profile")
     print("演示证据包已导出")
     print(f"- 输出目录: {output_dir}")
     print(f"- summary.md: {output_dir / 'summary.md'}")
     print(f"- evidence.json: {output_dir / 'evidence.json'}")
     print(f"- index.html: {output_dir / 'index.html'}")
-    print(f"- 校验状态: {export_validation.get('status')}")
-    return 0 if export_validation.get("status") == "passed" else 1
+    print(f"- 校验 profile: {validation_profile}")
+    print(f"- 校验状态: {validation_status}")
+    if export_validation.get("reason"):
+        print(f"- 校验说明: {export_validation.get('reason')}")
+    if validation_status == "passed":
+        return 0
+    if (
+        validation_profile == VALIDATION_PROFILE_SUMMARY_ONLY
+        and validation_status == "skipped"
+    ):
+        return 0
+    return 1
 
 
 if __name__ == "__main__":

@@ -197,3 +197,11 @@ python3 tools/demo/run_demo_evidence_suite.py --allow-missing-browser --output-r
 ```bash
 python3 tools/demo/export_evidence.py --output-dir /tmp/ai_td_demo_evidence
 ```
+
+该命令默认使用 `--validation-profile full`，会运行完整 validation commands；只有本次导出校验 `passed` 才返回 0。日常开发如果只想快速查看 `summary.md` / `index.html`，可以显式跳过 validation commands：
+
+```bash
+python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/ai_td_demo_evidence_preview
+```
+
+`summary-only` 会在 `validation_summary.current_export_validation` 中标记 `status=skipped`，只用于本地预览；最终评审、录屏或合并前仍使用默认 `full` 导出，或运行完整 demo evidence suite。
