@@ -17,6 +17,7 @@ if str(SCRIPT_DIR) not in sys.path:
 import map_path_geometry as mpg  # noqa: E402
 import map_runtime_package as mrp  # noqa: E402
 import map_runtime_package_v02 as mrp_v02  # noqa: E402
+from validation_common import load_json, write_json  # noqa: E402
 
 
 DEFAULT_SCHEMA = ROOT / "shared/schemas/map_path_geometry_report.v0.1.schema.json"
@@ -27,17 +28,6 @@ DEFAULT_PACKAGE_GLOBS = [
     "examples/map_runtime_packages/*.json",
     "examples/map_runtime_packages_v02/*.json",
 ]
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, ensure_ascii=False, indent=2)
-    path.write_text(payload + "\n", encoding="utf-8")
 
 
 def resolve(path: str) -> Path:

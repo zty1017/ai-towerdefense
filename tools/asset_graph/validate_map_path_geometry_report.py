@@ -15,14 +15,10 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import map_path_geometry as mpg  # noqa: E402
+from validation_common import load_json  # noqa: E402
 
 
 DEFAULT_SCHEMA = ROOT / "shared/schemas/map_path_geometry_report.v0.1.schema.json"
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
 
 
 def main() -> int:
