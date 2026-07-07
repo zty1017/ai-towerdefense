@@ -24,6 +24,7 @@ FORBIDDEN_KEYS = {
 REQUIRED_BACKEND_PATHS = {
     "backend/app/services/map_runtime_service.py",
     "backend/app/api/frontend_mock.py",
+    "backend/app/services/frontend_mock_service.py",
 }
 REQUIRED_FRONTEND_PATHS = {
     "frontend/app.js",
@@ -37,9 +38,9 @@ REQUIRED_COMMAND_IDS = {
     "demo_evidence_suite",
 }
 REQUIRED_NODE_BLOCKERS = {
-    "api_frontend_contract_update_required",
     "post_activation_evidence_required",
 }
+STALE_BACKEND_CONTRACT_BLOCKER = "api_frontend_contract_update_required"
 ALLOWED_STEP_STATUSES = {
     "not_applied",
     "pre_activation_ready",
@@ -247,6 +248,29 @@ def validate(report: dict[str, Any]) -> list[str]:
                     f"{where}.approved_fixture_contract.strong_semantic_counts.{key} must be > 0",
                         errors,
                     )
+            approved_selector = as_obj(node.get("approved_selector_contract"))
+            require(
+                approved_selector.get("activation_applied") is True,
+                f"{where}.approved_selector_contract.activation_applied must be true",
+                errors,
+            )
+            require(
+                approved_selector.get("selected_schema_version")
+                == "map_runtime_package.v0.2",
+                f"{where}.approved_selector_contract.selected_schema_version must be v0.2",
+                errors,
+            )
+            require(
+                approved_selector.get("authorization_status")
+                == "approved_for_gate_review",
+                f"{where}.approved_selector_contract.authorization_status must be approved_for_gate_review",
+                errors,
+            )
+            require(
+                approved_selector.get("target_matches_candidate") is True,
+                f"{where}.approved_selector_contract.target_matches_candidate must be true",
+                errors,
+            )
             frontend_contract = as_obj(node.get("frontend_contract"))
             require(
                 frontend_contract.get("status") in ALLOWED_STEP_STATUSES,
@@ -267,6 +291,33 @@ def validate(report: dict[str, Any]) -> list[str]:
                     require(
                         checks.get(key) is True,
                         f"{where}.frontend_contract.checks.{key} must be true when pre_activation_ready",
+                        errors,
+                    )
+            backend_selector = as_obj(node.get("backend_selector_contract"))
+            require(
+                backend_selector.get("status") in ALLOWED_STEP_STATUSES,
+                f"{where}.backend_selector_contract.status invalid",
+                errors,
+            )
+            if backend_selector.get("status") == "pre_activation_ready":
+                require(
+                    STALE_BACKEND_CONTRACT_BLOCKER not in blockers,
+                    f"{where}.remaining_blockers_from_gate must not include stale {STALE_BACKEND_CONTRACT_BLOCKER} when backend selector is pre_activation_ready",
+                    errors,
+                )
+                checks = as_obj(backend_selector.get("checks"))
+                for key in (
+                    "runtime_selector_function",
+                    "selected_runtime_loader",
+                    "render_plan_runtime_selector",
+                    "config_aggregation_uses_runtime_selection",
+                    "map_render_plan_route_uses_runtime_selection",
+                    "approved_selector_smoke",
+                    "pending_default_preserved",
+                ):
+                    require(
+                        checks.get(key) is True,
+                        f"{where}.backend_selector_contract.checks.{key} must be true when pre_activation_ready",
                         errors,
                     )
             safety = as_obj(node.get("safety"))
@@ -306,6 +357,12 @@ def validate(report: dict[str, Any]) -> list[str]:
         require(
             readiness.get("status") in ALLOWED_STEP_STATUSES,
             "contract_update_plan.frontend_contract_readiness.status invalid",
+            errors,
+        )
+        backend_readiness = as_obj(plan.get("backend_selector_contract_readiness"))
+        require(
+            backend_readiness.get("status") in ALLOWED_STEP_STATUSES,
+            "contract_update_plan.backend_selector_contract_readiness.status invalid",
             errors,
         )
         commands = plan.get("post_activation_required_commands")
@@ -368,6 +425,39 @@ def validate(report: dict[str, Any]) -> list[str]:
             "world_mutation_count_by_plan",
         ):
             require(summary.get(key) == 0, f"summary.{key} must be 0", errors)
+        require(
+            summary.get("backend_selector_contract_status") in ALLOWED_STEP_STATUSES,
+            "summary.backend_selector_contract_status invalid",
+            errors,
+        )
+        if summary.get("backend_selector_contract_status") == "pre_activation_ready":
+            blocker_counts = as_obj(summary.get("blocker_counts_from_gate"))
+            require(
+                blocker_counts.get(STALE_BACKEND_CONTRACT_BLOCKER) in (None, 0),
+                f"summary.blocker_counts_from_gate must not include stale {STALE_BACKEND_CONTRACT_BLOCKER} when backend selector is pre_activation_ready",
+                errors,
+            )
+            require(
+                summary.get("backend_not_applied_change_count") == 0,
+                "summary.backend_not_applied_change_count must be 0 when backend selector is pre_activation_ready",
+                errors,
+            )
+            require(
+                summary.get("backend_pre_activation_ready_count")
+                == summary.get("backend_tracked_step_count"),
+                "summary.backend_pre_activation_ready_count must match backend_tracked_step_count when backend selector is pre_activation_ready",
+                errors,
+            )
+        require(
+            summary.get("approved_selector_selected_v02_count") == len(nodes),
+            "summary.approved_selector_selected_v02_count mismatch",
+            errors,
+        )
+        require(
+            summary.get("approved_selector_activation_applied_count") == len(nodes),
+            "summary.approved_selector_activation_applied_count mismatch",
+            errors,
+        )
 
     safety = report.get("safety_summary")
     require(isinstance(safety, dict), "safety_summary must be object", errors)

@@ -3,7 +3,6 @@
     {
       "activation_decision": "blocked",
       "blockers": [
-        "api_frontend_contract_update_required",
         "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
@@ -51,8 +50,8 @@
         },
         {
           "check_id": "api_frontend_contract_update",
-          "status": "blocked",
-          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
+          "status": "passed",
+          "summary": "Developer-approved backend selector exists; default pending authorization still preserves v0.1, and approved fixture proves v0.2 can be selected consistently."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -65,7 +64,7 @@
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
-        "update_backend_api_contract_if_v02_becomes_default",
+        "keep_backend_selector_attached_to_explicit_authorization_record",
         "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
@@ -73,6 +72,7 @@
         "activation_allowed": false,
         "authorization_record_present": true,
         "authorization_status": "pending",
+        "backend_selector_contract_status": "pre_activation_ready",
         "default_runtime_mutation_performed": false,
         "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
@@ -89,7 +89,6 @@
     {
       "activation_decision": "blocked",
       "blockers": [
-        "api_frontend_contract_update_required",
         "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
@@ -137,8 +136,8 @@
         },
         {
           "check_id": "api_frontend_contract_update",
-          "status": "blocked",
-          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
+          "status": "passed",
+          "summary": "Developer-approved backend selector exists; default pending authorization still preserves v0.1, and approved fixture proves v0.2 can be selected consistently."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -151,7 +150,7 @@
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
-        "update_backend_api_contract_if_v02_becomes_default",
+        "keep_backend_selector_attached_to_explicit_authorization_record",
         "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
@@ -159,6 +158,7 @@
         "activation_allowed": false,
         "authorization_record_present": true,
         "authorization_status": "pending",
+        "backend_selector_contract_status": "pre_activation_ready",
         "default_runtime_mutation_performed": false,
         "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
@@ -175,7 +175,6 @@
     {
       "activation_decision": "blocked",
       "blockers": [
-        "api_frontend_contract_update_required",
         "explicit_developer_activation_not_approved",
         "post_activation_evidence_required",
         "review_only_or_rejected_visual_candidates_present"
@@ -223,8 +222,8 @@
         },
         {
           "check_id": "api_frontend_contract_update",
-          "status": "blocked",
-          "summary": "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence."
+          "status": "passed",
+          "summary": "Developer-approved backend selector exists; default pending authorization still preserves v0.1, and approved fixture proves v0.2 can be selected consistently."
         },
         {
           "check_id": "post_activation_evidence_required",
@@ -237,7 +236,7 @@
       "required_next_actions": [
         "keep_review_only_or_rejected_visual_candidates_isolated_or_clear_with_promotion_gate",
         "approve_or_deny_explicit_developer_activation_authorization",
-        "update_backend_api_contract_if_v02_becomes_default",
+        "keep_backend_selector_attached_to_explicit_authorization_record",
         "revalidate_frontend_activated_runtime_contract_after_backend_selector",
         "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes"
       ],
@@ -245,6 +244,7 @@
         "activation_allowed": false,
         "authorization_record_present": true,
         "authorization_status": "pending",
+        "backend_selector_contract_status": "pre_activation_ready",
         "default_runtime_mutation_performed": false,
         "frontend_v02_contract_status": "pre_activation_ready",
         "provider_call_count_by_gate": 0,
@@ -269,6 +269,7 @@
     "visual_promotion_gate_report": "examples/review_packs/map_visual_promotion_gate_report.v0.1.json"
   },
   "next_activation_task_contract": {
+    "backend_selector_contract_prepared": true,
     "frontend_v02_semantic_consumption_prepared": true,
     "must_keep_default_runtime_v01_until_activation_allowed": true,
     "must_rerun_commands": [
@@ -278,7 +279,7 @@
       "python3 tools/demo/run_demo_evidence_suite.py --output-root /tmp/demo_evidence_suite_after_map_runtime_activation"
     ],
     "must_revalidate_frontend_contract_after_activation": true,
-    "must_update_backend_contract": true,
+    "must_update_backend_contract": false,
     "required_authorization_kind": "explicit_developer_activation_authorization"
   },
   "policy": [
@@ -320,15 +321,24 @@
     "authorization_status_counts": {
       "pending": 3
     },
+    "backend_selector_contract_checks": {
+      "approved_selector_smoke": true,
+      "config_aggregation_uses_runtime_selection": true,
+      "map_render_plan_route_uses_runtime_selection": true,
+      "pending_default_preserved": true,
+      "render_plan_runtime_selector": true,
+      "runtime_selector_function": true,
+      "selected_runtime_loader": true
+    },
+    "backend_selector_contract_status": "pre_activation_ready",
     "blocker_counts": {
-      "api_frontend_contract_update_required": 3,
       "explicit_developer_activation_not_approved": 3,
       "post_activation_evidence_required": 3,
       "review_only_or_rejected_visual_candidates_present": 3
     },
     "check_status_counts": {
-      "blocked": 12,
-      "passed": 15,
+      "blocked": 9,
+      "passed": 18,
       "warning": 3
     },
     "decision_counts": {

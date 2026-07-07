@@ -24,6 +24,7 @@ FORBIDDEN_KEYS = {
 ALLOWED_REPORT_STATUSES = {"blocked", "allowed"}
 ALLOWED_DECISIONS = {"blocked", "allowed"}
 ALLOWED_CHECK_STATUSES = {"passed", "warning", "failed", "blocked"}
+STALE_BACKEND_CONTRACT_BLOCKER = "api_frontend_contract_update_required"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -38,6 +39,10 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def as_obj(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def require(condition: bool, message: str, errors: list[str]) -> None:
@@ -88,6 +93,9 @@ def validate(report: dict[str, Any]) -> list[str]:
             errors,
         )
 
+    summary_obj = as_obj(report.get("summary"))
+    backend_selector_contract_status = summary_obj.get("backend_selector_contract_status")
+
     decisions = report.get("decisions")
     require(
         isinstance(decisions, list) and bool(decisions),
@@ -117,6 +125,13 @@ def validate(report: dict[str, Any]) -> list[str]:
                 f"{where}.blockers must be non-empty while blocked",
                 errors,
             )
+            blocker_values = {str(item) for item in as_list(blockers)}
+            if backend_selector_contract_status == "pre_activation_ready":
+                require(
+                    STALE_BACKEND_CONTRACT_BLOCKER not in blocker_values,
+                    f"{where}.blockers must not include stale {STALE_BACKEND_CONTRACT_BLOCKER} when backend selector is pre_activation_ready",
+                    errors,
+                )
             checks = decision.get("checks")
             require(
                 isinstance(checks, list) and bool(checks),
@@ -125,6 +140,7 @@ def validate(report: dict[str, Any]) -> list[str]:
             )
             if isinstance(checks, list):
                 check_ids = set()
+                check_status_by_id: dict[str, Any] = {}
                 for check_index, item in enumerate(checks):
                     check_where = f"{where}.checks[{check_index}]"
                     require(isinstance(item, dict), f"{check_where} must be object", errors)
@@ -140,6 +156,7 @@ def validate(report: dict[str, Any]) -> list[str]:
                     )
                     if isinstance(check_id, str):
                         check_ids.add(check_id)
+                        check_status_by_id[check_id] = status
                 for required_check in (
                     "frontend_v02_semantic_consumption_contract",
                     "explicit_developer_activation_approval",
@@ -149,6 +166,13 @@ def validate(report: dict[str, Any]) -> list[str]:
                     require(
                         required_check in check_ids,
                         f"{where} missing required check {required_check}",
+                        errors,
+                    )
+                if backend_selector_contract_status == "pre_activation_ready":
+                    require(
+                        check_status_by_id.get("api_frontend_contract_update")
+                        == "passed",
+                        f"{where}.checks.api_frontend_contract_update must be passed when backend selector is pre_activation_ready",
                         errors,
                     )
             safety = decision.get("safety")
@@ -200,6 +224,19 @@ def validate(report: dict[str, Any]) -> list[str]:
             "summary.frontend_v02_contract_status invalid",
             errors,
         )
+        require(
+            summary.get("backend_selector_contract_status")
+            in {"pre_activation_ready", "missing", None},
+            "summary.backend_selector_contract_status invalid",
+            errors,
+        )
+        if summary.get("backend_selector_contract_status") == "pre_activation_ready":
+            blocker_counts = as_obj(summary.get("blocker_counts"))
+            require(
+                blocker_counts.get(STALE_BACKEND_CONTRACT_BLOCKER) in (None, 0),
+                f"summary.blocker_counts must not include stale {STALE_BACKEND_CONTRACT_BLOCKER} when backend selector is pre_activation_ready",
+                errors,
+            )
 
     safety = report.get("safety_summary")
     require(isinstance(safety, dict), "safety_summary must be object", errors)

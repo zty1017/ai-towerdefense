@@ -25,6 +25,13 @@ MAP_RUNTIME_DIR = ROOT / "examples/map_runtime_packages"
 MAP_RUNTIME_V02_DIR = ROOT / "examples/map_runtime_packages_v02"
 FRONTEND_APP = ROOT / "frontend/app.js"
 FRONTEND_VISUAL_CONTRACT = ROOT / "tools/frontend/validate_battle_visual_contract.py"
+MAP_RUNTIME_SERVICE = ROOT / "backend/app/services/map_runtime_service.py"
+MAP_RENDER_PLAN_SERVICE = ROOT / "backend/app/services/map_render_plan_service.py"
+FRONTEND_MOCK_SERVICE = ROOT / "backend/app/services/frontend_mock_service.py"
+FRONTEND_MOCK_API = ROOT / "backend/app/api/frontend_mock.py"
+OPT_IN_CONTRACT_REPORT = (
+    ROOT / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json"
+)
 
 
 NODE_SORT_ORDER = {
@@ -79,6 +86,53 @@ def frontend_v02_contract_prepared() -> dict[str, Any]:
         and '"map-v02-preview"' in validator,
         "opt_in_endpoint_forbidden": '"map-v02-opt-in-dry-run"' not in app
         and '"map-v02-opt-in-dry-run"' in validator,
+    }
+    return {
+        "status": "pre_activation_ready" if all(checks.values()) else "missing",
+        "checks": checks,
+    }
+
+
+def backend_selector_contract_prepared() -> dict[str, Any]:
+    runtime_service = (
+        MAP_RUNTIME_SERVICE.read_text(encoding="utf-8")
+        if MAP_RUNTIME_SERVICE.exists()
+        else ""
+    )
+    render_plan_service = (
+        MAP_RENDER_PLAN_SERVICE.read_text(encoding="utf-8")
+        if MAP_RENDER_PLAN_SERVICE.exists()
+        else ""
+    )
+    frontend_mock_service = (
+        FRONTEND_MOCK_SERVICE.read_text(encoding="utf-8")
+        if FRONTEND_MOCK_SERVICE.exists()
+        else ""
+    )
+    frontend_mock_api = (
+        FRONTEND_MOCK_API.read_text(encoding="utf-8")
+        if FRONTEND_MOCK_API.exists()
+        else ""
+    )
+    opt_in_report = load_json(OPT_IN_CONTRACT_REPORT) if OPT_IN_CONTRACT_REPORT.exists() else {}
+    opt_in_summary = as_obj(opt_in_report.get("summary"))
+    checks = {
+        "runtime_selector_function": "map_runtime_activation_selection" in runtime_service,
+        "selected_runtime_loader": "load_selected_map_runtime_package" in runtime_service,
+        "render_plan_runtime_selector": "load_map_render_plan_bundle_for_runtime"
+        in render_plan_service,
+        "config_aggregation_uses_runtime_selection": "runtime_selection" in frontend_mock_service
+        and "load_map_render_plan_bundle_for_runtime_optional" in frontend_mock_service,
+        "map_render_plan_route_uses_runtime_selection": "runtime_selection" in frontend_mock_api
+        and "runtime_schema_version" in frontend_mock_api,
+        "approved_selector_smoke": int(
+            opt_in_summary.get("approved_selector_selected_v02_count") or 0
+        )
+        >= 3,
+        "pending_default_preserved": int(
+            opt_in_summary.get("default_runtime_v01_preserved_count") or 0
+        )
+        >= 3,
     }
     return {
         "status": "pre_activation_ready" if all(checks.values()) else "missing",
@@ -145,6 +199,7 @@ def build_node_decision(
     runtime_v02: dict[str, Any] | None,
     authorization_node: dict[str, Any] | None,
     frontend_contract: dict[str, Any],
+    backend_selector_contract: dict[str, Any],
 ) -> dict[str, Any]:
     checks: list[dict[str, str]] = []
     blockers: list[str] = []
@@ -342,14 +397,23 @@ def build_node_decision(
         )
         blockers.append("frontend_v02_semantic_consumption_missing")
 
-    checks.append(
-        check(
-            "api_frontend_contract_update",
-            "blocked",
-            "Default backend API still serves v0.1; frontend v0.2 semantic rendering is prewired, but making v0.2 default still requires an explicit backend selector and activated-default evidence.",
+    if backend_selector_contract.get("status") == "pre_activation_ready":
+        checks.append(
+            check(
+                "api_frontend_contract_update",
+                "passed",
+                "Developer-approved backend selector exists; default pending authorization still preserves v0.1, and approved fixture proves v0.2 can be selected consistently.",
+            )
         )
-    )
-    blockers.append("api_frontend_contract_update_required")
+    else:
+        checks.append(
+            check(
+                "api_frontend_contract_update",
+                "blocked",
+                "Default backend API contract cannot select v0.2 safely until a developer-approved selector is present.",
+            )
+        )
+        blockers.append("api_frontend_contract_update_required")
 
     checks.append(
         check(
@@ -382,7 +446,7 @@ def build_node_decision(
     required_next_actions.extend(
         [
             "approve_or_deny_explicit_developer_activation_authorization",
-            "update_backend_api_contract_if_v02_becomes_default",
+            "keep_backend_selector_attached_to_explicit_authorization_record",
             "revalidate_frontend_activated_runtime_contract_after_backend_selector",
             "rerun_api_visual_and_demo_evidence_after_activation_candidate_changes",
         ]
@@ -409,6 +473,7 @@ def build_node_decision(
             "authorization_record_present": bool(authorization_node),
             "authorization_status": authorization_status,
             "frontend_v02_contract_status": frontend_contract_status,
+            "backend_selector_contract_status": backend_selector_contract.get("status"),
         },
         "required_next_actions": required_next_actions,
     }
@@ -432,6 +497,7 @@ def build_report() -> dict[str, Any]:
     visual_by_node = visual_gate_index(visual_report)
     authorization_by_node = authorization_index(authorization_report)
     frontend_contract = frontend_v02_contract_prepared()
+    backend_selector_contract = backend_selector_contract_prepared()
 
     node_ids = sorted(
         set(runtime_v01) | set(runtime_v02) | set(readiness_by_node) | set(api_by_node),
@@ -447,6 +513,7 @@ def build_report() -> dict[str, Any]:
             runtime_v02.get(node_id),
             authorization_by_node.get(node_id),
             frontend_contract,
+            backend_selector_contract,
         )
         for node_id in node_ids
     ]
@@ -531,6 +598,8 @@ def build_report() -> dict[str, Any]:
                 "default_runtime_v01_preserved_count"
             ),
             "frontend_v02_contract_status": frontend_contract.get("status"),
+            "backend_selector_contract_status": backend_selector_contract.get("status"),
+            "backend_selector_contract_checks": backend_selector_contract.get("checks"),
             "provider_call_count_by_report": 0,
             "world_mutation_count_by_report": 0,
             "runtime_mutation_count_by_report": 0,
@@ -538,7 +607,10 @@ def build_report() -> dict[str, Any]:
         "decisions": decisions,
         "next_activation_task_contract": {
             "required_authorization_kind": "explicit_developer_activation_authorization",
-            "must_update_backend_contract": True,
+            "must_update_backend_contract": backend_selector_contract.get("status")
+            != "pre_activation_ready",
+            "backend_selector_contract_prepared": backend_selector_contract.get("status")
+            == "pre_activation_ready",
             "frontend_v02_semantic_consumption_prepared": frontend_contract.get("status")
             == "pre_activation_ready",
             "must_revalidate_frontend_contract_after_activation": True,

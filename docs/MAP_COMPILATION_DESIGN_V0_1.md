@@ -702,9 +702,9 @@ MapRuntimePackage v0.2 preview
 - `tools/media/validate_map_runtime_v02_activation_contract_plan.py`
 - `examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json`
 
-该层的职责不是激活 v0.2，而是把 activation gate 中仍阻断的 API/frontend 合同更新和激活后 evidence 复跑，展开为可机器校验的计划：
+该层的职责不是激活 v0.2，而是把 activation gate 中仍阻断的显式授权、候选隔离和激活后 evidence 复跑，展开为可机器校验的计划；同时记录后端 selector 与前端消费合同是否已具备预接入条件：
 
-- 后端必须有显式默认地图 runtime 选择器，不能因为 v0.2 preview 存在就自动替换 `/map-runtime-package`。
+- 后端必须把 v0.2 选择限制在 developer-approved selector 之后，不能因为 v0.2 preview 存在就自动替换 `/map-runtime-package`。当前 selector 已预接入为 `pre_activation_ready`：默认 pending 授权仍保持 v0.1，临时 approved 授权夹具可证明 v0.2 包与对应 RenderPlan bundle 会一致被选中。
 - 前端必须只从 activated default runtime 消费资源点、机关区、防守锚点和阻挡区；review-only preview / opt-in endpoint 仍不能成为玩家默认依赖。当前前端强语义消费和默认 fetch 隔离已预接入为 `pre_activation_ready`，但激活后仍必须复跑前端静态合同与浏览器证据。
 - 激活后必须重新跑 v0.2 preview API、MVP 主流程 API、前端静态视觉合同、浏览器玩家链路和 demo evidence suite。
 
@@ -715,12 +715,14 @@ contract_plan_status = not_applied
 activation_allowed_count = 0
 activation_apply_now_count = 0
 frontend_contract_status = pre_activation_ready
+backend_selector_contract_status = pre_activation_ready
+backend_not_applied_change_count = 0
 default_runtime_mutation_performed = false
 backend_api_contract_mutation_performed = false
 frontend_contract_mutation_performed = false
 ```
 
-这说明 v0.2 强语义已经是“可读候选”，但还不是“默认玩家 runtime”。后续真正激活时，仍必须另开独立任务，并以该计划为 checklist 更新后端、前端和证据链。
+这说明 v0.2 强语义已经是“可读候选”，后端 selector 和前端消费也已预接入，但它还不是“默认玩家 runtime”。后续真正激活时，仍必须另开独立任务，提交显式开发者授权，并以该计划为 checklist 复跑后端、前端和证据链。
 
 ### 10.7 v0.2 强语义几何一致性 report 落点
 
@@ -752,4 +754,4 @@ MapRuntimePackage v0.2 preview
 
 安全边界保持显式字段：`runtime_effect=false`、`provider_call_count=0`、`default_runtime_mutation=false`，并声明不读 `.env`、不调用 provider、不读图片、不从 SVG / preview / AI candidate 反推语义。它不是新的 `PathGraph`、`CollisionMap`、`ResourceNodeMap` 或 `LevelBundle` 事实源，只是对现有 `MapRuntimePackage v0.2 preview` 的结构化证据层。
 
-`tools/demo/build_mvp_demo_readiness_report.py` 已把该报告作为 `map_runtime_v02_semantic_geometry` 必需 gate 纳入 MVP demo readiness：当前 gate 为 `passed_with_warnings`，只证明 v0.2 preview 的强语义几何候选足够进入演示证据链，不代表 v0.2 已成为玩家默认 runtime。默认 runtime 切换仍必须经过 activation authorization、activation gate、后端默认选择器、前端合同和激活后 evidence 复跑。
+`tools/demo/build_mvp_demo_readiness_report.py` 已把该报告作为 `map_runtime_v02_semantic_geometry` 必需 gate 纳入 MVP demo readiness：当前 gate 为 `passed_with_warnings`，只证明 v0.2 preview 的强语义几何候选足够进入演示证据链，不代表 v0.2 已成为玩家默认 runtime。默认 runtime 切换仍必须经过 activation authorization、activation gate、developer-approved selector 约束、前端合同和激活后 evidence 复跑。

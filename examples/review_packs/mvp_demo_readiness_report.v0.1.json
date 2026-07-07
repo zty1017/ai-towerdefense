@@ -85,9 +85,12 @@
         "activation_allowed_count": 0,
         "activation_apply_now_count": 0,
         "activation_gate_status": "blocked",
+        "backend_not_applied_change_count": 0,
+        "backend_pre_activation_ready_count": 3,
         "backend_required_change_count": 3,
+        "backend_selector_contract_status": "pre_activation_ready",
+        "backend_tracked_step_count": 3,
         "blocker_counts": {
-          "api_frontend_contract_update_required": 3,
           "explicit_developer_activation_not_approved": 3,
           "post_activation_evidence_required": 3,
           "review_only_or_rejected_visual_candidates_present": 3
@@ -101,7 +104,7 @@
       },
       "required_for_mvp_demo": false,
       "status": "passed_with_warnings",
-      "summary": "v0.2 强语义前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需要开发者授权、后端默认选择器和激活后证据复跑。",
+      "summary": "v0.2 强语义前端消费与后端 selector 已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需要开发者授权和激活后证据复跑。",
       "title": "MapRuntimePackage v0.2 激活合同门"
     },
     {
@@ -483,7 +486,7 @@
       ],
       "limitation_id": "map_runtime_v02_activation",
       "severity": "low",
-      "summary": "v0.2 地图强语义已形成候选且前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权、后端选择器和复跑证据。"
+      "summary": "v0.2 地图强语义已形成候选，前端消费与后端 selector 已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权和激活后证据复跑。"
     },
     {
       "evidence_refs": [

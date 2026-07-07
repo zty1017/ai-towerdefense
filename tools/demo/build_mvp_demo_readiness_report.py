@@ -250,6 +250,9 @@ def map_runtime_activation_contract_gate(
     frontend_status = plan_summary.get("frontend_contract_status") or gate_summary.get(
         "frontend_v02_contract_status"
     )
+    backend_selector_status = plan_summary.get(
+        "backend_selector_contract_status"
+    ) or gate_summary.get("backend_selector_contract_status")
     activation_allowed_count = int(plan_summary.get("activation_allowed_count") or 0)
     activation_apply_now_count = int(plan_summary.get("activation_apply_now_count") or 0)
     runtime_mutation_count = int(plan_summary.get("runtime_mutation_count_by_plan") or 0)
@@ -269,8 +272,8 @@ def map_runtime_activation_contract_gate(
         status="passed_with_warnings" if ok else "not_ready",
         required_for_mvp_demo=False,
         summary=(
-            "v0.2 强语义前端消费已预接入，但默认 runtime 仍保持 v0.1；"
-            "正式激活仍需要开发者授权、后端默认选择器和激活后证据复跑。"
+            "v0.2 强语义前端消费与后端 selector 已预接入，但默认 runtime 仍保持 v0.1；"
+            "正式激活仍需要开发者授权和激活后证据复跑。"
         ),
         evidence_keys=[
             "map_runtime_activation_gate",
@@ -280,6 +283,10 @@ def map_runtime_activation_contract_gate(
             "activation_gate_status": activation_gate_report.get("status"),
             "contract_plan_status": plan_summary.get("contract_plan_status"),
             "frontend_contract_status": frontend_status,
+            "backend_selector_contract_status": backend_selector_status,
+            "backend_pre_activation_ready_count": plan_summary.get(
+                "backend_pre_activation_ready_count"
+            ),
             "frontend_pre_activation_ready_count": plan_summary.get(
                 "frontend_pre_activation_ready_count"
             ),
@@ -290,6 +297,10 @@ def map_runtime_activation_contract_gate(
             "activation_apply_now_count": activation_apply_now_count,
             "backend_required_change_count": plan_summary.get(
                 "backend_required_change_count"
+            ),
+            "backend_tracked_step_count": plan_summary.get("backend_tracked_step_count"),
+            "backend_not_applied_change_count": plan_summary.get(
+                "backend_not_applied_change_count"
             ),
             "runtime_mutation_count_by_plan": runtime_mutation_count,
             "default_runtime_mutation_performed": plan_safety.get(
@@ -966,7 +977,7 @@ def build_report(
             {
                 "limitation_id": "map_runtime_v02_activation",
                 "severity": "low",
-                "summary": "v0.2 地图强语义已形成候选且前端消费已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权、后端选择器和复跑证据。",
+                "summary": "v0.2 地图强语义已形成候选，前端消费与后端 selector 已预接入，但默认 runtime 仍保持 v0.1；正式激活仍需开发者授权和激活后证据复跑。",
                 "evidence_refs": [
                     source_ref(PATHS["map_runtime_activation_gate"]),
                     source_ref(PATHS["map_runtime_v02_activation_contract_plan"]),

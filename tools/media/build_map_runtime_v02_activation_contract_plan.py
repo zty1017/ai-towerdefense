@@ -134,28 +134,35 @@ def frontend_v02_contract_prepared() -> dict[str, Any]:
     }
 
 
-def contract_update_plan(frontend_contract: dict[str, Any]) -> dict[str, Any]:
+def contract_update_plan(
+    frontend_contract: dict[str, Any],
+    backend_selector_contract: dict[str, Any],
+) -> dict[str, Any]:
+    backend_selector_status = backend_selector_contract.get("status", "not_applied")
     backend_steps = [
         planned_step(
             "backend_default_map_runtime_selector",
             "backend",
             "backend/app/services/map_runtime_service.py",
-            "Introduce an explicit approved activation selector before v0.2 can become the default map runtime source.",
-            "Default `/map-runtime-package` must not switch from v0.1 to v0.2 by accident.",
+            "Use the explicit approved activation selector before v0.2 can become the default map runtime source.",
+            "Default `/map-runtime-package` must not switch from v0.1 to v0.2 by accident; current selector keeps pending authorization on v0.1 and can choose v0.2 with an approved fixture.",
+            status=backend_selector_status,
         ),
         planned_step(
             "backend_frontend_mock_contract",
             "backend",
             "backend/app/api/frontend_mock.py",
-            "Update the default battle map endpoints only after activation is approved, while preserving review-only preview endpoints.",
-            "The player API contract must make the activated schema version explicit.",
+            "Keep default battle map endpoints behind the approved selector while preserving review-only preview endpoints.",
+            "The player API contract must expose the selected schema version through runtime_selection.",
+            status=backend_selector_status,
         ),
         planned_step(
             "backend_runtime_package_aggregation",
             "backend",
             "backend/app/services/frontend_mock_service.py",
-            "If v0.2 becomes default, aggregate resource nodes, hazard zones, defense anchors, and blocked areas into the battle runtime payload from the activated map package.",
+            "Aggregate resource nodes, hazard zones, defense anchors, and blocked areas from the selected activated map package.",
             "The frontend should not have to infer strong semantics from visual layers.",
+            status=backend_selector_status,
         ),
     ]
     frontend_steps = [
@@ -228,6 +235,7 @@ def contract_update_plan(frontend_contract: dict[str, Any]) -> dict[str, Any]:
         "backend_required_changes": backend_steps,
         "frontend_required_changes": frontend_steps,
         "frontend_contract_readiness": frontend_contract,
+        "backend_selector_contract_readiness": backend_selector_contract,
         "post_activation_required_commands": evidence_commands,
         "non_goals": [
             "Do not create a competing PathGraph or LevelBundle runtime source.",
@@ -243,8 +251,10 @@ def build_node(
     authorization_node: dict[str, Any],
     default_api_node: dict[str, Any],
     approved_service_node: dict[str, Any],
+    approved_selector_node: dict[str, Any],
     readiness_node: dict[str, Any],
     frontend_contract: dict[str, Any],
+    backend_selector_contract: dict[str, Any],
 ) -> dict[str, Any]:
     target = as_obj(gate_decision.get("target_candidate"))
     blockers = as_list(gate_decision.get("blockers"))
@@ -307,6 +317,22 @@ def build_node(
                 "default_runtime_v02_field_leak_count"
             ),
         },
+        "approved_selector_contract": {
+            "activation_applied": approved_selector_node.get("activation_applied"),
+            "selected_schema_version": approved_selector_node.get(
+                "selected_schema_version"
+            ),
+            "selected_package_id": approved_selector_node.get("selected_package_id"),
+            "strong_semantic_counts": as_obj(
+                approved_selector_node.get("strong_semantic_counts")
+            ),
+            "authorization_status": approved_selector_node.get(
+                "authorization_status"
+            ),
+            "target_matches_candidate": approved_selector_node.get(
+                "target_matches_candidate"
+            ),
+        },
         "readiness": {
             "status": readiness_node.get("status"),
             "blocking_reasons": as_list(readiness_node.get("blocking_reasons")),
@@ -316,9 +342,14 @@ def build_node(
             "checks": as_obj(frontend_contract.get("checks")),
             "requires_post_activation_revalidation": True,
         },
+        "backend_selector_contract": {
+            "status": backend_selector_contract.get("status"),
+            "checks": as_obj(backend_selector_contract.get("checks")),
+            "requires_post_activation_revalidation": True,
+        },
         "planned_next_checks": [
             "developer_must_approve_or_deny_activation_authorization",
-            "backend_default_runtime_contract_must_be_updated_in_dedicated_activation_task",
+            "backend_selector_must_remain_bound_to_explicit_authorization_record",
             "frontend_runtime_contract_must_be_revalidated_after_activation",
             "post_activation_api_browser_and_demo_evidence_must_be_rerun",
         ],
@@ -346,14 +377,25 @@ def build_report() -> dict[str, Any]:
     authorization_by_node = index_by_node(authorization_report.get("nodes"))
     default_api_by_node = index_by_node(opt_in_report.get("default_api"))
     approved_service_by_node = index_by_node(opt_in_report.get("approved_service_contract"))
+    approved_selector_by_node = index_by_node(opt_in_report.get("approved_activation_selector"))
     readiness_by_node = index_by_node(readiness_report.get("nodes"))
     frontend_contract = frontend_v02_contract_prepared()
+    backend_selector_contract = {
+        "status": as_obj(gate_report.get("summary")).get(
+            "backend_selector_contract_status"
+        )
+        or "not_applied",
+        "checks": as_obj(gate_report.get("summary")).get(
+            "backend_selector_contract_checks"
+        ),
+    }
 
     node_ids = sorted(
         set(gate_by_node)
         | set(authorization_by_node)
         | set(default_api_by_node)
         | set(approved_service_by_node)
+        | set(approved_selector_by_node)
         | set(readiness_by_node),
         key=lambda node: (NODE_SORT_ORDER.get(node, 99), node),
     )
@@ -364,12 +406,14 @@ def build_report() -> dict[str, Any]:
             authorization_by_node.get(node_id, {}),
             default_api_by_node.get(node_id, {}),
             approved_service_by_node.get(node_id, {}),
+            approved_selector_by_node.get(node_id, {}),
             readiness_by_node.get(node_id, {}),
             frontend_contract,
+            backend_selector_contract,
         )
         for node_id in node_ids
     ]
-    plan = contract_update_plan(frontend_contract)
+    plan = contract_update_plan(frontend_contract, backend_selector_contract)
     blocker_counts = Counter(
         blocker
         for node in nodes
@@ -378,6 +422,8 @@ def build_report() -> dict[str, Any]:
     semantic_counts = Counter()
     for node in nodes:
         semantic_counts.update(as_obj(node.get("approved_fixture_contract")).get("strong_semantic_counts", {}))
+    backend_steps = plan["backend_required_changes"]
+    frontend_steps = plan["frontend_required_changes"]
     summary = {
         "node_count": len(nodes),
         "contract_plan_status": plan["status"],
@@ -392,6 +438,12 @@ def build_report() -> dict[str, Any]:
         "approved_candidate_available_count": as_obj(opt_in_report.get("summary")).get(
             "approved_candidate_available_count"
         ),
+        "approved_selector_selected_v02_count": as_obj(opt_in_report.get("summary")).get(
+            "approved_selector_selected_v02_count"
+        ),
+        "approved_selector_activation_applied_count": as_obj(
+            opt_in_report.get("summary")
+        ).get("approved_selector_activation_applied_count"),
         "api_pending_authorization_count": as_obj(opt_in_report.get("summary")).get(
             "api_pending_authorization_count"
         ),
@@ -404,19 +456,29 @@ def build_report() -> dict[str, Any]:
         "api_smoke_status": api_smoke_report.get("status"),
         "blocker_counts_from_gate": dict(sorted(blocker_counts.items())),
         "approved_fixture_strong_semantic_totals": dict(sorted(semantic_counts.items())),
-        "backend_required_change_count": len(plan["backend_required_changes"]),
-        "frontend_required_change_count": len(plan["frontend_required_changes"]),
+        "backend_required_change_count": len(backend_steps),
+        "backend_tracked_step_count": len(backend_steps),
+        "backend_not_applied_change_count": sum(
+            1 for step in backend_steps if step.get("status") == "not_applied"
+        ),
+        "frontend_required_change_count": len(frontend_steps),
         "frontend_pre_activation_ready_count": sum(
             1
-            for step in plan["frontend_required_changes"]
+            for step in frontend_steps
             if step.get("status") == "pre_activation_ready"
         ),
         "frontend_post_activation_evidence_required_count": sum(
             1
-            for step in plan["frontend_required_changes"]
+            for step in frontend_steps
             if step.get("status") == "post_activation_evidence_required"
         ),
         "frontend_contract_status": frontend_contract.get("status"),
+        "backend_selector_contract_status": backend_selector_contract.get("status"),
+        "backend_pre_activation_ready_count": sum(
+            1
+            for step in backend_steps
+            if step.get("status") == "pre_activation_ready"
+        ),
         "post_activation_required_command_count": len(
             plan["post_activation_required_commands"]
         ),
@@ -496,7 +558,8 @@ def main() -> int:
         "status="
         f"{report['status']} nodes={report['summary']['node_count']} "
         f"activation_allowed={report['summary']['activation_allowed_count']} "
-        f"backend_steps={report['summary']['backend_required_change_count']} "
+        f"backend_steps={report['summary']['backend_tracked_step_count']} "
+        f"backend_not_applied={report['summary']['backend_not_applied_change_count']} "
         f"frontend_steps={report['summary']['frontend_required_change_count']}"
     )
     return 0

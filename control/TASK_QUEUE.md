@@ -87,9 +87,9 @@ P2：本阶段明确不做
 - MapPublishedVisualLayerAlignment v0.1 已把确定性逻辑对齐的 `battle_runtime_background.v0.2` 晋升为玩家可用 `published_visual_layer` fallback，旧 `painted_visual_layer` 保留为 `candidate_visual_layer` / `superseded_requires_overlay_correction` 证据。当前 map visual quality 不再报告 overlay correction blocker，只保留共享底图和非节点专属图层 warning。
 - MapRuntimePromotionReadinessReport v0.1 已作为地图 runtime 晋升读模型接入 demo evidence：三张节点均为 `promotion_candidate_activation_required`，说明 v0.2 强语义、RenderPlan 和语义一致性已经具备候选条件，但 activation allowed 仍为 0，且 review-only/拒绝候选隔离仍是 blocker。后续若要切换玩家默认地图语义，必须另开独立 activation / API / 前端 / 截图验收任务，不能直接从 readiness report 修改 runtime。
 - MapRuntimeActivationAuthorizationReport v0.1 已作为地图 runtime 激活授权记录层接入 demo evidence：默认状态 `pending_developer_approval`，三张节点均有记录但未批准，且 provider / runtime / backend / frontend / world 修改数均为 0。它不是激活命令，只是 activation gate 的输入。
-- MapRuntimeV02OptInContractSmokeReport v0.1 已作为地图 runtime v0.2 opt-in dry-run 合同证据接入 demo evidence：默认 API 仍 pending 且不返回完整 v0.2 包，临时 approved 授权夹具只在 service 层证明 v0.2 候选包可读；`/config`、`/runtime-package`、`/map-runtime-package` 仍保持 v0.1 且 v0.2 字段泄漏为 0。
-- MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0；前端 v0.2 强语义消费合同已标记为 `pre_activation_ready`，但阻断项仍包括显式开发者激活授权未批准、review-only/拒绝候选隔离、后端默认 API 合同未切换和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
-- MapRuntimeV02ActivationContractPlan v0.1 已作为地图 runtime v0.2 激活前合同计划层接入 demo evidence：它读取 activation gate、authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，列出正式激活前必须完成的后端默认选择器、前端预接入状态和复跑证据命令；当前 `contract_plan_status=not_applied`、`activation_allowed_count=0`、`activation_apply_now_count=0`，前端 2 项为 `pre_activation_ready`、1 项为 `post_activation_evidence_required`，且默认 runtime / backend API / frontend 合同修改均为 false。
+- MapRuntimeV02OptInContractSmokeReport v0.1 已作为地图 runtime v0.2 opt-in dry-run 合同证据接入 demo evidence：默认 API 仍 pending 且不返回完整 v0.2 包，临时 approved 授权夹具会在 service 层证明 v0.2 候选包可读，并证明 developer-approved selector 会一致选择 v0.2；默认 `/config`、`/runtime-package`、`/map-runtime-package` 仍保持 v0.1 且 v0.2 字段泄漏为 0。
+- MapRuntimeActivationGateReport v0.1 已作为地图 runtime 显式激活门接入 demo evidence：三张节点当前 activation decision 均为 `blocked`，允许数为 0；前端 v0.2 强语义消费合同和后端 developer-approved selector 合同已标记为 `pre_activation_ready`，但阻断项仍包括显式开发者激活授权未批准、review-only/拒绝候选隔离和激活后证据复跑。它证明 v0.2 强语义是候选而非默认运行时，后续任务不得绕过该 gate 直接修改 `examples/map_runtime_packages/`、后端默认接口或前端默认地图。
+- MapRuntimeV02ActivationContractPlan v0.1 已作为地图 runtime v0.2 激活前合同计划层接入 demo evidence：它读取 activation gate、authorization、opt-in smoke、promotion readiness、v0.2 API smoke、前端消费合同和后端 selector 合同，列出正式激活前的预接入状态和复跑证据命令；当前 `contract_plan_status=not_applied`、`activation_allowed_count=0`、`activation_apply_now_count=0`，后端 selector 3 项为 `pre_activation_ready`、后端未完成数为 0，前端 2 项为 `pre_activation_ready`、1 项为 `post_activation_evidence_required`，且默认 runtime / backend API / frontend 合同修改均为 false。
 - 前端战斗画面已补 MapRuntimePackage v0.2 强语义消费能力：当被激活的默认地图运行包携带 `resource_nodes`、`hazard_zones`、`defense_anchors`、`blocked_areas` 时，玩家战场会从结构化 runtime 字段绘制资源点、沿路线绑定的机关区、防守锚点和阻挡物；默认前端仍不得请求 `map-v02-preview` 或 `map-v02-opt-in-dry-run`，当前正式 runtime 仍保持 v0.1。
 - MVP 玩家主流程 API 已有本地 HTTP smoke 证据：`tools/dev/check_mvp_primary_api_flow.py` 会启动临时 `uvicorn` 和临时 SQLite，走通匿名 session、世界实例、开场、大地图、campaign router、研发 proposal/job、战斗配置、runtime package、地图包、战斗结算和 session evidence，生成 `examples/review_packs/mvp_primary_api_flow_smoke_report.v0.1.json`；统一 demo evidence 会展示该主流程 smoke 摘要。
 - MVP 演示 readiness 已有顶层聚合报告：`tools/demo/build_mvp_demo_readiness_report.py` 会读取已审 evidence，生成 `examples/review_packs/mvp_demo_readiness_report.v0.1.json`；`tools/demo/validate_mvp_demo_readiness_report.py` 会独立复算 gate 顺序、必需 gate 数、阻断 / warning / expected block、source file 数、安全计数和整体状态，并已接入 `tools/demo/export_evidence.py` 静态验证。当前结论为 `ready_for_mvp_demo_with_known_limitations`：主流程、v0.2 地图预览 API、v0.2 强语义几何审查、v0.2 激活合同门、核心对象对齐、地图视觉发布安全、前端战斗视觉合同、运行时 sprite 几何质量、Generation Scheduler review-only 调度、视频 provider 离线边界和失败地图候选隔离均纳入门禁/证据；地图美术质量、v0.2 默认 runtime 激活、真实图生视频关键帧和实时 provider 调度仍作为已知限制保留。`map_runtime_v02_semantic_geometry` 是 MVP 必需 warning gate，证明 v0.2 preview 的资源点、机关区、防守锚点和阻挡区已通过结构化几何审查；`battle_visual_contract` 是 MVP 必需 gate，证明默认战斗画面仍是全屏 MapRuntimePackage 驱动的程序化战场，不回退控制图、失败整图、棋盘或虚线调试画面；`generation_scheduler_review_only` 是 MVP 必需 gate，证明同步内容、后台预取、后台增强、懒加载和静态兜底都已有 review-only 调度计划和 dry-run 运行证据；`frontend_flow_visual_smoke_harness` 默认以 `harness_only` 模式证明浏览器截图工具可用，录屏前通过 `--frontend-flow-smoke-report` 可升级为消费真实 14 张截图的 `actual_report` 模式；`map_runtime_activation_contract` 和 `provider_video_boundary` 都是非必需 warning gate，前者证明前端已预接入但 runtime 仍未激活，后者证明 dry boundary / receipt / envelope / handoff 模板可见且不调用 provider。
@@ -3319,7 +3319,7 @@ git diff --check
 边界：
 
 - 本任务不批准 v0.2 激活，不修改 `examples/map_runtime_packages/`，不修改后端默认 `/map-runtime-package`，不修改前端默认战斗地图消费。
-- 即使未来授权为 approved，也只解除“开发者授权”这一项；仍必须完成 API/frontend 合同更新、review-only/拒绝候选隔离和激活后证据复跑。
+- 即使未来授权为 approved，也只解除“开发者授权”这一项；当前后端 selector 与前端消费预接入由 P1-D-32 / P1-D-33 证明，但仍必须保持 review-only/拒绝候选隔离并复跑激活后证据。
 
 验收：
 
@@ -3377,14 +3377,14 @@ git diff --check
 目标：
 
 ```text
-在不激活 MapRuntimePackage v0.2、不修改默认玩家 runtime、不改后端/前端默认行为的前提下，把 activation gate 中“API/frontend 合同更新和激活后证据复跑”的阻断项展开成可审查、可校验的计划层。
+在不激活 MapRuntimePackage v0.2、不修改默认玩家 runtime、不改后端/前端默认行为的前提下，把 activation gate 中“合同预接入状态和激活后证据复跑”的阻断项展开成可审查、可校验的计划层；当前后端 selector 预接入由 P1-D-32 / P1-D-33 补齐。
 ```
 
 已落地：
 
 - `tools/media/build_map_runtime_v02_activation_contract_plan.py`：读取 activation gate、activation authorization、opt-in smoke、promotion readiness 和 v0.2 API smoke，生成计划报告。
 - `tools/media/validate_map_runtime_v02_activation_contract_plan.py`：校验计划层必须保持 `plan_only` / `read_model_only`，且 activation allowed、apply-now、runtime/backend/frontend/world/provider 修改均为 0 / false。
-- `examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json`：三节点均记录 v0.1 -> v0.2 目标候选、当前 gate blocker、默认 API v0.1 保留、approved fixture v0.2 语义可读、前端强语义消费 `pre_activation_ready`，以及未应用的后端/evidence 合同计划。
+- `examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json`：三节点均记录 v0.1 -> v0.2 目标候选、当前 gate blocker、默认 API v0.1 保留、approved fixture v0.2 语义可读、前端强语义消费 `pre_activation_ready`，以及未应用的后端/evidence 合同计划；当前后端 selector 已由 P1-D-32 / P1-D-33 标记为 `pre_activation_ready`。
 - `tools/demo/export_evidence.py`：纳入该计划摘要、校验项、Markdown/HTML 展示，并在导出时断言计划不得激活或修改默认 runtime / backend / frontend 合同。
 
 边界：
@@ -3446,7 +3446,7 @@ git diff --check
 目标：
 
 ```text
-让 MVP demo readiness 顶层报告反映最新 v0.2 地图激活状态：前端强语义消费已预接入，但默认 runtime 仍保持 v0.1，正式激活仍需要开发者授权、后端选择器和激活后证据复跑。
+让 MVP demo readiness 顶层报告反映当时的 v0.2 地图激活状态；当前口径已由 P1-D-32 / P1-D-33 继续更新为：前端强语义消费与后端 selector 均已预接入，但默认 runtime 仍保持 v0.1，正式激活仍需要开发者授权和激活后证据复跑。
 ```
 
 已落地：
@@ -3979,6 +3979,41 @@ PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_runtime_v02_activation_selector pytho
 /home/zty/projects/ai-compiled-towerdefense/.venv/bin/python tools/dev/check_map_runtime_v02_opt_in_contract.py --output examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json --generated-at 2026-07-06T00:00:00+00:00
 python3 tools/dev/validate_map_runtime_v02_opt_in_contract_report.py examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_runtime_v02_activation_selector_fast_gate.json
+git diff --check
+```
+
+### P1-D-33 Map runtime activation gate selector sync
+
+状态：已完成 gate / plan / readiness 口径同步。
+
+目标：
+
+```text
+在 P1-D-32 补齐 developer-approved selector 之后，同步 MapRuntimeActivationGateReport、MapRuntimeV02ActivationContractPlan、MVP demo readiness 与主文档，确保旧的后端 API 合同 blocker 不再被当作未完成项，同时仍保持默认 pending 授权下 runtime v0.1。
+```
+
+已落地：
+
+- `tools/media/build_map_runtime_activation_gate_report.py` 与 validator：把后端 selector 合同纳入 gate summary；当 selector 为 `pre_activation_ready` 时，旧 `api_frontend_contract_update_required` blocker 不得再出现。
+- `tools/media/build_map_runtime_v02_activation_contract_plan.py` 与 validator：新增 `backend_tracked_step_count`、`backend_not_applied_change_count`、`backend_selector_contract_status`，把后端 selector 步骤标为已预接入但不执行激活。
+- `tools/demo/build_mvp_demo_readiness_report.py` 与 `tools/demo/export_evidence.py`：演示证据展示“后端 selector 已预接入、正式激活仍需开发者授权和激活后复跑”。
+- `docs/CURRENT_ARCHITECTURE_INDEX.md`、`docs/MAP_COMPILATION_DESIGN_V0_1.md` 与本任务队列：同步当前事实源。
+
+边界：
+
+- 不激活 `MapRuntimePackage v0.2`。
+- 不修改默认 pending 授权报告。
+- 不调用 provider，不读取 `.env`，不写世界状态。
+
+验收：
+
+```bash
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_map_activation_gate_sync python3 -m py_compile tools/media/build_map_runtime_activation_gate_report.py tools/media/validate_map_runtime_activation_gate_report.py tools/media/build_map_runtime_v02_activation_contract_plan.py tools/media/validate_map_runtime_v02_activation_contract_plan.py tools/demo/build_mvp_demo_readiness_report.py tools/demo/validate_mvp_demo_readiness_report.py tools/demo/export_evidence.py
+python3 tools/media/validate_map_runtime_activation_gate_report.py examples/review_packs/map_runtime_activation_gate_report.v0.1.json
+python3 tools/media/validate_map_runtime_v02_activation_contract_plan.py examples/review_packs/map_runtime_v02_activation_contract_plan.v0.1.json
+python3 tools/demo/validate_mvp_demo_readiness_report.py examples/review_packs/mvp_demo_readiness_report.v0.1.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/map_runtime_activation_gate_selector_sync_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/map_runtime_activation_gate_selector_sync_evidence
 git diff --check
 ```
 
