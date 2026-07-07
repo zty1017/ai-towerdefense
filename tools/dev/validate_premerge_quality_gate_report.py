@@ -14,7 +14,9 @@ sys.path.insert(0, str(ROOT))
 
 from tools.dev.premerge_quality_gate_contract import (  # noqa: E402
     COMMAND_DEMO_EVIDENCE_FULL_EXPORT,
+    FULL_COMMAND_ORDER,
     FULL_REQUIRED_COMMANDS,
+    PREMERGE_COMMAND_ORDER,
     PREMERGE_QUALITY_GATE_PROFILES,
     PREMERGE_QUALITY_GATE_REPORT_ID,
     PREMERGE_QUALITY_GATE_SCHEMA_VERSION,
@@ -47,6 +49,14 @@ def as_list(value: Any) -> list[Any]:
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValueError(message)
+
+
+def command_names(results: list[Any]) -> list[str]:
+    names: list[str] = []
+    for item in results:
+        if isinstance(item, dict):
+            names.append(str(item.get("name")))
+    return names
 
 
 def validate_report(
@@ -86,13 +96,34 @@ def validate_report(
     if expect_failed_count is not None:
         require(failed_count == expect_failed_count, f"failed_count must be {expect_failed_count}")
 
-    names = {str(item.get("name")) for item in results if isinstance(item, dict)}
+    names = command_names(results)
+    name_set = set(names)
+    fail_fast = bool(summary.get("fail_fast"))
     required = FULL_REQUIRED_COMMANDS if profile == PROFILE_FULL else PREMERGE_REQUIRED_COMMANDS
-    missing = sorted(required.difference(names))
-    require(not missing, f"missing required command results: {missing}")
+    if not fail_fast or status == "passed":
+        missing = sorted(required.difference(name_set))
+        require(not missing, f"missing required command results: {missing}")
+    expected_order = FULL_COMMAND_ORDER if profile == PROFILE_FULL else PREMERGE_COMMAND_ORDER
+    if fail_fast and status != "passed":
+        expected_prefix = expected_order[: len(names)]
+        require(
+            names == expected_prefix,
+            "command order prefix mismatch: expected "
+            + json.dumps(expected_prefix, ensure_ascii=False)
+            + ", got "
+            + json.dumps(names, ensure_ascii=False),
+        )
+    else:
+        require(
+            names == expected_order,
+            "command order mismatch: expected "
+            + json.dumps(expected_order, ensure_ascii=False)
+            + ", got "
+            + json.dumps(names, ensure_ascii=False),
+        )
     if profile == PROFILE_PREMERGE:
         require(
-            COMMAND_DEMO_EVIDENCE_FULL_EXPORT not in names,
+            COMMAND_DEMO_EVIDENCE_FULL_EXPORT not in name_set,
             "premerge profile must not run full evidence export",
         )
         require(

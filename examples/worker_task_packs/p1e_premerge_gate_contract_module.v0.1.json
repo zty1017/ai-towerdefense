@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/premerge-gate-contract-module",
   "worktree": "/tmp/ai-td-task-premerge-gate-contract-module",
-  "objective": "把 premerge quality gate 的 schema、profile、命令名、必需命令集合和安全边界常量收敛到共享 contract 模块，减少 runner 与 report validator 的重复维护，并补上 release gate audit 为 premerge validator 必需命令。",
+  "objective": "把 premerge quality gate 的 schema、profile、命令名、命令顺序、必需命令集合和安全边界常量收敛到共享 contract 模块，减少 runner 与 report validator 的重复维护，并补上 release gate audit 为 premerge validator 必需命令。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -113,6 +113,6 @@
   "notes": [
     "本任务不调用 provider、不读取 .env、不跑浏览器、不写世界状态、不激活 runtime。",
     "contract 模块只收敛 premerge 本地质量门常量，不改变 premerge 的执行命令集合。",
-    "validator 继续按独立 contract 检查 runner 产出的报告；release_gate_profile_audit 是合并前必需命令。"
+    "validator 继续按独立 contract 检查 runner 产出的报告；release_gate_profile_audit 是合并前必需命令，命令顺序由 contract 固化。"
   ]
 }
