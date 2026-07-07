@@ -41,19 +41,9 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import runtime_package as rp  # noqa: E402
+from validation_common import load_json, write_json  # noqa: E402
 
 DEFAULT_SCHEMA = ROOT / "shared/schemas/runtime_package.v0.1.schema.json"
-
-
-def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, ensure_ascii=False, indent=2)
-    path.write_text(payload + "\n", encoding="utf-8")
 
 
 def _now_iso() -> str:
