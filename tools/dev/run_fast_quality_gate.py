@@ -29,6 +29,7 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
     readiness_tmp = "/tmp/ai_td_fast_gate_mvp_demo_readiness_report.json"
     battle_visual_tmp = "/tmp/ai_td_fast_gate_battle_visual_contract_report.json"
     battle_interaction_tmp = "/tmp/ai_td_fast_gate_battle_interaction_contract_report.json"
+    worker_profile_audit_tmp = "/tmp/ai_td_fast_gate_worker_acceptance_profile_audit.json"
     release_gate_audit_tmp = "/tmp/ai_td_fast_gate_release_gate_profile_audit.json"
     worker_env_smoke_tmp = "/tmp/ai_td_fast_gate_worker_profile_env_assignment_smoke.json"
     pycache_prefix = "/tmp/ai_td_pycache_fast_quality_gate"
@@ -138,6 +139,18 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
                 "tools/dev/check_worker_acceptance_profile_env_assignments.py",
                 "--output",
                 worker_env_smoke_tmp,
+            ],
+        },
+        {
+            "name": "worker_acceptance_profile_audit",
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/dev/audit_worker_acceptance_profiles.py",
+                "--output",
+                worker_profile_audit_tmp,
+                "--max-samples",
+                "20",
             ],
         },
         {

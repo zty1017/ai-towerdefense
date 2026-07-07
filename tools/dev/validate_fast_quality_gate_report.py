@@ -21,6 +21,7 @@ EXPECTED_COMMAND_ORDER = [
     "map_component_frontend_contract",
     "map_decoration_zone_policy_validator",
     "worker_profile_env_assignment_smoke",
+    "worker_acceptance_profile_audit",
     "release_gate_profile_audit",
     "mvp_demo_readiness_build",
     "mvp_demo_readiness_validator_repo_fixture",
@@ -77,6 +78,7 @@ def validate_report(
     expect_status: str | None,
     expect_failed_count: int | None,
     require_worker_env_smoke: bool,
+    require_worker_profile_audit: bool,
     require_release_gate_audit: bool,
     require_complete_command_order: bool,
 ) -> dict[str, Any]:
@@ -135,6 +137,17 @@ def validate_report(
             if isinstance(item, dict) and item.get("name") == "worker_profile_env_assignment_smoke"
         )
         require(worker_smoke.get("status") == "passed", "worker env smoke must pass")
+    if require_worker_profile_audit:
+        require(
+            "worker_acceptance_profile_audit" in name_set,
+            "missing worker_acceptance_profile_audit",
+        )
+        worker_audit = next(
+            item
+            for item in results
+            if isinstance(item, dict) and item.get("name") == "worker_acceptance_profile_audit"
+        )
+        require(worker_audit.get("status") == "passed", "worker acceptance profile audit must pass")
     if require_release_gate_audit:
         require("release_gate_profile_audit" in name_set, "missing release_gate_profile_audit")
         release_audit = next(
@@ -159,6 +172,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expect-status", choices=sorted(VALID_STATUSES))
     parser.add_argument("--expect-failed-count", type=int)
     parser.add_argument("--require-worker-env-smoke", action="store_true")
+    parser.add_argument("--require-worker-profile-audit", action="store_true")
     parser.add_argument("--require-release-gate-audit", action="store_true")
     parser.add_argument(
         "--require-complete-command-order",
@@ -176,6 +190,7 @@ def main() -> int:
             expect_status=args.expect_status,
             expect_failed_count=args.expect_failed_count,
             require_worker_env_smoke=args.require_worker_env_smoke,
+            require_worker_profile_audit=args.require_worker_profile_audit,
             require_release_gate_audit=args.require_release_gate_audit,
             require_complete_command_order=args.require_complete_command_order,
         )

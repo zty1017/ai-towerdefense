@@ -7,7 +7,7 @@
   "base_branch": "develop",
   "branch": "task/fast-gate-report-validator",
   "worktree": "/tmp/ai-td-task-fast-gate-report-validator",
-  "objective": "新增 fast quality gate 结构化报告 validator，并把它接入 premerge gate，避免只凭命令退出码判断 fast gate 质量。",
+  "objective": "新增 fast quality gate 结构化报告 validator，并把它接入 premerge gate，避免只凭命令退出码判断 fast gate 质量；fast report 必须覆盖 worker env smoke、WorkerTaskPack profile 审计和 release gate 审计。",
   "required_reading": [
     "docs/CURRENT_ARCHITECTURE_INDEX.md",
     "docs/AI_COMPILATION_SYSTEM_V0_1.md",
@@ -49,7 +49,7 @@
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json",
     "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
     "python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast_quality_gate_report_validator_fast_report.json",
-    "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-release-gate-audit --require-complete-command-order",
+    "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
     "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/fast_quality_gate_report_validator_premerge_report.json --fail-fast",
     "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/fast_quality_gate_report_validator_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0",
     "git diff --check"
@@ -58,12 +58,12 @@
     "default_profile": "daily_fast",
     "profiles": {
       "daily_fast": {
-        "description": "日常快速 profile：验证 fast gate 结构化报告 validator、premerge 接入和任务包定义。",
+        "description": "日常快速 profile：验证 fast gate 结构化报告 validator、worker profile 审计覆盖、premerge 接入和任务包定义。",
         "commands": [
           "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_fast_quality_gate_report_validator.v0.1.json",
           "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_fast_quality_gate_report_validator_daily python3 -m py_compile tools/dev/run_fast_quality_gate.py tools/dev/validate_fast_quality_gate_report.py tools/dev/run_premerge_quality_gate.py tools/dev/validate_premerge_quality_gate_report.py tools/dev/command_runner.py",
           "python3 tools/dev/run_fast_quality_gate.py --output /tmp/fast_quality_gate_report_validator_fast_report.json",
-          "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-release-gate-audit --require-complete-command-order",
+          "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/fast_quality_gate_report_validator_fast_report.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
           "python3 tools/dev/run_premerge_quality_gate.py --output /tmp/fast_quality_gate_report_validator_premerge_report.json --fail-fast",
           "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/fast_quality_gate_report_validator_premerge_report.json --expect-status passed --expect-profile premerge --expect-failed-count 0",
           "git diff --check"

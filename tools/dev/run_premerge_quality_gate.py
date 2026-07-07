@@ -105,6 +105,7 @@ def command_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "--expect-failed-count",
                 "0",
                 "--require-worker-env-smoke",
+                "--require-worker-profile-audit",
                 "--require-release-gate-audit",
                 "--require-complete-command-order",
             ],
