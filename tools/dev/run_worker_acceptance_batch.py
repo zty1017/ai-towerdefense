@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso  # noqa: E402
+from tools.dev.report_io import write_json  # noqa: E402
 from tools.dev.run_worker_acceptance_profile import (  # noqa: E402
     empty_report,
     load_task_pack,
@@ -36,13 +37,6 @@ from tools.dev.worker_acceptance_batch_contract import (  # noqa: E402
 
 DEFAULT_TASK_PACK_DIR = Path("examples/worker_task_packs")
 DEFAULT_OUTPUT = WORKER_ACCEPTANCE_BATCH_DEFAULT_OUTPUT
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def display_path(path: Path) -> str:

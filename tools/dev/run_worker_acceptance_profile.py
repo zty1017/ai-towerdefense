@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import shlex
 import sys
@@ -16,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso, run_command
+from tools.dev.report_io import load_json_object, write_json
 from tools.dev.validate_worker_task_pack import validate
 from tools.dev.worker_acceptance_profile_contract import (
     WORKER_ACCEPTANCE_PROFILE_DEFAULT_OUTPUT,
@@ -51,19 +51,12 @@ class UnsupportedCommandSyntax(ValueError):
 
 
 def load_task_pack(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError("WorkerTaskPack root must be an object")
+    try:
+        data = load_json_object(path)
+    except ValueError as exc:
+        raise ValueError("WorkerTaskPack root must be an object") from exc
     validate(data)
     return data
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def require_tmp_stdout_path(path_text: str) -> Path:

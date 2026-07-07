@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
 from tools.dev.command_runner import run_command
+from tools.dev.report_io import write_json
 from tools.dev.report_status_contract import STATUS_FAILED, STATUS_PASSED
 
 
@@ -77,7 +77,4 @@ def print_failed_command_details(failed: list[dict[str, Any]]) -> None:
 
 
 def write_json_report(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+    write_json(path, value)

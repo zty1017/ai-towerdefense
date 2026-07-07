@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,17 +12,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso, run_command  # noqa: E402
+from tools.dev.report_io import write_json  # noqa: E402
 
 
 REPORT_SCHEMA_VERSION = "expected_command_failure_report.v0.1"
 OUTPUT_TAIL_LIMIT = 1600
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
 
 
 def require_tmp_path(path: Path, *, label: str) -> Path:
