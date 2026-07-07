@@ -64,6 +64,29 @@ def _activation_status(item: dict[str, Any]) -> tuple[str, str | None, list[str]
                 "explicit_activation_gate",
             ],
         )
+    if cache_status == "runtime_activation_authorization_recorded":
+        activation_authorization = item.get("runtime_activation_authorization")
+        if not isinstance(activation_authorization, dict):
+            activation_authorization = {}
+        decision = str(activation_authorization.get("decision") or "")
+        if decision in {"needs_more_review", "rejected"}:
+            return (
+                "blocked_runtime_activation_not_authorized",
+                f"runtime_activation_decision_{decision}",
+                [
+                    "developer_reconsideration_or_regeneration",
+                    "runtime_activation_authorization_record",
+                ],
+            )
+        return (
+            "blocked_runtime_activation_apply_required",
+            "runtime_activation_authorization_is_review_only_and_requires_apply_gate",
+            [
+                "runtime_activation_apply_gate",
+                "post_activation_validation_evidence",
+                "queue_completion_after_runtime_effect_if_applicable",
+            ],
+        )
     if cache_status == "promotion_blocked":
         blocked_reason = promotion_gate.get("blocked_reason") or "promotion_blocked"
         return (

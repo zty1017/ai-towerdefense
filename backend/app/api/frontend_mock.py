@@ -376,6 +376,30 @@ def run_generation_runtime_artifact_build_report(
     return _payload(session_id, data)
 
 
+@router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/record-runtime-activation-authorization",
+    response_model=FrontendMockPayloadResponse,
+)
+def record_generation_runtime_activation_authorization(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Record review-only explicit authorization before any runtime activation."""
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = (
+            generation_scheduler_service
+            .record_generation_runtime_activation_authorization(
+                session_id,
+                metadata,
+            )
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    return _payload(session_id, data)
+
+
 def _transition_generation_schedule_queue_item(
     session_id: str,
     schedule_item_id: str,

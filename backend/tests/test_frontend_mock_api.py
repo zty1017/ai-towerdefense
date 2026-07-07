@@ -101,6 +101,11 @@ from backend.app.services.generation_scheduler_runtime_artifact_build_report_bui
 from backend.app.services.generation_scheduler_runtime_artifact_target_resolver import (  # noqa: E402
     resolve_runtime_artifact_targets,
 )
+from backend.app.services.generation_scheduler_runtime_activation_authorization_builders import (  # noqa: E402
+    RUNTIME_ACTIVATION_AUTHORIZATION_CACHE_STATUS,
+    RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_KIND,
+    RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_STATUS,
+)
 from backend.app.services.generation_scheduler_shared_prefetch_cache_repository import (  # noqa: E402
     load_shared_prefetch_cache_records,
     upsert_shared_prefetch_cache_records,
@@ -4260,6 +4265,161 @@ def test_runtime_artifact_build_report_from_runtime_build_request(
     assert built_again["generation_artifact_ledger"]["summary"][
         "artifact_kind_counts"
     ][RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND] == 1
+
+
+def test_runtime_activation_authorization_requires_artifact_report(client):
+    missing = client.post(
+        "/api/sessions/missing-session/generation-schedule/workers/"
+        "record-runtime-activation-authorization"
+    )
+    assert missing.status_code == 404
+
+    sid = _create_session(client)
+    no_run = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "record-runtime-activation-authorization"
+    )
+    assert no_run.status_code == 409
+    assert "generation schedule run is required" in no_run.text
+
+    _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    no_report = client.post(
+        f"/api/sessions/{sid}/generation-schedule/workers/"
+        "record-runtime-activation-authorization"
+    )
+    assert no_report.status_code == 409
+    assert "no runtime artifact build report" in no_report.text
+
+
+def test_runtime_activation_authorization_records_review_only_gate(
+    client,
+    raw_conn,
+):
+    sid = _create_session(client)
+    run_payload = _payload(client.post(f"/api/sessions/{sid}/generation-schedule/runs"))
+    run_id = run_payload["generation_schedule_run"]["run_id"]
+    upsert_generation_artifact_ledger(
+        {
+            "schema_version": "generation_artifact_ledger_entry.v0.1",
+            "ledger_id": f"gled_{sid}_provider_artifact_promotion_report_activation",
+            "run_id": run_id,
+            "session_id": sid,
+            "schedule_item_id": "sched_next_map_visual_prefetch",
+            "artifact_kind": "provider_artifact_promotion_report",
+            "source_id": "ppromo_activation_auth",
+            "status": "promotion_allowed",
+            "created_at": "2026-07-03T00:00:00Z",
+            "updated_at": "2026-07-03T00:00:00Z",
+            "compact": {
+                "promotion_allowed": True,
+                "promotion_decision": "approved_for_runtime_package_build",
+                "required_next_actions": ["runtime_package_build"],
+                "promotion_gate": {"blocked_reason": None},
+            },
+        }
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "prepare-runtime-build-request",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "run-runtime-artifact-build-report",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    before_counts = _session_state_counts(raw_conn, sid)
+
+    authorized = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "record-runtime-activation-authorization",
+            json={
+                "worker_id": "runtime-activation-auth-test",
+                "schedule_item_id": "sched_next_map_visual_prefetch",
+                "activation_decision": "approved_for_manual_apply",
+            },
+        )
+    )
+
+    after_counts = _session_state_counts(raw_conn, sid)
+    assert after_counts == {
+        **before_counts,
+        "generation_artifact_ledger": before_counts["generation_artifact_ledger"] + 1,
+    }
+    worker_step = authorized["worker_step"]
+    assert worker_step["status"] == "recorded_review_only"
+    assert worker_step["schedule_item_id"] == "sched_next_map_visual_prefetch"
+    assert worker_step["runtime_activation_authorization_cache_status"] == (
+        RUNTIME_ACTIVATION_AUTHORIZATION_CACHE_STATUS
+    )
+    assert worker_step["activation_decision"] == "approved_for_manual_apply"
+    assert worker_step["developer_approval_recorded"] is True
+    assert worker_step["target_count"] == 2
+    assert worker_step["provider_call_count"] == 0
+    assert worker_step["world_mutation_count"] == 0
+    assert worker_step["activation_allowed_count"] == 0
+
+    authorization = authorized["generation_runtime_activation_authorization"]
+    assert authorization["authorization_status"] == (
+        RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_STATUS
+    )
+    assert authorization["source_report_ref"]["artifact_kind"] == (
+        RUNTIME_ARTIFACT_BUILD_REPORT_LEDGER_KIND
+    )
+    assert authorization["decision"]["developer_approval_recorded"] is True
+    assert authorization["activation_gate"]["activation_allowed"] is False
+    assert authorization["activation_gate"]["runtime_apply_allowed"] is False
+    assert authorization["activation_gate"]["world_mutation_allowed"] is False
+    assert authorization["safety"]["activates_runtime"] is False
+
+    ledger = authorized["generation_artifact_ledger"]
+    assert ledger["summary"]["artifact_kind_counts"][
+        RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_KIND
+    ] == 1
+    assert ledger["summary"]["status_counts"][
+        RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_STATUS
+    ] == 1
+    assert ledger["summary"]["activation_allowed_count"] == 0
+    item = {
+        cache_item["schedule_item_id"]: cache_item
+        for cache_item in authorized["generation_prefetch_cache"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert item["cache_status"] == RUNTIME_ACTIVATION_AUTHORIZATION_CACHE_STATUS
+    assert item["runtime_activation_authorization"]["authorization_recorded"] is True
+    assert item["runtime_activation_authorization"]["activation_allowed"] is False
+    assert item["runtime_activation_authorization"]["runtime_apply_allowed"] is False
+    gate = {
+        gate_item["schedule_item_id"]: gate_item
+        for gate_item in authorized["generation_activation_gate"]["items"]
+    }["sched_next_map_visual_prefetch"]
+    assert gate["activation_status"] == "blocked_runtime_activation_apply_required"
+    assert gate["activation_allowed"] is False
+
+    daemon = _payload(
+        client.get(f"/api/sessions/{sid}/generation-schedule/daemon-readiness")
+    )["generation_daemon_readiness"]
+    actions = {action["action"] for action in daemon["recommended_next_actions"]}
+    assert "wait_for_runtime_activation_apply_gate" in actions
+    assert "record_runtime_activation_authorization" not in actions
+    assert daemon["summary"]["runtime_activation_authorization_count"] == 1
+    assert daemon["summary"]["activation_allowed_count"] == 0
+
+    authorized_again = _payload(
+        client.post(
+            f"/api/sessions/{sid}/generation-schedule/workers/"
+            "record-runtime-activation-authorization",
+            json={"schedule_item_id": "sched_next_map_visual_prefetch"},
+        )
+    )
+    assert _session_state_counts(raw_conn, sid) == after_counts
+    assert authorized_again["generation_artifact_ledger"]["summary"][
+        "artifact_kind_counts"
+    ][RUNTIME_ACTIVATION_AUTHORIZATION_LEDGER_KIND] == 1
 
 
 def test_prepare_runtime_build_request_from_shared_cache_reuse_candidate(client):

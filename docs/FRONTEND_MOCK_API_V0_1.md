@@ -499,6 +499,57 @@ runtime_artifact_build_report_ready
 - 不写世界状态。
 - 不激活 runtime。
 
+### 记录 runtime activation authorization
+
+```http
+POST /api/sessions/{session_id}/generation-schedule/workers/record-runtime-activation-authorization
+```
+
+该接口消费当前 run 中已经存在的 `generation_runtime_artifact_build_report`，把显式激活决策登记为 `generation_artifact_ledger` 的 `generation_runtime_activation_authorization`。它用于 Studio / 演示脚本证明“显式激活门已经被记录”，不用于真正切换玩家 runtime。
+
+请求体可选：
+
+```json
+{
+  "worker_id": "studio-runtime-activation-authorizer",
+  "schedule_item_id": "sched_next_map_visual_prefetch",
+  "activation_decision": "approved_for_manual_apply"
+}
+```
+
+`activation_decision` 可为：
+
+- `approved_for_manual_apply`
+- `needs_more_review`
+- `rejected`
+
+返回包含：
+
+- `worker_step`
+- `generation_runtime_activation_authorization`
+- `generation_prefetch_cache`
+- `generation_activation_gate`
+- `generation_artifact_ledger`
+
+写入后，对应 prefetch item 的 `cache_status` 会变为：
+
+```text
+runtime_activation_authorization_recorded
+```
+
+此时 activation gate 会进入 `blocked_runtime_activation_apply_required`，并且 `activation_allowed_count` 仍必须为 0。
+
+边界：
+
+- 不调用 provider。
+- 不读取 `.env`。
+- 不保存 prompt 或 provider response。
+- 不生成新的 runtime package 文件。
+- 不提交 WorldStateDeltaTransaction。
+- 不 complete queue item。
+- 不写世界状态。
+- 不激活 runtime。
+
 ### 索引当前 session 的共享预取候选
 
 ```http

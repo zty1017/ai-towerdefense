@@ -18,6 +18,7 @@ PREFETCH_CACHE_REF_KINDS = (
     "shared_prefetch_cache_reuse_candidate",
     "generation_runtime_build_request",
     "generation_runtime_artifact_build_report",
+    "generation_runtime_activation_authorization",
 )
 
 
@@ -41,6 +42,8 @@ def prefetch_cache_status(
     queue_item: dict[str, Any],
     refs: dict[str, dict[str, Any] | None],
 ) -> str:
+    if refs.get("generation_runtime_activation_authorization") is not None:
+        return "runtime_activation_authorization_recorded"
     if refs.get("generation_runtime_artifact_build_report") is not None:
         return "runtime_artifact_build_report_ready"
     if refs.get("generation_runtime_build_request") is not None:
@@ -246,6 +249,48 @@ def build_generation_prefetch_cache_payload(
             "activation_allowed": False,
             "world_mutation_allowed": False,
         }
+        activation_authorization_ref = refs.get(
+            "generation_runtime_activation_authorization"
+        )
+        activation_authorization_compact = (
+            activation_authorization_ref.get("compact")
+            if isinstance(activation_authorization_ref, dict)
+            and isinstance(activation_authorization_ref.get("compact"), dict)
+            else {}
+        )
+        activation_authorization_decision = (
+            activation_authorization_compact.get("decision")
+            if isinstance(activation_authorization_compact.get("decision"), dict)
+            else {}
+        )
+        activation_authorization_gate = (
+            activation_authorization_compact.get("activation_gate")
+            if isinstance(
+                activation_authorization_compact.get("activation_gate"), dict
+            )
+            else {}
+        )
+        item["runtime_activation_authorization"] = {
+            "authorization_recorded": activation_authorization_ref is not None,
+            "authorization_id": activation_authorization_compact.get(
+                "authorization_id"
+            ),
+            "decision": activation_authorization_decision.get("decision"),
+            "developer_approval_recorded": (
+                activation_authorization_decision.get(
+                    "developer_approval_recorded"
+                )
+                is True
+            ),
+            "blocked_reason": activation_authorization_gate.get("blocked_reason"),
+            "required_next_gates": activation_authorization_gate.get(
+                "required_next_gates", []
+            ),
+            "runtime_ready": False,
+            "activation_allowed": False,
+            "world_mutation_allowed": False,
+            "runtime_apply_allowed": False,
+        }
         item["activation_allowed"] = item["activation_gate"]["activation_allowed"]
         item["promotion_allowed"] = item["promotion_gate"]["promotion_allowed"]
         item["review_only"] = True
@@ -268,6 +313,7 @@ def build_generation_prefetch_cache_payload(
             "shared_cache_reuse_pending_runtime_build",
             "runtime_build_request_prepared",
             "runtime_artifact_build_report_ready",
+            "runtime_activation_authorization_recorded",
         }
     )
     return {
@@ -312,6 +358,13 @@ def build_generation_prefetch_cache_payload(
                     for item in cache_items
                     if isinstance(item.get("refs"), dict)
                     and item["refs"].get("generation_runtime_artifact_build_report")
+                    is not None
+                ),
+                "runtime_activation_authorization_count": sum(
+                    1
+                    for item in cache_items
+                    if isinstance(item.get("refs"), dict)
+                    and item["refs"].get("generation_runtime_activation_authorization")
                     is not None
                 ),
             },

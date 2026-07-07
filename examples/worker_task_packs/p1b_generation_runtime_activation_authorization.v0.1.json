@@ -1,0 +1,123 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-B-generation-runtime-activation-authorization",
+  "title": "Generation Scheduler runtime activation authorization record",
+  "task_type": "implementation",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/generation-runtime-activation-authorization",
+  "worktree": "/tmp/ai-td-task-generation-runtime-activation-authorization",
+  "objective": "新增 Generation Scheduler 的 review-only runtime activation authorization 记录层：消费 generation_runtime_artifact_build_report，把显式激活决策登记为 generation_artifact_ledger evidence，使 activation gate 从等待显式激活推进到等待 runtime apply gate，同时保持 provider / world / runtime 激活边界为 0。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/services/generation_scheduler_runtime_artifact_build_report_builders.py",
+    "backend/app/services/generation_scheduler_prefetch_cache_builders.py",
+    "backend/app/services/generation_scheduler_activation_gate_builders.py",
+    "backend/app/services/generation_scheduler_daemon_readiness_builders.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/tests/test_frontend_mock_api.py"
+  ],
+  "allowed_paths": [
+    "backend/app/services/generation_scheduler_runtime_activation_authorization_builders.py",
+    "backend/app/services/generation_scheduler_prefetch_cache_builders.py",
+    "backend/app/services/generation_scheduler_activation_gate_builders.py",
+    "backend/app/services/generation_scheduler_daemon_readiness_builders.py",
+    "backend/app/services/generation_scheduler_service.py",
+    "backend/app/api/frontend_mock.py",
+    "backend/app/models.py",
+    "backend/tests/test_frontend_mock_api.py",
+    "docs/GENERATION_SCHEDULER_V0_1.md",
+    "docs/FRONTEND_MOCK_API_V0_1.md",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md",
+    "examples/worker_task_packs/p1b_generation_runtime_activation_authorization.v0.1.json"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "game_data/",
+    "content/",
+    "shared/schemas/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "examples/world_delta_transactions/",
+    "tools/llm/",
+    "tools/provider_adapter/run_provider_adapter.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_activation_authorization.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_activation_authorization python3 -m py_compile backend/app/services/generation_scheduler_runtime_activation_authorization_builders.py backend/app/services/generation_scheduler_prefetch_cache_builders.py backend/app/services/generation_scheduler_activation_gate_builders.py backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/app/models.py backend/tests/test_frontend_mock_api.py",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_activation_authorization_fast_gate.json",
+    "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_activation_authorization_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
+    "python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_activation_authorization_premerge_gate.json",
+    "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_activation_authorization_premerge_gate.json --expect-status passed --expect-failed-count 0",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile：验证 runtime activation authorization task pack、核心 Python 语法和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_activation_authorization.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_activation_authorization_daily python3 -m py_compile backend/app/services/generation_scheduler_runtime_activation_authorization_builders.py backend/app/services/generation_scheduler_prefetch_cache_builders.py backend/app/services/generation_scheduler_activation_gate_builders.py backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/app/models.py backend/tests/test_frontend_mock_api.py",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_activation_authorization_fast_gate.json",
+          "python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_activation_authorization_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "premerge": {
+        "description": "合回主线前 profile：在 daily_fast 基础上运行 premerge quality gate。",
+        "commands": [
+          "python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_activation_authorization_premerge_gate.json",
+          "python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_activation_authorization_premerge_gate.json --expect-status passed --expect-failed-count 0"
+        ],
+        "required_for": [
+          "premerge"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_behavior",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "runtime activation authorization 只记录显式决策，不执行 runtime apply，不 complete queue item。",
+    "record-runtime-activation-authorization 必须先看到 generation_runtime_artifact_build_report，不能从 promotion report 或 runtime build request 直接跳层。",
+    "后续玩家 runtime 激活仍必须由 runtime_activation_apply_gate 和激活后证据复跑单独处理。"
+  ]
+}

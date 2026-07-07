@@ -56,6 +56,7 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
             "shared_cache_reuse_pending_runtime_build",
             "runtime_build_request_prepared",
             "runtime_artifact_build_report_ready",
+            "runtime_activation_authorization_recorded",
         }
     )
     runtime_build_request_count = sum(
@@ -70,6 +71,12 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
         if isinstance(item.get("refs"), dict)
         and item["refs"].get("generation_runtime_artifact_build_report") is not None
     )
+    runtime_activation_authorization_count = sum(
+        1
+        for item in items
+        if isinstance(item.get("refs"), dict)
+        and item["refs"].get("generation_runtime_activation_authorization") is not None
+    )
     shared_cache_reuse_candidate_count = sum(
         1
         for item in items
@@ -83,6 +90,9 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
         "staged_or_reviewed_count": staged_or_reviewed_count,
         "runtime_build_request_count": runtime_build_request_count,
         "runtime_artifact_build_report_count": runtime_artifact_build_report_count,
+        "runtime_activation_authorization_count": (
+            runtime_activation_authorization_count
+        ),
         "shared_cache_reuse_candidate_count": shared_cache_reuse_candidate_count,
     }
 
@@ -100,6 +110,8 @@ def _manual_tick_status(
         return "ready_to_dispatch_queued_provider_review_items"
     if queue_counts["review_only_envelope_ready_count"] > 0:
         return "waiting_for_external_runner_or_artifact_review"
+    if queue_counts["runtime_activation_authorization_count"] > 0:
+        return "waiting_for_runtime_activation_apply_gate"
     if queue_counts["runtime_artifact_build_report_count"] > 0:
         return "waiting_for_explicit_runtime_activation_gate"
     if queue_counts["runtime_build_request_count"] > 0:
@@ -199,7 +211,35 @@ def _recommended_next_actions(
                 "activation_allowed_count": 0,
             }
         )
-    if queue_counts["runtime_artifact_build_report_count"] > 0:
+    if (
+        queue_counts["runtime_artifact_build_report_count"]
+        > queue_counts["runtime_activation_authorization_count"]
+    ):
+        actions.append(
+            {
+                "action": "record_runtime_activation_authorization",
+                "endpoint": (
+                    "POST /api/sessions/{session_id}/generation-schedule/"
+                    "workers/record-runtime-activation-authorization"
+                ),
+                "reason": "runtime_artifact_build_report_requires_explicit_activation_record",
+                "provider_call_count_by_this_request": 0,
+                "world_mutation_count_by_this_request": 0,
+                "activation_allowed_count": 0,
+            }
+        )
+    if queue_counts["runtime_activation_authorization_count"] > 0:
+        actions.append(
+            {
+                "action": "wait_for_runtime_activation_apply_gate",
+                "endpoint": None,
+                "reason": "runtime_activation_authorization_is_review_only",
+                "provider_call_count_by_this_request": 0,
+                "world_mutation_count_by_this_request": 0,
+                "activation_allowed_count": 0,
+            }
+        )
+    elif queue_counts["runtime_artifact_build_report_count"] > 0:
         actions.append(
             {
                 "action": "wait_for_explicit_runtime_activation_gate",
@@ -282,8 +322,16 @@ def _readiness_gates(
         },
         {
             "gate": "runtime_activation",
-            "status": "blocked_explicit_activation_required",
-            "reason": "promotion_allowed_does_not_activate_runtime_or_write_world_state",
+            "status": (
+                "authorized_review_only_blocked_apply"
+                if queue_counts["runtime_activation_authorization_count"] > 0
+                else "blocked_explicit_activation_required"
+            ),
+            "reason": (
+                "runtime_activation_authorization_record_does_not_apply_runtime"
+                if queue_counts["runtime_activation_authorization_count"] > 0
+                else "promotion_allowed_does_not_activate_runtime_or_write_world_state"
+            ),
         },
     ]
 

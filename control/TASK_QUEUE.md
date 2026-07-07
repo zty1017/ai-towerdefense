@@ -4740,6 +4740,47 @@ python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runti
 git diff --check
 ```
 
+### P1-B Generation Scheduler runtime activation authorization record
+
+状态：已完成。
+
+目标：
+
+```text
+消费 generation_runtime_artifact_build_report，把 Studio / 开发者 / 受控脚本的显式激活决策登记为 generation_artifact_ledger 中的 runtime activation authorization evidence，使 activation gate 能从“等待显式激活”推进到“等待 runtime apply gate”。
+```
+
+已落地：
+
+- `backend/app/services/generation_scheduler_runtime_activation_authorization_builders.py`：新增 `generation_runtime_activation_authorization.v0.1` builder 与 compact 摘要。
+- `backend/app/services/generation_scheduler_prefetch_cache_builders.py`：新增 `generation_runtime_activation_authorization` ref kind 与 `runtime_activation_authorization_recorded` 状态。
+- `backend/app/services/generation_scheduler_activation_gate_builders.py`：新增 `blocked_runtime_activation_apply_required` 状态。
+- `backend/app/services/generation_scheduler_daemon_readiness_builders.py`：新增 runtime activation authorization 计数、推荐动作和 readiness gate。
+- `backend/app/services/generation_scheduler_service.py`：新增 `record_generation_runtime_activation_authorization()`，只消费已有 runtime artifact build report 并幂等写入 ledger。
+- `backend/app/api/frontend_mock.py`：新增 `POST /generation-schedule/workers/record-runtime-activation-authorization`。
+- `backend/app/models.py`：为 worker metadata 增加 `activation_decision`。
+- `backend/tests/test_frontend_mock_api.py`：覆盖缺失 session / 无 run / 无 report、授权记录、prefetch-cache、activation-gate、daemon-readiness 和幂等。
+- `docs/GENERATION_SCHEDULER_V0_1.md`、`docs/FRONTEND_MOCK_API_V0_1.md`、`docs/CURRENT_ARCHITECTURE_INDEX.md`：补充 authorization record 边界。
+- `examples/worker_task_packs/p1b_generation_runtime_activation_authorization.v0.1.json`：新增本轮 worker task pack。
+
+边界：
+
+- runtime activation authorization 不是 runtime activation apply，不是玩家侧发布，不切换默认 runtime。
+- 该 worker 不调用 provider、不读取 `.env`、不保存 prompt / provider 正文、不 complete queue item、不写世界状态、不激活 runtime。
+- `runtime_activation_authorization_recorded` 只表示显式决策已登记；后续仍必须通过 `runtime_activation_apply_gate`、激活后证据复跑和必要的队列完成步骤。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_generation_runtime_activation_authorization.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_generation_runtime_activation_authorization python3 -m py_compile backend/app/services/generation_scheduler_runtime_activation_authorization_builders.py backend/app/services/generation_scheduler_prefetch_cache_builders.py backend/app/services/generation_scheduler_activation_gate_builders.py backend/app/services/generation_scheduler_daemon_readiness_builders.py backend/app/services/generation_scheduler_service.py backend/app/api/frontend_mock.py backend/app/models.py backend/tests/test_frontend_mock_api.py
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/generation_runtime_activation_authorization_fast_gate.json
+python3 tools/dev/validate_fast_quality_gate_report.py /tmp/generation_runtime_activation_authorization_fast_gate.json --expect-status passed --expect-failed-count 0 --require-worker-env-smoke --require-worker-profile-audit --require-release-gate-audit --require-complete-command-order
+python3 tools/dev/run_premerge_quality_gate.py --profile premerge --output /tmp/generation_runtime_activation_authorization_premerge_gate.json
+python3 tools/dev/validate_premerge_quality_gate_report.py /tmp/generation_runtime_activation_authorization_premerge_gate.json --expect-status passed --expect-failed-count 0
+git diff --check
+```
+
 ### P1-B Generation Scheduler review-only pipeline smoke
 
 状态：已完成本地 HTTP 闭环 smoke。
