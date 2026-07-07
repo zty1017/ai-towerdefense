@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html
-import json
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -23,6 +22,8 @@ sys.path.insert(0, str(ROOT))
 
 import build_mvp_demo_readiness_report as readiness_builder
 from tools.dev.command_runner import run_command
+from tools.demo.report_io import load_json as report_io_load_json
+from tools.demo.report_io import write_json as report_io_write_json
 
 
 DEFAULT_OUTPUT_DIR = ROOT / "demo_evidence"
@@ -1242,8 +1243,7 @@ FORBIDDEN_KEY_FRAGMENTS = (
 
 
 def load_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    return report_io_load_json(path)
 
 
 def write_text(path: Path, value: str) -> None:
@@ -1252,10 +1252,7 @@ def write_text(path: Path, value: str) -> None:
 
 
 def write_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+    report_io_write_json(path, value)
 
 
 def rel(path: Path) -> str:

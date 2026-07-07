@@ -9,16 +9,14 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
+from report_io import load_json_or_raise
+
 
 ContractValidator = Callable[[argparse.Namespace], dict[str, Any]]
 
 
 def load_json(path: Path, *, label: str) -> Any:
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            return json.load(handle)
-    except FileNotFoundError as exc:
-        raise ValueError(f"{label} does not exist: {path}") from exc
+    return load_json_or_raise(path, label=label)
 
 
 def load_text(path: Path, *, label: str) -> str:

@@ -7,6 +7,7 @@ from __future__ import annotations
 FAST_QUALITY_GATE_COMPILE_TARGETS = (
     "tools/demo/build_mvp_demo_readiness_report.py",
     "tools/demo/validate_mvp_demo_readiness_report.py",
+    "tools/demo/report_io.py",
     "tools/demo/export_evidence.py",
     "tools/frontend/validate_battle_interaction_contract.py",
     "tools/frontend/validate_battle_visual_contract.py",
@@ -105,6 +106,7 @@ PREMERGE_QUALITY_GATE_COMPILE_TARGETS = (
     "tools/frontend/validate_frontend_multinode_visual_smoke_report.py",
     "tools/demo/run_demo_evidence_suite.py",
     "tools/demo/demo_evidence_suite_contract.py",
+    "tools/demo/report_io.py",
     "tools/demo/validate_demo_evidence_suite_report.py",
     "tools/dev/validate_generation_scheduler_review_only_pipeline_smoke_report.py",
     "tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py",

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -20,14 +19,11 @@ from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
     DEMO_EVIDENCE_SUITE_ID,
     DEMO_EVIDENCE_SUITE_SCHEMA_VERSION,
 )
+from tools.demo.report_io import load_json_object  # noqa: E402
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError("suite report root must be an object")
-    return data
+    return load_json_object(path, label="suite report root")
 
 
 def as_obj(value: Any) -> dict[str, Any]:

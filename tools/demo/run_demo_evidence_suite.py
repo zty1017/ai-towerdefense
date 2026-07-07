@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -54,6 +53,7 @@ from tools.demo.demo_evidence_suite_contract import (  # noqa: E402
     SCHEDULER_PIPELINE_REPORT_NAME,
 )
 from tools.dev.command_runner import now_iso, run_command
+from tools.demo.report_io import load_json_object, write_json  # noqa: E402
 
 
 DEFAULT_OUTPUT_ROOT = Path("/tmp/ai_td_demo_evidence_suite")
@@ -70,18 +70,7 @@ def as_list(value: Any) -> list[Any]:
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        data = json.load(handle)
-    if not isinstance(data, dict):
-        raise ValueError(f"{path} must contain a JSON object")
-    return data
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+    return load_json_object(path, label=f"{path}")
 
 
 def sha256_file(path: Path) -> str:

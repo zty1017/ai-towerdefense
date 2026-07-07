@@ -9,11 +9,12 @@ status from the report JSON instead of trusting the builder output.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from report_io import load_json_object
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -69,13 +70,9 @@ FORBIDDEN_KEY_FRAGMENTS = (
 
 def load_json(path: Path) -> dict[str, Any]:
     try:
-        with path.open("r", encoding="utf-8") as handle:
-            value = json.load(handle)
-    except json.JSONDecodeError as exc:
+        return load_json_object(path, label=f"{path}: report")
+    except ValueError as exc:
         raise ValueError(f"{path}: invalid JSON: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: report must be a JSON object")
-    return value
 
 
 def as_obj(value: Any) -> dict[str, Any]:
