@@ -41,6 +41,25 @@
     "rg -n \"generation_scheduler_provider_adapter_import_helpers|validate_provider_adapter_runner_import_contract|provider_adapter_runner_import_alignment_checks\" backend/app backend/tests",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_provider_adapter_runner_import_helpers.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_provider_adapter_runner_import_helpers python3 -m compileall backend",
+          "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+          "rg -n \"generation_scheduler_provider_adapter_import_helpers|validate_provider_adapter_runner_import_contract|provider_adapter_runner_import_alignment_checks\" backend/app backend/tests",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

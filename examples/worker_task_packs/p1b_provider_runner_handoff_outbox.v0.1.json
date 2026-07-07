@@ -49,6 +49,42 @@
     "rg -n \"provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_evidence",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox python3 -m compileall backend",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+          "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+          "rg -n \"provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，完整复用原 acceptance_commands，包含 full demo evidence export。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox python3 -m compileall backend",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_handoff_outbox_tools python3 -m py_compile tools/dev/validate_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+          "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py -q",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/provider_runner_handoff_outbox_evidence",
+          "rg -n \"provider_adapter_runner_handoff_outbox|provider_adapter_runner_handoff_outbox_v0_1_ready|validate_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

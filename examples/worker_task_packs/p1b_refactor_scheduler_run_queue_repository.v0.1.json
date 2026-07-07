@@ -41,6 +41,25 @@
     "rg -n \"generation_scheduler_run_queue_repository|insert_generation_schedule_run|insert_generation_queue_items|load_latest_generation_schedule_run|load_generation_queue_items|load_generation_queue_item_row|load_next_generation_item_row_by_status|update_generation_queue_item\" backend/app backend/tests",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_refactor_scheduler_run_queue_repository.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_refactor_scheduler_run_queue_repository python3 -m compileall backend",
+          "uv run --extra dev python -m pytest backend/tests/test_frontend_mock_api.py backend/tests/test_sessions.py -q",
+          "rg -n \"generation_scheduler_run_queue_repository|insert_generation_schedule_run|insert_generation_queue_items|load_latest_generation_schedule_run|load_generation_queue_items|load_generation_queue_item_row|load_next_generation_item_row_by_status|update_generation_queue_item\" backend/app backend/tests",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

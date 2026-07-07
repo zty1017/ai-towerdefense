@@ -39,6 +39,24 @@
     "rg -n \"Architecture fact source freeze|p1b_architecture_fact_source_freeze\" control/TASK_QUEUE.md examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json",
+          "rg -n \"v0.1 冻结断言|ProviderAdapterRunnerHandoffOutbox|CURRENT_ARCHITECTURE_INDEX.md|shared/schemas/ \\\\+ tools/ \\\\+ 专题文档\" docs/AI_COMPILATION_SYSTEM_V0_1.md docs/CURRENT_ARCHITECTURE_INDEX.md",
+          "rg -n \"Architecture fact source freeze|p1b_architecture_fact_source_freeze\" control/TASK_QUEUE.md examples/worker_task_packs/p1b_architecture_fact_source_freeze.v0.1.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_decisions",

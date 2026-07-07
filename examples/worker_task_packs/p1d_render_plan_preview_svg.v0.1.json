@@ -53,6 +53,29 @@
     "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_render_plan_preview_svg.v0.1.json",
+          "python3 tools/asset_graph/render_procedural_map_preview.py --output examples/map_render_previews/mvp_first_battle.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/render_procedural_map_preview.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview.svg --report-output examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_first_battle.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_wick_store_pressure.procedural_map_preview_report.json",
+          "python3 tools/asset_graph/validate_procedural_map_preview_report.py examples/map_render_previews/mvp_old_signal_tower_pressure.procedural_map_preview_report.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-render-plan-preview python3 -m py_compile tools/asset_graph/render_procedural_map_preview.py tools/asset_graph/validate_procedural_map_preview_report.py",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

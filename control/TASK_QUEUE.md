@@ -102,6 +102,7 @@ P2：本阶段明确不做
 - 已补日常开发快速质量门 `tools/dev/run_fast_quality_gate.py`：串联 Python 编译、前端语法检查、战斗视觉合同、campaign router 前端合同、map component 前端合同、MVP readiness build 和 readiness validator，默认输出 `/tmp/ai_td_fast_quality_gate_report.v0.1.json`。它不跑浏览器、不调用 provider、不读取 `.env`、不写世界状态、不激活 runtime，用于比完整 evidence export 更快地发现常见破坏；录屏 / 评审前仍以完整 evidence 套件为准。
 - 已补 WorkerTaskPack acceptance profile runner `tools/dev/run_worker_acceptance_profile.py`：先校验任务包，再按 `acceptance_profile.default_profile` 或显式 `--profile` 安全执行命令，支持 profile 列表、dry-run、fail-fast、timeout 和 JSON report。该 runner 不使用 shell，遇到管道、非受限重定向、分号连接、逻辑连接或命令替换语法会记录 unsupported 并拒绝执行；最终 token 形式的 `> /tmp/file` 或 `>/tmp/file` 会由 runner 捕获 stdout 后写入仓库外 `/tmp` 文件；没有 `acceptance_profile` 的旧包仍需手动运行 `acceptance_commands`。
 - 已补 WorkerTaskPack acceptance profile 迁移审计 `tools/dev/audit_worker_acceptance_profiles.py`：只读扫描 `examples/worker_task_packs/*.json`，复用任务包 validator 和 profile runner 命令解析规则，输出已有 profile、无 profile 旧包、完整 evidence 顶层命令、fast gate、summary-only、迁移候选和 shell-only/manual-review 命令清单；该审计不执行被扫描任务包的验收命令，不修改旧包，并强制 `--output` 写到仓库外 `/tmp` 路径。
+- 已用 `tools/dev/migrate_worker_acceptance_profiles.py --write` 批量迁移 80 个 runner-compatible 旧 WorkerTaskPack；当前审计剩余 16 个无 profile / manual-review 包，均因 heredoc、多命令脚本或其他 runner-incompatible 命令需要人工处理。
 - `MediaAtlasManifest v0.1` 已以 `spritesheet` 多帧模式默认接入前端运行时；实体 atlas PNG 已生成并由前端战斗绘制优先裁剪使用。`LoopContinuityReport v0.1` 已接入 frontend mock 与 runtime art 两套 atlas，当前动画均为 deterministic placeholder warning，真实图生视频关键帧仍未生成。
 - `ContextPackage v0.1`、`FactEntry v0.1`、`CompiledGameObjectPackage v0.1`、`WorldStateDeltaTransaction v0.1` 已有 schema、最小示例和统一 validator；Research Job proposal / job metadata、battle settlement evidence 与 frontend mock pack 已携带 ContextPackage、FactEntry、CGOP 原生快照，并保留 core artifact refs / world delta 兼容字段。WorldStateDeltaTransaction 已扩展为 stage01-stage07 事务链。`CoreArtifactAlignmentReport v0.1` 已把更广义 review pack / provider artifact / 事务链的核心对象对齐状态纳入 evidence，当前为 `passed`，无 validator 失败、无剩余 P1 迁移任务；`mvp_compiler_review_dossier`、`mvp_stage_candidate_pack`、`mvp_multistage_stage_candidate_pack`、`mvp_multistage_content_pack`、`mvp_next_stage_compilable_object_plan`、`mvp_story_asset_review_pack`、`mvp_story_asset_promotion_report` 与 `mvp_stage05_plan_realization_report` 已显式声明为 `review_only_not_applicable`。
 - Sprite cutout quality report 已接入 evidence，用于识别内部透明洞、主体碎裂、漂浮组件和边缘接触；当前仅生成 `needs_review` 排序，不阻断 MVP。
@@ -4018,6 +4019,44 @@ python3 tools/dev/check_worker_acceptance_profile_pipe_args.py --output /tmp/wor
 python3 tools/dev/check_worker_acceptance_profile_python_c.py --output /tmp/worker_acceptance_profile_python_c_after_stdout_redirect_smoke.json
 python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_stdout_redirect_audit.json --max-samples 120
 python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_stdout_redirect_fast_gate.json
+git diff --check
+```
+
+### P1-E-10 WorkerTaskPack acceptance profile bulk migration
+
+状态：已完成机械迁移。
+
+目标：
+
+```text
+使用既有迁移器给所有 runner-compatible 的旧 WorkerTaskPack 批量补 acceptance_profile，减少日常验收手动步骤；保留 shell-only / heredoc 包为人工处理。
+```
+
+已落地：
+
+- 运行 `tools/dev/migrate_worker_acceptance_profiles.py --write`，迁移 80 个旧任务包。
+- 新增 `examples/worker_task_packs/p1e_worker_acceptance_bulk_migration.v0.1.json` 记录本轮机械迁移任务。
+- 不修改工具脚本、后端、前端、runtime、schema 或 review evidence。
+
+效果：
+
+- 审计从 `110 packs: 14 with profile, 96 without profile, 96 migration candidates, 16 manual review required` 变为 `111 packs: 95 with profile, 16 without profile, 16 migration candidates, 16 manual review required`。
+- 迁移器再次 dry-run 显示 `would_migrate_count=0`，说明没有剩余 runner-compatible 旧包可自动迁移。
+- 剩余 16 个包保留人工处理，主要是 heredoc、多命令脚本或其他 runner-incompatible 命令。
+
+边界：
+
+- 本任务不执行被迁移任务包的验收命令。
+- 本任务不调用 provider、不读取 `.env`、不改 runtime / backend / frontend。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_bulk_migration.v0.1.json
+python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_bulk_migration_after_dry.json
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/worker_acceptance_profile_bulk_migration_audit.json --max-samples 120
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/worker_acceptance_bulk_migration_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/worker_acceptance_bulk_migration_full_evidence
 git diff --check
 ```
 

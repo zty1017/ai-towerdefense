@@ -48,6 +48,27 @@
     "rg -n \"consume_import|outbox import|check_provider_runner_handoff_outbox_import_pipeline|local_consume_import_prefetch_smoke_ready\" /tmp/provider_runner_handoff_outbox_import_smoke_evidence",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_import_smoke.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_import_smoke python3 -m py_compile tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
+          "python3 tools/dev/check_provider_runner_handoff_outbox_import_pipeline.py --output /tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 -c \"import json; from pathlib import Path; report=json.loads(Path('/tmp/provider_runner_handoff_outbox_import_pipeline_report.v0.1.json').read_text(encoding='utf-8')); summary=report['summary']; safety=report['safety_summary']; assert report['status']=='passed'; assert summary['runner_handoff_count']==2; assert summary['consumer_executed_count']==2; assert summary['imported_count']==2; assert summary['pre_import_review_only_envelope_ready_count']==0; assert summary['prefetch_review_only_envelope_ready_count']==2; assert summary['activation_allowed_count']==0; assert safety['external_provider_call_count']==0; assert safety['consumer_reads_env_count']==0; assert safety['staging_count']==0; assert safety['promotion_count']==0; assert safety['queue_complete_count']==0; assert safety['world_mutation_count']==0; assert safety['runtime_activation_allowed_count']==0\"",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_import_smoke_evidence",
+          "rg -n \"consume_import|outbox import|check_provider_runner_handoff_outbox_import_pipeline|local_consume_import_prefetch_smoke_ready\" /tmp/provider_runner_handoff_outbox_import_smoke_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",
