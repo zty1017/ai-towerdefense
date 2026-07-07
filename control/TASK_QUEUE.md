@@ -4155,6 +4155,54 @@ python3 tools/demo/export_evidence.py --output-dir /tmp/evidence_assertions_full
 git diff --check
 ```
 
+### P1-E-13 WorkerTaskPack final heredoc checks cleanup
+
+状态：已完成最后一批 heredoc / inline Python 任务包迁移。
+
+目标：
+
+```text
+把最后 6 个需要人工审查的 WorkerTaskPack heredoc / inline Python 检查替换为窄用途 helper 或现有 validator，使所有任务包都具备 acceptance_profile，迁移审计归零。
+```
+
+已落地：
+
+- 新增 provider runner outbox fixture 和 execution report validator。
+- 新增 core alignment 文档一致性 validator。
+- 新增 controlled map candidate import smoke plan builder，并给 import report validator 增加 `--expect-status-count`。
+- 新增 MapRenderPlan service contract checker。
+- 移除 browser flow visual smoke 任务包中的冗余 heredoc；现有 `validate_frontend_flow_visual_smoke_report.py` 已覆盖截图矩阵、文件大小和安全计数。
+- 更新并迁移最后 6 个任务包到 `acceptance_profile`：
+  - `examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json`
+  - `examples/worker_task_packs/p1c_core_alignment_doc_consistency.v0.1.json`
+  - `examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json`
+  - `examples/worker_task_packs/p1d_controlled_map_candidate_artifact_import.v0.1.json`
+  - `examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json`
+  - `examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json`
+
+效果：
+
+- 审计从 `113 packs: 107 with profile, 6 without profile, 6 migration candidates, 6 manual review required` 先变为 `113 packs: 113 with profile, 0 without profile, 0 migration candidates, 0 manual review required`。
+- 新增本任务包后，预期审计为 `114 packs: 114 with profile, 0 without profile, 0 migration candidates, 0 manual review required`。
+
+边界：
+
+- 本任务不调用 provider、不读取 `.env`、不修改 schema、runtime package、前端或后端。
+- 新 helper 都是窄用途本地验收工具，不支持任意 Python 表达式。
+- `p1d_map_render_plan_api` 的旧断言曾要求 `lamp_wick_store` 没有 render plan；当前事实源已由 all-nodes 任务更新为三节点全覆盖，因此该包改为只验证 `gray_lantern_station` 当前 API 合同。
+
+验收：
+
+```bash
+python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_final_heredoc_checks.v0.1.json
+PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_final_heredoc python3 -m py_compile tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py tools/content_pipeline/validate_core_alignment_doc_consistency.py tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py tools/media/validate_controlled_map_candidate_artifact_import_report.py tools/dev/check_map_render_plan_service_contract.py
+python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/final_heredoc_audit_after_migrate.json --max-samples 250
+python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/final_heredoc_after_dry.json
+python3 tools/dev/run_fast_quality_gate.py --output /tmp/final_heredoc_fast_gate.json
+python3 tools/demo/export_evidence.py --output-dir /tmp/final_heredoc_full_evidence
+git diff --check
+```
+
 ### P1-F AI 编译架构事实源同步
 
 状态：已完成最小修补。

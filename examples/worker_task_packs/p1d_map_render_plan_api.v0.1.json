@@ -16,7 +16,8 @@
     "backend/app/services/map_runtime_service.py",
     "backend/app/services/frontend_mock_service.py",
     "backend/app/api/frontend_mock.py",
-    "frontend/app.js"
+    "frontend/app.js",
+    "tools/dev/check_map_render_plan_service_contract.py"
   ],
   "allowed_paths": [
     "backend/app/services/map_render_plan_service.py",
@@ -39,11 +40,31 @@
     "content/"
   ],
   "acceptance_commands": [
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api PYTHONPATH=/tmp/ai-td-task-map-render-plan-api/backend python3 - <<'PY'\nfrom app.services import frontend_mock_service, map_render_plan_service\nbundle = map_render_plan_service.load_map_render_plan_bundle('gray_lantern_station')\nassert bundle['procedural_map_render_plan']['schema_version'] == 'procedural_map_render_plan.v0.1'\nassert bundle['semantic_visual_consistency_report']['status'] == 'passed'\nassert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']\npayload = frontend_mock_service.get_battle_config('smoke_session', 'gray_lantern_station')\nassert payload['map_render_plan_bundle']['node_id'] == 'gray_lantern_station'\nassert frontend_mock_service.get_battle_config('smoke_session', 'lamp_wick_store')['map_render_plan_bundle'] is None\ntry:\n    map_render_plan_service.load_map_render_plan_bundle('lamp_wick_store')\nexcept map_render_plan_service.MapRenderPlanNotFoundError:\n    pass\nelse:\n    raise AssertionError('expected MapRenderPlanNotFoundError')\nPY",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 -m py_compile backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py",
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 tools/dev/check_map_render_plan_service_contract.py --mode gray-node",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 -m py_compile backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py tools/dev/check_map_render_plan_service_contract.py",
     "node --check frontend/app.js",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 tools/dev/check_map_render_plan_service_contract.py --mode gray-node",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 -m py_compile backend/app/services/map_render_plan_service.py backend/app/services/frontend_mock_service.py backend/app/api/frontend_mock.py backend/tests/test_frontend_mock_api.py tools/dev/check_map_render_plan_service_contract.py",
+          "node --check frontend/app.js",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

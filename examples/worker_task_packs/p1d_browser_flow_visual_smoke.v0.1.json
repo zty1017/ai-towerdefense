@@ -47,9 +47,28 @@
     "python3 tools/frontend/validate_battle_visual_contract.py",
     "python3 tools/frontend/capture_frontend_flow_visual_smoke.py --output-dir /tmp/frontend_flow_visual_smoke --timeout 45",
     "python3 tools/frontend/validate_frontend_flow_visual_smoke_report.py /tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nreport = json.loads(Path('/tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json').read_text(encoding='utf-8'))\nassert report['status'] == 'captured'\nassert report['captured_screenshot_count'] == report['expected_screenshot_count'] == 14\nassert {item['step_id'] for item in report['screenshots']} == {'profile', 'world_config', 'opening', 'map', 'workshop', 'battle', 'settlement'}\nassert {item['viewport_id'] for item in report['screenshots']} == {'desktop', 'mobile'}\nassert report['safety_summary']['provider_call_count'] == 0\nassert report['safety_summary']['world_mutation_count'] == 0\nfor item in report['screenshots']:\n    assert Path(item['path']).exists(), item['path']\n    assert item['file_size_bytes'] > 5000, item\nPY",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-browser-flow python3 -m py_compile tools/frontend/capture_frontend_flow_visual_smoke.py tools/frontend/validate_frontend_flow_visual_smoke_report.py",
+          "python3 tools/frontend/validate_battle_visual_contract.py",
+          "python3 tools/frontend/capture_frontend_flow_visual_smoke.py --output-dir /tmp/frontend_flow_visual_smoke --timeout 45",
+          "python3 tools/frontend/validate_frontend_flow_visual_smoke_report.py /tmp/frontend_flow_visual_smoke/frontend_flow_visual_smoke_report.v0.1.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

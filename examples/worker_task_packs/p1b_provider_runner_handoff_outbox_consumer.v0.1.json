@@ -17,7 +17,9 @@
     "tools/dev/validate_provider_adapter_runner_handoff_outbox.py",
     "tools/provider_adapter/run_provider_adapter.py",
     "backend/app/services/generation_scheduler_handoff_builders.py",
-    "tools/demo/export_evidence.py"
+    "tools/demo/export_evidence.py",
+    "tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py"
   ],
   "allowed_paths": [
     "tools/dev/run_provider_adapter_runner_handoff_outbox.py",
@@ -42,16 +44,40 @@
   ],
   "acceptance_commands": [
     "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_consumer python3 -m py_compile tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py",
-    "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nfrom backend.app.services.generation_scheduler_handoff_builders import build_provider_adapter_runner_handoff, build_provider_adapter_runner_handoff_outbox\nrequest=json.loads(Path('examples/provider_adapter_runs/p1b_provider_adapter_runner.executor_request.json').read_text())\nauth=json.loads(Path('examples/provider_authorizations/p1b_provider_execution_authorization.example.json').read_text())\nsource=request['source']\nhandoff=build_provider_adapter_runner_handoff(session_id=source['session_id'], run_id=source['run_id'], schedule_item_id=source['schedule_item_id'], authorization_ref=auth['authorization_ref'], executor_request_id=request['request_id'], executor_request=request, authorization=auth, provider_profile=auth['source']['provider_profile'], created_at='2026-07-07T00:00:00+00:00', note='outbox consumer acceptance fixture')\noutbox=build_provider_adapter_runner_handoff_outbox(session_id=source['session_id'], run_id=source['run_id'], worker_id='outbox-consumer-acceptance', max_items=1, dispatched_count=1, stop_reason='acceptance_fixture', runner_handoffs=[handoff], created_at='2026-07-07T00:00:00+00:00')\nPath('/tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json').write_text(json.dumps(outbox, ensure_ascii=False, indent=2)+'\\n', encoding='utf-8')\nPY",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_consumer python3 -m py_compile tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py",
+    "python3 tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py --output /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --created-at 2026-07-07T00:00:00+00:00",
     "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
     "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
     "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
-    "python3 -c \"import json; from pathlib import Path; paths=[Path('/tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json'), Path('/tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json')];\nfor path in paths:\n    report=json.loads(path.read_text(encoding='utf-8')); assert report['status']=='passed'; assert report['executed_count']==1; assert report['passed_count']==1; assert report['safety_summary']['provider_call_count']==0; assert report['safety_summary']['runtime_activation_allowed_count']==0; assert report['safety_summary']['imports_to_backend_count']==0; assert report['executions'][0]['output_refs']['receipt']['exists'] is True; assert report['executions'][0]['output_refs']['envelope']['exists'] is True; assert report['executions'][0]['import_after_runner']['not_performed_by_this_tool'] is True\"",
+    "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py /tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json /tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json",
     "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_consumer_evidence",
     "rg -n \"outbox consumer|local_dry_boundary_consumer_ready|run_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_consumer_evidence",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_provider_runner_outbox_consumer python3 -m py_compile tools/dev/run_provider_adapter_runner_handoff_outbox.py tools/demo/export_evidence.py tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py",
+          "python3 tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py --output /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --created-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py /tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json /tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json",
+          "python3 tools/demo/export_evidence.py --validation-profile summary-only --output-dir /tmp/provider_runner_handoff_outbox_consumer_evidence",
+          "rg -n \"outbox consumer|local_dry_boundary_consumer_ready|run_provider_adapter_runner_handoff_outbox\" /tmp/provider_runner_handoff_outbox_consumer_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

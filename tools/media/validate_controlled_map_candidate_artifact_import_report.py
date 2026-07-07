@@ -167,15 +167,53 @@ def validate(report: dict[str, Any]) -> list[str]:
     return errors
 
 
+def parse_expected_status_counts(values: list[str]) -> dict[str, int]:
+    expected: dict[str, int] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError("--expect-status-count values must use status=count")
+        status, raw_count = value.split("=", 1)
+        if status not in ALLOWED_STATUSES:
+            raise ValueError(f"unsupported expected status: {status}")
+        try:
+            count = int(raw_count)
+        except ValueError as exc:
+            raise ValueError(f"invalid expected count for {status}: {raw_count}") from exc
+        if count < 0:
+            raise ValueError(f"expected count for {status} must be >= 0")
+        expected[status] = count
+    return expected
+
+
+def validate_expected_status_counts(report: dict[str, Any], expected: dict[str, int]) -> list[str]:
+    if not expected:
+        return []
+    status_counts = as_obj(as_obj(report.get("summary")).get("status_counts"))
+    errors: list[str] = []
+    for status, count in expected.items():
+        if int(status_counts.get(status) or 0) != count:
+            errors.append(f"summary.status_counts.{status} must be {count}")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", type=Path)
+    parser.add_argument(
+        "--expect-status-count",
+        action="append",
+        default=[],
+        metavar="STATUS=COUNT",
+        help="Optional exact status count assertion, for smoke contracts.",
+    )
     args = parser.parse_args()
     try:
         report = load_json(resolve_path(str(args.report)))
         if not isinstance(report, dict):
             raise ValueError("report root must be an object")
+        expected_counts = parse_expected_status_counts(args.expect_status_count)
         errors = validate(report)
+        errors.extend(validate_expected_status_counts(report, expected_counts))
     except Exception as exc:  # noqa: BLE001
         print(f"controlled map artifact import report validation failed: {exc}", file=sys.stderr)
         return 1

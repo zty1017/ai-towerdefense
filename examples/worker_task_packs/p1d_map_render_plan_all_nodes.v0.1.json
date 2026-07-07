@@ -19,7 +19,8 @@
     "tools/asset_graph/build_procedural_map_render_plan.py",
     "backend/app/services/map_render_plan_service.py",
     "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
-    "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
+    "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+    "tools/dev/check_map_render_plan_service_contract.py"
   ],
   "allowed_paths": [
     "examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json",
@@ -53,10 +54,36 @@
     "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
     "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
     "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes PYTHONPATH=/tmp/ai-td-task-map-render-plan-all-nodes/backend python3 - <<'PY'\nfrom app.services import frontend_mock_service, map_render_plan_service\nexpected = {\n    'gray_lantern_station': 'render_plan_gray_lantern_station_v0_1',\n    'lamp_wick_store': 'render_plan_lamp_wick_store_v0_1',\n    'old_signal_tower': 'render_plan_old_signal_tower_v0_1',\n}\nassert map_render_plan_service.available_map_render_plan_node_ids() == sorted(expected)\nfor node_id, plan_id in expected.items():\n    bundle = map_render_plan_service.load_map_render_plan_bundle(node_id)\n    assert bundle['procedural_map_render_plan']['plan_id'] == plan_id\n    assert bundle['semantic_visual_consistency_report']['status'] == 'passed'\n    assert 'debug_control_overlay' not in bundle['procedural_map_render_plan']['player_default_layer_ids']\n    payload = frontend_mock_service.get_battle_config('smoke_session', node_id)\n    assert payload['map_render_plan_bundle']['procedural_map_render_plan']['plan_id'] == plan_id\nPY",
-    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 tools/dev/check_map_render_plan_service_contract.py --mode all-nodes",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py tools/dev/check_map_render_plan_service_contract.py",
     "git diff --check"
   ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，复用原 acceptance_commands 中不运行完整 evidence export 的命令，供本地交付前快速验收。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json",
+          "python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json",
+          "python3 tools/asset_graph/validate_map_style_pack.py examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json",
+          "python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_lamp_wick_store.map_style_pack.json --output examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z",
+          "python3 tools/asset_graph/build_procedural_map_render_plan.py --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json --style-pack examples/map_style_packs/long_night_old_signal_tower.map_style_pack.json --output examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --report-output examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --created-at 2026-07-04T00:00:00Z",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_procedural_map_render_plan.py examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_wick_store_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_wick_store_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+          "python3 tools/asset_graph/validate_semantic_visual_consistency_report.py examples/semantic_visual_consistency_reports/mvp_old_signal_tower_pressure.semantic_visual_consistency_report.json --render-plan examples/map_render_plans/mvp_old_signal_tower_pressure.procedural_map_render_plan.json --runtime-package examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 tools/dev/check_map_render_plan_service_contract.py --mode all-nodes",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 -m py_compile backend/app/services/map_render_plan_service.py backend/tests/test_frontend_mock_api.py tools/dev/check_map_render_plan_service_contract.py",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      }
+    }
+  },
   "reporting_requirements": [
     "modified_files",
     "key_design",

@@ -1,0 +1,168 @@
+{
+  "schema_version": "worker_task_pack.v0.1",
+  "task_id": "P1-E-13-worker-acceptance-final-heredoc-checks",
+  "title": "WorkerTaskPack final heredoc checks cleanup",
+  "task_type": "test",
+  "handoff_mode": "local_codex_safe_fallback",
+  "base_branch": "develop",
+  "branch": "task/worker-profile-final-heredoc-checks",
+  "worktree": "/tmp/ai-td-task-worker-profile-final-heredoc-checks",
+  "objective": "把最后 6 个需要人工审查的 WorkerTaskPack heredoc / inline Python 检查替换为窄用途 helper 或现有 validator，使所有任务包都具备 acceptance_profile，迁移审计归零。",
+  "required_reading": [
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "docs/AI_COMPILATION_SYSTEM_V0_1.md",
+    "docs/WORKER_TASK_PACK_V0_1.md",
+    "control/TASK_QUEUE.md",
+    "tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py",
+    "tools/content_pipeline/validate_core_alignment_doc_consistency.py",
+    "tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py",
+    "tools/media/validate_controlled_map_candidate_artifact_import_report.py",
+    "tools/dev/check_map_render_plan_service_contract.py",
+    "tools/dev/audit_worker_acceptance_profiles.py",
+    "tools/dev/migrate_worker_acceptance_profiles.py"
+  ],
+  "allowed_paths": [
+    "tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py",
+    "tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py",
+    "tools/content_pipeline/validate_core_alignment_doc_consistency.py",
+    "tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py",
+    "tools/media/validate_controlled_map_candidate_artifact_import_report.py",
+    "tools/dev/check_map_render_plan_service_contract.py",
+    "examples/worker_task_packs/p1b_provider_runner_handoff_outbox_consumer.v0.1.json",
+    "examples/worker_task_packs/p1c_core_alignment_doc_consistency.v0.1.json",
+    "examples/worker_task_packs/p1d_browser_flow_visual_smoke.v0.1.json",
+    "examples/worker_task_packs/p1d_controlled_map_candidate_artifact_import.v0.1.json",
+    "examples/worker_task_packs/p1d_map_render_plan_api.v0.1.json",
+    "examples/worker_task_packs/p1d_map_render_plan_all_nodes.v0.1.json",
+    "examples/worker_task_packs/p1e_worker_acceptance_final_heredoc_checks.v0.1.json",
+    "docs/CURRENT_ARCHITECTURE_INDEX.md",
+    "control/TASK_QUEUE.md"
+  ],
+  "forbidden_paths": [
+    ".env",
+    "frontend/",
+    "backend/app/",
+    "game_data/media/",
+    "content/",
+    "shared/schemas/",
+    "examples/review_packs/",
+    "examples/runtime_packages/",
+    "examples/map_runtime_packages/",
+    "examples/map_render_plans/",
+    "examples/map_render_previews/",
+    "examples/semantic_visual_consistency_reports/",
+    "tools/llm/",
+    "tools/provider_adapter/run_provider_adapter.py"
+  ],
+  "acceptance_commands": [
+    "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_final_heredoc_checks.v0.1.json",
+    "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_final_heredoc python3 -m py_compile tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py tools/content_pipeline/validate_core_alignment_doc_consistency.py tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py tools/media/validate_controlled_map_candidate_artifact_import_report.py tools/dev/check_map_render_plan_service_contract.py",
+    "python3 tools/content_pipeline/validate_core_alignment_doc_consistency.py",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 tools/dev/check_map_render_plan_service_contract.py --mode gray-node",
+    "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 tools/dev/check_map_render_plan_service_contract.py --mode all-nodes",
+    "python3 tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py --output /tmp/controlled_map_import_smoke_plan.json",
+    "python3 tools/media/import_controlled_map_candidate_artifacts.py --plan /tmp/controlled_map_import_smoke_plan.json --output /tmp/controlled_map_import_smoke_report.json",
+    "python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py /tmp/controlled_map_import_smoke_report.json --expect-status-count validated_not_copied=1 --expect-status-count awaiting_local_artifact=2",
+    "python3 tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py --output /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --created-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
+    "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
+    "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py /tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json /tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json",
+    "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/final_heredoc_audit_after_migrate.json --max-samples 250",
+    "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/final_heredoc_after_dry.json",
+    "python3 tools/dev/run_fast_quality_gate.py --output /tmp/final_heredoc_fast_gate.json",
+    "python3 tools/demo/export_evidence.py --output-dir /tmp/final_heredoc_full_evidence",
+    "git diff --check"
+  ],
+  "acceptance_profile": {
+    "default_profile": "daily_fast",
+    "profiles": {
+      "daily_fast": {
+        "description": "日常快速 profile，验证最后 6 个 heredoc 包已迁移、helper 可运行、审计归零和 fast gate。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_final_heredoc_checks.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_final_heredoc python3 -m py_compile tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py tools/content_pipeline/validate_core_alignment_doc_consistency.py tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py tools/media/validate_controlled_map_candidate_artifact_import_report.py tools/dev/check_map_render_plan_service_contract.py",
+          "python3 tools/content_pipeline/validate_core_alignment_doc_consistency.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 tools/dev/check_map_render_plan_service_contract.py --mode gray-node",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 tools/dev/check_map_render_plan_service_contract.py --mode all-nodes",
+          "python3 tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py --output /tmp/controlled_map_import_smoke_plan.json",
+          "python3 tools/media/import_controlled_map_candidate_artifacts.py --plan /tmp/controlled_map_import_smoke_plan.json --output /tmp/controlled_map_import_smoke_report.json",
+          "python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py /tmp/controlled_map_import_smoke_report.json --expect-status-count validated_not_copied=1 --expect-status-count awaiting_local_artifact=2",
+          "python3 tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py --output /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --created-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py /tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json /tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/final_heredoc_audit_after_migrate.json --max-samples 250",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/final_heredoc_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/final_heredoc_fast_gate.json",
+          "git diff --check"
+        ],
+        "required_for": [
+          "daily_small_changes",
+          "pre_handoff_sanity"
+        ]
+      },
+      "full_evidence": {
+        "description": "最终评审 profile，在 daily_fast 基础上导出完整 demo evidence。",
+        "commands": [
+          "python3 tools/dev/validate_worker_task_pack.py examples/worker_task_packs/p1e_worker_acceptance_final_heredoc_checks.v0.1.json",
+          "PYTHONPYCACHEPREFIX=/tmp/ai_td_pycache_final_heredoc python3 -m py_compile tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py tools/content_pipeline/validate_core_alignment_doc_consistency.py tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py tools/media/validate_controlled_map_candidate_artifact_import_report.py tools/dev/check_map_render_plan_service_contract.py",
+          "python3 tools/content_pipeline/validate_core_alignment_doc_consistency.py",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-api python3 tools/dev/check_map_render_plan_service_contract.py --mode gray-node",
+          "PYTHONPYCACHEPREFIX=/tmp/ai-td-pycache-map-render-plan-all-nodes python3 tools/dev/check_map_render_plan_service_contract.py --mode all-nodes",
+          "python3 tools/media/build_controlled_map_candidate_artifact_import_smoke_plan.py --output /tmp/controlled_map_import_smoke_plan.json",
+          "python3 tools/media/import_controlled_map_candidate_artifacts.py --plan /tmp/controlled_map_import_smoke_plan.json --output /tmp/controlled_map_import_smoke_report.json",
+          "python3 tools/media/validate_controlled_map_candidate_artifact_import_report.py /tmp/controlled_map_import_smoke_report.json --expect-status-count validated_not_copied=1 --expect-status-count awaiting_local_artifact=2",
+          "python3 tools/dev/build_provider_adapter_runner_handoff_outbox_fixture.py --output /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --created-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --output-dir /tmp/provider_runner_handoff_outbox_consumer_fixture_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/run_provider_adapter_runner_handoff_outbox.py /tmp/provider_runner_handoff_outbox_consumer_fixture.v0.1.json --adapter-mode video --output-dir /tmp/provider_runner_handoff_outbox_consumer_video_run --generated-at 2026-07-07T00:00:00+00:00",
+          "python3 tools/dev/validate_provider_adapter_runner_handoff_outbox_execution_report.py /tmp/provider_runner_handoff_outbox_consumer_fixture_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json /tmp/provider_runner_handoff_outbox_consumer_video_run/provider_adapter_runner_handoff_outbox_execution_report.v0.1.json",
+          "python3 tools/dev/audit_worker_acceptance_profiles.py --output /tmp/final_heredoc_audit_after_migrate.json --max-samples 250",
+          "python3 tools/dev/migrate_worker_acceptance_profiles.py --output /tmp/final_heredoc_after_dry.json",
+          "python3 tools/dev/run_fast_quality_gate.py --output /tmp/final_heredoc_fast_gate.json",
+          "python3 tools/demo/export_evidence.py --output-dir /tmp/final_heredoc_full_evidence",
+          "git diff --check"
+        ],
+        "required_for": [
+          "final_review",
+          "merge_readiness_without_recording"
+        ]
+      }
+    }
+  },
+  "reporting_requirements": [
+    "modified_files",
+    "key_design",
+    "acceptance_results",
+    "protected_files_touched",
+    "new_dependencies",
+    "subagent_usage",
+    "unresolved_risks"
+  ],
+  "safety_rules": {
+    "may_read_env": false,
+    "may_print_secrets": false,
+    "may_store_raw_prompt": false,
+    "may_store_provider_response": false,
+    "may_bypass_schema_or_semantic_gates": false,
+    "may_direct_merge_main_or_develop": false,
+    "may_activate_review_only_artifacts": false,
+    "must_preserve_player_immersion": true,
+    "must_report_protected_files_touched": true
+  },
+  "provider_policy": {
+    "provider_calls_allowed": false,
+    "requires_explicit_user_authorization": true,
+    "allowed_profiles": [],
+    "max_calls": 0,
+    "raw_response_storage": "forbidden"
+  },
+  "notes": [
+    "本任务只标准化本地验收 helper 和 WorkerTaskPack 命令，不调用 provider、不读取 .env、不激活 runtime。",
+    "p1d_map_render_plan_api 的旧断言曾要求 lamp_wick_store 没有 render plan；当前事实源已由 all-nodes 任务更新为三节点全覆盖，因此该包改为只验证 gray_lantern_station 当前 API 合同。",
+    "迁移最后 6 个任务包后，审计从 113 packs: 107 with profile, 6 without profile, 6 migration candidates, 6 manual review required 变为 113 packs: 113 with profile, 0 without profile, 0 migration candidates, 0 manual review required；新增本任务包后预期为 114 packs: 114 with profile, 0 without profile, 0 migration candidates, 0 manual review required。"
+  ]
+}
