@@ -521,7 +521,9 @@ def _build_capability(
         gate_status["media"] = "degraded"
         warnings.append("trusted MVP package used reviewed published fallback media")
     lifecycle_state = str(asset.get("lifecycle_state") or "ephemeral")
-    uses = int(_clamp(_json_object(asset.get("battle_availability")).get("uses_per_battle"), 2, 1, 99))
+    availability = _json_object(asset.get("battle_availability"))
+    uses = int(_clamp(availability.get("uses_per_battle"), 2, 1, 99))
+    requires_delivery = availability.get("requires_delivery") is True
     capability: dict[str, Any] = {
         "schema_version": "battle_object_capability.v0.1",
         "object_id": _safe_id(asset.get("stable_internal_id"), "activated_object"),
@@ -532,7 +534,7 @@ def _build_capability(
             "upgradeable": lifecycle_state == "stabilized_blueprint",
             "stacking": "limited_charges" if lifecycle_state == "ephemeral" else "single_per_slot",
             "expires": lifecycle_state == "ephemeral",
-            **({"max_uses": uses} if lifecycle_state == "ephemeral" else {}),
+            **({"max_uses": uses} if lifecycle_state == "ephemeral" or requires_delivery else {}),
         },
         "behavior_abi": behavior,
         "media_refs": media,
@@ -542,6 +544,8 @@ def _build_capability(
             "activation_id": activation_id,
         },
     }
+    if requires_delivery:
+        capability["tool_id"] = "sample"
     errors = _schema_errors(capability, _CAPABILITY_SCHEMA)
     if errors:
         raise ValueError(f"battle object capability failed: {errors[0]}")

@@ -129,12 +129,10 @@ def test_activation_is_idempotent_projected_and_rollbackable(app_env, monkeypatc
         assert rolled_back["runtime_effect"]["applied"] is False
         restored_bundle = rollback.json()["activated_runtime_bundle"]
         assert restored_bundle["runtime_selection"]["session_activation_ids"] == []
-        restored = next(
-            item
+        assert all(
+            item["object_id"] != activated_id
             for item in restored_bundle["capabilities"]["battle_objects"]
-            if item["object_id"] == activated_id
         )
-        assert "source_runtime_ref" not in restored
 
         second_rollback = await client.post(
             f"/api/sessions/{session_id}/runtime/activations/"

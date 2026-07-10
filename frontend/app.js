@@ -1418,7 +1418,11 @@ import {
 
   function deployToolAt(tool, cell) {
     if (tool === "basic") placeBasicDefense(cell);
-    if (tool === "sample") placeSampleTrap(cell);
+    if (tool === "sample") {
+      const projected = findBattleToolProjection("sample", battleToolProjection());
+      if (projected && projected.objectId !== "sample_trap_7f3a") deployRuntimeTool("sample", cell);
+      else placeSampleTrap(cell);
+    }
     if (tool === "support") useSupportPulse(cell);
     if (!["basic", "sample", "support"].includes(tool)) deployRuntimeTool(tool, cell);
   }
@@ -1429,7 +1433,14 @@ import {
 
   function canPreviewToolAt(tool, cell) {
     if (!isCellInGrid(cell) || !toolReady(tool)) return false;
-    if (tool === "basic" || tool === "sample") return canPlaceToolAt(tool, cell);
+    if (tool === "sample") {
+      const projected = findBattleToolProjection("sample", battleToolProjection());
+      if (projected && projected.objectId !== "sample_trap_7f3a") {
+        return canPreviewRuntimeToolAt({ tool: projected, cell, canPlaceToolAt });
+      }
+      return canPlaceToolAt(tool, cell);
+    }
+    if (tool === "basic") return canPlaceToolAt(tool, cell);
     if (tool === "support") return true;
     return canPreviewRuntimeToolAt({
       tool: findBattleToolProjection(tool, battleToolProjection()),

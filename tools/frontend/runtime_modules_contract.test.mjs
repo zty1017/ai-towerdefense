@@ -1066,6 +1066,37 @@ test("runtime projection supports explicit default binding and collision-safe dy
   assert.equal(findBattleToolProjection("storm_tower_2", projection).objectId, "storm_tower_beta");
 });
 
+test("compiled sample slot accepts a different allowlisted asset kind without duplicating tools", () => {
+  const projection = buildBattleToolProjection({
+    battle: { basicUses: 2, sampleDelivered: true, sampleUses: 3, supportUses: 1 },
+    activatedRuntimeBundle: {
+      capabilities: {
+        battle_objects: [
+          {
+            object_id: "compiled_tower_alpha",
+            tool_id: "sample",
+            display_name: "聚光刺塔",
+            asset_kind: "tower_blueprint",
+            behavior_abi: {
+              placement: { mode: "build_slot" },
+              cost: { resource: "materials", amount: 18 },
+              cooldown: { milliseconds: 1400 },
+              effect_blocks: [{ kind: "damage", amount: 10 }],
+              ui_surfaces: ["battle_hotbar"],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  const sample = findBattleToolProjection("sample", projection);
+  assert.equal(sample.objectId, "compiled_tower_alpha");
+  assert.equal(sample.assetKind, "tower_blueprint");
+  assert.equal(sample.name, "聚光刺塔");
+  assert.equal(projection.length, 3);
+});
+
 test("runtime tools deploy through behavior ABI whitelist", () => {
   const battle = {
     resources: 40,
@@ -1147,6 +1178,50 @@ test("runtime tools deploy through behavior ABI whitelist", () => {
   assert.equal(battle.power, 5);
   assert.equal(battle.cooldowns.echo_bell_001, 2500);
   assert.equal(battle.enemies[0].hp, 3);
+});
+
+test("compiled sample slot consumes its delivery charges while honoring dynamic ABI", () => {
+  const battle = {
+    resources: 40,
+    power: 8,
+    sampleDelivered: true,
+    sampleUses: 2,
+    cooldowns: {},
+    defenses: [],
+    traps: [],
+    effects: [],
+    enemies: [],
+    deployedAssetIds: [],
+    elapsedMs: 300,
+  };
+  const compiledTower = {
+    id: "sample",
+    name: "聚光刺塔",
+    assetKind: "tower_blueprint",
+    objectId: "compiled_tower_alpha",
+    cost: { resource: "materials", amount: 18 },
+    cooldownMs: 1400,
+    behaviorAbi: {
+      placement: { mode: "build_slot" },
+      targeting: { range_cells: 2.8 },
+      effect_blocks: [{ kind: "damage", amount: 10 }],
+    },
+  };
+
+  assert.equal(
+    deployRuntimeTool({
+      battle,
+      cell: { x: 2, y: 2 },
+      tool: compiledTower,
+      canPlaceToolAt: () => true,
+      addEffect: () => {},
+      setBattleToast: () => {},
+    }),
+    true,
+  );
+  assert.equal(battle.sampleUses, 1);
+  assert.equal(battle.resources, 22);
+  assert.equal(battle.defenses[0].objectId, "compiled_tower_alpha");
 });
 
 test("runtime deployment rejects locked tools and clamps unsafe ABI numbers", () => {
