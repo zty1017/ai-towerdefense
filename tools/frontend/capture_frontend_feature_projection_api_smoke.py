@@ -26,6 +26,13 @@ from capture_frontend_flow_visual_smoke import (
     wait_for_devtools_page,
     wait_for_http_json,
 )
+from capture_battle_drag_interaction_smoke import (
+    dispatch_drag,
+    interaction_passed,
+    js_probe_snapshot,
+    js_tool_center,
+    wait_probe,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -230,10 +237,34 @@ def run_smoke(
                 runtime_activation_expression(),
                 timeout_ms=12000,
             )
+            pause_result = cdp.eval(js_click("#pauseButton"))
+            if not isinstance(pause_result, dict) or pause_result.get("ok") is not True:
+                raise RuntimeError(f"battle pause failed before compiled tool drag: {pause_result}")
+            time.sleep(0.1)
+
+            drag_before = wait_probe(cdp, "sample", timeout_seconds=4)
+            drag_source = cdp.eval(js_tool_center("sample"), timeout_ms=3000)
+            drag_target = drag_before.get("deploymentPoint")
+            if not isinstance(drag_source, dict) or drag_source.get("ok") is not True:
+                raise RuntimeError(f"compiled sample card unavailable: {drag_source}")
+            if not isinstance(drag_target, dict):
+                raise RuntimeError(f"compiled sample has no deployment point: {drag_before}")
+            dispatch_drag(cdp, drag_source, drag_target)
+            time.sleep(0.45)
+            drag_after = cdp.eval(js_probe_snapshot("sample"), timeout_ms=3000)
+            if not isinstance(drag_after, dict) or not interaction_passed(
+                drag_before, drag_after, "sample"
+            ):
+                raise RuntimeError(
+                    f"compiled sample did not mutate battle state: before={drag_before}, after={drag_after}"
+                )
             activation_shot = capture_screenshot(
                 cdp,
                 output_dir / "feature_projection_api_activated_sample.png",
             )
+            resume_result = cdp.eval(js_click("#pauseButton"))
+            if not isinstance(resume_result, dict) or resume_result.get("ok") is not True:
+                raise RuntimeError(f"battle resume failed after compiled tool drag: {resume_result}")
             waited = cdp.eval(
                 js_wait_selector("[data-action='return-map']", 20000),
                 timeout_ms=21000,
@@ -264,6 +295,12 @@ def run_smoke(
                     "workshop_participant_projection_visible": participant_visible is True,
                     "workshop_proposal_projection": workshop_snapshot,
                     "runtime_activation_projection": activation_snapshot,
+                    "compiled_tool_drag": {
+                        "status": "passed",
+                        "tool": "sample",
+                        "before": drag_before,
+                        "after": drag_after,
+                    },
                     "settlement_projection": settlement_snapshot,
                 },
                 "screenshots": [workshop_shot, activation_shot, settlement_shot],

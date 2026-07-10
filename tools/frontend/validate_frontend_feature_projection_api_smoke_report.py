@@ -47,6 +47,20 @@ def validate(report: dict) -> None:
         activation.get("mediaGate") in {"passed", "degraded"},
         "media gate did not pass",
     )
+    drag = checks.get("compiled_tool_drag") or {}
+    require(drag.get("status") == "passed", "compiled battle tool was not deployed")
+    before = drag.get("before") or {}
+    after = drag.get("after") or {}
+    require(
+        int(after.get("deployedAssetCount") or 0)
+        > int(before.get("deployedAssetCount") or 0),
+        "compiled battle tool did not add a deployed asset",
+    )
+    require(
+        int(after.get("defensesCount") or 0) + int(after.get("trapsCount") or 0)
+        > int(before.get("defensesCount") or 0) + int(before.get("trapsCount") or 0),
+        "compiled battle tool did not add a playable entity",
+    )
     settlement = checks.get("settlement_projection") or {}
     require(
         set(settlement.get("slots") or []) >= {"result_summary", "world_delta"},

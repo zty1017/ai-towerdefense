@@ -473,13 +473,13 @@ def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) 
         contains_all(
             install_probe,
             [
-                "if (!battleVisualSmokeMode()) return;",
+                "if (!battleVisualSmokeMode() && !flowVisualSmokeMode()) return;",
                 "window.__AI_TD_BATTLE_SMOKE__ =",
                 "snapshot: battleSmokeSnapshot",
                 "deploymentPoint: battleSmokeDeploymentPoint",
             ],
         ),
-        "battle smoke probe must only be exposed in battleVisualSmoke mode.",
+        "battle smoke probe must only be exposed in battleVisualSmoke or flowVisualSmoke test modes.",
     )
     add_check(
         checks,
