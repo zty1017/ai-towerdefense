@@ -276,6 +276,9 @@ import {
     defaultWorldConfig: DEFAULT_WORLD_CONFIG,
     screenHeader: (...args) => screenHeader(...args),
     safeText: (value) => safeText(value),
+    getProfilePreviewUrl: () =>
+      resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png"),
+    getWorldPreviewUrl: () => mediaCatalog.layeredMapVisualUrl("composited"),
     navigate: (view) => setPlayerView(view),
     renderApp: () => render(),
   });

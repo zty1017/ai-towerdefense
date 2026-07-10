@@ -109,8 +109,11 @@ export function createBattleTerrainRenderer({
     const coverX = (metrics.width - coverWidth) / 2;
     const coverY = (metrics.height - coverHeight) / 2;
     ctx.save();
-    ctx.globalAlpha = 0.58;
-    ctx.filter = "blur(14px) brightness(0.52) saturate(0.86)";
+    const narrowViewport = metrics.width <= 760;
+    ctx.globalAlpha = narrowViewport ? 1 : 0.58;
+    ctx.filter = narrowViewport
+      ? "blur(6px) brightness(0.9) saturate(0.88)"
+      : "blur(14px) brightness(0.52) saturate(0.86)";
     ctx.drawImage(image, coverX - 18, coverY - 18, coverWidth + 36, coverHeight + 36);
     ctx.restore();
     ctx.drawImage(

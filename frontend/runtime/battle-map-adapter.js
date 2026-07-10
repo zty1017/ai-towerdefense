@@ -137,9 +137,9 @@ export function createBattleMapAdapter({
 
   function battleCanvasSafeArea(width, height) {
     if (width <= 760) {
-      const top = Math.min(162, height * 0.2);
-      const bottom = Math.min(278, height * 0.33);
-      return { left: 8, right: 8, top, bottom, mapShiftY: -6 };
+      const top = Math.min(116, height * 0.14);
+      const bottom = Math.min(156, height * 0.19);
+      return { left: 8, right: 8, top, bottom, mapShiftY: -46 };
     }
     if (width <= 1120) {
       return { left: 78, right: 24, top: 92, bottom: 110, mapShiftY: 8 };
