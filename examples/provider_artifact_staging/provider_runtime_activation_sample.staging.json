@@ -1,0 +1,78 @@
+{
+  "schema_version": "provider_artifact_staging_manifest.v0.1",
+  "manifest_id": "pstaging_provider_runtime_activation_sample_001",
+  "created_at": "2026-07-11T00:05:00Z",
+  "source_envelope_ref": "examples/provider_artifact_staging/provider_runtime_activation_sample.source_envelope.json",
+  "source_envelope_id": "pout_provider_runtime_activation_sample_001",
+  "authority": {
+    "visibility": "internal_evidence",
+    "review_only": true,
+    "runtime_activation_allowed": false,
+    "world_mutation_allowed": false,
+    "player_visible": false
+  },
+  "retention_policy": {
+    "prompt_body_storage": "forbidden",
+    "provider_body_storage": "forbidden",
+    "secret_storage": "forbidden",
+    "temporary_url_policy": "local_ref_required",
+    "local_refs_only": true,
+    "runtime_claim_policy": "forbidden_before_promotion"
+  },
+  "staging_status": "review_only_artifacts_staged",
+  "staged_artifacts": [
+    {
+      "artifact_id": "provider_runtime_package_candidate_001_staged",
+      "source_artifact_id": "provider_runtime_package_candidate_001",
+      "kind": "json_candidate",
+      "path": "examples/runtime_packages/provider_promotion_sample.runtime_package.json",
+      "sha256": "0a5fe1d0a773add2a34cc28e1e37eec87b2203b7d90016c598e33ea58437ea0e",
+      "content_type": "application/json",
+      "media_layer": "candidate_ref",
+      "role": "runtime_package_candidate",
+      "review_status": "staged_for_review",
+      "runtime_visible": false,
+      "player_visible": false
+    }
+  ],
+  "validation_results": {
+    "source_envelope_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/provider_artifact_staging/provider_runtime_activation_sample.source_envelope.json"
+    },
+    "local_ref_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null
+    },
+    "schema_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null
+    },
+    "media_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_media_manifest.v0.1.json"
+    },
+    "semantic_gate": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": "examples/compiled_assets/provider_promotion_lamp_tower.behavior_abi.json"
+    },
+    "human_review": {
+      "status": "passed",
+      "required_before_promotion": true,
+      "report_ref": null
+    }
+  },
+  "promotion_gate": {
+    "promotion_allowed": false,
+    "blocked_reason": "promotion_report_required",
+    "required_next_gates": ["promotion_report"],
+    "notes": [
+      "All staging checks passed; only an explicit promotion report may advance the package."
+    ]
+  }
+}

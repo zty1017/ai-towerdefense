@@ -401,6 +401,30 @@ def record_generation_runtime_activation_authorization(
 
 
 @router.post(
+    "/api/sessions/{session_id}/generation-schedule/workers/apply-runtime-activation",
+    response_model=FrontendMockPayloadResponse,
+)
+def apply_generation_runtime_activation(
+    session_id: str,
+    body: GenerationScheduleQueueTransitionRequest | None = None,
+) -> FrontendMockPayloadResponse:
+    """Apply one explicitly authorized scheduler runtime package."""
+
+    _require_session(session_id)
+    metadata = body.model_dump() if body is not None else {}
+    try:
+        data = generation_scheduler_service.apply_generation_runtime_activation(
+            session_id,
+            metadata,
+        )
+    except (InvalidQueueTransitionError, ValueError) as exc:
+        raise _queue_transition_409(exc) from exc
+    feature_runtime = frontend_mock_service.get_feature_runtime(session_id)
+    data["activated_runtime_bundle"] = feature_runtime["activated_runtime_bundle"]
+    return _payload(session_id, data)
+
+
+@router.post(
     "/api/sessions/{session_id}/generation-schedule/workers/run-runtime-activation-readiness-chain",
     response_model=FrontendMockPayloadResponse,
 )
@@ -899,6 +923,22 @@ def prefetch_next_campaign_node_dispatcher_drain(
     except (InvalidQueueTransitionError, ValueError) as exc:
         raise _queue_transition_409(exc) from exc
     return _payload(session_id, data)
+
+
+@router.get(
+    "/api/sessions/{session_id}/runtime/feature-snapshots",
+    response_model=FrontendMockPayloadResponse,
+)
+def get_feature_runtime(
+    session_id: str,
+    node_id: str | None = None,
+) -> FrontendMockPayloadResponse:
+    """Return the activated, player-safe FeatureSnapshot runtime projection."""
+    _require_session(session_id)
+    return _payload(
+        session_id,
+        frontend_mock_service.get_feature_runtime(session_id, node_id=node_id),
+    )
 
 
 @router.get(

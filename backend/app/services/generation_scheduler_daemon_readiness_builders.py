@@ -77,6 +77,15 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
         if isinstance(item.get("refs"), dict)
         and item["refs"].get("generation_runtime_activation_authorization") is not None
     )
+    runtime_activation_receipt_count = sum(
+        1
+        for item in items
+        if isinstance(item.get("refs"), dict)
+        and item["refs"].get("generation_runtime_activation_receipt") is not None
+    )
+    runtime_activated_count = sum(
+        1 for item in items if item.get("cache_status") == "runtime_activated"
+    )
     shared_cache_reuse_candidate_count = sum(
         1
         for item in items
@@ -93,6 +102,8 @@ def _queue_counts(items: list[dict[str, Any]]) -> dict[str, int]:
         "runtime_activation_authorization_count": (
             runtime_activation_authorization_count
         ),
+        "runtime_activation_receipt_count": runtime_activation_receipt_count,
+        "runtime_activated_count": runtime_activated_count,
         "shared_cache_reuse_candidate_count": shared_cache_reuse_candidate_count,
     }
 
@@ -110,7 +121,10 @@ def _manual_tick_status(
         return "ready_to_dispatch_queued_provider_review_items"
     if queue_counts["review_only_envelope_ready_count"] > 0:
         return "waiting_for_external_runner_or_artifact_review"
-    if queue_counts["runtime_activation_authorization_count"] > 0:
+    if (
+        queue_counts["runtime_activation_authorization_count"]
+        > queue_counts["runtime_activation_receipt_count"]
+    ):
         return "waiting_for_runtime_activation_apply_gate"
     if queue_counts["runtime_artifact_build_report_count"] > 0:
         return "waiting_for_explicit_runtime_activation_gate"
@@ -246,7 +260,10 @@ def _recommended_next_actions(
                 "activation_allowed_count": 0,
             }
         )
-    if queue_counts["runtime_activation_authorization_count"] > 0:
+    if (
+        queue_counts["runtime_activation_authorization_count"]
+        > queue_counts["runtime_activation_receipt_count"]
+    ):
         actions.append(
             {
                 "action": "wait_for_runtime_activation_apply_gate",
@@ -341,12 +358,16 @@ def _readiness_gates(
         {
             "gate": "runtime_activation",
             "status": (
-                "authorized_review_only_blocked_apply"
+                "activated"
+                if queue_counts["runtime_activated_count"] > 0
+                else "authorized_review_only_blocked_apply"
                 if queue_counts["runtime_activation_authorization_count"] > 0
                 else "blocked_explicit_activation_required"
             ),
             "reason": (
-                "runtime_activation_authorization_record_does_not_apply_runtime"
+                "runtime_activation_receipt_confirms_session_patch"
+                if queue_counts["runtime_activated_count"] > 0
+                else "runtime_activation_authorization_record_does_not_apply_runtime"
                 if queue_counts["runtime_activation_authorization_count"] > 0
                 else "promotion_allowed_does_not_activate_runtime_or_write_world_state"
             ),
@@ -398,8 +419,12 @@ def build_generation_daemon_readiness_payload(
                     activation_summary.get("blocked_count", 0) or 0
                 ),
                 "promotion_allowed_count": promotion_allowed_count,
-                "runtime_ready_count": 0,
-                "activation_allowed_count": 0,
+                "runtime_ready_count": int(
+                    activation_summary.get("runtime_ready_count", 0) or 0
+                ),
+                "activation_allowed_count": int(
+                    activation_summary.get("activation_allowed_count", 0) or 0
+                ),
                 "provider_call_count_by_this_request": 0,
                 "world_mutation_count_by_this_request": 0,
             },

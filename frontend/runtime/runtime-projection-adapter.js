@@ -1,0 +1,280 @@
+const DEFAULT_TOOL_DEFS = [
+  {
+    id: "basic",
+    assetKind: "tower_blueprint",
+    objectId: "basic_lantern_tower_001",
+    name: "基础灯栏",
+    cooldownMs: 3600,
+    mediaKey: "basic",
+    meta(battle, behaviorAbi) {
+      return [costLabel(behaviorAbi, "材料 20"), `剩余 ${battle.basicUses ?? 0}`];
+    },
+    locked() {
+      return false;
+    },
+  },
+  {
+    id: "sample",
+    assetKind: "temporary_trap_sample",
+    objectId: "sample_trap_7f3a",
+    name: "折光绊索",
+    cooldownMs: 1800,
+    mediaKey: "sample",
+    meta(battle, behaviorAbi) {
+      return [
+        battle.sampleDelivered ? `剩余 ${battle.sampleUses ?? 0}` : "封装中",
+        effectSummary(behaviorAbi, "减速"),
+      ];
+    },
+    locked(battle) {
+      return !battle.sampleDelivered;
+    },
+  },
+  {
+    id: "support",
+    assetKind: "support_item",
+    objectId: "guardian_support_001",
+    name: "守灯支援",
+    cooldownMs: 9000,
+    mediaKey: "support",
+    meta(battle, behaviorAbi) {
+      return [costLabel(behaviorAbi, "材料 15"), `剩余 ${battle.supportUses ?? 0}`];
+    },
+    locked() {
+      return false;
+    },
+  },
+];
+
+function asList(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function safeNumber(value, fallback, min, max) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return clamp(number, min, max);
+}
+
+function battleObjects(bundle) {
+  return asList(asObject(asObject(bundle).capabilities).battle_objects);
+}
+
+function hotbarObjects(bundle) {
+  return battleObjects(bundle).filter((item) =>
+    asList(asObject(item && item.behavior_abi).ui_surfaces).includes("battle_hotbar"),
+  );
+}
+
+function projectionTools(projection) {
+  if (Array.isArray(projection)) return projection;
+  const data = asObject(projection);
+  if (Array.isArray(data.tools)) return data.tools;
+  if (Array.isArray(data.toolbar_tools)) return data.toolbar_tools;
+  if (Array.isArray(asObject(data.battle).tools)) return data.battle.tools;
+  if (Array.isArray(asObject(data.battle).toolbar_tools)) return data.battle.toolbar_tools;
+  return [];
+}
+
+function hotbarObjectForTool(tool, bundle) {
+  const objects = hotbarObjects(bundle);
+  return (
+    objects.find(
+      (item) => item && item.object_id === tool.objectId && item.asset_kind === tool.assetKind,
+    ) ||
+    objects.find(
+      (item) =>
+        item && item.asset_kind === tool.assetKind && explicitHotbarId(item) === tool.id,
+    ) ||
+    null
+  );
+}
+
+function explicitHotbarId(object) {
+  const ui = asObject(asObject(object && object.behavior_abi).ui);
+  return (
+    (object && (object.tool_id || object.hotbar_id)) ||
+    ui.tool_id ||
+    ui.hotbar_id ||
+    null
+  );
+}
+
+function defaultToolForRuntimeObject(object) {
+  return DEFAULT_TOOL_DEFS.find((tool) => tool.objectId === object.object_id) || null;
+}
+
+function toolIdForRuntimeObject(object) {
+  const ui = asObject(asObject(object.behavior_abi).ui);
+  const raw = (
+    object.tool_id ||
+    object.hotbar_id ||
+    ui.tool_id ||
+    ui.hotbar_id ||
+    object.object_id ||
+    object.asset_kind ||
+    "runtime_tool"
+  );
+  const safe = String(raw).replace(/[^A-Za-z0-9_:-]/g, "_").slice(0, 96);
+  return safe || "runtime_tool";
+}
+
+function allocateUniqueToolId(baseId, usedIds) {
+  if (!usedIds.has(baseId)) {
+    usedIds.add(baseId);
+    return baseId;
+  }
+  let suffix = 2;
+  let uniqueId = "";
+  do {
+    const suffixText = `_${suffix}`;
+    uniqueId = `${baseId.slice(0, Math.max(1, 96 - suffixText.length))}${suffixText}`;
+    suffix += 1;
+  } while (usedIds.has(uniqueId));
+  usedIds.add(uniqueId);
+  return uniqueId;
+}
+
+function cooldownMsFromAbi(behaviorAbi, fallback) {
+  const cooldown = asObject(asObject(behaviorAbi).cooldown);
+  const milliseconds = Number(cooldown.milliseconds ?? cooldown.ms);
+  if (Number.isFinite(milliseconds) && milliseconds >= 0) return milliseconds;
+  const seconds = Number(cooldown.seconds);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  return fallback;
+}
+
+function costFromAbi(behaviorAbi) {
+  return asObject(asObject(behaviorAbi).cost);
+}
+
+function resourceName(resource) {
+  const key = String(resource || "").toLowerCase();
+  if (key === "materials" || key === "material") return "材料";
+  if (key === "light" || key === "lamp_light") return "灯火";
+  if (key === "power" || key === "electricity") return "电力";
+  return resource ? String(resource) : "材料";
+}
+
+function costLabel(behaviorAbi, fallback) {
+  const cost = costFromAbi(behaviorAbi);
+  const amount = safeNumber(cost.amount, NaN, 0, 999);
+  if (!Number.isFinite(amount)) return fallback;
+  return `${resourceName(cost.resource)} ${amount}`;
+}
+
+function effectSummary(behaviorAbi, fallback) {
+  const first = asList(asObject(behaviorAbi).effect_blocks)[0];
+  const kind = String((first && first.kind) || "");
+  if (kind === "slow") return "减速";
+  if (kind === "damage") return "打击";
+  if (kind === "aura") return "光环";
+  if (kind === "reveal") return "揭示";
+  return fallback;
+}
+
+function mediaForTool(tool, media) {
+  if (!media) return "";
+  if (typeof media === "function") return media(tool.id, tool);
+  if (typeof media.getToolImage === "function") return media.getToolImage(tool.id, tool) || "";
+  const images = asObject(media.toolImages);
+  return media[tool.mediaKey] || media[`${tool.mediaKey}Img`] || images[tool.id] || "";
+}
+
+function buildTool(tool, battle, bundle, media) {
+  const runtimeObject = hotbarObjectForTool(tool, bundle);
+  return buildToolFromRuntimeObject({
+    tool,
+    runtimeObject,
+    battle,
+    media,
+    runtimeOnly: false,
+  });
+}
+
+function dynamicToolFromRuntimeObject(runtimeObject) {
+  return {
+    id: toolIdForRuntimeObject(runtimeObject),
+    assetKind: runtimeObject.asset_kind || "support_item",
+    objectId: runtimeObject.object_id || toolIdForRuntimeObject(runtimeObject),
+    name: runtimeObject.display_name || runtimeObject.object_id || "临时装置",
+    cooldownMs: 1000,
+    mediaKey: runtimeObject.object_id || runtimeObject.asset_kind || "runtime_tool",
+    meta(_battle, behaviorAbi) {
+      return [costLabel(behaviorAbi, "待装配"), effectSummary(behaviorAbi, "新装置")];
+    },
+    locked(_battle, behaviorAbi) {
+      const lifecycle = asObject(runtimeObject.lifecycle);
+      return lifecycle.deployable === false || !asList(behaviorAbi.ui_surfaces).includes("battle_hotbar");
+    },
+  };
+}
+
+function buildToolFromRuntimeObject({ tool, runtimeObject, battle, media, runtimeOnly }) {
+  const behaviorAbi = runtimeObject ? asObject(runtimeObject.behavior_abi) : {};
+  const mediaRefs = runtimeObject ? asObject(runtimeObject.media_refs) : {};
+  const directIcon = asObject(mediaRefs.icon).url || "";
+  return {
+    id: tool.id,
+    name: (runtimeObject && runtimeObject.display_name) || tool.name,
+    img: directIcon || mediaForTool(tool, media),
+    meta: tool.meta(battle, behaviorAbi),
+    locked: tool.locked(battle, behaviorAbi),
+    assetKind: (runtimeObject && runtimeObject.asset_kind) || tool.assetKind,
+    objectId: (runtimeObject && runtimeObject.object_id) || tool.objectId,
+    behaviorAbi,
+    mediaRefs,
+    cost: costFromAbi(behaviorAbi),
+    cooldownMs: cooldownMsFromAbi(behaviorAbi, tool.cooldownMs),
+    runtimeOnly: Boolean(runtimeOnly),
+  };
+}
+
+export function findBattleToolProjection(toolId, projection) {
+  return projectionTools(projection).find((tool) => tool && tool.id === toolId) || null;
+}
+
+export function assetKindForToolId(toolId, projection) {
+  const projected = findBattleToolProjection(toolId, projection);
+  if (projected && projected.assetKind) return projected.assetKind;
+  const fallback = DEFAULT_TOOL_DEFS.find((tool) => tool.id === toolId);
+  return fallback ? fallback.assetKind : "support_item";
+}
+
+export function buildBattleToolProjection({
+  battle,
+  battleConfig,
+  activatedRuntimeBundle,
+  media,
+} = {}) {
+  const battleState = asObject(battle);
+  void battleConfig;
+  const defaults = DEFAULT_TOOL_DEFS.map((tool) =>
+    buildTool(tool, battleState, activatedRuntimeBundle, media),
+  );
+  const usedObjectIds = new Set(defaults.map((tool) => tool.objectId).filter(Boolean));
+  const usedToolIds = new Set(defaults.map((tool) => tool.id));
+  const dynamicTools = hotbarObjects(activatedRuntimeBundle)
+    .filter((object) => object && object.object_id && !usedObjectIds.has(object.object_id))
+    .filter((object) => !defaultToolForRuntimeObject(object))
+    .map((object) => {
+      const tool = dynamicToolFromRuntimeObject(object);
+      tool.id = allocateUniqueToolId(tool.id, usedToolIds);
+      return buildToolFromRuntimeObject({
+        tool,
+        runtimeObject: object,
+        battle: battleState,
+        media,
+        runtimeOnly: true,
+      });
+    });
+  return [...defaults, ...dynamicTools];
+}

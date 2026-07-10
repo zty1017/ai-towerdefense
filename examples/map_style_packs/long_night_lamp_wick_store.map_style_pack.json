@@ -11,9 +11,10 @@
     "style_authority": "developer_fixture"
   },
   "node_theme_tags": [
-    "wick_store",
-    "old_pipe_lane",
-    "lamp_oil_shelves",
+    "old_chinese_wick_storehouse",
+    "courtyard_supply_depot",
+    "oil_jar_and_bamboo_rack",
+    "paper_talisman_storage_seal",
     "ash_burst_residue",
     "supply_line_pressure"
   ],
@@ -198,12 +199,12 @@
       {
         "gate_id": "style_only_visual_boundary",
         "status": "passed",
-        "summary": "This pack only defines lamp-wick store materials, prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
+        "summary": "This pack defines old Chinese lamp-wick storehouse materials, courtyard supply prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
       },
       {
         "gate_id": "player_readability_boundary",
         "status": "passed",
-        "summary": "Pipe routes, build slots, objectives, and spawn markers remain readable without baked UI text or baked enemies/towers."
+        "summary": "Courtyard service paths, stone-plinth build slots, objectives, and spawn markers remain readable without baked UI text or baked enemies/towers."
       }
     ]
   }

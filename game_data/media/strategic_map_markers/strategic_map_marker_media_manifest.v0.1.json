@@ -1,0 +1,188 @@
+{
+  "schema_version": "strategic_map_marker_media_manifest.v0.1",
+  "media_pack_id": "strategic_map_marker_media_pack_v0_1",
+  "created_at": "2026-07-09T00:00:00Z",
+  "source_map_path": "game_data/demo/initial_map.json",
+  "public_url_prefix": "/assets/strategic_map_markers",
+  "media_layer": "reviewed_strategic_map_marker_media",
+  "usage_policy": [
+    "review_gate_only",
+    "not_runtime_semantic_source",
+    "no_image_to_map_semantic_inference",
+    "local_reviewed_marker_only",
+    "frontend_default_presentation_allowed",
+    "no_provider_or_prompt_payload",
+    "no_external_temporary_url"
+  ],
+  "atlas": {
+    "url": "/assets/strategic_map_markers/processed/strategic_map_markers.atlas.png",
+    "local_path": "game_data/media/strategic_map_markers/processed/strategic_map_markers.atlas.png",
+    "width": 640,
+    "height": 128,
+    "sha256": "d18af4f8a8f492a19abc2bdf33a5ca621dbc4380acb9c044cbca0e2b4d0f120f"
+  },
+  "items": [
+    {
+      "stable_internal_id": "strategic_map_marker_main_city_controlled",
+      "asset_id": "strategic_map_marker_main_city_controlled",
+      "asset_type": "strategic_map_marker",
+      "media_role": "strategic_node_marker",
+      "media_layer": "reviewed_strategic_map_marker_media",
+      "node_kind": "main_city",
+      "state_hint": "controlled",
+      "atlas_frame": {
+        "x": 0,
+        "y": 0,
+        "width": 128,
+        "height": 128,
+        "anchor_x": 64,
+        "anchor_y": 64,
+        "display_width": 42,
+        "display_height": 42
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "local_reviewed_marker_only",
+        "frontend_default_presentation_allowed",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ],
+      "source_kind": "deterministic_developer_fixture_png_atlas"
+    },
+    {
+      "stable_internal_id": "strategic_map_marker_battle_hotspot_crisis_active",
+      "asset_id": "strategic_map_marker_battle_hotspot_crisis_active",
+      "asset_type": "strategic_map_marker",
+      "media_role": "strategic_node_marker",
+      "media_layer": "reviewed_strategic_map_marker_media",
+      "node_kind": "battle_hotspot",
+      "state_hint": "crisis_active",
+      "atlas_frame": {
+        "x": 128,
+        "y": 0,
+        "width": 128,
+        "height": 128,
+        "anchor_x": 64,
+        "anchor_y": 64,
+        "display_width": 42,
+        "display_height": 42
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "local_reviewed_marker_only",
+        "frontend_default_presentation_allowed",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ],
+      "source_kind": "deterministic_developer_fixture_png_atlas"
+    },
+    {
+      "stable_internal_id": "strategic_map_marker_research_facility_available",
+      "asset_id": "strategic_map_marker_research_facility_available",
+      "asset_type": "strategic_map_marker",
+      "media_role": "strategic_node_marker",
+      "media_layer": "reviewed_strategic_map_marker_media",
+      "node_kind": "research_facility",
+      "state_hint": "available",
+      "atlas_frame": {
+        "x": 256,
+        "y": 0,
+        "width": 128,
+        "height": 128,
+        "anchor_x": 64,
+        "anchor_y": 64,
+        "display_width": 38,
+        "display_height": 38
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "local_reviewed_marker_only",
+        "frontend_default_presentation_allowed",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ],
+      "source_kind": "deterministic_developer_fixture_png_atlas"
+    },
+    {
+      "stable_internal_id": "strategic_map_marker_resource_storage_controlled",
+      "asset_id": "strategic_map_marker_resource_storage_controlled",
+      "asset_type": "strategic_map_marker",
+      "media_role": "strategic_node_marker",
+      "media_layer": "reviewed_strategic_map_marker_media",
+      "node_kind": "resource_storage",
+      "state_hint": "controlled",
+      "atlas_frame": {
+        "x": 384,
+        "y": 0,
+        "width": 128,
+        "height": 128,
+        "anchor_x": 64,
+        "anchor_y": 64,
+        "display_width": 38,
+        "display_height": 38
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "local_reviewed_marker_only",
+        "frontend_default_presentation_allowed",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ],
+      "source_kind": "deterministic_developer_fixture_png_atlas"
+    },
+    {
+      "stable_internal_id": "strategic_map_marker_generic_available",
+      "asset_id": "strategic_map_marker_generic_available",
+      "asset_type": "strategic_map_marker",
+      "media_role": "strategic_node_marker",
+      "media_layer": "reviewed_strategic_map_marker_media",
+      "node_kind": "generic",
+      "state_hint": "available",
+      "atlas_frame": {
+        "x": 512,
+        "y": 0,
+        "width": 128,
+        "height": 128,
+        "anchor_x": 64,
+        "anchor_y": 64,
+        "display_width": 36,
+        "display_height": 36
+      },
+      "usage_policy": [
+        "review_gate_only",
+        "not_runtime_semantic_source",
+        "no_image_to_map_semantic_inference",
+        "local_reviewed_marker_only",
+        "frontend_default_presentation_allowed",
+        "no_provider_or_prompt_payload",
+        "no_external_temporary_url"
+      ],
+      "source_kind": "deterministic_developer_fixture_png_atlas"
+    }
+  ],
+  "summary": {
+    "marker_count": 5,
+    "atlas_frame_count": 5,
+    "node_kinds": {
+      "battle_hotspot": 1,
+      "generic": 1,
+      "main_city": 1,
+      "research_facility": 1,
+      "resource_storage": 1
+    }
+  },
+  "validation": {
+    "validator": "tools/media/validate_strategic_map_marker_media_pack.py",
+    "commands": [
+      "python3 tools/media/validate_strategic_map_marker_media_pack.py game_data/media/strategic_map_markers/strategic_map_marker_media_manifest.v0.1.json"
+    ]
+  }
+}

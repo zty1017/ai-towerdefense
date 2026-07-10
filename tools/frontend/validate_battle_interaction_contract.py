@@ -20,6 +20,8 @@ from report_io import write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_JS = ROOT / "frontend/app.js"
+RUNTIME_JS_DIR = ROOT / "frontend/runtime"
+RUNTIME_JS_FILES = sorted(RUNTIME_JS_DIR.glob("*.js"))
 STYLES_CSS = ROOT / "frontend/styles.css"
 REPORT_SCHEMA_VERSION = "battle_interaction_contract_report.v0.1"
 DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
@@ -28,17 +30,62 @@ DEFAULT_GENERATED_AT = "2026-07-07T00:00:00+00:00"
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
+
+def rel(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def frontend_js_files() -> list[Path]:
+    return [APP_JS, *RUNTIME_JS_FILES]
+
+
+def read_frontend_sources() -> dict[Path, str]:
+    return {path: path.read_text(encoding="utf-8") for path in frontend_js_files()}
+
+
+def frontend_source_bundle(sources: dict[Path, str]) -> str:
+    return "\n\n".join(
+        f"/* frontend source: {rel(path)} */\n{source}" for path, source in sources.items()
+    )
+
+
+def runtime_module_sources(sources: dict[Path, str]) -> dict[str, str]:
+    return {path.name: source for path, source in sources.items() if path.parent == RUNTIME_JS_DIR}
+
+
+def frontend_source_bundle_report(sources: dict[Path, str]) -> dict[str, Any]:
+    runtime_paths = [path for path in sources if path.parent == RUNTIME_JS_DIR]
+    return {
+        "entrypoint": rel(APP_JS),
+        "source_file_count": len(sources),
+        "source_files": [rel(path) for path in sources],
+        "runtime_source_file_count": len(runtime_paths),
+        "runtime_source_files": [rel(path) for path in runtime_paths],
+    }
+
+
 def js_section(source: str, start_name: str, end_name: str | None = None) -> str:
-    start = source.find(f"function {start_name}")
-    if start < 0:
+    start_match = re.search(
+        rf"(?m)^[ \t]*(?:export\s+)?(?:async\s+)?function\s+{re.escape(start_name)}\s*\(",
+        source,
+    )
+    if not start_match:
         return ""
+    start = start_match.start()
     if end_name:
-        end = source.find(f"\n  function {end_name}", start + 1)
-        if end > start:
-            return source[start:end]
-    next_match = re.search(r"\n  function\s+\w+", source[start + 1 :])
+        end_match = re.search(
+            rf"(?m)^[ \t]*(?:export\s+)?(?:async\s+)?function\s+{re.escape(end_name)}\s*\(",
+            source[start + 1 :],
+        )
+        if end_match:
+            return source[start : start + 1 + end_match.start()]
+    search_start = start_match.end()
+    next_match = re.search(r"(?m)^[ \t]*(?:export\s+)?(?:async\s+)?function\s+\w+\s*\(", source[search_start:])
     if next_match:
-        return source[start : start + 1 + next_match.start()]
+        return source[start : search_start + next_match.start()]
     return source[start:]
 
 
@@ -62,6 +109,35 @@ def contains_all(value: str, tokens: list[str]) -> bool:
     return all(token in value for token in tokens)
 
 
+def has_named_export(source: str, name: str) -> bool:
+    escaped = re.escape(name)
+    return bool(
+        re.search(rf"(?m)^[ \t]*export\s+(?:async\s+)?function\s+{escaped}\s*\(", source)
+        or re.search(rf"(?s)\bexport\s*\{{[^}}]*\b{escaped}\b[^}}]*\}}", source)
+    )
+
+
+def set_battle_toast_literals(source: str) -> str:
+    return "\n".join(
+        match.group("literal")
+        for match in re.finditer(
+            r"setBattleToast\(\s*(?P<literal>\"[^\"\\]*(?:\\.[^\"\\]*)*\"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`)",
+            source,
+            re.S,
+        )
+    )
+
+
+def has_state_mutation(section: str) -> bool:
+    assignment = re.search(
+        r"\b(?:state|battle)\.[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*(?:=|\+=|-=|\*=|/=|%=|\+\+|--)",
+        section,
+    )
+    mutating_call = re.search(r"\.(?:push|pop|splice|shift|unshift|sort|reverse)\s*\(", section)
+    helper_mutation = re.search(r"\b(?:setBattleToast|deployToolAt|placeBasicDefense|placeSampleTrap|useSupportPulse|addEffect|addBeam|addFloating|finishBattle)\s*\(", section)
+    return bool(assignment or mutating_call or helper_mutation)
+
+
 def add_check(checks: list[dict[str, Any]], check_id: str, passed: bool, detail: str) -> None:
     checks.append(
         {
@@ -72,30 +148,148 @@ def add_check(checks: list[dict[str, Any]], check_id: str, passed: bool, detail:
     )
 
 
-def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
+def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
-    setup = js_section(app, "setupBattle", "stopBattleLoop")
-    state_factory = js_section(app, "createBattleState")
-    begin_drag = js_section(app, "beginToolDrag", "updateToolDrag")
-    update_drag = js_section(app, "updateToolDrag", "finishToolDrag")
-    finish_drag = js_section(app, "finishToolDrag", "deployToolAt")
-    toolbar_markup = js_section(app, "battleToolsMarkup", "drawBattle")
-    draw_battle = js_section(app, "drawBattle", "runtimeMapSeed")
-    deploy_hints = js_section(app, "drawDeployHints", "drawDeploymentBase")
-    drag_ghost = js_section(app, "drawDragGhost", "drawGroundGlow")
-    install_probe = js_section(app, "installBattleSmokeProbe", "battleSmokeDeploymentPoint")
-    probe_point = js_section(app, "battleSmokeDeploymentPoint", "battleSmokeSnapshot")
-    probe_snapshot = js_section(app, "battleSmokeSnapshot", "stopBattleLoop")
-    root_listener_match = re.search(
-        r'ROOT\.addEventListener\("pointerdown",\s*\(event\)\s*=>\s*\{(?P<body>.*?)\n  \}\);',
-        app,
-        re.S,
+    battle_dom_controller = runtime_sources.get("battle-dom-controller.js", "")
+    setup = js_section(battle_dom_controller, "setupBattle")
+    state_factory = "\n".join(
+        [
+            js_section(frontend, "createBattleState"),
+            js_section(frontend, "createBattleStateFactory"),
+        ]
     )
-    root_pointerdown = root_listener_match.group("body") if root_listener_match else ""
+    begin_drag = js_section(frontend, "beginToolDrag", "updateToolDrag")
+    update_drag = js_section(frontend, "updateToolDrag", "finishToolDrag")
+    finish_drag = js_section(frontend, "finishToolDrag", "deployToolAt")
+    cancel_drag = js_section(frontend, "cancelToolDrag")
+    toolbar_markup = js_section(frontend, "battleToolsMarkup", "drawBattle")
+    draw_battle = "\n".join(
+        [
+            js_section(frontend, "drawBattle", "runtimeMapSeed"),
+            js_section(frontend, "drawBattleFrame"),
+        ]
+    )
+    deployment_renderer = runtime_sources.get("battle-deployment-renderer.js", "")
+    deploy_hints = js_section(deployment_renderer, "drawDeployHints")
+    install_probe = js_section(frontend, "installBattleSmokeProbe", "battleSmokeDeploymentPoint")
+    probe_point = js_section(frontend, "battleSmokeDeploymentPoint", "battleSmokeSnapshot")
+    probe_snapshot = js_section(frontend, "battleSmokeSnapshot", "stopBattleLoop")
+    unavailable_text = js_section(frontend, "toolUnavailableText", "canPreviewToolAt")
+    placement_feedback = "\n".join(
+        [
+            js_section(frontend, "placeBasicDefense", "placeSampleTrap"),
+            js_section(frontend, "placeSampleTrap", "useSupportPulse"),
+            js_section(frontend, "useSupportPulse", "setBattleToast"),
+            set_battle_toast_literals(frontend),
+        ]
+    )
     toolbar_css = "\n".join(css_blocks(css, ".toolbar-card"))
     toolbar_drag_css = css_block(css, ".toolbar-card.is-dragging")
     stage_css = css_block(css, ".battle-stage")
     canvas_css = css_block(css, "#battleCanvas")
+    input_controller = runtime_sources.get("battle-input-controller.js", "")
+    battle_rules = runtime_sources.get("battle-rules.js", "")
+    entity_renderer = runtime_sources.get("battle-entity-renderer.js", "")
+    projection_adapter = runtime_sources.get("runtime-projection-adapter.js", "")
+    root_event_router = runtime_sources.get("root-event-router.js", "")
+    drag_ghost = entity_renderer
+    input_controller_exports = [
+        "onBattleCanvasClick",
+        "onBattleCanvasPointerMove",
+        "onBattleCanvasPointerLeave",
+        "beginToolDrag",
+        "updateToolDrag",
+        "finishToolDrag",
+        "cancelToolDrag",
+    ]
+    battle_rule_exports = [
+        "createBattleStateFactory",
+        "canPlaceToolAt",
+        "toolReady",
+        "buildSpawnSchedule",
+    ]
+    projection_exports = [
+        "buildBattleToolProjection",
+        "assetKindForToolId",
+    ]
+    add_check(
+        checks,
+        "deployment_renderer_module_boundary",
+        has_named_export(deployment_renderer, "createBattleDeploymentRenderer")
+        and "document." not in deployment_renderer
+        and "state." not in deployment_renderer
+        and "deployToolAt(" not in deployment_renderer,
+        "battle-deployment-renderer must expose a presentation-only factory without owning DOM or deployment rules.",
+    )
+
+    add_check(
+        checks,
+        "battle_dom_controller_module_boundary",
+        has_named_export(battle_dom_controller, "createBattleDomController")
+        and "advanceBattleStep" not in battle_dom_controller
+        and "deployRuntimeTool(" not in battle_dom_controller
+        and "finishBattle(" not in battle_dom_controller,
+        "battle-dom-controller must own battle DOM lifecycle without owning simulation, runtime deployment, or settlement.",
+    )
+    add_check(
+        checks,
+        "frontend_source_bundle_includes_runtime_modules",
+        "frontend/app.js" in frontend
+        and bool(runtime_sources)
+        and "frontend source: frontend/runtime/" in frontend,
+        "validator must scan frontend/app.js plus sorted frontend/runtime/*.js modules.",
+    )
+    add_check(
+        checks,
+        "battle_rules_runtime_module_present",
+        bool(battle_rules),
+        "frontend/runtime/battle-rules.js must be part of the scanned frontend source bundle.",
+    )
+    add_check(
+        checks,
+        "battle_input_controller_runtime_module_present",
+        bool(input_controller),
+        "frontend/runtime/battle-input-controller.js must be part of the scanned frontend source bundle.",
+    )
+    add_check(
+        checks,
+        "battle_entity_renderer_runtime_module_present",
+        bool(entity_renderer) and has_named_export(entity_renderer, "createBattleEntityRenderer"),
+        "frontend/runtime/battle-entity-renderer.js must own the canvas drag ghost renderer.",
+    )
+    add_check(
+        checks,
+        "battle_input_controller_runtime_exports_contract",
+        bool(input_controller) and all(has_named_export(input_controller, name) for name in input_controller_exports),
+        "battle-input-controller.js must export the battle canvas and drag handler contract.",
+    )
+    add_check(
+        checks,
+        "battle_rules_runtime_exports_contract",
+        bool(battle_rules) and all(has_named_export(battle_rules, name) for name in battle_rule_exports),
+        "battle-rules.js must export createBattleStateFactory/canPlaceToolAt/toolReady/buildSpawnSchedule.",
+    )
+    add_check(
+        checks,
+        "root_event_router_module_boundary",
+        has_named_export(root_event_router, "createRootEventRouter")
+        and "deployToolAt(" not in root_event_router
+        and "finishBattle(" not in root_event_router
+        and "state." not in root_event_router,
+        "root-event-router must own listener wiring and delegate commands without owning gameplay state.",
+    )
+    add_check(
+        checks,
+        "runtime_projection_adapter_module_present",
+        bool(projection_adapter),
+        "frontend/runtime/runtime-projection-adapter.js must be part of the scanned frontend source bundle.",
+    )
+    add_check(
+        checks,
+        "runtime_projection_adapter_exports_contract",
+        bool(projection_adapter) and all(has_named_export(projection_adapter, name) for name in projection_exports),
+        "runtime-projection-adapter.js must export buildBattleToolProjection/assetKindForToolId.",
+    )
 
     add_check(
         checks,
@@ -109,8 +303,8 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
         contains_all(
             setup,
             [
-                'canvas.addEventListener("pointermove", onBattleCanvasPointerMove)',
-                'canvas.addEventListener("pointerleave", onBattleCanvasPointerLeave)',
+                'canvas.addEventListener("pointermove", onCanvasPointerMove)',
+                'canvas.addEventListener("pointerleave", onCanvasPointerLeave)',
             ],
         ),
         "battle canvas must update deployment preview while the pointer moves.",
@@ -119,12 +313,12 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
         checks,
         "toolbar_pointerdown_starts_drag",
         contains_all(
-            root_pointerdown,
+            root_event_router + frontend,
             [
                 '.toolbar-card[data-tool]',
-                'state.view !== "battle"',
-                "event.button !== 0",
-                "beginToolDrag(target.dataset.tool, event)",
+                "canBeginToolDrag(event, target)",
+                "options.beginToolDrag(target.dataset.tool, event)",
+                'canBeginToolDrag: (event) => state.view === "battle" && event.button === 0',
             ],
         ),
         "tool cards must start a drag gesture from pointerdown in the battle view.",
@@ -132,8 +326,15 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
     add_check(
         checks,
         "window_drag_lifecycle_registered",
-        contains_all(app, ['window.addEventListener("pointermove", updateToolDrag)', 'window.addEventListener("pointerup", finishToolDrag)']),
-        "drag move/up listeners must live on window so release outside the card still completes cleanly.",
+        contains_all(
+            root_event_router,
+            [
+                'windowRef.addEventListener("pointermove", options.updateToolDrag)',
+                'windowRef.addEventListener("pointerup", options.finishToolDrag)',
+                'windowRef.addEventListener("pointercancel", options.cancelToolDrag)',
+            ],
+        ),
+        "drag move/up/cancel listeners must live on window so release or cancellation outside the card still completes cleanly.",
     )
     add_check(
         checks,
@@ -142,14 +343,17 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
             begin_drag,
             [
                 "battle.selectedTool = tool || \"basic\"",
+                "if (!toolReady(battle.selectedTool))",
+                "battle.draggingTool = null",
+                "setBattleToast(toolUnavailableText(battle.selectedTool))",
+                "return",
                 "battle.draggingTool = battle.selectedTool",
                 "battle.dragPointer = { x: event.clientX, y: event.clientY }",
                 "battle.hoverCell = cellFromCanvasEvent(event)",
-                "toolUnavailableText(battle.draggingTool)",
                 "event.preventDefault()",
             ],
         ),
-        "beginToolDrag must select the tool, initialize drag state, show unavailable feedback, and suppress native drag behavior.",
+        "beginToolDrag must select the tool, block unavailable drags, initialize valid drag state, show unavailable feedback, and suppress native drag behavior.",
     )
     add_check(
         checks,
@@ -173,19 +377,37 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
                 "setBattleToast(\"拖到战场格位后释放\")",
                 "deployToolAt(tool, cell)",
             ],
-        ),
+        )
+        and finish_drag.count("deployToolAt(") == 1,
         "finishToolDrag must clear drag state and deploy exactly on pointer release over a valid battle cell.",
     )
     add_check(
         checks,
+        "cancel_drag_clears_state_without_deploying",
+        contains_all(
+            cancel_drag,
+            [
+                "battle.draggingTool = null",
+                "battle.dragPointer = null",
+                "battle.hoverCell = null",
+                "updateBattleDom()",
+            ],
+        )
+        and "deployToolAt(" not in cancel_drag
+        and "placeBasicDefense(" not in cancel_drag,
+        "cancelToolDrag must clear drag state without deploying on pointer cancellation.",
+    )
+    add_check(
+        checks,
         "toolbar_cards_are_non_native_drag_sources",
-        contains_all(toolbar_markup, ['class="toolbar-card', 'data-action="select-tool"', 'data-tool="${tool.id}"', 'draggable="false"', "is-dragging"]),
+        contains_all(toolbar_markup, ['class="toolbar-card', 'data-action="select-tool"', 'data-tool="${safeText(tool.id)}"', 'draggable="false"', "is-dragging"]),
         "tool cards must expose game drag state instead of browser-native draggable behavior.",
     )
     add_check(
         checks,
         "battle_draws_preview_and_drag_ghost",
-        contains_all(draw_battle, ["drawDeployHints(ctx)", "drawDragGhost(ctx)"]),
+        ("drawDeployHints(ctx)" in draw_battle or "drawDeployHints(ctx," in draw_battle)
+        and "drawDragGhost(ctx)" in draw_battle,
         "the battle draw loop must render both grid deployment hints and the dragged tool ghost.",
     )
     add_check(
@@ -221,19 +443,28 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
     add_check(
         checks,
         "click_to_place_is_only_fallback",
-        'canvas.addEventListener("click", onBattleCanvasClick)' in setup and "deployToolAt(battle.selectedTool, cell)" in js_section(app, "onBattleCanvasClick", "onBattleCanvasPointerMove"),
+        'canvas.addEventListener("click", onCanvasClick)' in setup
+        and "deployToolAt(battle.selectedTool, cell)" in js_section(
+            frontend,
+            "onBattleCanvasClick",
+            "onBattleCanvasPointerMove",
+        ),
         "click placement may remain as a fallback while drag-to-place is protected as the primary contract.",
     )
     add_check(
         checks,
         "no_technical_terms_in_player_drag_feedback",
-        not re.search(r"\b(provider|schema|prompt|json|trace|api|model)\b", compact(begin_drag + update_drag + finish_drag), re.I),
-        "player-facing drag feedback must not expose provider/schema/prompt/debug wording.",
+        not re.search(
+            r"\b(provider|schema|prompt|json|trace|api|model)\b",
+            compact(begin_drag + update_drag + finish_drag + cancel_drag + unavailable_text + placement_feedback),
+            re.I,
+        ),
+        "player-facing battle feedback must not expose provider/schema/prompt/debug wording.",
     )
     add_check(
         checks,
         "battle_smoke_probe_installed_after_metrics",
-        "resizeBattleCanvas();\n    installBattleSmokeProbe();" in setup,
+        "resizeBattleCanvas();\n    installSmokeProbe();" in setup,
         "battle smoke probe must be installed only after canvas metrics are initialized.",
     )
     add_check(
@@ -287,6 +518,12 @@ def validate_contract(app: str, css: str) -> list[dict[str, Any]]:
         and "state.view =" not in probe_snapshot,
         "battle smoke snapshot must expose read-only counters and never mutate battle state.",
     )
+    add_check(
+        checks,
+        "battle_smoke_probe_snapshot_has_no_state_mutation",
+        not has_state_mutation(probe_snapshot),
+        "battle smoke snapshot must expose read-only counters and never mutate battle state.",
+    )
     return checks
 
 
@@ -299,9 +536,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    app = APP_JS.read_text(encoding="utf-8")
+    frontend_sources = read_frontend_sources()
+    frontend = frontend_source_bundle(frontend_sources)
+    runtime_sources = runtime_module_sources(frontend_sources)
     css = STYLES_CSS.read_text(encoding="utf-8")
-    checks = validate_contract(app, css)
+    checks = validate_contract(frontend, css, runtime_sources)
     failed = [check for check in checks if check["status"] != "passed"]
     report = {
         "schema_version": REPORT_SCHEMA_VERSION,
@@ -317,7 +556,9 @@ def main() -> int:
             "provider_call_count": 0,
             "reads_env_file": False,
             "browser_required": False,
+            "runtime_source_file_count": len(runtime_sources),
         },
+        "frontend_source_bundle": frontend_source_bundle_report(frontend_sources),
         "checks": checks,
     }
     if args.report_output:

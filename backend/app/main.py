@@ -23,8 +23,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 _STATIC_MEDIA_ROOTS = {
     "frontend_mock": _REPO_ROOT / "game_data/media/frontend_mock",
     "frontend_runtime_mock": _REPO_ROOT / "game_data/media/frontend_runtime_mock",
+    "strategic_map_markers": _REPO_ROOT / "game_data/media/strategic_map_markers",
 }
 _STATIC_DIRECT_MEDIA_ROOTS = {
+    "layered_maps": _REPO_ROOT / "game_data/media/layered_maps",
     "map_components": _REPO_ROOT / "game_data/media/map_components",
     "map_visual_reference": _REPO_ROOT / "game_data/media/map_visual_reference",
 }

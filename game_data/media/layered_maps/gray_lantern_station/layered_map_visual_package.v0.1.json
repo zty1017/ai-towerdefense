@@ -1,0 +1,480 @@
+{
+  "schema_version": "layered_map_visual_package.v0.1",
+  "package_id": "layered_map_visual_pkg_gray_lantern_station_v0_1",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "created_at": "2026-07-08T00:00:00Z",
+  "source_refs": {
+    "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "map_style_pack_path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    "procedural_map_render_plan_path": "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json"
+  },
+  "runtime_semantics_source": {
+    "kind": "MapRuntimePackage",
+    "id": "map_pkg_gray_lantern_station_v0_1",
+    "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+    "authority": "runtime_semantic_truth"
+  },
+  "style_source": {
+    "kind": "MapStylePack",
+    "id": "style_long_night_ruined_outpost_v0_1",
+    "path": "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+    "authority": "visual_style"
+  },
+  "render_plan_source": {
+    "kind": "ProceduralMapRenderPlan",
+    "id": "render_plan_gray_lantern_station_v0_1",
+    "path": "examples/map_render_plans/mvp_first_battle.procedural_map_render_plan.json",
+    "authority": "presentation_plan"
+  },
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "format": "svg"
+  },
+  "coordinate_projection": {
+    "projection": "pseudo3d_oblique",
+    "mapping": "frontend_battle_design_space",
+    "width_cells": 16,
+    "height_cells": 9,
+    "base_tile_w": 96.0,
+    "base_tile_h": 49.92,
+    "base_offset_x": 472.0,
+    "base_offset_y": 78.96
+  },
+  "usage_policy": [
+    "runtime_semantics_from_map_runtime_package",
+    "visual_package_is_presentation_only",
+    "no_pixel_to_semantic_inference",
+    "player_default_presentation_allowed",
+    "local_reviewed_artifact_only",
+    "no_raw_generation_payload",
+    "no_external_temporary_url",
+    "painted_backdrop_must_not_bake_build_slots",
+    "painted_backdrop_must_not_bake_path_routes"
+  ],
+  "media_assets": [
+    {
+      "asset_id": "gray_lantern_station_terrain_tile",
+      "role": "terrain_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "local_ai_exploration_texture",
+      "source_local_path": "game_data/media/layered_maps/_exploration/texture_tiles_v0_1/ai_terrain_tile_v0_1.png",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.terrain_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.terrain_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "29e22c1a48d359c6405312d112e2105af5606543f69137c2c87734524da385dd",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_terrain_detail_tile",
+      "role": "terrain_detail_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.terrain_detail_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.terrain_detail_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "71eecec7e43ddfd531937e7d1beeb42b4b5f456ac8317b2975943a4b5d0848ac",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_road_tile",
+      "role": "road_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "local_ai_exploration_texture",
+      "source_local_path": "game_data/media/layered_maps/_exploration/texture_tiles_v0_1/ai_road_tile_v0_1.png",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_tile.png",
+      "width": 256,
+      "height": 128,
+      "sha256": "2ebc11cae205e8dd08778840519ede49fb087e99b0e957dad6e7b43be24f06b0",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_road_edge_tile",
+      "role": "road_edge_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "local_ai_exploration_texture",
+      "source_local_path": "game_data/media/layered_maps/_exploration/texture_tiles_v0_1/ai_road_edge_tile_v0_1.png",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_edge_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_edge_tile.png",
+      "width": 192,
+      "height": 96,
+      "sha256": "55d35cf65c8a02c52d036c266e511aeb10166eab015f24c28772ddd0f6da739b",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_road_detail_atlas",
+      "role": "road_detail_atlas",
+      "media_kind": "texture_atlas_png",
+      "source_kind": "local_ai_exploration_texture",
+      "source_local_path": "game_data/media/layered_maps/_exploration/texture_tiles_v0_1/ai_road_detail_atlas_v0_1.png",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_detail_atlas.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_detail_atlas.png",
+      "width": 384,
+      "height": 192,
+      "sha256": "0114c639236d260d093b51721b7e67ad8cbe8f50844391879167ac860d8ebc2d",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_slot_tile",
+      "role": "slot_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "local_ai_exploration_texture",
+      "source_local_path": "game_data/media/layered_maps/_exploration/texture_tiles_v0_1/ai_slot_tile_v0_1.png",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+      "width": 192,
+      "height": 96,
+      "sha256": "2399c5854c6bc80151fdf1e2dd76b6c163a9eeb5311c2a196e8318728bfa5a77",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_shadow_overlay_tile",
+      "role": "shadow_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.shadow_overlay_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.shadow_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "4917b49de64a53fa69fcbe5f85e972e7f6fb883d63644192a1fc06cccc466bf1",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_fog_overlay_tile",
+      "role": "fog_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.fog_overlay_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.fog_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "2213aa67138ac7e09e8f3832a3b2ef60f6734190046c6212da2777e67b6edcc3",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_light_overlay_tile",
+      "role": "light_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/layered_maps/gray_lantern_station/textures/gray_lantern_station.light_overlay_tile.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.light_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "033de2f46a18f343cf403286a43f26cecefe40c1b3af302d741badc78acc6c4c",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "gray_lantern_station_reviewed_painted_backdrop",
+      "role": "reviewed_painted_backdrop",
+      "media_kind": "map_backdrop_png",
+      "source_kind": "local_ai_exploration_backdrop",
+      "source_local_path": "game_data/media/layered_maps/_exploration/gray_lantern_station.reviewed_painted_backdrop.png",
+      "url": "/assets/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "513b01388345494def8ec0cb9ffdfeb2009a1c479ba62ea26e7293dbcd356e40",
+      "usage": "presentation_backdrop_only"
+    }
+  ],
+  "layers": [
+    {
+      "layer_id": "layer_terrain_base",
+      "role": "terrain_base",
+      "order": 0,
+      "player_default": true,
+      "source": "reviewed_visual_backdrop",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.terrain_base.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.terrain_base.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9deee7557005e08065f8a82b102c9125c3793e353b77f96fe1d2a9615a641d71",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_terrain_detail",
+      "role": "terrain_detail",
+      "order": 5,
+      "player_default": false,
+      "source": "map_style_pack",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.terrain_detail.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.terrain_detail.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d3741f6785533bc533e411a90213f26ccd45d55d0280177b6d428f710370fe57",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_shadow",
+      "role": "road_shadow",
+      "order": 10,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_shadow.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_shadow.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "fe16bdd776fd1c4bb84030aa9ebdcd02b4aa28b4bf1528e1573295747413a177",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_edge",
+      "role": "road_edge",
+      "order": 12,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_edge.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_edge.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cbdc6685b5b0a9d086c6258dad5dd4c2a9986549b91e85ec91b03fb1032ab277",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_surface",
+      "role": "road_surface",
+      "order": 14,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_surface.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.road_surface.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cd33fd1bf8adf0ea112ef3f967fdb81897afe69e5e81c3a74914cdca20c6d0b3",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_build_slots",
+      "role": "build_slots",
+      "order": 20,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.build_slots.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.build_slots.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d2a3852a7ca23a6c7128936c655549ccea3b9df28537b47958b73f3a7c297035",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_objectives",
+      "role": "objectives",
+      "order": 30,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.objectives.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.objectives.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9f858e6b97f7d0860e422ab9a5430fdc334d4490397763a7c3747d6557388bc1",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_spawn",
+      "role": "spawn",
+      "order": 40,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.spawn.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.spawn.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3398c0cc8145728514704e8117e94acb8a321439cbd7b9de38d9aacfec57414a",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_semantic_props",
+      "role": "semantic_props",
+      "order": 45,
+      "player_default": false,
+      "source": "map_runtime_package",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.semantic_props.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.semantic_props.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "b07a47c57f4e716fcddbcd56e1c3613f2461ddf21eee45eea630dece4597b2bc",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_non_blocking_decorations",
+      "role": "non_blocking_decorations",
+      "order": 50,
+      "player_default": false,
+      "source": "map_style_pack",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.non_blocking_decorations.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.non_blocking_decorations.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "268e5446514cbb29b6d737414c7aeb55fd7cce876959648b98c95a9977d5c19e",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_lighting",
+      "role": "lighting",
+      "order": 60,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.lighting.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.lighting.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d6271f72a84772d936fafbb1fb984b938e1205c566615600f619231e761f1a4a",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_fog_weather",
+      "role": "fog_weather",
+      "order": 70,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.fog_weather.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.fog_weather.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "562b46017400be55511fd20e52e86b8ade2d357bb84b2a4bb62bb85a1e59b2d4",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_color_grade",
+      "role": "color_grade",
+      "order": 90,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/layered_maps/gray_lantern_station/layers/gray_lantern_station.color_grade.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/layers/gray_lantern_station.color_grade.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "f33ac5cf55eb39758a9b794cf2c32f86bac9613ae1a0f910727dc52761c2e657",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_composited",
+      "role": "composited",
+      "order": 100,
+      "player_default": true,
+      "source": "derived_composite",
+      "url": "/assets/layered_maps/gray_lantern_station/composited/gray_lantern_station.layered_map.svg",
+      "local_path": "game_data/media/layered_maps/gray_lantern_station/composited/gray_lantern_station.layered_map.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "4853ca7652a52f8944cf5fd474ba3289078ce9c3d93443dc01d328cad7ddbd38",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    }
+  ],
+  "alignment_report": {
+    "gate_status": "passed",
+    "runtime_truth_preserved": true,
+    "route_count": 1,
+    "build_slot_count": 9,
+    "objective_count": 2,
+    "spawn_count": 1,
+    "checks": [
+      {
+        "check_id": "projection_matches_frontend_design_space",
+        "status": "passed",
+        "summary": "Layer coordinates use the same base projection and offsets as the frontend battle canvas."
+      },
+      {
+        "check_id": "strong_semantics_drawn_from_runtime_package",
+        "status": "passed",
+        "summary": "Routes, build slots, objectives, and spawns are copied from MapRuntimePackage rather than inferred from pixels."
+      },
+      {
+        "check_id": "composite_keeps_runtime_overlay_available",
+        "status": "passed",
+        "summary": "The composite is presentation only; frontend interaction and collision still use structured runtime data."
+      },
+      {
+        "check_id": "reviewed_backdrop_does_not_override_runtime_semantics",
+        "status": "passed",
+        "summary": "A local reviewed painted backdrop is used only as terrain presentation; route, slot, objective, and spawn overlays remain derived from MapRuntimePackage."
+      }
+    ]
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "player_default_safe": true,
+    "external_generation_call_count": 0,
+    "gates": [
+      {
+        "gate_id": "local_svg_artifacts_written",
+        "status": "passed",
+        "summary": "All layers and the composite are local SVG artifacts with sha256 checksums."
+      },
+      {
+        "gate_id": "no_external_runtime_dependency",
+        "status": "passed",
+        "summary": "The package does not require external media services at runtime."
+      },
+      {
+        "gate_id": "reviewed_painted_backdrop_localized",
+        "status": "passed",
+        "summary": "The painted backdrop was copied to local package media, resized to canvas, checksummed, and referenced without external URLs."
+      }
+    ]
+  }
+}

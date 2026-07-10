@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_JS = ROOT / "frontend/app.js"
+RUNTIME_DIR = ROOT / "frontend/runtime"
 README = ROOT / "frontend/README.md"
 
 
@@ -23,6 +24,13 @@ def read(path: Path) -> str:
 
 def validate() -> list[str]:
     app = read(APP_JS)
+    frontend = "\n".join(
+        [app]
+        + [
+            read(module)
+            for module in sorted(RUNTIME_DIR.glob("*.js"))
+        ]
+    )
     readme = read(README)
     errors: list[str] = []
 
@@ -32,14 +40,14 @@ def validate() -> list[str]:
         "function currentNodeId()",
         "function requestNextPrefetch()",
         "function enterCurrentNode()",
-        "static_fallback_route",
+        "static_mvp_three_battle_route",
         "sessionApiPath(`/nodes/${nodeId}/briefing`)",
         "sessionApiPath(`/battles/${nodeId}/config`)",
-        "sessionApiPath(`/battles/${currentNodeId()}/results`)",
+        "sessionApiPath(`/battles/${finishedNodeId}/results`)",
     ]
     for fragment in required_app_fragments:
-        if fragment not in app:
-            errors.append(f"frontend/app.js missing router contract fragment: {fragment}")
+        if fragment not in frontend:
+            errors.append(f"frontend app/runtime missing router contract fragment: {fragment}")
 
     forbidden_app_fragments = [
         "sessionApiPath(`/nodes/${NODE_ID}/briefing`)",
@@ -48,13 +56,13 @@ def validate() -> list[str]:
         "selected.stable_internal_id === NODE_ID ?",
     ]
     for fragment in forbidden_app_fragments:
-        if fragment in app:
-            errors.append(f"frontend/app.js still hardcodes API node route: {fragment}")
+        if fragment in frontend:
+            errors.append(f"frontend app/runtime still hardcodes API node route: {fragment}")
 
     required_readme_fragments = [
         "/api/sessions/{session_id}/campaign-router",
         "/api/sessions/{session_id}/campaign-router/prefetch-next",
-        "静态模式仍固定使用灰灯驿站首战作为可玩兜底",
+        "静态模式使用同一套节点资源组织三关 MVP 短流程",
     ]
     for fragment in required_readme_fragments:
         if fragment not in readme:
@@ -73,7 +81,7 @@ def main() -> int:
     print("OK campaign router frontend contract")
     print("- API mode consumes campaign-router current/next node")
     print("- prefetch-next is wired as fire-and-forget")
-    print("- static first-battle fallback remains documented")
+    print("- static three-battle MVP route remains documented")
     return 0
 
 

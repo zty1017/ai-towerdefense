@@ -27,6 +27,7 @@ _SESSION_SCOPED_TABLES = (
     "generation_schedule_worker_cache",
     "generation_schedule_queue_items",
     "generation_schedule_runs",
+    "runtime_activations",
     "research_jobs",
     "research_proposals",
     "studio_logs",

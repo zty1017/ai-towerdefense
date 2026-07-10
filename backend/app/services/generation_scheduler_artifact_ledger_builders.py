@@ -134,6 +134,24 @@ def compact_provider_artifact_promotion_report(
     reviewed = report.get("reviewed_artifacts", [])
     if not isinstance(reviewed, list):
         reviewed = []
+
+    def compact_local_refs(value: Any) -> list[dict[str, Any]]:
+        refs = value if isinstance(value, list) else []
+        return [
+            {
+                "path": ref.get("path"),
+                "kind": ref.get("kind"),
+                "sha256": ref.get("sha256"),
+            }
+            for ref in refs
+            if isinstance(ref, dict)
+        ]
+
+    runtime_package_refs = compact_local_refs(targets.get("runtime_package_refs"))
+    world_transaction_refs = compact_local_refs(
+        targets.get("world_transaction_refs")
+    )
+    published_media_refs = compact_local_refs(targets.get("published_media_refs"))
     return {
         "schema_version": report.get("schema_version"),
         "report_id": report.get("report_id"),
@@ -151,21 +169,12 @@ def compact_provider_artifact_promotion_report(
         },
         "promotion_targets": {
             "target_kind": targets.get("target_kind"),
-            "runtime_package_ref_count": len(
-                targets.get("runtime_package_refs", [])
-                if isinstance(targets.get("runtime_package_refs"), list)
-                else []
-            ),
-            "world_transaction_ref_count": len(
-                targets.get("world_transaction_refs", [])
-                if isinstance(targets.get("world_transaction_refs"), list)
-                else []
-            ),
-            "published_media_ref_count": len(
-                targets.get("published_media_refs", [])
-                if isinstance(targets.get("published_media_refs"), list)
-                else []
-            ),
+            "runtime_package_refs": runtime_package_refs,
+            "world_transaction_refs": world_transaction_refs,
+            "published_media_refs": published_media_refs,
+            "runtime_package_ref_count": len(runtime_package_refs),
+            "world_transaction_ref_count": len(world_transaction_refs),
+            "published_media_ref_count": len(published_media_refs),
         },
         "safety_summary": {
             "provider_call_count_by_report": safety.get("provider_call_count_by_report"),
@@ -176,6 +185,7 @@ def compact_provider_artifact_promotion_report(
             "stores_prompt_body": safety.get("stores_prompt_body"),
             "stores_provider_body": safety.get("stores_provider_body"),
             "stores_sensitive_value": safety.get("stores_secret"),
+            "stores_secret": safety.get("stores_secret"),
             "uses_temporary_url": safety.get("uses_temporary_url"),
         },
     }

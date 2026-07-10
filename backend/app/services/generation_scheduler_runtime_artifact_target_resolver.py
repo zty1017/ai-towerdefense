@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,9 @@ _RUNTIME_PACKAGE_PATHS = {
     ),
     "mvp_wick_store_pressure": (
         "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json"
+    ),
+    "provider_promotion_sample": (
+        "examples/runtime_packages/provider_promotion_sample.runtime_package.json"
     ),
 }
 _MAP_RUNTIME_PACKAGE_PATHS = {
@@ -88,6 +92,14 @@ def _load_json_object_if_exists(path: Path) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _json_artifact_ref(
     *,
     ref_kind: str,
@@ -114,6 +126,7 @@ def _json_artifact_ref(
         "path": _repo_relative(path, repo_root),
         "schema_version": schema_version,
         "node_id": node_id,
+        "sha256": _sha256_file(path) if payload is not None else None,
         "status": status if payload is not None else "missing_reference",
     }
 

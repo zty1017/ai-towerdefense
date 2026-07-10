@@ -47,6 +47,7 @@ backend/
       frontend_mock.py
     services/
       research_service.py
+      runtime_activation_service.py
       frontend_mock_service.py
   tests/
     conftest.py
@@ -109,6 +110,10 @@ uvicorn app.main:app --app-dir backend --reload
 | POST | `/api/sessions/{session_id}/research/proposals` | Create a fixture-backed research proposal |
 | POST | `/api/sessions/{session_id}/research/proposals/{proposal_id}/confirm` | Confirm proposal and run deterministic workflows |
 | GET | `/api/sessions/{session_id}/research/jobs/{job_id}` | Read research job |
+| POST | `/api/sessions/{session_id}/research/jobs/{job_id}/activate` | Validate and apply a compiled battle-object patch to this session |
+| POST | `/api/sessions/{session_id}/generation-schedule/workers/apply-runtime-activation` | 校验 Scheduler 授权证据链并显式激活一个战斗运行包 |
+| GET | `/api/sessions/{session_id}/runtime/activations` | List session runtime activation receipts |
+| POST | `/api/sessions/{session_id}/runtime/activations/{activation_id}/rollback` | Roll back one session runtime patch |
 
 ### 前端 Mock
 
@@ -132,6 +137,7 @@ uvicorn app.main:app --app-dir backend --reload
 | POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback` | Select static fallback for a failed/review-blocked item |
 | POST | `/api/sessions/{session_id}/generation-schedule/workers/dry-run-step` | Process one queued scheduler item without providers |
 | POST | `/api/sessions/{session_id}/generation-schedule/workers/live-executor-guard` | Record a blocked live-provider intent without providers |
+| GET | `/api/sessions/{session_id}/runtime/feature-snapshots` | Read activated player-safe page projections; optional `node_id` narrows node-scoped contributions |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/config` | Read battle config and toolbar assets |

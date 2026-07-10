@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/battle_object_capability.v0.1.schema.json",
+  "title": "BattleObjectCapability v0.1",
+  "description": "Runtime-safe executable subset for one activated battle object. The browser interprets this declarative ABI and never executes generated code.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "object_id",
+    "display_name",
+    "asset_kind",
+    "lifecycle",
+    "behavior_abi"
+  ],
+  "properties": {
+    "schema_version": { "const": "battle_object_capability.v0.1" },
+    "object_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+    "display_name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "asset_kind": {
+      "type": "string",
+      "enum": ["tower_blueprint", "temporary_trap_sample", "support_item", "field_device"]
+    },
+    "tool_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,96}$" },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deployable", "upgradeable", "stacking", "expires"],
+      "properties": {
+        "deployable": { "type": "boolean" },
+        "upgradeable": { "type": "boolean" },
+        "stacking": {
+          "type": "string",
+          "enum": ["single_per_slot", "limited_charges", "charges", "replace_existing"]
+        },
+        "expires": { "type": "boolean" },
+        "max_uses": { "type": "integer", "minimum": 1, "maximum": 99 }
+      }
+    },
+    "behavior_abi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "placement",
+        "cost",
+        "cooldown",
+        "targeting",
+        "effect_blocks",
+        "ui_surfaces",
+        "simulation_hooks"
+      ],
+      "properties": {
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "slot_source"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["build_slot", "path_adjacent_or_slot", "free_point", "path_area", "area_point"]
+            },
+            "slot_source": { "type": "string", "enum": ["map_runtime_package.build_slots", "battle_canvas"] },
+            "required_tags": {
+              "type": "array",
+              "maxItems": 8,
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,64}$" }
+            },
+            "allowed_area": { "type": "string", "enum": ["visible_battlefield", "path_adjacent", "build_slots"] }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["resource", "amount"],
+          "properties": {
+            "resource": { "type": "string", "enum": ["materials", "light", "power", "electricity"] },
+            "amount": { "type": "number", "minimum": 0, "maximum": 999 }
+          }
+        },
+        "cooldown": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["milliseconds"],
+          "properties": {
+            "milliseconds": { "type": "integer", "minimum": 0, "maximum": 120000 }
+          }
+        },
+        "targeting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["nearest_path_enemy", "path_area", "area_point", "none"] },
+            "range_cells": { "type": "number", "minimum": 0.3, "maximum": 8 },
+            "radius_cells": { "type": "number", "minimum": 0.3, "maximum": 8 },
+            "line_of_sight": { "type": "boolean" }
+          }
+        },
+        "effect_blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/effect_block" }
+        },
+        "ui_surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["battle_hotbar", "battle_tooltip", "slot_inspector"] }
+        },
+        "simulation_hooks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["on_place", "on_attack_tick", "on_wave_end", "on_enemy_enter_radius", "on_tick", "on_expire", "on_use"]
+          }
+        },
+        "active_duration_ms": { "type": "integer", "minimum": 0, "maximum": 15000 }
+      }
+    },
+    "media_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": { "$ref": "#/$defs/icon_ref" },
+        "sprite": { "$ref": "#/$defs/sprite_ref" }
+      },
+      "minProperties": 1
+    },
+    "source_runtime_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_id", "package_sha256", "activation_id"],
+      "properties": {
+        "package_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "package_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "activation_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,160}$" }
+      }
+    }
+  },
+  "$defs": {
+    "effect_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_id", "kind"],
+      "properties": {
+        "effect_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "kind": { "type": "string", "enum": ["damage", "slow", "aura", "reveal"] },
+        "amount": { "type": "number", "minimum": 0, "maximum": 320 },
+        "damage_type": { "type": "string", "enum": ["light", "physical", "arcane"] },
+        "duration_ms": { "type": "integer", "minimum": 0, "maximum": 15000 },
+        "strength": { "type": "number", "minimum": 0, "maximum": 1 },
+        "radius_cells": { "type": "number", "minimum": 0.3, "maximum": 8 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "damage" } } },
+          "then": { "required": ["amount", "damage_type"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "slow" } } },
+          "then": { "required": ["duration_ms", "strength"] }
+        }
+      ]
+    },
+    "icon_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "width", "height", "sha256"],
+      "properties": {
+        "url": { "type": "string", "pattern": "^/assets/" },
+        "width": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "sprite_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["texture_key", "image"],
+      "properties": {
+        "texture_key": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,160}$" },
+        "atlas": { "type": "string", "pattern": "^/assets/" },
+        "image": { "type": "string", "pattern": "^/assets/" }
+      }
+    }
+  }
+}

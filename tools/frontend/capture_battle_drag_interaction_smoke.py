@@ -2,9 +2,9 @@
 """Capture a browser smoke report for battle drag deployment.
 
 The smoke opens the no-build frontend in battle smoke mode and performs the
-player-facing gesture: drag the basic tool card onto a valid battlefield slot
-and release. It writes a structured report plus after-drag screenshots. No
-providers, .env files, world mutations, or runtime activation are involved.
+player-facing gesture: drag a requested tool card onto a valid battlefield
+slot and release. It writes a structured report plus after-drag screenshots.
+No providers, .env files, world mutations, or runtime activation are involved.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from tools.frontend.capture_frontend_flow_visual_smoke import (  # noqa: E402
     launch_browser,
     parse_viewports,
     start_static_server,
-    wait_for_http_json,
+    wait_for_devtools_page,
 )
 
 
@@ -63,6 +63,7 @@ def js_tool_center(tool: str) -> str:
   const tool = {json.dumps(tool)};
   const el = document.querySelector(`.toolbar-card[data-tool="${{tool}}"]`);
   if (!el) return {{ ok: false, error: "tool card not found", tool }};
+  el.scrollIntoView({{ block: "nearest", inline: "nearest" }});
   const rect = el.getBoundingClientRect();
   return {{
     ok: true,
@@ -168,12 +169,20 @@ def int_value(value: Any) -> int:
         return 0
 
 
-def interaction_passed(before: dict[str, Any], after: dict[str, Any]) -> bool:
-    return (
-        int_value(after.get("defensesCount")) > int_value(before.get("defensesCount"))
-        and int_value(after.get("basicUses")) < int_value(before.get("basicUses"))
-        and int_value(after.get("resources")) < int_value(before.get("resources"))
+def interaction_passed(before: dict[str, Any], after: dict[str, Any], tool: str) -> bool:
+    entity_count_before = sum(
+        int_value(before.get(field)) for field in ("defensesCount", "trapsCount", "effectsCount")
     )
+    entity_count_after = sum(
+        int_value(after.get(field)) for field in ("defensesCount", "trapsCount", "effectsCount")
+    )
+    resource_spent = (
+        int_value(after.get("resources")) < int_value(before.get("resources"))
+        or int_value(after.get("power")) < int_value(before.get("power"))
+    )
+    deployed = int_value(after.get("deployedAssetCount")) > int_value(before.get("deployedAssetCount"))
+    default_use_spent = tool != "basic" or int_value(after.get("basicUses")) < int_value(before.get("basicUses"))
+    return entity_count_after > entity_count_before and resource_spent and deployed and default_use_spent
 
 
 def run_drag_for_viewport(
@@ -193,12 +202,8 @@ def run_drag_for_viewport(
         proc = launch_browser(browser, remote_port, Path(tmp))
         cdp: CDPClient | None = None
         try:
-            tabs = wait_for_http_json(remote_port, "/json/list", timeout=timeout)
-            if not isinstance(tabs, list) or not tabs:
-                raise DevToolsProtocolError("No DevTools page target found")
-            websocket_url = tabs[0].get("webSocketDebuggerUrl")
-            if not websocket_url:
-                raise DevToolsProtocolError("Missing page WebSocket URL")
+            tab = wait_for_devtools_page(remote_port, timeout=timeout)
+            websocket_url = tab.get("webSocketDebuggerUrl")
             cdp = CDPClient(websocket_url)
             cdp.call("Page.enable")
             cdp.call("Runtime.enable")
@@ -213,7 +218,8 @@ def run_drag_for_viewport(
             )
             url = smoke_url(static_port, node_id)
             cdp.call("Page.navigate", {"url": url})
-            wait_result = cdp.eval(js_wait_selector(".toolbar-card[data-tool='basic']", 9000), timeout_ms=10000)
+            selector = f'.toolbar-card[data-tool="{tool}"]'
+            wait_result = cdp.eval(js_wait_selector(selector, 9000), timeout_ms=10000)
             if not as_obj(wait_result).get("ok"):
                 raise DevToolsProtocolError(f"Battle toolbar did not mount: {wait_result}")
             time.sleep(0.4)
@@ -227,9 +233,10 @@ def run_drag_for_viewport(
             dispatch_drag(cdp, source, target)
             time.sleep(0.45)
             after = as_obj(cdp.eval(js_probe_snapshot(tool), timeout_ms=3000))
-            screenshot_path = output_dir / f"battle_drag_interaction_{node_id}_{viewport_id}.png"
+            safe_tool = "".join(char if char.isalnum() or char in "_-" else "_" for char in tool)
+            screenshot_path = output_dir / f"battle_drag_interaction_{node_id}_{safe_tool}_{viewport_id}.png"
             screenshot = capture_screenshot(cdp, screenshot_path)
-            passed = interaction_passed(before, after)
+            passed = interaction_passed(before, after, tool)
             return {
                 "node_id": node_id,
                 "viewport_id": viewport_id,
@@ -353,7 +360,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--allow-missing-browser", action="store_true")
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--node-id", default=DEFAULT_NODE_ID)
-    parser.add_argument("--tool", default="basic", choices=["basic"])
+    parser.add_argument("--tool", default="basic", help="Projected battle toolbar tool id to drag.")
     parser.add_argument(
         "--viewport",
         action="append",

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/frontend_surface_contribution.v0.1.schema.json",
+  "title": "FrontendSurfaceContribution v0.1",
+  "description": "Player-safe declarative content projected from an explicitly activated runtime bundle. It cannot carry executable presentation code.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contribution_id",
+    "feature_id",
+    "surface",
+    "kind",
+    "slot",
+    "priority",
+    "visibility",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "const": "frontend_surface_contribution.v0.1" },
+    "contribution_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+    "feature_id": {
+      "type": "string",
+      "enum": ["strategic_map", "workshop", "narrative", "settlement"]
+    },
+    "surface": {
+      "type": "string",
+      "enum": ["strategic_map", "prototype_workshop", "dialogue_modal", "settlement_panel"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "objective_card",
+        "node_participant",
+        "node_badge",
+        "map_notice",
+        "proposal_hint",
+        "participant_notice",
+        "material_notice",
+        "narrative_beat",
+        "settlement_note"
+      ]
+    },
+    "slot": {
+      "type": "string",
+      "enum": [
+        "objective_overlay",
+        "node_panel",
+        "node_marker",
+        "proposal_panel",
+        "participant_panel",
+        "material_panel",
+        "dialogue_queue",
+        "result_summary",
+        "world_delta"
+      ]
+    },
+    "priority": { "type": "integer", "minimum": -1000, "maximum": 1000 },
+    "visibility": { "const": "player_visible" },
+    "target_node_id": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+    "source_refs": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9_./:-]{1,240}$" },
+      "uniqueItems": true
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "maxLength": 120 },
+        "summary": { "type": "string", "maxLength": 600 },
+        "status": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,64}$" },
+        "node_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "npc_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "display_name": { "type": "string", "maxLength": 120 },
+        "gameplay_roles": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+          "uniqueItems": true
+        },
+        "label": { "type": "string", "maxLength": 48 },
+        "tone": { "type": "string", "enum": ["neutral", "positive", "warning", "danger", "mystery"] },
+        "severity": { "type": "string", "enum": ["info", "notice", "warning", "critical"] },
+        "material_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "quantity": { "type": "number", "minimum": 0, "maximum": 999999 },
+        "beat_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "speaker_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "speaker_name": { "type": "string", "maxLength": 120 },
+        "portrait_asset_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" },
+        "text": { "type": "string", "maxLength": 1200 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "objective_card" } } },
+      "then": {
+        "properties": { "feature_id": { "const": "strategic_map" }, "surface": { "const": "strategic_map" }, "slot": { "const": "objective_overlay" }, "payload": { "required": ["title", "summary"] } }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "node_participant" } } },
+      "then": {
+        "properties": { "feature_id": { "const": "strategic_map" }, "surface": { "const": "strategic_map" }, "slot": { "const": "node_panel" }, "payload": { "required": ["npc_id", "display_name", "summary", "node_id"] } }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "node_badge" } } },
+      "then": {
+        "properties": { "feature_id": { "const": "strategic_map" }, "surface": { "const": "strategic_map" }, "slot": { "enum": ["node_marker", "node_panel"] }, "payload": { "required": ["node_id", "label", "tone"] } }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "map_notice" } } },
+      "then": {
+        "properties": { "feature_id": { "const": "strategic_map" }, "surface": { "const": "strategic_map" }, "slot": { "enum": ["objective_overlay", "node_panel"] }, "payload": { "required": ["title", "summary", "severity", "node_id"] } }
+      }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "proposal_hint" } } },
+      "then": { "properties": { "feature_id": { "const": "workshop" }, "surface": { "const": "prototype_workshop" }, "slot": { "const": "proposal_panel" }, "payload": { "required": ["title", "summary", "node_id"] } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "participant_notice" } } },
+      "then": { "properties": { "feature_id": { "const": "workshop" }, "surface": { "const": "prototype_workshop" }, "slot": { "const": "participant_panel" }, "payload": { "required": ["npc_id", "display_name", "summary", "node_id"] } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "material_notice" } } },
+      "then": { "properties": { "feature_id": { "const": "workshop" }, "surface": { "const": "prototype_workshop" }, "slot": { "const": "material_panel" }, "payload": { "required": ["material_id", "display_name", "summary", "quantity"] } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "narrative_beat" } } },
+      "then": { "properties": { "feature_id": { "const": "narrative" }, "surface": { "const": "dialogue_modal" }, "slot": { "const": "dialogue_queue" }, "payload": { "required": ["beat_id", "text"] } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "settlement_note" } } },
+      "then": { "properties": { "feature_id": { "const": "settlement" }, "surface": { "const": "settlement_panel" }, "slot": { "enum": ["result_summary", "world_delta"] }, "payload": { "required": ["title", "summary", "node_id"] } } }
+    }
+  ]
+}

@@ -449,38 +449,313 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(260px, 0.55fr) minmax(560px, 1.45fr) minmax(260px, 0.62fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
+}
+
+.map-screen {
+  padding: 14px 18px 18px;
+}
+
+.map-screen .screen-header {
+  max-width: min(1540px, calc(100vw - 36px));
+  margin-bottom: 10px;
+  align-items: end;
+}
+
+.map-screen .screen-title {
+  font-size: clamp(1.7rem, 2.45vw, 3rem);
+}
+
+.map-screen .screen-subtitle {
+  max-width: 900px;
+  margin-top: 6px;
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.map-screen .map-layout {
+  display: block;
+  max-width: min(1540px, calc(100vw - 36px));
+}
+
+.strategic-map-stage {
+  position: relative;
+  width: min(100%, calc((100vh - 126px) * 16 / 9));
+  min-width: 0;
+  margin: 0 auto;
 }
 
 .strategic-map {
-  min-height: 620px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  min-width: 0;
+  border: 1px solid rgba(230, 204, 132, 0.24);
+  border-radius: 8px;
   background:
-    radial-gradient(circle at 32% 48%, rgba(240, 189, 88, 0.16), transparent 13rem),
-    linear-gradient(140deg, rgba(40, 44, 32, 0.9), rgba(10, 14, 15, 0.94));
+    radial-gradient(circle at 32% 48%, rgba(240, 189, 88, 0.14), transparent 15rem),
+    linear-gradient(140deg, rgba(20, 26, 22, 0.94), rgba(5, 8, 8, 0.98));
   overflow: hidden;
   position: relative;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px rgba(255, 235, 170, 0.055),
+    inset 0 -56px 90px rgba(0, 0, 0, 0.36);
+}
+
+.strategic-map.is-dragging {
+  cursor: grabbing;
+}
+
+.map-screen .strategic-map {
+  width: 100%;
 }
 
 .strategic-map svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
 }
 
+.strategic-map-backdrop {
+  opacity: 1;
+}
+
+.map-camera-controls {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 5px;
+  border: 1px solid rgba(242, 205, 130, 0.20);
+  border-radius: 999px;
+  background: rgba(5, 8, 7, 0.58);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(8px) saturate(1.04);
+}
+
+.map-camera-button {
+  min-width: 34px;
+  min-height: 30px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(17, 21, 17, 0.74);
+  box-shadow: none;
+}
+
+.map-camera-button--reset {
+  min-width: 46px;
+  font-size: 0.82rem;
+}
+
+.map-camera-readout {
+  min-width: 46px;
+  text-align: center;
+  color: #efe2c3;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.map-overlay {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  width: min(292px, 25%);
+  max-height: calc(100% - 28px);
+  overflow: auto;
+  padding: 13px;
+  background: rgba(8, 12, 10, 0.58);
+  border-color: rgba(242, 205, 130, 0.20);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(7px) saturate(1.05);
+}
+
+.map-overlay--objectives {
+  left: 14px;
+}
+
+.map-overlay--node {
+  right: 14px;
+}
+
+.map-overlay .panel-title {
+  margin-bottom: 8px;
+}
+
+.map-overlay .event-list {
+  gap: 8px;
+}
+
+.map-overlay .event-item {
+  padding: 8px 9px;
+  background: rgba(4, 7, 6, 0.42);
+}
+
+.map-overlay .panel-text {
+  line-height: 1.5;
+}
+
+.map-overlay .screen-actions {
+  margin-top: 10px;
+}
+
+.map-overlay .screen-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.map-next-list {
+  margin-top: 10px;
+}
+
+.map-supply-shadow,
+.map-supply-line,
+.map-supply-glint,
+.map-supply-dots {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-supply-shadow {
+  stroke: rgba(0, 0, 0, 0.30);
+  stroke-width: 9px;
+}
+
+.map-supply-line {
+  stroke: rgba(198, 137, 66, 0.30);
+  stroke-width: 3px;
+}
+
+.map-supply-glint {
+  stroke: rgba(255, 224, 142, 0.18);
+  stroke-width: 1px;
+}
+
+.map-supply-dots {
+  stroke: rgba(230, 179, 95, 0.42);
+  stroke-width: 3px;
+  stroke-dasharray: 0.5 20;
+  stroke-linecap: round;
+}
+
+.map-dark-region {
+  fill: rgba(2, 5, 7, 0.30);
+  stroke: none;
+}
+
+.map-threat-edge {
+  pointer-events: none;
+  opacity: 0.68;
+}
+
+.map-threat-fog {
+  filter: url(#strategicThreatBlur);
+}
+
+.map-threat-fog--outer {
+  fill: rgba(8, 9, 12, 0.42);
+  stroke: none;
+}
+
+.map-threat-fog--inner {
+  fill: rgba(45, 18, 14, 0.20);
+  stroke: none;
+}
+
+.map-threat-ash {
+  fill: rgba(117, 78, 58, 0.16);
+}
+
 .map-node {
   cursor: pointer;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.32));
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.36));
+  transition: filter 0.18s ease;
+}
+
+.map-node:hover {
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, 0.42))
+    drop-shadow(0 0 10px rgba(240, 189, 88, 0.24));
 }
 
 .map-node text {
   pointer-events: none;
-  font-size: 18px;
+  font-size: 15px;
   fill: #f6edda;
   paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.72);
-  stroke-width: 4px;
+  stroke: rgba(0, 0, 0, 0.62);
+  stroke-width: 2.4px;
+}
+
+.map-node-pulse {
+  stroke-width: 2px;
+  opacity: 0.42;
+}
+
+.strategic-node-marker {
+  pointer-events: none;
+}
+
+.node-ground {
+  fill: rgba(0, 0, 0, 0.34);
+}
+
+.node-halo {
+  opacity: 0.10;
+}
+
+.node-ring {
+  fill: rgba(6, 9, 8, 0.62);
+  stroke-width: 2px;
+  stroke-opacity: 0.76;
+}
+
+.node-core {
+  opacity: 0.22;
+}
+
+.node-symbol,
+.node-alert {
+  fill: none;
+  stroke: rgba(255, 242, 205, 0.86);
+  stroke-width: 2.1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.node-alert {
+  stroke-opacity: 0.55;
+}
+
+.node-flame,
+.node-symbol-fill {
+  fill: rgba(255, 239, 188, 0.88);
+}
+
+.map-node-label text {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.map-node-label path,
+.map-node-tick {
+  fill: none;
+  stroke-opacity: 0.28;
+  stroke-width: 1.3px;
+  stroke-linecap: round;
 }
 
 .event-list,
@@ -629,11 +904,11 @@ button:disabled {
 .battle-top {
   position: absolute;
   z-index: 5;
-  top: 10px;
-  left: 12px;
-  right: 12px;
+  top: 8px;
+  left: 10px;
+  right: 10px;
   display: grid;
-  grid-template-columns: minmax(210px, 0.95fr) minmax(320px, 1.5fr) minmax(154px, 0.75fr);
+  grid-template-columns: minmax(200px, 0.92fr) minmax(300px, 1.38fr) minmax(144px, 0.65fr);
   gap: 8px;
   pointer-events: none;
 }
@@ -643,8 +918,8 @@ button:disabled {
 }
 
 .mini-map {
-  width: 72px;
-  height: 72px;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
   border: 2px solid rgba(255, 225, 161, 0.68);
   background:
@@ -667,14 +942,14 @@ button:disabled {
 .battle-tools {
   border: 1px solid rgba(242, 205, 130, 0.2);
   border-radius: var(--radius);
-  background: rgba(8, 10, 9, 0.42);
+  background: rgba(8, 10, 9, 0.36);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(8px) saturate(1.03);
 }
 
 .top-stat {
-  min-width: 94px;
-  padding: 6px 9px;
+  min-width: 90px;
+  padding: 5px 8px;
 }
 
 .top-stat span {
@@ -703,22 +978,22 @@ button:disabled {
 .battle-side {
   position: absolute;
   z-index: 4;
-  top: 98px;
-  bottom: 126px;
-  width: 190px;
-  padding: 10px;
+  top: 92px;
+  bottom: 104px;
+  width: 166px;
+  padding: 9px;
   min-height: 0;
   overflow: auto;
-  opacity: 0.76;
+  opacity: 0.64;
 }
 
 .battle-left {
-  left: 14px;
+  left: 10px;
 }
 
 .battle-right {
-  right: 14px;
-  width: 198px;
+  right: 10px;
+  width: 172px;
 }
 
 .battle-stage {
@@ -743,7 +1018,7 @@ button:disabled {
 .battle-toast {
   position: absolute;
   left: 50%;
-  top: 102px;
+  top: 96px;
   transform: translateX(-50%);
   min-width: 220px;
   max-width: 360px;
@@ -761,22 +1036,46 @@ button:disabled {
   z-index: 5;
   left: 50%;
   right: auto;
-  bottom: 12px;
+  bottom: 10px;
   transform: translateX(-50%);
-  width: min(680px, calc(100vw - 28px));
+  width: min(650px, calc(100vw - 24px));
   display: grid;
-  grid-template-columns: repeat(3, minmax(132px, 1fr));
+  grid-template-columns: repeat(3, minmax(122px, 1fr));
   justify-content: center;
-  gap: 9px;
-  padding: 9px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.battle-shell.is-dialogue-open .battle-top,
+.battle-shell.is-dialogue-open .battle-side,
+.battle-shell.is-dialogue-open .battle-tools,
+.battle-shell.is-dialogue-open .battle-toast {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.battle-shell.is-dialogue-open .battle-stage {
+  filter: blur(1.5px) brightness(0.74) saturate(0.82);
+}
+
+#dialogueLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+#dialogueLayer .dialogue-overlay {
+  pointer-events: auto;
 }
 
 .toolbar-card {
   display: grid;
-  grid-template-columns: 48px 1fr;
+  grid-template-columns: 44px 1fr;
   align-items: center;
-  gap: 8px;
-  padding: 7px;
+  gap: 7px;
+  padding: 6px;
   min-width: 0;
   background: linear-gradient(180deg, rgba(30, 31, 22, 0.8), rgba(9, 12, 10, 0.78));
   cursor: grab;
@@ -801,8 +1100,8 @@ button:disabled {
 }
 
 .tool-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
 }
 
 .tool-body {
@@ -856,9 +1155,11 @@ button:disabled {
   inset: 0;
   display: grid;
   grid-template-rows: 1fr auto;
-  background: rgba(0, 0, 0, 0.52);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.72)),
+    rgba(0, 0, 0, 0.38);
   backdrop-filter: blur(2px) saturate(0.75);
-  z-index: 6;
+  z-index: 20;
   padding: 24px;
 }
 
@@ -1011,9 +1312,40 @@ details.evidence-drawer summary {
     grid-template-columns: 1fr;
   }
 
-  .profile-visual,
-  .strategic-map {
+  .profile-visual {
     min-height: 420px;
+  }
+
+  .map-screen {
+    padding: 14px;
+  }
+
+  .map-screen .screen-header,
+  .map-screen .map-layout {
+    max-width: none;
+  }
+
+  .strategic-map-stage {
+    width: 100%;
+  }
+
+  .map-overlay {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    width: 100%;
+    max-height: none;
+    margin-top: 12px;
+  }
+
+  .map-camera-controls {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: max-content;
+    margin: 8px auto 0;
   }
 
   .battle-shell {

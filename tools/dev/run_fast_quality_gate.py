@@ -18,17 +18,25 @@ sys.path.insert(0, str(ROOT))
 
 from tools.dev.command_runner import now_iso
 from tools.dev.fast_quality_gate_contract import (
+    COMMAND_ACTIVATED_RUNTIME_BUNDLE_FIXTURE,
     COMMAND_BATTLE_INTERACTION_CONTRACT,
     COMMAND_BATTLE_VISUAL_CONTRACT,
     COMMAND_CAMPAIGN_ROUTER_FRONTEND_CONTRACT,
     COMMAND_FRONTEND_APP_SYNTAX,
+    COMMAND_FRONTEND_ES_MODULE_IMPORTS,
+    COMMAND_FRONTEND_FEATURE_SNAPSHOT_CONTRACT,
+    COMMAND_FRONTEND_RUNTIME_CONTRACT_MANIFEST,
+    COMMAND_LAYERED_MAP_FRONTEND_CONTRACT,
     COMMAND_MAP_COMPONENT_FRONTEND_CONTRACT,
+    COMMAND_MAP_COMPONENT_MEDIA_PACK,
     COMMAND_MAP_DECORATION_ZONE_POLICY_VALIDATOR,
     COMMAND_MVP_DEMO_READINESS_BUILD,
     COMMAND_MVP_DEMO_READINESS_VALIDATOR_REBUILT_REPORT,
     COMMAND_MVP_DEMO_READINESS_VALIDATOR_REPO_FIXTURE,
     COMMAND_PYTHON_COMPILE_CORE_TOOLS,
     COMMAND_RELEASE_GATE_PROFILE_AUDIT,
+    COMMAND_RUNTIME_MODULES_CONTRACT_TEST,
+    COMMAND_STRATEGIC_MAP_MARKER_FRONTEND_CONTRACT,
     COMMAND_WORKER_ACCEPTANCE_PROFILE_AUDIT,
     COMMAND_WORKER_PROFILE_ENV_ASSIGNMENT_SMOKE,
     FAST_QUALITY_GATE_REPORT_ID,
@@ -78,6 +86,50 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             "command": ["node", "--check", "frontend/app.js"],
         },
         {
+            "name": COMMAND_FRONTEND_ES_MODULE_IMPORTS,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_frontend_es_module_imports.py",
+            ],
+        },
+        {
+            "name": COMMAND_RUNTIME_MODULES_CONTRACT_TEST,
+            "timeout_seconds": 30,
+            "command": [
+                "node",
+                "--test",
+                "tools/frontend/runtime_modules_contract.test.mjs",
+            ],
+        },
+        {
+            "name": COMMAND_FRONTEND_RUNTIME_CONTRACT_MANIFEST,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_frontend_runtime_contract_manifest.py",
+                "frontend/runtime_contract_manifest.v0.1.json",
+            ],
+        },
+        {
+            "name": COMMAND_ACTIVATED_RUNTIME_BUNDLE_FIXTURE,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_activated_runtime_bundle_fixture.py",
+                "examples/frontend_runtime/activated_runtime_bundle.mvp.v0.1.json",
+            ],
+        },
+        {
+            "name": COMMAND_FRONTEND_FEATURE_SNAPSHOT_CONTRACT,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_frontend_feature_snapshots.py",
+                "examples/frontend_runtime/activated_runtime_bundle.mvp.v0.1.json",
+            ],
+        },
+        {
             "name": COMMAND_BATTLE_VISUAL_CONTRACT,
             "timeout_seconds": 20,
             "command": [
@@ -115,6 +167,31 @@ def default_commands(generated_at: str) -> list[dict[str, Any]]:
             "command": [
                 sys.executable,
                 "tools/frontend/validate_map_component_frontend_contract.py",
+            ],
+        },
+        {
+            "name": COMMAND_MAP_COMPONENT_MEDIA_PACK,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/media/validate_map_component_media_pack.py",
+                "game_data/media/map_components/map_component_media_manifest.v0.1.json",
+            ],
+        },
+        {
+            "name": COMMAND_LAYERED_MAP_FRONTEND_CONTRACT,
+            "timeout_seconds": 20,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_layered_map_frontend_contract.py",
+            ],
+        },
+        {
+            "name": COMMAND_STRATEGIC_MAP_MARKER_FRONTEND_CONTRACT,
+            "timeout_seconds": 10,
+            "command": [
+                sys.executable,
+                "tools/frontend/validate_strategic_map_marker_frontend_contract.py",
             ],
         },
         {
