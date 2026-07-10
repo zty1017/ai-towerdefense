@@ -5,6 +5,8 @@ export function createOnboardingFeatureController({
   defaultWorldConfig,
   screenHeader,
   safeText,
+  getProfilePreviewUrl = () => "",
+  getWorldPreviewUrl = () => "",
   navigate,
   renderApp,
 } = {}) {
@@ -26,6 +28,7 @@ export function createOnboardingFeatureController({
   function renderProfile() {
     const state = getState();
     const hasSession = Boolean(state.sessionId || state.profile.sessionId);
+    const previewUrl = getProfilePreviewUrl();
     root.innerHTML = `
       <main class="screen">
         <section class="hero-layout">
@@ -54,7 +57,14 @@ export function createOnboardingFeatureController({
               </button>
             </div>
           </div>
-          <div class="profile-visual" aria-label="余灯中枢远景"></div>
+          <div class="profile-visual" aria-label="余灯中枢远景">
+            ${previewUrl ? `<img src="${safeText(previewUrl)}" alt="余灯中枢与周边前线态势" loading="eager" />` : ""}
+            <div class="profile-visual-caption">
+              <span>前线急报</span>
+              <strong>灰灯驿站信标正在熄灭</strong>
+              <small>建立本局世界后，地图、任务与可研发装置将随局势生长。</small>
+            </div>
+          </div>
         </section>
       </main>
     `;
@@ -65,6 +75,7 @@ export function createOnboardingFeatureController({
     const config = getWorldConfig();
     const creativity = config.creativity_mode || defaultWorldConfig.creativity_mode;
     const origin = config.player_origin || defaultWorldConfig.player_origin;
+    const previewUrl = getWorldPreviewUrl();
     root.innerHTML = `
       <main class="screen">
         ${screenHeader("建立本局档案", "选择本局世界书、画风、创造性与开局身份。", "开局建档")}
@@ -80,10 +91,8 @@ export function createOnboardingFeatureController({
             <p class="panel-text">长夜没有结束，余灯中枢仍在燃烧。第一处危机已经点亮。</p>
           </aside>
           <div class="world-preview" aria-label="画风预览">
-            <span class="signal"></span>
-            <span class="signal"></span>
-            <div class="horizon"></div>
-            <div style="position:absolute;left:18px;bottom:18px;right:18px">
+            ${previewUrl ? `<img src="${safeText(previewUrl)}" alt="当前世界画风下的灰灯驿站战场" loading="eager" />` : ""}
+            <div class="world-preview-caption">
               <div class="eyebrow">画风</div>
               <h2 class="panel-title">${safeText(config.visual_style_display_name || "灯塬旧朝·伪三维")}</h2>
               <p class="panel-text">斜视角战场、暗色地形、暖金灯火与冷色迟滞场。</p>
