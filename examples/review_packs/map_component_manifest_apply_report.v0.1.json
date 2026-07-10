@@ -1,10 +1,10 @@
 {
   "approval_id": "map_component_manifest_apply_approval_plan_v0_1_empty",
-  "created_at": "2026-07-05T00:00:00Z",
+  "created_at": "2026-07-11T00:00:00Z",
   "manifest_sha": {
-    "replacement_manifest_content_sha256_after": "23930309185a5f59a10c606964d5ba0a2f5dfe88b70b672e08b7f79857c9a2e0",
+    "replacement_manifest_content_sha256_after": "1625cf8054d88b7d42b811310576cffa70b0bac01b5f31138ed825ac671d1817",
     "replacement_manifest_file_sha256_after": null,
-    "source_manifest_file_sha256_before": "793ea2cb2bbc83cef982866f6e8fa9787221219dc35fe224c201c01f618b4f83"
+    "source_manifest_file_sha256_before": "39b65f77959d62b3a1f978f163c7f4d7bf1e46fc88c49e77eef255b624dfcf87"
   },
   "output_manifest_path": null,
   "patch_results": [],
