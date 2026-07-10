@@ -73,6 +73,7 @@ FLOW_STEPS = (
         "step_id": "opening",
         "label": "开场叙事",
         "click_selector": "[data-action='begin-world']",
+        "prepare_click_selector": "[data-action='opening-next']",
         "wait_selector": "[data-action='opening-skip']",
     },
     {
@@ -85,6 +86,7 @@ FLOW_STEPS = (
         "step_id": "workshop",
         "label": "现场试作工坊",
         "click_selector": "[data-action='enter-node']",
+        "prepare_click_selector": "[data-action='proposal-refresh']",
         "wait_selector": "[data-action='confirm-prototype']",
     },
     {
@@ -570,6 +572,21 @@ def run_flow_for_viewport(
                     if not as_obj(click_result).get("ok"):
                         raise DevToolsProtocolError(
                             f"Click failed for {step_id}: {click_result}"
+                        )
+                if step.get("prepare_click_selector"):
+                    prepare_selector = str(step["prepare_click_selector"])
+                    prepare_wait = cdp.eval(
+                        js_wait_selector(prepare_selector, 9000),
+                        timeout_ms=10000,
+                    )
+                    if not as_obj(prepare_wait).get("ok"):
+                        raise DevToolsProtocolError(
+                            f"Prepare selector unavailable for {step_id}: {prepare_wait}"
+                        )
+                    prepare_click = cdp.eval(js_click(prepare_selector))
+                    if not as_obj(prepare_click).get("ok"):
+                        raise DevToolsProtocolError(
+                            f"Prepare click failed for {step_id}: {prepare_click}"
                         )
                 wait_selector = str(step["wait_selector"])
                 wait_timeout_ms = int(step.get("wait_timeout_ms") or 7000)

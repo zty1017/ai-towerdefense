@@ -1555,6 +1555,7 @@ test("page feature controllers project injected runtime state without browser gl
     defaultWorldConfig: {},
     screenHeader: (title) => `<header>${title}</header>`,
     safeText,
+    getOpeningSceneUrl: () => "/opening-map.png",
     navigate: (view) => navigations.push(view),
     renderApp: () => {},
   });
@@ -1565,9 +1566,32 @@ test("page feature controllers project injected runtime state without browser gl
   assert.match(root.innerHTML, /option-button is-selected/);
   onboarding.renderOpening();
   assert.match(root.innerHTML, /长夜未尽/);
+  state.data.opening = {
+    segments: [
+      {
+        kind: "animated_card",
+        display_name: "远景",
+        narration: "灯火正在远处熄灭。",
+        visual: { scene: "distant_map" },
+      },
+    ],
+  };
+  onboarding.renderOpening();
+  assert.match(root.innerHTML, /opening-map\.png/);
+  assert.match(root.innerHTML, /灯火正在远处熄灭/);
   assert.deepEqual(navigations, []);
 
   const workshopRoot = {};
+  let workshopContributions = [
+    {
+      kind: "proposal_hint",
+      payload: { title: "编译后的回光棱镜", summary: "让旧塔回光形成短时迟滞。" },
+    },
+    {
+      kind: "participant_notice",
+      payload: { display_name: "巡灯使", summary: "可校准回光角度。" },
+    },
+  ];
   const workshop = createWorkshopFeatureController({
     root: workshopRoot,
     getState: () => state,
@@ -1586,22 +1610,18 @@ test("page feature controllers project injected runtime state without browser gl
     npcPortraitUrl: () => "/npc.png",
     sampleIconUrl: () => "/sample.png",
     materialName: () => "辉晶",
-    getSurfaceContributions: () => [
-      {
-        kind: "proposal_hint",
-        payload: { title: "编译后的回光棱镜", summary: "让旧塔回光形成短时迟滞。" },
-      },
-      {
-        kind: "participant_notice",
-        payload: { display_name: "巡灯使", summary: "可校准回光角度。" },
-      },
-    ],
+    getSurfaceContributions: () => workshopContributions,
   });
   assert.equal(workshop.currentProposal().name, "编译后的回光棱镜");
   workshop.renderWorkshop();
   assert.match(workshopRoot.innerHTML, /把辉晶做成减速灯塔/);
   assert.match(workshopRoot.innerHTML, /旧信号塔应急改造间/);
   assert.match(workshopRoot.innerHTML, /巡灯使/);
+  state.research = { status: "idle", proposal: null };
+  workshopContributions = [];
+  workshop.renderWorkshop();
+  assert.match(workshopRoot.innerHTML, /尚未形成方案/);
+  assert.doesNotMatch(workshopRoot.innerHTML, /sample\.png/);
 
   const settlementRoot = {};
   const settlement = createSettlementFeatureController({

@@ -279,6 +279,10 @@ import {
     getProfilePreviewUrl: () =>
       resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png"),
     getWorldPreviewUrl: () => mediaCatalog.layeredMapVisualUrl("composited"),
+    getOpeningSceneUrl: (scene) =>
+      scene === "player_awakening"
+        ? mediaCatalog.layeredMapVisualUrl("composited")
+        : resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png"),
     navigate: (view) => setPlayerView(view),
     renderApp: () => render(),
   });
@@ -993,7 +997,8 @@ import {
 
   function sampleIconUrl() {
     const sample = state.data.sampleDeliveryAsset;
-    const sampleId = sample ? sample.stable_internal_id : "asset_mirror_lure_trap_001";
+    if (!sample) return "";
+    const sampleId = sample.stable_internal_id;
     return mediaUrl(sampleId, "icon", false) || mediaUrl(sampleId, "ui_card", false);
   }
 
