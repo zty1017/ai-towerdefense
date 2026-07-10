@@ -134,6 +134,11 @@ def runtime_activation_expression() -> str:
           activationId: receipt.activation_id,
           objectId,
           displayName: object.display_name,
+          assetKind: object.asset_kind,
+          toolId: object.tool_id || null,
+          placementMode: object.behavior_abi && object.behavior_abi.placement
+            ? object.behavior_abi.placement.mode
+            : null,
           behaviorGate: receipt.validation.behavior_abi.status,
           mediaGate: receipt.validation.media.status,
         };
@@ -141,7 +146,9 @@ def runtime_activation_expression() -> str:
     """
 
 
-def run_smoke(browser: str, output_dir: Path, timeout: int) -> dict[str, Any]:
+def run_smoke(
+    browser: str, output_dir: Path, timeout: int, intent_text: str
+) -> dict[str, Any]:
     backend_port = choose_port()
     remote_port = choose_port()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -176,6 +183,20 @@ def run_smoke(browser: str, output_dir: Path, timeout: int) -> dict[str, Any]:
             click_and_wait(cdp, "[data-action='begin-world']", "[data-action='opening-skip']")
             click_and_wait(cdp, "[data-action='opening-skip']", "[data-action='enter-node']")
             click_and_wait(cdp, "[data-action='enter-node']", "[data-action='proposal-refresh']")
+
+            intent_result = cdp.eval(
+                f"""
+                (() => {{
+                  const input = document.querySelector('.workshop-input');
+                  if (!input) return {{ ok: false }};
+                  input.value = {json.dumps(intent_text, ensure_ascii=False)};
+                  input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                  return {{ ok: true, value: input.value }};
+                }})()
+                """
+            )
+            if not isinstance(intent_result, dict) or intent_result.get("ok") is not True:
+                raise RuntimeError("workshop intent input was unavailable")
 
             participant_visible = wait_for_condition(
                 cdp,
@@ -239,6 +260,7 @@ def run_smoke(browser: str, output_dir: Path, timeout: int) -> dict[str, Any]:
             return {
                 "status": "passed",
                 "checks": {
+                    "intent_text": intent_text,
                     "workshop_participant_projection_visible": participant_visible is True,
                     "workshop_proposal_projection": workshop_snapshot,
                     "runtime_activation_projection": activation_snapshot,
@@ -266,6 +288,11 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--browser-bin")
     parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument(
+        "--intent",
+        default="我想做一个能拖慢影潮的临时装置。",
+        help="Player intent entered in the workshop before proposal generation.",
+    )
     args = parser.parse_args()
     browser = find_browser(args.browser_bin)
     report: dict[str, Any] = {
@@ -285,7 +312,7 @@ def main() -> int:
     try:
         if not browser:
             raise RuntimeError("No Chromium-compatible browser executable found")
-        report.update(run_smoke(browser, args.output_dir, args.timeout))
+        report.update(run_smoke(browser, args.output_dir, args.timeout, args.intent))
     except Exception as exc:  # noqa: BLE001 - write a structured smoke failure.
         report.update(
             {

@@ -88,11 +88,13 @@ function hotbarObjectForTool(tool, bundle) {
   const objects = hotbarObjects(bundle);
   return (
     objects.find(
-      (item) => item && item.object_id === tool.objectId && item.asset_kind === tool.assetKind,
+      (item) =>
+        item &&
+        explicitHotbarId(item) === tool.id &&
+        (item.asset_kind === tool.assetKind || tool.id === "sample"),
     ) ||
     objects.find(
-      (item) =>
-        item && item.asset_kind === tool.assetKind && explicitHotbarId(item) === tool.id,
+      (item) => item && item.object_id === tool.objectId && item.asset_kind === tool.assetKind,
     ) ||
     null
   );
@@ -109,7 +111,15 @@ function explicitHotbarId(object) {
 }
 
 function defaultToolForRuntimeObject(object) {
-  return DEFAULT_TOOL_DEFS.find((tool) => tool.objectId === object.object_id) || null;
+  return (
+    DEFAULT_TOOL_DEFS.find((tool) => tool.objectId === object.object_id) ||
+    DEFAULT_TOOL_DEFS.find(
+      (tool) =>
+        explicitHotbarId(object) === tool.id &&
+        (object.asset_kind === tool.assetKind || tool.id === "sample"),
+    ) ||
+    null
+  );
 }
 
 function toolIdForRuntimeObject(object) {

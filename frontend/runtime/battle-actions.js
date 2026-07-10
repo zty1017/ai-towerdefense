@@ -302,6 +302,11 @@ export function deployRuntimeTool({
     setToast(setBattleToast, "尚未装配完成");
     return false;
   }
+  const deliveredSample = tool.id === "sample";
+  if (deliveredSample && (!battle.sampleDelivered || Number(battle.sampleUses || 0) <= 0)) {
+    setToast(setBattleToast, "样品尚不可用");
+    return false;
+  }
   const key = cooldownKey(tool, tool.id);
   const fallbackCost = runtimeActionKind(tool) === "support" ? 0 : 10;
   if (!cooldownReady(battle, tool, key) || !canPayCost(battle, tool, fallbackCost, "materials")) {
@@ -315,6 +320,7 @@ export function deployRuntimeTool({
   }
 
   spendCost(battle, tool, fallbackCost, "materials");
+  if (deliveredSample) battle.sampleUses -= 1;
   setCooldown(battle, tool, key, 1000);
   pushDeployedAssetId(battle, tool, tool.id);
 

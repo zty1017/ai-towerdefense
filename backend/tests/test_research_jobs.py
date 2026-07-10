@@ -204,6 +204,51 @@ def test_confirm_proposal_runs_workflows_and_produces_artifacts(client):
     _assert_no_forbidden_terms(job["player_state_message"])
 
 
+@pytest.mark.parametrize(
+    ("intent", "asset_kind", "display_name", "placement_mode", "uses"),
+    [
+        ("做一座能攻击影潮的灯塔", "tower_blueprint", "聚光刺塔", "build_slot", 3),
+        ("在路口布置绊索陷阱", "temporary_trap_sample", "折光绊索", "path_adjacent_or_slot", 2),
+        ("释放一次守灯支援脉冲", "support_item", "守灯脉冲", "free_point", 1),
+    ],
+)
+def test_player_intent_compiles_to_distinct_playable_runtime_objects(
+    client, intent, asset_kind, display_name, placement_mode, uses
+):
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent=intent)
+    job = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    ).json()
+    assert job["status"] == "completed"
+
+    package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
+    asset = package["assets"][0]
+    assert package["session_id"] == sid
+    assert asset["asset_kind"] == asset_kind
+    assert asset["display"]["name"] == display_name
+    assert asset["battle_availability"]["uses_per_battle"] == uses
+
+    activation = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activation.status_code == 200, activation.text
+    body = activation.json()
+    receipt = body["activation_receipt"]
+    assert receipt["status"] == "activated"
+    object_id = receipt["runtime_effect"]["activated_object_ids"][0]
+    capability = next(
+        item
+        for item in body["activated_runtime_bundle"]["capabilities"]["battle_objects"]
+        if item["object_id"] == object_id
+    )
+    assert capability["asset_kind"] == asset_kind
+    assert capability["display_name"] == display_name
+    assert capability["tool_id"] == "sample"
+    assert capability["lifecycle"]["max_uses"] == uses
+    assert capability["behavior_abi"]["placement"]["mode"] == placement_mode
+
+
 def test_confirm_proposal_marks_proposal_confirmed(client, raw_conn):
     sid = _create_session(client)
     proposal = _create_proposal(client, sid)
