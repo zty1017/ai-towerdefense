@@ -5630,6 +5630,11 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     _payload(client.post(f"/api/sessions/{sid}/battles/gray_lantern_station/results"))
     wick_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/lamp_wick_store/briefing"))
     assert wick_briefing["briefing"]["node_id"] == "lamp_wick_store"
+    assert wick_briefing["briefing"]["available_materials"]
+    assert all(
+        item.get("material_id") and isinstance(item.get("quantity"), int)
+        for item in wick_briefing["briefing"]["available_materials"]
+    )
     wick_battle = _payload(client.get(f"/api/sessions/{sid}/battles/lamp_wick_store/config"))
     assert wick_battle["map_runtime_package"]["node_id"] == "lamp_wick_store"
     wick = _payload(

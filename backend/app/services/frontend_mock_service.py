@@ -378,6 +378,16 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
             ),
             {},
         )
+        available_materials = [
+            {
+                "material_id": item.get("material_id")
+                or item.get("resource_id")
+                or item.get("stable_internal_id"),
+                "quantity": item.get("quantity", item.get("amount", item.get("default_quantity", 0))),
+            }
+            for item in pack.get("materials", [])
+            if isinstance(item, dict)
+        ]
         briefing = {
             "node_id": node_id,
             "display_name": battle_config.get("display_name", node_id),
@@ -401,7 +411,7 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
                 ]
                 if isinstance(target, dict)
             ],
-            "available_materials": pack.get("materials", []),
+            "available_materials": available_materials,
             "facility_state": {"summary": "现场工坊可进行应急试作。"},
             "constraints": {"sample_delivery": "样品可在战斗中途送达。"},
         }

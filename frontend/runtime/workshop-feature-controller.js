@@ -59,17 +59,39 @@ export function createWorkshopFeatureController({
   }
 
   function currentProposal() {
+    const state = getState();
     const sample = (getBattleConfig().sample_asset) || {};
     const text = PROPOSAL_DEFAULTS[getCurrentNodeId()] || PROPOSAL_DEFAULTS.gray_lantern_station;
     const compiled = surfaceContributions().find((item) => item.kind === "proposal_hint");
     const compiledPayload = (compiled && compiled.payload) || {};
+    const proposalRecord = state.research.proposal || {};
+    const proposalKind =
+      (((proposalRecord.compiler_metadata || {}).compiled_object || {}).candidate_kind) ||
+      compiledPayload.candidate_kind ||
+      "temporary_trap_sample";
+    const expectedEffects = {
+      tower_blueprint: "在可部署平台建造一座持续攻击的试作装置。",
+      temporary_trap_sample: "在敌人路径附近布置一次性迟滞装置。",
+      support_item: "在指定区域释放一次应急支援效果。",
+    };
+    const hasProposal = Boolean(
+      proposalRecord.proposal_id || compiled || state.research.status === "proposed",
+    );
+    if (!hasProposal) return null;
     return {
-      name: compiledPayload.title || sample.display_name || "折光绊索",
-      summary: compiledPayload.summary || text.summary,
-      effect: sample.effect_summary || "范围内敌人短暂减速。",
+      name:
+        proposalRecord.display_name ||
+        compiledPayload.title ||
+        "现场试作草案",
+      summary: proposalRecord.summary || compiledPayload.summary || text.summary,
+      effect:
+        compiledPayload.effect_summary ||
+        expectedEffects[proposalKind] ||
+        sample.effect_summary ||
+        "形成一件可在当前战场验证的试作品。",
       material: text.material,
       constraint: text.constraint,
-      risk: text.risk,
+      risk: proposalRecord.risk_note || text.risk,
       npc: text.npc,
     };
   }
@@ -82,6 +104,7 @@ export function createWorkshopFeatureController({
     const state = getState();
     const briefing = getBriefing();
     const proposal = currentProposal();
+    const hasProposal = Boolean(proposal);
     const materials = briefing.available_materials || state.data.materials || [];
     const targets = briefing.protection_targets || [];
     const threat = briefing.threat || {};
@@ -105,32 +128,42 @@ export function createWorkshopFeatureController({
             <textarea class="workshop-input" data-field="intent">${safeText(state.intentText)}</textarea>
             <div class="screen-actions" style="margin-top:12px">
               <button class="ghost-button" data-action="proposal-refresh" ${state.research.status === "proposing" ? "disabled" : ""}>${state.research.status === "proposing" ? "校准中" : "校准方案"}</button>
-              <button class="primary-button" data-action="confirm-prototype" ${["proposing", "confirming"].includes(state.research.status) ? "disabled" : ""}>确认试作</button>
+              <button class="primary-button" data-action="confirm-prototype" ${!hasProposal || ["proposing", "confirming"].includes(state.research.status) ? "disabled" : ""}>确认试作</button>
             </div>
-            <article class="proposal-card">
-              <div class="proposal-art">${imageTag(sampleIconUrl(), proposal.name)}</div>
-              <div class="proposal-body">
-                <h3>${safeText(proposal.name)}</h3>
-                <p class="panel-text">${safeText(proposal.summary)}</p>
-                <div class="tag-row">
-                  <span class="tag">减速：中</span><span class="tag">持续：短</span>
-                  <span class="tag">稳定性：偏低</span><span class="tag">次数：2</span>
-                </div>
-                <div class="event-list">
-                  <div class="event-item"><strong>预期作用</strong><span>${safeText(proposal.effect)}</span></div>
-                  <div class="event-item"><strong>建议投入</strong><span>${safeText(proposal.material)}</span></div>
-                  <div class="event-item"><strong>已知约束</strong><span>${safeText(proposal.constraint)}</span></div>
-                  <div class="event-item"><strong>不确定性</strong><span>${safeText(proposal.risk)}</span></div>
-                  <div class="event-item"><strong>NPC 初判</strong><span>${safeText(proposal.npc)}</span></div>
-                </div>
-              </div>
-            </article>
+            ${
+              proposal
+                ? `<article class="proposal-card">
+                    <div class="proposal-art proposal-art--draft" aria-label="尚未制成的试作草案">
+                      <span>草案</span><i></i><i></i><i></i>
+                    </div>
+                    <div class="proposal-body">
+                      <div class="eyebrow">待确认方案</div>
+                      <h3>${safeText(proposal.name)}</h3>
+                      <p class="panel-text">${safeText(proposal.summary)}</p>
+                      <div class="event-list">
+                        <div class="event-item"><strong>预期作用</strong><span>${safeText(proposal.effect)}</span></div>
+                        <div class="event-item"><strong>建议投入</strong><span>${safeText(proposal.material)}</span></div>
+                        <div class="event-item"><strong>已知约束</strong><span>${safeText(proposal.constraint)}</span></div>
+                        <div class="event-item"><strong>不确定性</strong><span>${safeText(proposal.risk)}</span></div>
+                        <div class="event-item"><strong>NPC 初判</strong><span>${safeText(proposal.npc)}</span></div>
+                      </div>
+                    </div>
+                  </article>`
+                : `<section class="proposal-empty">
+                    <div class="proposal-empty-mark" aria-hidden="true"></div>
+                    <div>
+                      <div class="eyebrow">尚未形成方案</div>
+                      <h3>先让在场人员校准你的构想</h3>
+                      <p>这里会先出现可讨论的试作方案。实物图标和最终性能要等试作完成后才会进入战场。</p>
+                    </div>
+                  </section>`
+            }
           </section>
           <aside class="panel">
             <div class="side-avatar">${imageTag(npcPortraitUrl("npc_workshop_mentor"), "临时工坊老师傅")}</div>
             <h2 class="panel-title">参与者与条件</h2>
             <div class="material-grid">
-              ${materials.map((item) => `<div class="meter-row"><span>${safeText(materialName(item.material_id || item.resource_id))}</span><b>${safeText(item.quantity ?? item.amount ?? 0)}</b></div>`).join("")}
+              ${materials.map((item) => `<div class="meter-row"><span>${safeText(materialName(item.material_id || item.resource_id || item.stable_internal_id))}</span><b>${safeText(item.quantity ?? item.amount ?? item.default_quantity ?? 0)}</b></div>`).join("")}
             </div>
             <div class="event-list" style="margin-top:12px">
               ${participants.map((item) => `<div class="event-item"><strong>${safeText(item.payload.display_name || "在场参与者")}</strong><span>${safeText(item.payload.summary || "参与当前试作。")}</span></div>`).join("")}

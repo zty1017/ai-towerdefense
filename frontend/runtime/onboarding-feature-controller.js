@@ -7,6 +7,7 @@ export function createOnboardingFeatureController({
   safeText,
   getProfilePreviewUrl = () => "",
   getWorldPreviewUrl = () => "",
+  getOpeningSceneUrl = () => "",
   navigate,
   renderApp,
 } = {}) {
@@ -150,13 +151,26 @@ export function createOnboardingFeatureController({
     }
     const lines = Array.isArray(segment.lines) ? segment.lines : [];
     const isBlack = segment.kind === "black_screen_text";
+    const scene = ["distant_map", "crisis_alert", "player_awakening"].includes(
+      segment.visual && segment.visual.scene,
+    )
+      ? segment.visual.scene
+      : "distant_map";
+    const sceneUrl = getOpeningSceneUrl(scene);
     root.innerHTML = `
       <main class="opening-screen">
         <section class="opening-frame">
           ${
             isBlack
               ? `<div class="opening-lines">${lines.map((line) => `<div>${safeText(line)}</div>`).join("")}</div>`
-              : `<div class="opening-card"><p class="opening-narration">${safeText(segment.narration || "")}</p></div>`
+              : `<div class="opening-card opening-card--${scene}">
+                  ${sceneUrl ? `<img class="opening-scene-image" src="${safeText(sceneUrl)}" alt="${safeText(segment.display_name || "开场远景")}" loading="eager" />` : ""}
+                  <div class="opening-scene-shade"></div>
+                  <div class="opening-scene-caption">
+                    <span>${safeText(segment.display_name || "前线记录")}</span>
+                    <p class="opening-narration">${safeText(segment.narration || "")}</p>
+                  </div>
+                </div>`
           }
           <div class="opening-controls">
             <button class="ghost-button" data-action="opening-skip">跳过</button>
