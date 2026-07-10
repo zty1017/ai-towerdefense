@@ -11,6 +11,25 @@ Last updated: 2026-07-06
 
 审查结论：方向采纳，结构改写。
 
+## 当前实现状态（2026-07-11）
+
+地图编译必须拆开说明，不能只用“已完成”概括：
+
+- 逻辑地图编译已接通：三张 MVP 战斗地图都有独立 `MapRuntimePackage`，路径、塔位、目标和出生点是结构化运行时事实。
+- 世界书风格与分层组装已接通：每个节点都有独立 `MapStylePack`、`ProceduralMapRenderPlan` 和 `LayeredMapVisualPackage`，前端消费节点专属分层合成图。
+- 编译证据绑定已修正：每个 `MapCompilePackage` 直接绑定对应节点的 `LayeredMapVisualPackage`，不再让三份编译包共用同一张通用背景。
+- AI 媒体目前属于“已审本地导入”，不是“编译器运行内生成”：现有地形、道路和背景中包含 `local_ai_exploration_*` 资产，但历史生成过程没有完整进入 provider envelope、staging、review、promotion 和 activation 记录。
+- 因此 `ai_media_generation_provenance` 当前必须是 `warning`。只有真实 provider 执行记录和产物晋升证据随同一次地图编译运行进入包内，才可以改为 `passed`。
+
+当前准确口径是：
+
+```text
+结构化地图编译 + 世界书风格编译 + 分层运行包编译：已完成 MVP 闭环
+AI 媒体自动生成并在同一次 DAG 中晋升：尚未完全接通
+```
+
+这不影响玩家使用已发布地图，但演示时不能把历史人工触发、人工挑选的 AI 地图素材描述成实时自动生成。
+
 该方案与本项目当前证据一致：多轮 Agnes / text-fallback / topology-constrained 地图整图候选已经证明，图像模型会重构路径、塔位、目标和装饰布局；即使参考图和 overlay 能帮助审查，也不能让整图成为运行时事实源。因此，正式地图编译应从“AI 画一张地图”转为“结构化地图事实 + AI 生成风格和组件 + 程序确定性渲染”。
 
 ## 0. 2026-07-06 外部 v0.3 附件复审结论

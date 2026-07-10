@@ -188,6 +188,87 @@ def _published_source_kinds(visual_manifest: dict[str, Any] | None) -> set[str]:
     return source_kinds
 
 
+def _layered_visual_artifact(
+    layered_visual_package: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Project an activated layered visual package into compile evidence."""
+    if not isinstance(layered_visual_package, dict):
+        return None
+    validation = layered_visual_package.get("validation_report") or {}
+    alignment = layered_visual_package.get("alignment_report") or {}
+    if (
+        validation.get("gate_status") != "passed"
+        or validation.get("player_default_safe") is not True
+        or alignment.get("gate_status") != "passed"
+        or alignment.get("runtime_truth_preserved") is not True
+    ):
+        return None
+    for layer in layered_visual_package.get("layers") or []:
+        if not isinstance(layer, dict) or layer.get("role") != "composited":
+            continue
+        quality = layer.get("quality") or {}
+        if (
+            layer.get("player_default") is not True
+            or quality.get("gate_status") != "passed"
+            or quality.get("alignment_status") != "passed"
+            or quality.get("player_visible_quality") != "passed"
+        ):
+            continue
+        return {
+            "artifact_id": f"artifact_{layered_visual_package.get('node_id', 'unknown')}_layered_map",
+            "role": "painted_visual_layer",
+            "url": str(layer.get("url", "")),
+            "local_path": str(layer.get("local_path", "")),
+            "width": int(layer.get("width", 1)),
+            "height": int(layer.get("height", 1)),
+            "sha256": str(layer.get("sha256", "")),
+            "authority": "published_visual_layer",
+            "review_status": "layered_visual_package_gates_passed",
+            "player_visible_quality": "passed",
+            "logic_alignment_status": "passed",
+        }
+    return None
+
+
+def _media_generation_provenance_gate(
+    layered_visual_package: dict[str, Any] | None,
+) -> dict[str, str]:
+    media_assets = (
+        layered_visual_package.get("media_assets") or []
+        if isinstance(layered_visual_package, dict)
+        else []
+    )
+    source_kinds = {
+        str(item.get("source_kind") or "")
+        for item in media_assets
+        if isinstance(item, dict)
+    }
+    imported_ai_media = any(kind.startswith("local_ai_") for kind in source_kinds)
+    validation = (
+        layered_visual_package.get("validation_report") or {}
+        if isinstance(layered_visual_package, dict)
+        else {}
+    )
+    provider_calls = int(validation.get("external_generation_call_count") or 0)
+    if imported_ai_media and provider_calls > 0:
+        return {
+            "gate_id": "ai_media_generation_provenance",
+            "status": "passed",
+            "summary": "AI media generation is recorded inside the executable layered-map compilation run.",
+        }
+    if imported_ai_media:
+        return {
+            "gate_id": "ai_media_generation_provenance",
+            "status": "warning",
+            "summary": "Layered map uses reviewed local AI exploration media, but the executable compiler run does not contain provider-generation evidence; treat it as imported AI media.",
+        }
+    return {
+        "gate_id": "ai_media_generation_provenance",
+        "status": "warning",
+        "summary": "No AI-generated media source is recorded in the activated layered visual package.",
+    }
+
+
 def _project_cell_to_pixel(
     point: dict[str, Any],
     grid: dict[str, Any],
@@ -296,15 +377,22 @@ def build_map_compile_package(
     battle_config_path: str,
     visual_reference_manifest: dict[str, Any] | None,
     visual_reference_manifest_path: str,
+    layered_visual_package: dict[str, Any] | None = None,
+    layered_visual_package_path: str | None = None,
     package_id: str | None = None,
     created_at: str | None = None,
 ) -> dict[str, Any]:
     artifacts = _iter_manifest_artifacts(visual_reference_manifest)
     control_artifacts = [item for item in artifacts if item.get("role") in CONTROL_ROLES]
-    any_visual_artifact = _first_artifact_by_role(artifacts, PUBLISHED_ROLES)
-    painted_artifact = _first_player_ready_artifact(artifacts)
+    if isinstance(layered_visual_package, dict) and (
+        layered_visual_package.get("node_id") != runtime_package.get("node_id")
+    ):
+        raise ValueError("layered visual package node_id must match runtime package node_id")
+    layered_artifact = _layered_visual_artifact(layered_visual_package)
+    any_visual_artifact = layered_artifact or _first_artifact_by_role(artifacts, PUBLISHED_ROLES)
+    painted_artifact = layered_artifact or _first_player_ready_artifact(artifacts)
     published_source_kinds = _published_source_kinds(visual_reference_manifest)
-    logic_aligned_visual = bool(published_source_kinds & {
+    logic_aligned_visual = bool(layered_artifact) or bool(published_source_kinds & {
         "deterministic_logic_aligned_runtime_background",
         "certified_logic_aligned_runtime_background",
         "human_reviewed_painted_visual_runtime_overlay",
@@ -348,6 +436,14 @@ def build_map_compile_package(
             else "Published background exists, but its source does not prove logic alignment; runtime overlay correction is required.",
         },
         {
+            "gate_id": "layered_visual_package_binding",
+            "status": "passed" if layered_artifact else "warning",
+            "summary": "The node-specific layered visual package is bound to this map compile package."
+            if layered_artifact
+            else "No activated node-specific layered visual package is bound; visual evidence may be generic.",
+        },
+        _media_generation_provenance_gate(layered_visual_package),
+        {
             "gate_id": "no_ui_text_enemy_tower_in_painted_map",
             "status": "warning",
             "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled.",
@@ -371,6 +467,11 @@ def build_map_compile_package(
             "battle_config_path": battle_config_path,
             "map_runtime_package_path": map_runtime_package_path,
             "visual_reference_manifest_path": visual_reference_manifest_path,
+            **(
+                {"layered_visual_package_path": layered_visual_package_path}
+                if layered_visual_package_path
+                else {}
+            ),
             "logic_authority": "map_runtime_package",
         },
         "logical_map_layer": {
@@ -442,8 +543,10 @@ def _validate_visual_artifact(raw: Any, path: str, errors: list[str]) -> dict[st
     if role and role not in VISUAL_ROLES:
         errors.append(f"{path}.role={role!r} is not allowed")
     url = _require_string(artifact.get("url"), f"{path}.url", errors)
-    if url and not url.startswith("/assets/map_visual_reference/"):
-        errors.append(f"{path}.url must start with /assets/map_visual_reference/")
+    if url and not url.startswith(("/assets/map_visual_reference/", "/assets/layered_maps/")):
+        errors.append(
+            f"{path}.url must start with /assets/map_visual_reference/ or /assets/layered_maps/"
+        )
     _require_string(artifact.get("local_path"), f"{path}.local_path", errors)
     _require_int(artifact.get("width"), f"{path}.width", errors, minimum=1)
     _require_int(artifact.get("height"), f"{path}.height", errors, minimum=1)
@@ -543,7 +646,12 @@ def validate_pure_python(package: dict[str, Any]) -> list[str]:
         errors.append("created_at must be an ISO-8601 datetime string")
 
     source_refs = _require_object(package.get("source_refs"), "source_refs", errors)
-    for key in ("battle_config_path", "map_runtime_package_path", "visual_reference_manifest_path"):
+    for key in (
+        "battle_config_path",
+        "map_runtime_package_path",
+        "visual_reference_manifest_path",
+        "layered_visual_package_path",
+    ):
         _require_string(source_refs.get(key), f"source_refs.{key}", errors)
     if source_refs.get("logic_authority") != "map_runtime_package":
         errors.append("source_refs.logic_authority must be 'map_runtime_package'")
@@ -580,6 +688,27 @@ def validate_pure_python(package: dict[str, Any]) -> list[str]:
         elif artifact is not None:
             _validate_visual_artifact(artifact, "painted_visual_layer.artifact", errors)
         _require_array(painted.get("visual_constraints"), "painted_visual_layer.visual_constraints", errors, minimum=1)
+        node_id = str(package.get("node_id") or "")
+        if isinstance(artifact, dict) and node_id:
+            expected_url_prefix = f"/assets/layered_maps/{node_id}/"
+            expected_path_prefix = f"game_data/media/layered_maps/{node_id}/"
+            if not str(artifact.get("url") or "").startswith(expected_url_prefix):
+                errors.append(
+                    "painted_visual_layer.artifact.url must bind the package node-specific layered map"
+                )
+            if not str(artifact.get("local_path") or "").startswith(expected_path_prefix):
+                errors.append(
+                    "painted_visual_layer.artifact.local_path must bind the package node-specific layered map"
+                )
+            expected_package_prefix = (
+                f"game_data/media/layered_maps/{node_id}/"
+            )
+            if not str(source_refs.get("layered_visual_package_path") or "").startswith(
+                expected_package_prefix
+            ):
+                errors.append(
+                    "source_refs.layered_visual_package_path must bind the package node"
+                )
 
     alignment = _require_object(package.get("alignment_layer"), "alignment_layer", errors)
     if alignment:
@@ -599,6 +728,10 @@ def validate_pure_python(package: dict[str, Any]) -> list[str]:
         errors.append("quality_gates must include runtime_truth_source")
     if "player_visual_quality_passed" not in gate_ids:
         errors.append("quality_gates must include player_visual_quality_passed")
+    if "layered_visual_package_binding" not in gate_ids:
+        errors.append("quality_gates must include layered_visual_package_binding")
+    if "ai_media_generation_provenance" not in gate_ids:
+        errors.append("quality_gates must include ai_media_generation_provenance")
 
     export_refs = _require_object(package.get("export_refs"), "export_refs", errors)
     _require_string(export_refs.get("map_runtime_package_path"), "export_refs.map_runtime_package_path", errors)
