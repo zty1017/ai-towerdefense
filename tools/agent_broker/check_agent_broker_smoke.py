@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.agent_broker.agentctl import select_route  # noqa: E402
+from tools.agent_broker.agent_worker import codebuddy_prompt_ready  # noqa: E402
 
 
 TASK_PACK = ROOT / "examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json"
@@ -55,6 +56,22 @@ def main() -> int:
                 "actual": actual,
             }
         )
+
+    readiness_cases = {
+        "ready": "CodeBuddy Code\n>\n⏵⏵ auto mode on (shift+Tab to cycle)\n",
+        "splash_only": "CodeBuddy Code\nTips for getting started\n",
+        "mode_without_prompt": "CodeBuddy Code\n⏵⏵ auto mode on\n",
+    }
+    checks.append(
+        {
+            "name": "codebuddy_prompt_readiness",
+            "passed": (
+                codebuddy_prompt_ready(readiness_cases["ready"])
+                and not codebuddy_prompt_ready(readiness_cases["splash_only"])
+                and not codebuddy_prompt_ready(readiness_cases["mode_without_prompt"])
+            ),
+        }
+    )
 
     with tempfile.TemporaryDirectory(prefix="ai-td-agent-broker-", dir="/tmp") as tmp:
         bus = Path(tmp)
