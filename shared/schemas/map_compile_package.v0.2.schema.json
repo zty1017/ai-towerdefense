@@ -47,12 +47,14 @@
         "battle_config_path",
         "map_runtime_package_path",
         "visual_reference_manifest_path",
+        "layered_visual_package_path",
         "logic_authority"
       ],
       "properties": {
         "battle_config_path": { "type": "string", "minLength": 1 },
         "map_runtime_package_path": { "type": "string", "minLength": 1 },
         "visual_reference_manifest_path": { "type": "string", "minLength": 1 },
+        "layered_visual_package_path": { "type": "string", "minLength": 1 },
         "logic_authority": {
           "type": "string",
           "enum": ["map_runtime_package", "certified_map_template"]
@@ -147,7 +149,7 @@
             "painted_visual_layer"
           ]
         },
-        "url": { "type": "string", "pattern": "^/assets/map_visual_reference/.+" },
+        "url": { "type": "string", "pattern": "^/assets/(map_visual_reference|layered_maps)/.+" },
         "local_path": { "type": "string", "minLength": 1 },
         "width": { "type": "integer", "minimum": 1 },
         "height": { "type": "integer", "minimum": 1 },
