@@ -1203,7 +1203,7 @@ import {
   }
 
   function installBattleSmokeProbe() {
-    if (!battleVisualSmokeMode()) return;
+    if (!battleVisualSmokeMode() && !flowVisualSmokeMode()) return;
     window.__AI_TD_BATTLE_SMOKE__ = {
       snapshot: battleSmokeSnapshot,
       deploymentPoint: battleSmokeDeploymentPoint,

@@ -113,6 +113,16 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python tools/frontend/validate_frontend_feature_projection_api_smoke_report.py /tmp/frontend_feature_projection_api_smoke/frontend_feature_projection_api_smoke_report.v0.1.json
 ```
 
+也可以直接替换玩家构想，验证同一研发槽被编译成不同可玩对象。烟测会在激活后暂停战斗，把新对象拖到合法位置，检查资源扣除、战场实体与部署记录，再继续到结算：
+
+```bash
+.venv/bin/python tools/frontend/capture_frontend_feature_projection_api_smoke.py \
+  --intent '做一座能攻击影潮的聚光灯塔' \
+  --output-dir /tmp/frontend_attack_tower_api_smoke
+```
+
+当前 MVP 受控 lowering 支持 `tower_blueprint`、`temporary_trap_sample` 与 `support_item`；三类对象仍经过同一 RuntimePackage、激活门和 `behavior_abi` 前端执行通道。
+
 如果当前机器没有浏览器，可先记录环境探测结果：
 
 ```bash
