@@ -170,6 +170,36 @@ def tmux_session_name(dispatch_id: str) -> str:
     return f"ai-td-{slug}"
 
 
+def codebuddy_prompt_ready(screen_text: str) -> bool:
+    normalized = screen_text.replace("\r", "")
+    has_prompt = any(line.strip() == ">" for line in normalized.splitlines())
+    has_mode = any(
+        marker in normalized
+        for marker in ("auto mode on", "bypass mode on", "default mode on")
+    )
+    return has_prompt and has_mode
+
+
+def wait_for_codebuddy_prompt(
+    *, session: str, worktree: Path, timeout_seconds: float
+) -> None:
+    deadline = time.monotonic() + max(3.0, timeout_seconds)
+    while time.monotonic() < deadline:
+        capture = run(
+            ["tmux", "capture-pane", "-p", "-t", session, "-S", "-80"],
+            cwd=worktree,
+            timeout=30,
+        )
+        if capture.returncode == 0 and codebuddy_prompt_ready(capture.stdout):
+            return
+        alive = run(["tmux", "has-session", "-t", session], cwd=worktree, timeout=30)
+        if alive.returncode != 0:
+            raise RuntimeError("CodeBuddy 会话在输入框就绪前退出")
+        time.sleep(0.5)
+    run(["tmux", "kill-session", "-t", session], cwd=worktree, timeout=30)
+    raise RuntimeError("等待 CodeBuddy 输入框就绪超时")
+
+
 def run_codebuddy(
     *,
     worktree: Path,
@@ -203,7 +233,13 @@ def run_codebuddy(
         if completed.returncode != 0:
             raise RuntimeError(completed.stderr.strip() or "启动 CodeBuddy tmux 失败")
 
-    time.sleep(float(os.environ.get("AI_TD_CODEBUDDY_STARTUP_SECONDS", "3")))
+    wait_for_codebuddy_prompt(
+        session=session,
+        worktree=worktree,
+        timeout_seconds=float(
+            os.environ.get("AI_TD_CODEBUDDY_READY_TIMEOUT_SECONDS", "45")
+        ),
+    )
     prompt_path = bus_root / f".prompt-{dispatch_id}.txt"
     prompt_path.write_text(prompt, encoding="utf-8")
     os.chmod(prompt_path, 0o600)

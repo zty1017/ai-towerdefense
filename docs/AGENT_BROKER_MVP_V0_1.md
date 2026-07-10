@@ -107,6 +107,8 @@ export AI_TD_CODEBUDDY_PERMISSION_MODE=bypassPermissions
 2. 只接受 `base_branch=develop`、`branch=task/*`。
 3. 若 worktree 不存在则创建；已存在时必须分支正确且启动前干净。
 4. 启动外部 agent。
+   - CodeBuddy 不使用固定睡眠猜测启动时间；worker 会等待交互输入框与权限模式提示同时出现，再粘贴任务包。
+   - 默认就绪超时为 45 秒，可用 `AI_TD_CODEBUDDY_READY_TIMEOUT_SECONDS` 临时调整。
 5. CodeBuddy 通过本地 `worker-complete` 命令报告结束；Codex 以进程退出码报告结束。
 6. 若任务声明 `acceptance_profile`，worker 再运行一次标准 profile runner。
 7. 检查所有改动是否位于 `allowed_paths`，并拒绝 `forbidden_paths`。
