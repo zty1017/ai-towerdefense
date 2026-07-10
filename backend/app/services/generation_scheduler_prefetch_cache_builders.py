@@ -19,6 +19,7 @@ PREFETCH_CACHE_REF_KINDS = (
     "generation_runtime_build_request",
     "generation_runtime_artifact_build_report",
     "generation_runtime_activation_authorization",
+    "generation_runtime_activation_receipt",
 )
 
 
@@ -42,6 +43,15 @@ def prefetch_cache_status(
     queue_item: dict[str, Any],
     refs: dict[str, dict[str, Any] | None],
 ) -> str:
+    receipt_ref = refs.get("generation_runtime_activation_receipt")
+    if receipt_ref is not None:
+        receipt_compact = receipt_ref.get("compact")
+        if (
+            isinstance(receipt_compact, dict)
+            and receipt_compact.get("status") == "activated"
+        ):
+            return "runtime_activated"
+        return "runtime_activation_blocked"
     if refs.get("generation_runtime_activation_authorization") is not None:
         return "runtime_activation_authorization_recorded"
     if refs.get("generation_runtime_artifact_build_report") is not None:
@@ -148,7 +158,7 @@ def build_generation_prefetch_cache_payload(
             else {}
         )
         item["cache_status"] = prefetch_cache_status(item, refs)
-        item["runtime_ready"] = False
+        item["runtime_ready"] = item["cache_status"] == "runtime_activated"
         item["recorded_provider_call_count"] = (
             1
             if (
@@ -291,9 +301,28 @@ def build_generation_prefetch_cache_payload(
             "world_mutation_allowed": False,
             "runtime_apply_allowed": False,
         }
-        item["activation_allowed"] = item["activation_gate"]["activation_allowed"]
+        activation_receipt_ref = refs.get("generation_runtime_activation_receipt")
+        activation_receipt_compact = (
+            activation_receipt_ref.get("compact")
+            if isinstance(activation_receipt_ref, dict)
+            and isinstance(activation_receipt_ref.get("compact"), dict)
+            else {}
+        )
+        runtime_effect = (
+            activation_receipt_compact.get("runtime_effect")
+            if isinstance(activation_receipt_compact.get("runtime_effect"), dict)
+            else {}
+        )
+        item["runtime_activation_receipt"] = {
+            "receipt_recorded": activation_receipt_ref is not None,
+            "activation_id": activation_receipt_compact.get("activation_id"),
+            "status": activation_receipt_compact.get("status"),
+            "runtime_effect_applied": runtime_effect.get("applied") is True,
+            "activated_object_ids": runtime_effect.get("activated_object_ids", []),
+        }
+        item["activation_allowed"] = item["runtime_ready"]
         item["promotion_allowed"] = item["promotion_gate"]["promotion_allowed"]
-        item["review_only"] = True
+        item["review_only"] = not item["runtime_ready"]
         cache_items.append(item)
 
     summary_counts = Counter(str(item.get("cache_status")) for item in cache_items)
@@ -314,6 +343,8 @@ def build_generation_prefetch_cache_payload(
             "runtime_build_request_prepared",
             "runtime_artifact_build_report_ready",
             "runtime_activation_authorization_recorded",
+            "runtime_activated",
+            "runtime_activation_blocked",
         }
     )
     return {
@@ -326,7 +357,9 @@ def build_generation_prefetch_cache_payload(
                 "cache_status_counts": dict(sorted(summary_counts.items())),
                 "review_only_envelope_ready_count": ready_count,
                 "staged_or_reviewed_count": staged_count,
-                "runtime_ready_count": 0,
+                "runtime_ready_count": sum(
+                    1 for item in cache_items if item.get("runtime_ready") is True
+                ),
                 "recorded_provider_call_count": sum(
                     int(item.get("recorded_provider_call_count", 0))
                     for item in cache_items
@@ -365,6 +398,13 @@ def build_generation_prefetch_cache_payload(
                     for item in cache_items
                     if isinstance(item.get("refs"), dict)
                     and item["refs"].get("generation_runtime_activation_authorization")
+                    is not None
+                ),
+                "runtime_activation_receipt_count": sum(
+                    1
+                    for item in cache_items
+                    if isinstance(item.get("refs"), dict)
+                    and item["refs"].get("generation_runtime_activation_receipt")
                     is not None
                 ),
             },

@@ -16,6 +16,7 @@ from ..db import db_cursor, now_iso
 from . import (
     ai_core_artifact_service,
     battle_content_service,
+    frontend_feature_projection_service,
     frontend_media_service,
     generation_scheduler_service,
     map_render_plan_service,
@@ -138,6 +139,19 @@ def _save_campaign_state(session_id: str, payload: dict[str, Any]) -> None:
             "VALUES (?, ?, ?, ?)",
             (session_id, _dump_payload(payload), ts, ts),
         )
+
+
+def _player_runtime_bundle(
+    session_id: str,
+    *,
+    node_id: str | None = None,
+    state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return frontend_feature_projection_service.build_player_runtime_bundle(
+        session_id,
+        run_world_state=state or _load_campaign_state(session_id),
+        node_id=node_id,
+    )
 
 
 def _selected_options(config: dict[str, Any], overrides: dict[str, Any] | None) -> dict[str, str]:
@@ -287,6 +301,7 @@ def get_frontend_mock_pack(session_id: str) -> dict[str, Any]:
         "mode": "frontend_mock_fixture",
         "pack": _load_frontend_pack(),
         "ai_compile_core_artifacts": ai_core_artifact_service.core_artifact_payload(),
+        "activated_runtime_bundle": _player_runtime_bundle(session_id),
         **frontend_media_service.frontend_media_payload(),
         **frontend_media_service.runtime_art_payload(),
     }
@@ -318,11 +333,27 @@ def get_animation_seeds(session_id: str) -> dict[str, Any]:
 
 
 def get_map(session_id: str) -> dict[str, Any]:
+    state = _load_campaign_state(session_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "map": _load_json(_INITIAL_MAP),
-        "run_world_state": _load_campaign_state(session_id),
+        "run_world_state": state,
+        "activated_runtime_bundle": _player_runtime_bundle(session_id, state=state),
+    }
+
+
+def get_feature_runtime(session_id: str, node_id: str | None = None) -> dict[str, Any]:
+    state = _load_campaign_state(session_id)
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "node_id": node_id,
+        "activated_runtime_bundle": _player_runtime_bundle(
+            session_id,
+            node_id=node_id,
+            state=state,
+        ),
     }
 
 
@@ -331,6 +362,7 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
         raise FixtureNotFoundError(node_id)
     override = _NODE_BRIEFING_OVERRIDES[node_id]
     pack = _load_frontend_pack()
+    state = _load_campaign_state(session_id)
     if override.get("source_path"):
         briefing = _load_json(override["source_path"])
     else:
@@ -338,7 +370,6 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
             battle_config = battle_content_service.load_battle_config(node_id)
         except battle_content_service.BattleContentNotFoundError as exc:
             raise FixtureNotFoundError(node_id) from exc
-        state = _load_campaign_state(session_id)
         node = next(
             (
                 item
@@ -382,6 +413,11 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
         "materials": pack.get("materials", []),
         "npcs": pack.get("npcs", []),
         "suggested_input": override["suggested_input"],
+        "activated_runtime_bundle": _player_runtime_bundle(
+            session_id,
+            node_id=node_id,
+            state=state,
+        ),
     }
 
 
@@ -409,6 +445,7 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
         "map_render_plan_bundle": map_render_plan_bundle,
         "toolbar_assets": _battle_toolbar_assets(pack),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
+        "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id),
         **frontend_media_service.frontend_media_payload(),
         **frontend_media_service.runtime_art_payload(),
     }
@@ -435,6 +472,7 @@ def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
             )
         ),
         "sample_delivery_asset": _asset_for_sample_delivery(pack),
+        "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id),
         **frontend_media_service.frontend_media_payload(),
         **frontend_media_service.runtime_art_payload(),
     }
@@ -530,6 +568,11 @@ def record_battle_result(
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
         "settlement": settlement,
+        "activated_runtime_bundle": _player_runtime_bundle(
+            session_id,
+            node_id=node_id,
+            state=next_state,
+        ),
     }
 
 
@@ -547,6 +590,7 @@ def get_latest_settlement(session_id: str) -> dict[str, Any]:
             "mode": "frontend_mock_fixture",
             "settlement": None,
             "run_world_state": _load_campaign_state(session_id),
+            "activated_runtime_bundle": _player_runtime_bundle(session_id),
         }
     payload = json.loads(row["payload"])
     settlement = payload.get("settlement")
@@ -555,6 +599,10 @@ def get_latest_settlement(session_id: str) -> dict[str, Any]:
         "mode": "frontend_mock_fixture",
         "created_at": row["created_at"],
         "settlement": settlement,
+        "activated_runtime_bundle": _player_runtime_bundle(
+            session_id,
+            node_id=(settlement or {}).get("node_id") if isinstance(settlement, dict) else None,
+        ),
     }
 
 

@@ -86,7 +86,7 @@
     {
       "slot_id": "slot_01",
       "position": {
-        "x": 17,
+        "x": 16,
         "y": 1
       },
       "footprint": {
@@ -107,7 +107,7 @@
     {
       "slot_id": "slot_02",
       "position": {
-        "x": 17,
+        "x": 16,
         "y": 3
       },
       "footprint": {
@@ -128,7 +128,7 @@
     {
       "slot_id": "slot_03",
       "position": {
-        "x": 16,
+        "x": 14,
         "y": 1
       },
       "footprint": {
@@ -149,48 +149,6 @@
     {
       "slot_id": "slot_04",
       "position": {
-        "x": 16,
-        "y": 3
-      },
-      "footprint": {
-        "width_cells": 1,
-        "height_cells": 1
-      },
-      "allowed_asset_kinds": [
-        "tower_blueprint",
-        "temporary_trap_sample",
-        "support_item"
-      ],
-      "placement_tags": [
-        "near_path",
-        "mvp_auto_derived"
-      ],
-      "visual_hint": "ground_plate"
-    },
-    {
-      "slot_id": "slot_05",
-      "position": {
-        "x": 14,
-        "y": 1
-      },
-      "footprint": {
-        "width_cells": 1,
-        "height_cells": 1
-      },
-      "allowed_asset_kinds": [
-        "tower_blueprint",
-        "temporary_trap_sample",
-        "support_item"
-      ],
-      "placement_tags": [
-        "near_path",
-        "mvp_auto_derived"
-      ],
-      "visual_hint": "ground_plate"
-    },
-    {
-      "slot_id": "slot_06",
-      "position": {
         "x": 13,
         "y": 1
       },
@@ -210,49 +168,7 @@
       "visual_hint": "ground_plate"
     },
     {
-      "slot_id": "slot_07",
-      "position": {
-        "x": 15,
-        "y": 1
-      },
-      "footprint": {
-        "width_cells": 1,
-        "height_cells": 1
-      },
-      "allowed_asset_kinds": [
-        "tower_blueprint",
-        "temporary_trap_sample",
-        "support_item"
-      ],
-      "placement_tags": [
-        "near_path",
-        "mvp_auto_derived"
-      ],
-      "visual_hint": "ground_plate"
-    },
-    {
-      "slot_id": "slot_08",
-      "position": {
-        "x": 15,
-        "y": 3
-      },
-      "footprint": {
-        "width_cells": 1,
-        "height_cells": 1
-      },
-      "allowed_asset_kinds": [
-        "tower_blueprint",
-        "temporary_trap_sample",
-        "support_item"
-      ],
-      "placement_tags": [
-        "near_path",
-        "mvp_auto_derived"
-      ],
-      "visual_hint": "ground_plate"
-    },
-    {
-      "slot_id": "slot_09",
+      "slot_id": "slot_05",
       "position": {
         "x": 12,
         "y": 5
@@ -273,10 +189,94 @@
       "visual_hint": "ground_plate"
     },
     {
+      "slot_id": "slot_06",
+      "position": {
+        "x": 10,
+        "y": 3
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_07",
+      "position": {
+        "x": 9,
+        "y": 5
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_08",
+      "position": {
+        "x": 7,
+        "y": 3
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_09",
+      "position": {
+        "x": 15,
+        "y": 6
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
       "slot_id": "slot_10",
       "position": {
         "x": 11,
-        "y": 3
+        "y": 8
       },
       "footprint": {
         "width_cells": 1,
@@ -296,8 +296,8 @@
     {
       "slot_id": "slot_11",
       "position": {
-        "x": 11,
-        "y": 5
+        "x": 8,
+        "y": 8
       },
       "footprint": {
         "width_cells": 1,
@@ -317,8 +317,8 @@
     {
       "slot_id": "slot_12",
       "position": {
-        "x": 8,
-        "y": 3
+        "x": 4,
+        "y": 7
       },
       "footprint": {
         "width_cells": 1,

@@ -234,8 +234,13 @@ def check_gate_logic(report: dict[str, Any], staging: dict[str, Any], errors: li
     ]
 
     staging_promotion = as_obj(staging.get("promotion_gate"))
-    if staging_promotion.get("promotion_allowed") is False and promotion_allowed is True:
-        errors.append("report cannot allow promotion while source staging promotion gate is false")
+    if (
+        staging_promotion.get("blocked_reason") == "validation_failed"
+        and promotion_allowed is True
+    ):
+        errors.append(
+            "report cannot allow promotion while source staging validation failed"
+        )
 
     if promotion_decision in APPROVED_DECISIONS:
         if promotion_allowed is not True:

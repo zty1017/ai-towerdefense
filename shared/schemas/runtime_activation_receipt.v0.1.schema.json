@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/runtime_activation_receipt.v0.1.schema.json",
+  "title": "RuntimeActivationReceipt v0.1",
+  "description": "Auditable result of the final session runtime apply gate. A blocked receipt never changes the player runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "activation_id",
+    "session_id",
+    "source",
+    "status",
+    "created_at",
+    "updated_at",
+    "validation",
+    "promotion",
+    "runtime_effect",
+    "rollback",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": { "const": "runtime_activation_receipt.v0.1" },
+    "activation_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,160}$" },
+    "session_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_id", "runtime_package_id", "runtime_package_sha256"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["research_job", "generation_schedule"] },
+        "source_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "runtime_package_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "runtime_package_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "status": { "type": "string", "enum": ["activated", "blocked", "rolled_back"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package_schema", "runtime_safety", "semantic", "behavior_abi", "media"],
+      "properties": {
+        "package_schema": { "$ref": "#/$defs/gate" },
+        "runtime_safety": { "$ref": "#/$defs/gate" },
+        "semantic": { "$ref": "#/$defs/gate" },
+        "behavior_abi": { "$ref": "#/$defs/gate" },
+        "media": { "$ref": "#/$defs/gate" }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "status", "evidence_id"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["trusted_deterministic_workflow", "provider_promotion_report"] },
+        "status": { "type": "string", "enum": ["passed", "blocked"] },
+        "evidence_id": { "type": ["string", "null"], "maxLength": 200 }
+      }
+    },
+    "runtime_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applied", "scope", "activated_object_ids", "replaced_object_ids"],
+      "properties": {
+        "applied": { "type": "boolean" },
+        "scope": { "const": "anonymous_session" },
+        "activated_object_ids": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" }
+        },
+        "replaced_object_ids": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "type": "string", "maxLength": 240 }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "type": "string", "maxLength": 240 }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported", "status"],
+      "properties": {
+        "supported": { "const": true },
+        "status": { "type": "string", "enum": ["available", "applied", "not_applicable"] },
+        "rolled_back_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reads_env_file",
+        "calls_provider",
+        "stores_raw_prompt",
+        "stores_provider_body",
+        "writes_world_state",
+        "player_runtime_mutation_count"
+      ],
+      "properties": {
+        "reads_env_file": { "const": false },
+        "calls_provider": { "const": false },
+        "stores_raw_prompt": { "const": false },
+        "stores_provider_body": { "const": false },
+        "writes_world_state": { "const": false },
+        "player_runtime_mutation_count": { "type": "integer", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason"],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "blocked", "degraded"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    }
+  }
+}

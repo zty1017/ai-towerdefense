@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/strategic_map_marker_media_manifest.v0.1.schema.json",
+  "title": "StrategicMapMarkerMediaManifest v0.1",
+  "description": "Reviewed local marker atlas for strategic map presentation. It is not a map semantic source.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "media_pack_id",
+    "created_at",
+    "source_map_path",
+    "public_url_prefix",
+    "media_layer",
+    "usage_policy",
+    "atlas",
+    "items",
+    "summary",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "strategic_map_marker_media_manifest.v0.1" },
+    "media_pack_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_map_path": { "type": "string", "const": "game_data/demo/initial_map.json" },
+    "public_url_prefix": { "type": "string", "const": "/assets/strategic_map_markers" },
+    "media_layer": { "type": "string", "const": "reviewed_strategic_map_marker_media" },
+    "usage_policy": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "review_gate_only",
+          "not_runtime_semantic_source",
+          "no_image_to_map_semantic_inference",
+          "local_reviewed_marker_only",
+          "frontend_default_presentation_allowed",
+          "no_provider_or_prompt_payload",
+          "no_external_temporary_url"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "atlas": { "$ref": "#/$defs/atlas" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "$defs": {
+    "atlas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "local_path", "width", "height", "sha256"],
+      "properties": {
+        "url": { "type": "string", "pattern": "^/assets/strategic_map_markers/processed/[A-Za-z0-9_.-]+\\.png$" },
+        "local_path": { "type": "string", "pattern": "^game_data/media/strategic_map_markers/processed/[A-Za-z0-9_.-]+\\.png$" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_internal_id",
+        "asset_id",
+        "asset_type",
+        "media_role",
+        "media_layer",
+        "node_kind",
+        "state_hint",
+        "atlas_frame",
+        "usage_policy",
+        "source_kind"
+      ],
+      "properties": {
+        "stable_internal_id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "asset_id": { "type": "string", "minLength": 1 },
+        "asset_type": { "type": "string", "const": "strategic_map_marker" },
+        "media_role": { "type": "string", "const": "strategic_node_marker" },
+        "media_layer": { "type": "string", "const": "reviewed_strategic_map_marker_media" },
+        "node_kind": { "type": "string", "minLength": 1 },
+        "state_hint": { "type": "string", "minLength": 1 },
+        "atlas_frame": { "$ref": "#/$defs/atlas_frame" },
+        "usage_policy": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "source_kind": { "type": "string", "const": "deterministic_developer_fixture_png_atlas" }
+      }
+    },
+    "atlas_frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "anchor_x", "anchor_y", "display_width", "display_height"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "anchor_x": { "type": "number", "minimum": 0 },
+        "anchor_y": { "type": "number", "minimum": 0 },
+        "display_width": { "type": "number", "minimum": 1 },
+        "display_height": { "type": "number", "minimum": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["marker_count", "node_kinds", "atlas_frame_count"],
+      "properties": {
+        "marker_count": { "type": "integer", "minimum": 0 },
+        "atlas_frame_count": { "type": "integer", "minimum": 0 },
+        "node_kinds": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator", "commands"],
+      "properties": {
+        "validator": { "type": "string", "minLength": 1 },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

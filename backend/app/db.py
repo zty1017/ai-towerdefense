@@ -208,6 +208,20 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS runtime_activations (
+                activation_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                source_kind TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                rolled_back_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE,
+                UNIQUE (session_id, source_kind, source_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_world_instance_session
                 ON world_instance(session_id);
             CREATE INDEX IF NOT EXISTS idx_campaign_state_session
@@ -248,6 +262,10 @@ def init_db(path: str | None = None) -> None:
                 ON research_proposals(session_id);
             CREATE INDEX IF NOT EXISTS idx_research_jobs_session
                 ON research_jobs(session_id);
+            CREATE INDEX IF NOT EXISTS idx_runtime_activations_session
+                ON runtime_activations(session_id);
+            CREATE INDEX IF NOT EXISTS idx_runtime_activations_status
+                ON runtime_activations(status);
             """
         )
         conn.commit()

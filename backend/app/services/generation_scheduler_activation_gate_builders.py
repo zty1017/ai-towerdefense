@@ -33,6 +33,17 @@ def _activation_status(item: dict[str, Any]) -> tuple[str, str | None, list[str]
     if not isinstance(activation_gate, dict):
         activation_gate = {}
 
+    if cache_status == "runtime_activated":
+        return ("activated", None, [])
+    if cache_status == "runtime_activation_blocked":
+        return (
+            "blocked_runtime_activation_apply_failed",
+            "runtime_activation_receipt_is_blocked",
+            [
+                "repair_or_regenerate_runtime_package",
+                "repeat_runtime_activation_apply_gate",
+            ],
+        )
     if cache_status == "promotion_allowed_pending_activation":
         return (
             "blocked_runtime_package_or_world_delta_required",
@@ -167,6 +178,7 @@ def _gate_item(item: dict[str, Any]) -> dict[str, Any]:
             ]
         )
     )
+    runtime_ready = activation_status == "activated"
     return {
         "schedule_item_id": item.get("schedule_item_id"),
         "object_kind": item.get("object_kind"),
@@ -174,13 +186,13 @@ def _gate_item(item: dict[str, Any]) -> dict[str, Any]:
         "latency_class": item.get("latency_class"),
         "queue_status": item.get("queue_status"),
         "cache_status": item.get("cache_status"),
-        "runtime_ready": False,
-        "activation_allowed": False,
+        "runtime_ready": runtime_ready,
+        "activation_allowed": runtime_ready,
         "promotion_allowed": _item_promotion_allowed(item),
         "activation_status": activation_status,
         "blocked_reason": blocked_reason,
         "required_next_gates": merged_required,
-        "review_only": True,
+        "review_only": not runtime_ready,
         "provider_call_count_by_this_request": 0,
         "world_mutation_count_by_this_request": 0,
         "recorded_provider_call_count": int(
@@ -227,8 +239,12 @@ def build_generation_activation_gate_payload(
                     if item.get("activation_status")
                     == "not_applicable_locked_or_fallback_source"
                 ),
-                "runtime_ready_count": 0,
-                "activation_allowed_count": 0,
+                "runtime_ready_count": sum(
+                    1 for item in items if item.get("runtime_ready") is True
+                ),
+                "activation_allowed_count": sum(
+                    1 for item in items if item.get("activation_allowed") is True
+                ),
                 "promotion_allowed_count": sum(
                     1 for item in items if item.get("promotion_allowed") is True
                 ),

@@ -2,8 +2,8 @@
 
 This module owns the MVP scheduler control-plane state: review-only schedule
 plans, dry-run reports, per-session dry-run records, item queues, transitions,
-retry/fallback guards, and the local dry worker step. It deliberately does not
-call providers, read `.env`, mutate world state, or activate generated content.
+retry/fallback guards, and the local dry worker step. Provider workers remain
+review-only; runtime changes require the explicit scheduler apply worker.
 """
 
 from __future__ import annotations
@@ -144,6 +144,10 @@ from .generation_scheduler_runtime_activation_authorization_builders import (  #
     build_runtime_activation_authorization as _build_runtime_activation_authorization,
     compact_runtime_activation_authorization as _compact_runtime_activation_authorization,
     normalize_runtime_activation_decision as _normalize_runtime_activation_decision,
+)
+from .generation_scheduler_runtime_activation_apply_service import (  # noqa: E402
+    RUNTIME_ACTIVATION_RECEIPT_CACHE_STATUS,
+    apply_generation_runtime_activation as _apply_generation_runtime_activation,
 )
 from .generation_scheduler_runtime_artifact_target_resolver import (  # noqa: E402
     resolve_runtime_artifact_targets as _resolve_runtime_artifact_targets_base,
@@ -2525,6 +2529,64 @@ def record_generation_runtime_activation_authorization(
             "queue_completed_count": 0,
         },
         "generation_runtime_activation_authorization": compact,
+        "generation_prefetch_cache": refreshed_prefetch,
+        "generation_activation_gate": refreshed_activation,
+        "generation_artifact_ledger": _compact_generation_artifact_ledger(
+            ledger_items
+        ),
+    }
+
+
+def apply_generation_runtime_activation(
+    session_id: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Run the explicit final apply gate for one approved scheduler item."""
+
+    safe_metadata = metadata if isinstance(metadata, dict) else {}
+    schedule_item_id = _requested_schedule_item_id(safe_metadata)
+    worker_id = str(
+        safe_metadata.get("worker_id") or "generation_runtime_activation_apply_gate"
+    )
+    note = safe_metadata.get("note")
+    receipt, receipt_entry = _apply_generation_runtime_activation(
+        session_id,
+        schedule_item_id=schedule_item_id,
+        worker_id=worker_id,
+        note=str(note) if note is not None else None,
+    )
+    schedule_item_id = str(receipt_entry.get("schedule_item_id") or "")
+    latest_run = _load_latest_generation_schedule_run(session_id)
+    run_id = str(latest_run.get("run_id")) if latest_run is not None else None
+    ledger_items = _load_generation_artifact_ledger_items(session_id, run_id)
+    refreshed_prefetch = get_generation_prefetch_cache(session_id)[
+        "generation_prefetch_cache"
+    ]
+    refreshed_activation = get_generation_activation_gate(session_id)[
+        "generation_activation_gate"
+    ]
+    activated = receipt.get("status") == "activated"
+    return {
+        "session_id": session_id,
+        "mode": "frontend_mock_fixture",
+        "worker_step": {
+            "status": receipt.get("status"),
+            "worker_mode": "generation_runtime_activation_apply_gate",
+            "schedule_item_id": schedule_item_id,
+            "runtime_activation_receipt_cache_status": (
+                RUNTIME_ACTIVATION_RECEIPT_CACHE_STATUS
+                if activated
+                else "runtime_activation_blocked"
+            ),
+            "activation_id": receipt.get("activation_id"),
+            "provider_call_count": 0,
+            "world_mutation_count": 0,
+            "runtime_mutation_count": 1 if activated else 0,
+            "runtime_ready_count": 1 if activated else 0,
+            "activation_allowed_count": 1 if activated else 0,
+            "queue_completed_count": 0,
+        },
+        "runtime_activation_receipt": receipt,
         "generation_prefetch_cache": refreshed_prefetch,
         "generation_activation_gate": refreshed_activation,
         "generation_artifact_ledger": _compact_generation_artifact_ledger(

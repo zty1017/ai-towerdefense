@@ -36,7 +36,7 @@ from tools.frontend.capture_frontend_flow_visual_smoke import (  # noqa: E402
     launch_browser,
     parse_viewports,
     start_static_server,
-    wait_for_http_json,
+    wait_for_devtools_page,
 )
 
 
@@ -104,12 +104,8 @@ def run_node_viewport_capture(
         proc = launch_browser(browser, remote_port, Path(tmp))
         cdp: CDPClient | None = None
         try:
-            tabs = wait_for_http_json(remote_port, "/json/list", timeout=timeout)
-            if not isinstance(tabs, list) or not tabs:
-                raise DevToolsProtocolError("No DevTools page target found")
-            websocket_url = tabs[0].get("webSocketDebuggerUrl")
-            if not websocket_url:
-                raise DevToolsProtocolError("Missing page WebSocket URL")
+            tab = wait_for_devtools_page(remote_port, timeout=timeout)
+            websocket_url = tab.get("webSocketDebuggerUrl")
             cdp = CDPClient(websocket_url)
             cdp.call("Page.enable")
             cdp.call("Runtime.enable")

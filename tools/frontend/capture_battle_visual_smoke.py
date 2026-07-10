@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from report_io import write_json
+from report_io import sha256_file, write_json
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,6 +40,10 @@ BROWSER_CANDIDATES = (
 PLAYWRIGHT_BROWSER_GLOBS = (
     "/tmp/pw-browsers/chromium-*/chrome-linux64/chrome",
     "/tmp/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
+)
+PLAYWRIGHT_BROWSER_CACHE_PATTERNS = (
+    "chromium-*/chrome-linux64/chrome",
+    "chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
 )
 
 
@@ -83,6 +87,11 @@ def browser_candidates(override: str | None) -> list[dict[str, str | None]]:
             for path in sorted(Path("/").glob(pattern.lstrip("/"))):
                 if path.is_file():
                     candidates.append({"name": str(path), "path": str(path)})
+        for root in (Path.home() / ".cache/ms-playwright",):
+            for pattern in PLAYWRIGHT_BROWSER_CACHE_PATTERNS:
+                for path in sorted(root.glob(pattern)):
+                    if path.is_file():
+                        candidates.append({"name": str(path), "path": str(path)})
     seen = set()
     unique = []
     for candidate in candidates:
@@ -127,13 +136,24 @@ def screenshot_with_chromium(
         url,
     ]
     started = time.time()
-    result = subprocess.run(
-        cmd,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+    try:
+        result = subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        elapsed_ms = round((time.time() - started) * 1000)
+        return {
+            "status": "failed",
+            "returncode": None,
+            "elapsed_ms": elapsed_ms,
+            "stdout_tail": (exc.stdout or "")[-1200:] if isinstance(exc.stdout, str) else "",
+            "stderr_tail": (exc.stderr or "")[-1200:] if isinstance(exc.stderr, str) else "",
+            "error": f"browser screenshot timed out after {timeout}s",
+        }
     elapsed_ms = round((time.time() - started) * 1000)
     stderr_tail = result.stderr[-1200:] if result.stderr else ""
     stdout_tail = result.stdout[-1200:] if result.stdout else ""
@@ -162,6 +182,7 @@ def screenshot_with_chromium(
         "width": actual_width,
         "height": actual_height,
         "file_size_bytes": output_path.stat().st_size,
+        "sha256": sha256_file(output_path),
         "stdout_tail": stdout_tail,
         "stderr_tail": stderr_tail,
     }
@@ -192,7 +213,7 @@ def build_report(
             "python3 tools/frontend/capture_battle_visual_smoke.py --allow-missing-browser --output-dir /tmp/p0m_browser_visual_smoke",
         ],
         "notes": [
-            "The smoke URL forces static data and deep-links to the battle screen.",
+            "The smoke URL forces static data, deep-links to the battle screen, and freezes battle time for screenshot stability.",
             "The battle rendering code path is the same MapRuntimePackage-driven player battle canvas.",
             "Screenshots are only valid when produced by a real browser executable.",
         ],
@@ -218,7 +239,7 @@ def main() -> int:
     args = parse_args()
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
-    url_path = "/frontend/index.html?static=1&battleVisualSmoke=1"
+    url_path = "/frontend/index.html?static=1&battleVisualSmoke=1&battleVisualHold=1"
     candidates = browser_candidates(args.browser_bin)
     browser = find_browser(args.browser_bin)
     if not browser:

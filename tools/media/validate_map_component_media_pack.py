@@ -38,7 +38,7 @@ REQUIRED_USAGE_POLICY = {
     "not_runtime_semantic_source",
     "no_image_to_map_semantic_inference",
     "local_reviewed_component_only",
-    "no_frontend_default_consumption",
+    "frontend_default_presentation_allowed",
     "no_provider_or_prompt_payload",
     "no_external_temporary_url",
 }

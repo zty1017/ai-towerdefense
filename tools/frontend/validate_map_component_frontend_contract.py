@@ -2,8 +2,8 @@
 """Validate the map component media frontend boundary.
 
 Map component media is reviewed presentation evidence for MapStylePack entries.
-It may be served by the backend, but the player-default frontend must not load
-or draw it until a separate runtime publication contract exists.
+The player-default frontend may load the v0.1 reviewed component manifest for
+presentation stamps, but it must not treat those images as map semantic truth.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from report_io import load_json
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_JS = ROOT / "frontend/app.js"
+FRONTEND_RUNTIME = ROOT / "frontend/runtime"
 BACKEND_MAIN = ROOT / "backend/app/main.py"
 MANIFEST = ROOT / "game_data/media/map_components/map_component_media_manifest.v0.1.json"
 
@@ -25,7 +26,7 @@ REQUIRED_USAGE_POLICY = {
     "not_runtime_semantic_source",
     "no_image_to_map_semantic_inference",
     "local_reviewed_component_only",
-    "no_frontend_default_consumption",
+    "frontend_default_presentation_allowed",
     "no_provider_or_prompt_payload",
     "no_external_temporary_url",
 }
@@ -100,37 +101,82 @@ def validate_backend_mount(errors: list[str]) -> None:
     )
 
 
-def validate_frontend_default_non_consumption(errors: list[str]) -> None:
+def validate_frontend_default_presentation_consumption(errors: list[str]) -> None:
     source = APP_JS.read_text(encoding="utf-8")
+    frontend_source = "\n".join(
+        [source]
+        + [
+            runtime_js.read_text(encoding="utf-8")
+            for runtime_js in sorted(FRONTEND_RUNTIME.glob("*.js"))
+        ]
+    )
     require(
-        "/assets/map_components" not in source,
-        "frontend/app.js must not default-load /assets/map_components assets",
+        "/assets/map_components" in frontend_source,
+        "frontend app/runtime must resolve /assets/map_components assets for reviewed presentation components",
         errors,
     )
     require(
-        "map_component_media_manifest" not in source
-        and "mapComponentMediaManifest" not in source,
-        "frontend/app.js must not default-load MapComponentMediaManifest",
+        "map_component_media_manifest" in frontend_source and "mapComponentManifest" in frontend_source,
+        "frontend app/runtime must default-load MapComponentMediaManifest v0.1 for presentation components",
         errors,
     )
-    forbidden_names = (
-        "drawMapComponent",
-        "loadMapComponent",
+    required_names = (
+        "mapComponentItems",
+        "mapComponentPreloadUrls",
         "mapComponentImage",
-        "styleComponentImage",
+        "drawComponentTextureEllipse",
     )
-    for name in forbidden_names:
+    for name in required_names:
         require(
-            name not in source,
-            f"frontend/app.js must not include player-default {name} flow",
+            name in frontend_source,
+            f"frontend app/runtime must include player-default presentation flow: {name}",
             errors,
         )
-    static_paths_match = re.search(r"const\s+STATIC_PATHS\s*=\s*\{(?P<body>.*?)\n\s*\};", source, re.S)
+    require(
+        "createFrontendMediaCatalog" in frontend_source
+        and "getData" in frontend_source
+        and "resolveAssetUrl" in frontend_source,
+        "reviewed component lookup must pass through the injected frontend media catalog",
+        errors,
+    )
+    for role in (
+        "terrain_base",
+        "road_band",
+        "build_slot_platform",
+        "objective_foundation",
+        "spawn_marker",
+        "resource_marker",
+        "hazard_marker",
+        "blocking_prop",
+    ):
+        require(
+            f'"{role}"' in frontend_source,
+            f"frontend app/runtime must consume reviewed component role for presentation: {role}",
+            errors,
+        )
+    static_paths_match = re.search(
+        r"const\s+STATIC_PATHS\s*=\s*\{(?P<body>.*?)\n\s*\};",
+        frontend_source,
+        re.S,
+    )
     if static_paths_match:
         body = static_paths_match.group("body")
         require(
-            "mapComponent" not in body and "map_components" not in body,
-            "STATIC_PATHS must not include map component media before publication",
+            "mapComponentManifest" in body and "map_components" in body,
+            "STATIC_PATHS must include reviewed map component media manifest",
+            errors,
+        )
+    semantic_forbidden = (
+        "imageToMap",
+        "inferMapFromImage",
+        "reverseMapComponent",
+        "componentToPath",
+        "componentToCollision",
+    )
+    for name in semantic_forbidden:
+        require(
+            name not in frontend_source,
+            f"frontend app/runtime must not include image-to-map semantic inference flow: {name}",
             errors,
         )
 
@@ -139,7 +185,7 @@ def main() -> int:
     errors: list[str] = []
     validate_manifest(errors)
     validate_backend_mount(errors)
-    validate_frontend_default_non_consumption(errors)
+    validate_frontend_default_presentation_consumption(errors)
 
     if errors:
         print("INVALID MapComponentFrontendContract")
@@ -149,8 +195,8 @@ def main() -> int:
 
     print("OK MapComponentFrontendContract")
     print("- backend static mount: /assets/map_components")
-    print("- frontend default consumption: disabled")
-    print("- manifest usage: review-only")
+    print("- frontend default consumption: reviewed presentation components only")
+    print("- manifest usage: presentation allowed, not runtime semantic source")
     return 0
 
 

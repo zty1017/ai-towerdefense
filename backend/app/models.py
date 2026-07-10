@@ -97,6 +97,18 @@ class ResearchJobInfo(ResearchJobResponse):
     completed_at: Optional[datetime] = None
 
 
+class RuntimeActivationResponse(BaseModel):
+    """Result of applying or rolling back one session runtime patch."""
+
+    activation_receipt: dict[str, Any]
+    activated_runtime_bundle: dict[str, Any]
+
+
+class RuntimeActivationListResponse(BaseModel):
+    session_id: str
+    activation_receipts: list[dict[str, Any]] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Frontend mock API models
 # ---------------------------------------------------------------------------
