@@ -139,6 +139,7 @@ import {
     mapCameraMode: "auto",
     mapDrag: null,
     suppressMapClick: false,
+    mapSyncStatus: "idle",
   };
 
   const safeText = (value) =>
@@ -353,6 +354,7 @@ import {
       nodePlayable: (nodeId) => nodePlayable(nodeId),
       routeCurrent: () => routeCurrent(),
       routeNext: () => routeNext(),
+      mapSyncStatus: () => state.mapSyncStatus,
     },
     presentation: {
       routePath: (from, to) => strategicRoutePath(from, to),
@@ -2301,7 +2303,17 @@ import {
         renderMap();
     },
     "enter-node": () => enterCurrentNode(),
-    "refresh-map": () => loadMap().finally(renderMap),
+    "refresh-map": async () => {
+        state.mapSyncStatus = "loading";
+        renderMap();
+        try {
+          await loadMap();
+          state.mapSyncStatus = "success";
+        } catch {
+          state.mapSyncStatus = "idle";
+        }
+        if (state.view === "map") renderMap();
+    },
     "map-zoom-in": () => zoomStrategicMapBy(1.25),
     "map-zoom-out": () => zoomStrategicMapBy(1 / 1.25),
     "map-camera-reset": () => resetStrategicMapCamera(),
@@ -2346,7 +2358,14 @@ import {
     cancelToolDrag: (event) => cancelToolDrag(event),
     beginStrategicMapDrag: (event) => beginStrategicMapDrag(event),
     updateStrategicMapDrag: (event) => updateStrategicMapDrag(event),
-    finishStrategicMapDrag: (event) => finishStrategicMapDrag(event),
+    finishStrategicMapDrag: (event) => {
+      finishStrategicMapDrag(event);
+      if (state.suppressMapClick) {
+        window.setTimeout(() => {
+          state.suppressMapClick = false;
+        }, 220);
+      }
+    },
     handleStrategicMapWheel: (event) => handleStrategicMapWheel(event),
     updateIntent: (value) => {
       state.intentText = value;

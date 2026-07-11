@@ -15,10 +15,15 @@ SCHEMA_VERSION = "strategic_map_interaction_smoke_report.v0.1"
 EXPECTED_VIEWPORTS = {"desktop", "mobile"}
 EXPECTED_CHECKS = {
     "initial_snapshot_valid",
+    "real_zoom_button_hit",
     "zoom_reduces_view_box",
     "drag_changes_camera_center",
     "drag_class_released",
+    "real_reset_button_hit",
     "reset_restores_auto_camera",
+    "node_hit_area_selects",
+    "refresh_feedback_visible",
+    "enter_current_node_navigates",
 }
 
 
@@ -65,8 +70,8 @@ def validate_interaction(item: dict[str, Any]) -> None:
     for phase in ("initial", "zoomed", "dragged", "reset"):
         require(valid_view_box(as_obj(item.get(phase))), f"{viewport_id} {phase} viewBox invalid")
     screenshots = as_list(item.get("screenshots"))
-    require(len(screenshots) == 3, f"{viewport_id} must include three screenshots")
-    require({entry.get("phase") for entry in screenshots if isinstance(entry, dict)} == {"initial", "dragged", "reset"}, f"{viewport_id} screenshot phases mismatch")
+    require(len(screenshots) == 4, f"{viewport_id} must include four screenshots")
+    require({entry.get("phase") for entry in screenshots if isinstance(entry, dict)} == {"initial", "dragged", "reset", "actions"}, f"{viewport_id} screenshot phases mismatch")
     for screenshot in screenshots:
         require(isinstance(screenshot, dict), f"{viewport_id} screenshot must be an object")
         path = Path(str(screenshot.get("path") or ""))
@@ -93,7 +98,7 @@ def validate(report: dict[str, Any], allow_unavailable: bool) -> None:
     require(viewport_ids == EXPECTED_VIEWPORTS, f"unexpected viewports: {sorted(viewport_ids)}")
     require(int_value(report.get("expected_interaction_count")) == 2, "expected interaction count must be 2")
     require(int_value(report.get("passed_interaction_count")) == 2, "passed interaction count must be 2")
-    require(int_value(report.get("captured_screenshot_count")) == 6, "captured screenshot count must be 6")
+    require(int_value(report.get("captured_screenshot_count")) == 8, "captured screenshot count must be 8")
     require(not as_list(report.get("failures")), "captured report must have no failures")
     for item in interactions:
         require(isinstance(item, dict), "interaction entries must be objects")

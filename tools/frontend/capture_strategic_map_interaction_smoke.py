@@ -59,9 +59,55 @@ def js_map_snapshot() -> str:
             height: rect.height,
           },
           dragging: map.classList.contains('is-dragging'),
+          selectedNodeTitle: document.querySelector('.map-overlay--node .panel-title')?.textContent.trim() || '',
+          enterDisabled: Boolean(document.querySelector("[data-action='enter-node']")?.disabled),
+          syncFeedback: document.querySelector('.map-sync-feedback')?.textContent.trim() || '',
         };
       })()
     """
+
+
+def js_element_center(selector: str) -> str:
+    return f"""
+      (() => {{
+        const selector = {json.dumps(selector)};
+        const element = document.querySelector(selector);
+        if (!element) return {{ ok: false, selector, error: 'missing' }};
+        element.scrollIntoView({{ block: 'center', inline: 'center' }});
+        const rect = element.getBoundingClientRect();
+        const clientX = rect.left + rect.width / 2;
+        const clientY = rect.top + rect.height / 2;
+        const hit = document.elementFromPoint(clientX, clientY);
+        const action = hit?.closest?.('[data-action]');
+        return {{
+          ok: rect.width > 0 && rect.height > 0 && Boolean(hit),
+          selector,
+          clientX,
+          clientY,
+          hitTag: hit?.tagName || '',
+          hitAction: action?.dataset?.action || '',
+          hitNodeId: action?.dataset?.nodeId || '',
+        }};
+      }})()
+    """
+
+
+def dispatch_real_click(cdp: CDPClient, selector: str) -> dict[str, Any]:
+    target = as_obj(cdp.eval(js_element_center(selector), timeout_ms=3000))
+    if not target.get("ok"):
+        raise DevToolsProtocolError(f"real click target unavailable: {target}")
+    x = float(target["clientX"])
+    y = float(target["clientY"])
+    cdp.call("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x, "y": y, "button": "none"})
+    cdp.call(
+        "Input.dispatchMouseEvent",
+        {"type": "mousePressed", "x": x, "y": y, "button": "left", "buttons": 1, "clickCount": 1},
+    )
+    cdp.call(
+        "Input.dispatchMouseEvent",
+        {"type": "mouseReleased", "x": x, "y": y, "button": "left", "buttons": 0, "clickCount": 1},
+    )
+    return target
 
 
 def view_box(snapshot: dict[str, Any]) -> list[float]:
@@ -141,10 +187,9 @@ def run_for_viewport(
 
             initial = as_obj(cdp.eval(js_map_snapshot()))
             screenshots = [screenshot_record(cdp, output_dir, viewport_id, "initial")]
+            zoom_hits = []
             for _ in range(2):
-                clicked = cdp.eval(js_click("[data-action='map-zoom-in']"))
-                if not as_obj(clicked).get("ok"):
-                    raise DevToolsProtocolError(f"zoom button failed: {clicked}")
+                zoom_hits.append(dispatch_real_click(cdp, "[data-action='map-zoom-in']"))
                 time.sleep(0.12)
             zoomed = as_obj(cdp.eval(js_map_snapshot()))
 
@@ -177,20 +222,47 @@ def run_for_viewport(
             dragged = as_obj(cdp.eval(js_map_snapshot()))
             screenshots.append(screenshot_record(cdp, output_dir, viewport_id, "dragged"))
 
-            reset_click = cdp.eval(js_click("[data-action='map-camera-reset']"))
-            if not as_obj(reset_click).get("ok"):
-                raise DevToolsProtocolError(f"reset button failed: {reset_click}")
+            reset_click = dispatch_real_click(cdp, "[data-action='map-camera-reset']")
             time.sleep(0.15)
             reset = as_obj(cdp.eval(js_map_snapshot()))
             screenshots.append(screenshot_record(cdp, output_dir, viewport_id, "reset"))
 
+            alternate_node_click = dispatch_real_click(
+                cdp,
+                "[data-node-id='lamp_wick_store'] .map-node-hit",
+            )
+            time.sleep(0.15)
+            alternate_selected = as_obj(cdp.eval(js_map_snapshot()))
+            current_node_click = dispatch_real_click(
+                cdp,
+                "[data-node-id='gray_lantern_station'] .map-node-hit",
+            )
+            time.sleep(0.15)
+            current_selected = as_obj(cdp.eval(js_map_snapshot()))
+            refresh_click = dispatch_real_click(cdp, "[data-action='refresh-map']")
+            time.sleep(0.35)
+            refreshed = as_obj(cdp.eval(js_map_snapshot()))
+            screenshots.append(screenshot_record(cdp, output_dir, viewport_id, "actions"))
+            enter_click = dispatch_real_click(cdp, "[data-action='enter-node']")
+            entered = cdp.eval(js_wait_selector("[data-action='proposal-refresh']", 7000), timeout_ms=8000)
+
             checks = {
                 "initial_snapshot_valid": initial.get("ok") is True,
+                "real_zoom_button_hit": all(hit.get("hitAction") == "map-zoom-in" for hit in zoom_hits),
                 "zoom_reduces_view_box": view_box_changed(initial, zoomed, axes=range(2, 4))
                 and view_box(zoomed)[2] < view_box(initial)[2],
                 "drag_changes_camera_center": view_box_changed(zoomed, dragged, axes=range(0, 2)),
                 "drag_class_released": dragged.get("dragging") is False,
+                "real_reset_button_hit": reset_click.get("hitAction") == "map-camera-reset",
                 "reset_restores_auto_camera": view_box_matches(initial, reset),
+                "node_hit_area_selects": alternate_node_click.get("hitNodeId") == "lamp_wick_store"
+                and alternate_selected.get("selectedNodeTitle") == "灯芯仓"
+                and current_node_click.get("hitNodeId") == "gray_lantern_station"
+                and current_selected.get("selectedNodeTitle") == "灰灯驿站",
+                "refresh_feedback_visible": refresh_click.get("hitAction") == "refresh-map"
+                and refreshed.get("syncFeedback") == "态势已同步",
+                "enter_current_node_navigates": enter_click.get("hitAction") == "enter-node"
+                and as_obj(entered).get("ok") is True,
             }
             return {
                 "viewport_id": viewport_id,
@@ -202,6 +274,9 @@ def run_for_viewport(
                 "zoomed": zoomed,
                 "dragged": dragged,
                 "reset": reset,
+                "alternate_selected": alternate_selected,
+                "current_selected": current_selected,
+                "refreshed": refreshed,
                 "drag": {
                     "start": {"x": start_x, "y": start_y},
                     "end": {"x": end_x, "y": end_y},
