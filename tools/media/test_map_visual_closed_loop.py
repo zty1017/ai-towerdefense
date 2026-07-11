@@ -68,6 +68,45 @@ def test_repair_prompt_uses_controlled_mapping():
     assert repaired["prompt_brief"].startswith("Subject:")
 
 
+def test_score_threshold_never_overrides_hard_checks():
+    request = request_pack()["requests"][0]
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+    below = closed_loop.normalize_vision_review(
+        {"score": 0.77, "checks": checks, "notes": []}, request
+    )
+    assert below["status"] == "failed"
+    checks["central_playable_clearance"] = False
+    hard_failure = closed_loop.normalize_vision_review(
+        {"score": 1.0, "checks": checks, "notes": []}, request
+    )
+    assert hard_failure["status"] == "failed"
+    assert "central_playable_clearance" in hard_failure["failed_checks"]
+
+
+def test_calibration_summary_does_not_auto_lower_threshold():
+    summary = closed_loop.build_calibration_summary(
+        {
+            "node_id": "test_node",
+            "status": "blocked_after_retries",
+            "runtime_critical_roles_ready": False,
+            "policy": {"minimum_vision_score": 0.78},
+            "results": [
+                {
+                    "role": "terrain_base",
+                    "status": "failed_after_retries",
+                    "attempt_count": 2,
+                    "attempts": [
+                        {"review": {"score": 0.9, "failed_checks": ["no_people_or_creatures"]}}
+                    ],
+                }
+            ],
+        }
+    )
+    assert summary["configured_minimum_score"] == 0.78
+    assert summary["recommendation"] == "keep_hard_check_vetoes_and_revise_prompts_before_threshold_changes"
+
+
 def test_closed_loop_promotes_only_after_critical_roles_pass(tmp_path, monkeypatch):
     pack = request_pack()
     pack_path = tmp_path / "pack.json"

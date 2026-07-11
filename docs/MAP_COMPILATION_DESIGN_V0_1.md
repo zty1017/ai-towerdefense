@@ -140,6 +140,25 @@ reviewed_visual_staging/components/non_blocking_decoration.png
 
 `LayeredMapVisualPackage` 会把三类媒体登记为 `component_sprite_png / compiled_reviewed_component`，复制到节点专属本地包并嵌入最终 SVG。图片不能改变锚点、路径、碰撞、目标类型或出生逻辑。前端检测到 player-ready layered backdrop 后，会停止额外绘制旧目标、出生点和地标，避免双重叠图。
 
+开发者现场校准使用单一入口，不再逐角色调用：
+
+```bash
+/home/zty/projects/ai-compiled-towerdefense/.venv/bin/python \
+  tools/media/map_visual_closed_loop.py \
+  --request-pack /tmp/ai_td_live_map_compile_v3/gray_lantern_station/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json \
+  --output-dir /tmp/ai_td_live_map_calibration/candidates \
+  --reviewed-dir /tmp/ai_td_live_map_calibration/reviewed \
+  --dotenv /home/zty/projects/ai-compiled-towerdefense/.env \
+  --image-profile agnes_image_flash \
+  --vision-profile agnes_multimodal_flash \
+  --max-attempts 2 \
+  --max-workers 3 \
+  --minimum-score 0.78 \
+  --live
+```
+
+该命令自动完成六层生成、多模态审查、受控修复、重试、后处理和 reviewed staging，并额外输出 `map_visual_calibration_summary.v0.1.json`。分数阈值不是唯一门禁：任一固定检查失败都会阻断晋升；单次校准不得自动降低默认阈值。
+
 任何 AI 产物都必须进入 provider envelope / staging / promotion / media gate / runtime package 或 MapCompilePackage 审查链，不能直接被前端默认加载。
 
 ### 1.3 采纳：StylePack，但先作为编译期约束
