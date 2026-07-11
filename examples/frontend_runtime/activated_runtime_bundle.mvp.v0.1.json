@@ -40,7 +40,7 @@
     "frontend_mock_pack": {
       "schema_version": "frontend_mock_pack.v0.1",
       "ref": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
-      "hash": "sha256:2b1d73a7dc33822bc62ece791db3e24e389bffefa7f3ffd21bca36bdbc1c76a4"
+      "hash": "sha256:dc7b31532e2a7b29de653099b1ff61a3a5177168eef957f188c490ea59910a31"
     },
     "runtime_packages": [
       {

@@ -448,6 +448,7 @@ import {
     drawGroundGlow: (...args) => drawGroundGlow(...args),
     mapSpriteSize: (...args) => mapSpriteSize(...args),
     resolveToolSpriteRef: (toolId) => battleToolSpriteRef(toolId),
+    getToolProjection: (toolId) => findBattleToolProjection(toolId, battleToolProjection()),
   });
   const battleSemanticRenderer = createBattleSemanticRenderer({
     getBattle: () => state.battle,

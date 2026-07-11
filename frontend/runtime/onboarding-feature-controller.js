@@ -159,7 +159,7 @@ export function createOnboardingFeatureController({
     const sceneUrl = getOpeningSceneUrl(scene);
     root.innerHTML = `
       <main class="opening-screen">
-        <section class="opening-frame">
+        <section class="opening-frame opening-frame--${isBlack ? "text" : "scene"}">
           ${
             isBlack
               ? `<div class="opening-lines">${lines.map((line) => `<div>${safeText(line)}</div>`).join("")}</div>`
@@ -167,7 +167,7 @@ export function createOnboardingFeatureController({
                   ${sceneUrl ? `<img class="opening-scene-image" src="${safeText(sceneUrl)}" alt="${safeText(segment.display_name || "开场远景")}" loading="eager" />` : ""}
                   <div class="opening-scene-shade"></div>
                   <div class="opening-scene-caption">
-                    <span>${safeText(segment.display_name || "前线记录")}</span>
+                    <span>${safeText((segment.visual && segment.visual.location_label) || segment.display_name || "前线记录")}</span>
                     <p class="opening-narration">${safeText(segment.narration || "")}</p>
                   </div>
                 </div>`

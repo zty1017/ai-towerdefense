@@ -380,21 +380,26 @@ button:disabled {
 
 .opening-screen {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 50% 62%, rgba(240, 189, 88, 0.1), transparent 34rem),
-    #000;
-  padding: 22px;
+  background: #000;
+  overflow: hidden;
 }
 
 .opening-frame {
-  width: min(980px, 100%);
-  min-height: 62vh;
+  width: 100%;
+  min-height: 100vh;
   display: grid;
   align-content: center;
-  gap: 28px;
   position: relative;
+}
+
+.opening-frame--text {
+  width: min(1120px, calc(100% - 64px));
+  margin: 0 auto;
+  gap: 38px;
+}
+
+.opening-frame--scene {
+  isolation: isolate;
 }
 
 .opening-lines {
@@ -406,13 +411,11 @@ button:disabled {
 }
 
 .opening-card {
-  min-height: 360px;
-  border: 1px solid rgba(242, 205, 130, 0.24);
-  border-radius: var(--radius);
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
   background: #080a09;
-  box-shadow: inset 0 0 90px rgba(240, 189, 88, 0.08), 0 22px 60px rgba(0, 0, 0, 0.48);
   overflow: hidden;
-  position: relative;
 }
 
 .opening-scene-image {
@@ -428,15 +431,18 @@ button:disabled {
 .opening-scene-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 24%, rgba(2, 4, 3, 0.9) 100%);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42), transparent 48%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08) 42%, rgba(2, 4, 3, 0.92) 100%),
+    radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.54) 100%);
 }
 
 .opening-scene-caption {
   position: absolute;
   z-index: 1;
-  left: 34px;
-  right: 34px;
-  bottom: 28px;
+  left: clamp(28px, 6vw, 112px);
+  bottom: clamp(104px, 14vh, 164px);
+  max-width: min(720px, calc(100vw - 56px));
 }
 
 .opening-scene-caption > span {
@@ -446,10 +452,12 @@ button:disabled {
 }
 
 .opening-narration {
-  margin: 6px 0 0;
+  margin: 10px 0 0;
   color: #f1e7d2;
-  font-size: 1.12rem;
-  line-height: 1.7;
+  font-family: var(--font-title);
+  font-size: clamp(1.25rem, 2vw, 2rem);
+  line-height: 1.55;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.88);
 }
 
 @keyframes opening-camera {
@@ -458,10 +466,37 @@ button:disabled {
 }
 
 .opening-controls {
+  position: absolute;
+  z-index: 2;
+  left: clamp(28px, 6vw, 112px);
+  right: clamp(28px, 6vw, 112px);
+  bottom: clamp(24px, 5vh, 52px);
   display: flex;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.opening-frame--text .opening-controls {
+  position: static;
+}
+
+@media (max-width: 720px) {
+  .opening-frame--text {
+    width: calc(100% - 36px);
+  }
+
+  .opening-scene-caption {
+    left: 20px;
+    bottom: 104px;
+    max-width: calc(100vw - 40px);
+  }
+
+  .opening-controls {
+    left: 20px;
+    right: 20px;
+    bottom: 24px;
+  }
 }
 
 .map-layout {

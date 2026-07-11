@@ -746,6 +746,10 @@ test("battle entity renderer draws runtime sprites, effects, and drag preview", 
 
   renderer.drawEntities(context);
   renderer.drawEffects(context);
+  const beforeSnappedGhost = context.calls.length;
+  renderer.drawDragGhost(context);
+  assert.equal(context.calls.length, beforeSnappedGhost);
+  battle.hoverCell = null;
   renderer.drawDragGhost(context);
   assert.ok(context.calls.some(([name]) => name === "drawImage"));
   assert.ok(context.calls.some(([name]) => name === "ellipse"));
@@ -791,11 +795,16 @@ test("battle deployment renderer previews a compiled tool with its reviewed spri
     drawGroundGlow: () => {},
     mapSpriteSize: () => 62,
     resolveToolSpriteRef: (toolId) => ({ url: `/compiled/${toolId}.png`, source: null }),
+    getToolProjection: () => ({
+      assetKind: "tower_blueprint",
+      behaviorAbi: { targeting: { range_cells: 3 } },
+    }),
   });
 
   renderer.drawBuildableTerraces(context);
   renderer.drawDeployHints(context, { layeredBackdrop: true });
   assert.deepEqual(spriteCalls, [{ url: "/compiled/asset_light_slow_tower_001.png", source: null }]);
+  assert.ok(context.calls.some(([name, , , radiusX, radiusY]) => name === "ellipse" && radiusX > 160 && radiusY > 80));
   assert.equal(renderer.suggestedSockets()[0].slot_id, "slot_a");
 });
 
