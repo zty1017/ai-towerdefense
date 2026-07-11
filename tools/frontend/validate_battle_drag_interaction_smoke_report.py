@@ -87,8 +87,12 @@ def validate_interaction(item: dict[str, Any], tool: str) -> None:
     )
     require(
         int_value(after.get("resources")) < int_value(before.get("resources"))
-        or int_value(after.get("power")) < int_value(before.get("power")),
-        "neither materials nor power decreased after drag",
+        or int_value(after.get("power")) < int_value(before.get("power"))
+        or (
+            tool == "sample"
+            and int_value(after.get("sampleUses")) < int_value(before.get("sampleUses"))
+        ),
+        "neither deployment resources nor delivered sample charges decreased after drag",
     )
     if tool == "basic":
         require(
