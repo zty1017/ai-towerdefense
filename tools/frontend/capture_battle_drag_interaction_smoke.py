@@ -187,9 +187,18 @@ def interaction_passed(before: dict[str, Any], after: dict[str, Any], tool: str)
         int_value(after.get("resources")) < int_value(before.get("resources"))
         or int_value(after.get("power")) < int_value(before.get("power"))
     )
+    delivery_charge_spent = (
+        tool == "sample"
+        and int_value(after.get("sampleUses")) < int_value(before.get("sampleUses"))
+    )
     deployed = int_value(after.get("deployedAssetCount")) > int_value(before.get("deployedAssetCount"))
     default_use_spent = tool != "basic" or int_value(after.get("basicUses")) < int_value(before.get("basicUses"))
-    return entity_count_after > entity_count_before and resource_spent and deployed and default_use_spent
+    return (
+        entity_count_after > entity_count_before
+        and (resource_spent or delivery_charge_spent)
+        and deployed
+        and default_use_spent
+    )
 
 
 def run_drag_for_viewport(
