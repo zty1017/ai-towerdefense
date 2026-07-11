@@ -1200,7 +1200,7 @@ test("runtime tools deploy through behavior ABI whitelist", () => {
   assert.equal(battle.enemies[0].hp, 3);
 });
 
-test("compiled sample slot consumes its delivery charges while honoring dynamic ABI", () => {
+test("compiled sample slot consumes delivery charges without charging research materials twice", () => {
   const battle = {
     resources: 40,
     power: 8,
@@ -1240,7 +1240,7 @@ test("compiled sample slot consumes its delivery charges while honoring dynamic 
     true,
   );
   assert.equal(battle.sampleUses, 1);
-  assert.equal(battle.resources, 22);
+  assert.equal(battle.resources, 40);
   assert.equal(battle.defenses[0].objectId, "compiled_tower_alpha");
 });
 

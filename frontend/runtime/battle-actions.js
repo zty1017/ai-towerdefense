@@ -309,7 +309,10 @@ export function deployRuntimeTool({
   }
   const key = cooldownKey(tool, tool.id);
   const fallbackCost = runtimeActionKind(tool) === "support" ? 0 : 10;
-  if (!cooldownReady(battle, tool, key) || !canPayCost(battle, tool, fallbackCost, "materials")) {
+  if (
+    !cooldownReady(battle, tool, key) ||
+    (!deliveredSample && !canPayCost(battle, tool, fallbackCost, "materials"))
+  ) {
     setToast(setBattleToast, "材料或冷却不足");
     return false;
   }
@@ -319,7 +322,7 @@ export function deployRuntimeTool({
     return false;
   }
 
-  spendCost(battle, tool, fallbackCost, "materials");
+  if (!deliveredSample) spendCost(battle, tool, fallbackCost, "materials");
   if (deliveredSample) battle.sampleUses -= 1;
   setCooldown(battle, tool, key, 1000);
   pushDeployedAssetId(battle, tool, tool.id);
