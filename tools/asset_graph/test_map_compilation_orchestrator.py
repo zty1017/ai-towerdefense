@@ -89,27 +89,66 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
     orchestrator._write(input_path, input_value)
     calls = []
 
-    def fake_run_request(_pack_path, _pack, request, _output, _profile, **kwargs):
-        calls.append((request["role"], kwargs["live"]))
-        return {
-            "request_id": request["request_id"],
-            "role": request["role"],
-            "status": "candidate_needs_visual_and_alignment_review",
-            "candidate_path": f"/tmp/{request['role']}.png",
-            "sidecar_path": f"/tmp/{request['role']}.json",
-            "provider_called_this_run": True,
-            "image_exists": True,
+    def fake_closed_loop(_pack_path, pack, output_dir, reviewed_dir, *_profiles, **kwargs):
+        calls.append((len(pack["requests"]), kwargs["max_workers"]))
+        backdrops = reviewed_dir / "backdrops"
+        textures = reviewed_dir / "textures"
+        backdrops.mkdir(parents=True, exist_ok=True)
+        textures.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+            backdrops / "map_orchestrator_live_test_node.reviewed_painted_backdrop.png",
+        )
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_tile.png",
+            textures / "road_tile.png",
+        )
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+            textures / "slot_tile.png",
+        )
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_path = output_dir / "map_visual_closed_loop_report.v0.1.json"
+        report = {
+            "schema_version": "map_visual_closed_loop_report.v0.1",
+            "node_id": pack["node_id"],
+            "worldbook_id": pack["worldbook_id"],
+            "status": "runtime_visuals_ready",
+            "runtime_critical_roles_ready": True,
+            "runtime_critical_roles": ["build_slot_platform", "road_surface", "terrain_base"],
+            "summary": {
+                "request_count": 6, "passed_count": 6, "failed_count": 0,
+                "provider_failure_count": 0, "attempt_count": 6,
+                "provider_call_count": 6, "vision_review_call_count": 6,
+                "promotion_count": 6,
+            },
+            "results": [],
+            "failures": [],
+            "promotions": [],
+            "reviewed_backdrop_source_dir": str(backdrops),
+            "reviewed_texture_source_dir": str(textures),
+            "policy": {
+                "runtime_semantics_source": "MapRuntimePackage",
+                "image_to_semantic_inference": False,
+                "raw_prompt_stored": False,
+                "raw_provider_response_stored": False,
+                "automatic_promotion_scope": "reviewed_visual_staging_only",
+                "unreviewed_candidate_player_visible": False,
+            },
         }
+        orchestrator._write(report_path, report)
+        return {**report, "report_path": str(report_path)}
 
     monkeypatch.setattr(orchestrator.image_provider, "load_dotenv", lambda *_: None)
-    monkeypatch.setattr(orchestrator.visual_candidates, "run_request", fake_run_request)
+    monkeypatch.setattr(orchestrator.vision_review, "load_dotenv", lambda *_: None)
+    monkeypatch.setattr(orchestrator.map_visual_closed_loop, "run_closed_loop", fake_closed_loop)
     shutil.rmtree(output, ignore_errors=True)
     try:
         report = orchestrator.compile_map(input_path, output, live_visuals=True)
-        assert len(calls) == 6
-        assert all(live is True for _, live in calls)
+        assert calls == [(6, 3)]
         assert report["provider_execution"]["call_count"] == 6
-        assert report["provider_execution"]["candidate_generation_status"] == "completed_review_only"
-        assert report["provider_execution"]["reviewed_local_media_imported"] is False
+        assert report["provider_execution"]["candidate_generation_status"] == "runtime_visuals_ready"
+        assert report["provider_execution"]["reviewed_local_media_imported"] is True
+        assert report["provider_execution"]["automatic_reviewed_staging_ready"] is True
     finally:
         shutil.rmtree(output, ignore_errors=True)

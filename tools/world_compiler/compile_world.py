@@ -31,6 +31,9 @@ def main() -> int:
         help="Generate all layered map visual candidates during map compilation.",
     )
     parser.add_argument("--map-image-profile", default="agnes_image_flash")
+    parser.add_argument("--map-visual-review-profile", default="agnes_multimodal_flash")
+    parser.add_argument("--map-visual-max-attempts", type=int, default=2)
+    parser.add_argument("--map-visual-max-workers", type=int, default=3)
     parser.add_argument("--dotenv", type=Path)
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
@@ -65,6 +68,9 @@ def main() -> int:
             compile_map=args.compile_map,
             live_map_visuals=args.live_map_visuals,
             map_image_profile=args.map_image_profile,
+            map_visual_review_profile=args.map_visual_review_profile,
+            map_visual_max_attempts=args.map_visual_max_attempts,
+            map_visual_max_workers=args.map_visual_max_workers,
             dotenv_path=args.dotenv.resolve() if args.dotenv else None,
         )
     except (OSError, ValueError, json.JSONDecodeError, WorldCompilationError) as exc:

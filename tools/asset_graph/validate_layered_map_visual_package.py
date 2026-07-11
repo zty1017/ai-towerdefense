@@ -215,6 +215,8 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             "procedural_texture",
             "local_ai_exploration_texture",
             "local_ai_exploration_backdrop",
+            "compiled_reviewed_texture",
+            "compiled_reviewed_backdrop",
         }:
             errors.append(f"media_assets[{index}].source_kind is not supported: {source_kind}")
         source_local_path = item.get("source_local_path")
@@ -224,6 +226,18 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             ):
                 errors.append(
                     f"media_assets[{index}].source_local_path must point to local exploration media"
+                )
+            elif not (ROOT / source_local_path).exists():
+                errors.append(f"media_assets[{index}].source_local_path does not exist: {source_local_path}")
+        if source_kind in {"compiled_reviewed_texture", "compiled_reviewed_backdrop"}:
+            is_reviewed_staging = (
+                isinstance(source_local_path, str)
+                and source_local_path.startswith("game_data/media/layered_maps/")
+                and "/reviewed_visual_staging/" in source_local_path
+            )
+            if not is_reviewed_staging:
+                errors.append(
+                    f"media_assets[{index}].source_local_path must point to map reviewed visual staging"
                 )
             elif not (ROOT / source_local_path).exists():
                 errors.append(f"media_assets[{index}].source_local_path does not exist: {source_local_path}")

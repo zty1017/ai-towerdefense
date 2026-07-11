@@ -38,8 +38,9 @@ if str(MEDIA_TOOLS) not in sys.path:
     sys.path.insert(0, str(MEDIA_TOOLS))
 
 import build_map_topology_control_sketch_pack as topology_sketches  # noqa: E402
-import generate_layered_map_visual_candidates as visual_candidates  # noqa: E402
 import image_provider  # noqa: E402
+import map_visual_closed_loop  # noqa: E402
+import vision_review  # noqa: E402
 
 REPORT_SCHEMA_VERSION = "map_compilation_run_report.v0.1"
 INPUT_SCHEMA_VERSION = "map_compilation_input.v0.1"
@@ -506,6 +507,9 @@ def compile_map(
     dotenv_path: Path | None = None,
     visual_request_timeout: int = 240,
     visual_max_workers: int = 3,
+    visual_review_profile: str = "agnes_multimodal_flash",
+    visual_review_timeout: int = 180,
+    visual_max_attempts: int = 2,
 ) -> dict[str, Any]:
     compile_plan = plan(input_path, output_dir)
     report_path = output_dir / "map_compilation_run_report.v0.1.json"
@@ -577,38 +581,47 @@ def compile_map(
             profile = image_provider.PROFILES.get(image_profile)
             if profile is None:
                 raise MapCompilationError(f"unknown image profile: {image_profile}")
-            image_provider.load_dotenv(dotenv_path or ROOT / ".env")
+            reviewer = vision_review.PROFILES.get(visual_review_profile)
+            if reviewer is None:
+                raise MapCompilationError(f"unknown visual review profile: {visual_review_profile}")
+            env_path = dotenv_path or ROOT / ".env"
+            image_provider.load_dotenv(env_path)
+            vision_review.load_dotenv(env_path)
             request_pack_path = output_dir / "visual_handoff" / "map_layered_visual_generation_request_pack.v0.1.json"
             candidate_dir = output_dir / "visual_candidates"
-            candidate_dir.mkdir(parents=True, exist_ok=True)
-            results, failures = visual_candidates.run_pack(
+            reviewed_dir = output_dir / "reviewed_visual_staging"
+            visual_generation_report = map_visual_closed_loop.run_closed_loop(
                 request_pack_path,
                 visual_handoff,
                 candidate_dir,
+                reviewed_dir,
                 profile,
-                timeout=visual_request_timeout,
-                live=True,
+                reviewer,
+                max_attempts=visual_max_attempts,
                 max_workers=visual_max_workers,
+                generation_timeout=visual_request_timeout,
+                review_timeout=visual_review_timeout,
             )
-            visual_generation_report = visual_candidates.build_report(
-                request_pack_path=request_pack_path,
-                output_dir=candidate_dir,
-                profile=profile,
-                live=True,
-                results=results,
-                failures=failures,
+            closed_loop_report_path = Path(str(visual_generation_report["report_path"]))
+            closed_loop_errors = render_plan.validate_with_jsonschema(
+                _load(closed_loop_report_path),
+                _schema("map_visual_closed_loop_report.v0.1.schema.json"),
             )
-            visual_report_path = _write(
-                candidate_dir / "layered_map_visual_candidate_generation_run.v0.1.json",
-                visual_generation_report,
+            if closed_loop_errors:
+                raise MapCompilationError(
+                    f"MapVisualClosedLoopReport validation failed: {closed_loop_errors[0]}"
+                )
+            visual_generation_paths = sorted(
+                path for path in [*candidate_dir.rglob("*"), *reviewed_dir.rglob("*")] if path.is_file()
             )
-            visual_generation_paths = [visual_report_path, *sorted(candidate_dir.glob("*.candidate.*"))]
             stages.append(
                 _stage(
-                    "visual_candidate_generation",
+                    "visual_generate_review_repair_promote",
                     started,
                     visual_generation_paths,
-                    ["candidates_require_automatic_and_visual_review_before_promotion"],
+                    []
+                    if visual_generation_report.get("runtime_critical_roles_ready")
+                    else ["visual_candidates_failed_review_after_retries; procedural_visual_fallback_used"],
                 )
             )
 
@@ -645,6 +658,9 @@ def compile_map(
     started = time.monotonic()
     texture_dir = _resolve(str(visual_generation["reviewed_texture_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_texture_source_dir") else None
     backdrop_dir = _resolve(str(visual_generation["reviewed_backdrop_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_backdrop_source_dir") else None
+    if visual_generation_report and visual_generation_report.get("runtime_critical_roles_ready"):
+        texture_dir = Path(str(visual_generation_report["reviewed_texture_source_dir"]))
+        backdrop_dir = Path(str(visual_generation_report["reviewed_backdrop_source_dir"]))
     layered = layered_builder.build_package(
         runtime,
         style,
@@ -725,6 +741,15 @@ def compile_map(
                 visual_generation_report.get("status")
                 if visual_generation_report
                 else "not_requested"
+            ),
+            "vision_review_call_count": (
+                visual_generation_report.get("summary", {}).get("vision_review_call_count", 0)
+                if visual_generation_report
+                else 0
+            ),
+            "automatic_reviewed_staging_ready": bool(
+                visual_generation_report
+                and visual_generation_report.get("runtime_critical_roles_ready")
             ),
         },
         "quality": {

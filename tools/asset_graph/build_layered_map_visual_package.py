@@ -409,6 +409,12 @@ def source_backdrop_path(backdrop_source_dir: Path | None, node_id: str) -> Path
     return None
 
 
+def reviewed_source_kind(path: Path, media_type: str) -> str:
+    if "reviewed_visual_staging" in path.parts:
+        return f"compiled_reviewed_{media_type}"
+    return f"local_ai_exploration_{media_type}"
+
+
 def make_texture_pixels(
     role: str,
     width: int,
@@ -562,7 +568,7 @@ def build_texture_assets(
         source_kind = "procedural_texture"
         if source_path:
             fit_resize_png(source_path, path, width, height)
-            source_kind = "local_ai_exploration_texture"
+            source_kind = reviewed_source_kind(source_path, "texture")
         else:
             write_png_rgba(path, width, height, make_texture_pixels(role, width, height, style, rng, node_id))
         texture_refs[role] = png_data_uri(path)
@@ -600,7 +606,7 @@ def build_backdrop_asset(
             "asset_id": f"{node_id}_{PAINTED_BACKDROP_ROLE}",
             "role": PAINTED_BACKDROP_ROLE,
             "media_kind": "map_backdrop_png",
-            "source_kind": "local_ai_exploration_backdrop",
+            "source_kind": reviewed_source_kind(source_path, "backdrop"),
             "source_local_path": rel(source_path),
             "url": public_url(backdrop_path),
             "local_path": rel(backdrop_path),
