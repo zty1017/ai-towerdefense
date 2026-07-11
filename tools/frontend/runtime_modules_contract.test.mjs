@@ -285,6 +285,95 @@ test("demo-precompiled bundle only exposes node-allowlisted dynamic tools", () =
   assert.ok(findBattleToolProjection("other_node_tower", liveProjection));
 });
 
+test("latest session-activated sample replaces fixture sample only at its source node", () => {
+  const bundle = runtimeBundle([
+    {
+      object_id: "fixture_sample",
+      tool_id: "sample",
+      display_name: "预编译样品",
+      asset_kind: "temporary_trap_sample",
+      lifecycle: { deployable: true },
+      behavior_abi: { ui_surfaces: ["battle_hotbar"] },
+    },
+    {
+      object_id: "compiled_sample_old",
+      tool_id: "sample",
+      display_name: "旧编译样品",
+      asset_kind: "tower_blueprint",
+      lifecycle: { deployable: true, max_uses: 2 },
+      source_runtime_ref: {
+        activation_id: "activation_old",
+        node_id: "gray_lantern_station",
+      },
+      behavior_abi: {
+        placement: { mode: "build_slot" },
+        cost: { resource: "materials", amount: 17 },
+        effect_blocks: [{ kind: "damage", amount: 9 }],
+        ui_surfaces: ["battle_hotbar"],
+      },
+    },
+    {
+      object_id: "compiled_sample_latest",
+      tool_id: "sample",
+      display_name: "玩家编译的聚光塔",
+      asset_kind: "tower_blueprint",
+      lifecycle: { deployable: true, max_uses: 3 },
+      source_runtime_ref: {
+        activation_id: "activation_latest",
+        node_id: "gray_lantern_station",
+      },
+      behavior_abi: {
+        placement: { mode: "build_slot" },
+        cost: { resource: "materials", amount: 23 },
+        effect_blocks: [{ kind: "damage", amount: 21 }],
+        ui_surfaces: ["battle_hotbar"],
+      },
+    },
+    {
+      object_id: "other_node_sample",
+      tool_id: "sample",
+      display_name: "其他节点样品",
+      asset_kind: "field_device",
+      lifecycle: { deployable: true },
+      source_runtime_ref: {
+        activation_id: "activation_other_node",
+        node_id: "lamp_wick_store",
+      },
+      behavior_abi: {
+        placement: { mode: "free_point" },
+        cost: { resource: "materials", amount: 1 },
+        effect_blocks: [{ kind: "reveal" }],
+        ui_surfaces: ["battle_hotbar"],
+      },
+    },
+  ]);
+  bundle.fixture_scope = { example_only: true };
+  bundle.runtime_selection = {
+    session_activation_ids: [
+      "activation_old",
+      "activation_latest",
+      "activation_other_node",
+    ],
+  };
+  const config = battleConfigForTests({
+    node_id: "gray_lantern_station",
+    activated_runtime_object_ids: ["fixture_sample"],
+  });
+  const projection = buildBattleToolProjection({
+    battle: { sampleDelivered: true, sampleUses: 3 },
+    battleConfig: config,
+    activatedRuntimeBundle: bundle,
+  });
+
+  const sample = findBattleToolProjection("sample", projection);
+  assert.equal(sample.objectId, "compiled_sample_latest");
+  assert.equal(sample.name, "玩家编译的聚光塔");
+  assert.equal(sample.behaviorAbi.effect_blocks[0].amount, 21);
+  assert.equal(projection.filter((tool) => tool.id === "sample").length, 1);
+  assert.equal(projection.some((tool) => tool.objectId === "compiled_sample_old"), false);
+  assert.equal(projection.some((tool) => tool.objectId === "other_node_sample"), false);
+});
+
 test("node-bound sample carries its compiled label and runtime behavior ABI", () => {
   const config = battleConfigForTests({
     basic_defense: null,

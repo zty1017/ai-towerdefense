@@ -139,7 +139,8 @@
       "properties": {
         "package_id": { "type": "string", "minLength": 1, "maxLength": 160 },
         "package_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "activation_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,160}$" }
+        "activation_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,160}$" },
+        "node_id": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$" }
       }
     }
   },

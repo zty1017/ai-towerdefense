@@ -28,17 +28,54 @@ function hotbarObjects(bundle) {
 
 function objectAvailableAtNode(object, nodeId) {
   const availableNodeIds = asList(object && object.available_node_ids);
+  const sourceNodeId = asString(asObject(object && object.source_runtime_ref).node_id, "");
+  if (sourceNodeId && nodeId && sourceNodeId !== nodeId) return false;
   return !availableNodeIds.length || !nodeId || availableNodeIds.includes(nodeId);
 }
 
-function dynamicHotbarObjects(bundle, battleConfig) {
+function activeSessionActivationIds(bundle) {
+  return asList(asObject(asObject(bundle).runtime_selection).session_activation_ids)
+    .map(String)
+    .filter(Boolean);
+}
+
+function activationIdForObject(object) {
+  return asString(asObject(object && object.source_runtime_ref).activation_id, "");
+}
+
+function runtimeHotbarObjects(bundle, battleConfig) {
   const config = asObject(battleConfig);
   const nodeId = asString(config.node_id, "");
   const objects = hotbarObjects(bundle).filter((object) => objectAvailableAtNode(object, nodeId));
+  const activationIds = activeSessionActivationIds(bundle);
+  const activationPriority = new Map(
+    activationIds.map((activationId, index) => [activationId, index]),
+  );
+  const sessionActivated = objects
+    .filter((object) => activationPriority.has(activationIdForObject(object)))
+    .sort(
+      (left, right) =>
+        activationPriority.get(activationIdForObject(right)) -
+        activationPriority.get(activationIdForObject(left)),
+    );
   const fixtureScope = asObject(asObject(bundle).fixture_scope);
-  if (fixtureScope.example_only !== true) return objects;
+  if (fixtureScope.example_only !== true) {
+    const activatedIds = new Set(sessionActivated.map((object) => object.object_id));
+    return [
+      ...sessionActivated,
+      ...objects.filter((object) => !activatedIds.has(object.object_id)),
+    ];
+  }
   const allowedIds = new Set(asList(config.activated_runtime_object_ids).map(String));
-  return objects.filter((object) => allowedIds.has(String(object.object_id || "")));
+  const activatedObjectIds = new Set(sessionActivated.map((object) => object.object_id));
+  return [
+    ...sessionActivated,
+    ...objects.filter(
+      (object) =>
+        allowedIds.has(String(object.object_id || "")) &&
+        !activatedObjectIds.has(object.object_id),
+    ),
+  ];
 }
 
 function projectionTools(projection) {
@@ -51,8 +88,7 @@ function projectionTools(projection) {
   return [];
 }
 
-function hotbarObjectForTool(tool, bundle) {
-  const objects = hotbarObjects(bundle);
+function hotbarObjectForTool(tool, objects) {
   return (
     objects.find(
       (item) =>
@@ -242,8 +278,8 @@ function mediaForTool(tool, media) {
   return media[tool.mediaKey] || media[`${tool.mediaKey}Img`] || images[tool.id] || "";
 }
 
-function buildTool(tool, battle, bundle, media) {
-  const runtimeObject = hotbarObjectForTool(tool, bundle);
+function buildTool(tool, battle, runtimeObjects, media) {
+  const runtimeObject = hotbarObjectForTool(tool, runtimeObjects);
   return buildToolFromRuntimeObject({
     tool,
     runtimeObject,
@@ -317,12 +353,13 @@ export function buildBattleToolProjection({
 } = {}) {
   const battleState = asObject(battle);
   const toolDefs = toolDefsFromBattleConfig(battleConfig);
+  const runtimeObjects = runtimeHotbarObjects(activatedRuntimeBundle, battleConfig);
   const defaults = toolDefs.map((tool) =>
-    buildTool(tool, battleState, activatedRuntimeBundle, media),
+    buildTool(tool, battleState, runtimeObjects, media),
   );
   const usedObjectIds = new Set(defaults.map((tool) => tool.objectId).filter(Boolean));
   const usedToolIds = new Set(defaults.map((tool) => tool.id));
-  const dynamicTools = dynamicHotbarObjects(activatedRuntimeBundle, battleConfig)
+  const dynamicTools = runtimeObjects
     .filter((object) => object && object.object_id && !usedObjectIds.has(object.object_id))
     .filter((object) => !defaultToolForRuntimeObject(object, toolDefs))
     .map((object) => {

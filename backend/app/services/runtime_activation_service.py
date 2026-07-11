@@ -593,6 +593,11 @@ def _build_capability(
             "package_id": str(package.get("package_id") or "runtime_package"),
             "package_sha256": package_hash,
             "activation_id": activation_id,
+            **(
+                {"node_id": _safe_id(package["node_id"], "unknown_node")}
+                if package.get("node_id")
+                else {}
+            ),
         },
     }
     if requires_delivery:

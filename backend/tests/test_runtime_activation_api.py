@@ -104,6 +104,7 @@ def test_activation_is_idempotent_projected_and_rollbackable(app_env, monkeypatc
         )
         assert capability["schema_version"] == "battle_object_capability.v0.1"
         assert capability["source_runtime_ref"]["activation_id"] == receipt["activation_id"]
+        assert capability["source_runtime_ref"]["node_id"] == "gray_lantern_station"
         assert capability["media_refs"]["icon"]["url"].startswith(
             "/assets/frontend_mock/processed/"
         )
