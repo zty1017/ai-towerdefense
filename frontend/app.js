@@ -297,7 +297,6 @@ import {
     safeText: (value) => safeText(value),
     imageTag: (...args) => imageTag(...args),
     npcPortraitUrl: (npcId) => npcPortraitUrl(npcId),
-    sampleIconUrl: () => sampleIconUrl(),
     materialName: (materialId) => materialName(materialId),
     getSurfaceContributions: (nodeId) =>
       featureGateRegistry.surfaceContributions("workshop", {
@@ -2306,6 +2305,13 @@ import {
     "map-zoom-out": () => zoomStrategicMapBy(1 / 1.25),
     "map-camera-reset": () => resetStrategicMapCamera(),
     "proposal-refresh": () => refreshProposal(),
+    "intent-preset": (target) => {
+        state.intentText = target.dataset.intent || state.intentText;
+        state.research.status = "idle";
+        state.research.proposal = null;
+        state.research.proposalIntent = "";
+        renderWorkshop();
+    },
     "confirm-prototype": () => confirmPrototype(),
     "toggle-pause": () => battleDomController.togglePause(),
     "cycle-speed": () => battleDomController.cycleSpeed(),
@@ -2343,6 +2349,25 @@ import {
     handleStrategicMapWheel: (event) => handleStrategicMapWheel(event),
     updateIntent: (value) => {
       state.intentText = value;
+      if (
+        state.research.status === "proposed" &&
+        state.research.proposalIntent &&
+        state.research.proposalIntent !== value.trim()
+      ) {
+        state.research.status = "stale";
+        state.research.proposal = null;
+        state.research.proposalIntent = "";
+        const review = ROOT.querySelector(".workshop-review");
+        if (review) review.classList.add("is-stale");
+        const confirm = ROOT.querySelector("[data-action='confirm-prototype']");
+        if (confirm) confirm.disabled = true;
+        const refresh = ROOT.querySelector("[data-action='proposal-refresh']");
+        if (refresh) {
+          refresh.disabled = false;
+          refresh.textContent = "重新推演方案";
+          refresh.classList.add("primary-button");
+        }
+      }
     },
   });
   rootEventRouter.install();
