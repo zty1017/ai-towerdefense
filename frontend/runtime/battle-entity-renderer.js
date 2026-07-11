@@ -261,8 +261,9 @@ export function createBattleEntityRenderer({
     const x = battle.dragPointer.x - rect.left;
     const y = battle.dragPointer.y - rect.top;
     if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+    if (battle.hoverCell) return;
     ctx.save();
-    ctx.globalAlpha = battle.hoverCell ? 0.36 : 0.72;
+    ctx.globalAlpha = 0.72;
     if (battle.draggingTool === "basic") {
       drawSprite(ctx, mediaSpriteRef("defense_basic_lantern_barricade", "defense_sprite", true), x, y + 28, 68);
     } else if (battle.draggingTool === "sample") {

@@ -17,7 +17,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlencode
 
 
@@ -107,7 +107,12 @@ def wait_probe(cdp: CDPClient, tool: str, timeout_seconds: float) -> dict[str, A
     raise DevToolsProtocolError(f"Battle smoke probe not ready: {last}")
 
 
-def dispatch_drag(cdp: CDPClient, start: dict[str, Any], end: dict[str, Any]) -> None:
+def dispatch_drag(
+    cdp: CDPClient,
+    start: dict[str, Any],
+    end: dict[str, Any],
+    before_release: Callable[[], None] | None = None,
+) -> None:
     start_x = float(start["client_x"])
     start_y = float(start["client_y"])
     end_x = float(end["client_x"])
@@ -148,6 +153,8 @@ def dispatch_drag(cdp: CDPClient, start: dict[str, Any], end: dict[str, Any]) ->
             },
         )
         time.sleep(0.025)
+    if before_release:
+        before_release()
     cdp.call(
         "Input.dispatchMouseEvent",
         {
@@ -230,10 +237,18 @@ def run_drag_for_viewport(
             target = as_obj(before.get("deploymentPoint"))
             if not target:
                 raise DevToolsProtocolError(f"No deployment point returned: {before}")
-            dispatch_drag(cdp, source, target)
+            safe_tool = "".join(char if char.isalnum() or char in "_-" else "_" for char in tool)
+            preview: dict[str, Any] = {}
+
+            def capture_preview() -> None:
+                time.sleep(0.18)
+                preview["snapshot"] = as_obj(cdp.eval(js_probe_snapshot(tool), timeout_ms=3000))
+                preview_path = output_dir / f"battle_drag_preview_{node_id}_{safe_tool}_{viewport_id}.png"
+                preview.update(capture_screenshot(cdp, preview_path))
+
+            dispatch_drag(cdp, source, target, before_release=capture_preview)
             time.sleep(0.45)
             after = as_obj(cdp.eval(js_probe_snapshot(tool), timeout_ms=3000))
-            safe_tool = "".join(char if char.isalnum() or char in "_-" else "_" for char in tool)
             screenshot_path = output_dir / f"battle_drag_interaction_{node_id}_{safe_tool}_{viewport_id}.png"
             screenshot = capture_screenshot(cdp, screenshot_path)
             passed = interaction_passed(before, after, tool)
@@ -248,6 +263,7 @@ def run_drag_for_viewport(
                 "source": source,
                 "target": target,
                 "before": before,
+                "preview": preview,
                 "after": after,
                 **screenshot,
             }
