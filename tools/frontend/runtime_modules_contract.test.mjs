@@ -971,6 +971,17 @@ test("strategic map controller updates DOM and suppresses click after drag", () 
     clientY: 250,
     preventDefault() {},
   };
+  controller.beginStrategicMapDrag({
+    ...beginEvent,
+    target: {
+      closest(selector) {
+        if (selector === ".strategic-map") return mapEl;
+        if (selector === "[data-action]") return { dataset: { action: "select-map-node" } };
+        return null;
+      },
+    },
+  });
+  assert.equal(state.mapDrag, null);
   controller.beginStrategicMapDrag(beginEvent);
   assert.ok(state.mapDrag);
   assert.equal(classNames.has("is-dragging"), true);
@@ -1898,6 +1909,7 @@ test("strategic map projection merges compiled contributions with world and map 
       nodePlayable: () => true,
       routeCurrent: () => ({ node_id: "node_a" }),
       routeNext: () => null,
+      mapSyncStatus: () => "success",
     },
     presentation: {
       routePath: () => "M 0 0 L 1 1",
@@ -1917,6 +1929,8 @@ test("strategic map projection merges compiled contributions with world and map 
   assert.match(root.innerHTML, /动态态势图/);
   assert.match(root.innerHTML, /编译目标/);
   assert.match(root.innerHTML, /巡灯使/);
+  assert.match(root.innerHTML, /map-node-hit/);
+  assert.match(root.innerHTML, /态势已同步/);
   assert.doesNotMatch(root.innerHTML, /隐藏节点/);
 });
 

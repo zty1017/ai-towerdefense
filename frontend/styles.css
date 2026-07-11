@@ -671,6 +671,12 @@ button:disabled {
   padding: 7px 10px;
 }
 
+.map-sync-feedback {
+  margin-top: 8px;
+  color: #a8d8b0;
+  font-size: 0.78rem;
+}
+
 .map-next-list {
   margin-top: 10px;
 }
@@ -738,6 +744,11 @@ button:disabled {
   cursor: pointer;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.36));
   transition: filter 0.18s ease;
+}
+
+.map-node-hit {
+  fill: transparent;
+  pointer-events: all;
 }
 
 .map-node:hover {

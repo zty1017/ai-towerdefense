@@ -196,6 +196,7 @@ export function createStrategicMapController({
     if (state.view !== "map" || event.button !== 0) return;
     const mapEl = event.target.closest(".strategic-map");
     if (!mapEl || event.target.closest(".map-overlay")) return;
+    if (event.target.closest("[data-action]")) return;
     const rect = mapEl.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const camera = setStrategicMapCamera(activeStrategicMapCamera(getMapData()), {

@@ -17,6 +17,7 @@ export function createStrategicMapFeatureController({
       mode: camera.mode() === "manual" ? "manual" : "auto",
     });
     const zoomPercent = Math.round(activeCamera.zoom * 100);
+    const syncStatus = runtime.mapSyncStatus ? runtime.mapSyncStatus() : "idle";
     const lines = (map.supply_lines || [])
       .map((line) => {
         const from = byId.get(line.from_node_id);
@@ -73,6 +74,7 @@ export function createStrategicMapFeatureController({
           : "";
         return `
           <g class="map-node map-node--${presentation.safeText(node.kind || "node")}" data-action="select-map-node" data-node-id="${presentation.safeText(node.stable_internal_id)}">
+            <circle class="map-node-hit" cx="${node.position.x}" cy="${node.position.y}" r="${radius + 18}" />
             ${pulse}
             <circle cx="${node.position.x}" cy="${node.position.y}" r="${radius + 8}" fill="${color}" opacity=".08" filter="url(#strategicSoftGlow)" />
             ${presentation.nodeMarkerMarkup(node, color, stateName)}
@@ -108,8 +110,9 @@ export function createStrategicMapFeatureController({
             </div>
             <div class="screen-actions">
               <button class="primary-button" data-action="enter-node" ${selected && runtime.isCurrentNode(selected.stable_internal_id) && runtime.nodePlayable(selected.stable_internal_id) ? "" : "disabled"}>进入当前节点</button>
-              <button class="ghost-button" data-action="refresh-map">刷新态势</button>
+              <button class="ghost-button" data-action="refresh-map" ${syncStatus === "loading" ? "disabled" : ""}>${syncStatus === "loading" ? "同步中..." : "刷新态势"}</button>
             </div>
+            ${syncStatus === "success" ? `<div class="map-sync-feedback" role="status">态势已同步</div>` : ""}
             ${runtime.routeNext() ? `<div class="event-list map-next-list"><div class="event-item"><strong>下一处</strong><span>${presentation.safeText(runtime.routeNext().display_name || "前方节点")}</span></div></div>` : ""}
             ${participants.length ? `<div class="event-list map-next-list">${participants.map((npc) => `<div class="event-item"><strong>${presentation.safeText(npc.title)}</strong><span>${presentation.safeText(npc.summary)}</span></div>`).join("")}</div>` : ""}
             ${!runtime.routeCurrent() ? `<div class="event-list map-next-list"><div class="event-item"><strong>本章完成</strong><span>三处防线均已完成演示，新的北路分潮线留作后续版本。</span></div></div>` : ""}
