@@ -40,8 +40,20 @@ def test_compile_and_resume(tmp_path):
         first = orchestrator.compile_map(input_path, output)
         assert first["status"] == "completed"
         assert first["quality"]["runtime_truth_preserved"] is True
+        assert first["provider_execution"]["handoff_status"] == "request_pack_ready_review_only"
+        handoff_dir = output / "visual_handoff"
+        request_pack = orchestrator._load(
+            handoff_dir / "map_layered_visual_generation_request_pack.v0.1.json"
+        )
+        assert request_pack["node_id"] == "map_orchestrator_test_node"
+        assert len(request_pack["requests"]) == 6
+        by_role = {item["role"]: item for item in request_pack["requests"]}
+        assert "old chinese post station" in by_role["terrain_base"]["prompt_brief"]
+        assert "do not paint roads" in by_role["terrain_base"]["prompt_brief"]
+        assert by_role["road_surface"]["output_contract"]["transparent"] is True
+        assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
+        assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
         resumed = orchestrator.compile_map(input_path, output, resume=True)
         assert resumed["resume"]["reused"] is True
     finally:
         shutil.rmtree(output, ignore_errors=True)
-

@@ -19,6 +19,7 @@ Last updated: 2026-07-06
 - 世界书风格与分层组装已接通：每个节点都有独立 `MapStylePack`、`ProceduralMapRenderPlan` 和 `LayeredMapVisualPackage`，前端消费节点专属分层合成图。
 - 编译证据绑定已修正：每个 `MapCompilePackage` 直接绑定对应节点的 `LayeredMapVisualPackage`，不再让三份编译包共用同一张通用背景。
 - AI 媒体目前属于“已审本地导入”，不是“编译器运行内生成”：现有地形、道路和背景中包含 `local_ai_exploration_*` 资产，但历史生成过程没有完整进入 provider envelope、staging、review、promotion 和 activation 记录。
+- `provider_handoff=true` 现在会在同一次地图编译中生成拓扑控制图、由 `MapStylePack` 派生的节点美术简报，以及 `terrain_base / road_surface / build_slot_platform / objective_foundation / spawn_marker / non_blocking_decoration` 六类 provider 中立分层请求；这固化了早期人工探索所缺失的输入边界，并避免重新引入整图道路、塔位和基地重复叠加，但 provider 执行、候选视觉审查与晋升仍未自动完成。
 - 因此 `ai_media_generation_provenance` 当前必须是 `warning`。只有真实 provider 执行记录和产物晋升证据随同一次地图编译运行进入包内，才可以改为 `passed`。
 
 当前准确口径是：

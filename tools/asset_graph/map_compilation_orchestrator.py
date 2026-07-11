@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,12 @@ except ModuleNotFoundError:  # pragma: no cover - package imports in tests.
 ROOT = Path(__file__).resolve().parents[2]
 LAYERED_ROOT = ROOT / "game_data" / "media" / "layered_maps"
 SCHEMAS = ROOT / "shared" / "schemas"
+MEDIA_TOOLS = ROOT / "tools" / "media"
+if str(MEDIA_TOOLS) not in sys.path:
+    sys.path.insert(0, str(MEDIA_TOOLS))
+
+import build_map_topology_control_sketch_pack as topology_sketches  # noqa: E402
+
 REPORT_SCHEMA_VERSION = "map_compilation_run_report.v0.1"
 INPUT_SCHEMA_VERSION = "map_compilation_input.v0.1"
 
@@ -169,6 +176,219 @@ def _validate_style(style: dict[str, Any]) -> list[str]:
     return render_plan.validate_style_pack(style, _schema("map_style_pack.v0.1.schema.json"))
 
 
+def _style_prompt_pack(
+    runtime: dict[str, Any], style: dict[str, Any], *, runtime_path: Path
+) -> dict[str, Any]:
+    tags = [str(item).replace("_", " ") for item in style.get("node_theme_tags", [])]
+    palette = style.get("palette") if isinstance(style.get("palette"), dict) else {}
+    lighting = style.get("lighting") if isinstance(style.get("lighting"), dict) else {}
+    topology = topology_sketches.runtime_summary(runtime)
+    prompt_brief = " ".join(
+        [
+            "Wide 16:9 hand-painted 2D or pseudo-3D tower-defense battlefield background.",
+            f"Worldbook: {style.get('worldbook_id') or runtime.get('worldbook_id')}.",
+            f"Scene direction: {', '.join(tags) or 'worldbook-consistent frontier battlefield'}.",
+            f"Lighting: {lighting.get('time_of_day', 'night')}, {lighting.get('contrast_policy', 'high gameplay readability')}.",
+            f"Palette anchors: {', '.join(str(value) for value in palette.values())}.",
+            "Use Chinese-inspired architecture and material language when the scene tags request it; do not drift into generic western fantasy.",
+            "Keep the battlefield empty and readable so runtime roads, objectives, build slots, enemies, towers, and effects can be layered independently.",
+        ]
+    )
+    return {
+        "schema_version": "topology_constrained_map_prompt_pack.v0.1",
+        "pack_id": f"map_prompt_{runtime.get('node_id', 'map')}_v0_1",
+        "layout_plan_path": _rel(runtime_path),
+        "status": "prompt_pack_ready",
+        "summary": {
+            "prompt_count": 1,
+            "status_counts": {"prompt_ready": 1},
+            "primary_prompt_count": 1,
+            "fallback_prompt_count": 0,
+        },
+        "prompts": [
+            {
+                "node_id": runtime.get("node_id"),
+                "status": "prompt_ready",
+                "primary_use": "topology_constrained_generation",
+                "topology_policy": "preserve_runtime_topology",
+                "recommendation_source": "map_style_pack_and_runtime_truth",
+                "runtime_package_path": _rel(runtime_path),
+                "runtime_topology_summary": topology,
+                "prompt_brief": prompt_brief,
+                "negative_constraints": [
+                    "no_generic_western_castle_unless_worldbook_tags_request_it",
+                    "no_baked_deployed_towers_or_enemies",
+                    "no_baked_combat_effects_or_projectiles",
+                    "no_ui_text_arrows_grid_or_route_markings",
+                    "no_large_landmark_covering_runtime_combat_space",
+                    "no_build_pad_or_objective_positions_invented_outside_reference",
+                ],
+                "required_review_gates": [
+                    "worldbook_style_alignment",
+                    "paths_visually_match_runtime_topology",
+                    "objective_landmark_matches_runtime_policy",
+                    "build_pads_distributed_near_routes",
+                    "no_baked_units_towers_effects_or_ui",
+                    "overlay_review_generated_before_promotion",
+                ],
+            }
+        ],
+        "policy": [
+            "This prompt pack is compiled from MapStylePack and MapRuntimePackage, not handwritten per node.",
+            "It is a provider handoff artifact and never a player runtime visual layer.",
+            "Generated candidates must pass alignment, visual review, promotion, and local publication gates.",
+        ],
+    }
+
+
+def _build_visual_handoff(
+    runtime: dict[str, Any], style: dict[str, Any], *, runtime_path: Path,
+    output_dir: Path,
+) -> tuple[list[Path], dict[str, Any]]:
+    handoff_dir = output_dir / "visual_handoff"
+    control_dir = handoff_dir / "control"
+    sketch = topology_sketches.build_sketch(runtime_path, control_dir, 1280, 720)
+    control_pack = {
+        "schema_version": topology_sketches.REPORT_VERSION,
+        "pack_id": f"map_topology_{runtime.get('node_id', 'map')}_v0_1",
+        "runtime_package_dir": _rel(runtime_path.parent),
+        "output_dir": _rel(control_dir),
+        "status": "control_sketches_ready_review_only",
+        "summary": {
+            "sketch_count": 1,
+            "ready_count": 1,
+            "blocked_count": 0,
+            "status_counts": {"control_sketch_ready": 1},
+            "target_size": {"width": 1280, "height": 720},
+        },
+        "sketches": [sketch],
+        "policy": [
+            "Control sketches are compile-time references only.",
+            "Generated candidates must preserve MapRuntimePackage topology.",
+            "No control sketch is a published player visual layer.",
+        ],
+    }
+    control_pack_path = _write(
+        handoff_dir / "map_topology_control_sketch_pack.v0.1.json", control_pack
+    )
+    prompt_pack = _style_prompt_pack(runtime, style, runtime_path=runtime_path)
+    prompt_pack_path = _write(
+        handoff_dir / "topology_constrained_map_prompt_pack.v0.1.json",
+        prompt_pack,
+    )
+    common_prompt = str(prompt_pack["prompts"][0]["prompt_brief"])
+    common_negative = list(prompt_pack["prompts"][0]["negative_constraints"])
+    layer_specs = [
+        (
+            "terrain_base",
+            "full_frame_backdrop",
+            {"width": 1280, "height": 720, "transparent": False},
+            "Render terrain, boundary architecture, vegetation, and distant atmosphere only. Keep route corridors and semantic anchor zones visually quiet, but do not paint roads, build pads, objectives, spawn portals, towers, units, or combat effects.",
+        ),
+        (
+            "road_surface",
+            "tile_or_brush_atlas",
+            {"width": 1024, "height": 1024, "transparent": True},
+            "Create seamless road surface and soft edge brush components matching the scene materials. No complete map composition and no directional symbols.",
+        ),
+        (
+            "build_slot_platform",
+            "component_atlas",
+            {"width": 1024, "height": 1024, "transparent": True},
+            "Create empty terrain-integrated tower placement foundations. They must be flat, readable, unoccupied, and contain no tower, weapon, aura, or selection glow.",
+        ),
+        (
+            "objective_foundation",
+            "component_atlas",
+            {"width": 1024, "height": 1024, "transparent": True},
+            "Create compact protected-objective foundations or structures with a clear bottom-center anchor. Do not include runtime health bars, halos, units, text, or oversized monuments.",
+        ),
+        (
+            "spawn_marker",
+            "component_atlas",
+            {"width": 1024, "height": 1024, "transparent": True},
+            "Create restrained enemy entrance terrain markers that remain secondary to the battlefield. No enemies, arrows, warning icons, text, or large magical glow baked into the sprite.",
+        ),
+        (
+            "non_blocking_decoration",
+            "component_atlas",
+            {"width": 1024, "height": 1024, "transparent": True},
+            "Create small non-blocking edge decorations and material props. Keep silhouettes compact and avoid anything that reads as a unit, tower, objective, projectile, or UI icon.",
+        ),
+    ]
+    requests = []
+    for index, (role, output_kind, dimensions, role_prompt) in enumerate(layer_specs, start=1):
+        requests.append(
+            {
+                "request_id": f"map_layer_{runtime.get('node_id', 'map')}_{index:02d}_{role}",
+                "role": role,
+                "status": "ready_for_provider_or_manual_generation",
+                "prompt_profile": "worldbook_style_plus_runtime_topology_v0_1",
+                "prompt_brief": f"{common_prompt} Layer task: {role_prompt}",
+                "negative_constraints": common_negative,
+                "output_contract": {"kind": output_kind, **dimensions},
+                "control_reference": {
+                    "usage": "reserved_zone_and_alignment_reference",
+                    "local_path": sketch["control_sketch_png_path"],
+                    "sha256": sketch["png_sha256"],
+                    "semantic_authority": False,
+                },
+                "required_gates": [
+                    "local_artifact_import",
+                    "worldbook_style_review",
+                    "cutout_or_texture_quality_review",
+                    "runtime_overlay_alignment_review",
+                    "explicit_promotion",
+                ],
+            }
+        )
+    request_pack = {
+        "schema_version": "map_layered_visual_generation_request_pack.v0.1",
+        "pack_id": f"map_layered_visual_requests_{runtime.get('node_id', 'map')}_v0_1",
+        "status": "request_pack_ready_review_only",
+        "node_id": runtime.get("node_id"),
+        "worldbook_id": style.get("worldbook_id") or runtime.get("worldbook_id"),
+        "source_refs": {
+            "map_runtime_package": _rel(runtime_path),
+            "map_style_pack": style.get("style_pack_id"),
+            "topology_control_pack": _rel(control_pack_path),
+            "prompt_pack": _rel(prompt_pack_path),
+        },
+        "requests": requests,
+        "assembly_contract": {
+            "semantic_authority": "map_runtime_package",
+            "layer_order": [
+                "terrain_base",
+                "road_surface",
+                "build_slot_platform",
+                "objective_foundation",
+                "spawn_marker",
+                "non_blocking_decoration",
+                "runtime_interaction_overlay",
+            ],
+            "forbid_image_to_semantic_inference": True,
+            "unreviewed_media_player_visible": False,
+        },
+        "policy": [
+            "This pack records the previously manual layered visual generation handoff.",
+            "No request or provider output is a published player layer until review and promotion pass.",
+            "Roads, slots, objectives, and spawns are placed from runtime anchors, never recovered from pixels.",
+        ],
+    }
+    request_pack_path = _write(
+        handoff_dir / "map_layered_visual_generation_request_pack.v0.1.json",
+        request_pack,
+    )
+    generated_paths = [
+        control_pack_path,
+        prompt_pack_path,
+        request_pack_path,
+        _resolve(str(sketch["control_sketch_png_path"])),
+        _resolve(str(sketch["control_sketch_svg_path"])),
+    ]
+    return generated_paths, request_pack
+
+
 def plan(input_path: Path, output_dir: Path) -> dict[str, Any]:
     value = _load(input_path)
     battle_path, style_path = _check_input(value, input_path)
@@ -196,6 +416,7 @@ def plan(input_path: Path, output_dir: Path) -> dict[str, Any]:
             "map_runtime_package",
             "procedural_map_render_plan",
             "semantic_visual_consistency",
+            "visual_generation_handoff",
             "layered_map_visual_package",
             "map_compile_package",
         ],
@@ -255,6 +476,26 @@ def compile_map(
     _write(runtime_path, runtime)
     stages.append(_stage("map_runtime_package", started, [runtime_path]))
 
+    visual_generation = value.get("visual_generation") or {}
+    visual_handoff_paths: list[Path] = []
+    visual_handoff: dict[str, Any] | None = None
+    if visual_generation.get("provider_handoff"):
+        started = time.monotonic()
+        visual_handoff_paths, visual_handoff = _build_visual_handoff(
+            runtime,
+            style,
+            runtime_path=runtime_path,
+            output_dir=output_dir,
+        )
+        stages.append(
+            _stage(
+                "visual_generation_handoff",
+                started,
+                visual_handoff_paths,
+                ["provider_execution_and_candidate_review_are_pending"],
+            )
+        )
+
     started = time.monotonic()
     render = render_plan.build_render_plan(
         runtime,
@@ -286,7 +527,6 @@ def compile_map(
     stages.append(_stage("render_plan_and_semantic_consistency", started, [render_path, semantic_report_path]))
 
     started = time.monotonic()
-    visual_generation = value.get("visual_generation") or {}
     texture_dir = _resolve(str(visual_generation["reviewed_texture_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_texture_source_dir") else None
     backdrop_dir = _resolve(str(visual_generation["reviewed_backdrop_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_backdrop_source_dir") else None
     layered = layered_builder.build_package(
@@ -332,7 +572,15 @@ def compile_map(
     _write(compile_path, compiled)
     stages.append(_stage("map_compile_package", started, [visual_manifest_path, compile_path]))
 
-    outputs = [runtime_path, render_path, semantic_report_path, layered_path, visual_manifest_path, compile_path]
+    outputs = [
+        runtime_path,
+        *visual_handoff_paths,
+        render_path,
+        semantic_report_path,
+        layered_path,
+        visual_manifest_path,
+        compile_path,
+    ]
     report = {
         "schema_version": REPORT_SCHEMA_VERSION,
         "run_id": f"maprun_{compile_plan['input_fingerprint'][:20]}",
@@ -348,6 +596,9 @@ def compile_map(
         "provider_execution": {
             "call_count": 0,
             "handoff_requested": bool(visual_generation.get("provider_handoff")),
+            "handoff_status": (
+                visual_handoff.get("status") if visual_handoff else "not_requested"
+            ),
             "reviewed_local_media_imported": bool(texture_dir or backdrop_dir),
         },
         "quality": {
