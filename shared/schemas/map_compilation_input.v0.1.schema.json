@@ -17,9 +17,9 @@
       "properties": {
         "provider_handoff": {"type": "boolean"},
         "reviewed_texture_source_dir": {"type": "string", "minLength": 1},
-        "reviewed_backdrop_source_dir": {"type": "string", "minLength": 1}
+        "reviewed_backdrop_source_dir": {"type": "string", "minLength": 1},
+        "reviewed_component_source_dir": {"type": "string", "minLength": 1}
       }
     }
   }
 }
-

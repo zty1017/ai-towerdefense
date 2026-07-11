@@ -29,7 +29,7 @@ Last updated: 2026-07-06
 结构化地图编译 + 世界书风格编译 + 分层运行包编译：已完成 MVP 闭环
 AI 媒体批量自动生成、专用视觉审查、受控提示修复重试：已接通可选实时阶段
 地形、道路、塔位 reviewed staging 与地图包重新组装：已接通
-目标、出生点、装饰组件的正式运行时媒体绑定：尚未接通，当前继续使用结构化程序表现
+目标、出生点、装饰组件的正式表现媒体绑定：已接通；图片只在 `MapRuntimePackage` 锚点或装饰允许区渲染，前端使用 layered backdrop 时不重复绘制旧组件
 ```
 
 这不影响玩家使用已发布地图，但演示时不能把历史人工触发、人工挑选的 AI 地图素材描述成实时自动生成。
@@ -124,6 +124,21 @@ AI 不允许决定：
 - 塔位最终坐标。
 - 资源点、机关、防守点、碰撞区的最终语义。
 - 哪些图片可以进入玩家 runtime。
+
+当前 reviewed 组件绑定固定为：
+
+```text
+reviewed_visual_staging/components/objective_foundation.png
+  -> MapRuntimePackage.objectives 中的结构化目标锚点
+
+reviewed_visual_staging/components/spawn_marker.png
+  -> MapRuntimePackage.spawn_points 中的结构化出生点锚点
+
+reviewed_visual_staging/components/non_blocking_decoration.png
+  -> reserved_cells 之外的装饰允许区
+```
+
+`LayeredMapVisualPackage` 会把三类媒体登记为 `component_sprite_png / compiled_reviewed_component`，复制到节点专属本地包并嵌入最终 SVG。图片不能改变锚点、路径、碰撞、目标类型或出生逻辑。前端检测到 player-ready layered backdrop 后，会停止额外绘制旧目标、出生点和地标，避免双重叠图。
 
 任何 AI 产物都必须进入 provider envelope / staging / promotion / media gate / runtime package 或 MapCompilePackage 审查链，不能直接被前端默认加载。
 

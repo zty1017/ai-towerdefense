@@ -17,6 +17,7 @@
     "promotions",
     "reviewed_backdrop_source_dir",
     "reviewed_texture_source_dir",
+    "reviewed_component_source_dir",
     "policy"
   ],
   "properties": {
@@ -51,6 +52,7 @@
     "promotions": {"type": "array", "items": {"type": "object"}},
     "reviewed_backdrop_source_dir": {"type": ["string", "null"]},
     "reviewed_texture_source_dir": {"type": ["string", "null"]},
+    "reviewed_component_source_dir": {"type": ["string", "null"]},
     "policy": {
       "type": "object",
       "additionalProperties": false,
