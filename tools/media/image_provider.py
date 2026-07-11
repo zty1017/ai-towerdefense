@@ -78,11 +78,14 @@ def load_dotenv(path: Path) -> None:
             os.environ[key] = value
 
 
-def get_api_key(profile: ImageProfile) -> str:
-    for env_key in profile.env_keys:
-        key = os.environ.get(env_key)
-        if key and key.strip():
-            return key
+def get_api_key(profile: ImageProfile, credential_index: int = 0) -> str:
+    keys = [
+        key.strip()
+        for env_key in profile.env_keys
+        if (key := os.environ.get(env_key)) and key.strip()
+    ]
+    if keys:
+        return keys[max(0, credential_index) % len(keys)]
     env_names = " or ".join(profile.env_keys)
     raise RuntimeError(
         f"Missing environment variable: {env_names} "
@@ -107,25 +110,96 @@ def parse_size(size: str) -> tuple[int, int]:
     return width, height
 
 
+def validate_size(size: str) -> str:
+    """Validate either an exact size or an Agnes resolution tier."""
+    normalized = size.strip()
+    if normalized.upper() in {"1K", "2K", "3K", "4K"}:
+        return normalized.upper()
+    parse_size(normalized)
+    return normalized
+
+
+def validate_ratio(ratio: str) -> str:
+    normalized = ratio.strip()
+    supported = {"1:1", "3:4", "4:3", "16:9", "9:16", "2:3", "3:2", "21:9"}
+    if normalized not in supported:
+        raise ValueError(f"unsupported image ratio {ratio!r}")
+    return normalized
+
+
+def image_data_uri(path: Path, max_bytes: int = 20 * 1024 * 1024) -> str:
+    """Encode a local PNG/JPEG/WebP reference without publishing it."""
+    size = path.stat().st_size
+    if size > max_bytes:
+        raise RuntimeError(f"input image exceeds maximum allowed size: {path}")
+    mime_by_suffix = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+    }
+    mime = mime_by_suffix.get(path.suffix.lower())
+    if mime is None:
+        raise ValueError(f"unsupported input image type: {path.suffix}")
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
+def build_generation_payload(
+    profile: ImageProfile,
+    prompt: str,
+    *,
+    size: str | None = None,
+    ratio: str | None = None,
+    input_images: list[str] | None = None,
+    response_format: str | None = None,
+    credential_index: int = 0,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": profile.model,
+        "prompt": prompt,
+        "size": validate_size(size or profile.default_size),
+    }
+    payload.update(profile.extra_payload)
+    if ratio is not None:
+        payload["ratio"] = validate_ratio(ratio)
+    if input_images or response_format:
+        extra_body = dict(payload.get("extra_body") or {})
+        if input_images:
+            extra_body["image"] = list(input_images)
+        if response_format:
+            if response_format not in {"url", "b64_json"}:
+                raise ValueError(f"unsupported image response format {response_format!r}")
+            extra_body["response_format"] = response_format
+        payload["extra_body"] = extra_body
+    return payload
+
+
 def generate_image(
     profile: ImageProfile,
     prompt: str,
     size: str | None = None,
     timeout: int = 120,
+    *,
+    ratio: str | None = None,
+    input_images: list[str] | None = None,
+    response_format: str | None = None,
 ) -> dict[str, Any]:
     """Call an OpenAI-compatible image generation endpoint.
 
     Returns the full API response dict.
     """
-    api_key = get_api_key(profile)
+    api_key = get_api_key(profile, credential_index)
     url = profile.base_url.rstrip("/") + profile.path
 
-    payload: dict[str, Any] = {
-        "model": profile.model,
-        "prompt": prompt,
-        "size": size or profile.default_size,
-    }
-    payload.update(profile.extra_payload)
+    payload = build_generation_payload(
+        profile,
+        prompt,
+        size=size,
+        ratio=ratio,
+        input_images=input_images,
+        response_format=response_format,
+    )
 
     headers = {
         "Authorization": f"Bearer {api_key}",

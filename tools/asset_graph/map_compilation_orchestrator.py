@@ -38,6 +38,8 @@ if str(MEDIA_TOOLS) not in sys.path:
     sys.path.insert(0, str(MEDIA_TOOLS))
 
 import build_map_topology_control_sketch_pack as topology_sketches  # noqa: E402
+import generate_layered_map_visual_candidates as visual_candidates  # noqa: E402
+import image_provider  # noqa: E402
 
 REPORT_SCHEMA_VERSION = "map_compilation_run_report.v0.1"
 INPUT_SCHEMA_VERSION = "map_compilation_input.v0.1"
@@ -176,6 +178,15 @@ def _validate_style(style: dict[str, Any]) -> list[str]:
     return render_plan.validate_style_pack(style, _schema("map_style_pack.v0.1.schema.json"))
 
 
+def _compose_visual_prompt(sections: dict[str, str]) -> str:
+    order = ("subject", "environment", "style", "lighting", "composition", "quality")
+    return " ".join(
+        f"{key.replace('_', ' ').title()}: {sections[key].strip().rstrip('.')}."
+        for key in order
+        if sections.get(key, "").strip()
+    )
+
+
 def _style_prompt_pack(
     runtime: dict[str, Any], style: dict[str, Any], *, runtime_path: Path
 ) -> dict[str, Any]:
@@ -183,18 +194,15 @@ def _style_prompt_pack(
     palette = style.get("palette") if isinstance(style.get("palette"), dict) else {}
     lighting = style.get("lighting") if isinstance(style.get("lighting"), dict) else {}
     topology = topology_sketches.runtime_summary(runtime)
-    prompt_brief = " ".join(
-        [
-            "EMPTY ENVIRONMENT CLEAN PLATE for a polished 2D or pseudo-3D strategy game, elevated three-quarter top-down camera.",
-            "This is an environment asset sheet with no narrative action and no gameplay entities.",
-            f"Worldbook: {style.get('worldbook_id') or runtime.get('worldbook_id')}.",
-            f"Scene direction: {', '.join(tags) or 'worldbook-consistent frontier environment'}.",
-            f"Lighting: {lighting.get('time_of_day', 'night')}, {lighting.get('contrast_policy', 'high gameplay readability')}.",
-            f"Palette anchors: {', '.join(str(value) for value in palette.values())}.",
-            "Use Chinese-inspired architecture and material language when the scene tags request it; do not drift into generic western fantasy.",
-            "Keep all playable space empty, calm, and readable; interactive content will be composed later by deterministic runtime layers.",
-        ]
-    )
+    prompt_sections = {
+        "subject": "an uninhabited old Chinese frontier courier-station environment plate",
+        "environment": f"quiet ground and boundary architecture shaped by {', '.join(tags) or 'the worldbook frontier'}",
+        "style": "polished hand-painted 2D game environment with restrained pseudo-3D depth and Chinese architectural language",
+        "lighting": f"{lighting.get('time_of_day', 'night')} with {lighting.get('contrast_policy', 'clear gameplay readability')} and palette anchors {', '.join(str(value) for value in palette.values())}",
+        "composition": "wide elevated three-quarter top-down view with the central playable area calm, open, and free of focal subjects",
+        "quality": "production game background, crisp material separation, low grain, no narrative action or gameplay entities",
+    }
+    prompt_brief = _compose_visual_prompt(prompt_sections)
     return {
         "schema_version": "topology_constrained_map_prompt_pack.v0.1",
         "pack_id": f"map_prompt_{runtime.get('node_id', 'map')}_v0_1",
@@ -215,6 +223,7 @@ def _style_prompt_pack(
                 "recommendation_source": "map_style_pack_and_runtime_truth",
                 "runtime_package_path": _rel(runtime_path),
                 "runtime_topology_summary": topology,
+                "prompt_sections": prompt_sections,
                 "prompt_brief": prompt_brief,
                 "negative_constraints": [
                     "no_generic_western_castle_unless_worldbook_tags_request_it",
@@ -281,57 +290,112 @@ def _build_visual_handoff(
         handoff_dir / "topology_constrained_map_prompt_pack.v0.1.json",
         prompt_pack,
     )
-    common_prompt = str(prompt_pack["prompts"][0]["prompt_brief"])
     common_negative = list(prompt_pack["prompts"][0]["negative_constraints"])
     layer_specs = [
-        (
-            "terrain_base",
-            "full_frame_backdrop",
-            {"width": 1280, "height": 720, "transparent": False},
-            "PRIMARY TASK: create one wide EMPTY TERRAIN CLEAN PLATE. Paint only natural ground materials, quiet boundary architecture around the outer edges, sparse vegetation, distant mountains, and restrained atmosphere. Keep the central seventy percent open and low-detail. Do not paint roads, trails, paths, platforms, pads, objectives, monuments, portals, lamps, people, creatures, weapons, action, magic, or combat effects anywhere.",
-        ),
-        (
-            "road_surface",
-            "tile_or_brush_atlas",
-            {"width": 1024, "height": 1024, "transparent": True},
-            "PRIMARY TASK: create one isolated reusable old Chinese post-road material strip with soft dirt-and-stone edges, seen from an elevated top-down angle, centered on a completely plain pure-white background. Asset cutout source only. No complete map, landscape, buildings, lamps, characters, symbols, arrows, text, glow, shadowy scenery, or decorative frame.",
-        ),
-        (
-            "build_slot_platform",
-            "component_atlas",
-            {"width": 1024, "height": 1024, "transparent": True},
-            "PRIMARY TASK: create one single empty low circular stone-and-timber deployment foundation, elevated top-down view, centered on a completely plain pure-white background. Asset cutout source only. It must be flat, unoccupied, understated, and contain no building, tower, weapon, lantern, character, text, aura, ring, selection glow, scenery, or frame.",
-        ),
-        (
-            "objective_foundation",
-            "component_atlas",
-            {"width": 1024, "height": 1024, "transparent": True},
-            "Create compact protected-objective foundations or structures with a clear bottom-center anchor. Do not include runtime health bars, halos, units, text, or oversized monuments.",
-        ),
-        (
-            "spawn_marker",
-            "component_atlas",
-            {"width": 1024, "height": 1024, "transparent": True},
-            "Create restrained enemy entrance terrain markers that remain secondary to the battlefield. No enemies, arrows, warning icons, text, or large magical glow baked into the sprite.",
-        ),
-        (
-            "non_blocking_decoration",
-            "component_atlas",
-            {"width": 1024, "height": 1024, "transparent": True},
-            "Create small non-blocking edge decorations and material props. Keep silhouettes compact and avoid anything that reads as a unit, tower, objective, projectile, or UI icon.",
-        ),
+        {
+            "role": "terrain_base",
+            "output_kind": "full_frame_backdrop",
+            "output": {"width": 1280, "height": 720, "size_tier": "1K", "ratio": "16:9", "transparent": False},
+            "generation_mode": "image_to_image",
+            "sections": {
+                "subject": "transform the reference into an uninhabited empty old Chinese courier-station terrain clean plate",
+                "environment": "natural stone and packed-earth ground, sparse damp vegetation, low ruined walls and modest timber buildings only along the outer perimeter; remove every diagram line, marker, circle, platform, route, symbol, person, creature, weapon and text",
+                "style": "polished hand-painted 2D tower-defense game environment with restrained pseudo-3D depth, late-Ming frontier material language, subtle dark-fantasy influence",
+                "lighting": "clear moonlit night with soft warm lantern ambience restricted to perimeter buildings, readable midtones and no magical glow",
+                "composition": "preserve only the reference camera framing and broad central clearance; elevated three-quarter top-down 16:9 view, central seventy percent open and low-detail, architecture confined to the outer twenty percent, no central focal object",
+                "quality": "production-ready clean background plate, crisp ground texture, low grain, no baked road, deployment pad, objective, unit, effect or UI",
+            },
+        },
+        {
+            "role": "road_surface", "output_kind": "tile_or_brush_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
+            "generation_mode": "text_to_image",
+            "sections": {
+                "subject": "one isolated reusable old Chinese courier-road material strip",
+                "environment": "a single dirt-and-worn-stone strip with soft irregular edges on a completely plain pure-white studio background",
+                "style": "polished hand-painted 2D game texture matching a late-Ming frontier outpost",
+                "lighting": "neutral soft asset lighting without dramatic shadows or glow",
+                "composition": "elevated top-down view, one centered horizontal strip, generous white margin, no complete map or scenery",
+                "quality": "sharp clean cutout source, seamless material rhythm, no buildings, lamps, characters, signs, symbols, arrows, text or frame",
+            },
+        },
+        {
+            "role": "build_slot_platform", "output_kind": "component_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
+            "generation_mode": "text_to_image",
+            "sections": {
+                "subject": "one single empty low stone-and-timber tower foundation",
+                "environment": "an isolated flat construction base on a completely plain pure-white studio background",
+                "style": "understated late-Ming frontier craft rendered as a polished hand-painted 2D game component",
+                "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
+                "composition": "elevated top-down view, centered single object, compact oval footprint, generous white margin",
+                "quality": "sharp clean cutout source, empty and unoccupied, no tower, weapon, lantern, character, text, ring, scenery or frame",
+            },
+        },
+        {
+            "role": "objective_foundation", "output_kind": "component_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
+            "generation_mode": "text_to_image",
+            "sections": {
+                "subject": "one compact protected-objective foundation with a clear bottom-center anchor",
+                "environment": "isolated on a pure-white studio background",
+                "style": "late-Ming frontier hand-painted 2D game component",
+                "lighting": "neutral soft asset lighting",
+                "composition": "elevated top-down view, centered single compact object",
+                "quality": "clean cutout source without health bars, halos, units, text or oversized monument forms",
+            },
+        },
+        {
+            "role": "spawn_marker", "output_kind": "component_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
+            "generation_mode": "text_to_image",
+            "sections": {
+                "subject": "one restrained enemy entrance terrain marker",
+                "environment": "isolated on a pure-white studio background",
+                "style": "late-Ming frontier hand-painted 2D game component",
+                "lighting": "neutral dim asset lighting without magical glow",
+                "composition": "elevated top-down view, centered low-profile terrain object",
+                "quality": "clean cutout source without enemies, arrows, warning icons, text or large effects",
+            },
+        },
+        {
+            "role": "non_blocking_decoration", "output_kind": "component_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
+            "generation_mode": "text_to_image",
+            "sections": {
+                "subject": "a small grouped set of non-blocking frontier edge props",
+                "environment": "isolated on a pure-white studio background",
+                "style": "late-Ming frontier hand-painted 2D game components",
+                "lighting": "neutral soft asset lighting",
+                "composition": "elevated top-down view, separated compact objects with generous spacing",
+                "quality": "clean cutout source, no unit, tower, objective, projectile, UI icon, text or frame",
+            },
+        },
     ]
     requests = []
-    for index, (role, output_kind, dimensions, role_prompt) in enumerate(layer_specs, start=1):
+    for index, spec in enumerate(layer_specs, start=1):
+        role = str(spec["role"])
+        sections = dict(spec["sections"])
         requests.append(
             {
                 "request_id": f"map_layer_{runtime.get('node_id', 'map')}_{index:02d}_{role}",
                 "role": role,
                 "status": "ready_for_provider_or_manual_generation",
-                "prompt_profile": "worldbook_style_plus_runtime_topology_v0_1",
-                "prompt_brief": f"{role_prompt} Art direction: {common_prompt}",
+                "prompt_profile": "agnes_official_structured_prompt_v0_1",
+                "prompt_sections": sections,
+                "prompt_brief": _compose_visual_prompt(sections),
                 "negative_constraints": common_negative,
-                "output_contract": {"kind": output_kind, **dimensions},
+                "generation_mode": spec["generation_mode"],
+                "output_contract": {"kind": spec["output_kind"], **spec["output"]},
+                "generation_reference": (
+                    {
+                        "usage": "camera_and_clearance_reference_only",
+                        "local_path": sketch["terrain_composition_reference_path"],
+                        "sha256": sketch["terrain_composition_reference_sha256"],
+                    }
+                    if spec["generation_mode"] == "image_to_image"
+                    else None
+                ),
                 "control_reference": {
                     "usage": "reserved_zone_and_alignment_reference",
                     "local_path": sketch["control_sketch_png_path"],
@@ -390,6 +454,7 @@ def _build_visual_handoff(
         request_pack_path,
         _resolve(str(sketch["control_sketch_png_path"])),
         _resolve(str(sketch["control_sketch_svg_path"])),
+        _resolve(str(sketch["terrain_composition_reference_path"])),
     ]
     return generated_paths, request_pack
 
@@ -436,6 +501,11 @@ def compile_map(
     *,
     resume: bool = False,
     force: bool = False,
+    live_visuals: bool = False,
+    image_profile: str = "agnes_image_flash",
+    dotenv_path: Path | None = None,
+    visual_request_timeout: int = 240,
+    visual_max_workers: int = 3,
 ) -> dict[str, Any]:
     compile_plan = plan(input_path, output_dir)
     report_path = output_dir / "map_compilation_run_report.v0.1.json"
@@ -484,6 +554,8 @@ def compile_map(
     visual_generation = value.get("visual_generation") or {}
     visual_handoff_paths: list[Path] = []
     visual_handoff: dict[str, Any] | None = None
+    visual_generation_report: dict[str, Any] | None = None
+    visual_generation_paths: list[Path] = []
     if visual_generation.get("provider_handoff"):
         started = time.monotonic()
         visual_handoff_paths, visual_handoff = _build_visual_handoff(
@@ -500,6 +572,45 @@ def compile_map(
                 ["provider_execution_and_candidate_review_are_pending"],
             )
         )
+        if live_visuals:
+            started = time.monotonic()
+            profile = image_provider.PROFILES.get(image_profile)
+            if profile is None:
+                raise MapCompilationError(f"unknown image profile: {image_profile}")
+            image_provider.load_dotenv(dotenv_path or ROOT / ".env")
+            request_pack_path = output_dir / "visual_handoff" / "map_layered_visual_generation_request_pack.v0.1.json"
+            candidate_dir = output_dir / "visual_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            results, failures = visual_candidates.run_pack(
+                request_pack_path,
+                visual_handoff,
+                candidate_dir,
+                profile,
+                timeout=visual_request_timeout,
+                live=True,
+                max_workers=visual_max_workers,
+            )
+            visual_generation_report = visual_candidates.build_report(
+                request_pack_path=request_pack_path,
+                output_dir=candidate_dir,
+                profile=profile,
+                live=True,
+                results=results,
+                failures=failures,
+            )
+            visual_report_path = _write(
+                candidate_dir / "layered_map_visual_candidate_generation_run.v0.1.json",
+                visual_generation_report,
+            )
+            visual_generation_paths = [visual_report_path, *sorted(candidate_dir.glob("*.candidate.*"))]
+            stages.append(
+                _stage(
+                    "visual_candidate_generation",
+                    started,
+                    visual_generation_paths,
+                    ["candidates_require_automatic_and_visual_review_before_promotion"],
+                )
+            )
 
     started = time.monotonic()
     render = render_plan.build_render_plan(
@@ -580,6 +691,7 @@ def compile_map(
     outputs = [
         runtime_path,
         *visual_handoff_paths,
+        *visual_generation_paths,
         render_path,
         semantic_report_path,
         layered_path,
@@ -599,12 +711,21 @@ def compile_map(
         "stages": stages,
         "output_refs": [_output_ref(path, path.stem) for path in outputs],
         "provider_execution": {
-            "call_count": 0,
+            "call_count": (
+                visual_generation_report.get("summary", {}).get("provider_call_count", 0)
+                if visual_generation_report
+                else 0
+            ),
             "handoff_requested": bool(visual_generation.get("provider_handoff")),
             "handoff_status": (
                 visual_handoff.get("status") if visual_handoff else "not_requested"
             ),
             "reviewed_local_media_imported": bool(texture_dir or backdrop_dir),
+            "candidate_generation_status": (
+                visual_generation_report.get("status")
+                if visual_generation_report
+                else "not_requested"
+            ),
         },
         "quality": {
             "runtime_truth_preserved": True,

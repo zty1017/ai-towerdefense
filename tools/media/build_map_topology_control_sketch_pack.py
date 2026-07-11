@@ -144,6 +144,20 @@ def draw_control_png(path: Path, package: dict[str, Any], width: int, height: in
     overlay.write_png(path, width, height, 2, rows)
 
 
+def draw_terrain_composition_png(path: Path, width: int, height: int) -> None:
+    """Build a marker-free reference for terrain framing, not map semantics."""
+    rows = make_canvas(width, height, (170, 178, 164))
+    edge_x = max(1, int(width * 0.18))
+    edge_y = max(1, int(height * 0.18))
+    for y in range(height):
+        for x in range(width):
+            distance = min(x / edge_x, (width - 1 - x) / edge_x, y / edge_y, (height - 1 - y) / edge_y)
+            if distance < 1:
+                strength = min(0.58, (1 - max(0.0, distance)) * 0.58)
+                overlay.blend_pixel(rows, width, height, x, y, (54, 62, 58), strength)
+    overlay.write_png(path, width, height, 2, rows)
+
+
 def svg_escape(value: Any) -> str:
     return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
@@ -204,8 +218,10 @@ def build_sketch(package_path: Path, output_dir: Path, width: int, height: int) 
         }
     node_id = str(package.get("node_id") or package_path.stem)
     png_path = output_dir / f"{node_id}.topology_control_sketch.png"
+    composition_path = output_dir / f"{node_id}.terrain_composition_reference.png"
     svg_path = output_dir / f"{node_id}.topology_control_sketch.svg"
     draw_control_png(png_path, package, width, height)
+    draw_terrain_composition_png(composition_path, width, height)
     build_control_svg(svg_path, package, png_path, width, height)
     return {
         "node_id": node_id,
@@ -213,7 +229,9 @@ def build_sketch(package_path: Path, output_dir: Path, width: int, height: int) 
         "runtime_package_path": rel(package_path),
         "control_sketch_png_path": rel(png_path),
         "control_sketch_svg_path": rel(svg_path),
+        "terrain_composition_reference_path": rel(composition_path),
         "png_sha256": sha256_file(png_path),
+        "terrain_composition_reference_sha256": sha256_file(composition_path),
         "svg_sha256": sha256_file(svg_path),
         "dimensions": {"width": width, "height": height},
         "runtime_summary": runtime_summary(package),

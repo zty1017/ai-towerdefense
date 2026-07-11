@@ -48,17 +48,68 @@ def test_compile_and_resume(tmp_path):
         assert request_pack["node_id"] == "map_orchestrator_test_node"
         assert len(request_pack["requests"]) == 6
         by_role = {item["role"]: item for item in request_pack["requests"]}
-        assert "old chinese post station" in by_role["terrain_base"]["prompt_brief"]
-        assert by_role["terrain_base"]["prompt_brief"].startswith(
-            "PRIMARY TASK: create one wide EMPTY TERRAIN CLEAN PLATE"
-        )
+        assert "old Chinese courier-station" in by_role["terrain_base"]["prompt_brief"]
+        assert by_role["terrain_base"]["prompt_brief"].startswith("Subject:")
         assert "central seventy percent open" in by_role["terrain_base"]["prompt_brief"]
-        assert "pure-white background" in by_role["road_surface"]["prompt_brief"]
-        assert "one single empty low circular" in by_role["build_slot_platform"]["prompt_brief"]
+        assert set(by_role["terrain_base"]["prompt_sections"]) == {
+            "subject", "environment", "style", "lighting", "composition", "quality"
+        }
+        assert by_role["terrain_base"]["generation_mode"] == "image_to_image"
+        assert by_role["terrain_base"]["generation_reference"]["usage"] == "camera_and_clearance_reference_only"
+        assert by_role["terrain_base"]["output_contract"]["size_tier"] == "1K"
+        assert by_role["terrain_base"]["output_contract"]["ratio"] == "16:9"
+        assert "pure-white studio background" in by_role["road_surface"]["prompt_brief"]
+        assert "one single empty low stone-and-timber" in by_role["build_slot_platform"]["prompt_brief"]
+        assert by_role["road_surface"]["generation_mode"] == "text_to_image"
         assert by_role["road_surface"]["output_contract"]["transparent"] is True
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
         assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
         resumed = orchestrator.compile_map(input_path, output, resume=True)
         assert resumed["resume"]["reused"] is True
+    finally:
+        shutil.rmtree(output, ignore_errors=True)
+
+
+def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_path, monkeypatch):
+    output = ROOT / "game_data/media/layered_maps/map_orchestrator_live_test_node"
+    input_value = orchestrator._load(INPUT)
+    battle = orchestrator._load(ROOT / "game_data/demo/first_battle_config.json")
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    battle["node_id"] = "map_orchestrator_live_test_node"
+    style["node_id"] = "map_orchestrator_live_test_node"
+    battle_path = tmp_path / "battle.json"
+    style_path = tmp_path / "style.json"
+    input_path = tmp_path / "input.json"
+    orchestrator._write(battle_path, battle)
+    orchestrator._write(style_path, style)
+    input_value["battle_config_path"] = str(battle_path)
+    input_value["map_style_pack_path"] = str(style_path)
+    orchestrator._write(input_path, input_value)
+    calls = []
+
+    def fake_run_request(_pack_path, _pack, request, _output, _profile, **kwargs):
+        calls.append((request["role"], kwargs["live"]))
+        return {
+            "request_id": request["request_id"],
+            "role": request["role"],
+            "status": "candidate_needs_visual_and_alignment_review",
+            "candidate_path": f"/tmp/{request['role']}.png",
+            "sidecar_path": f"/tmp/{request['role']}.json",
+            "provider_called_this_run": True,
+            "image_exists": True,
+        }
+
+    monkeypatch.setattr(orchestrator.image_provider, "load_dotenv", lambda *_: None)
+    monkeypatch.setattr(orchestrator.visual_candidates, "run_request", fake_run_request)
+    shutil.rmtree(output, ignore_errors=True)
+    try:
+        report = orchestrator.compile_map(input_path, output, live_visuals=True)
+        assert len(calls) == 6
+        assert all(live is True for _, live in calls)
+        assert report["provider_execution"]["call_count"] == 6
+        assert report["provider_execution"]["candidate_generation_status"] == "completed_review_only"
+        assert report["provider_execution"]["reviewed_local_media_imported"] is False
     finally:
         shutil.rmtree(output, ignore_errors=True)
