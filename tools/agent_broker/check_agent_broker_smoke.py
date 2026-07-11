@@ -15,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from tools.agent_broker.agentctl import select_route  # noqa: E402
-from tools.agent_broker.agent_worker import codebuddy_prompt_ready  # noqa: E402
+from tools.agent_broker.agent_worker import (  # noqa: E402
+    codebuddy_prompt_ready,
+    codebuddy_trust_prompt_visible,
+)
 
 
 TASK_PACK = ROOT / "examples/worker_task_packs/p1e_premerge_quality_gate.v0.1.json"
@@ -69,6 +72,20 @@ def main() -> int:
                 codebuddy_prompt_ready(readiness_cases["ready"])
                 and not codebuddy_prompt_ready(readiness_cases["splash_only"])
                 and not codebuddy_prompt_ready(readiness_cases["mode_without_prompt"])
+            ),
+        }
+    )
+    trust_prompt = """
+Do you trust the files in this folder?
+  > 1. Trust folder only (task-worktree)
+Enter to confirm • Esc to exit
+"""
+    checks.append(
+        {
+            "name": "codebuddy_trust_prompt_detection",
+            "passed": (
+                codebuddy_trust_prompt_visible(trust_prompt)
+                and not codebuddy_trust_prompt_visible(readiness_cases["ready"])
             ),
         }
     )
