@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/generated_world_candidate.v0.1.schema.json",
+  "title": "GeneratedWorldCandidate v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "world_id", "display_name", "tagline", "summary", "tone_voice", "naming_style", "phase_terms", "resources", "nodes", "enemies", "npcs", "visual", "opening_cards", "player_origins", "first_battle"],
+  "properties": {
+    "schema_version": {"const": "generated_world_candidate.v0.1"},
+    "world_id": {"$ref": "#/$defs/id"},
+    "display_name": {"$ref": "#/$defs/short_text"},
+    "tagline": {"$ref": "#/$defs/short_text"},
+    "summary": {"$ref": "#/$defs/text"},
+    "tone_voice": {"$ref": "#/$defs/text"},
+    "naming_style": {"$ref": "#/$defs/text"},
+    "phase_terms": {
+      "type": "object", "additionalProperties": false,
+      "required": ["preparation", "battle", "resolution"],
+      "properties": {"preparation": {"$ref": "#/$defs/short_text"}, "battle": {"$ref": "#/$defs/short_text"}, "resolution": {"$ref": "#/$defs/short_text"}}
+    },
+    "resources": {"type": "array", "minItems": 3, "maxItems": 4, "items": {"$ref": "#/$defs/named_summary"}},
+    "nodes": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/node"}},
+    "enemies": {"type": "array", "minItems": 2, "maxItems": 3, "items": {"$ref": "#/$defs/enemy"}},
+    "npcs": {"type": "array", "minItems": 2, "maxItems": 3, "items": {"$ref": "#/$defs/npc"}},
+    "visual": {"$ref": "#/$defs/visual"},
+    "opening_cards": {"type": "array", "minItems": 3, "maxItems": 4, "items": {"$ref": "#/$defs/opening"}},
+    "player_origins": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/named_summary"}},
+    "first_battle": {"$ref": "#/$defs/first_battle"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,47}$"},
+    "hex": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "short_text": {"type": "string", "minLength": 1, "maxLength": 48},
+    "text": {"type": "string", "minLength": 4, "maxLength": 240},
+    "named_summary": {
+      "type": "object", "additionalProperties": false, "required": ["id", "display_name", "summary"],
+      "properties": {"id": {"$ref": "#/$defs/id"}, "display_name": {"$ref": "#/$defs/short_text"}, "summary": {"$ref": "#/$defs/text"}}
+    },
+    "node": {
+      "type": "object", "additionalProperties": false, "required": ["id", "display_name", "summary", "role"],
+      "properties": {"id": {"$ref": "#/$defs/id"}, "display_name": {"$ref": "#/$defs/short_text"}, "summary": {"$ref": "#/$defs/text"}, "role": {"enum": ["main_city", "battle_hotspot", "research_facility", "resource_storage"]}}
+    },
+    "enemy": {
+      "type": "object", "additionalProperties": false, "required": ["id", "display_name", "summary", "archetype"],
+      "properties": {"id": {"$ref": "#/$defs/id"}, "display_name": {"$ref": "#/$defs/short_text"}, "summary": {"$ref": "#/$defs/text"}, "archetype": {"enum": ["fast_swarm", "basic", "armored_slow"]}}
+    },
+    "npc": {
+      "type": "object", "additionalProperties": false, "required": ["id", "display_name", "role", "voice"],
+      "properties": {"id": {"$ref": "#/$defs/id"}, "display_name": {"$ref": "#/$defs/short_text"}, "role": {"$ref": "#/$defs/short_text"}, "voice": {"$ref": "#/$defs/text"}}
+    },
+    "visual": {
+      "type": "object", "additionalProperties": false,
+      "required": ["style_id", "style_name", "theme_tags", "palette", "time_of_day", "terrain_name", "road_name", "slot_name", "objective_name", "spawn_name"],
+      "properties": {
+        "style_id": {"$ref": "#/$defs/id"}, "style_name": {"$ref": "#/$defs/short_text"},
+        "theme_tags": {"type": "array", "minItems": 5, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "palette": {
+          "type": "object", "additionalProperties": false,
+          "required": ["terrain_base", "terrain_detail", "road_base", "road_edge", "build_slot", "objective", "spawn", "resource", "hazard", "fog", "accent"],
+          "properties": {"terrain_base": {"$ref": "#/$defs/hex"}, "terrain_detail": {"$ref": "#/$defs/hex"}, "road_base": {"$ref": "#/$defs/hex"}, "road_edge": {"$ref": "#/$defs/hex"}, "build_slot": {"$ref": "#/$defs/hex"}, "objective": {"$ref": "#/$defs/hex"}, "spawn": {"$ref": "#/$defs/hex"}, "resource": {"$ref": "#/$defs/hex"}, "hazard": {"$ref": "#/$defs/hex"}, "fog": {"$ref": "#/$defs/hex"}, "accent": {"$ref": "#/$defs/hex"}}
+        },
+        "time_of_day": {"enum": ["dawn", "day", "dusk", "night", "storm"]},
+        "terrain_name": {"$ref": "#/$defs/id"}, "road_name": {"$ref": "#/$defs/id"}, "slot_name": {"$ref": "#/$defs/id"}, "objective_name": {"$ref": "#/$defs/id"}, "spawn_name": {"$ref": "#/$defs/id"}
+      }
+    },
+    "opening": {
+      "type": "object", "additionalProperties": false, "required": ["title", "text"],
+      "properties": {"title": {"$ref": "#/$defs/short_text"}, "text": {"$ref": "#/$defs/text"}}
+    },
+    "first_battle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["display_name", "summary", "route_shape", "core_name", "optional_target_name", "enemy_traits", "approach_direction", "suggested_research_intent"],
+      "properties": {
+        "display_name": {"$ref": "#/$defs/short_text"}, "summary": {"$ref": "#/$defs/text"},
+        "route_shape": {"enum": ["east_west_switchback", "north_south_serpentine", "diagonal_zigzag"]},
+        "core_name": {"$ref": "#/$defs/short_text"}, "optional_target_name": {"$ref": "#/$defs/short_text"},
+        "enemy_traits": {"$ref": "#/$defs/text"}, "approach_direction": {"$ref": "#/$defs/short_text"},
+        "suggested_research_intent": {"$ref": "#/$defs/text"}
+      }
+    }
+  }
+}
