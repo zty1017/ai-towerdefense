@@ -250,6 +250,8 @@ export function createBattleStateFactory({
     sampleUses: sampleReady ? Number(sample.uses_per_battle || 0) : 0,
     supportUses: 1,
     sampleDelivered: sampleReady,
+    sampleActivationPending: false,
+    sampleActivationRequested: false,
     sampleDeliveryMs:
       sampleDeliveryMsOverride === undefined ? defaultSampleDeliveryMs : sampleDeliveryMsOverride,
     cooldowns: {

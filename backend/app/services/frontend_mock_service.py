@@ -202,6 +202,139 @@ def _battle_toolbar_assets(pack: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def _effect_summary(display_name: str, behavior_abi: dict[str, Any]) -> str:
+    effects = behavior_abi.get("effect_blocks", [])
+    if not isinstance(effects, list):
+        effects = []
+    damage = next(
+        (item for item in effects if isinstance(item, dict) and item.get("kind") == "damage"),
+        None,
+    )
+    slow = any(isinstance(item, dict) and item.get("kind") == "slow" for item in effects)
+    aura = any(isinstance(item, dict) and item.get("kind") == "aura" for item in effects)
+    reveal = any(isinstance(item, dict) and item.get("kind") == "reveal" for item in effects)
+    clauses: list[str] = []
+    if damage:
+        radius = float(damage.get("radius_cells") or 0)
+        clauses.append(f"形成约 {radius:g} 格范围打击" if radius > 0 else "完成单体打击")
+    if slow:
+        clauses.append("附带迟滞")
+    if aura:
+        clauses.append("形成短时光环")
+    if reveal:
+        clauses.append("揭示来敌")
+    if not clauses:
+        return f"{display_name}已在本场实际部署，运行数据已经留档。"
+    return f"{display_name}在实战中{'，'.join(clauses)}，对应数据已经留档。"
+
+
+def _configured_battle_assets(config: dict[str, Any]) -> list[dict[str, Any]]:
+    configured: list[dict[str, Any]] = []
+    for field, role, default_kind in (
+        ("basic_defense", "basic", "tower_blueprint"),
+        ("sample_asset", "sample", "temporary_trap_sample"),
+        ("support_asset", "support", "support_item"),
+    ):
+        item = config.get(field)
+        if not isinstance(item, dict) or not item:
+            continue
+        ids = {
+            str(value)
+            for value in (item.get("stable_internal_id"), item.get("runtime_object_id"))
+            if value
+        }
+        configured.append(
+            {
+                "ids": ids,
+                "object_id": str(item.get("runtime_object_id") or item.get("stable_internal_id") or ""),
+                "display_name": str(item.get("display_name") or "未命名装置"),
+                "asset_kind": str(item.get("asset_kind") or default_kind),
+                "role": role,
+                "behavior_abi": item.get("runtime_behavior_abi")
+                if isinstance(item.get("runtime_behavior_abi"), dict)
+                else {},
+                "effect_summary": str(item.get("effect_summary") or ""),
+                "source": "battle_config",
+            }
+        )
+    return configured
+
+
+def _deployed_asset_summaries(
+    deployed_asset_ids: list[Any],
+    battle_config: dict[str, Any],
+    runtime_bundle: dict[str, Any],
+) -> list[dict[str, Any]]:
+    configured = _configured_battle_assets(battle_config)
+    configured_by_id = {
+        asset_id: item for item in configured for asset_id in item["ids"]
+    }
+    capabilities = runtime_bundle.get("capabilities", {})
+    runtime_objects = capabilities.get("battle_objects", []) if isinstance(capabilities, dict) else []
+    runtime_by_id = {
+        str(item.get("object_id")): item
+        for item in runtime_objects
+        if isinstance(item, dict) and item.get("object_id")
+    }
+    summaries: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw_id in deployed_asset_ids:
+        asset_id = str(raw_id or "").strip()
+        if not asset_id or asset_id in seen:
+            continue
+        seen.add(asset_id)
+        runtime_object = runtime_by_id.get(asset_id)
+        configured_asset = configured_by_id.get(asset_id)
+        if runtime_object:
+            behavior = runtime_object.get("behavior_abi")
+            if not isinstance(behavior, dict):
+                behavior = {}
+            tool_id = str(runtime_object.get("tool_id") or runtime_object.get("hotbar_id") or "")
+            role = tool_id if tool_id in {"basic", "sample", "support"} else (
+                configured_asset["role"] if configured_asset else "compiled"
+            )
+            name = str(runtime_object.get("display_name") or asset_id)
+            summary = {
+                "object_id": asset_id,
+                "display_name": name,
+                "asset_kind": str(runtime_object.get("asset_kind") or "runtime_object"),
+                "role": role,
+                "source": "activated_runtime" if runtime_object.get("source_runtime_ref") else "runtime_fixture",
+                "effect_summary": _effect_summary(name, behavior),
+            }
+        elif configured_asset:
+            name = configured_asset["display_name"]
+            effect_summary = configured_asset["effect_summary"] or _effect_summary(
+                name, configured_asset["behavior_abi"]
+            )
+            summary = {
+                "object_id": configured_asset["object_id"] or asset_id,
+                "display_name": name,
+                "asset_kind": configured_asset["asset_kind"],
+                "role": configured_asset["role"],
+                "source": configured_asset["source"],
+                "effect_summary": effect_summary,
+            }
+        else:
+            summary = {
+                "object_id": asset_id,
+                "display_name": asset_id,
+                "asset_kind": "unknown",
+                "role": "unknown",
+                "source": "submitted_result",
+                "effect_summary": "该对象已部署，但当前运行包中没有可用于结算的说明。",
+            }
+        summaries.append(summary)
+    return summaries
+
+
+def _primary_deployed_asset(assets: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next(
+        (item for item in reversed(assets) if item.get("role") in {"sample", "compiled"}),
+        next((item for item in reversed(assets) if item.get("role") != "basic"), None),
+    )
+
+
 def _apply_delta_to_state(state: dict[str, Any], delta: dict[str, Any]) -> dict[str, Any]:
     """Apply the small subset of WorldStateDelta ops needed for the MVP mock."""
     updated = json.loads(json.dumps(state, ensure_ascii=False))
@@ -646,6 +779,15 @@ def record_battle_result(
     else:
         next_state = previous_state
     submitted = result if isinstance(result, dict) else {}
+    runtime_bundle = _player_runtime_bundle(session_id, node_id=node_id, state=previous_state)
+    deployed_assets = _deployed_asset_summaries(
+        submitted.get("deployed_asset_ids", [])
+        if isinstance(submitted.get("deployed_asset_ids"), list)
+        else [],
+        battle_config,
+        runtime_bundle,
+    )
+    primary_asset = _primary_deployed_asset(deployed_assets)
     ts = now_iso()
     core_artifacts = None
     if delta and transaction:
@@ -683,7 +825,18 @@ def record_battle_result(
         "battle_summary": battle_config.get("post_battle", {}).get(
             "on_victory", "节点守住，样品表现已记录。"
         ),
-        "sample_performance": spec["sample_performance"],
+        "sample_performance": (
+            primary_asset["effect_summary"]
+            if primary_asset
+            else "本场没有实际部署试作品；结算只记录基础防线表现。"
+        ),
+        "deployed_assets": deployed_assets,
+        "primary_deployed_asset": primary_asset,
+        "primary_sample_name": (
+            primary_asset["display_name"]
+            if primary_asset and primary_asset.get("role") in {"sample", "compiled"}
+            else None
+        ),
         "npc_feedback": spec["npc_feedback"],
         "world_delta": delta,
         "world_delta_transaction": transaction,

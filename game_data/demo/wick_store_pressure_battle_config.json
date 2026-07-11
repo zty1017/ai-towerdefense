@@ -122,7 +122,8 @@
           "effect_id": "ash_burst_damage",
           "kind": "damage",
           "amount": 12,
-          "damage_type": "light"
+          "damage_type": "light",
+          "radius_cells": 1.45
         },
         {
           "effect_id": "ash_guard_aura",

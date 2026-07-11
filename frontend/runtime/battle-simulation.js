@@ -4,7 +4,10 @@ export function advanceBattleStep({ battle, dt }) {
     battle.cooldowns[key] = Math.max(0, battle.cooldowns[key] - dt);
   }
   const sampleAsset = battle.config.sample_asset || {};
-  const sampleDelivered = !battle.sampleDelivered && battle.elapsedMs >= battle.sampleDeliveryMs;
+  const sampleDelivered =
+    !battle.sampleDelivered &&
+    !battle.sampleActivationPending &&
+    battle.elapsedMs >= battle.sampleDeliveryMs;
   if (sampleDelivered) {
     battle.sampleDelivered = true;
     battle.sampleUses = sampleAsset.uses_per_battle || 2;
@@ -98,16 +101,33 @@ export function updateDefenses({ battle }) {
     const attackIntervalMs = Number(defense.attackIntervalMs) > 0 ? Number(defense.attackIntervalMs) : 760;
     const attackRange = Number(defense.range) > 0 ? Number(defense.range) : 2.6;
     const damage = Number(defense.damage) > 0 ? Number(defense.damage) : 1;
+    const splashRadius = Math.max(0, Number(defense.splashRadius) || 0);
     const color = defense.attackColor || "#ffd37a";
     if (battle.elapsedMs < defense.shotAt + attackIntervalMs) continue;
     const target = nearestEnemy({ battle, x: defense.x, y: defense.y, radius: attackRange });
     if (!target) continue;
     defense.shotAt = battle.elapsedMs;
-    target.hp -= damage;
-    target.hitFlashUntil = battle.elapsedMs + 160;
+    const impacted = splashRadius > 0
+      ? battle.enemies.filter(
+          (enemy) =>
+            enemy.hp > 0 && Math.hypot(enemy.x - target.x, enemy.y - target.y) <= splashRadius,
+        )
+      : [target];
+    for (const enemy of impacted) {
+      enemy.hp -= damage;
+      enemy.hitFlashUntil = battle.elapsedMs + 160;
+    }
     addEffect(battle, "muzzle", defense.x, defense.y, color, 220, 0.75);
     addBeam(battle, defense.x, defense.y, target.x, target.y, color);
-    addEffect(battle, "burst", target.x, target.y, color, 240, 0.55);
+    addEffect(
+      battle,
+      splashRadius > 0 ? "ring" : "burst",
+      target.x,
+      target.y,
+      color,
+      splashRadius > 0 ? 420 : 240,
+      splashRadius > 0 ? Math.max(0.8, splashRadius / 1.4) : 0.55,
+    );
   }
   battle.defenses = battle.defenses.filter((item) => !item.expired);
 }

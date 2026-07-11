@@ -547,6 +547,7 @@ def _package_media(asset: dict[str, Any]) -> dict[str, Any]:
 def _build_capability(
     asset: dict[str, Any], *, activation_id: str, package: dict[str, Any],
     package_hash: str, artifact_root: Path, allow_reviewed_fallback: bool,
+    tool_id_override: str | None = None,
 ) -> tuple[dict[str, Any], list[str], dict[str, str]]:
     warnings: list[str] = []
     gate_status = {"behavior": "passed", "media": "passed"}
@@ -600,7 +601,9 @@ def _build_capability(
             ),
         },
     }
-    if requires_delivery:
+    if tool_id_override:
+        capability["tool_id"] = tool_id_override
+    elif requires_delivery:
         capability["tool_id"] = "sample"
     errors = _schema_errors(capability, _CAPABILITY_SCHEMA)
     if errors:
@@ -814,6 +817,7 @@ def apply_runtime_package(
                     package_hash=package_hash,
                     artifact_root=package_path.parent,
                     allow_reviewed_fallback=allow_reviewed_fallback,
+                    tool_id_override="sample" if source_kind == "research_job" else None,
                 )
             except (OSError, ValueError, json.JSONDecodeError) as exc:
                 blocked.append(str(exc))
