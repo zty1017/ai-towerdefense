@@ -5640,7 +5640,11 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     wick = _payload(
         client.post(
             f"/api/sessions/{sid}/battles/lamp_wick_store/results",
-            json={"result": "victory", "protected_core_hp": 6},
+            json={
+                "result": "victory",
+                "protected_core_hp": 6,
+                "deployed_asset_ids": ["asset_ash_burst_lantern"],
+            },
         )
     )
     wick_settlement = wick["settlement"]
@@ -5656,6 +5660,11 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     assert wick_settlement["run_world_state"]["progress"]["phase"] == (
         "post_wick_store_defense"
     )
+    assert wick_settlement["primary_sample_name"] == "灯灰爆鸣塔"
+    assert wick_settlement["primary_deployed_asset"]["object_id"] == (
+        "asset_ash_burst_lantern"
+    )
+    assert "范围" in wick_settlement["sample_performance"]
 
     tower_route = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
     assert tower_route["campaign_router"]["current"]["node_id"] == "old_signal_tower"

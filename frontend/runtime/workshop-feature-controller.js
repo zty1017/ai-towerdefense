@@ -215,6 +215,7 @@ export function createWorkshopFeatureController({
               <div class="workshop-primary-action">
                 <button class="${hasProposal ? "ghost-button" : "primary-button"}" data-action="proposal-refresh" ${proposalBusy ? "disabled" : ""}>${proposalBusy ? "正在推演" : hasProposal ? "重新推演方案" : "推演一个方案"}</button>
               </div>
+              ${state.research.errorMessage ? `<p class="workshop-material-notice">方案尚未完成登记，请稍后重试。</p>` : ""}
             </section>
             <aside class="panel workshop-review ${hasProposal ? "has-proposal" : "is-empty"}">
               ${

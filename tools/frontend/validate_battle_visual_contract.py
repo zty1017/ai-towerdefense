@@ -781,9 +781,10 @@ def validate_app_contract(errors: list[str]) -> None:
         "updateDefenses: ({ battle }) => updateDefensesStep({ battle })" in app
         and "const attackRange = Number(defense.range) > 0" in update_defenses
         and "nearestEnemy({ battle, x: defense.x, y: defense.y, radius: attackRange })" in update_defenses
-        and "target.hp -= damage" in update_defenses
+        and "enemy.hp -= damage" in update_defenses
+        and "splashRadius" in update_defenses
         and "addBeam(battle" in update_defenses,
-        "battle orchestrator wiring must delegate defenses while preserving ABI-driven targeting and beam attacks",
+        "battle orchestrator wiring must delegate defenses while preserving ABI-driven single-target/radius attacks",
         errors,
     )
     require(

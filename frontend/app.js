@@ -128,6 +128,7 @@ import {
       proposalIntent: "",
       job: null,
       jobPromise: null,
+      errorMessage: "",
     },
     battle: null,
     battleOutcome: null,
@@ -1132,6 +1133,7 @@ import {
       proposalIntent: "",
       job: null,
       jobPromise: null,
+      errorMessage: "",
     };
     state.battle = null;
     state.settlement = null;
@@ -1169,13 +1171,18 @@ import {
   async function refreshProposal() {
     const intent = state.intentText.trim() || "我想做一个能拖慢影潮的临时装置。";
     state.research.status = "proposing";
+    state.research.errorMessage = "";
     renderWorkshop();
     if (isApiMode()) {
       try {
         await createResearchProposal(intent);
-      } catch {
+      } catch (error) {
         state.research.proposal = null;
         state.research.proposalIntent = "";
+        state.research.status = "idle";
+        state.research.errorMessage = error && error.message ? error.message : "方案尚未完成";
+        if (state.view === "workshop") renderWorkshop();
+        return;
       }
     } else {
       await sleep(260);
@@ -1188,11 +1195,15 @@ import {
     const proposal = await apiPost(
       sessionApiPath("/research/proposals"),
       { intent_text: intent, node_id: currentNodeId() },
-      4200,
+      90000,
     );
     state.research.proposal = proposal;
     state.research.proposalIntent = intent;
-    await loadFeatureRuntime(currentNodeId());
+    try {
+      await loadFeatureRuntime(currentNodeId());
+    } catch {
+      // The proposal response is authoritative; projection refresh is best effort.
+    }
     return proposal;
   }
 
@@ -1226,6 +1237,7 @@ import {
 
   async function confirmPrototype() {
     state.research.status = "confirming";
+    state.research.errorMessage = "";
     renderWorkshop();
     const intent = state.intentText.trim() || "我想做一个能拖慢影潮的临时装置。";
     if (isApiMode()) {
@@ -1242,16 +1254,27 @@ import {
             `/research/proposals/${encodeURIComponent(proposal.proposal_id)}/confirm`,
           ),
           {},
-          20000,
+          90000,
         )
           .then(async (job) => {
             state.research.job = job;
-            await loadFeatureRuntime(currentNodeId());
+            try {
+              await loadFeatureRuntime(currentNodeId());
+            } catch {
+              // Job completion is authoritative; projection refresh can recover later.
+            }
             return job;
           })
-          .catch(() => null);
-      } catch {
-        state.research.proposal = null;
+          .catch((error) => {
+            state.research.job = null;
+            state.research.errorMessage = error && error.message ? error.message : "试作登记失败";
+            return null;
+          });
+      } catch (error) {
+        state.research.status = state.research.proposal ? "proposed" : "idle";
+        state.research.errorMessage = error && error.message ? error.message : "方案尚未完成";
+        if (state.view === "workshop") renderWorkshop();
+        return;
       }
     }
     state.research.status = "in_progress";
@@ -1288,6 +1311,15 @@ import {
       </main>
     `;
     setupBattle();
+    if (
+      isApiMode() &&
+      state.research.jobPromise &&
+      state.battle &&
+      state.battle.sampleDelivered &&
+      !state.battle.sampleActivationRequested
+    ) {
+      handleBattleSampleDelivered();
+    }
   }
 
   function setupBattle() {
@@ -1666,6 +1698,8 @@ import {
   }
 
   function handleBattleSampleDelivered() {
+    if (!state.battle || state.battle.sampleActivationRequested) return;
+    state.battle.sampleActivationRequested = true;
     void activateDeliveredSample();
   }
 
@@ -1673,6 +1707,12 @@ import {
     const presentation = battlePresentation();
     let displayName = presentation.sampleDisplayName;
     if (isApiMode() && state.research.jobPromise) {
+      if (state.battle) {
+        state.battle.sampleActivationPending = true;
+        state.battle.sampleDelivered = false;
+        state.battle.sampleUses = 0;
+        updateBattleDom();
+      }
       try {
         const job = await state.research.jobPromise;
         if (!job || job.status !== "completed") throw new Error("sample unavailable");
@@ -1694,9 +1734,22 @@ import {
           const uses = Number((activatedObject.lifecycle || {}).max_uses);
           if (state.battle && Number.isFinite(uses) && uses > 0) state.battle.sampleUses = uses;
         }
+        if (state.battle) {
+          state.battle.sampleActivationPending = false;
+          state.battle.sampleDelivered = true;
+          if (!state.battle.sampleUses) {
+            state.battle.sampleUses = Number((state.battle.config.sample_asset || {}).uses_per_battle || 2);
+          }
+        }
         battleObjectPreloadUrls().forEach((url) => getImage(url));
         updateBattleDom();
       } catch {
+        if (state.battle) {
+          state.battle.sampleActivationPending = false;
+          state.battle.sampleDelivered = false;
+          state.battle.sampleUses = 0;
+          updateBattleDom();
+        }
         setBattleToast("样品封装尚未稳定，先维持现有防线");
         return;
       }
@@ -2444,6 +2497,7 @@ import {
         state.research.status = "idle";
         state.research.proposal = null;
         state.research.proposalIntent = "";
+        state.research.errorMessage = "";
         renderWorkshop();
     },
     "confirm-prototype": () => confirmPrototype(),
@@ -2498,6 +2552,7 @@ import {
         state.research.status = "stale";
         state.research.proposal = null;
         state.research.proposalIntent = "";
+        state.research.errorMessage = "";
         const review = ROOT.querySelector(".workshop-review");
         if (review) review.classList.add("is-stale");
         const confirm = ROOT.querySelector("[data-action='confirm-prototype']");

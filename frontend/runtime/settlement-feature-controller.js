@@ -65,26 +65,28 @@ export function createSettlementFeatureController({
   function evidenceMarkup() {
     const state = getState();
     const evidence = state.evidence;
+    const settlement = state.settlement || {};
+    const actualAsset = settlement.primary_deployed_asset || null;
+    const actualName = actualAsset && actualAsset.display_name;
     if (!evidence) {
       return `
         <details class="evidence-drawer">
           <summary>留档片段</summary>
           <div class="log-lines">
-            <span>方案：折光绊索</span><span>试作：战场送达</span>
+            <span>实战对象：${safeText(actualName || "未部署试作品")}</span><span>试作：${actualAsset ? "已部署" : "未部署"}</span>
             <span>战斗：${safeText((state.battleOutcome || {}).result || "完成")}</span>
           </div>
         </details>
       `;
     }
-    const proposal = evidence.proposal || {};
     const job = evidence.research_job || {};
     const battle = evidence.battle_result || {};
     return `
       <details class="evidence-drawer">
         <summary>留档片段</summary>
         <div class="log-lines">
-          <span>方案：${safeText(proposal.display_name || "折光绊索")}</span>
-          <span>试作：${safeText(job.status || "已完成")}</span>
+          <span>实战对象：${safeText(actualName || "未部署试作品")}</span>
+          <span>试作：${safeText(job.status || (actualAsset ? "已部署" : "未登记"))}</span>
           <span>战斗：${safeText(((battle.settlement || {}).result) || (state.battleOutcome || {}).result || "完成")}</span>
           <span>封存：${safeText(((evidence.audit_summary || {}).overall_status) || "通过")}</span>
         </div>

@@ -66,7 +66,10 @@ import {
   onBattleCanvasClick,
   onBattleCanvasPointerMove,
 } from "../../frontend/runtime/battle-input-controller.js";
-import { advanceBattleStep } from "../../frontend/runtime/battle-simulation.js";
+import {
+  advanceBattleStep,
+  updateDefenses,
+} from "../../frontend/runtime/battle-simulation.js";
 
 function recordingCanvasContext() {
   const calls = [];
@@ -1454,6 +1457,7 @@ test("runtime tools deploy through behavior ABI whitelist", () => {
   assert.equal(battle.defenses[0].name, "余烬望塔");
   assert.equal(battle.defenses[0].damage, 2);
   assert.equal(battle.defenses[0].range, 3);
+  assert.equal(battle.defenses[0].splashRadius, 0);
   assert.deepEqual(battle.defenses[0].mediaRefs, tower.mediaRefs);
 
   assert.equal(
@@ -1471,6 +1475,35 @@ test("runtime tools deploy through behavior ABI whitelist", () => {
   assert.equal(battle.power, 5);
   assert.equal(battle.cooldowns.echo_bell_001, 2500);
   assert.equal(battle.enemies[0].hp, 3);
+});
+
+test("damage radius from behavior ABI applies one impact to every nearby enemy", () => {
+  const battle = {
+    elapsedMs: 1000,
+    defenses: [
+      {
+        x: 2,
+        y: 2,
+        until: 5000,
+        shotAt: 0,
+        attackIntervalMs: 760,
+        range: 4,
+        damage: 2,
+        splashRadius: 1.45,
+      },
+    ],
+    enemies: [
+      { id: "primary", x: 4, y: 2, hp: 5 },
+      { id: "nearby", x: 4.8, y: 2.4, hp: 5 },
+      { id: "distant", x: 6.2, y: 2, hp: 5 },
+    ],
+    effects: [],
+  };
+  updateDefenses({ battle });
+  assert.equal(battle.enemies[0].hp, 3);
+  assert.equal(battle.enemies[1].hp, 3);
+  assert.equal(battle.enemies[2].hp, 5);
+  assert.ok(battle.effects.some((effect) => effect.type === "ring"));
 });
 
 test("compiled sample slot consumes delivery charges without charging research materials twice", () => {
@@ -1795,6 +1828,21 @@ test("sample delivery never changes the player's current tool selection", () => 
   assert.equal(result.sampleDelivered, true);
   assert.equal(battle.sampleUses, 2);
   assert.equal(battle.selectedTool, null);
+});
+
+test("sample delivery waits while runtime activation is pending", () => {
+  const battle = {
+    elapsedMs: 100,
+    sampleDeliveryMs: 100,
+    sampleDelivered: false,
+    sampleActivationPending: true,
+    sampleUses: 0,
+    config: { sample_asset: { uses_per_battle: 2 } },
+    cooldowns: {},
+  };
+  const result = advanceBattleStep({ battle, dt: 100 });
+  assert.equal(result.sampleDelivered, false);
+  assert.equal(battle.sampleUses, 0);
 });
 
 test("battle state respects node package sample delivery state", () => {

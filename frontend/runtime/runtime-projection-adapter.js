@@ -264,7 +264,7 @@ function effectSummary(behaviorAbi, fallback) {
   const first = asList(asObject(behaviorAbi).effect_blocks)[0];
   const kind = String((first && first.kind) || "");
   if (kind === "slow") return "减速";
-  if (kind === "damage") return "打击";
+  if (kind === "damage") return Number(first.radius_cells) > 0 ? "范围打击" : "打击";
   if (kind === "aura") return "光环";
   if (kind === "reveal") return "揭示";
   return fallback;

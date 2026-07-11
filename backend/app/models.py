@@ -75,6 +75,7 @@ class ResearchProposalResponse(BaseModel):
     risk_note: str
     player_state_message: str
     compiler_metadata: dict[str, Any] = Field(default_factory=dict)
+    compiled_candidate: Optional[dict[str, Any]] = None
 
 
 class ResearchJobResponse(BaseModel):

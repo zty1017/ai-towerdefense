@@ -108,6 +108,11 @@ function normalizedDamage(tool, fallback = 1) {
   return clamp(Math.max(1, Math.ceil(amount / 8)), 1, 5);
 }
 
+function damageRadiusCells(tool) {
+  const damage = firstEffectOf(tool, "damage");
+  return safeNumber(damage && damage.radius_cells, 0, 0, 8);
+}
+
 function slowDurationMs(tool, fallback = 1800) {
   const slow = firstEffectOf(tool, "slow");
   return safeNumber(slow && slow.duration_ms, fallback, 0, 10000);
@@ -195,6 +200,7 @@ export function placeBasicDefense({
     mediaRefs: (tool && tool.mediaRefs) || {},
     range: targetRadius(tool, 2.6),
     damage: normalizedDamage(tool, 1),
+    splashRadius: damageRadiusCells(tool),
     attackIntervalMs: 760,
     attackColor: effectColor(tool, "#ffd37a"),
   });
@@ -343,6 +349,7 @@ export function deployRuntimeTool({
       mediaRefs: tool.mediaRefs || {},
       range: targetRadius(tool, 2.6),
       damage: normalizedDamage(tool, 1),
+      splashRadius: damageRadiusCells(tool),
       attackIntervalMs: 760,
       attackColor: effectColor(tool, "#ffd37a"),
     });
