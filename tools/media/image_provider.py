@@ -153,7 +153,6 @@ def build_generation_payload(
     ratio: str | None = None,
     input_images: list[str] | None = None,
     response_format: str | None = None,
-    credential_index: int = 0,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": profile.model,
@@ -184,6 +183,7 @@ def generate_image(
     ratio: str | None = None,
     input_images: list[str] | None = None,
     response_format: str | None = None,
+    credential_index: int = 0,
 ) -> dict[str, Any]:
     """Call an OpenAI-compatible image generation endpoint.
 

@@ -5,7 +5,7 @@
   "battle_config_path": "../../game_data/demo/first_battle_config.json",
   "map_style_pack_path": "../map_style_packs/long_night_ruined_outpost.map_style_pack.json",
   "visual_generation": {
-    "provider_handoff": true
+    "provider_handoff": true,
+    "background_execution": true
   }
 }
-

@@ -39,6 +39,7 @@ if str(MEDIA_TOOLS) not in sys.path:
 
 import build_map_topology_control_sketch_pack as topology_sketches  # noqa: E402
 import image_provider  # noqa: E402
+import map_visual_job_queue  # noqa: E402
 import map_visual_closed_loop  # noqa: E402
 import vision_review  # noqa: E402
 
@@ -708,6 +709,28 @@ def compile_map(
     _write(compile_path, compiled)
     stages.append(_stage("map_compile_package", started, [visual_manifest_path, compile_path]))
 
+    background_job_path: Path | None = None
+    if (
+        visual_generation.get("provider_handoff")
+        and visual_generation.get("background_execution", True)
+        and not live_visuals
+    ):
+        background_job_path = map_visual_job_queue.enqueue_job(
+            input_path=input_path,
+            output_dir=output_dir,
+            request_pack_path=(
+                output_dir
+                / "visual_handoff"
+                / "map_layered_visual_generation_request_pack.v0.1.json"
+            ),
+            image_profile=image_profile,
+            vision_profile=visual_review_profile,
+            max_attempts=visual_max_attempts,
+            max_workers=visual_max_workers,
+            generation_timeout=visual_request_timeout,
+            review_timeout=visual_review_timeout,
+        )
+
     outputs = [
         runtime_path,
         *visual_handoff_paths,
@@ -755,6 +778,8 @@ def compile_map(
                 visual_generation_report
                 and visual_generation_report.get("runtime_critical_roles_ready")
             ),
+            "background_job_status": "pending" if background_job_path else "not_requested",
+            "background_job_ref": _rel(background_job_path) if background_job_path else None,
         },
         "quality": {
             "runtime_truth_preserved": True,
@@ -764,6 +789,113 @@ def compile_map(
         },
         "resume": {"reused": False, "checked_at": None},
     }
+    report_errors = render_plan.validate_with_jsonschema(
+        report, _schema("map_compilation_run_report.v0.1.schema.json")
+    )
+    if report_errors:
+        raise MapCompilationError(f"MapCompilationRunReport validation failed: {report_errors[0]}")
+    _write(report_path, report)
+    return report
+
+
+def apply_reviewed_visuals(
+    input_path: Path,
+    output_dir: Path,
+    visual_report: dict[str, Any],
+) -> dict[str, Any]:
+    """Rebuild presentation artifacts after the background visual gate passes."""
+    if not visual_report.get("runtime_critical_roles_ready"):
+        raise MapCompilationError("reviewed critical visual roles are not ready")
+    value = _load(input_path)
+    battle_path, style_path = _check_input(value, input_path)
+    style = _load(style_path)
+    runtime_path = output_dir / "map_runtime_package.v0.2.json"
+    render_path = output_dir / "procedural_map_render_plan.v0.1.json"
+    layered_path = output_dir / "layered_map_visual_package.v0.1.json"
+    visual_manifest_path = output_dir / "map_visual_reference_manifest.v0.1.json"
+    compile_path = output_dir / "map_compile_package.v0.2.json"
+    report_path = output_dir / "map_compilation_run_report.v0.1.json"
+    runtime = _load(runtime_path)
+    render = _load(render_path)
+    created_at = str(value.get("created_at") or _now())
+    started = time.monotonic()
+
+    layered = layered_builder.build_package(
+        runtime,
+        style,
+        render,
+        runtime_path=runtime_path,
+        style_path=style_path,
+        render_plan_path=render_path,
+        output_dir=output_dir,
+        created_at=created_at,
+        texture_source_dir=Path(str(visual_report["reviewed_texture_source_dir"])),
+        backdrop_source_dir=Path(str(visual_report["reviewed_backdrop_source_dir"])),
+        component_source_dir=(
+            Path(str(visual_report["reviewed_component_source_dir"]))
+            if visual_report.get("reviewed_component_source_dir")
+            else None
+        ),
+    )
+    layered_errors = layered_validator.validate_manifest(
+        layered, SCHEMAS / "layered_map_visual_package.v0.1.schema.json"
+    )
+    if layered_errors:
+        raise MapCompilationError(f"LayeredMapVisualPackage validation failed: {layered_errors[0]}")
+    visual_manifest = _visual_reference_manifest(layered)
+    _write(visual_manifest_path, visual_manifest)
+    compiled = compile_package.build_map_compile_package(
+        runtime,
+        map_runtime_package_path=_rel(runtime_path),
+        battle_config_path=_rel(battle_path),
+        visual_reference_manifest=visual_manifest,
+        visual_reference_manifest_path=_rel(visual_manifest_path),
+        layered_visual_package=layered,
+        layered_visual_package_path=_rel(layered_path),
+        created_at=created_at,
+    )
+    compile_errors = compile_package.validate_package(
+        compiled, _schema("map_compile_package.v0.2.schema.json")
+    )
+    if compile_errors:
+        raise MapCompilationError(f"MapCompilePackage validation failed: {compile_errors[0]}")
+    _write(compile_path, compiled)
+
+    report = _load(report_path)
+    report["completed_at"] = _now()
+    report["stages"].append(
+        _stage(
+            "background_visual_activation",
+            started,
+            [layered_path, visual_manifest_path, compile_path],
+        )
+    )
+    provider_execution = report.setdefault("provider_execution", {})
+    provider_execution.update(
+        {
+            "call_count": visual_report.get("summary", {}).get("provider_call_count", 0),
+            "vision_review_call_count": visual_report.get("summary", {}).get(
+                "vision_review_call_count", 0
+            ),
+            "candidate_generation_status": visual_report.get("status"),
+            "reviewed_local_media_imported": True,
+            "automatic_reviewed_staging_ready": True,
+            "background_job_status": "completed",
+        }
+    )
+    report["quality"]["player_visual_status"] = compiled.get("validation_report", {}).get(
+        "gate_status"
+    )
+    refreshed = {
+        str(path.resolve()): _output_ref(path, path.stem)
+        for path in (layered_path, visual_manifest_path, compile_path)
+    }
+    report["output_refs"] = [
+        refreshed.get(str(_resolve(str(item.get("path") or "")).resolve()), item)
+        if isinstance(item, dict)
+        else item
+        for item in report.get("output_refs", [])
+    ]
     report_errors = render_plan.validate_with_jsonschema(
         report, _schema("map_compilation_run_report.v0.1.schema.json")
     )

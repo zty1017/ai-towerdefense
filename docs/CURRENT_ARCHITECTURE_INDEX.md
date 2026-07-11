@@ -1,6 +1,6 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
@@ -21,6 +21,7 @@ Last updated: 2026-07-11
 - 任何世界状态变化都必须经过当前 `operations[]` 白名单、结构校验和语义校验；不得用通用 `effects[]` 绕过。
 - `ProviderAdapterRunnerHandoffOutbox v0.1` 是外部 runner 批量交接单，不是 provider 输出、staging manifest、promotion report、runtime package 或世界状态事务。
 - worker 不得从旧 task worktree、早期主聊天摘要或 `main` 的滞后文档推导当前字段事实；派发实现任务时以 `develop` 上的本索引、`AI_COMPILATION_SYSTEM_V0_1.md`、schema、tools 和专题文档为准。
+- 地图视觉已具有专用的最小 live 后台 worker：地图编译自动生成幂等任务，后端自动执行 Agnes 生图、多模态审查、修复重试和通过后的表现包重建。它只覆盖地图视觉子图，不等同于通用 Generation Scheduler 的全部 live provider daemon 已完成。
 
 ## 0. 冻结快照
 

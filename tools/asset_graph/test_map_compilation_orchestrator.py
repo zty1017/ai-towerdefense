@@ -64,6 +64,14 @@ def test_compile_and_resume(tmp_path):
         assert by_role["road_surface"]["output_contract"]["transparent"] is True
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
         assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
+        job = orchestrator._load(
+            handoff_dir / "map_visual_background_job.v0.1.json"
+        )
+        assert job["status"] == "pending"
+        assert job["request_pack_path"].endswith(
+            "map_layered_visual_generation_request_pack.v0.1.json"
+        )
+        assert first["provider_execution"]["background_job_status"] == "pending"
         resumed = orchestrator.compile_map(input_path, output, resume=True)
         assert resumed["resume"]["reused"] is True
     finally:
@@ -166,5 +174,72 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
         assert 'data-objective-part="reviewed-component"' in composite
         assert 'data-spawn-part="reviewed-component"' in composite
         assert 'data-decoration="reviewed-component"' in composite
+    finally:
+        shutil.rmtree(output, ignore_errors=True)
+
+
+def test_background_reviewed_visuals_rebuild_presentation_only(tmp_path):
+    output = ROOT / "game_data/media/layered_maps/map_orchestrator_activation_test_node"
+    input_value = orchestrator._load(INPUT)
+    battle = orchestrator._load(ROOT / "game_data/demo/first_battle_config.json")
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    node_id = "map_orchestrator_activation_test_node"
+    battle["node_id"] = node_id
+    style["node_id"] = node_id
+    battle_path = tmp_path / "battle.json"
+    style_path = tmp_path / "style.json"
+    input_path = tmp_path / "input.json"
+    orchestrator._write(battle_path, battle)
+    orchestrator._write(style_path, style)
+    input_value["battle_config_path"] = str(battle_path)
+    input_value["map_style_pack_path"] = str(style_path)
+    orchestrator._write(input_path, input_value)
+    shutil.rmtree(output, ignore_errors=True)
+    try:
+        first = orchestrator.compile_map(input_path, output)
+        reviewed = output / "reviewed_visual_staging" / "test_job"
+        (reviewed / "backdrops").mkdir(parents=True)
+        (reviewed / "textures").mkdir()
+        (reviewed / "components").mkdir()
+        source = ROOT / "game_data/media/layered_maps/gray_lantern_station"
+        shutil.copy2(
+            source / "backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+            reviewed / "backdrops" / f"{node_id}.reviewed_painted_backdrop.png",
+        )
+        shutil.copy2(
+            source / "textures/gray_lantern_station.road_tile.png",
+            reviewed / "textures/road_tile.png",
+        )
+        shutil.copy2(
+            source / "textures/gray_lantern_station.slot_tile.png",
+            reviewed / "textures/slot_tile.png",
+        )
+        for role in ("objective_foundation", "spawn_marker", "non_blocking_decoration"):
+            shutil.copy2(
+                source / "textures/gray_lantern_station.slot_tile.png",
+                reviewed / "components" / f"{role}.png",
+            )
+        runtime_hash = orchestrator._sha(output / "map_runtime_package.v0.2.json")
+        activated = orchestrator.apply_reviewed_visuals(
+            input_path,
+            output,
+            {
+                "status": "runtime_visuals_ready",
+                "runtime_critical_roles_ready": True,
+                "reviewed_backdrop_source_dir": str(reviewed / "backdrops"),
+                "reviewed_texture_source_dir": str(reviewed / "textures"),
+                "reviewed_component_source_dir": str(reviewed / "components"),
+                "summary": {"provider_call_count": 6, "vision_review_call_count": 6},
+            },
+        )
+        assert first["provider_execution"]["background_job_status"] == "pending"
+        assert activated["provider_execution"]["background_job_status"] == "completed"
+        assert orchestrator._sha(output / "map_runtime_package.v0.2.json") == runtime_hash
+        package = orchestrator._load(output / "layered_map_visual_package.v0.1.json")
+        roles = {item["role"]: item for item in package["media_assets"]}
+        assert roles["reviewed_painted_backdrop"]["source_kind"] == "compiled_reviewed_backdrop"
+        assert roles["road_tile"]["source_kind"] == "compiled_reviewed_texture"
     finally:
         shutil.rmtree(output, ignore_errors=True)

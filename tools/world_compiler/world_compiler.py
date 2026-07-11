@@ -537,7 +537,10 @@ def compile_candidate(
         "created_at": created_at,
         "battle_config_path": "first_battle_config.json",
         "map_style_pack_path": "map_style_pack.json",
-        "visual_generation": {"provider_handoff": True},
+        "visual_generation": {
+            "provider_handoff": True,
+            "background_execution": True,
+        },
     }
     map_input_path = _write(world_dir / "map_compilation_input.json", map_input)
     paths["map_compilation_input"] = map_input_path

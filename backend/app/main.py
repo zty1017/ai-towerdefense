@@ -15,8 +15,10 @@ from .api import frontend_mock as frontend_mock_api
 from .api import health as health_api
 from .api import research as research_api
 from .api import sessions as sessions_api
+from .api import studio as studio_api
 from .config import get_app_title, get_app_version
 from .db import init_db
+from .services.map_visual_worker_service import worker as map_visual_worker
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -37,7 +39,11 @@ _FRONTEND_DIR = _REPO_ROOT / "frontend"
 async def lifespan(app: FastAPI):
     # Ensure the schema exists before serving any request.
     init_db()
-    yield
+    await map_visual_worker.start()
+    try:
+        yield
+    finally:
+        await map_visual_worker.stop()
 
 
 def create_app() -> FastAPI:
@@ -57,6 +63,7 @@ def create_app() -> FastAPI:
     app.include_router(sessions_api.router)
     app.include_router(research_api.router)
     app.include_router(frontend_mock_api.router)
+    app.include_router(studio_api.router)
     _mount_frontend_mock_media(app)
     _mount_frontend(app)
     return app
