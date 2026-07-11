@@ -68,6 +68,13 @@ def _write(path: Path, value: dict[str, Any]) -> Path:
     return path
 
 
+def _path_ref(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(path.resolve())
+
+
 def _schema(name: str) -> dict[str, Any]:
     return _load(SCHEMAS / name)
 
@@ -451,7 +458,7 @@ def _style_pack(candidate: dict[str, Any], battle_path: Path, worldbook_path: Pa
     style = {
         "schema_version": "map_style_pack.v0.1", "style_pack_id": f"style_{candidate['world_id']}_{node['id']}_v0_1",
         "worldbook_id": candidate["world_id"], "node_id": node["id"], "created_at": created_at,
-        "source_refs": {"map_runtime_package_path": str(battle_path), "worldbook_path": str(worldbook_path), "logic_authority": "map_runtime_package", "style_authority": "reviewed_ai_proposal"},
+        "source_refs": {"map_runtime_package_path": "generated_by_map_compilation_input", "worldbook_path": _path_ref(worldbook_path), "logic_authority": "map_runtime_package", "style_authority": "reviewed_ai_proposal"},
         "node_theme_tags": visual["theme_tags"], "palette": visual["palette"],
         "lighting": {"time_of_day": visual["time_of_day"], "contrast_policy": "high_path_readability", "shadow_policy": "soft_blob", "intensity": 0.74},
         "terrain_materials": [
@@ -522,8 +529,8 @@ def compile_candidate(
         "schema_version": "map_compilation_input.v0.1",
         "input_id": f"map_input_{candidate['world_id']}_first_battle",
         "created_at": created_at,
-        "battle_config_path": str(battle_path),
-        "map_style_pack_path": str(paths["map_style_pack"]),
+        "battle_config_path": "first_battle_config.json",
+        "map_style_pack_path": "map_style_pack.json",
         "visual_generation": {"provider_handoff": True},
     }
     map_input_path = _write(world_dir / "map_compilation_input.json", map_input)
@@ -541,9 +548,9 @@ def compile_candidate(
         "generation": provenance,
         "entry_node_id": _by_role(candidate, "battle_hotspot")["id"],
         "suggested_research_intent": candidate["first_battle"]["suggested_research_intent"],
-        "artifacts": {key: str(path) for key, path in paths.items()},
+        "artifacts": {key: _path_ref(path) for key, path in paths.items()},
         "map_compilation_report": map_report,
         "activation": {"world_catalog_ready": True, "runtime_truth": "map_runtime_package" if map_report else "battle_config_pending_map_compile"},
     }
     manifest_path = _write(world_dir / "compiled_world_runtime_manifest.json", manifest)
-    return {"manifest_path": str(manifest_path), "manifest": manifest}
+    return {"manifest_path": _path_ref(manifest_path), "manifest": manifest}

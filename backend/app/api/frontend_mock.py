@@ -25,6 +25,7 @@ from ..services import (
     generation_scheduler_service,
     map_render_plan_service,
     map_runtime_service,
+    world_catalog_service,
 )
 from ..services.generation_scheduler_service import (
     GenerationSchedulerFixtureNotFoundError,
@@ -105,10 +106,23 @@ def create_world_instance(
     """Create the fixture-backed world instance for this session."""
     _require_session(session_id)
     selected = body.selected_options if body is not None else None
-    return _payload(
-        session_id,
-        frontend_mock_service.create_world_instance(session_id, selected),
-    )
+    world_id = body.world_id if body is not None else "long_night_lanterns"
+    try:
+        data = frontend_mock_service.create_world_instance(
+            session_id, selected, world_id=world_id
+        )
+    except world_catalog_service.WorldCatalogNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"world is not ready: {world_id}",
+        ) from exc
+    return _payload(session_id, data)
+
+
+@router.get("/api/world-catalog")
+def get_world_catalog() -> dict[str, Any]:
+    """Return reviewed and compiled worlds that are ready for a new session."""
+    return world_catalog_service.get_catalog()
 
 
 @router.get(

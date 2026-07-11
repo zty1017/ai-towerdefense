@@ -13,7 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor
-from . import battle_content_service, generation_scheduler_service, map_runtime_service
+from . import (
+    battle_content_service,
+    generation_scheduler_service,
+    map_runtime_service,
+    world_catalog_service,
+)
 from .generation_scheduler_service import InvalidQueueTransitionError
 
 
@@ -177,6 +182,55 @@ def _scheduler_signal(session_id: str) -> dict[str, Any]:
 
 
 def get_campaign_router(session_id: str) -> dict[str, Any]:
+    world_id = world_catalog_service.selected_world_id(session_id)
+    if world_id != "long_night_lanterns":
+        bundle = world_catalog_service.load_world_bundle(world_id)
+        entry = bundle["catalog_entry"]
+        node_id = entry["entry_node_id"]
+        step = {
+            "stage_index": 1,
+            "node_id": node_id,
+            "kind": "battle",
+            "display_name": bundle["briefing"]["display_name"],
+            "phase_triggers": ["first_defense"],
+            "transaction_ref": None,
+            "playable": True,
+            "asset_handle": {
+                "node_id": node_id,
+                "status": "ready",
+                "battle_config_ref": "compiled_world_runtime_manifest",
+                "runtime_package_ref": "session_runtime_bundle",
+                "map_runtime_package_ref": bundle["map_runtime_package"].get("package_id"),
+                "fallback_ref": None,
+                "provider_call_required": False,
+                "world_mutation_required": False,
+            },
+            "api_refs": {
+                "briefing": f"/api/sessions/{{session_id}}/nodes/{node_id}/briefing",
+                "battle_config": f"/api/sessions/{{session_id}}/battles/{node_id}/config",
+            },
+        }
+        return {
+            "session_id": session_id,
+            "mode": "compiled_world_runtime",
+            "campaign_router": {
+                "schema_version": "campaign_router.v0.1",
+                "router_mode": "compiled_world_single_node_mvp",
+                "current": step,
+                "next": None,
+                "lookahead": [],
+                "prefetch_window": {"behind": 0, "ahead": 1},
+                "route": [step],
+                "run_progress": {"phase": "first_defense", "chapter": 1, "turn": 1},
+                "scheduler_signal": _scheduler_signal(session_id),
+                "boundary": {
+                    "provider_calls": False,
+                    "world_mutations": False,
+                    "state_owner": "compiled world instance + session state",
+                    "content_owner": "CompiledWorldRuntimeManifest",
+                },
+            },
+        }
     state = _load_campaign_state(session_id)
     steps = _route_steps()
     current_index = _current_route_index(state, steps)

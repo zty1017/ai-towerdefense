@@ -309,6 +309,59 @@ button:disabled {
   align-items: stretch;
 }
 
+.world-choice-strip {
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.world-choice {
+  min-height: 126px;
+  padding: 15px;
+  border: 1px solid rgba(242, 205, 130, 0.22);
+  background: rgba(12, 16, 14, 0.88);
+  color: var(--text);
+  text-align: left;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.world-choice:hover:not(:disabled),
+.world-choice.is-selected {
+  border-color: var(--line-strong);
+  background: rgba(36, 38, 27, 0.96);
+  transform: translateY(-2px);
+}
+
+.world-choice:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.world-choice strong {
+  font-size: 1.08rem;
+}
+
+.world-choice small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.world-choice-status,
+.world-choice-style {
+  color: #dfc47c;
+  font-size: 0.72rem;
+}
+
+.world-choice-style {
+  color: #8fc8b5;
+}
+
 .world-preview {
   min-height: 420px;
   padding: 18px;

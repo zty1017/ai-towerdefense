@@ -49,7 +49,7 @@ def _mode() -> str:
 
 def _proposal_payload(
     *, proposal_id: str, intent_text: str, worldbook_id: str, candidate_kind: str,
-    display_name: str, summary: str,
+    display_name: str, summary: str, world_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     intended = {
         "temporary_trap_sample": "temporary_mod",
@@ -68,12 +68,14 @@ def _proposal_payload(
         "known_tradeoffs": ["需要经过现场试作验证"],
         "player_prompt": intent_text,
         "worldbook_id": worldbook_id,
+        "world_context": world_context or {},
     }
 
 
 def compile_candidate(
     *, proposal_id: str, intent_text: str, worldbook_id: str,
     candidate_kind: str, display_name: str, summary: str,
+    world_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return a validated live candidate, or a compact fallback result."""
     mode = _mode()
@@ -94,6 +96,7 @@ def compile_candidate(
         candidate_kind=candidate_kind,
         display_name=display_name,
         summary=summary,
+        world_context=world_context,
     )
     registry = _load_json(_EFFECT_REGISTRY)
     messages = [

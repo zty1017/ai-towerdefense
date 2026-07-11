@@ -29,6 +29,7 @@ from . import (
     battle_content_service,
     live_asset_compile_service,
     map_runtime_service,
+    world_catalog_service,
 )
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
@@ -172,6 +173,7 @@ def _compiler_metadata_for_proposal(
     intent_text: str,
     display_name: str,
     proposal_summary: str,
+    worldbook_id: str,
 ) -> dict[str, Any]:
     candidate_kind = _candidate_kind_from_intent(intent_text)
     battle_config_ref = battle_content_service.battle_config_ref(node_id)
@@ -202,7 +204,7 @@ def _compiler_metadata_for_proposal(
             "runtime_surfaces": ["battle_toolbar", "battle_delivery"],
         },
         "context_package": {
-            "worldbook_id": "long_night_lanterns",
+            "worldbook_id": worldbook_id,
             "node_id": node_id,
             "battle_config_ref": battle_config_ref,
             "map_runtime_package_ref": map_runtime_package_ref,
@@ -610,14 +612,34 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
     """Create a research proposal row and return its public representation."""
     proposal_id = secrets.token_urlsafe(16)
     fields = _synthesize_proposal_fields(intent_text, node_id)
+    world_bundle = world_catalog_service.session_bundle(session_id)
+    worldbook = as_dict(world_bundle.get("worldbook"))
+    worldbook_id = str(worldbook.get("worldbook_id") or "long_night_lanterns")
+    if worldbook_id != "long_night_lanterns":
+        fields = {
+            "display_name": "现场试作方案",
+            "summary": _sanitize_player_text(f"围绕“{intent_text[:72]}”形成的本局临时装置。"),
+            "risk_note": "试作品的完整代价需要在实战中继续确认。",
+            "player_state_message": "现场试作方案已就绪，等待确认。",
+        }
+    world_context = {
+        "display_name": worldbook.get("display_name"),
+        "summary": worldbook.get("summary"),
+        "tone_and_taboos": worldbook.get("tone_and_taboos"),
+        "resource_mapping": worldbook.get("resource_mapping"),
+        "enemy_mapping": worldbook.get("enemy_mapping"),
+        "asset_naming_rules": worldbook.get("asset_naming_rules"),
+        "visual_rules": worldbook.get("visual_rules"),
+    }
     candidate_kind = _candidate_kind_from_intent(intent_text)
     live_result = live_asset_compile_service.compile_candidate(
         proposal_id=proposal_id,
         intent_text=intent_text,
-        worldbook_id="long_night_lanterns",
+        worldbook_id=worldbook_id,
         candidate_kind=candidate_kind,
         display_name=fields["display_name"],
         summary=fields["summary"],
+        world_context=world_context,
     )
     compiled_candidate = as_dict(live_result.get("candidate"))
     if compiled_candidate:
@@ -634,6 +656,7 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
         intent_text=intent_text,
         display_name=fields["display_name"],
         proposal_summary=fields["summary"],
+        worldbook_id=worldbook_id,
     )
     provenance = as_dict(live_result.get("provenance"))
     compiler_metadata["generation"] = provenance or {

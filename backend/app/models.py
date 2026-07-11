@@ -118,6 +118,7 @@ class WorldInstanceCreateRequest(BaseModel):
     """Optional world-instance selections from the frontend start flow."""
 
     selected_options: dict[str, Any] = Field(default_factory=dict)
+    world_id: str = Field(default="long_night_lanterns", min_length=1, max_length=64)
 
 
 class FrontendMockPayloadResponse(BaseModel):

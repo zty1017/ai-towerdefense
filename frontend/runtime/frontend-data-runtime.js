@@ -283,6 +283,7 @@ export function createFrontendDataRuntime({
       async loadInitialData() {
         await ensureSession();
         const [
+          worldCatalog,
           packResponse,
           openingResponse,
           mapVisualManifest,
@@ -290,6 +291,7 @@ export function createFrontendDataRuntime({
           strategicMapMarkerManifest,
           layeredMapVisualPackage,
         ] = await Promise.all([
+          apiGet("/api/world-catalog", 3600),
           apiGet(sessionApiPath("/frontend-mock-pack"), 7000),
           apiGet(sessionApiPath("/opening"), 3600),
           fetchOptionalJson(
@@ -306,6 +308,7 @@ export function createFrontendDataRuntime({
           ),
         ]);
         Object.assign(state.data, {
+          worldCatalog,
           pack: packResponse.pack,
           mediaManifest: packResponse.media_manifest,
           mediaAtlasManifest: packResponse.media_atlas_manifest,
@@ -318,7 +321,10 @@ export function createFrontendDataRuntime({
           strategicMapMarkerManifest,
           layeredMapVisualPackage,
           opening: openingResponse.opening,
-          worldConfig: DEFAULT_WORLD_CONFIG,
+          worldConfig:
+            ((worldCatalog.worlds || []).find(
+              (item) => item.world_id === state.selectedWorldId,
+            ) || {}).world_config || DEFAULT_WORLD_CONFIG,
         });
         await Promise.all([loadMap(), loadCampaignRoute()]);
         await Promise.all([loadBriefing(), loadBattleConfig()]);
@@ -330,6 +336,8 @@ export function createFrontendDataRuntime({
           runWorldState: response.run_world_state,
           activatedRuntimeBundle:
             response.activated_runtime_bundle || state.data.activatedRuntimeBundle || null,
+          layeredMapVisualPackage:
+            response.layered_map_visual_package || state.data.layeredMapVisualPackage || null,
         });
         return state.data.map;
       },
@@ -498,6 +506,24 @@ export function createFrontendDataRuntime({
               }
             : null;
         state.data = {
+          worldCatalog: {
+            schema_version: "world_catalog.v0.1",
+            default_world_id: "long_night_lanterns",
+            worlds: [
+              {
+                world_id: "long_night_lanterns",
+                display_name: worldConfig.worldbook_display_name || "长夜灯火",
+                tagline: "长夜未尽，第一处危机已经点亮。",
+                visual_style_name: worldConfig.visual_style_display_name,
+                status: "ready",
+                source: "reviewed_mvp_template",
+                entry_node_id: NODE_ID,
+                preview_url: "/assets/layered_maps/gray_lantern_station/composited/gray_lantern_station.layered_map.svg",
+                theme_tags: ["东方古风", "暗夜", "灯火", "驿站"],
+                world_config: worldConfig,
+              },
+            ],
+          },
           pack,
           runtimeKit,
           mediaManifest,

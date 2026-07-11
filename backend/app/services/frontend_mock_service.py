@@ -21,6 +21,7 @@ from . import (
     generation_scheduler_service,
     map_render_plan_service,
     map_runtime_service,
+    world_catalog_service,
 )
 
 
@@ -269,15 +270,54 @@ def _apply_delta_to_state(state: dict[str, Any], delta: dict[str, Any]) -> dict[
     return updated
 
 
-def create_world_instance(session_id: str, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
-    config = _load_json(_WORLD_INSTANCE_CONFIG)
-    state = _load_json(_INITIAL_RUN_STATE)
+def _compiled_world_initial_state(bundle: dict[str, Any]) -> dict[str, Any]:
+    world_map = bundle["map"]
+    worldbook = bundle["worldbook"]
+    return {
+        "schema_version": "run_world_state.v0.1",
+        "worldbook_id": world_map["worldbook_id"],
+        "progress": {"chapter": 1, "turn": 1, "phase": "first_defense"},
+        "map_nodes": [
+            {
+                "node_id": item["stable_internal_id"],
+                "display_name": item["display_name"],
+                "state": item.get("state"),
+                "summary": item.get("summary"),
+            }
+            for item in world_map.get("nodes", [])
+        ],
+        "resources": [
+            {"resource_id": resource_id, "display_name": item.get("display_name"), "quantity": 4}
+            for resource_id, item in worldbook.get("resource_mapping", {}).items()
+        ],
+        "npcs": [
+            {"npc_id": item.get("stable_internal_id"), "display_name": item.get("display_name")}
+            for item in worldbook.get("npc_archetypes", [])
+        ],
+        "flags": {"compiled_world_instance": True},
+        "event_log": [],
+    }
+
+
+def create_world_instance(
+    session_id: str,
+    overrides: dict[str, Any] | None = None,
+    *,
+    world_id: str = "long_night_lanterns",
+) -> dict[str, Any]:
+    bundle = world_catalog_service.load_world_bundle(world_id)
+    config = bundle["world_config"]
+    state = (
+        _load_json(_INITIAL_RUN_STATE)
+        if world_id == "long_night_lanterns"
+        else _compiled_world_initial_state(bundle)
+    )
     selected = _selected_options(config, overrides)
     payload = {
         "worldbook_id": config.get("worldbook_template_id"),
         "config": config,
         "selected_options": selected,
-        "mode": "frontend_mock_fixture",
+        "mode": "reviewed_template" if world_id == "long_night_lanterns" else "compiled_world_runtime",
     }
     ts = now_iso()
     with db_cursor() as cur:
@@ -292,6 +332,8 @@ def create_world_instance(session_id: str, overrides: dict[str, Any] | None = No
         "mode": "frontend_mock_fixture",
         "world_instance": payload,
         "run_world_state": state,
+        "world_bundle": bundle,
+        "world_catalog": world_catalog_service.get_catalog(),
     }
 
 
@@ -316,10 +358,11 @@ def get_runtime_art_kit(session_id: str) -> dict[str, Any]:
 
 
 def get_opening(session_id: str) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
-        "opening": _load_json(_OPENING),
+        "opening": bundle["opening"],
     }
 
 
@@ -334,10 +377,11 @@ def get_animation_seeds(session_id: str) -> dict[str, Any]:
 
 def get_map(session_id: str) -> dict[str, Any]:
     state = _load_campaign_state(session_id)
+    bundle = world_catalog_service.session_bundle(session_id)
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
-        "map": _load_json(_INITIAL_MAP),
+        "map": bundle["map"],
         "run_world_state": state,
         "activated_runtime_bundle": _player_runtime_bundle(session_id, state=state),
     }
@@ -358,6 +402,26 @@ def get_feature_runtime(session_id: str, node_id: str | None = None) -> dict[str
 
 
 def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
+    if bundle["catalog_entry"]["world_id"] != "long_night_lanterns":
+        if node_id != bundle["catalog_entry"]["entry_node_id"]:
+            raise FixtureNotFoundError(node_id)
+        worldbook = bundle["worldbook"]
+        materials = [
+            {"material_id": key, **value}
+            for key, value in worldbook.get("resource_mapping", {}).items()
+        ]
+        npcs = list(worldbook.get("npc_archetypes") or [])
+        return {
+            "session_id": session_id,
+            "mode": "compiled_world_runtime",
+            "node_id": node_id,
+            "briefing": bundle["briefing"],
+            "materials": materials,
+            "npcs": npcs,
+            "suggested_input": bundle["suggested_input"],
+            "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id),
+        }
     if node_id not in _NODE_BRIEFING_OVERRIDES:
         raise FixtureNotFoundError(node_id)
     override = _NODE_BRIEFING_OVERRIDES[node_id]
@@ -432,6 +496,40 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
 
 
 def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
+    if bundle["catalog_entry"]["world_id"] != "long_night_lanterns":
+        if node_id != bundle["catalog_entry"]["entry_node_id"]:
+            raise FixtureNotFoundError(node_id)
+        pack = _load_frontend_pack()
+        map_package = bundle["map_runtime_package"]
+        render_bundle = {
+            "node_id": node_id,
+            "refs": {},
+            "map_style_pack": bundle["map_style_pack"],
+            "procedural_map_render_plan": bundle["map_render_plan"],
+            "semantic_visual_consistency_report": bundle["semantic_visual_consistency_report"],
+        }
+        return {
+            "session_id": session_id,
+            "mode": "compiled_world_runtime",
+            "node_id": node_id,
+            "battle_config": bundle["battle_config"],
+            "map_runtime_package": map_package,
+            "runtime_selection": {
+                "selection_mode": "compiled_world_manifest",
+                "selected_schema_version": map_package.get("schema_version"),
+                "selected_package_id": map_package.get("package_id"),
+                "activation_applied": True,
+                "fallback_reasons": [],
+            },
+            "map_render_plan_bundle": render_bundle,
+            "layered_map_visual_package": bundle["layered_map_visual_package"],
+            "toolbar_assets": _battle_toolbar_assets(pack),
+            "sample_delivery_asset": _asset_for_sample_delivery(pack),
+            "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id),
+            **frontend_media_service.frontend_media_payload(),
+            **frontend_media_service.runtime_art_payload(),
+        }
     try:
         config = battle_content_service.load_battle_config(node_id)
     except battle_content_service.BattleContentNotFoundError as exc:
@@ -493,6 +591,42 @@ def record_battle_result(
     node_id: str,
     result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
+    if bundle["catalog_entry"]["world_id"] != "long_night_lanterns":
+        if node_id != bundle["catalog_entry"]["entry_node_id"]:
+            raise FixtureNotFoundError(node_id)
+        submitted = result if isinstance(result, dict) else {}
+        state = _load_campaign_state(session_id)
+        settlement = {
+            "node_id": node_id,
+            "settlement_mode": "compiled_world_mvp",
+            "result": submitted.get("result", "victory"),
+            "battle_summary": bundle["battle_config"].get("post_battle", {}).get(
+                "on_victory", "节点守住，新的线索开始生长。"
+            ),
+            "sample_performance": "试作品的首轮表现已经写入本局档案。",
+            "npc_feedback": "在场角色会依据实战表现调整后续建议。",
+            "world_delta": {
+                "summary": f"{bundle['briefing']['display_name']}的局势因本场战斗发生变化。"
+            },
+            "world_delta_transaction": None,
+            "fixture_baseline": None,
+            "core_artifact_refs": {},
+            "core_artifacts": None,
+            "run_world_state": state,
+        }
+        ts = now_iso()
+        with db_cursor() as cur:
+            cur.execute(
+                "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
+                (session_id, _dump_payload({"node_id": node_id, "submitted_result": submitted, "settlement": settlement}), ts),
+            )
+        return {
+            "session_id": session_id,
+            "mode": "compiled_world_runtime",
+            "settlement": settlement,
+            "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id, state=state),
+        }
     spec = _NODE_SETTLEMENT_SPECS.get(node_id)
     if spec is None:
         raise FixtureNotFoundError(node_id)
