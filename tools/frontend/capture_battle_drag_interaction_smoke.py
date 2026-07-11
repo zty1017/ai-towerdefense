@@ -199,6 +199,7 @@ def interaction_passed(before: dict[str, Any], after: dict[str, Any], tool: str)
         and deployed
         and default_use_spent
         and after.get("selectedTool") is None
+        and after.get("hoverCell") is None
     )
 
 
@@ -258,6 +259,18 @@ def run_drag_for_viewport(
 
             dispatch_drag(cdp, source, target, before_release=capture_preview)
             time.sleep(0.45)
+            cdp.call(
+                "Input.dispatchMouseEvent",
+                {
+                    "type": "mouseMoved",
+                    "x": float(target.get("client_x", 0)) + 12,
+                    "y": float(target.get("client_y", 0)) + 8,
+                    "button": "none",
+                    "buttons": 0,
+                    "pointerType": "mouse",
+                },
+            )
+            time.sleep(0.12)
             after = as_obj(cdp.eval(js_probe_snapshot(tool), timeout_ms=3000))
             screenshot_path = output_dir / f"battle_drag_interaction_{node_id}_{safe_tool}_{viewport_id}.png"
             screenshot = capture_screenshot(cdp, screenshot_path)

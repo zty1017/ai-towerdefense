@@ -364,6 +364,19 @@ def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) 
     )
     add_check(
         checks,
+        "idle_pointer_cannot_restore_deployment_preview",
+        contains_all(
+            js_section(input_controller, "onBattleCanvasPointerMove", "onBattleCanvasPointerLeave"),
+            [
+                "if (!battle.selectedTool && !battle.draggingTool)",
+                "battle.hoverCell = null",
+                "return",
+            ],
+        ),
+        "ordinary pointer movement must not restore deployment preview after a successful placement.",
+    )
+    add_check(
+        checks,
         "finish_drag_deploys_once_and_clears_state",
         contains_all(
             finish_drag,

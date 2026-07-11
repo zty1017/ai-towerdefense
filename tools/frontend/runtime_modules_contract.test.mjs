@@ -63,6 +63,7 @@ import { createBattleWorldRenderer } from "../../frontend/runtime/battle-world-r
 import {
   finishToolDrag,
   onBattleCanvasClick,
+  onBattleCanvasPointerMove,
 } from "../../frontend/runtime/battle-input-controller.js";
 import { advanceBattleStep } from "../../frontend/runtime/battle-simulation.js";
 
@@ -698,7 +699,8 @@ test("battle orchestrator owns frame timing, HUD throttling, and cancellation", 
   assert.equal(battle.loopActive, true);
   frames.shift()(100);
   frames.shift()(220);
-  assert.deepEqual(observedDt, [0, 160]);
+  frames.shift()(230);
+  assert.deepEqual(observedDt, [0, 160, 20]);
   assert.equal(drawCount, 2);
   assert.equal(domCount, 1);
   orchestrator.stop();
@@ -1509,6 +1511,31 @@ test("successful deployment consumes selection while failed placement keeps it",
   onBattleCanvasClick(context, {});
   assert.equal(battle.selectedTool, "basic");
   assert.deepEqual(battle.hoverCell, { x: 4, y: 5 });
+});
+
+test("battle hover preview only exists while a deployment tool is active", () => {
+  const battle = {
+    selectedTool: null,
+    draggingTool: null,
+    hoverCell: { x: 8, y: 8 },
+  };
+  let cellReads = 0;
+  const context = {
+    getBattle: () => battle,
+    cellFromCanvasEvent: () => {
+      cellReads += 1;
+      return { x: 2, y: 3 };
+    },
+  };
+
+  onBattleCanvasPointerMove(context, {});
+  assert.equal(battle.hoverCell, null);
+  assert.equal(cellReads, 0);
+
+  battle.selectedTool = "basic";
+  onBattleCanvasPointerMove(context, {});
+  assert.deepEqual(battle.hoverCell, { x: 2, y: 3 });
+  assert.equal(cellReads, 1);
 });
 
 test("drag deployment consumes selection only after the action succeeds", () => {

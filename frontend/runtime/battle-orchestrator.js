@@ -45,7 +45,8 @@ export function createBattleOrchestrator({
   drawBattle,
   updateBattleDom,
   maxFrameDeltaMs = 80,
-  domUpdateIntervalMs = 180,
+  renderIntervalMs = 1000 / 30,
+  domUpdateIntervalMs = 320,
 } = {}) {
   if (typeof getBattle !== "function") {
     throw new TypeError("createBattleOrchestrator requires getBattle");
@@ -69,6 +70,7 @@ export function createBattleOrchestrator({
   }
 
   let scheduledFrameId = null;
+  let lastRenderAt = 0;
 
   function updateBattle(dt) {
     return runBattleUpdate({
@@ -100,7 +102,10 @@ export function createBattleOrchestrator({
     const dt = battle.paused || isSimulationHeld() ? 0 : realDt * battle.speed;
     updateBattle(dt);
     if (!battle.loopActive || getBattle() !== battle) return;
-    drawBattle();
+    if (!lastRenderAt || timestamp - lastRenderAt >= renderIntervalMs) {
+      drawBattle();
+      lastRenderAt = timestamp;
+    }
     if (battle.elapsedMs - battle.lastDomAt > domUpdateIntervalMs) {
       updateBattleDom();
       battle.lastDomAt = battle.elapsedMs;
@@ -115,6 +120,7 @@ export function createBattleOrchestrator({
     battle.loopActive = true;
     battle.lastFrameAt = 0;
     battle.lastDomAt = -999;
+    lastRenderAt = 0;
     scheduleNextFrame();
     return true;
   }

@@ -11,6 +11,10 @@ export function onBattleCanvasClick(context, event) {
 export function onBattleCanvasPointerMove(context, event) {
   const battle = context.getBattle();
   if (!battle || battle.dialogueOpen || battle.finishing) return;
+  if (!battle.selectedTool && !battle.draggingTool) {
+    battle.hoverCell = null;
+    return;
+  }
   const { cellFromCanvasEvent } = context;
   battle.hoverCell = cellFromCanvasEvent(event);
 }

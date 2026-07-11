@@ -120,17 +120,25 @@ export function createBattleDomController({
     updateBattleDom();
   }
 
+  function replaceHtmlIfChanged(element, html) {
+    if (element && element.innerHTML !== html) element.innerHTML = html;
+  }
+
+  function replaceTextIfChanged(element, text) {
+    if (element && element.textContent !== text) element.textContent = text;
+  }
+
   function updateBattleDom() {
     const battle = getBattle();
     if (!battle || !battle.dom) return;
     const hud = buildHudViewModel();
-    battle.dom.stats.innerHTML = hud.stats
+    const statsHtml = hud.stats
       .map(
         (item) =>
           `<div class="top-stat"><span>${safeText(item.label)}</span><strong>${safeText(item.value)}</strong></div>`,
       )
       .join("");
-    battle.dom.tasks.innerHTML = `
+    const tasksHtml = `
       <h2 class="panel-title">${safeText(hud.tasksTitle)}</h2>
       <div class="event-list">
         ${hud.taskItems
@@ -141,7 +149,7 @@ export function createBattleDomController({
           .join("")}
       </div>
     `;
-    battle.dom.info.innerHTML = `
+    const infoHtml = `
       <div class="side-avatar">${imageTag(hud.info.avatarUrl, hud.info.avatarAlt)}</div>
       <h2 class="panel-title">${safeText(hud.info.title)}</h2>
       <div class="event-list">
@@ -153,10 +161,13 @@ export function createBattleDomController({
           .join("")}
       </div>
     `;
-    battle.dom.tools.innerHTML = renderToolbar(hud.toolbarTools);
-    battle.dom.toast.textContent = hud.toastText;
-    battle.dom.pause.textContent = hud.pauseText;
-    battle.dom.speed.textContent = hud.speedText;
+    replaceHtmlIfChanged(battle.dom.stats, statsHtml);
+    replaceHtmlIfChanged(battle.dom.tasks, tasksHtml);
+    replaceHtmlIfChanged(battle.dom.info, infoHtml);
+    replaceHtmlIfChanged(battle.dom.tools, renderToolbar(hud.toolbarTools));
+    replaceTextIfChanged(battle.dom.toast, hud.toastText);
+    replaceTextIfChanged(battle.dom.pause, hud.pauseText);
+    replaceTextIfChanged(battle.dom.speed, hud.speedText);
   }
 
   function setupBattle() {

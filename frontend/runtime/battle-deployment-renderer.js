@@ -275,8 +275,7 @@ export function createBattleDeploymentRenderer({
     if (!battle || !battle.metrics) return;
     const metrics = battle.metrics;
     const tool = battle.draggingTool || battle.selectedTool;
-    const activeOverlay = Boolean(tool || battle.hoverCell);
-    if (options.layeredBackdrop && !activeOverlay) return;
+    if (options.layeredBackdrop && !tool) return;
     suggestedSockets().forEach((slot, index) => {
       const cell = slot.position || slot;
       const point = projectCell(cell.x, cell.y);
@@ -285,7 +284,7 @@ export function createBattleDeploymentRenderer({
       drawDeploymentBase(ctx, point, metrics, index, { dragging: Boolean(tool), hovered, valid }, slot);
     });
     const previewCell = battle.hoverCell;
-    if (!previewCell) return;
+    if (!tool || !previewCell) return;
     const point = projectCell(previewCell.x, previewCell.y);
     const valid = canPreviewToolAt(tool, previewCell);
     drawRangePreview(ctx, point, metrics, tool, valid);

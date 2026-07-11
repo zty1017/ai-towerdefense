@@ -101,6 +101,7 @@ def validate_interaction(item: dict[str, Any], tool: str) -> None:
         )
     require("已" in str(after.get("toast") or ""), "after-drag toast should be player-facing deployment feedback")
     require(after.get("selectedTool") is None, "successful drag must consume the selected deployment tool")
+    require(after.get("hoverCell") is None, "ordinary movement after deployment must not restore placement preview")
 
 
 def validate_captured(report: dict[str, Any], expected_tool: str | None) -> None:
