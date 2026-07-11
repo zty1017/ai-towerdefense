@@ -497,6 +497,9 @@ def compile_candidate(
     *, provenance: dict[str, Any], compile_map: bool,
     live_map_visuals: bool = False,
     map_image_profile: str = "agnes_image_flash",
+    map_visual_review_profile: str = "agnes_multimodal_flash",
+    map_visual_max_attempts: int = 2,
+    map_visual_max_workers: int = 3,
     dotenv_path: Path | None = None,
 ) -> dict[str, Any]:
     seed_errors = validate_seed(seed)
@@ -547,6 +550,9 @@ def compile_candidate(
             map_output,
             live_visuals=live_map_visuals,
             image_profile=map_image_profile,
+            visual_review_profile=map_visual_review_profile,
+            visual_max_attempts=map_visual_max_attempts,
+            visual_max_workers=map_visual_max_workers,
             dotenv_path=dotenv_path,
         )
     manifest = {

@@ -20,15 +20,16 @@ Last updated: 2026-07-06
 - 编译证据绑定已修正：每个 `MapCompilePackage` 直接绑定对应节点的 `LayeredMapVisualPackage`，不再让三份编译包共用同一张通用背景。
 - AI 媒体目前属于“已审本地导入”，不是“编译器运行内生成”：现有地形、道路和背景中包含 `local_ai_exploration_*` 资产，但历史生成过程没有完整进入 provider envelope、staging、review、promotion 和 activation 记录。
 - `provider_handoff=true` 会生成拓扑控制图、无语义标记的地形构图参考、由 `MapStylePack` 派生的节点美术简报，以及六类 provider 中立分层请求。提示词遵循 Agnes 官方推荐的“主体、环境、风格、光照、构图、质量”结构；`terrain_base` 使用构图参考走图生图，其他组件走独立白底文生图，避免把道路、塔位和基地烙进底图。
-- `--live-visuals` 已接入地图编译入口，`--live-map-visuals` 已接入世界编译入口。一次任务可自动调用 provider 生成全部六类候选，并写入脱敏 generation report，不再要求开发者逐角色执行命令。候选视觉审查、修复重试与晋升仍需继续接入自动门禁，未审候选不会进入玩家运行包。
+- `--live-visuals` 已接入地图编译入口，`--live-map-visuals` 已接入世界编译入口。一次任务会并发生成六类候选，调用多模态模型执行 role 专用固定检查，并把失败检查映射成受控修复语句后重试。地形、道路、塔位三个运行关键层全部通过时，候选才会进入地图包内的 `reviewed_visual_staging`；道路与塔位还会经过白底清理、孤岛清理、裁切留白和画布归一化，再由 `LayeredMapVisualPackage` 重新组装。未审或重试后仍失败的候选不会进入玩家运行包。
 - 因此 `ai_media_generation_provenance` 当前必须是 `warning`。只有真实 provider 执行记录和产物晋升证据随同一次地图编译运行进入包内，才可以改为 `passed`。
 
 当前准确口径是：
 
 ```text
 结构化地图编译 + 世界书风格编译 + 分层运行包编译：已完成 MVP 闭环
-AI 媒体批量自动生成：已接通可选实时阶段
-AI 媒体自动审查、修复重试并在同一次 DAG 中晋升：尚未完全接通
+AI 媒体批量自动生成、专用视觉审查、受控提示修复重试：已接通可选实时阶段
+地形、道路、塔位 reviewed staging 与地图包重新组装：已接通
+目标、出生点、装饰组件的正式运行时媒体绑定：尚未接通，当前继续使用结构化程序表现
 ```
 
 这不影响玩家使用已发布地图，但演示时不能把历史人工触发、人工挑选的 AI 地图素材描述成实时自动生成。

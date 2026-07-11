@@ -22,6 +22,9 @@ def main() -> int:
     parser.add_argument("--dotenv", type=Path)
     parser.add_argument("--visual-request-timeout", type=int, default=240)
     parser.add_argument("--visual-max-workers", type=int, default=3)
+    parser.add_argument("--visual-review-profile", default="agnes_multimodal_flash")
+    parser.add_argument("--visual-review-timeout", type=int, default=180)
+    parser.add_argument("--visual-max-attempts", type=int, default=2)
     args = parser.parse_args()
     try:
         result = (
@@ -37,6 +40,9 @@ def main() -> int:
                 dotenv_path=args.dotenv,
                 visual_request_timeout=args.visual_request_timeout,
                 visual_max_workers=args.visual_max_workers,
+                visual_review_profile=args.visual_review_profile,
+                visual_review_timeout=args.visual_review_timeout,
+                visual_max_attempts=args.visual_max_attempts,
             )
         )
     except (OSError, ValueError, json.JSONDecodeError, MapCompilationError) as exc:

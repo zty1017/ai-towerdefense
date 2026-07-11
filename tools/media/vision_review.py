@@ -90,11 +90,14 @@ def load_dotenv(path: Path) -> None:
             os.environ[key] = value
 
 
-def get_api_key(profile: VisionProfile) -> str:
-    for env_key in profile.env_keys:
-        key = os.environ.get(env_key)
-        if key and key.strip():
-            return key
+def get_api_key(profile: VisionProfile, credential_index: int = 0) -> str:
+    keys = [
+        key.strip()
+        for env_key in profile.env_keys
+        if (key := os.environ.get(env_key)) and key.strip()
+    ]
+    if keys:
+        return keys[max(0, credential_index) % len(keys)]
     env_names = " or ".join(profile.env_keys)
     raise RuntimeError(
         f"Missing environment variable: {env_names} "
@@ -288,8 +291,9 @@ def call_vision_model(
     *,
     max_tokens: int,
     timeout: int,
+    credential_index: int = 0,
 ) -> str:
-    api_key = get_api_key(profile)
+    api_key = get_api_key(profile, credential_index)
     url = profile.base_url.rstrip("/") + profile.path
     content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
     for idx, item in enumerate(review_items, start=1):
