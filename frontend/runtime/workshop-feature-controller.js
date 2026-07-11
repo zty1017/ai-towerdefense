@@ -22,6 +22,24 @@ const PROPOSAL_DEFAULTS = {
   },
 };
 
+const INTENT_PRESETS = [
+  {
+    id: "slow",
+    label: "迟滞敌群",
+    intent: "我想做一个能在道路转角拖慢影潮的临时陷阱。",
+  },
+  {
+    id: "attack",
+    label: "持续打击",
+    intent: "我想做一座能持续攻击影潮的聚光灯塔。",
+  },
+  {
+    id: "support",
+    label: "应急支援",
+    intent: "我想做一个能在危急时支援整片战场的灯火脉冲。",
+  },
+];
+
 export function createWorkshopFeatureController({
   root,
   getState,
@@ -33,7 +51,6 @@ export function createWorkshopFeatureController({
   safeText,
   imageTag,
   npcPortraitUrl,
-  sampleIconUrl,
   materialName,
   getSurfaceContributions,
 } = {}) {
@@ -47,7 +64,6 @@ export function createWorkshopFeatureController({
     safeText,
     imageTag,
     npcPortraitUrl,
-    sampleIconUrl,
     materialName,
     getSurfaceContributions,
   };
@@ -60,6 +76,7 @@ export function createWorkshopFeatureController({
 
   function currentProposal() {
     const state = getState();
+    if (["idle", "stale", "proposing"].includes(state.research.status)) return null;
     const sample = (getBattleConfig().sample_asset) || {};
     const text = PROPOSAL_DEFAULTS[getCurrentNodeId()] || PROPOSAL_DEFAULTS.gray_lantern_station;
     const compiled = surfaceContributions().find((item) => item.kind === "proposal_hint");
@@ -73,6 +90,16 @@ export function createWorkshopFeatureController({
       tower_blueprint: "在可部署平台建造一座持续攻击的试作装置。",
       temporary_trap_sample: "在敌人路径附近布置一次性迟滞装置。",
       support_item: "在指定区域释放一次应急支援效果。",
+    };
+    const placementConstraints = {
+      tower_blueprint: "样品会在战斗中途送达，只能安装在现有防御平台。",
+      temporary_trap_sample: text.constraint,
+      support_item: "样品会在战斗中途送达，可在战场内选择释放位置。",
+    };
+    const npcReviews = {
+      tower_blueprint: "守灯人建议把射界对准道路转角，同时保留核心照明的供能余量。",
+      temporary_trap_sample: text.npc,
+      support_item: "守灯人建议把它留到防线出现缺口时再使用。",
     };
     const hasProposal = Boolean(
       proposalRecord.proposal_id || compiled || state.research.status === "proposed",
@@ -90,9 +117,13 @@ export function createWorkshopFeatureController({
         sample.effect_summary ||
         "形成一件可在当前战场验证的试作品。",
       material: text.material,
-      constraint: text.constraint,
+      constraint:
+        compiledPayload.constraint ||
+        placementConstraints[proposalKind] ||
+        text.constraint,
       risk: proposalRecord.risk_note || text.risk,
-      npc: text.npc,
+      npc: compiledPayload.npc_review || npcReviews[proposalKind] || text.npc,
+      kind: proposalKind,
     };
   }
 
@@ -111,67 +142,87 @@ export function createWorkshopFeatureController({
     const contributions = surfaceContributions();
     const participants = contributions.filter((item) => item.kind === "participant_notice");
     const materialNotices = contributions.filter((item) => item.kind === "material_notice");
+    const primaryTarget = targets[0] || {};
+    const proposalKinds = {
+      tower_blueprint: "固定防御装置",
+      temporary_trap_sample: "路径试作陷阱",
+      support_item: "战场支援道具",
+    };
+    const proposalBusy = state.research.status === "proposing";
     root.innerHTML = `
       <main class="screen">
         ${screenHeader(`${getCurrentNodeDisplayName()}应急改造间`, briefing.summary || "影潮正在接近。", "现场试作")}
-        <section class="workshop-grid">
-          <aside class="panel">
-            <h2 class="panel-title">当前危机</h2>
-            <div class="brief-list">
-              <div class="brief-item"><strong>敌潮</strong><span>${safeText(threat.enemy_traits || "高速、低耐久。")}</span></div>
-              <div class="brief-item"><strong>方向</strong><span>${safeText(threat.approach_direction || "东南方向。")}</span></div>
-              ${targets.map((target) => `<div class="brief-item"><strong>${safeText(target.display_name)}</strong><span>${safeText(target.summary)}</span></div>`).join("")}
-            </div>
-          </aside>
-          <section class="panel">
-            <h2 class="panel-title">构想</h2>
-            <textarea class="workshop-input" data-field="intent">${safeText(state.intentText)}</textarea>
-            <div class="screen-actions" style="margin-top:12px">
-              <button class="ghost-button" data-action="proposal-refresh" ${state.research.status === "proposing" ? "disabled" : ""}>${state.research.status === "proposing" ? "校准中" : "校准方案"}</button>
-              <button class="primary-button" data-action="confirm-prototype" ${!hasProposal || ["proposing", "confirming"].includes(state.research.status) ? "disabled" : ""}>确认试作</button>
-            </div>
-            ${
-              proposal
-                ? `<article class="proposal-card">
-                    <div class="proposal-art proposal-art--draft" aria-label="尚未制成的试作草案">
-                      <span>草案</span><i></i><i></i><i></i>
+        <section class="workshop-shell">
+          <div class="workshop-context-bar" aria-label="当前危机摘要">
+            <div><span>来敌</span><strong>${safeText(threat.enemy_traits || "高速、低耐久。")}</strong></div>
+            <div><span>守护</span><strong>${safeText(primaryTarget.display_name || "节点核心")}</strong></div>
+            <div><span>试作窗口</span><strong>${safeText((briefing.constraints || {}).research_budget || "只允许一次现场试作。")}</strong></div>
+          </div>
+          <div class="workshop-stage">
+            <section class="panel workshop-bench">
+              <div class="workshop-section-heading">
+                <div>
+                  <div class="eyebrow">构想工作台</div>
+                  <h2>你想让这件装置解决什么？</h2>
+                </div>
+                <span class="workshop-step">01 构想</span>
+              </div>
+              <textarea class="workshop-input" data-field="intent" placeholder="说出目标、攻击方式或希望利用的材料……">${safeText(state.intentText)}</textarea>
+              <div class="workshop-focus-row">
+                <span>快速方向</span>
+                <div class="workshop-focus-options" role="group" aria-label="快速构想方向">
+                  ${INTENT_PRESETS.map((preset) => `<button class="workshop-focus-button" data-action="intent-preset" data-intent="${safeText(preset.intent)}">${safeText(preset.label)}</button>`).join("")}
+                </div>
+              </div>
+              <div class="workshop-bench-info">
+                <div class="workshop-npc-note">
+                  <div class="workshop-npc-avatar">${imageTag(npcPortraitUrl("npc_workshop_mentor"), "在场评审者")}</div>
+                  <div>
+                    <span>${safeText((participants[0] && participants[0].payload.display_name) || "驿站守灯人")}</span>
+                    <p>${safeText((participants[0] && participants[0].payload.summary) || "先说明你要解决的战场问题，我会判断现场条件是否支撑试作。")}</p>
+                  </div>
+                </div>
+                <div class="workshop-material-shelf">
+                  <span>本次可调用材料</span>
+                  <div>
+                    ${materials.map((item) => `<span class="material-token"><b>${safeText(materialName(item.material_id || item.resource_id || item.stable_internal_id))}</b><i>${safeText(item.quantity ?? item.amount ?? item.default_quantity ?? 0)}</i></span>`).join("")}
+                  </div>
+                </div>
+              </div>
+              ${materialNotices.map((item) => `<p class="workshop-material-notice">${safeText(item.payload.summary || `${materialName(item.payload.material_id)}可用数量 ${item.payload.quantity ?? 0}`)}</p>`).join("")}
+              <div class="workshop-primary-action">
+                <button class="${hasProposal ? "ghost-button" : "primary-button"}" data-action="proposal-refresh" ${proposalBusy ? "disabled" : ""}>${proposalBusy ? "正在推演" : hasProposal ? "重新推演方案" : "推演一个方案"}</button>
+              </div>
+            </section>
+            <aside class="panel workshop-review ${hasProposal ? "has-proposal" : "is-empty"}">
+              ${
+                proposal
+                  ? `<div class="workshop-review-heading">
+                      <div><div class="eyebrow">现场评审结果</div><h2>${safeText(proposal.name)}</h2></div>
+                      <span class="workshop-step">02 方案</span>
                     </div>
-                    <div class="proposal-body">
-                      <div class="eyebrow">待确认方案</div>
-                      <h3>${safeText(proposal.name)}</h3>
-                      <p class="panel-text">${safeText(proposal.summary)}</p>
-                      <div class="event-list">
-                        <div class="event-item"><strong>预期作用</strong><span>${safeText(proposal.effect)}</span></div>
-                        <div class="event-item"><strong>建议投入</strong><span>${safeText(proposal.material)}</span></div>
-                        <div class="event-item"><strong>已知约束</strong><span>${safeText(proposal.constraint)}</span></div>
-                        <div class="event-item"><strong>不确定性</strong><span>${safeText(proposal.risk)}</span></div>
-                        <div class="event-item"><strong>NPC 初判</strong><span>${safeText(proposal.npc)}</span></div>
+                    <p class="workshop-proposal-summary">${safeText(proposal.summary)}</p>
+                    <div class="workshop-proposal-kind"><span>建议形态</span><strong>${safeText(proposalKinds[proposal.kind] || "临时试作品")}</strong></div>
+                    <div class="workshop-review-list">
+                      <div><span>预期作用</span><p>${safeText(proposal.effect)}</p></div>
+                      <div><span>建议投入</span><p>${safeText(proposal.material)}</p></div>
+                      <div><span>现场约束</span><p>${safeText(proposal.constraint)}</p></div>
+                      <div class="is-risk"><span>仍不确定</span><p>${safeText(proposal.risk)}</p></div>
+                    </div>
+                    <blockquote>${safeText(proposal.npc)}</blockquote>
+                    <button class="primary-button workshop-confirm" data-action="confirm-prototype" ${["confirming"].includes(state.research.status) ? "disabled" : ""}>${state.research.status === "confirming" ? "正在登记试作" : "投入试作"}</button>`
+                  : `<div class="workshop-review-empty">
+                      <span class="workshop-step">02 方案</span>
+                      <div class="proposal-empty-mark" aria-hidden="true"></div>
+                      <div>
+                        <div class="eyebrow">等待构想</div>
+                        <h2>${proposalBusy ? "在场人员正在推演" : "方案席仍是空的"}</h2>
+                        <p>${proposalBusy ? "他们正在结合来敌、地形和现有材料整理一个可试作方案。" : "先在工作台留下构想。只有形成方案后，这里才会出现预期作用与代价。"}</p>
                       </div>
-                    </div>
-                  </article>`
-                : `<section class="proposal-empty">
-                    <div class="proposal-empty-mark" aria-hidden="true"></div>
-                    <div>
-                      <div class="eyebrow">尚未形成方案</div>
-                      <h3>先让在场人员校准你的构想</h3>
-                      <p>这里会先出现可讨论的试作方案。实物图标和最终性能要等试作完成后才会进入战场。</p>
-                    </div>
-                  </section>`
-            }
-          </section>
-          <aside class="panel">
-            <div class="side-avatar">${imageTag(npcPortraitUrl("npc_workshop_mentor"), "临时工坊老师傅")}</div>
-            <h2 class="panel-title">参与者与条件</h2>
-            <div class="material-grid">
-              ${materials.map((item) => `<div class="meter-row"><span>${safeText(materialName(item.material_id || item.resource_id || item.stable_internal_id))}</span><b>${safeText(item.quantity ?? item.amount ?? item.default_quantity ?? 0)}</b></div>`).join("")}
-            </div>
-            <div class="event-list" style="margin-top:12px">
-              ${participants.map((item) => `<div class="event-item"><strong>${safeText(item.payload.display_name || "在场参与者")}</strong><span>${safeText(item.payload.summary || "参与当前试作。")}</span></div>`).join("")}
-              ${materialNotices.map((item) => `<div class="event-item"><strong>${safeText(item.payload.display_name || materialName(item.payload.material_id))}</strong><span>${safeText(item.payload.summary || `可用数量 ${item.payload.quantity ?? 0}`)}</span></div>`).join("")}
-              <div class="event-item"><strong>设施</strong><span>${safeText((briefing.facility_state || {}).summary || "临时工坊可用。")}</span></div>
-              <div class="event-item"><strong>限制</strong><span>${safeText((briefing.constraints || {}).sample_delivery || "样品在战斗中途送达。")}</span></div>
-            </div>
-          </aside>
+                    </div>`
+              }
+            </aside>
+          </div>
         </section>
       </main>
     `;

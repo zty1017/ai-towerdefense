@@ -808,21 +808,308 @@ button:disabled {
   line-height: 1.45;
 }
 
-.workshop-grid {
+.workshop-shell {
   max-width: 1380px;
   margin: 0 auto;
-  grid-template-columns: minmax(250px, 0.72fr) minmax(420px, 1.1fr) minmax(260px, 0.72fr);
+}
+
+.workshop-context-bar {
+  display: grid;
+  grid-template-columns: 1.35fr 0.75fr 1fr;
+  border-top: 1px solid rgba(242, 205, 130, 0.2);
+  border-bottom: 1px solid rgba(242, 205, 130, 0.2);
+  margin-bottom: 16px;
+}
+
+.workshop-context-bar > div {
+  min-width: 0;
+  padding: 12px 16px;
+  border-right: 1px solid rgba(242, 205, 130, 0.14);
+}
+
+.workshop-context-bar > div:last-child {
+  border-right: 0;
+}
+
+.workshop-context-bar span,
+.workshop-material-shelf > span,
+.workshop-focus-row > span,
+.workshop-review-list span,
+.workshop-proposal-kind span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.workshop-context-bar strong {
+  display: block;
+  overflow: hidden;
+  color: #f3ead5;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workshop-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.78fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.workshop-bench,
+.workshop-review {
+  min-height: 570px;
+}
+
+.workshop-bench {
+  display: flex;
+  flex-direction: column;
+}
+
+.workshop-section-heading,
+.workshop-review-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.workshop-section-heading h2,
+.workshop-review-heading h2,
+.workshop-review-empty h2 {
+  margin: 3px 0 0;
+  color: #fff4d8;
+  font-size: 1.35rem;
+}
+
+.workshop-step {
+  flex: 0 0 auto;
+  color: rgba(242, 205, 130, 0.68);
+  font-size: 0.76rem;
+}
+
+.workshop-focus-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.workshop-focus-row > span {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.workshop-focus-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: min(480px, 100%);
+}
+
+.workshop-focus-button {
+  min-height: 36px;
+  border: 1px solid rgba(116, 201, 189, 0.25);
+  background: rgba(15, 28, 25, 0.5);
+  color: #bfe2d9;
+  cursor: pointer;
+}
+
+.workshop-focus-button:hover,
+.workshop-focus-button:focus-visible {
+  border-color: rgba(116, 201, 189, 0.68);
+  color: #ecfff8;
+}
+
+.workshop-bench-info {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(230px, 0.85fr);
+  gap: 16px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(242, 205, 130, 0.16);
+}
+
+.workshop-npc-note {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.workshop-npc-avatar {
+  flex: 0 0 62px;
+  width: 62px;
+  height: 62px;
+  overflow: hidden;
+  border: 1px solid rgba(242, 205, 130, 0.22);
+  background: rgba(5, 8, 7, 0.56);
+}
+
+.workshop-npc-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.workshop-npc-note span {
+  color: #fff0cb;
+  font-weight: 700;
+}
+
+.workshop-npc-note p,
+.workshop-review-empty p,
+.workshop-review-list p,
+.workshop-proposal-summary {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.workshop-material-shelf > div {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.material-token {
+  display: inline-flex;
+  min-width: 92px;
+  padding: 8px 10px;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(215, 202, 166, 0.16);
+  background: rgba(8, 11, 9, 0.38);
+}
+
+.material-token b {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.material-token i {
+  color: var(--gold-2);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.workshop-material-notice {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.workshop-primary-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.workshop-primary-action button {
+  min-width: 180px;
+}
+
+.workshop-review {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.workshop-review.is-empty {
+  background:
+    linear-gradient(135deg, rgba(240, 189, 88, 0.025), transparent 55%),
+    var(--panel);
+}
+
+.workshop-review-empty {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.workshop-review-empty .workshop-step {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.workshop-review-empty .proposal-empty-mark {
+  margin: 0 auto;
+}
+
+.workshop-proposal-summary {
+  margin-top: 16px;
+  font-size: 0.98rem;
+}
+
+.workshop-proposal-kind {
+  margin-top: 18px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(242, 205, 130, 0.16);
+  border-bottom: 1px solid rgba(242, 205, 130, 0.16);
+}
+
+.workshop-proposal-kind strong {
+  color: #d8eee7;
+}
+
+.workshop-review-list {
+  display: grid;
+  gap: 0;
+}
+
+.workshop-review-list > div {
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(215, 202, 166, 0.12);
+}
+
+.workshop-review-list .is-risk span {
+  color: #d7a58f;
+}
+
+.workshop-review blockquote {
+  margin: 16px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 2px solid rgba(116, 201, 189, 0.42);
+  color: #c8d7d1;
+  line-height: 1.55;
+}
+
+.workshop-confirm {
+  width: 100%;
+  margin-top: auto;
+}
+
+.workshop-review.is-stale::after {
+  content: "构想已改变，请重新推演";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 9, 8, 0.9);
+  color: #fff0cb;
+  text-align: center;
 }
 
 .workshop-input {
   width: 100%;
-  min-height: 132px;
+  min-height: 176px;
   resize: vertical;
   border-radius: var(--radius);
   border: 1px solid rgba(242, 205, 130, 0.28);
   background: rgba(8, 10, 9, 0.78);
   color: var(--text);
-  padding: 14px;
+  margin-top: 18px;
+  padding: 16px;
   outline: none;
   line-height: 1.55;
 }
@@ -1377,9 +1664,21 @@ details.evidence-drawer summary {
   .hero-layout,
   .config-grid,
   .map-layout,
-  .workshop-grid,
   .settlement-grid {
     grid-template-columns: 1fr;
+  }
+
+  .workshop-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .workshop-bench,
+  .workshop-review {
+    min-height: auto;
+  }
+
+  .workshop-review {
+    min-height: 480px;
   }
 
   .profile-visual {
@@ -1446,6 +1745,46 @@ details.evidence-drawer summary {
 
   .screen-header {
     display: grid;
+  }
+
+  .workshop-context-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .workshop-context-bar > div {
+    border-right: 0;
+    border-bottom: 1px solid rgba(242, 205, 130, 0.12);
+  }
+
+  .workshop-context-bar > div:last-child {
+    border-bottom: 0;
+  }
+
+  .workshop-context-bar strong {
+    white-space: normal;
+  }
+
+  .workshop-section-heading h2,
+  .workshop-review-heading h2,
+  .workshop-review-empty h2 {
+    font-size: 1.12rem;
+  }
+
+  .workshop-focus-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workshop-focus-options {
+    width: 100%;
+  }
+
+  .workshop-bench-info {
+    grid-template-columns: 1fr;
+  }
+
+  .workshop-primary-action button {
+    width: 100%;
   }
 
   .hero-layout {

@@ -218,7 +218,7 @@ def run_smoke(
                   const proposal = snapshot && snapshot.contributions.find(
                     (item) => item.kind === 'proposal_hint'
                   );
-                  const title = document.querySelector('.proposal-card h3');
+                  const title = document.querySelector('.workshop-review.has-proposal h2');
                   return proposal && title && title.textContent.trim() === proposal.payload.title
                     ? {{ proposalId: proposal.contribution_id, title: proposal.payload.title }}
                     : null;

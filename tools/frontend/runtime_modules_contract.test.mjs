@@ -1617,10 +1617,14 @@ test("page feature controllers project injected runtime state without browser gl
   assert.match(workshopRoot.innerHTML, /把辉晶做成减速灯塔/);
   assert.match(workshopRoot.innerHTML, /旧信号塔应急改造间/);
   assert.match(workshopRoot.innerHTML, /巡灯使/);
+  assert.match(workshopRoot.innerHTML, /投入试作/);
   state.research = { status: "idle", proposal: null };
   workshopContributions = [];
   workshop.renderWorkshop();
-  assert.match(workshopRoot.innerHTML, /尚未形成方案/);
+  assert.match(workshopRoot.innerHTML, /方案席仍是空的/);
+  assert.match(workshopRoot.innerHTML, /迟滞敌群/);
+  assert.match(workshopRoot.innerHTML, /推演一个方案/);
+  assert.doesNotMatch(workshopRoot.innerHTML, /confirm-prototype/);
   assert.doesNotMatch(workshopRoot.innerHTML, /sample\.png/);
 
   const settlementRoot = {};
