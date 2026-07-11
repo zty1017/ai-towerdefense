@@ -49,7 +49,12 @@ def test_compile_and_resume(tmp_path):
         assert len(request_pack["requests"]) == 6
         by_role = {item["role"]: item for item in request_pack["requests"]}
         assert "old chinese post station" in by_role["terrain_base"]["prompt_brief"]
-        assert "do not paint roads" in by_role["terrain_base"]["prompt_brief"]
+        assert by_role["terrain_base"]["prompt_brief"].startswith(
+            "PRIMARY TASK: create one wide EMPTY TERRAIN CLEAN PLATE"
+        )
+        assert "central seventy percent open" in by_role["terrain_base"]["prompt_brief"]
+        assert "pure-white background" in by_role["road_surface"]["prompt_brief"]
+        assert "one single empty low circular" in by_role["build_slot_platform"]["prompt_brief"]
         assert by_role["road_surface"]["output_contract"]["transparent"] is True
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
         assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True

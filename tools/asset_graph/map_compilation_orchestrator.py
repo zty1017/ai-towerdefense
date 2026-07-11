@@ -185,13 +185,14 @@ def _style_prompt_pack(
     topology = topology_sketches.runtime_summary(runtime)
     prompt_brief = " ".join(
         [
-            "Wide 16:9 hand-painted 2D or pseudo-3D tower-defense battlefield background.",
+            "EMPTY ENVIRONMENT CLEAN PLATE for a polished 2D or pseudo-3D strategy game, elevated three-quarter top-down camera.",
+            "This is an environment asset sheet with no narrative action and no gameplay entities.",
             f"Worldbook: {style.get('worldbook_id') or runtime.get('worldbook_id')}.",
-            f"Scene direction: {', '.join(tags) or 'worldbook-consistent frontier battlefield'}.",
+            f"Scene direction: {', '.join(tags) or 'worldbook-consistent frontier environment'}.",
             f"Lighting: {lighting.get('time_of_day', 'night')}, {lighting.get('contrast_policy', 'high gameplay readability')}.",
             f"Palette anchors: {', '.join(str(value) for value in palette.values())}.",
             "Use Chinese-inspired architecture and material language when the scene tags request it; do not drift into generic western fantasy.",
-            "Keep the battlefield empty and readable so runtime roads, objectives, build slots, enemies, towers, and effects can be layered independently.",
+            "Keep all playable space empty, calm, and readable; interactive content will be composed later by deterministic runtime layers.",
         ]
     )
     return {
@@ -219,6 +220,10 @@ def _style_prompt_pack(
                     "no_generic_western_castle_unless_worldbook_tags_request_it",
                     "no_baked_deployed_towers_or_enemies",
                     "no_baked_combat_effects_or_projectiles",
+                    "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+                    "no_weapons_battle_pose_combat_scene_or_story_action",
+                    "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+                    "no_text_signs_talismans_letters_numbers_or_watermarks",
                     "no_ui_text_arrows_grid_or_route_markings",
                     "no_large_landmark_covering_runtime_combat_space",
                     "no_build_pad_or_objective_positions_invented_outside_reference",
@@ -283,19 +288,19 @@ def _build_visual_handoff(
             "terrain_base",
             "full_frame_backdrop",
             {"width": 1280, "height": 720, "transparent": False},
-            "Render terrain, boundary architecture, vegetation, and distant atmosphere only. Keep route corridors and semantic anchor zones visually quiet, but do not paint roads, build pads, objectives, spawn portals, towers, units, or combat effects.",
+            "PRIMARY TASK: create one wide EMPTY TERRAIN CLEAN PLATE. Paint only natural ground materials, quiet boundary architecture around the outer edges, sparse vegetation, distant mountains, and restrained atmosphere. Keep the central seventy percent open and low-detail. Do not paint roads, trails, paths, platforms, pads, objectives, monuments, portals, lamps, people, creatures, weapons, action, magic, or combat effects anywhere.",
         ),
         (
             "road_surface",
             "tile_or_brush_atlas",
             {"width": 1024, "height": 1024, "transparent": True},
-            "Create seamless road surface and soft edge brush components matching the scene materials. No complete map composition and no directional symbols.",
+            "PRIMARY TASK: create one isolated reusable old Chinese post-road material strip with soft dirt-and-stone edges, seen from an elevated top-down angle, centered on a completely plain pure-white background. Asset cutout source only. No complete map, landscape, buildings, lamps, characters, symbols, arrows, text, glow, shadowy scenery, or decorative frame.",
         ),
         (
             "build_slot_platform",
             "component_atlas",
             {"width": 1024, "height": 1024, "transparent": True},
-            "Create empty terrain-integrated tower placement foundations. They must be flat, readable, unoccupied, and contain no tower, weapon, aura, or selection glow.",
+            "PRIMARY TASK: create one single empty low circular stone-and-timber deployment foundation, elevated top-down view, centered on a completely plain pure-white background. Asset cutout source only. It must be flat, unoccupied, understated, and contain no building, tower, weapon, lantern, character, text, aura, ring, selection glow, scenery, or frame.",
         ),
         (
             "objective_foundation",
@@ -324,7 +329,7 @@ def _build_visual_handoff(
                 "role": role,
                 "status": "ready_for_provider_or_manual_generation",
                 "prompt_profile": "worldbook_style_plus_runtime_topology_v0_1",
-                "prompt_brief": f"{common_prompt} Layer task: {role_prompt}",
+                "prompt_brief": f"{role_prompt} Art direction: {common_prompt}",
                 "negative_constraints": common_negative,
                 "output_contract": {"kind": output_kind, **dimensions},
                 "control_reference": {
