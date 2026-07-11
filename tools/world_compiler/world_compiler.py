@@ -495,6 +495,9 @@ def _style_pack(candidate: dict[str, Any], battle_path: Path, worldbook_path: Pa
 def compile_candidate(
     seed: dict[str, Any], candidate: dict[str, Any], output_root: Path,
     *, provenance: dict[str, Any], compile_map: bool,
+    live_map_visuals: bool = False,
+    map_image_profile: str = "agnes_image_flash",
+    dotenv_path: Path | None = None,
 ) -> dict[str, Any]:
     seed_errors = validate_seed(seed)
     candidate_errors = validate_candidate(candidate)
@@ -539,7 +542,13 @@ def compile_candidate(
     if compile_map:
         node_id = _by_role(candidate, "battle_hotspot")["id"]
         map_output = map_compilation_orchestrator.LAYERED_ROOT / node_id
-        map_report = map_compilation_orchestrator.compile_map(map_input_path, map_output)
+        map_report = map_compilation_orchestrator.compile_map(
+            map_input_path,
+            map_output,
+            live_visuals=live_map_visuals,
+            image_profile=map_image_profile,
+            dotenv_path=dotenv_path,
+        )
     manifest = {
         "schema_version": "compiled_world_runtime_manifest.v0.1",
         "world_id": candidate["world_id"], "display_name": candidate["display_name"],

@@ -25,6 +25,13 @@ def main() -> int:
     parser.add_argument("--allow-provider", action="store_true")
     parser.add_argument("--output-root", type=Path, default=Path("content/generated_worlds"))
     parser.add_argument("--compile-map", action="store_true")
+    parser.add_argument(
+        "--live-map-visuals",
+        action="store_true",
+        help="Generate all layered map visual candidates during map compilation.",
+    )
+    parser.add_argument("--map-image-profile", default="agnes_image_flash")
+    parser.add_argument("--dotenv", type=Path)
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
     try:
@@ -56,6 +63,9 @@ def main() -> int:
         result = compile_candidate(
             seed, candidate, args.output_root.resolve(), provenance=provenance,
             compile_map=args.compile_map,
+            live_map_visuals=args.live_map_visuals,
+            map_image_profile=args.map_image_profile,
+            dotenv_path=args.dotenv.resolve() if args.dotenv else None,
         )
     except (OSError, ValueError, json.JSONDecodeError, WorldCompilationError) as exc:
         print(f"ERROR: {exc}")
@@ -66,4 +76,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

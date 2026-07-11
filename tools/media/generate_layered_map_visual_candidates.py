@@ -8,6 +8,7 @@ import hashlib
 import json
 import sys
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -71,15 +72,48 @@ def selected_requests(pack: dict[str, Any], roles: list[str]) -> list[dict[str, 
     return [item for item in requests if item.get("role") in selected]
 
 
-def output_size(request: dict[str, Any], override: str | None) -> str:
-    if override:
-        image_provider.parse_size(override)
-        return override
+def output_spec(
+    request: dict[str, Any],
+    override: str | None,
+    profile: image_provider.ImageProfile,
+) -> tuple[str, str | None]:
     contract = request.get("output_contract")
     contract = contract if isinstance(contract, dict) else {}
+    ratio = str(contract.get("ratio") or "").strip() or None
+    if override:
+        size = image_provider.validate_size(override)
+        return size, ratio if size.endswith("K") else None
+    if profile.name.startswith("agnes_") and contract.get("size_tier"):
+        size = image_provider.validate_size(str(contract["size_tier"]))
+        return size, image_provider.validate_ratio(ratio or "1:1")
     size = f"{int(contract.get('width') or 1024)}x{int(contract.get('height') or 1024)}"
     image_provider.parse_size(size)
-    return size
+    return size, None
+
+
+def resolve_reference_path(value: str, request_pack_path: Path) -> Path:
+    path = Path(value)
+    candidates = [path] if path.is_absolute() else [ROOT / path, request_pack_path.parent / path]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    raise FileNotFoundError(f"generation reference does not exist: {value}")
+
+
+def generation_inputs(request: dict[str, Any], request_pack_path: Path) -> tuple[str, list[str]]:
+    mode = str(request.get("generation_mode") or "text_to_image")
+    if mode == "text_to_image":
+        return mode, []
+    if mode != "image_to_image":
+        raise ValueError(f"unsupported generation_mode: {mode}")
+    reference = request.get("generation_reference")
+    if not isinstance(reference, dict):
+        raise ValueError("image_to_image request has no generation_reference")
+    reference_path = resolve_reference_path(str(reference.get("local_path") or ""), request_pack_path)
+    expected_sha = str(reference.get("sha256") or "")
+    if not expected_sha or sha256_file(reference_path) != expected_sha:
+        raise ValueError("generation reference sha256 mismatch")
+    return mode, [image_provider.image_data_uri(reference_path)]
 
 
 def run_request(
@@ -92,18 +126,31 @@ def run_request(
     size_override: str | None,
     timeout: int,
     live: bool,
+    credential_index: int = 0,
 ) -> dict[str, Any]:
     role = safe_id(request.get("role"))
     node_id = safe_id(pack.get("node_id"))
     request_id = safe_id(request.get("request_id"))
-    size = output_size(request, size_override)
+    size, ratio = output_spec(request, size_override, profile)
     prompt = str(request.get("prompt_brief") or "").strip()
     if not prompt:
         raise ValueError(f"request has no prompt_brief: {request_id}")
     output_path = output_dir / f"{node_id}.{role}.{profile.name}.candidate.png"
+    generation_mode, input_images = generation_inputs(request, request_pack_path)
+    if input_images and not profile.name.startswith("agnes_"):
+        raise ValueError(f"profile {profile.name!r} does not support this image-to-image contract")
     provider_called = False
     if live:
-        response = image_provider.generate_image(profile, prompt, size=size, timeout=timeout)
+        response = image_provider.generate_image(
+            profile,
+            prompt,
+            size=size,
+            ratio=ratio,
+            input_images=input_images,
+            response_format="url" if profile.name.startswith("agnes_") else None,
+            credential_index=credential_index,
+            timeout=timeout,
+        )
         image_url = image_provider.extract_image_url(response)
         image_provider.download_image(image_url, output_path, timeout=timeout)
         provider_called = True
@@ -120,6 +167,14 @@ def run_request(
         "provider_profile": profile.name if live else None,
         "model": profile.model if live else None,
         "size": size,
+        "ratio": ratio,
+        "generation_mode": generation_mode,
+        "input_image_count": len(input_images),
+        "generation_reference_sha256": (
+            request.get("generation_reference", {}).get("sha256")
+            if isinstance(request.get("generation_reference"), dict)
+            else None
+        ),
         "prompt_sha256": sha256_text(prompt),
         "provider_called_this_run": provider_called,
         "image_exists": output_path.is_file(),
@@ -151,6 +206,56 @@ def run_request(
         "provider_called_this_run": provider_called,
         "image_exists": sidecar["image_exists"],
     }
+
+
+def run_pack(
+    request_pack_path: Path,
+    pack: dict[str, Any],
+    output_dir: Path,
+    profile: image_provider.ImageProfile,
+    *,
+    roles: list[str] | None = None,
+    size_override: str | None = None,
+    timeout: int = 180,
+    live: bool = False,
+    max_workers: int = 3,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    requests = selected_requests(pack, roles or [])
+    results_by_index: dict[int, dict[str, Any]] = {}
+    failures_by_index: dict[int, dict[str, Any]] = {}
+
+    def execute(index: int, request: dict[str, Any]) -> dict[str, Any]:
+        return run_request(
+            request_pack_path,
+            pack,
+            request,
+            output_dir,
+            profile,
+            size_override=size_override,
+            timeout=timeout,
+            live=live,
+            credential_index=index,
+        )
+
+    with ThreadPoolExecutor(max_workers=max(1, min(max_workers, len(requests) or 1))) as executor:
+        future_map = {
+            executor.submit(execute, index, request): (index, request)
+            for index, request in enumerate(requests)
+        }
+        for future in as_completed(future_map):
+            index, request = future_map[future]
+            try:
+                results_by_index[index] = future.result()
+            except Exception as exc:  # pragma: no cover - live provider failure path.
+                failures_by_index[index] = {
+                    "request_id": request.get("request_id"),
+                    "role": request.get("role"),
+                    "error": str(exc)[:500],
+                }
+    return (
+        [results_by_index[index] for index in sorted(results_by_index)],
+        [failures_by_index[index] for index in sorted(failures_by_index)],
+    )
 
 
 def build_report(
@@ -206,6 +311,7 @@ def main() -> int:
     parser.add_argument("--dotenv", type=Path, default=ROOT / ".env")
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--continue-on-error", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=3)
     args = parser.parse_args()
 
     pack = load_json(args.request_pack)
@@ -215,32 +321,17 @@ def main() -> int:
     if args.live:
         image_provider.load_dotenv(args.dotenv)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    results: list[dict[str, Any]] = []
-    failures: list[dict[str, Any]] = []
-    for request in selected_requests(pack, args.role):
-        try:
-            results.append(
-                run_request(
-                    args.request_pack,
-                    pack,
-                    request,
-                    args.output_dir,
-                    profile,
-                    size_override=args.size,
-                    timeout=args.request_timeout,
-                    live=args.live,
-                )
-            )
-        except Exception as exc:  # pragma: no cover - live provider failure path.
-            failures.append(
-                {
-                    "request_id": request.get("request_id"),
-                    "role": request.get("role"),
-                    "error": str(exc)[:500],
-                }
-            )
-            if not args.continue_on_error:
-                break
+    results, failures = run_pack(
+        args.request_pack,
+        pack,
+        args.output_dir,
+        profile,
+        roles=args.role,
+        size_override=args.size,
+        timeout=args.request_timeout,
+        live=args.live,
+        max_workers=args.max_workers,
+    )
     report = build_report(
         request_pack_path=args.request_pack,
         output_dir=args.output_dir,

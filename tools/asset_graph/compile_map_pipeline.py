@@ -17,6 +17,11 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--live-visuals", action="store_true")
+    parser.add_argument("--image-profile", default="agnes_image_flash")
+    parser.add_argument("--dotenv", type=Path)
+    parser.add_argument("--visual-request-timeout", type=int, default=240)
+    parser.add_argument("--visual-max-workers", type=int, default=3)
     args = parser.parse_args()
     try:
         result = (
@@ -27,6 +32,11 @@ def main() -> int:
                 args.output_dir.resolve(),
                 resume=args.resume,
                 force=args.force,
+                live_visuals=args.live_visuals,
+                image_profile=args.image_profile,
+                dotenv_path=args.dotenv,
+                visual_request_timeout=args.visual_request_timeout,
+                visual_max_workers=args.visual_max_workers,
             )
         )
     except (OSError, ValueError, json.JSONDecodeError, MapCompilationError) as exc:
@@ -38,4 +48,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
