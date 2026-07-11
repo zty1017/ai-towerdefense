@@ -368,7 +368,7 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
     effects: list[dict[str, Any]] = []
     for index, raw in enumerate(_json_list(gameplay.get("effect_blocks"))):
         raw = _json_object(raw)
-        kind = str(raw.get("kind") or raw.get("effect_type") or "")
+        kind = str(raw.get("kind") or raw.get("effect_type") or raw.get("type") or "")
         if kind in {"area_damage", "damage"}:
             effects.append({
                 "effect_id": _safe_id(raw.get("effect_id"), f"compiled_damage_{index}"),
@@ -394,7 +394,8 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
         raise ValueError("compiled gameplay has no supported effect block")
     fallback = _fallback_behavior(asset_kind)
     fallback["effect_blocks"] = effects
-    fallback["cost"]["amount"] = _clamp(stats.get("cost"), fallback["cost"]["amount"], 0, 999)
+    cost = stats.get("cost", stats.get("build_cost", stats.get("deploy_cost")))
+    fallback["cost"]["amount"] = _clamp(cost, fallback["cost"]["amount"], 0, 999)
     fallback["cooldown"]["milliseconds"] = int(
         _clamp(stats.get("cooldown_ms"), fallback["cooldown"]["milliseconds"], 0, 120000)
     )
@@ -845,8 +846,10 @@ def activate_research_job(session_id: str, job_id: str) -> dict[str, Any]:
         blocked.append("research job is not completed")
 
     metadata = _job_metadata(row)
+    generation = _json_object(metadata.get("generation"))
+    provider_backed = generation.get("provider_call_performed") is True
     trusted, trusted_evidence, trusted_errors = _trusted_workflow_gate(row, job_root)
-    if trusted:
+    if trusted and not provider_backed:
         promotion_mode = "trusted_deterministic_workflow"
         promotion_ok = True
         promotion_evidence = trusted_evidence
@@ -858,6 +861,13 @@ def activate_research_job(session_id: str, job_id: str) -> dict[str, Any]:
         if not promotion_ok:
             blocked.extend(trusted_errors + provider_errors)
 
+    runtime_refs = _json_object(metadata.get("runtime_refs"))
+    reviewed_fallback_allowed = (
+        provider_backed
+        and promotion_ok
+        and runtime_refs.get("reviewed_media_fallback_allowed") is True
+    )
+
     return apply_runtime_package(
         session_id,
         source_kind="research_job",
@@ -868,8 +878,8 @@ def activate_research_job(session_id: str, job_id: str) -> dict[str, Any]:
         promotion_mode=promotion_mode,
         promotion_evidence_id=promotion_evidence,
         promotion_ok=promotion_ok,
-        allow_reviewed_fallback=trusted,
-        allow_session_rebind=trusted,
+        allow_reviewed_fallback=trusted or reviewed_fallback_allowed,
+        allow_session_rebind=trusted and not provider_backed,
         preflight_blocked_reasons=blocked,
     )
 
