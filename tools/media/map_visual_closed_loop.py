@@ -391,6 +391,11 @@ def run_closed_loop(
         "promotions": promotions,
         "reviewed_backdrop_source_dir": str((reviewed_dir / "backdrops").resolve()) if critical_ready else None,
         "reviewed_texture_source_dir": str((reviewed_dir / "textures").resolve()) if critical_ready else None,
+        "reviewed_component_source_dir": (
+            str((reviewed_dir / "components").resolve())
+            if critical_ready and (reviewed_dir / "components").is_dir()
+            else None
+        ),
         "policy": {
             "runtime_semantics_source": "MapRuntimePackage",
             "image_to_semantic_inference": False,

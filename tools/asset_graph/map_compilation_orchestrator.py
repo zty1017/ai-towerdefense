@@ -658,9 +658,12 @@ def compile_map(
     started = time.monotonic()
     texture_dir = _resolve(str(visual_generation["reviewed_texture_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_texture_source_dir") else None
     backdrop_dir = _resolve(str(visual_generation["reviewed_backdrop_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_backdrop_source_dir") else None
+    component_dir = _resolve(str(visual_generation["reviewed_component_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_component_source_dir") else None
     if visual_generation_report and visual_generation_report.get("runtime_critical_roles_ready"):
         texture_dir = Path(str(visual_generation_report["reviewed_texture_source_dir"]))
         backdrop_dir = Path(str(visual_generation_report["reviewed_backdrop_source_dir"]))
+        reviewed_component_dir = visual_generation_report.get("reviewed_component_source_dir")
+        component_dir = Path(str(reviewed_component_dir)) if reviewed_component_dir else None
     layered = layered_builder.build_package(
         runtime,
         style,
@@ -672,6 +675,7 @@ def compile_map(
         created_at=created_at,
         texture_source_dir=texture_dir,
         backdrop_source_dir=backdrop_dir,
+        component_source_dir=component_dir,
     )
     layered_errors = layered_validator.validate_manifest(
         layered, SCHEMAS / "layered_map_visual_package.v0.1.schema.json"

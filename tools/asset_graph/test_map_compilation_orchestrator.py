@@ -93,8 +93,10 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
         calls.append((len(pack["requests"]), kwargs["max_workers"]))
         backdrops = reviewed_dir / "backdrops"
         textures = reviewed_dir / "textures"
+        components = reviewed_dir / "components"
         backdrops.mkdir(parents=True, exist_ok=True)
         textures.mkdir(parents=True, exist_ok=True)
+        components.mkdir(parents=True, exist_ok=True)
         shutil.copy2(
             ROOT / "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
             backdrops / "map_orchestrator_live_test_node.reviewed_painted_backdrop.png",
@@ -107,6 +109,11 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
             ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
             textures / "slot_tile.png",
         )
+        for role in ("objective_foundation", "spawn_marker", "non_blocking_decoration"):
+            shutil.copy2(
+                ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+                components / f"{role}.png",
+            )
         output_dir.mkdir(parents=True, exist_ok=True)
         report_path = output_dir / "map_visual_closed_loop_report.v0.1.json"
         report = {
@@ -127,6 +134,7 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
             "promotions": [],
             "reviewed_backdrop_source_dir": str(backdrops),
             "reviewed_texture_source_dir": str(textures),
+            "reviewed_component_source_dir": str(components),
             "policy": {
                 "runtime_semantics_source": "MapRuntimePackage",
                 "image_to_semantic_inference": False,
@@ -150,5 +158,12 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
         assert report["provider_execution"]["candidate_generation_status"] == "runtime_visuals_ready"
         assert report["provider_execution"]["reviewed_local_media_imported"] is True
         assert report["provider_execution"]["automatic_reviewed_staging_ready"] is True
+        package = orchestrator._load(output / "layered_map_visual_package.v0.1.json")
+        media_roles = {item["role"] for item in package["media_assets"]}
+        assert {"objective_foundation", "spawn_marker", "non_blocking_decoration"}.issubset(media_roles)
+        composite = (output / "composited/map_orchestrator_live_test_node.layered_map.svg").read_text()
+        assert 'data-objective-part="reviewed-component"' in composite
+        assert 'data-spawn-part="reviewed-component"' in composite
+        assert 'data-decoration="reviewed-component"' in composite
     finally:
         shutil.rmtree(output, ignore_errors=True)

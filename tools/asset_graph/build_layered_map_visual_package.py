@@ -90,6 +90,11 @@ TEXTURE_ROLES = (
     "light_overlay_tile",
 )
 PAINTED_BACKDROP_ROLE = "reviewed_painted_backdrop"
+COMPONENT_MEDIA_ROLES = (
+    "objective_foundation",
+    "spawn_marker",
+    "non_blocking_decoration",
+)
 
 
 def as_list(value: Any) -> list[Any]:
@@ -409,6 +414,13 @@ def source_backdrop_path(backdrop_source_dir: Path | None, node_id: str) -> Path
     return None
 
 
+def source_component_path(component_source_dir: Path | None, role: str) -> Path | None:
+    if not component_source_dir:
+        return None
+    path = component_source_dir / f"{role}.png"
+    return path if path.is_file() else None
+
+
 def reviewed_source_kind(path: Path, media_type: str) -> str:
     if "reviewed_visual_staging" in path.parts:
         return f"compiled_reviewed_{media_type}"
@@ -616,6 +628,38 @@ def build_backdrop_asset(
             "usage": "presentation_backdrop_only",
         }
     ]
+
+
+def build_component_assets(
+    node_id: str,
+    output_dir: Path,
+    component_source_dir: Path | None = None,
+) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    refs: dict[str, str] = {}
+    assets: list[dict[str, Any]] = []
+    for role in COMPONENT_MEDIA_ROLES:
+        source_path = source_component_path(component_source_dir, role)
+        if not source_path:
+            continue
+        output_path = output_dir / "components" / f"{node_id}.{role}.png"
+        fit_resize_png(source_path, output_path, 512, 512)
+        refs[role] = png_data_uri(output_path)
+        assets.append(
+            {
+                "asset_id": f"{node_id}_{role}",
+                "role": role,
+                "media_kind": "component_sprite_png",
+                "source_kind": "compiled_reviewed_component",
+                "source_local_path": rel(source_path),
+                "url": public_url(output_path),
+                "local_path": rel(output_path),
+                "width": 512,
+                "height": 512,
+                "sha256": sha256_file(output_path),
+                "usage": "presentation_component_only",
+            }
+        )
+    return refs, assets
 
 
 def raw_project(x: float, y: float, tile_w: float, tile_h: float) -> tuple[float, float]:
@@ -858,7 +902,34 @@ def texture_pattern_defs(texture_refs: dict[str, str] | None) -> str:
     return "\n".join(parts)
 
 
-def svg_defs(style: dict[str, str], texture_refs: dict[str, str] | None = None) -> str:
+def component_symbol_defs(component_refs: dict[str, str] | None) -> str:
+    if not component_refs:
+        return ""
+    symbols = {
+        "objective_foundation": "componentObjectiveFoundation",
+        "spawn_marker": "componentSpawnMarker",
+        "non_blocking_decoration": "componentNonBlockingDecoration",
+    }
+    parts: list[str] = []
+    for role, symbol_id in symbols.items():
+        href = component_refs.get(role)
+        if not href:
+            continue
+        parts.extend(
+            [
+                f'    <symbol id="{symbol_id}" viewBox="0 0 512 512" overflow="visible">',
+                f'      <image href="{svg_escape(href)}" x="0" y="0" width="512" height="512"/>',
+                "    </symbol>",
+            ]
+        )
+    return "\n".join(parts)
+
+
+def svg_defs(
+    style: dict[str, str],
+    texture_refs: dict[str, str] | None = None,
+    component_refs: dict[str, str] | None = None,
+) -> str:
     terrain_dark = mix_hex(style["terrain_base"], "#030706", 0.42)
     terrain_mid = mix_hex(style["terrain_base"], style["terrain_detail"], 0.48)
     road_shadow = mix_hex(style["road_base"], "#090604", 0.46)
@@ -884,6 +955,7 @@ def svg_defs(style: dict[str, str], texture_refs: dict[str, str] | None = None) 
       <stop offset="100%" stop-color="{style["build_slot"]}" stop-opacity="0"/>
     </radialGradient>
 {texture_pattern_defs(texture_refs)}
+{component_symbol_defs(component_refs)}
     <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000000" flood-opacity="0.30"/>
     </filter>
@@ -903,6 +975,7 @@ def svg_document(
     *,
     title: str,
     texture_refs: dict[str, str] | None = None,
+    component_refs: dict[str, str] | None = None,
 ) -> str:
     body = "\n".join(groups)
     return "\n".join(
@@ -913,7 +986,7 @@ def svg_document(
                 f'height="{CANVAS_HEIGHT}" viewBox="0 0 {CANVAS_WIDTH} {CANVAS_HEIGHT}" '
                 f'role="img" aria-label="{svg_escape(title)}">'
             ),
-            svg_defs(style, texture_refs),
+            svg_defs(style, texture_refs, component_refs),
             body,
             "</svg>",
             "",
@@ -1420,6 +1493,7 @@ def objectives_layer(
     runtime_package: dict[str, Any],
     projection: dict[str, float],
     style: dict[str, str],
+    component_ref: str | None = None,
 ) -> str:
     lines = ['  <g id="objectives" data-layer-role="objectives">']
     for index, target in enumerate(objectives(runtime_package)):
@@ -1437,6 +1511,16 @@ def objectives_layer(
         roof_h = projection["base_tile_h"] * 0.28
         post_gap = base_rx * 0.34
         plinth_fill = mix_hex(style["road_edge"], style["terrain_base"], 0.60)
+        if component_ref:
+            image_size = projection["base_tile_w"] * (1.42 if is_core else 0.96)
+            image_bottom = y + base_ry * 0.72
+            lines.extend(
+                [
+                    f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.18:.1f}" rx="{base_rx * 1.06:.1f}" ry="{base_ry * 0.70:.1f}" fill="#000000" opacity="0.30" data-target="{target_id}" data-objective-part="shadow"/>',
+                    f'    <use href="#componentObjectiveFoundation" x="{x - image_size / 2:.1f}" y="{image_bottom - image_size:.1f}" width="{image_size:.1f}" height="{image_size:.1f}" data-target="{target_id}" data-objective-part="reviewed-component" data-visual-source="compiled-reviewed-component"/>',
+                ]
+            )
+            continue
         lines.extend(
             [
                 f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.18:.1f}" rx="{base_rx * 1.06:.1f}" ry="{base_ry * 0.70:.1f}" fill="#000000" opacity="0.30" data-target="{target_id}" data-objective-part="shadow"/>',
@@ -1474,6 +1558,7 @@ def spawn_layer(
     runtime_package: dict[str, Any],
     projection: dict[str, float],
     style: dict[str, str],
+    component_ref: str | None = None,
 ) -> str:
     lines = ['  <g id="spawn" data-layer-role="spawn">']
     for index, spawn in enumerate(as_list(runtime_package.get("spawn_points"))):
@@ -1483,6 +1568,16 @@ def spawn_layer(
         spawn_id = svg_escape(spawn.get("spawn_id") or f"spawn_{index + 1}")
         gate_w = projection["base_tile_w"] * 0.58
         gate_h = projection["base_tile_h"] * 0.70
+        if component_ref:
+            image_size = projection["base_tile_w"] * 1.20
+            image_bottom = y + projection["base_tile_h"] * 0.30
+            lines.extend(
+                [
+                    f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.20:.1f}" rx="{gate_w * 0.94:.1f}" ry="{projection["base_tile_h"] * 0.28:.1f}" fill="#000000" opacity="0.34" data-spawn="{spawn_id}" data-spawn-part="shadow"/>',
+                    f'    <use href="#componentSpawnMarker" x="{x - image_size / 2:.1f}" y="{image_bottom - image_size:.1f}" width="{image_size:.1f}" height="{image_size:.1f}" data-spawn="{spawn_id}" data-spawn-part="reviewed-component" data-visual-source="compiled-reviewed-component"/>',
+                ]
+            )
+            continue
         lines.extend(
             [
                 f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.20:.1f}" rx="{gate_w * 0.94:.1f}" ry="{projection["base_tile_h"] * 0.28:.1f}" fill="#000000" opacity="0.34" data-spawn="{spawn_id}" data-spawn-part="shadow"/>',
@@ -1580,6 +1675,7 @@ def non_blocking_decorations_layer(
     projection: dict[str, float],
     style: dict[str, str],
     rng: random.Random,
+    component_ref: str | None = None,
 ) -> str:
     lines = ['  <g id="non_blocking_decorations" data-layer-role="non_blocking_decorations">']
     reserved = reserved_cells(runtime_package)
@@ -1588,6 +1684,27 @@ def non_blocking_decorations_layer(
     height_cells = int(projection["height_cells"])
     placed = 0
     attempts = 0
+    if component_ref:
+        while placed < 18 and attempts < 180:
+            attempts += 1
+            cell_x = rng.randrange(0, width_cells)
+            cell_y = rng.randrange(0, height_cells)
+            if (cell_x, cell_y) in reserved:
+                continue
+            x, y = project_cell(
+                {"x": cell_x + rng.uniform(-0.32, 0.32), "y": cell_y + rng.uniform(-0.32, 0.32)},
+                projection,
+            )
+            if x < 54 or x > CANVAS_WIDTH - 54 or y < 54 or y > CANVAS_HEIGHT - 34:
+                continue
+            size = rng.uniform(0.42, 0.72) * projection["base_tile_w"]
+            angle = rng.uniform(-12, 12)
+            lines.append(
+                f'    <use href="#componentNonBlockingDecoration" x="{x - size / 2:.1f}" y="{y - size * 0.82:.1f}" width="{size:.1f}" height="{size:.1f}" opacity="{rng.uniform(0.58, 0.82):.3f}" transform="rotate({angle:.1f} {x:.1f} {y:.1f})" data-decoration="reviewed-component" data-visual-source="compiled-reviewed-component"/>'
+            )
+            placed += 1
+        lines.append("  </g>")
+        return "\n".join(lines)
     while placed < 56 and attempts < 280:
         attempts += 1
         cell_x = rng.randrange(0, width_cells)
@@ -1778,6 +1895,7 @@ def build_package(
     created_at: str,
     texture_source_dir: Path | None = None,
     backdrop_source_dir: Path | None = None,
+    component_source_dir: Path | None = None,
 ) -> dict[str, Any]:
     node_id = str(runtime_package.get("node_id") or style_pack.get("node_id") or "map")
     projection = build_projection(runtime_package)
@@ -1796,6 +1914,12 @@ def build_package(
         backdrop_source_dir=backdrop_source_dir,
     )
     media_assets.extend(backdrop_assets)
+    component_refs, component_assets = build_component_assets(
+        node_id,
+        output_dir,
+        component_source_dir=component_source_dir,
+    )
+    media_assets.extend(component_assets)
     has_backdrop = bool(backdrop_ref)
 
     terrain = terrain_layer(runtime_package, projection, style, rng, backdrop_ref=backdrop_ref)
@@ -1804,10 +1928,20 @@ def build_package(
     road_edge = road_edge_layer(runtime_package, render_plan, projection, style, rng)
     road_surface = road_surface_layer(runtime_package, render_plan, projection, style, rng)
     slots = build_slots_layer(runtime_package, render_plan, projection, style)
-    objectives_group = objectives_layer(runtime_package, projection, style)
-    spawn_group = spawn_layer(runtime_package, projection, style)
+    objectives_group = objectives_layer(
+        runtime_package, projection, style, component_refs.get("objective_foundation")
+    )
+    spawn_group = spawn_layer(
+        runtime_package, projection, style, component_refs.get("spawn_marker")
+    )
     semantic_props = semantic_props_layer(runtime_package, projection, style)
-    decorations = non_blocking_decorations_layer(runtime_package, projection, style, rng)
+    decorations = non_blocking_decorations_layer(
+        runtime_package,
+        projection,
+        style,
+        rng,
+        component_refs.get("non_blocking_decoration"),
+    )
     lighting = lighting_layer(runtime_package, projection, style, semantic_glows=not has_backdrop)
     fog_weather = fog_weather_layer(runtime_package, projection, style, rng)
     color_grade = color_grade_layer(style)
@@ -1820,6 +1954,11 @@ def build_package(
             composite_opacity(slots, 0.88),
             composite_opacity(objectives_group, 0.94),
             composite_opacity(spawn_group, 0.86),
+            *(
+                [composite_opacity(decorations, 0.82)]
+                if component_refs.get("non_blocking_decoration")
+                else []
+            ),
             composite_opacity(lighting, 0.74),
             composite_opacity(fog_weather, 0.56),
             color_grade,
@@ -1863,7 +2002,13 @@ def build_package(
         path = layers_dir / f"{node_id}.{role}.svg"
         write_text(
             path,
-            svg_document([group], style, title=f"{node_id} {role}", texture_refs=texture_refs),
+            svg_document(
+                [group],
+                style,
+                title=f"{node_id} {role}",
+                texture_refs=texture_refs,
+                component_refs=component_refs,
+            ),
         )
         non_default_roles_with_backdrop = {
             "terrain_detail",
@@ -1881,6 +2026,7 @@ def build_package(
             style,
             title=f"{node_id} layered map",
             texture_refs=texture_refs,
+            component_refs=component_refs,
         ),
     )
     layer_records.append(layer_record(composite_path, "composited", 100, "derived_composite"))
@@ -2005,6 +2151,15 @@ def build_package(
                         else "No painted backdrop source was supplied for this package."
                     ),
                 },
+                {
+                    "gate_id": "reviewed_components_bound_to_runtime_anchors",
+                    "status": "passed" if component_refs else "warning",
+                    "summary": (
+                        "Reviewed objective, spawn, and decoration components are local, checksummed, and rendered only at structured runtime or allowed decoration anchors."
+                        if component_refs
+                        else "No reviewed component media was supplied; structured procedural components remain active."
+                    ),
+                },
             ],
         },
     }
@@ -2035,9 +2190,15 @@ def main() -> int:
         default="",
         help="Optional local exploration backdrop directory containing node-specific reviewed painted PNGs.",
     )
+    parser.add_argument(
+        "--component-source-dir",
+        default="",
+        help="Optional reviewed component directory containing objective, spawn, and decoration PNGs.",
+    )
     args = parser.parse_args()
     texture_source_dir = Path(args.texture_source_dir) if args.texture_source_dir else None
     backdrop_source_dir = Path(args.backdrop_source_dir) if args.backdrop_source_dir else None
+    component_source_dir = Path(args.component_source_dir) if args.component_source_dir else None
 
     if args.all_mvp:
         built: list[dict[str, Any]] = []
@@ -2060,6 +2221,7 @@ def main() -> int:
                 created_at=args.created_at,
                 texture_source_dir=texture_source_dir,
                 backdrop_source_dir=backdrop_source_dir,
+                component_source_dir=component_source_dir,
             )
             built.append(package)
             print(f"OK: wrote {output_dir / 'layered_map_visual_package.v0.1.json'}")
@@ -2088,6 +2250,7 @@ def main() -> int:
         created_at=args.created_at,
         texture_source_dir=texture_source_dir,
         backdrop_source_dir=backdrop_source_dir,
+        component_source_dir=component_source_dir,
     )
     print(f"OK: wrote {output_dir / 'layered_map_visual_package.v0.1.json'}")
     print(f"- package_id: {package.get('package_id')}")

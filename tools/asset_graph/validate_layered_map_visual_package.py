@@ -70,7 +70,17 @@ REQUIRED_MEDIA_ROLES = {
     "fog_overlay_tile",
     "light_overlay_tile",
 }
-OPTIONAL_MEDIA_ROLES = {"reviewed_painted_backdrop"}
+OPTIONAL_MEDIA_ROLES = {
+    "reviewed_painted_backdrop",
+    "objective_foundation",
+    "spawn_marker",
+    "non_blocking_decoration",
+}
+COMPONENT_MEDIA_ROLES = {
+    "objective_foundation",
+    "spawn_marker",
+    "non_blocking_decoration",
+}
 SUPPORTED_MEDIA_ROLES = REQUIRED_MEDIA_ROLES | OPTIONAL_MEDIA_ROLES
 
 
@@ -197,13 +207,16 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             expected_media_kind = "map_backdrop_png"
         elif role == "road_detail_atlas":
             expected_media_kind = "texture_atlas_png"
+        elif role in COMPONENT_MEDIA_ROLES:
+            expected_media_kind = "component_sprite_png"
         else:
             expected_media_kind = "texture_tile_png"
-        expected_usage = (
-            "presentation_backdrop_only"
-            if role == "reviewed_painted_backdrop"
-            else "presentation_texture_only"
-        )
+        if role == "reviewed_painted_backdrop":
+            expected_usage = "presentation_backdrop_only"
+        elif role in COMPONENT_MEDIA_ROLES:
+            expected_usage = "presentation_component_only"
+        else:
+            expected_usage = "presentation_texture_only"
         if item.get("media_kind") != expected_media_kind:
             errors.append(f"media_assets[{index}].media_kind must be {expected_media_kind}")
         if item.get("usage") != expected_usage:
@@ -217,6 +230,7 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             "local_ai_exploration_backdrop",
             "compiled_reviewed_texture",
             "compiled_reviewed_backdrop",
+            "compiled_reviewed_component",
         }:
             errors.append(f"media_assets[{index}].source_kind is not supported: {source_kind}")
         source_local_path = item.get("source_local_path")
@@ -229,7 +243,11 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
                 )
             elif not (ROOT / source_local_path).exists():
                 errors.append(f"media_assets[{index}].source_local_path does not exist: {source_local_path}")
-        if source_kind in {"compiled_reviewed_texture", "compiled_reviewed_backdrop"}:
+        if source_kind in {
+            "compiled_reviewed_texture",
+            "compiled_reviewed_backdrop",
+            "compiled_reviewed_component",
+        }:
             is_reviewed_staging = (
                 isinstance(source_local_path, str)
                 and source_local_path.startswith("game_data/media/layered_maps/")

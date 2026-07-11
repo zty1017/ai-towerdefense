@@ -211,19 +211,25 @@
             "shadow_overlay_tile",
             "fog_overlay_tile",
             "light_overlay_tile",
-            "reviewed_painted_backdrop"
+            "reviewed_painted_backdrop",
+            "objective_foundation",
+            "spawn_marker",
+            "non_blocking_decoration"
           ]
         },
         "media_kind": {
           "type": "string",
-          "enum": ["texture_tile_png", "texture_atlas_png", "map_backdrop_png"]
+          "enum": ["texture_tile_png", "texture_atlas_png", "map_backdrop_png", "component_sprite_png"]
         },
         "source_kind": {
           "type": "string",
           "enum": [
             "procedural_texture",
             "local_ai_exploration_texture",
-            "local_ai_exploration_backdrop"
+            "local_ai_exploration_backdrop",
+            "compiled_reviewed_texture",
+            "compiled_reviewed_backdrop",
+            "compiled_reviewed_component"
           ]
         },
         "source_local_path": { "type": "string" },
@@ -234,7 +240,7 @@
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "usage": {
           "type": "string",
-          "enum": ["presentation_texture_only", "presentation_backdrop_only"]
+          "enum": ["presentation_texture_only", "presentation_backdrop_only", "presentation_component_only"]
         }
       }
     },

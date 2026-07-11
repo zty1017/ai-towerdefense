@@ -53,7 +53,12 @@ REQUIRED_MEDIA_ROLES = {
     "fog_overlay_tile",
     "light_overlay_tile",
 }
-OPTIONAL_MEDIA_ROLES = {"reviewed_painted_backdrop"}
+COMPONENT_MEDIA_ROLES = {
+    "objective_foundation",
+    "spawn_marker",
+    "non_blocking_decoration",
+}
+OPTIONAL_MEDIA_ROLES = {"reviewed_painted_backdrop", *COMPONENT_MEDIA_ROLES}
 REQUIRED_USAGE_POLICY = {
     "runtime_semantics_from_map_runtime_package",
     "visual_package_is_presentation_only",
@@ -152,13 +157,16 @@ def validate_manifest(node_id: str, manifest_path: Path, errors: list[str]) -> N
             expected_media_kind = "map_backdrop_png"
         elif role == "road_detail_atlas":
             expected_media_kind = "texture_atlas_png"
+        elif role in COMPONENT_MEDIA_ROLES:
+            expected_media_kind = "component_sprite_png"
         else:
             expected_media_kind = "texture_tile_png"
-        expected_usage = (
-            "presentation_backdrop_only"
-            if role == "reviewed_painted_backdrop"
-            else "presentation_texture_only"
-        )
+        if role == "reviewed_painted_backdrop":
+            expected_usage = "presentation_backdrop_only"
+        elif role in COMPONENT_MEDIA_ROLES:
+            expected_usage = "presentation_component_only"
+        else:
+            expected_usage = "presentation_texture_only"
         require(
             item.get("media_kind") == expected_media_kind,
             f"{node_id} media_assets[{index}].media_kind must be {expected_media_kind}",
@@ -178,6 +186,9 @@ def validate_manifest(node_id: str, manifest_path: Path, errors: list[str]) -> N
                 "procedural_texture",
                 "local_ai_exploration_texture",
                 "local_ai_exploration_backdrop",
+                "compiled_reviewed_texture",
+                "compiled_reviewed_backdrop",
+                "compiled_reviewed_component",
             ),
             f"{node_id} media_assets[{index}].source_kind must be controlled when present",
             errors,
@@ -261,6 +272,22 @@ def validate_frontend_consumption(errors: list[str]) -> None:
     require(
         "drawBuildableTerraces(ctx)" in frontend_source and "if (!layeredBackdrop)" in frontend_source,
         "drawBattle must avoid duplicating baked build slots when layered backdrop is active",
+        errors,
+    )
+    require(
+        "if (!layeredBackdrop) drawBattlefieldLandmarks(ctx)" in frontend_source,
+        "battle renderer must avoid duplicating reviewed non-blocking decorations",
+        errors,
+    )
+    require(
+        "if (!layeredBackdrop) drawSpawnMarkers(ctx)" in frontend_source,
+        "battle renderer must avoid duplicating reviewed spawn markers",
+        errors,
+    )
+    require(
+        "if (!layeredBackdrop) {" in frontend_source
+        and "drawTargetFoundation(ctx" in frontend_source,
+        "battle renderer must avoid duplicating reviewed objective components",
         errors,
     )
     forbidden = (
