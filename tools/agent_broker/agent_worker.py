@@ -180,18 +180,39 @@ def codebuddy_prompt_ready(screen_text: str) -> bool:
     return has_prompt and has_mode
 
 
+def codebuddy_trust_prompt_visible(screen_text: str) -> bool:
+    normalized = screen_text.replace("\r", "")
+    return (
+        "Do you trust the files in this folder?" in normalized
+        and "Trust folder only" in normalized
+        and "Enter to confirm" in normalized
+    )
+
+
 def wait_for_codebuddy_prompt(
     *, session: str, worktree: Path, timeout_seconds: float
 ) -> None:
     deadline = time.monotonic() + max(3.0, timeout_seconds)
+    trust_confirmed = False
     while time.monotonic() < deadline:
         capture = run(
             ["tmux", "capture-pane", "-p", "-t", session, "-S", "-80"],
             cwd=worktree,
             timeout=30,
         )
-        if capture.returncode == 0 and codebuddy_prompt_ready(capture.stdout):
-            return
+        if capture.returncode == 0:
+            if codebuddy_prompt_ready(capture.stdout):
+                return
+            if not trust_confirmed and codebuddy_trust_prompt_visible(capture.stdout):
+                confirmed = run(
+                    ["tmux", "send-keys", "-t", session, "C-m"],
+                    cwd=worktree,
+                    timeout=30,
+                )
+                if confirmed.returncode != 0:
+                    raise RuntimeError("无法确认 CodeBuddy 当前 worktree 信任提示")
+                trust_confirmed = True
+                continue
         alive = run(["tmux", "has-session", "-t", session], cwd=worktree, timeout=30)
         if alive.returncode != 0:
             raise RuntimeError("CodeBuddy 会话在输入框就绪前退出")
