@@ -56,14 +56,15 @@
     "policy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["runtime_semantics_source", "image_to_semantic_inference", "raw_prompt_stored", "raw_provider_response_stored", "automatic_promotion_scope", "unreviewed_candidate_player_visible"],
+      "required": ["runtime_semantics_source", "image_to_semantic_inference", "raw_prompt_stored", "raw_provider_response_stored", "automatic_promotion_scope", "unreviewed_candidate_player_visible", "minimum_vision_score"],
       "properties": {
         "runtime_semantics_source": {"const": "MapRuntimePackage"},
         "image_to_semantic_inference": {"const": false},
         "raw_prompt_stored": {"const": false},
         "raw_provider_response_stored": {"const": false},
         "automatic_promotion_scope": {"const": "reviewed_visual_staging_only"},
-        "unreviewed_candidate_player_visible": {"const": false}
+        "unreviewed_candidate_player_visible": {"const": false},
+        "minimum_vision_score": {"type": "number", "minimum": 0, "maximum": 1}
       }
     }
   }

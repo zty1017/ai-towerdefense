@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import copy
 import hashlib
 import json
@@ -22,6 +23,7 @@ except ImportError:  # pragma: no cover - direct script/import from tools path.
 
 
 REPORT_VERSION = "map_visual_closed_loop_report.v0.1"
+DEFAULT_MIN_VISION_SCORE = 0.78
 CRITICAL_ROLES = {"terrain_base", "road_surface", "build_slot_platform"}
 COMPONENT_ROLES = {
     "road_surface",
@@ -134,7 +136,12 @@ def deterministic_issues(path: Path, role: str) -> tuple[list[str], dict[str, An
     return issues, metrics
 
 
-def normalize_vision_review(raw: dict[str, Any], request: dict[str, Any]) -> dict[str, Any]:
+def normalize_vision_review(
+    raw: dict[str, Any],
+    request: dict[str, Any],
+    *,
+    minimum_score: float = DEFAULT_MIN_VISION_SCORE,
+) -> dict[str, Any]:
     role = str(request.get("role") or "unknown")
     required = [*COMMON_CHECKS, *ROLE_CHECKS.get(role, ())]
     raw_checks = raw.get("checks") if isinstance(raw.get("checks"), dict) else {}
@@ -149,7 +156,7 @@ def normalize_vision_review(raw: dict[str, Any], request: dict[str, Any]) -> dic
         "checks": checks,
         "failed_checks": failed,
         "notes": [str(item)[:240] for item in raw.get("notes", []) if isinstance(item, str)][:8],
-        "status": "passed" if not failed and score >= 0.78 else "failed",
+        "status": "passed" if not failed and score >= minimum_score else "failed",
     }
 
 
@@ -161,6 +168,7 @@ def review_candidate(
     timeout: int,
     max_tokens: int,
     credential_index: int = 0,
+    minimum_score: float = DEFAULT_MIN_VISION_SCORE,
 ) -> dict[str, Any]:
     deterministic, metrics = deterministic_issues(candidate_path, str(request.get("role") or ""))
     review_item = {
@@ -179,7 +187,7 @@ def review_candidate(
         credential_index=credential_index,
     )
     parsed = vision_review.extract_json(raw_text) or {}
-    normalized = normalize_vision_review(parsed, request)
+    normalized = normalize_vision_review(parsed, request, minimum_score=minimum_score)
     failed = list(dict.fromkeys([*deterministic, *normalized["failed_checks"]]))
     normalized.update(
         {
@@ -257,6 +265,7 @@ def run_role(
     generation_timeout: int,
     review_timeout: int,
     review_max_tokens: int,
+    minimum_score: float = DEFAULT_MIN_VISION_SCORE,
 ) -> dict[str, Any]:
     current = copy.deepcopy(request)
     current.setdefault("worldbook_id", pack.get("worldbook_id"))
@@ -274,6 +283,7 @@ def run_role(
             timeout=generation_timeout,
             live=True,
             credential_index=request_index + attempt - 1,
+            minimum_score=minimum_score,
         )
         candidate_path = Path(str(generated["candidate_path"]))
         if not candidate_path.is_absolute():
@@ -322,6 +332,7 @@ def run_closed_loop(
     generation_timeout: int = 240,
     review_timeout: int = 180,
     review_max_tokens: int = 1200,
+    minimum_score: float = DEFAULT_MIN_VISION_SCORE,
 ) -> dict[str, Any]:
     requests = candidate_generator.selected_requests(pack, [])
     results_by_index: dict[int, dict[str, Any]] = {}
@@ -341,6 +352,7 @@ def run_closed_loop(
                 generation_timeout=generation_timeout,
                 review_timeout=review_timeout,
                 review_max_tokens=review_max_tokens,
+                minimum_score=minimum_score,
             ): (index, request)
             for index, request in enumerate(requests)
         }
@@ -403,9 +415,117 @@ def run_closed_loop(
             "raw_provider_response_stored": False,
             "automatic_promotion_scope": "reviewed_visual_staging_only",
             "unreviewed_candidate_player_visible": False,
+            "minimum_vision_score": minimum_score,
         },
     }
     report_path = output_dir / REPORT_VERSION.replace(".v0.1", ".v0.1.json")
     candidate_generator.write_json(report_path, report)
     report["report_path"] = str(report_path.resolve())
     return report
+
+
+def build_calibration_summary(report: dict[str, Any]) -> dict[str, Any]:
+    roles: list[dict[str, Any]] = []
+    accepted_scores: list[float] = []
+    for result in report.get("results", []):
+        if not isinstance(result, dict):
+            continue
+        attempts = [item for item in result.get("attempts", []) if isinstance(item, dict)]
+        final_review = attempts[-1].get("review", {}) if attempts else {}
+        score = float(final_review.get("score") or 0)
+        if result.get("status") == "passed":
+            accepted_scores.append(score)
+        roles.append(
+            {
+                "role": result.get("role"),
+                "status": result.get("status"),
+                "attempt_count": result.get("attempt_count"),
+                "final_score": score,
+                "final_failed_checks": final_review.get("failed_checks", []),
+            }
+        )
+    threshold = float(report.get("policy", {}).get("minimum_vision_score") or DEFAULT_MIN_VISION_SCORE)
+    return {
+        "schema_version": "map_visual_calibration_summary.v0.1",
+        "node_id": report.get("node_id"),
+        "closed_loop_status": report.get("status"),
+        "configured_minimum_score": threshold,
+        "roles": roles,
+        "accepted_score_range": {
+            "minimum": min(accepted_scores) if accepted_scores else None,
+            "maximum": max(accepted_scores) if accepted_scores else None,
+        },
+        "recommendation": (
+            "retain_threshold_and_perform_human_visual_confirmation"
+            if report.get("runtime_critical_roles_ready")
+            else "keep_hard_check_vetoes_and_revise_prompts_before_threshold_changes"
+        ),
+        "policy": [
+            "A failed fixed check always blocks promotion regardless of score.",
+            "One calibration run must not automatically lower the minimum score.",
+            "Human visual confirmation is required before changing the project default threshold.",
+        ],
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--request-pack", required=True, type=Path)
+    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--reviewed-dir", required=True, type=Path)
+    parser.add_argument("--dotenv", required=True, type=Path)
+    parser.add_argument("--image-profile", default="agnes_image_flash", choices=sorted(image_provider.PROFILES))
+    parser.add_argument("--vision-profile", default="agnes_multimodal_flash", choices=sorted(vision_review.PROFILES))
+    parser.add_argument("--max-attempts", type=int, default=2)
+    parser.add_argument("--max-workers", type=int, default=3)
+    parser.add_argument("--generation-timeout", type=int, default=300)
+    parser.add_argument("--review-timeout", type=int, default=240)
+    parser.add_argument("--review-max-tokens", type=int, default=1200)
+    parser.add_argument("--minimum-score", type=float, default=DEFAULT_MIN_VISION_SCORE)
+    parser.add_argument("--live", action="store_true")
+    args = parser.parse_args()
+    if not args.live:
+        raise SystemExit("--live is required because this command calls external providers")
+    if not 0 <= args.minimum_score <= 1:
+        raise SystemExit("--minimum-score must be between 0 and 1")
+    report_path = args.output_dir / REPORT_VERSION.replace(".v0.1", ".v0.1.json")
+    if report_path.exists():
+        raise SystemExit(f"output already contains a closed-loop report: {report_path}")
+    pack = candidate_generator.load_json(args.request_pack)
+    if pack.get("schema_version") != candidate_generator.PACK_VERSION:
+        raise SystemExit(f"request pack must be {candidate_generator.PACK_VERSION}")
+    image_provider.load_dotenv(args.dotenv)
+    vision_review.load_dotenv(args.dotenv)
+    report = run_closed_loop(
+        args.request_pack,
+        pack,
+        args.output_dir,
+        args.reviewed_dir,
+        image_provider.PROFILES[args.image_profile],
+        vision_review.PROFILES[args.vision_profile],
+        max_attempts=args.max_attempts,
+        max_workers=args.max_workers,
+        generation_timeout=args.generation_timeout,
+        review_timeout=args.review_timeout,
+        review_max_tokens=args.review_max_tokens,
+        minimum_score=args.minimum_score,
+    )
+    calibration = build_calibration_summary(report)
+    calibration_path = args.output_dir / "map_visual_calibration_summary.v0.1.json"
+    candidate_generator.write_json(calibration_path, calibration)
+    print(
+        json.dumps(
+            {
+                "status": report["status"],
+                "summary": report["summary"],
+                "report_path": report["report_path"],
+                "calibration_path": str(calibration_path.resolve()),
+            },
+            ensure_ascii=False,
+        )
+    )
+    return 0 if report["runtime_critical_roles_ready"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

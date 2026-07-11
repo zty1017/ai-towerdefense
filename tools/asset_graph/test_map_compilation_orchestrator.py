@@ -142,6 +142,7 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
                 "raw_provider_response_stored": False,
                 "automatic_promotion_scope": "reviewed_visual_staging_only",
                 "unreviewed_candidate_player_visible": False,
+                "minimum_vision_score": 0.78,
             },
         }
         orchestrator._write(report_path, report)
