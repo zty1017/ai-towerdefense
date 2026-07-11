@@ -1,0 +1,67 @@
+{
+  "schema_version": "generated_world_candidate.v0.1",
+  "world_id": "cloud_courier_realm",
+  "display_name": "凌霄机城",
+  "tagline": "云桥断裂，风潮正沿索道扑向移动城阙。",
+  "summary": "漂浮在云海中的机关聚落依靠索道和风轮迁徙，失控风灵正逼近最后一座稳定锚城。",
+  "tone_voice": "明亮而紧张，人物以风势、机关和航路描述危机。",
+  "naming_style": "采用云、翼、弦、轮、阙、索等意象，名称短促而具有机械运动感。",
+  "phase_terms": {
+    "preparation": "停风校机",
+    "battle": "迎潮守桥",
+    "resolution": "收索验损"
+  },
+  "resources": [
+    {"id": "wind_copper", "display_name": "风铜", "summary": "能随气流轻微鸣响的机关合金。"},
+    {"id": "cloud_silk", "display_name": "云丝", "summary": "用于牵引浮台和传递振动的韧性纤维。"},
+    {"id": "thunder_resin", "display_name": "雷脂", "summary": "可短暂储存风暴电荷的半透明树脂。"}
+  ],
+  "nodes": [
+    {"id": "sky_anchor_city", "display_name": "定霄城", "summary": "维系周边浮岛高度的主城锚点。", "role": "main_city"},
+    {"id": "broken_cloud_bridge", "display_name": "断云桥", "summary": "风潮正沿断裂索桥涌入的前线。", "role": "battle_hotspot"},
+    {"id": "windwork_yard", "display_name": "听风机坊", "summary": "能把临时构想快速试制成机关样品。", "role": "research_facility"},
+    {"id": "suspension_store", "display_name": "悬材库", "summary": "储存风铜和云丝的浮空仓。", "role": "resource_storage"}
+  ],
+  "enemies": [
+    {"id": "gale_wisp_swarm", "display_name": "裂风游灵", "summary": "借乱流高速穿行的轻小风灵。", "archetype": "fast_swarm"},
+    {"id": "storm_shell", "display_name": "沉雷壳", "summary": "裹着厚重雷云缓慢推进的风暴团块。", "archetype": "basic"}
+  ],
+  "npcs": [
+    {"id": "bridge_rigger", "display_name": "索桥绳正", "role": "前线机匠", "voice": "说话直接，以张力和风向判断局势。"},
+    {"id": "windwork_keeper", "display_name": "听风坊守", "role": "试作导师", "voice": "沉着谨慎，总先检查机关是否会破坏浮力平衡。"}
+  ],
+  "visual": {
+    "style_id": "bright_cloud_mechanism_pseudo3d",
+    "style_name": "晴云机关·斜视",
+    "theme_tags": ["eastern_cloud_city", "suspended_bridge", "wind_mechanism", "bright_sky", "bronze_wood", "moving_platform"],
+    "palette": {
+      "terrain_base": "#557B82", "terrain_detail": "#86A9A5", "road_base": "#8A7452", "road_edge": "#D1C38F", "build_slot": "#E4B85A", "objective": "#FFF0A8", "spawn": "#7B6BB4", "resource": "#72C7B8", "hazard": "#B95D62", "fog": "#BFD9D5", "accent": "#E8A94A"
+    },
+    "time_of_day": "day",
+    "terrain_name": "cloudstone_deck",
+    "road_name": "suspension_track",
+    "slot_name": "windwheel_socket",
+    "objective_name": "sky_anchor_core",
+    "spawn_name": "storm_breach"
+  },
+  "opening_cards": [
+    {"title": "云海失衡", "text": "第七条定风索在清晨断裂，整座机城向风暴侧倾。"},
+    {"title": "断桥急报", "text": "断云桥的绳正敲响铜钟，裂风游灵已越过第一座浮台。"},
+    {"title": "临机试作", "text": "你被带进听风机坊，必须用手边材料造出能守住索道的临时机关。"}
+  ],
+  "player_origins": [
+    {"id": "junior_rigger", "display_name": "见习绳正", "summary": "熟悉索桥结构和浮台张力。"},
+    {"id": "wind_reader", "display_name": "听风士", "summary": "能从微小振动判断敌潮方向。"},
+    {"id": "salvage_courier", "display_name": "拾件行者", "summary": "擅长从断桥残骸中找出可用零件。"}
+  ],
+  "first_battle": {
+    "display_name": "断云桥·首轮守桥",
+    "summary": "两股乱流将敌群推向定风锚，索桥结构无法承受长时间冲击。",
+    "route_shape": "diagonal_zigzag",
+    "core_name": "定风锚",
+    "optional_target_name": "侧翼风标",
+    "enemy_traits": "前锋速度快，后续团块较慢但更耐久。",
+    "approach_direction": "东侧高空乱流",
+    "suggested_research_intent": "描述一种能借风势拖慢或击退敌群的临时机关。"
+  }
+}
