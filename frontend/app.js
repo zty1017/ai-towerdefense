@@ -108,6 +108,7 @@ import {
     dataMode: "loading",
     apiBase: "",
     sessionId: "",
+    selectedWorldId: "long_night_lanterns",
     selectedNodeId: NODE_ID,
     selectedMapNodeId: NODE_ID,
     selectedOptions: {
@@ -157,6 +158,7 @@ import {
     try {
       state.profile = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
       state.sessionId = state.profile.sessionId || "";
+      state.selectedWorldId = state.profile.selectedWorldId || state.selectedWorldId;
       state.selectedOptions = {
         ...state.selectedOptions,
         ...(state.profile.selectedOptions || {}),
@@ -170,6 +172,7 @@ import {
     state.profile = {
       ...state.profile,
       sessionId: state.sessionId,
+      selectedWorldId: state.selectedWorldId,
       selectedOptions: state.selectedOptions,
       dataMode: state.dataMode,
       ...patch,
@@ -277,13 +280,27 @@ import {
     defaultWorldConfig: DEFAULT_WORLD_CONFIG,
     screenHeader: (...args) => screenHeader(...args),
     safeText: (value) => safeText(value),
-    getProfilePreviewUrl: () =>
-      resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png"),
-    getWorldPreviewUrl: () => mediaCatalog.layeredMapVisualUrl("composited"),
-    getOpeningSceneUrl: (scene) =>
-      scene === "player_awakening"
+    getProfilePreviewUrl: () => {
+      const preview = (selectedWorldEntry() || {}).preview_url;
+      return resolveAssetUrl(
+        preview || "/assets/map_visual_reference/strategic_region_map_clean_v0_1.png",
+      );
+    },
+    getWorldPreviewUrl: () => {
+      const preview = (selectedWorldEntry() || {}).preview_url;
+      return preview
+        ? resolveAssetUrl(preview)
+        : mediaCatalog.layeredMapVisualUrl("composited");
+    },
+    getOpeningSceneUrl: (scene) => {
+      const entry = selectedWorldEntry() || {};
+      if (entry.world_id !== "long_night_lanterns" && entry.preview_url) {
+        return resolveAssetUrl(entry.preview_url);
+      }
+      return scene === "player_awakening"
         ? mediaCatalog.layeredMapVisualUrl("composited")
-        : resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png"),
+        : resolveAssetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png");
+    },
     navigate: (view) => setPlayerView(view),
     renderApp: () => render(),
   });
@@ -579,11 +596,13 @@ import {
     `;
   }
 
-  function screenHeader(title, subtitle, eyebrow = "长夜灯火") {
+  function screenHeader(title, subtitle, eyebrow = "") {
+    const label =
+      eyebrow || (selectedWorldEntry() || {}).display_name || "Compiler";
     return `
       <header class="screen-header">
         <div class="brand-stack">
-          <div class="eyebrow">${safeText(eyebrow)}</div>
+          <div class="eyebrow">${safeText(label)}</div>
           <h1 class="screen-title">${safeText(title)}</h1>
           ${subtitle ? `<p class="screen-subtitle">${safeText(subtitle)}</p>` : ""}
         </div>
@@ -594,6 +613,47 @@ import {
 
   function worldConfig() {
     return state.data.worldConfig || DEFAULT_WORLD_CONFIG;
+  }
+
+  function worldCatalog() {
+    return state.data.worldCatalog || { worlds: [] };
+  }
+
+  function selectedWorldEntry() {
+    return (worldCatalog().worlds || []).find(
+      (item) => item.world_id === state.selectedWorldId,
+    ) || (worldCatalog().worlds || [])[0] || null;
+  }
+
+  function applyWorldBundle(bundle) {
+    if (!bundle) return;
+    const entry = bundle.catalog_entry || selectedWorldEntry() || {};
+    const nodeId = entry.entry_node_id || (bundle.battle_config || {}).node_id || NODE_ID;
+    Object.assign(state.data, {
+      worldConfig: bundle.world_config || state.data.worldConfig,
+      opening: bundle.opening || state.data.opening,
+      map: bundle.map || state.data.map,
+      briefing: bundle.briefing || state.data.briefing,
+      battleConfig: bundle.battle_config || state.data.battleConfig,
+      mapRuntimePackage: bundle.map_runtime_package || state.data.mapRuntimePackage,
+      layeredMapVisualPackage:
+        bundle.layered_map_visual_package || state.data.layeredMapVisualPackage,
+      suggestedInput: bundle.suggested_input || state.data.suggestedInput,
+      mapRenderPlanBundle:
+        bundle.map_render_plan && bundle.map_style_pack
+          ? {
+              node_id: nodeId,
+              refs: {},
+              map_style_pack: bundle.map_style_pack,
+              procedural_map_render_plan: bundle.map_render_plan,
+              semantic_visual_consistency_report:
+                bundle.semantic_visual_consistency_report || {},
+            }
+          : state.data.mapRenderPlanBundle,
+    });
+    state.selectedNodeId = nodeId;
+    state.selectedMapNodeId = nodeId;
+    state.intentText = bundle.suggested_input || state.intentText;
   }
 
   function mapData() {
@@ -1019,11 +1079,13 @@ import {
       try {
         const response = await apiPost(
           sessionApiPath("/world-instance"),
-          { selected_options: state.selectedOptions },
+          { selected_options: state.selectedOptions, world_id: state.selectedWorldId },
           5000,
         );
         state.data.worldInstance = response.world_instance;
         state.data.runWorldState = response.run_world_state;
+        if (response.world_catalog) state.data.worldCatalog = response.world_catalog;
+        applyWorldBundle(response.world_bundle);
       } catch {
         // Continue with loaded fixture content if the write path is unavailable.
       }
@@ -1043,6 +1105,11 @@ import {
       player_origin: "lampwright_apprentice",
       visual_style_id: "old_chinese_lantern_frontier_pseudo3d",
     };
+    state.selectedWorldId = (worldCatalog().default_world_id || "long_night_lanterns");
+    state.data.worldConfig =
+      ((worldCatalog().worlds || []).find(
+        (item) => item.world_id === state.selectedWorldId,
+      ) || {}).world_config || DEFAULT_WORLD_CONFIG;
     state.research = {
       status: "idle",
       proposal: null,
@@ -2276,13 +2343,26 @@ import {
         saveProfile();
         renderWorldConfig();
     },
+    "select-world": (target) => {
+        const entry = (worldCatalog().worlds || []).find(
+          (item) => item.world_id === target.dataset.value && item.status === "ready",
+        );
+        if (!entry) return;
+        state.selectedWorldId = entry.world_id;
+        state.data.worldConfig = entry.world_config || DEFAULT_WORLD_CONFIG;
+        state.selectedOptions = {
+          ...(state.data.worldConfig.recommended_defaults || DEFAULT_WORLD_CONFIG.recommended_defaults),
+        };
+        saveProfile();
+        renderWorldConfig();
+    },
     "select-origin": (target) => {
         state.selectedOptions.player_origin = target.dataset.value;
         saveProfile();
         renderWorldConfig();
     },
     "use-recommended": () => {
-        state.selectedOptions = { ...DEFAULT_WORLD_CONFIG.recommended_defaults };
+        state.selectedOptions = { ...worldConfig().recommended_defaults };
         saveProfile();
         renderWorldConfig();
     },

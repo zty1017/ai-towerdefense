@@ -96,6 +96,7 @@ def build_user_prompt(
             "known_tradeoffs": proposal.get("known_tradeoffs"),
             "player_prompt": proposal.get("player_prompt"),
             "worldbook_id": proposal.get("worldbook_id"),
+            "world_context": proposal.get("world_context"),
         },
         "effect_registry": _registry_summary(effect_registry),
         "example_shape": {
