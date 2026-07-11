@@ -1,6 +1,6 @@
 # 地图编译设计采纳审查 v0.1
 
-Last updated: 2026-07-06
+Last updated: 2026-07-12
 
 本文用于审查并项目化采纳外部 AI 给出的地图编译方案。该外部方案的核心建议是：
 
@@ -21,6 +21,7 @@ Last updated: 2026-07-06
 - AI 媒体目前属于“已审本地导入”，不是“编译器运行内生成”：现有地形、道路和背景中包含 `local_ai_exploration_*` 资产，但历史生成过程没有完整进入 provider envelope、staging、review、promotion 和 activation 记录。
 - `provider_handoff=true` 会生成拓扑控制图、无语义标记的地形构图参考、由 `MapStylePack` 派生的节点美术简报，以及六类 provider 中立分层请求。提示词遵循 Agnes 官方推荐的“主体、环境、风格、光照、构图、质量”结构；`terrain_base` 使用构图参考走图生图，其他组件走独立白底文生图，避免把道路、塔位和基地烙进底图。
 - `--live-visuals` 已接入地图编译入口，`--live-map-visuals` 已接入世界编译入口。一次任务会并发生成六类候选，调用多模态模型执行 role 专用固定检查，并把失败检查映射成受控修复语句后重试。地形、道路、塔位三个运行关键层全部通过时，候选才会进入地图包内的 `reviewed_visual_staging`；道路与塔位还会经过白底清理、孤岛清理、裁切留白和画布归一化，再由 `LayeredMapVisualPackage` 重新组装。未审或重试后仍失败的候选不会进入玩家运行包。
+- 地图视觉默认改为后台自动执行：普通 `compile_map()` 在交付可玩 fallback 包后，会写入幂等 `MapVisualBackgroundJob`；FastAPI lifespan 中的轻量 worker 自动消费任务，完成生成、视觉审查、受控修复、最多两轮重试和 reviewed staging。关键视觉全部通过后，worker 只重建表现层、视觉清单与 `MapCompilePackage`，不改写 `MapRuntimePackage` 的路线、塔位、目标或出生点。开发者不再需要逐次手动运行 provider 命令。
 - 因此 `ai_media_generation_provenance` 当前必须是 `warning`。只有真实 provider 执行记录和产物晋升证据随同一次地图编译运行进入包内，才可以改为 `passed`。
 
 当前准确口径是：
@@ -140,7 +141,7 @@ reviewed_visual_staging/components/non_blocking_decoration.png
 
 `LayeredMapVisualPackage` 会把三类媒体登记为 `component_sprite_png / compiled_reviewed_component`，复制到节点专属本地包并嵌入最终 SVG。图片不能改变锚点、路径、碰撞、目标类型或出生逻辑。前端检测到 player-ready layered backdrop 后，会停止额外绘制旧目标、出生点和地标，避免双重叠图。
 
-开发者现场校准使用单一入口，不再逐角色调用：
+正常开发和玩家流程不再手动执行下列命令。它仅保留为开发者诊断单个请求包时的旁路入口：
 
 ```bash
 /home/zty/projects/ai-compiled-towerdefense/.venv/bin/python \
@@ -158,6 +159,14 @@ reviewed_visual_staging/components/non_blocking_decoration.png
 ```
 
 该命令自动完成六层生成、多模态审查、受控修复、重试、后处理和 reviewed staging，并额外输出 `map_visual_calibration_summary.v0.1.json`。分数阈值不是唯一门禁：任一固定检查失败都会阻断晋升；单次校准不得自动降低默认阈值。
+
+后台任务状态只在 Studio 证据接口读取：
+
+```text
+GET /api/studio/map-visual-jobs
+```
+
+worker 默认随后端启动；测试环境自动关闭。部署时只有明确设置 `AI_TD_MAP_VISUAL_WORKER=off` 才会禁用。密钥只从 `AI_TD_ENV_FILE` 或仓库 `.env` 读取，不写入任务、报告或玩家接口。
 
 任何 AI 产物都必须进入 provider envelope / staging / promotion / media gate / runtime package 或 MapCompilePackage 审查链，不能直接被前端默认加载。
 

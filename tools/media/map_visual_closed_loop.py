@@ -32,6 +32,15 @@ COMPONENT_ROLES = {
     "spawn_marker",
     "non_blocking_decoration",
 }
+
+
+class MapVisualStageError(RuntimeError):
+    """Keep provider failures diagnosable without retaining provider bodies."""
+
+    def __init__(self, stage: str, cause: Exception):
+        super().__init__(f"{stage}:{type(cause).__name__}")
+        self.stage = stage
+        self.cause_type = type(cause).__name__
 COMMON_CHECKS = (
     "no_people_or_creatures",
     "no_text_symbols_or_watermark",
@@ -273,29 +282,35 @@ def run_role(
     accepted_path: Path | None = None
     for attempt in range(1, max(1, max_attempts) + 1):
         attempt_dir = output_dir / f"attempt_{attempt:02d}"
-        generated = candidate_generator.run_request(
-            request_pack_path,
-            pack,
-            current,
-            attempt_dir,
-            image_profile,
-            size_override=None,
-            timeout=generation_timeout,
-            live=True,
-            credential_index=request_index + attempt - 1,
-            minimum_score=minimum_score,
-        )
+        try:
+            generated = candidate_generator.run_request(
+                request_pack_path,
+                pack,
+                current,
+                attempt_dir,
+                image_profile,
+                size_override=None,
+                timeout=generation_timeout,
+                live=True,
+                credential_index=request_index + attempt - 1,
+                minimum_score=minimum_score,
+            )
+        except Exception as exc:
+            raise MapVisualStageError("generation", exc) from exc
         candidate_path = Path(str(generated["candidate_path"]))
         if not candidate_path.is_absolute():
             candidate_path = candidate_generator.ROOT / candidate_path
-        review = review_candidate(
-            current,
-            candidate_path,
-            vision_profile,
-            timeout=review_timeout,
-            max_tokens=review_max_tokens,
-            credential_index=request_index + attempt - 1,
-        )
+        try:
+            review = review_candidate(
+                current,
+                candidate_path,
+                vision_profile,
+                timeout=review_timeout,
+                max_tokens=review_max_tokens,
+                credential_index=request_index + attempt - 1,
+            )
+        except Exception as exc:
+            raise MapVisualStageError("vision_review", exc) from exc
         attempts.append(
             {
                 "attempt": attempt,
@@ -361,10 +376,13 @@ def run_closed_loop(
             try:
                 results_by_index[index] = future.result()
             except Exception as exc:  # pragma: no cover - live provider failure path.
+                stage = exc.stage if isinstance(exc, MapVisualStageError) else "closed_loop"
+                error_type = exc.cause_type if isinstance(exc, MapVisualStageError) else type(exc).__name__
                 failures_by_index[index] = {
                     "request_id": request.get("request_id"),
                     "role": request.get("role"),
-                    "error": f"{type(exc).__name__}:provider_or_review_call_failed",
+                    "stage": stage,
+                    "error": f"{error_type}:external_call_failed",
                 }
     results = [results_by_index[index] for index in sorted(results_by_index)]
     failures = [failures_by_index[index] for index in sorted(failures_by_index)]

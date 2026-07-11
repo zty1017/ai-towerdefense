@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 from tools.media import generate_layered_map_visual_candidates as generator
 from tools.media import image_provider
@@ -129,3 +130,35 @@ def test_agnes_credentials_rotate_across_available_keys(monkeypatch):
     assert image_provider.get_api_key(profile, 0) == "key-one"
     assert image_provider.get_api_key(profile, 1) == "key-two"
     assert image_provider.get_api_key(profile, 2) == "key-one"
+
+
+def test_generate_image_accepts_credential_index_and_uses_selected_key(monkeypatch):
+    profile = image_provider.PROFILES["agnes_image_flash"]
+    monkeypatch.setenv("AGNES_API_KEY", "key-one")
+    monkeypatch.setenv("AGNES_API_KEY_2", "key-two")
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps({"data": [{"url": "https://example.invalid/image.png"}]}).encode()
+
+    def fake_urlopen(request, timeout):
+        captured["authorization"] = request.headers["Authorization"]
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(image_provider.urllib.request, "urlopen", fake_urlopen)
+    response = image_provider.generate_image(
+        profile,
+        "test prompt",
+        credential_index=1,
+        timeout=7,
+    )
+    assert response["data"][0]["url"].endswith("image.png")
+    assert captured == {"authorization": "Bearer key-two", "timeout": 7}

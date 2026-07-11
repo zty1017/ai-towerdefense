@@ -231,3 +231,33 @@ def test_critical_review_failure_blocks_every_promotion(tmp_path, monkeypatch):
     assert report["runtime_critical_roles_ready"] is False
     assert report["promotions"] == []
     assert not (tmp_path / "reviewed").exists()
+
+
+def test_provider_failure_reports_generation_stage(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+
+    def fail_generation(*_args, **_kwargs):
+        raise TypeError("unexpected adapter keyword")
+
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", fail_generation)
+    report = closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run",
+        tmp_path / "reviewed",
+        image_provider.PROFILES["agnes_image_flash"],
+        vision_review.PROFILES["agnes_multimodal_flash"],
+        max_attempts=1,
+        max_workers=1,
+    )
+    assert report["failures"] == [
+        {
+            "request_id": "request_1",
+            "role": "terrain_base",
+            "stage": "generation",
+            "error": "TypeError:external_call_failed",
+        }
+    ]
