@@ -155,6 +155,112 @@ def test_create_proposal_is_persisted(client, raw_conn: sqlite3.Connection):
     assert rows[0]["status"] == "proposed"
 
 
+def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
+    from app.services import live_asset_compile_service
+    from tools.dev.validate_provider_artifact_promotion_report import (
+        validate_provider_artifact_promotion_report,
+    )
+    from tools.dev.validate_provider_artifact_staging_manifest import (
+        validate_provider_artifact_staging_manifest,
+    )
+    from tools.dev.validate_provider_output_envelope import validate_provider_output_envelope
+
+    candidate = {
+        "id": "asset_live_prism_tower",
+        "lifecycle": "session_blueprint",
+        "gameplay": {
+            "asset_type": "tower_blueprint",
+            "base_stats": {"build_cost": 17, "range": 3.4, "cooldown_ms": 1200},
+            "effect_blocks": [
+                {"type": "damage", "amount": 13, "damage_type": "light"},
+                {"type": "slow", "duration_ms": 1400, "slow_ratio": 0.24},
+            ],
+            "constraints": {"max_instances": 2},
+            "type_specific": {"tower_slot": "standard"},
+        },
+        "presentation": {
+            "name": "棱潮束灯塔",
+            "short_description": "折射灯束打击来敌，并留下短暂迟滞。",
+            "icon_prompt": "clean tower icon",
+            "animation_card_prompt": "tower animation card",
+            "visual_tags": ["棱镜", "束光", "迟滞"],
+        },
+        "provenance": {
+            "proposal_id": "rebound",
+            "mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "provider": "ark_deepseek_v4_flash",
+            "model": "deepseek-v4-flash",
+            "npc_ids": [],
+            "material_ids": [],
+            "validation_status": "pending",
+            "simulation_report_id": None,
+        },
+    }
+    monkeypatch.setattr(
+        live_asset_compile_service,
+        "compile_candidate",
+        lambda **_: {
+            "status": "live_validated",
+            "candidate": candidate,
+            "provenance": {
+                "mode": "live",
+                "profile": "ark_deepseek_v4_flash",
+                "model": "deepseek-v4-flash",
+                "provider_call_performed": True,
+                "raw_prompt_stored": False,
+                "raw_response_stored": False,
+            },
+        },
+    )
+
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent="做一座折射灯塔攻击并拖慢影潮")
+    assert proposal["display_name"] == "棱潮束灯塔"
+    assert proposal["compiler_metadata"]["generation"]["mode"] == "live"
+    job = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    ).json()
+    assert job["status"] == "completed"
+    report_path = Path(job["compiler_metadata"]["runtime_refs"]["promotion_report_path"])
+    assert report_path.exists()
+    evidence_root = report_path.parent
+    envelope = json.loads((evidence_root / "provider_output_envelope.json").read_text())
+    staging = json.loads(
+        (evidence_root / "provider_artifact_staging_manifest.json").read_text()
+    )
+    promotion = json.loads(report_path.read_text())
+    assert validate_provider_output_envelope(envelope) == []
+    assert validate_provider_artifact_staging_manifest(staging) == []
+    assert validate_provider_artifact_promotion_report(promotion) == []
+    assert promotion["gate_results"]["human_review"] == {
+        "status": "not_applicable",
+        "required_before_promotion": False,
+        "report_ref": None,
+    }
+    package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
+    assert package["assets"][0]["display"]["name"] == "棱潮束灯塔"
+    assert package["assets"][0]["gameplay_ref"]["path"].endswith(
+        "validated_live_asset_candidate.json"
+    )
+
+    activated = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activated.status_code == 200, activated.text
+    receipt = activated.json()["activation_receipt"]
+    assert receipt["status"] == "activated"
+    assert receipt["promotion"]["mode"] == "provider_promotion_report"
+    assert receipt["validation"]["behavior_abi"]["status"] == "passed", receipt["warnings"]
+    capability = next(
+        item
+        for item in activated.json()["activated_runtime_bundle"]["capabilities"]["battle_objects"]
+        if item["object_id"] in receipt["runtime_effect"]["activated_object_ids"]
+    )
+    assert capability["display_name"] == "棱潮束灯塔"
+    assert capability["behavior_abi"]["targeting"]["range_cells"] == 3.4
+
+
 # ---------------------------------------------------------------------------
 # Confirm -> completed job
 # ---------------------------------------------------------------------------

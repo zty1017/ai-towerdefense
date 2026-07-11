@@ -24,7 +24,12 @@ from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import ai_core_artifact_service, battle_content_service, map_runtime_service
+from . import (
+    ai_core_artifact_service,
+    battle_content_service,
+    live_asset_compile_service,
+    map_runtime_service,
+)
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -241,6 +246,8 @@ def _compiler_metadata_for_job(
     metadata["runtime_refs"] = {
         "runtime_package_path": result.get("runtime_package_path"),
         "delivery_payload_path": result.get("delivery_payload_path"),
+        "promotion_report_path": result.get("promotion_report_path"),
+        "reviewed_media_fallback_allowed": bool(result.get("promotion_report_path")),
         "trace_count": len(result.get("trace_paths") or []),
     }
     metadata["core_artifacts"] = ai_core_artifact_service.research_job_core_artifacts(
@@ -298,11 +305,13 @@ def _find_artifact_path(
     return None
 
 
-def _compiled_runtime_identity(intent_text: str, candidate_kind: str) -> dict[str, Any]:
+def _compiled_runtime_identity(
+    intent_text: str, candidate_kind: str, candidate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     intent = intent_text or ""
     if candidate_kind == "tower_blueprint":
         slowing = any(keyword in intent for keyword in ("拖慢", "减速", "迟滞", "slow"))
-        return {
+        identity = {
             "name": "迟光灯塔" if slowing else "聚光刺塔",
             "tags": ["防御塔", "迟滞" if slowing else "打击", "试作蓝图"],
             "lifecycle_state": "session_blueprint",
@@ -322,8 +331,8 @@ def _compiled_runtime_identity(intent_text: str, candidate_kind: str) -> dict[st
                 }
             ],
         }
-    if candidate_kind == "support_item":
-        return {
+    elif candidate_kind == "support_item":
+        identity = {
             "name": "守灯脉冲",
             "tags": ["支援", "范围", "一次性"],
             "lifecycle_state": "ephemeral",
@@ -354,37 +363,51 @@ def _compiled_runtime_identity(intent_text: str, candidate_kind: str) -> dict[st
                 },
             ],
         }
-    return {
-        "name": "折光绊索",
-        "tags": ["陷阱", "减速", "试作品"],
-        "lifecycle_state": "ephemeral",
-        "uses_per_battle": 2,
-        "visual_recipes": [
-            {
-                "trigger": "on_activate",
-                "kind": "ring_pulse",
-                "palette_token": "light.control.cold",
-                "color": "#9edcff",
-                "secondary_color": "#ffffff",
-                "intensity": "medium",
-                "radius": 96,
-                "duration_ms": 900,
-                "blend_mode": "additive",
-            },
-            {
-                "trigger": "on_active",
-                "kind": "aura_field",
-                "palette_token": "light.control.cold",
-                "color": "#9edcff",
-                "secondary_color": "#cfeeff",
-                "intensity": "medium",
-                "radius": 96,
-                "duration_ms": 1200,
-                "particle_density": "low",
-                "blend_mode": "additive",
-            },
-        ],
-    }
+    else:
+        identity = {
+            "name": "折光绊索",
+            "tags": ["陷阱", "减速", "试作品"],
+            "lifecycle_state": "ephemeral",
+            "uses_per_battle": 2,
+            "visual_recipes": [
+                {
+                    "trigger": "on_activate",
+                    "kind": "ring_pulse",
+                    "palette_token": "light.control.cold",
+                    "color": "#9edcff",
+                    "secondary_color": "#ffffff",
+                    "intensity": "medium",
+                    "radius": 96,
+                    "duration_ms": 900,
+                    "blend_mode": "additive",
+                },
+                {
+                    "trigger": "on_active",
+                    "kind": "aura_field",
+                    "palette_token": "light.control.cold",
+                    "color": "#9edcff",
+                    "secondary_color": "#cfeeff",
+                    "intensity": "medium",
+                    "radius": 96,
+                    "duration_ms": 1200,
+                    "particle_density": "low",
+                    "blend_mode": "additive",
+                },
+            ],
+        }
+    if candidate:
+        presentation = as_dict(candidate.get("presentation"))
+        gameplay = as_dict(candidate.get("gameplay"))
+        stats = as_dict(gameplay.get("base_stats"))
+        identity["name"] = _sanitize_player_text(str(presentation.get("name") or identity["name"]))[:48]
+        tags = presentation.get("visual_tags")
+        if isinstance(tags, list) and tags:
+            identity["tags"] = [_sanitize_player_text(str(item))[:24] for item in tags[:4]]
+        uses = stats.get("use_count", stats.get("charges"))
+        if isinstance(uses, (int, float)):
+            identity["uses_per_battle"] = max(1, min(5, int(uses)))
+        identity["lifecycle_state"] = str(candidate.get("lifecycle") or identity["lifecycle_state"])
+    return identity
 
 
 def _personalize_compiled_artifacts(
@@ -397,6 +420,8 @@ def _personalize_compiled_artifacts(
     intent_text: str,
     proposal_summary: str,
     candidate_kind: str,
+    compiled_candidate: dict[str, Any] | None = None,
+    candidate_path: Path | None = None,
 ) -> None:
     """Bind deterministic workflow output to this proposal's compiled object.
 
@@ -404,7 +429,7 @@ def _personalize_compiled_artifacts(
     deterministic lowering step only selects allowlisted runtime fields; the
     activation service still owns schema, behavior, media, and promotion gates.
     """
-    identity = _compiled_runtime_identity(intent_text, candidate_kind)
+    identity = _compiled_runtime_identity(intent_text, candidate_kind, compiled_candidate)
     suffix = hashlib.sha256(proposal_id.encode("utf-8")).hexdigest()[:10]
     object_id = f"compiled_{candidate_kind}_{suffix}"
 
@@ -426,6 +451,12 @@ def _personalize_compiled_artifacts(
         "tags": identity["tags"],
     }
     asset["visual_recipes"] = identity["visual_recipes"]
+    if candidate_path is not None:
+        asset["gameplay_ref"] = {
+            "kind": "compiled_asset_candidate",
+            "path": str(candidate_path),
+            "sha256": hashlib.sha256(candidate_path.read_bytes()).hexdigest(),
+        }
     asset["battle_availability"] = {
         "surfaces": ["battle_hotbar"],
         "uses_per_battle": identity["uses_per_battle"],
@@ -517,6 +548,12 @@ def _run_two_workflows(
     if runtime_package_path and delivery_payload_path:
         metadata = as_dict(proposal.get("compiler_metadata"))
         compiled_object = as_dict(metadata.get("compiled_object"))
+        compiled_candidate = as_dict(proposal.get("compiled_candidate"))
+        candidate_path = None
+        if compiled_candidate:
+            candidate_path = live_asset_compile_service.write_candidate(
+                compiled_candidate, Path(runtime_package_path).parent
+            )
         try:
             _personalize_compiled_artifacts(
                 runtime_package_path=Path(runtime_package_path),
@@ -529,7 +566,20 @@ def _run_two_workflows(
                 candidate_kind=str(
                     compiled_object.get("candidate_kind") or "temporary_trap_sample"
                 ),
+                compiled_candidate=compiled_candidate or None,
+                candidate_path=candidate_path,
             )
+            promotion_report_path = None
+            generation = as_dict(metadata.get("generation"))
+            if generation.get("provider_call_performed") is True and candidate_path is not None:
+                promotion_report_path = live_asset_compile_service.write_promotion_report(
+                    package_path=Path(runtime_package_path),
+                    candidate_path=candidate_path,
+                    job_dir=job_dir,
+                    created_at=now_iso(),
+                    profile=str(generation.get("profile") or "unknown_profile"),
+                    model=str(generation.get("model") or "unknown_model"),
+                )
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             return {
                 "trace_paths": trace_paths,
@@ -538,11 +588,14 @@ def _run_two_workflows(
                 "ok": False,
                 "error": f"runtime lowering failed: {exc}",
             }
+    else:
+        promotion_report_path = None
 
     return {
         "trace_paths": trace_paths,
         "runtime_package_path": runtime_package_path,
         "delivery_payload_path": delivery_payload_path,
+        "promotion_report_path": str(promotion_report_path) if promotion_report_path else None,
         "ok": True,
         "error": None,
     }
@@ -555,8 +608,25 @@ def _run_two_workflows(
 
 def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str, Any]:
     """Create a research proposal row and return its public representation."""
-    fields = _synthesize_proposal_fields(intent_text, node_id)
     proposal_id = secrets.token_urlsafe(16)
+    fields = _synthesize_proposal_fields(intent_text, node_id)
+    candidate_kind = _candidate_kind_from_intent(intent_text)
+    live_result = live_asset_compile_service.compile_candidate(
+        proposal_id=proposal_id,
+        intent_text=intent_text,
+        worldbook_id="long_night_lanterns",
+        candidate_kind=candidate_kind,
+        display_name=fields["display_name"],
+        summary=fields["summary"],
+    )
+    compiled_candidate = as_dict(live_result.get("candidate"))
+    if compiled_candidate:
+        fields.update(
+            {
+                key: _sanitize_player_text(value)
+                for key, value in live_asset_compile_service.player_fields(compiled_candidate).items()
+            }
+        )
     compiler_metadata = _compiler_metadata_for_proposal(
         session_id=session_id,
         proposal_id=proposal_id,
@@ -565,12 +635,21 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
         display_name=fields["display_name"],
         proposal_summary=fields["summary"],
     )
+    provenance = as_dict(live_result.get("provenance"))
+    compiler_metadata["generation"] = provenance or {
+        "mode": "deterministic_fallback",
+        "provider_call_performed": False,
+        "fallback_reason": str(live_result.get("reason") or "not_requested"),
+        "raw_prompt_stored": False,
+        "raw_response_stored": False,
+    }
     ts = now_iso()
     payload = json.dumps(
         {
             "intent_text": intent_text,
             "node_id": node_id,
             "compiler_metadata": compiler_metadata,
+            "compiled_candidate": compiled_candidate or None,
         },
         ensure_ascii=False,
     )
@@ -680,6 +759,7 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
             "display_name": prow["display_name"],
             "summary": prow["summary"],
             "compiler_metadata": proposal_metadata,
+            "compiled_candidate": as_dict(proposal_payload.get("compiled_candidate")),
         },
     )
     completed_at = now_iso()
