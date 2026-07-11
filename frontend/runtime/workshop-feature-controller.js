@@ -1,27 +1,3 @@
-const PROPOSAL_DEFAULTS = {
-  gray_lantern_station: {
-    summary: "灯光编织的临时绊线，可让经过的影潮短暂迟滞。",
-    material: "灯芯碎片 x2 / 导线丝 x1",
-    constraint: "样品会在第一波中途送达，需要部署在路径转角附近。",
-    risk: "稳定性偏低，强雾中效果可能衰减。",
-    npc: "守灯人认为它能争取第一波后的喘息。",
-  },
-  lamp_wick_store: {
-    summary: "把灯灰压入旧灯壳，形成短促爆鸣和灰灯护幕。",
-    material: "灯灰 x2 / 灯芯碎片 x1 / 辉晶线索",
-    constraint: "适合放在双路径汇合点附近，误放会浪费爆鸣窗口。",
-    risk: "爆鸣范围可观，但材料消耗高，密集敌潮后容易出现空档。",
-    npc: "补线人建议先护住补给线接点，再用爆鸣处理聚集影潮。",
-  },
-  old_signal_tower: {
-    summary: "让旧塔回光穿过棱镜，短暂显形来敌并压低路径压力。",
-    material: "辉晶 x1 / 导线丝 x1 / 回光玻片样本",
-    constraint: "需要靠近旧塔回光范围，离核心太远会失去显形效果。",
-    risk: "回光能稳定短时间，但可能引来新的分潮线。",
-    npc: "北路斥候建议把它当作稳定器，而不是长期防线。",
-  },
-};
-
 const INTENT_PRESETS = [
   {
     id: "slow",
@@ -39,6 +15,39 @@ const INTENT_PRESETS = [
     intent: "我想做一个能在危急时支援整片战场的灯火脉冲。",
   },
 ];
+
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function asList(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function effectSummary(candidate, fallback) {
+  const effects = asList(asObject(candidate.gameplay).effect_blocks);
+  const labels = effects.slice(0, 3).map((effect) => {
+    if (effect.type === "area_damage") return `造成 ${effect.amount ?? "一定"} 点范围伤害`;
+    if (effect.type === "damage") return `造成 ${effect.amount ?? "一定"} 点伤害`;
+    if (effect.type === "slow") return `使敌人减速 ${Math.round(Number(effect.slow_ratio || 0) * 100)}%`;
+    if (effect.type === "shield") return `提供 ${effect.shield_amount ?? "短时"} 点护盾`;
+    if (effect.type === "chain") return "攻击可在相邻目标间传递";
+    if (effect.type === "power_cost") return `持续消耗 ${effect.power_per_second ?? "额外"} 点供能`;
+    return "产生一种受控战场效果";
+  });
+  return labels.length ? `${labels.join("，")}。` : fallback;
+}
+
+function constraintSummary(candidate, kind) {
+  const constraints = asObject(asObject(candidate.gameplay).constraints);
+  const parts = [];
+  if (constraints.max_instances != null) parts.push(`本场最多部署 ${constraints.max_instances} 次`);
+  if (constraints.requires_power_grid) parts.push("需要接入稳定供能");
+  if (kind === "tower_blueprint") parts.push("只能安装在可用防御平台");
+  if (kind === "temporary_trap_sample") parts.push("需要放在允许布置的道路附近");
+  if (kind === "support_item") parts.push("可在战场范围内选择释放位置");
+  return parts.join("；") || "样品将在战斗中途送达，部署条件以战场提示为准。";
+}
 
 export function createWorkshopFeatureController({
   root,
@@ -77,53 +86,66 @@ export function createWorkshopFeatureController({
   function currentProposal() {
     const state = getState();
     if (["idle", "stale", "proposing"].includes(state.research.status)) return null;
-    const sample = (getBattleConfig().sample_asset) || {};
-    const text = PROPOSAL_DEFAULTS[getCurrentNodeId()] || PROPOSAL_DEFAULTS.gray_lantern_station;
-    const compiled = surfaceContributions().find((item) => item.kind === "proposal_hint");
-    const compiledPayload = (compiled && compiled.payload) || {};
+    const briefing = getBriefing();
+    const sample = getBattleConfig().sample_asset || {};
+    const contributions = surfaceContributions();
+    const compiled = contributions.find((item) => item.kind === "proposal_hint");
+    const participant = contributions.find((item) => item.kind === "participant_notice");
+    const compiledPayload = asObject(compiled && compiled.payload);
     const proposalRecord = state.research.proposal || {};
+    const candidate = asObject(proposalRecord.compiled_candidate);
+    const presentation = asObject(candidate.presentation);
+    const gameplay = asObject(candidate.gameplay);
     const proposalKind =
+      gameplay.asset_type ||
       (((proposalRecord.compiler_metadata || {}).compiled_object || {}).candidate_kind) ||
       compiledPayload.candidate_kind ||
       "temporary_trap_sample";
-    const expectedEffects = {
-      tower_blueprint: "在可部署平台建造一座持续攻击的试作装置。",
-      temporary_trap_sample: "在敌人路径附近布置一次性迟滞装置。",
-      support_item: "在指定区域释放一次应急支援效果。",
-    };
-    const placementConstraints = {
-      tower_blueprint: "样品会在战斗中途送达，只能安装在现有防御平台。",
-      temporary_trap_sample: text.constraint,
-      support_item: "样品会在战斗中途送达，可在战场内选择释放位置。",
-    };
-    const npcReviews = {
-      tower_blueprint: "守灯人建议把射界对准道路转角，同时保留核心照明的供能余量。",
-      temporary_trap_sample: text.npc,
-      support_item: "守灯人建议把它留到防线出现缺口时再使用。",
-    };
     const hasProposal = Boolean(
       proposalRecord.proposal_id || compiled || state.research.status === "proposed",
     );
     if (!hasProposal) return null;
+    const candidateMaterialIds = asList(asObject(candidate.provenance).material_ids);
+    const availableMaterials = asList(briefing.available_materials || state.data.materials);
+    const materialEntries = candidateMaterialIds.length
+      ? candidateMaterialIds.map((id) => materialName(id))
+      : availableMaterials.slice(0, 3).map((item) => {
+          const id = item.material_id || item.resource_id || item.stable_internal_id;
+          const quantity = item.quantity ?? item.amount ?? item.default_quantity;
+          return `${materialName(id)}${quantity == null ? "" : ` x${quantity}`}`;
+        });
+    const defaultEffects = {
+      tower_blueprint: "在防御平台上形成一座可持续参与战斗的试作装置。",
+      temporary_trap_sample: "在敌人路径附近形成一次性战场效果。",
+      support_item: "在指定区域释放一次应急支援效果。",
+    };
     return {
       name:
+        presentation.name ||
         proposalRecord.display_name ||
         compiledPayload.title ||
         "现场试作草案",
-      summary: proposalRecord.summary || compiledPayload.summary || text.summary,
+      summary:
+        presentation.short_description ||
+        proposalRecord.summary ||
+        compiledPayload.summary ||
+        "当前构想已经被整理为一件可进入实战验证的试作品。",
       effect:
         compiledPayload.effect_summary ||
-        expectedEffects[proposalKind] ||
-        sample.effect_summary ||
-        "形成一件可在当前战场验证的试作品。",
-      material: text.material,
+        effectSummary(candidate, defaultEffects[proposalKind] || sample.effect_summary),
+      material: materialEntries.join(" / ") || "使用当前节点允许调用的材料",
       constraint:
         compiledPayload.constraint ||
-        placementConstraints[proposalKind] ||
-        text.constraint,
-      risk: proposalRecord.risk_note || text.risk,
-      npc: compiledPayload.npc_review || npcReviews[proposalKind] || text.npc,
+        constraintSummary(candidate, proposalKind),
+      risk:
+        proposalRecord.risk_note ||
+        "当前仅确认了可运行边界，隐藏缺陷需要在本场实战后继续记录。",
+      npc:
+        compiledPayload.npc_review ||
+        asObject(participant && participant.payload).summary ||
+        "在场人员确认方案符合当前危机，但建议保留材料余量应对变化。",
       kind: proposalKind,
+      source: candidate.id ? "compiled_candidate" : "runtime_fallback",
     };
   }
 

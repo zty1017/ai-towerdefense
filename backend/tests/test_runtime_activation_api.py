@@ -216,3 +216,27 @@ def test_behavior_abi_is_cropped_clamped_and_rejects_unknown_effects():
     raw["effect_blocks"][0]["kind"] = "execute_script"
     with pytest.raises(ValueError, match="effect kind"):
         _normalize_behavior(raw, "tower_blueprint")
+
+
+def test_compiled_candidate_stats_and_effects_lower_into_runtime_behavior():
+    candidate = {
+        "gameplay": {
+            "base_stats": {
+                "build_cost": 37,
+                "range": 144,
+                "cooldown": 2.5,
+            },
+            "effect_blocks": [
+                {"type": "area_damage", "amount": 64, "radius": 96},
+                {"type": "slow", "slow_ratio": 0.35, "duration": 1.8},
+            ],
+        }
+    }
+    normalized = _normalize_behavior(candidate, "tower_blueprint")
+    assert normalized["cost"] == {"resource": "materials", "amount": 37}
+    assert normalized["cooldown"] == {"milliseconds": 2500}
+    assert normalized["targeting"]["range_cells"] == 3
+    assert normalized["effect_blocks"][0]["amount"] == 64
+    assert normalized["effect_blocks"][0]["radius_cells"] == 2
+    assert normalized["effect_blocks"][1]["strength"] == 0.35
+    assert normalized["effect_blocks"][1]["duration_ms"] == 1800

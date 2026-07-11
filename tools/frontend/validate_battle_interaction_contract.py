@@ -294,7 +294,7 @@ def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) 
     add_check(
         checks,
         "battle_state_tracks_drag",
-        contains_all(state_factory, ["selectedTool: \"basic\"", "draggingTool: null", "dragPointer: null", "hoverCell: null"]),
+        contains_all(state_factory, ["selectedTool: null", "draggingTool: null", "dragPointer: null", "hoverCell: null"]),
         "battle state must keep selected, dragging, pointer, and hover-cell fields.",
     )
     add_check(
@@ -342,7 +342,7 @@ def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) 
         contains_all(
             begin_drag,
             [
-                "battle.selectedTool = tool || \"basic\"",
+                "battle.selectedTool = tool || null",
                 "if (!toolReady(battle.selectedTool))",
                 "battle.draggingTool = null",
                 "setBattleToast(toolUnavailableText(battle.selectedTool))",
@@ -376,10 +376,11 @@ def validate_contract(frontend: str, css: str, runtime_sources: dict[str, str]) 
                 "event.preventDefault()",
                 "setBattleToast(\"拖到战场格位后释放\")",
                 "deployToolAt(tool, cell)",
+                "clearDeploymentSelection(battle)",
             ],
         )
         and finish_drag.count("deployToolAt(") == 1,
-        "finishToolDrag must clear drag state and deploy exactly on pointer release over a valid battle cell.",
+        "finishToolDrag must clear drag state and consume selection only after a successful deployment.",
     )
     add_check(
         checks,

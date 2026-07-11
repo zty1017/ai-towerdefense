@@ -708,6 +708,7 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
     data = dict(row)
     payload_obj = _proposal_payload(row)
     data["compiler_metadata"] = as_dict(payload_obj.get("compiler_metadata"))
+    data["compiled_candidate"] = as_dict(payload_obj.get("compiled_candidate")) or None
     data.pop("payload", None)
     return data
 

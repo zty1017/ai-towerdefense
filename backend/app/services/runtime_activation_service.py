@@ -215,6 +215,14 @@ def _clamp(value: Any, fallback: float, minimum: float, maximum: float) -> float
     return max(minimum, min(maximum, number))
 
 
+def _cells(value: Any, fallback: float) -> float:
+    """Accept authored cell values or legacy pixel-like ranges from candidates."""
+    number = _clamp(value, fallback, 0.3, 10000)
+    if number > 16:
+        number /= 48
+    return _clamp(number, fallback, 0.3, 8)
+
+
 def _fallback_behavior(asset_kind: str) -> dict[str, Any]:
     if asset_kind == "tower_blueprint":
         return {
@@ -370,18 +378,35 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
         raw = _json_object(raw)
         kind = str(raw.get("kind") or raw.get("effect_type") or raw.get("type") or "")
         if kind in {"area_damage", "damage"}:
-            effects.append({
+            effect = {
                 "effect_id": _safe_id(raw.get("effect_id"), f"compiled_damage_{index}"),
                 "kind": "damage",
                 "amount": _clamp(raw.get("amount", raw.get("damage")), 8, 0, 320),
                 "damage_type": str(raw.get("damage_type") or "light") if str(raw.get("damage_type") or "light") in {"light", "physical", "arcane"} else "light",
-            })
+            }
+            if raw.get("radius") is not None or raw.get("radius_cells") is not None:
+                effect["radius_cells"] = _cells(
+                    raw.get("radius_cells", raw.get("radius")), 1
+                )
+            effects.append(effect)
         elif kind == "slow":
             effects.append({
                 "effect_id": _safe_id(raw.get("effect_id"), f"compiled_slow_{index}"),
                 "kind": "slow",
-                "duration_ms": int(_clamp(raw.get("duration_ms"), 1200, 0, 15000)),
-                "strength": _clamp(raw.get("strength", raw.get("ratio")), 0.2, 0, 1),
+                "duration_ms": int(
+                    _clamp(
+                        raw.get("duration_ms", float(raw.get("duration", 1.2)) * 1000),
+                        1200,
+                        0,
+                        15000,
+                    )
+                ),
+                "strength": _clamp(
+                    raw.get("strength", raw.get("ratio", raw.get("slow_ratio"))),
+                    0.2,
+                    0,
+                    1,
+                ),
             })
         elif kind in {"aura", "aura_buff"}:
             effects.append({
@@ -394,13 +419,38 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
         raise ValueError("compiled gameplay has no supported effect block")
     fallback = _fallback_behavior(asset_kind)
     fallback["effect_blocks"] = effects
-    cost = stats.get("cost", stats.get("build_cost", stats.get("deploy_cost")))
-    fallback["cost"]["amount"] = _clamp(cost, fallback["cost"]["amount"], 0, 999)
-    fallback["cooldown"]["milliseconds"] = int(
-        _clamp(stats.get("cooldown_ms"), fallback["cooldown"]["milliseconds"], 0, 120000)
+    costs = _json_object(gameplay.get("costs"))
+    cost = stats.get(
+        "cost",
+        stats.get(
+            "build_cost",
+            stats.get("deploy_cost", costs.get("materials", costs.get("amount"))),
+        ),
     )
-    if "range" in stats:
-        fallback["targeting"]["range_cells"] = _clamp(stats.get("range"), 2.5, 0.3, 8)
+    fallback["cost"]["amount"] = _clamp(cost, fallback["cost"]["amount"], 0, 999)
+    power = next(
+        (
+            _json_object(item).get("power_per_second")
+            for item in _json_list(gameplay.get("effect_blocks"))
+            if _json_object(item).get("type") == "power_cost"
+        ),
+        None,
+    )
+    if power is not None:
+        fallback["cost"] = {
+            "resource": "power",
+            "amount": _clamp(power, 1, 0, 999),
+        }
+    cooldown_ms = stats.get("cooldown_ms")
+    if cooldown_ms is None and stats.get("cooldown") is not None:
+        cooldown_ms = float(stats["cooldown"]) * 1000
+    fallback["cooldown"]["milliseconds"] = int(
+        _clamp(cooldown_ms, fallback["cooldown"]["milliseconds"], 0, 120000)
+    )
+    if "range" in stats or "range_cells" in stats:
+        fallback["targeting"]["range_cells"] = _cells(
+            stats.get("range_cells", stats.get("range")), 2.5
+        )
     return fallback
 
 

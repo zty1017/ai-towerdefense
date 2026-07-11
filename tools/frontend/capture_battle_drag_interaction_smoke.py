@@ -198,6 +198,7 @@ def interaction_passed(before: dict[str, Any], after: dict[str, Any], tool: str)
         and (resource_spent or delivery_charge_spent)
         and deployed
         and default_use_spent
+        and after.get("selectedTool") is None
     )
 
 
