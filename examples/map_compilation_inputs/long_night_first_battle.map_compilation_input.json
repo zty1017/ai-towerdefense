@@ -1,0 +1,11 @@
+{
+  "schema_version": "map_compilation_input.v0.1",
+  "input_id": "map_input_long_night_first_battle_v0_1",
+  "created_at": "2026-07-11T00:00:00Z",
+  "battle_config_path": "../../game_data/demo/first_battle_config.json",
+  "map_style_pack_path": "../map_style_packs/long_night_ruined_outpost.map_style_pack.json",
+  "visual_generation": {
+    "provider_handoff": true
+  }
+}
+
