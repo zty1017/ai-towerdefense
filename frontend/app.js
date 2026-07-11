@@ -228,6 +228,7 @@ import {
     loadData,
     loadFeatureRuntime,
     loadMap,
+    loadNodeRuntime,
     nodePlayable,
     resolveAssetUrl,
     routeCurrent,
@@ -1189,14 +1190,16 @@ import {
         // Keep the last known route.
       }
     }
+    const routeNodeId = (routeCurrent() || {}).node_id;
     const selected = selectedMapNode();
-    if (selected && isCurrentNode(selected.stable_internal_id)) {
-      state.selectedNodeId = selected.stable_internal_id;
-    }
+    const nodeId = routeNodeId || (selected && selected.stable_internal_id) || currentNodeId();
+    state.selectedNodeId = nodeId;
+    state.selectedMapNodeId = nodeId;
     try {
-      await Promise.all([loadBriefing(), loadBattleConfig()]);
-    } catch {
-      // Static fallback content is already loaded.
+      await loadNodeRuntime(nodeId);
+    } catch (error) {
+      renderError(`当前节点资料未能完整装载：${error.message || "请重试"}`);
+      return;
     }
     if (state.data.suggestedInput) {
       state.intentText = state.data.suggestedInput;
@@ -1371,7 +1374,7 @@ import {
         flowVisualSmoke: flowVisualSmokeMode(),
         spawnSchedule: buildSpawnSchedule(config),
       }),
-      selectedTool: "basic",
+      selectedTool: null,
       draggingTool: null,
       dragPointer: null,
       hoverCell: null,
@@ -1491,14 +1494,17 @@ import {
   const cancelToolDrag = (event) => handleCancelToolDrag(battleInputContext, event);
 
   function deployToolAt(tool, cell) {
-    if (tool === "basic") placeBasicDefense(cell);
+    if (!tool) return false;
+    if (tool === "basic") return placeBasicDefense(cell);
     if (tool === "sample") {
       const projected = findBattleToolProjection("sample", battleToolProjection());
-      if (projected && projected.objectId !== "sample_trap_7f3a") deployRuntimeTool("sample", cell);
-      else placeSampleTrap(cell);
+      if (projected && projected.objectId !== "sample_trap_7f3a") {
+        return deployRuntimeTool("sample", cell);
+      }
+      return placeSampleTrap(cell);
     }
-    if (tool === "support") useSupportPulse(cell);
-    if (!["basic", "sample", "support"].includes(tool)) deployRuntimeTool(tool, cell);
+    if (tool === "support") return useSupportPulse(cell);
+    return deployRuntimeTool(tool, cell);
   }
 
   function toolUnavailableText(tool) {
@@ -1580,7 +1586,7 @@ import {
   }
 
   function placeBasicDefense(cell) {
-    placeBasicDefenseAction({
+    return placeBasicDefenseAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("basic", battleToolProjection()),
@@ -1591,7 +1597,7 @@ import {
   }
 
   function placeSampleTrap(cell) {
-    placeSampleTrapAction({
+    return placeSampleTrapAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("sample", battleToolProjection()),
@@ -1602,7 +1608,7 @@ import {
   }
 
   function useSupportPulse(cell) {
-    useSupportPulseAction({
+    return useSupportPulseAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("support", battleToolProjection()),
@@ -1613,7 +1619,7 @@ import {
   }
 
   function deployRuntimeTool(toolId, cell) {
-    deployRuntimeToolAction({
+    return deployRuntimeToolAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection(toolId, battleToolProjection()),

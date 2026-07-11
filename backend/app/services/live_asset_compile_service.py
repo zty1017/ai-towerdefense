@@ -21,6 +21,28 @@ _EFFECT_REGISTRY = _REPO_ROOT / "shared" / "module_registry" / "effect_blocks.v0
 _DEFAULT_PROFILE = "ark_deepseek_v4_flash"
 
 
+def _dotenv_path() -> Path:
+    configured = os.environ.get("AI_TD_ENV_FILE")
+    if configured:
+        return Path(configured).expanduser()
+    local = _REPO_ROOT / ".env"
+    if local.is_file():
+        return local
+    git_pointer = _REPO_ROOT / ".git"
+    if git_pointer.is_file():
+        try:
+            marker = git_pointer.read_text(encoding="utf-8").strip()
+            if marker.startswith("gitdir:"):
+                git_dir = Path(marker.partition(":")[2].strip()).expanduser().resolve()
+                for parent in git_dir.parents:
+                    candidate = parent / ".env"
+                    if (parent / ".git").exists() and candidate.is_file():
+                        return candidate
+        except OSError:
+            pass
+    return local
+
+
 def _modules():
     for path in (_LLM_DIR, _CONTENT_PIPELINE_DIR):
         value = str(path)
@@ -83,7 +105,7 @@ def compile_candidate(
         return {"status": "fallback", "reason": "disabled", "candidate": None}
 
     adapter, prompt_helper, validator = _modules()
-    adapter.load_dotenv(_REPO_ROOT / ".env")
+    adapter.load_dotenv(_dotenv_path())
     profile_name = os.environ.get("AI_TD_LLM_PROFILE", _DEFAULT_PROFILE)
     profile = adapter.PROFILES.get(profile_name)
     if profile is None or not os.environ.get(profile.env_key):

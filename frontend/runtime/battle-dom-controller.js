@@ -205,7 +205,7 @@ export function createBattleDomController({
   function selectTool(toolId) {
     const battle = getBattle();
     if (!battle) return;
-    battle.selectedTool = toolId || "basic";
+    battle.selectedTool = toolId || null;
     updateBattleDom();
   }
 

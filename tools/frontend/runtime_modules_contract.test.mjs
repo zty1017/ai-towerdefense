@@ -60,6 +60,11 @@ import { createBattleRoadRenderer } from "../../frontend/runtime/battle-road-ren
 import { createBattleSemanticRenderer } from "../../frontend/runtime/battle-semantic-renderer.js";
 import { createBattleTerrainRenderer } from "../../frontend/runtime/battle-terrain-renderer.js";
 import { createBattleWorldRenderer } from "../../frontend/runtime/battle-world-renderer.js";
+import {
+  finishToolDrag,
+  onBattleCanvasClick,
+} from "../../frontend/runtime/battle-input-controller.js";
+import { advanceBattleStep } from "../../frontend/runtime/battle-simulation.js";
 
 function recordingCanvasContext() {
   const calls = [];
@@ -338,6 +343,66 @@ test("frontend data runtime advances static campaign and refreshes route atomica
   assert.equal(state.data.campaignRouter.current.node_id, "lamp_wick_store");
   assert.equal(state.selectedMapNodeId, "lamp_wick_store");
   assert.match(fetched[0], /demo_after_stage_03_northern_road/);
+});
+
+test("frontend data runtime loads one explicit node bundle and rejects mixed-node responses", async () => {
+  const state = {
+    apiBase: "",
+    dataMode: "api",
+    sessionId: "session-node-test",
+    selectedNodeId: "lamp_wick_store",
+    selectedMapNodeId: "lamp_wick_store",
+    data: {
+      campaignRouter: { current: { node_id: "lamp_wick_store" } },
+      briefing: { node_id: "gray_lantern_station" },
+      battleConfig: { node_id: "gray_lantern_station" },
+      layeredMapVisualPackage: { node_id: "gray_lantern_station" },
+    },
+  };
+  let mismatch = false;
+  const runtime = createFrontendDataRuntime({
+    state,
+    location: { search: "", protocol: "http:", hostname: "127.0.0.1", origin: "http://127.0.0.1" },
+    fetchJsonImpl: async (url) => {
+      if (url.includes("/briefing")) {
+        return {
+          node_id: "lamp_wick_store",
+          briefing: { node_id: "lamp_wick_store", display_name: "灯芯仓" },
+          materials: [],
+          npcs: [],
+          suggested_input: "守住灯芯仓",
+        };
+      }
+      if (url.includes("/config")) {
+        const nodeId = mismatch ? "gray_lantern_station" : "lamp_wick_store";
+        return {
+          node_id: nodeId,
+          battle_config: { node_id: nodeId, display_name: nodeId === "lamp_wick_store" ? "灯芯仓" : "灰灯驿站" },
+          map_runtime_package: { node_id: nodeId },
+          map_render_plan_bundle: { node_id: nodeId },
+          layered_map_visual_package: { node_id: nodeId },
+          toolbar_assets: [],
+        };
+      }
+      throw new Error(`unexpected url: ${url}`);
+    },
+  });
+
+  await runtime.loadNodeRuntime("lamp_wick_store");
+  assert.equal(state.data.loadedNodeId, "lamp_wick_store");
+  assert.equal(state.data.briefing.display_name, "灯芯仓");
+  assert.equal(state.data.battleConfig.display_name, "灯芯仓");
+  assert.equal(state.data.layeredMapVisualPackage.node_id, "lamp_wick_store");
+
+  const acceptedSnapshot = { ...state.data };
+  mismatch = true;
+  await assert.rejects(
+    runtime.loadNodeRuntime("lamp_wick_store"),
+    /节点运行数据错配/,
+  );
+  assert.equal(state.data.battleConfig, acceptedSnapshot.battleConfig);
+  assert.equal(state.data.layeredMapVisualPackage, acceptedSnapshot.layeredMapVisualPackage);
+  assert.equal(state.data.loadedNodeId, "lamp_wick_store");
 });
 
 test("battle update orchestration preserves simulation order and outcome boundary", () => {
@@ -1422,6 +1487,74 @@ test("HUD view model remains pure projection of battle state", () => {
   assert.equal(hud.toolbarTools.length, 1);
 });
 
+test("successful deployment consumes selection while failed placement keeps it", () => {
+  const battle = {
+    selectedTool: "basic",
+    draggingTool: null,
+    dragPointer: null,
+    hoverCell: { x: 2, y: 3 },
+  };
+  const context = {
+    getBattle: () => battle,
+    cellFromCanvasEvent: () => ({ x: 2, y: 3 }),
+    deployToolAt: () => true,
+  };
+  onBattleCanvasClick(context, {});
+  assert.equal(battle.selectedTool, null);
+  assert.equal(battle.hoverCell, null);
+
+  battle.selectedTool = "basic";
+  battle.hoverCell = { x: 4, y: 5 };
+  context.deployToolAt = () => false;
+  onBattleCanvasClick(context, {});
+  assert.equal(battle.selectedTool, "basic");
+  assert.deepEqual(battle.hoverCell, { x: 4, y: 5 });
+});
+
+test("drag deployment consumes selection only after the action succeeds", () => {
+  const battle = {
+    selectedTool: "basic",
+    draggingTool: "basic",
+    dragPointer: { x: 10, y: 20 },
+    hoverCell: { x: 1, y: 1 },
+  };
+  const updates = [];
+  const context = {
+    getBattle: () => battle,
+    cellFromCanvasEvent: () => ({ x: 1, y: 1 }),
+    deployToolAt: () => true,
+    setBattleToast: () => {},
+    updateBattleDom: () => updates.push("update"),
+  };
+  finishToolDrag(context, { preventDefault() {} });
+  assert.equal(battle.selectedTool, null);
+  assert.equal(battle.draggingTool, null);
+  assert.equal(updates.length, 1);
+
+  battle.selectedTool = "basic";
+  battle.draggingTool = "basic";
+  context.deployToolAt = () => false;
+  finishToolDrag(context, { preventDefault() {} });
+  assert.equal(battle.selectedTool, "basic");
+  assert.equal(battle.draggingTool, null);
+});
+
+test("sample delivery never changes the player's current tool selection", () => {
+  const battle = {
+    elapsedMs: 0,
+    sampleDeliveryMs: 100,
+    sampleDelivered: false,
+    sampleUses: 0,
+    selectedTool: null,
+    config: { sample_asset: { uses_per_battle: 2 } },
+    cooldowns: {},
+  };
+  const result = advanceBattleStep({ battle, dt: 100 });
+  assert.equal(result.sampleDelivered, true);
+  assert.equal(battle.sampleUses, 2);
+  assert.equal(battle.selectedTool, null);
+});
+
 test("map runtime accessors normalize package-first data and render plan geometry", () => {
   const mapPackage = {
     grid: { width_cells: 20, height_cells: 12 },
@@ -1638,6 +1771,38 @@ test("page feature controllers project injected runtime state without browser gl
   assert.match(workshopRoot.innerHTML, /旧信号塔应急改造间/);
   assert.match(workshopRoot.innerHTML, /巡灯使/);
   assert.match(workshopRoot.innerHTML, /投入试作/);
+  state.research = {
+    status: "proposed",
+    proposal: {
+      proposal_id: "proposal-live",
+      display_name: "旧占位名",
+      summary: "旧占位摘要",
+      risk_note: "本场最多部署 2 次",
+      compiled_candidate: {
+        id: "candidate-live",
+        gameplay: {
+          asset_type: "tower_blueprint",
+          effect_blocks: [
+            { type: "area_damage", amount: 80 },
+            { type: "shield", shield_amount: 50 },
+          ],
+          constraints: { max_instances: 2, requires_power_grid: true },
+        },
+        presentation: {
+          name: "编译候选·灯灰爆鸣塔",
+          short_description: "用灯灰爆鸣清理聚集敌潮。",
+        },
+        provenance: { material_ids: ["lantern_ash", "lamp_shard"] },
+      },
+    },
+  };
+  const liveProposal = workshop.currentProposal();
+  assert.equal(liveProposal.name, "编译候选·灯灰爆鸣塔");
+  assert.match(liveProposal.effect, /80 点范围伤害/);
+  assert.match(liveProposal.effect, /50 点护盾/);
+  assert.match(liveProposal.constraint, /最多部署 2 次/);
+  assert.match(liveProposal.constraint, /稳定供能/);
+  assert.equal(liveProposal.source, "compiled_candidate");
   state.research = { status: "idle", proposal: null };
   workshopContributions = [];
   workshop.renderWorkshop();

@@ -239,7 +239,7 @@ export function createBattleStateFactory({
     optionalHp: (asList(battleObjectives.optional_targets)[0] || {}).durability || 4,
     leaks: 0,
     kills: 0,
-    selectedTool: "basic",
+    selectedTool: null,
     draggingTool: null,
     dragPointer: null,
     hoverCell: null,

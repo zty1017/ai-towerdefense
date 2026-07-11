@@ -8,7 +8,6 @@ export function advanceBattleStep({ battle, dt }) {
   if (sampleDelivered) {
     battle.sampleDelivered = true;
     battle.sampleUses = sampleAsset.uses_per_battle || 2;
-    battle.selectedTool = "sample";
   }
   return { sampleDelivered };
 }

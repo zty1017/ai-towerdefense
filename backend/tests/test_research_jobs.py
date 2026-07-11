@@ -217,6 +217,7 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
     sid = _create_session(client)
     proposal = _create_proposal(client, sid, intent="做一座折射灯塔攻击并拖慢影潮")
     assert proposal["display_name"] == "棱潮束灯塔"
+    assert proposal["compiled_candidate"] == candidate
     assert proposal["compiler_metadata"]["generation"]["mode"] == "live"
     job = client.post(
         f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"

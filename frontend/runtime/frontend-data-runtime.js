@@ -61,6 +61,16 @@ export function createFrontendDataRuntime({
     }
   }
 
+  function assertNodeBound(expectedNodeId, values) {
+    const mismatches = values
+      .map(([label, value]) => [label, value && typeof value === "object" ? value.node_id : null])
+      .filter(([, nodeId]) => nodeId && nodeId !== expectedNodeId);
+    if (mismatches.length) {
+      const detail = mismatches.map(([label, nodeId]) => `${label}:${nodeId}`).join(", ");
+      throw new Error(`节点运行数据错配，期望 ${expectedNodeId}，收到 ${detail}`);
+    }
+  }
+
   function forceStaticDataMode() {
     return queryFlag("static", location) || queryFlag("staticMode", location);
   }
@@ -327,7 +337,7 @@ export function createFrontendDataRuntime({
             ) || {}).world_config || DEFAULT_WORLD_CONFIG,
         });
         await Promise.all([loadMap(), loadCampaignRoute()]);
-        await Promise.all([loadBriefing(), loadBattleConfig()]);
+        await loadNodeRuntime(currentNodeId());
       },
       async loadMap() {
         const response = await apiGet(sessionApiPath("/map"), 3600);
@@ -356,8 +366,7 @@ export function createFrontendDataRuntime({
         }
         return state.data.campaignRouter;
       },
-      async loadBriefing() {
-        const nodeId = currentNodeId();
+      async loadBriefing(nodeId = currentNodeId()) {
         let response;
         try {
           response = await apiGet(sessionApiPath(`/nodes/${nodeId}/briefing`), 3600);
@@ -369,6 +378,10 @@ export function createFrontendDataRuntime({
             suggested_input: "我想做一个能稳住当前节点防线的临时装置。",
           };
         }
+        assertNodeBound(nodeId, [
+          ["briefing_response", response],
+          ["briefing", response.briefing],
+        ]);
         Object.assign(state.data, {
           briefing: response.briefing,
           materials: response.materials,
@@ -376,16 +389,56 @@ export function createFrontendDataRuntime({
           suggestedInput: response.suggested_input,
           activatedRuntimeBundle:
             response.activated_runtime_bundle || state.data.activatedRuntimeBundle || null,
+          loadedBriefingNodeId: nodeId,
         });
         return state.data.briefing;
       },
-      async loadBattleConfig() {
-        const nodeId = currentNodeId();
+      async loadBattleConfig(nodeId = currentNodeId()) {
         const response = await apiGet(sessionApiPath(`/battles/${nodeId}/config`), 5000);
+        let mapRuntimePackage = response.map_runtime_package || null;
+        let mapRenderPlanBundle = response.map_render_plan_bundle || null;
+        if (!mapRuntimePackage) {
+          try {
+            const mapResponse = await apiGet(
+              sessionApiPath(`/battles/${nodeId}/map-runtime-package`),
+              3600,
+            );
+            assertNodeBound(nodeId, [["map_runtime_response", mapResponse]]);
+            mapRuntimePackage = mapResponse.map_runtime_package;
+          } catch {
+            mapRuntimePackage = null;
+          }
+        }
+        if (!mapRenderPlanBundle) {
+          try {
+            const mapPlanResponse = await apiGet(
+              sessionApiPath(`/battles/${nodeId}/map-render-plan`),
+              3600,
+            );
+            assertNodeBound(nodeId, [["map_render_plan_response", mapPlanResponse]]);
+            mapRenderPlanBundle = mapPlanResponse.map_render_plan_bundle;
+          } catch {
+            mapRenderPlanBundle = null;
+          }
+        }
+        const layeredMapVisualPackage =
+          response.layered_map_visual_package ||
+          (await fetchOptionalJson(
+            `${state.apiBase}/assets/layered_maps/${encodeURIComponent(nodeId)}/layered_map_visual_package.v0.1.json`,
+            null,
+          ));
+        assertNodeBound(nodeId, [
+          ["battle_response", response],
+          ["battle_config", response.battle_config],
+          ["map_runtime_package", mapRuntimePackage],
+          ["map_render_plan_bundle", mapRenderPlanBundle],
+          ["layered_map_visual_package", layeredMapVisualPackage],
+        ]);
         Object.assign(state.data, {
           battleConfig: response.battle_config,
-          mapRuntimePackage: response.map_runtime_package || null,
-          mapRenderPlanBundle: response.map_render_plan_bundle || null,
+          mapRuntimePackage,
+          mapRenderPlanBundle,
+          layeredMapVisualPackage,
           toolbarAssets: response.toolbar_assets,
           sampleDeliveryAsset: response.sample_delivery_asset,
           mediaManifest: response.media_manifest,
@@ -396,33 +449,8 @@ export function createFrontendDataRuntime({
             response.runtime_art_atlas_manifest || state.data.runtimeArtAtlasManifest,
           activatedRuntimeBundle:
             response.activated_runtime_bundle || state.data.activatedRuntimeBundle || null,
+          loadedBattleNodeId: nodeId,
         });
-        if (!state.data.mapRuntimePackage) {
-          try {
-            const mapResponse = await apiGet(
-              sessionApiPath(`/battles/${nodeId}/map-runtime-package`),
-              3600,
-            );
-            state.data.mapRuntimePackage = mapResponse.map_runtime_package;
-          } catch {
-            state.data.mapRuntimePackage = null;
-          }
-        }
-        if (!state.data.mapRenderPlanBundle) {
-          try {
-            const mapPlanResponse = await apiGet(
-              sessionApiPath(`/battles/${nodeId}/map-render-plan`),
-              3600,
-            );
-            state.data.mapRenderPlanBundle = mapPlanResponse.map_render_plan_bundle;
-          } catch {
-            state.data.mapRenderPlanBundle = null;
-          }
-        }
-        state.data.layeredMapVisualPackage = await fetchOptionalJson(
-          `${state.apiBase}/assets/layered_maps/${encodeURIComponent(nodeId)}/layered_map_visual_package.v0.1.json`,
-          state.data.layeredMapVisualPackage || null,
-        );
         return state.data.battleConfig;
       },
       async loadFeatureRuntime(nodeId = currentNodeId()) {
@@ -594,8 +622,7 @@ export function createFrontendDataRuntime({
         state.selectedMapNodeId = current ? current.node_id : state.selectedMapNodeId || NODE_ID;
         return state.data.campaignRouter;
       },
-      async loadBriefing() {
-        const nodeId = currentNodeId();
+      async loadBriefing(nodeId = currentNodeId()) {
         const nodePaths = staticNodePathsFor(nodeId);
         const briefing = nodePaths.briefing
           ? await fetchJsonImpl(nodePaths.briefing, {}, 3600)
@@ -605,11 +632,11 @@ export function createFrontendDataRuntime({
           materials: briefing.available_materials || (state.data.pack || {}).materials || [],
           suggestedInput:
             nodePaths.suggestedInput || "我想做一个能稳住当前节点防线的临时装置。",
+          loadedBriefingNodeId: nodeId,
         });
         return state.data.briefing;
       },
-      async loadBattleConfig() {
-        const nodeId = currentNodeId();
+      async loadBattleConfig(nodeId = currentNodeId()) {
         const nodePaths = staticNodePathsFor(nodeId);
         const [
           battleConfig,
@@ -646,13 +673,19 @@ export function createFrontendDataRuntime({
                 semantic_visual_consistency_report: mapSemanticVisualConsistencyReport,
               }
             : null;
+        assertNodeBound(nodeId, [
+          ["battle_config", battleConfig],
+          ["map_runtime_package", mapRuntimePackage],
+          ["map_render_plan_bundle", mapRenderPlanBundle],
+          ["layered_map_visual_package", layeredMapVisualPackage],
+        ]);
         Object.assign(state.data, {
           battleConfig,
           mapRuntimePackage,
           mapRenderPlanBundle,
           layeredMapVisualPackage,
+          loadedBattleNodeId: nodeId,
         });
-        await this.loadCampaignRoute();
         return state.data.battleConfig;
       },
       async loadFeatureRuntime() {
@@ -710,12 +743,46 @@ export function createFrontendDataRuntime({
     };
   }
 
-  function loadBriefing() {
-    return dataAdapter().loadBriefing();
+  function loadBriefing(nodeId) {
+    return dataAdapter().loadBriefing(nodeId);
   }
 
-  function loadBattleConfig() {
-    return dataAdapter().loadBattleConfig();
+  function loadBattleConfig(nodeId) {
+    return dataAdapter().loadBattleConfig(nodeId);
+  }
+
+  async function loadNodeRuntime(nodeId = currentNodeId()) {
+    const expectedNodeId = nodeId || currentNodeId();
+    const previousData = { ...state.data };
+    const results = await Promise.allSettled([
+      dataAdapter().loadBriefing(expectedNodeId),
+      dataAdapter().loadBattleConfig(expectedNodeId),
+    ]);
+    const failed = results.find((result) => result.status === "rejected");
+    const routeChanged = currentNodeId() !== expectedNodeId;
+    if (failed || routeChanged) {
+      for (const key of Object.keys(state.data)) delete state.data[key];
+      Object.assign(state.data, previousData);
+      if (failed) throw failed.reason;
+      throw new Error(`节点在装载期间发生变化：${expectedNodeId}`);
+    }
+    if (
+      state.data.loadedBriefingNodeId !== expectedNodeId ||
+      state.data.loadedBattleNodeId !== expectedNodeId
+    ) {
+      for (const key of Object.keys(state.data)) delete state.data[key];
+      Object.assign(state.data, previousData);
+      throw new Error(`节点运行数据未完整装载：${expectedNodeId}`);
+    }
+    state.data.loadedNodeId = expectedNodeId;
+    return {
+      nodeId: expectedNodeId,
+      briefing: state.data.briefing,
+      battleConfig: state.data.battleConfig,
+      mapRuntimePackage: state.data.mapRuntimePackage,
+      mapRenderPlanBundle: state.data.mapRenderPlanBundle,
+      layeredMapVisualPackage: state.data.layeredMapVisualPackage,
+    };
   }
 
   function loadCampaignRoute() {
@@ -753,6 +820,7 @@ export function createFrontendDataRuntime({
     loadData,
     loadFeatureRuntime,
     loadMap,
+    loadNodeRuntime,
     nodePlayable,
     requestedStaticNodeId,
     resolveAssetUrl,
