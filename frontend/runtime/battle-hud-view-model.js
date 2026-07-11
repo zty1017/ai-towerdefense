@@ -46,16 +46,38 @@ export function buildBattleToolbarViewModel({ battle, tools, isToolReady }) {
   });
 }
 
+const NEUTRAL_SAMPLE_DELIVERED_TEXT = "临时装置已送达。";
+const NEUTRAL_ENVIRONMENT_TEXT = "当前节点战场条件尚未明确记录。";
+const NEUTRAL_ENEMY_WEAKNESS = "观察敌潮走向，优先守住核心。";
+const NEUTRAL_NPC_ADVICE = "在主路边缘部署防御，别让第一波直冲核心。";
+const NEUTRAL_NPC_AVATAR_ALT = "节点联络人";
+
+function asString(value, fallback = "") {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+function asObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
 export function buildBattleHudViewModel({
   battle,
   objectives,
   sampleProgressText,
   nextWaveLabel,
   npcAvatarUrl,
+  npcAvatarAlt,
+  sampleDeliveredText,
+  tacticalHints,
   toolbarTools,
 }) {
   const coreTarget = (objectives || {}).core_target || {};
   const optionalTarget = ((objectives || {}).optional_targets || [])[0] || {};
+  const hints = asObject(tacticalHints);
+  const sampleText = asString(sampleDeliveredText, NEUTRAL_SAMPLE_DELIVERED_TEXT);
+  const coreName = asString(coreTarget.display_name, "核心");
+  const optionalName = asString(optionalTarget.display_name, "附属设施");
   return {
     stats: [
       { label: "波次", value: battleWaveLabel(battle) },
@@ -66,26 +88,24 @@ export function buildBattleHudViewModel({
     ],
     tasksTitle: "本场目标",
     taskItems: [
-      { title: "守住核心", text: (battle.config || {}).victory_condition || "" },
-      { title: "保护信标", text: `当前耐久 ${battle.optionalHp}/${optionalTarget.durability || 4}` },
+      { title: `守住${coreName}`, text: (battle.config || {}).victory_condition || "" },
+      { title: "保护目标", text: `${optionalName} · 当前耐久 ${battle.optionalHp}/${optionalTarget.durability || 4}` },
       {
         title: "现场状态",
-        text: battle.sampleDelivered ? "折光绊索已送达。" : sampleProgressText,
+        text: battle.sampleDelivered ? sampleText : sampleProgressText,
       },
-      { title: "环境影响", text: "低雾压在路径转角，迟滞场更容易成形。" },
+      { title: "环境影响", text: asString(hints.fieldCondition, NEUTRAL_ENVIRONMENT_TEXT) },
     ],
     info: {
       avatarUrl: npcAvatarUrl,
-      avatarAlt: "灰灯驿站守灯人",
+      avatarAlt: asString(npcAvatarAlt, NEUTRAL_NPC_AVATAR_ALT),
       title: "战术面板",
       items: [
         { title: "下一波", text: nextWaveLabel },
-        { title: "敌人弱点", text: "低耐久，受灯栏打击后容易散开。" },
+        { title: "敌人弱点", text: asString(hints.enemyWeakness, NEUTRAL_ENEMY_WEAKNESS) },
         {
           title: "NPC 建议",
-          text: battle.sampleDelivered
-            ? "把绊索压在主路转角，能拖住第二波残影。"
-            : "先在主路边缘立灯栏，别让第一波直冲核心。",
+          text: asString(hints.npcAdvice, NEUTRAL_NPC_ADVICE),
         },
       ],
     },

@@ -28,6 +28,7 @@ import {
   buildBattleToolProjection,
   findBattleToolProjection,
 } from "./runtime/runtime-projection-adapter.js";
+import { buildBattlePresentation } from "./runtime/battle-presentation-projection.js";
 import {
   activatedRuntimeBundleFromData,
   battleConfigFromData,
@@ -503,12 +504,10 @@ import {
     installSmokeProbe: () => installBattleSmokeProbe(),
     preloadImages: () => preloadBattleImages(),
     shouldShowInitialDialogue: () => !flowVisualSmokeMode(),
-    getInitialDialogue: () =>
-      narrativeFeatureProjection.battleIntro(currentNodeId(), {
-        name: "灰灯驿站守灯人",
-        line: "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
-        portraitId: "npc_gray_lantern_keeper_portrait",
-      }),
+    getInitialDialogue: () => {
+      const presentation = battlePresentation();
+      return presentation.introDialogue;
+    },
     resolvePortraitUrl: (portraitId) =>
       mediaUrl(portraitId, "portrait", true) || mediaUrl(portraitId, "icon", true),
     buildHudViewModel: () => battleHudViewModel(),
@@ -667,6 +666,18 @@ import {
 
   function battleConfig() {
     return battleConfigFromData(state.data);
+  }
+
+  function battlePresentation() {
+    const config = battleConfig();
+    const nodeId = currentNodeId();
+    const narrativeIntro = narrativeFeatureProjection.battleIntro(nodeId, {});
+    return buildBattlePresentation({
+      nodeId,
+      battleConfig: config,
+      battle: state.battle || {},
+      narrativeIntro,
+    });
   }
 
   function activatedRuntimeBundle() {
@@ -1055,7 +1066,11 @@ import {
     if (npcId === "npc_workshop_mentor") {
       return mediaUrl("npc_workshop_mentor_portrait", "portrait", true);
     }
-    return mediaUrl("npc_gray_lantern_keeper_portrait", "portrait", true);
+    const portraitId = battlePresentation().npcPortraitId;
+    if (portraitId) {
+      return mediaUrl(portraitId, "portrait", true);
+    }
+    return "";
   }
 
   function sampleIconUrl() {
@@ -1253,7 +1268,7 @@ import {
           <div class="battle-top">
             <div class="battle-status">
               <button class="mini-map" data-action="back-to-map" aria-label="查看态势"></button>
-              <div class="top-stat"><span>节点</span><strong>${safeText(battleConfig().display_name || "灰灯驿站")}</strong></div>
+              <div class="top-stat"><span>节点</span><strong>${safeText(battlePresentation().nodeDisplayName)}</strong></div>
             </div>
             <div class="battle-status" id="battleStats"></div>
             <div class="battle-controls">
@@ -1386,21 +1401,29 @@ import {
   }
 
   function preloadBattleImages() {
-    [
+    const config = battleConfig();
+    const presentation = battlePresentation();
+    const basicDefense = config.basic_defense || {};
+    const preloadUrls = [
       ...mediaPreloadUrls("enemy_shadow_tide_runner", "unit_sprite", true),
       ...mediaPreloadUrls("enemy_shadow_tide_shade", "unit_sprite", true),
       ...mediaPreloadUrls("enemy_shadow_tide_cluster", "unit_sprite", true),
-      ...mediaPreloadUrls("objective_station_core", "objective_sprite", true),
-      ...mediaPreloadUrls("objective_signal_beacon", "objective_sprite", true),
-      ...mediaPreloadUrls("defense_basic_lantern_barricade", "defense_sprite", true),
       ...battleObjectPreloadUrls(),
       sampleIconUrl(),
       ...layeredMapVisualPreloadUrls(),
       ...mapComponentPreloadUrls(),
       ...debugBattleMapVisualUrls(),
-      npcPortraitUrl("npc_gray_lantern_keeper"),
-      npcPortraitUrl("npc_workshop_mentor"),
-    ].forEach((url) => getImage(url));
+    ];
+    if (basicDefense.stable_internal_id) {
+      preloadUrls.push(
+        ...mediaPreloadUrls(`defense_${basicDefense.stable_internal_id}`, "defense_sprite", true),
+      );
+    }
+    if (presentation.npcPortraitId) {
+      preloadUrls.push(mediaUrl(presentation.npcPortraitId, "portrait", true));
+    }
+    preloadUrls.push(npcPortraitUrl("npc_workshop_mentor"));
+    preloadUrls.forEach((url) => getImage(url));
   }
 
   function resizeBattleCanvas() {
@@ -1647,7 +1670,8 @@ import {
   }
 
   async function activateDeliveredSample() {
-    let displayName = "折光绊索";
+    const presentation = battlePresentation();
+    let displayName = presentation.sampleDisplayName;
     if (isApiMode() && state.research.jobPromise) {
       try {
         const job = await state.research.jobPromise;
@@ -1680,9 +1704,9 @@ import {
     setBattleToast(`样品完成：${displayName} x${state.battle ? state.battle.sampleUses : 2}`);
     if (!flowVisualSmokeMode()) {
       showDialogue(
-        "临时工坊老师傅",
-        `${displayName}封装完成。把它压在转角，影潮会被那道折光拖住。`,
-        "npc_workshop_mentor_portrait",
+        presentation.npcDisplayName,
+        `${displayName}封装完成。可以部署到战场了。`,
+        presentation.npcPortraitId,
       );
     }
   }
@@ -1700,12 +1724,16 @@ import {
   }
 
   function battleHudViewModel() {
+    const presentation = battlePresentation();
     return buildBattleHudViewModel({
       battle: state.battle,
       objectives: mapObjectives(),
       sampleProgressText: sampleProgressMessage(),
       nextWaveLabel: nextWaveText(),
-      npcAvatarUrl: npcPortraitUrl("npc_gray_lantern_keeper"),
+      npcAvatarUrl: npcPortraitUrl(""),
+      npcAvatarAlt: presentation.npcAvatarAlt,
+      sampleDeliveredText: presentation.sampleDeliveredText,
+      tacticalHints: presentation.tacticalHints,
       toolbarTools: battleToolbarViewModel(),
     });
   }
@@ -1746,15 +1774,22 @@ import {
   }
 
   function battleToolbarViewModel() {
-    const basicUrl = mediaUrl("defense_basic_lantern_barricade", "icon", true);
-    const sampleUrl = sampleIconUrl();
-    const npcUrl = mediaUrl("npc_gray_lantern_keeper_portrait", "icon", true);
-    const tools = battleToolProjection({
-      basic: basicUrl,
-      sample: sampleUrl,
-      support: npcUrl,
-      asset_light_slow_tower_001: mediaUrl("asset_light_slow_tower_001", "icon"),
-    });
+    const config = battleConfig();
+    const media = {};
+    const basicDefense = config.basic_defense || {};
+    const supportAsset = config.support_asset || {};
+    if (basicDefense.stable_internal_id) {
+      media.basic = mediaUrl(`defense_${basicDefense.stable_internal_id}`, "icon", true);
+    }
+    media.sample = sampleIconUrl();
+    if (supportAsset.stable_internal_id) {
+      media.support = mediaUrl(
+        supportAsset.media_asset_id || supportAsset.stable_internal_id,
+        "icon",
+        true,
+      );
+    }
+    const tools = battleToolProjection({ ...media });
     return buildBattleToolbarViewModel({
       battle: state.battle,
       tools,

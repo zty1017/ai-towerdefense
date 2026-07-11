@@ -2,6 +2,8 @@
   "battle_config_version": "first_battle.v0.1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "gray_lantern_station",
+  "artifact_track": "demo-precompiled",
+  "activated_runtime_object_ids": ["asset_light_slow_tower_001"],
   "display_name": "灰灯驿站·第一场战斗",
   "grid": {
     "projection": "pseudo3d_oblique",
@@ -63,10 +65,19 @@
   ],
   "basic_defense": {
     "stable_internal_id": "basic_lantern_barricade",
+    "runtime_object_id": "basic_lantern_tower_001",
     "display_name": "基础灯栏",
     "summary": "可用基础手段搭建的临时灯栏，能少量拖延敌人，无减速效果。",
     "uses_per_battle": 3,
     "duration_ms": 4000
+  },
+  "support_asset": {
+    "stable_internal_id": "guardian_support_barricade",
+    "runtime_object_id": "guardian_support_001",
+    "media_asset_id": "npc_gray_lantern_keeper_portrait",
+    "display_name": "守灯支援",
+    "uses_per_battle": 1,
+    "summary": "召唤守灯人短时协助防守，对范围内敌人造成打击并延缓其行动。"
   },
   "sample_asset": {
     "stable_internal_id": "sample_trap_7f3a",
@@ -74,6 +85,7 @@
     "template_id": "temporary_trap_sample",
     "lifecycle_state": "ephemeral",
     "display_name": "折光绊索",
+    "toolbar_effect_label": "减速",
     "uses_per_battle": 2,
     "requires_delivery": true,
     "delivery_state": "research_in_progress",
@@ -89,6 +101,22 @@
   },
   "victory_condition": "守住驿站核心至所有波次结束。",
   "failure_condition": "驿站核心耐久归零。",
+  "presentation": {
+    "npc_portrait_id": "npc_gray_lantern_keeper_portrait",
+    "npc_display_name": "灰灯驿站守灯人",
+    "intro_dialogue": {
+      "name": "灰灯驿站守灯人",
+      "line": "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
+      "portrait_id": "npc_gray_lantern_keeper_portrait"
+    },
+    "tactical_hints": {
+      "enemy_weakness": "低耐久，受灯栏打击后容易散开。",
+      "npc_advice_before_sample": "先在主路边缘立灯栏，别让第一波直冲核心。",
+      "npc_advice_after_sample": "把绊索压在主路转角，能拖住第二波残影。",
+      "field_condition": "低雾压在路径转角，迟滞场更容易成形。"
+    },
+    "sample_delivered_text": "折光绊索已送达。"
+  },
   "post_battle": {
     "on_victory": "节点守住，但信标天线可能受损。暴露样品缺陷并获得正式研发线索。",
     "on_failure": "节点失守，但仍记录样品实战表现，世界状态恶化但不终结体验。"

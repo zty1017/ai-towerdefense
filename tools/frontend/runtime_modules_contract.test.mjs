@@ -7,6 +7,7 @@ import {
   buildBattleToolProjection,
   findBattleToolProjection,
 } from "../../frontend/runtime/runtime-projection-adapter.js";
+import { buildBattlePresentation } from "../../frontend/runtime/battle-presentation-projection.js";
 import {
   canPreviewRuntimeToolAt,
   deployRuntimeTool,
@@ -31,7 +32,7 @@ import {
   runtimeSemanticList,
   slotFootprintScaleFromPlan,
 } from "../../frontend/runtime/map-runtime-accessors.js";
-import { toolReady } from "../../frontend/runtime/battle-rules.js";
+import { createBattleStateFactory, toolReady } from "../../frontend/runtime/battle-rules.js";
 import { createFrontendDataRuntime } from "../../frontend/runtime/frontend-data-runtime.js";
 import { createFeatureGateRegistry } from "../../frontend/runtime/feature-gates.js";
 import { createNarrativeFeatureProjection } from "../../frontend/runtime/narrative-feature-projection.js";
@@ -122,9 +123,58 @@ function runtimeBundle(extraObjects = []) {
   };
 }
 
+function battleConfigForTests(overrides = {}) {
+  return {
+    node_id: "gray_lantern_station",
+    display_name: "灰灯驿站·第一场战斗",
+    activated_runtime_object_ids: ["ember_watch_tower_001"],
+    basic_defense: {
+      stable_internal_id: "basic_lantern_barricade",
+      runtime_object_id: "basic_lantern_tower_001",
+      display_name: "基础灯栏",
+      uses_per_battle: 3,
+      duration_ms: 4000,
+    },
+    sample_asset: {
+      stable_internal_id: "sample_trap_7f3a",
+      runtime_object_id: "sample_trap_7f3a",
+      asset_kind: "temporary_trap_sample",
+      display_name: "折光绊索",
+      toolbar_effect_label: "减速",
+      uses_per_battle: 2,
+      requires_delivery: true,
+      delivery_progress_messages: ["现场试作中。"],
+    },
+    support_asset: {
+      stable_internal_id: "guardian_support_barricade",
+      runtime_object_id: "guardian_support_001",
+      display_name: "守灯支援",
+      uses_per_battle: 1,
+    },
+    presentation: {
+      npc_portrait_id: "npc_gray_lantern_keeper_portrait",
+      npc_display_name: "灰灯驿站守灯人",
+      intro_dialogue: {
+        name: "灰灯驿站守灯人",
+        line: "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。",
+        portrait_id: "npc_gray_lantern_keeper_portrait",
+      },
+      tactical_hints: {
+        enemy_weakness: "低耐久，受灯栏打击后容易散开。",
+        npc_advice_before_sample: "先在主路边缘立灯栏，别让第一波直冲核心。",
+        npc_advice_after_sample: "把绊索压在主路转角，能拖住第二波残影。",
+        field_condition: "低雾压在路径转角，迟滞场更容易成形。",
+      },
+      sample_delivered_text: "折光绊索已送达。",
+    },
+    ...overrides,
+  };
+}
+
 test("runtime projection consumes battle_hotbar ABI cost and cooldown", () => {
   const projection = buildBattleToolProjection({
     battle: { basicUses: 2, sampleDelivered: false, sampleUses: 0, supportUses: 1 },
+    battleConfig: battleConfigForTests(),
     activatedRuntimeBundle: runtimeBundle([
       {
         object_id: "ember_watch_tower_001",
@@ -197,6 +247,71 @@ test("runtime projection consumes battle_hotbar ABI cost and cooldown", () => {
   const unsafe = projection.find((tool) => tool.objectId === "unsafe_tool");
   assert.equal(unsafe.id.includes('"'), false);
   assert.equal(unsafe.meta[0], "材料 0");
+});
+
+test("demo-precompiled bundle only exposes node-allowlisted dynamic tools", () => {
+  const bundle = runtimeBundle([
+    {
+      object_id: "wick_only_tower",
+      display_name: "灯芯仓试作塔",
+      asset_kind: "tower_blueprint",
+      lifecycle: { deployable: true },
+      behavior_abi: { ui_surfaces: ["battle_hotbar"] },
+    },
+    {
+      object_id: "other_node_tower",
+      display_name: "其他节点试作塔",
+      asset_kind: "tower_blueprint",
+      lifecycle: { deployable: true },
+      behavior_abi: { ui_surfaces: ["battle_hotbar"] },
+    },
+  ]);
+  bundle.fixture_scope = { example_only: true };
+  const config = battleConfigForTests({ activated_runtime_object_ids: ["wick_only_tower"] });
+  const projection = buildBattleToolProjection({
+    battle: {},
+    battleConfig: config,
+    activatedRuntimeBundle: bundle,
+  });
+  assert.ok(findBattleToolProjection("wick_only_tower", projection));
+  assert.equal(findBattleToolProjection("other_node_tower", projection), null);
+
+  bundle.fixture_scope = { example_only: false };
+  const liveProjection = buildBattleToolProjection({
+    battle: {},
+    battleConfig: config,
+    activatedRuntimeBundle: bundle,
+  });
+  assert.ok(findBattleToolProjection("other_node_tower", liveProjection));
+});
+
+test("node-bound sample carries its compiled label and runtime behavior ABI", () => {
+  const config = battleConfigForTests({
+    basic_defense: null,
+    support_asset: null,
+    sample_asset: {
+      stable_internal_id: "asset_ash_burst_lantern",
+      asset_kind: "tower_blueprint",
+      display_name: "灯灰爆鸣塔",
+      toolbar_effect_label: "范围爆鸣",
+      runtime_behavior_abi: {
+        targeting: { range_cells: 2.8 },
+        effect_blocks: [{ kind: "damage", amount: 12 }],
+        ui_surfaces: ["battle_hotbar"],
+      },
+    },
+  });
+  const projection = buildBattleToolProjection({
+    battle: { sampleDelivered: true, sampleUses: 2 },
+    battleConfig: config,
+    activatedRuntimeBundle: { fixture_scope: { example_only: true }, capabilities: { battle_objects: [] } },
+  });
+  const sample = findBattleToolProjection("sample", projection);
+  assert.equal(sample.name, "灯灰爆鸣塔");
+  assert.equal(sample.assetKind, "tower_blueprint");
+  assert.equal(sample.meta[1], "范围爆鸣");
+  assert.equal(sample.behaviorAbi.targeting.range_cells, 2.8);
+  assert.equal(sample.behaviorAbi.effect_blocks[0].amount, 12);
 });
 
 test("frontend data runtime owns static node routing and asset resolution", async () => {
@@ -1072,6 +1187,7 @@ test("strategic map controller updates DOM and suppresses click after drag", () 
 test("runtime projection keeps new asset kinds out of default slots unless explicitly bound", () => {
   const projection = buildBattleToolProjection({
     battle: { basicUses: 2, sampleDelivered: false, sampleUses: 0, supportUses: 1 },
+    battleConfig: battleConfigForTests(),
     activatedRuntimeBundle: {
       capabilities: {
         battle_objects: [
@@ -1156,6 +1272,7 @@ test("runtime projection supports explicit default binding and collision-safe dy
 test("compiled sample slot accepts a different allowlisted asset kind without duplicating tools", () => {
   const projection = buildBattleToolProjection({
     battle: { basicUses: 2, sampleDelivered: true, sampleUses: 3, supportUses: 1 },
+    battleConfig: battleConfigForTests(),
     activatedRuntimeBundle: {
       capabilities: {
         battle_objects: [
@@ -1482,10 +1599,19 @@ test("HUD view model remains pure projection of battle state", () => {
     sampleProgressText: "封装中",
     nextWaveLabel: "第二波",
     npcAvatarUrl: "/npc.png",
+    sampleDeliveredText: "折光绊索已送达。",
+    tacticalHints: {
+      enemyWeakness: "低耐久",
+      npcAdvice: "先部署防御",
+      fieldCondition: "低雾压路径",
+    },
     toolbarTools,
   });
   assert.equal(hud.stats[0].value, "2/2");
   assert.equal(hud.taskItems[2].text, "折光绊索已送达。");
+  assert.equal(hud.taskItems[3].text, "低雾压路径");
+  assert.equal(hud.info.items[1].text, "低耐久");
+  assert.equal(hud.info.items[2].text, "先部署防御");
   assert.equal(hud.toolbarTools.length, 1);
 });
 
@@ -1580,6 +1706,26 @@ test("sample delivery never changes the player's current tool selection", () => 
   assert.equal(result.sampleDelivered, true);
   assert.equal(battle.sampleUses, 2);
   assert.equal(battle.selectedTool, null);
+});
+
+test("battle state respects node package sample delivery state", () => {
+  const battle = createBattleStateFactory({
+    config: {
+      sample_asset: {
+        display_name: "灯灰爆鸣塔",
+        uses_per_battle: 2,
+        requires_delivery: false,
+        delivery_state: "sample_ready",
+      },
+      waves: [],
+    },
+    objectives: { core_target: { durability: 14 }, optional_targets: [] },
+    mapPackage: {},
+    flowVisualSmoke: false,
+  });
+  assert.equal(battle.sampleDelivered, true);
+  assert.equal(battle.sampleUses, 2);
+  assert.equal(battle.toast, "灯灰爆鸣塔已就绪");
 });
 
 test("map runtime accessors normalize package-first data and render plan geometry", () => {
@@ -1899,6 +2045,61 @@ test("narrative feature projection accepts only node-targeted beats for battle i
     contributionId: "compiled_intro",
   });
   assert.deepEqual(projection.battleIntro("node_b", fallback), fallback);
+});
+
+test("battle presentation projection consumes node-bound config with neutral fallback", () => {
+  const config = battleConfigForTests();
+  const presentation = buildBattlePresentation({
+    nodeId: "gray_lantern_station",
+    battleConfig: config,
+    battle: { sampleDelivered: false },
+    narrativeIntro: null,
+  });
+  assert.equal(presentation.nodeDisplayName, "灰灯驿站·第一场战斗");
+  assert.equal(presentation.npcDisplayName, "灰灯驿站守灯人");
+  assert.equal(presentation.npcPortraitId, "npc_gray_lantern_keeper_portrait");
+  assert.equal(presentation.introDialogue.name, "灰灯驿站守灯人");
+  assert.equal(presentation.introDialogue.line, "第一波很快就会撞进来。样品还在封装，先用基础灯栏争取时间。");
+  assert.equal(presentation.tacticalHints.enemyWeakness, "低耐久，受灯栏打击后容易散开。");
+  assert.equal(presentation.tacticalHints.npcAdvice, "先在主路边缘立灯栏，别让第一波直冲核心。");
+  assert.equal(presentation.tacticalHints.fieldCondition, "低雾压在路径转角，迟滞场更容易成形。");
+  assert.equal(presentation.sampleDisplayName, "折光绊索");
+  assert.equal(presentation.sampleDeliveredText, "折光绊索已送达。");
+
+  const delivered = buildBattlePresentation({
+    nodeId: "gray_lantern_station",
+    battleConfig: config,
+    battle: { sampleDelivered: true },
+    narrativeIntro: null,
+  });
+  assert.equal(delivered.tacticalHints.npcAdvice, "把绊索压在主路转角，能拖住第二波残影。");
+
+  const narrative = buildBattlePresentation({
+    nodeId: "node_a",
+    battleConfig: config,
+    battle: {},
+    narrativeIntro: {
+      name: "巡灯使",
+      line: "北路影潮已经转向。",
+      portraitId: "npc_patrol_portrait",
+      contributionId: "compiled_intro",
+    },
+  });
+  assert.equal(narrative.introDialogue.name, "巡灯使");
+  assert.equal(narrative.introDialogue.line, "北路影潮已经转向。");
+  assert.equal(narrative.introDialogue.portraitId, "npc_patrol_portrait");
+  assert.equal(narrative.introDialogue.contributionId, "compiled_intro");
+
+  const neutral = buildBattlePresentation({
+    nodeId: "unknown_node",
+    battleConfig: {},
+    battle: {},
+    narrativeIntro: null,
+  });
+  assert.equal(neutral.nodeDisplayName, "当前节点");
+  assert.equal(neutral.npcDisplayName, "节点联络人");
+  assert.equal(neutral.tacticalHints.fieldCondition, "当前节点战场条件尚未明确记录。");
+  assert.equal(neutral.sampleDisplayName, "临时装置");
 });
 
 test("root event router installs one delegated lifecycle and dispatches injected commands", () => {

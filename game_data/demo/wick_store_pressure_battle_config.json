@@ -2,6 +2,8 @@
   "battle_config_version": "wick_store_pressure_battle.v0.1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "lamp_wick_store",
+  "artifact_track": "demo-precompiled",
+  "activated_runtime_object_ids": [],
   "display_name": "灯芯仓·压力防守",
   "grid": {
     "projection": "pseudo3d_oblique",
@@ -102,6 +104,36 @@
     "template_id": "tower_blueprint",
     "lifecycle_state": "session_blueprint",
     "display_name": "灯灰爆鸣塔",
+    "toolbar_effect_label": "范围爆鸣",
+    "runtime_behavior_abi": {
+      "placement": {
+        "mode": "build_slot",
+        "slot_source": "map_runtime_package.build_slots",
+        "required_tags": ["tower_slot"]
+      },
+      "cooldown": { "milliseconds": 1800 },
+      "targeting": {
+        "mode": "nearest_path_enemy",
+        "range_cells": 2.8,
+        "line_of_sight": false
+      },
+      "effect_blocks": [
+        {
+          "effect_id": "ash_burst_damage",
+          "kind": "damage",
+          "amount": 12,
+          "damage_type": "light"
+        },
+        {
+          "effect_id": "ash_guard_aura",
+          "kind": "aura",
+          "duration_ms": 1400,
+          "strength": 0.2
+        }
+      ],
+      "ui_surfaces": ["battle_hotbar", "battle_tooltip", "slot_inspector"],
+      "simulation_hooks": ["on_place", "on_attack_tick", "on_wave_end"]
+    },
     "uses_per_battle": 2,
     "requires_delivery": false,
     "delivery_state": "sample_ready",
@@ -115,6 +147,22 @@
   },
   "victory_condition": "守住灯芯仓核心库存，并尽量保住补给线接点。",
   "failure_condition": "灯芯仓核心库存耐久归零。",
+  "presentation": {
+    "npc_portrait_id": "",
+    "npc_display_name": "灯芯仓守库人",
+    "intro_dialogue": {
+      "name": "灯芯仓守库人",
+      "line": "管线方向已经有影潮渗入。灯灰爆鸣塔已封装，把它压在仓门口。",
+      "portrait_id": ""
+    },
+    "tactical_hints": {
+      "enemy_weakness": "重影耐久较高，但爆鸣范围伤害能有效削减聚暗冲击。",
+      "npc_advice_before_sample": "守住仓门与补给线接点之间的通道，别让多路同时压进来。",
+      "npc_advice_after_sample": "灯灰爆鸣塔压在聚集点，能同时覆盖管线和窄道两路残影。",
+      "field_condition": "旧管线区域狭窄，爆鸣与迟滞效果更容易覆盖全场。"
+    },
+    "sample_delivered_text": "灯灰爆鸣塔已就绪。"
+  },
   "post_battle": {
     "on_victory": "灯芯仓守住，补给线恢复，灰烬下发现辉晶。",
     "on_failure": "灯芯仓库存受损，但仍记录诱饵、护幕和爆鸣塔的组合表现。"

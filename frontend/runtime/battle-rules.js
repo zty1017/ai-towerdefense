@@ -220,6 +220,9 @@ export function createBattleStateFactory({
   const battleConfig = config || {};
   const battleObjectives = objectives || {};
   const sample = battleConfig.sample_asset || {};
+  const sampleReady =
+    sample.requires_delivery === false ||
+    ["sample_ready", "ready", "delivered"].includes(String(sample.delivery_state || ""));
   const defaultSampleDeliveryMs = flowVisualSmoke
     ? Math.min(1800, sample.delivery_delay_ms || 30000)
     : sample.delivery_delay_ms || 30000;
@@ -244,9 +247,9 @@ export function createBattleStateFactory({
     dragPointer: null,
     hoverCell: null,
     basicUses: (battleConfig.basic_defense || {}).uses_per_battle || 3,
-    sampleUses: 0,
+    sampleUses: sampleReady ? Number(sample.uses_per_battle || 0) : 0,
     supportUses: 1,
-    sampleDelivered: false,
+    sampleDelivered: sampleReady,
     sampleDeliveryMs:
       sampleDeliveryMsOverride === undefined ? defaultSampleDeliveryMs : sampleDeliveryMsOverride,
     cooldowns: {
@@ -259,7 +262,9 @@ export function createBattleStateFactory({
     finishing: false,
     deployedAssetIds: [],
     selectedObject: null,
-    toast: "样品封装中",
+    toast: sampleReady
+      ? `${sample.display_name || "临时装置"}已就绪`
+      : "样品封装中",
     dialogueOpen: false,
     dialogueWasPaused: false,
     metrics: null,

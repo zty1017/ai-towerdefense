@@ -231,7 +231,7 @@ export function createFrontendDataRuntime({
     return (
       (routeCurrent() || {}).display_name ||
       (state.data.battleConfig || {}).display_name ||
-      "灰灯驿站"
+      "当前节点"
     );
   }
 
@@ -569,6 +569,7 @@ export function createFrontendDataRuntime({
           map,
           briefing,
           battleConfig,
+          sampleDeliveryAsset: battleConfig.sample_asset || null,
           mapRuntimePackage,
           mapRenderPlanBundle,
         };
@@ -581,7 +582,7 @@ export function createFrontendDataRuntime({
         const nodeId = staticNodeId();
         const nodePaths = staticNodePaths();
         const displayName =
-          (state.data.battleConfig || {}).display_name || nodePaths.displayName || "灰灯驿站";
+          (state.data.battleConfig || {}).display_name || nodePaths.displayName || nodeId || "当前节点";
         const requestedIndex = staticCampaignStepIndexForNode(requestedStaticNodeId());
         const currentIndex =
           flowVisualSmokeMode() && requestedStaticNodeId() && requestedIndex >= 0
@@ -681,6 +682,7 @@ export function createFrontendDataRuntime({
         ]);
         Object.assign(state.data, {
           battleConfig,
+          sampleDeliveryAsset: battleConfig.sample_asset || null,
           mapRuntimePackage,
           mapRenderPlanBundle,
           layeredMapVisualPackage,
