@@ -19,9 +19,11 @@ from typing import Any
 try:
     from . import generate_layered_map_visual_candidates as candidate_generator
     from . import image_provider, png_pipeline, vision_review
+    from . import map_visual_candidate_cache
 except ImportError:  # pragma: no cover - direct script/import from tools path.
     import generate_layered_map_visual_candidates as candidate_generator  # type: ignore[no-redef]
     import image_provider  # type: ignore[no-redef]
+    import map_visual_candidate_cache  # type: ignore[no-redef]
     import png_pipeline  # type: ignore[no-redef]
     import vision_review  # type: ignore[no-redef]
 
@@ -37,6 +39,7 @@ COMPONENT_ROLES = {
     "spawn_marker",
     "non_blocking_decoration",
 }
+DEFAULT_CACHE_DIR = candidate_generator.ROOT / "backend" / "data" / "map_visual_candidate_cache"
 
 
 class MapVisualStageError(RuntimeError):
@@ -118,9 +121,43 @@ def compose_prompt(sections: dict[str, str]) -> str:
     )
 
 
+def resolve_cache_dir() -> Path:
+    configured = os.environ.get("AI_TD_MAP_VISUAL_CACHE_DIR")
+    return Path(configured).expanduser() if configured else DEFAULT_CACHE_DIR
+
+
+def required_review_checks(role: str) -> list[str]:
+    return [*COMMON_CHECKS, *ROLE_CHECKS.get(role, ())]
+
+
+def cache_fingerprints(
+    pack: dict[str, Any],
+    request: dict[str, Any],
+    image_profile: image_provider.ImageProfile,
+    vision_profile: vision_review.VisionProfile,
+    minimum_score: float,
+) -> tuple[str, str]:
+    role = str(request.get("role") or "unknown")
+    return (
+        map_visual_candidate_cache.request_fingerprint(
+            pack,
+            request,
+            image_profile_name=image_profile.name,
+            image_model=image_profile.model,
+        ),
+        map_visual_candidate_cache.review_policy_fingerprint(
+            role=role,
+            required_checks=required_review_checks(role),
+            minimum_score=minimum_score,
+            reviewer_profile_name=vision_profile.name,
+            reviewer_model=vision_profile.model,
+        ),
+    )
+
+
 def build_review_prompt(request: dict[str, Any]) -> str:
     role = str(request.get("role") or "unknown")
-    required = [*COMMON_CHECKS, *ROLE_CHECKS.get(role, ())]
+    required = required_review_checks(role)
     context = {
         "role": role,
         "worldbook_id": request.get("worldbook_id"),
@@ -172,7 +209,7 @@ def normalize_vision_review(
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
 ) -> dict[str, Any]:
     role = str(request.get("role") or "unknown")
-    required = [*COMMON_CHECKS, *ROLE_CHECKS.get(role, ())]
+    required = required_review_checks(role)
     raw_checks = raw.get("checks") if isinstance(raw.get("checks"), dict) else {}
     checks = {key: raw_checks.get(key) is True for key in required}
     try:
@@ -355,11 +392,90 @@ def run_role(
     review_max_tokens: int,
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
     credential_locks: list[threading.Lock] | None = None,
+    candidate_cache: map_visual_candidate_cache.CandidateCache | None = None,
 ) -> dict[str, Any]:
     current = copy.deepcopy(request)
     current.setdefault("worldbook_id", pack.get("worldbook_id"))
     attempts: list[dict[str, Any]] = []
     accepted_path: Path | None = None
+    request_fp, policy_fp = cache_fingerprints(
+        pack, request, image_profile, vision_profile, minimum_score
+    )
+    cache_status: dict[str, Any] = {"status": "disabled"}
+    if candidate_cache is not None:
+        restored_path = (
+            output_dir
+            / "cache_restore"
+            / f"{candidate_generator.safe_id(pack.get('node_id'))}."
+            f"{candidate_generator.safe_id(request.get('role'))}.cached.candidate.png"
+        )
+        restored = candidate_cache.restore(
+            request_fingerprint_value=request_fp,
+            review_policy_fingerprint_value=policy_fp,
+            output_path=restored_path,
+        )
+        if restored is not None:
+            role = str(request.get("role") or "")
+            contract = request.get("output_contract")
+            contract = contract if isinstance(contract, dict) else {}
+            ratio_text = str(contract.get("ratio") or "")
+            expected_ratio = None
+            if ":" in ratio_text:
+                left, right = ratio_text.split(":", 1)
+                expected_ratio = int(left) / int(right)
+            deterministic, metrics = deterministic_issues(
+                restored_path, role, expected_ratio
+            )
+            review = copy.deepcopy(restored["review"])
+            required = required_review_checks(role)
+            checks = review.get("checks") if isinstance(review.get("checks"), dict) else {}
+            score = float(review.get("score") or 0)
+            failed = list(
+                dict.fromkeys(
+                    [
+                        *deterministic,
+                        *[name for name in required if checks.get(name) is not True],
+                    ]
+                )
+            )
+            if not failed and score >= minimum_score:
+                review.update(
+                    {
+                        "status": "passed",
+                        "failed_checks": [],
+                        "deterministic_metrics": metrics,
+                        "cache_review_reused": True,
+                    }
+                )
+                return {
+                    "request_id": request.get("request_id"),
+                    "role": request.get("role"),
+                    "status": "passed",
+                    "accepted_candidate_path": str(restored_path.resolve()),
+                    "attempt_count": 0,
+                    "attempts": [],
+                    "cache": {
+                        "status": "hit",
+                        "request_fingerprint": request_fp,
+                        "review_policy_fingerprint": policy_fp,
+                        "cache_entry_path": restored["cache_entry_path"],
+                        "candidate_sha256": restored["candidate_sha256"],
+                        "review": review,
+                    },
+                }
+            restored_path.unlink(missing_ok=True)
+            cache_status = {
+                "status": "rejected_by_current_policy",
+                "request_fingerprint": request_fp,
+                "review_policy_fingerprint": policy_fp,
+                "failed_checks": failed,
+            }
+        else:
+            cache_status = {
+                "status": "miss",
+                "request_fingerprint": request_fp,
+                "review_policy_fingerprint": policy_fp,
+            }
     for attempt in range(1, max(1, max_attempts) + 1):
         attempt_dir = output_dir / f"attempt_{attempt:02d}"
         credential_index = request_index + attempt - 1
@@ -431,6 +547,31 @@ def run_role(
         )
         if review["status"] == "passed":
             accepted_path = candidate_path
+            if candidate_cache is not None:
+                source_prompt_sha = hashlib.sha256(
+                    str(current.get("prompt_brief") or "").encode("utf-8")
+                ).hexdigest()
+                stored = candidate_cache.store(
+                    request_fingerprint_value=request_fp,
+                    review_policy_fingerprint_value=policy_fp,
+                    candidate_path=candidate_path,
+                    review=review,
+                    source_prompt_sha256=source_prompt_sha,
+                    provenance={
+                        "node_id": pack.get("node_id"),
+                        "worldbook_id": pack.get("worldbook_id"),
+                        "request_id": request.get("request_id"),
+                        "role": request.get("role"),
+                        "image_profile": image_profile.name,
+                        "reviewer_profile": vision_profile.name,
+                    },
+                )
+                cache_status = {
+                    "status": "stored",
+                    "request_fingerprint": request_fp,
+                    "review_policy_fingerprint": policy_fp,
+                    **stored,
+                }
             break
         current = repaired_request(current, review["failed_checks"])
     return {
@@ -440,6 +581,7 @@ def run_role(
         "accepted_candidate_path": str(accepted_path.resolve()) if accepted_path else None,
         "attempt_count": len(attempts),
         "attempts": attempts,
+        "cache": cache_status,
     }
 
 
@@ -458,6 +600,7 @@ def run_closed_loop(
     review_max_tokens: int = 1200,
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
     reviewed_fallback_dir: Path | None = None,
+    cache_dir: Path | None = None,
 ) -> dict[str, Any]:
     requests = candidate_generator.selected_requests(pack, [])
     credential_count = max(
@@ -465,6 +608,11 @@ def run_closed_loop(
         sum(1 for env_key in image_profile.env_keys if os.environ.get(env_key)),
     )
     credential_locks = [threading.Lock() for _ in range(credential_count)]
+    candidate_cache = (
+        map_visual_candidate_cache.CandidateCache(cache_dir)
+        if cache_dir is not None
+        else None
+    )
     results_by_index: dict[int, dict[str, Any]] = {}
     failures_by_index: dict[int, dict[str, Any]] = {}
     with ThreadPoolExecutor(max_workers=max(1, min(max_workers, len(requests) or 1))) as executor:
@@ -484,6 +632,7 @@ def run_closed_loop(
                 review_max_tokens=review_max_tokens,
                 minimum_score=minimum_score,
                 credential_locks=credential_locks,
+                candidate_cache=candidate_cache,
             ): (index, request)
             for index, request in enumerate(requests)
         }
@@ -558,6 +707,12 @@ def run_closed_loop(
             ),
             "promotion_count": len(promotions),
             "reviewed_fallback_count": len(reviewed_fallbacks),
+            "cache_hit_count": sum(
+                1 for item in results if item.get("cache", {}).get("status") == "hit"
+            ),
+            "cache_store_count": sum(
+                1 for item in results if item.get("cache", {}).get("status") == "stored"
+            ),
         },
         "results": results,
         "failures": failures,
@@ -578,6 +733,7 @@ def run_closed_loop(
             "automatic_promotion_scope": "reviewed_visual_staging_only",
             "unreviewed_candidate_player_visible": False,
             "minimum_vision_score": minimum_score,
+            "reviewed_candidate_cache_enabled": candidate_cache is not None,
         },
     }
     report_path = output_dir / REPORT_VERSION.replace(".v0.1", ".v0.1.json")
@@ -644,6 +800,7 @@ def main() -> int:
     parser.add_argument("--review-timeout", type=int, default=240)
     parser.add_argument("--review-max-tokens", type=int, default=1200)
     parser.add_argument("--minimum-score", type=float, default=DEFAULT_MIN_VISION_SCORE)
+    parser.add_argument("--cache-dir", type=Path, default=resolve_cache_dir())
     parser.add_argument("--live", action="store_true")
     args = parser.parse_args()
     if not args.live:
@@ -671,6 +828,7 @@ def main() -> int:
         review_timeout=args.review_timeout,
         review_max_tokens=args.review_max_tokens,
         minimum_score=args.minimum_score,
+        cache_dir=args.cache_dir,
     )
     calibration = build_calibration_summary(report)
     calibration_path = args.output_dir / "map_visual_calibration_summary.v0.1.json"

@@ -113,6 +113,7 @@ def process_job(path: Path) -> dict[str, Any] | None:
             max_workers=int(settings.get("max_workers") or 3),
             generation_timeout=int(settings.get("generation_timeout") or 240),
             review_timeout=int(settings.get("review_timeout") or 180),
+            cache_dir=map_visual_closed_loop.resolve_cache_dir(),
         )
         calibration = map_visual_closed_loop.build_calibration_summary(report)
         calibration_path = candidate_dir / "map_visual_calibration_summary.v0.1.json"
