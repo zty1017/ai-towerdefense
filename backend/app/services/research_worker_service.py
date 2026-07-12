@@ -33,9 +33,25 @@ class ResearchWorker:
             return
         assert self._stop is not None
         self._stop.set()
-        await self._task
-        self._task = None
-        self._stop = None
+        task = self._task
+        try:
+            await asyncio.wait_for(
+                task,
+                timeout=max(
+                    1.0,
+                    float(os.environ.get("AI_TD_RESEARCH_WORKER_STOP_SECONDS", "10")),
+                ),
+            )
+        except (TimeoutError, asyncio.CancelledError):
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        except Exception:
+            # A failed background consumer must not prevent the remaining app
+            # services from completing their own shutdown.
+            pass
+        finally:
+            self._task = None
+            self._stop = None
 
     async def _run(self) -> None:
         assert self._stop is not None
@@ -45,16 +61,36 @@ class ResearchWorker:
             float(os.environ.get("AI_TD_RESEARCH_WORKER_POLL_SECONDS", "0.25")),
         )
         while not stop.is_set():
-            claimed = await asyncio.to_thread(research_service.claim_next_job)
+            try:
+                claimed = await asyncio.to_thread(research_service.claim_next_job)
+            except Exception:
+                await self._sleep_or_stop(stop, interval)
+                continue
             if claimed is not None:
                 # The existing workflow runner is synchronous and filesystem
                 # heavy; keep it entirely outside the event-loop thread.
-                await asyncio.to_thread(research_service.run_claimed_job, claimed)
+                try:
+                    await asyncio.to_thread(research_service.run_claimed_job, claimed)
+                except Exception:
+                    try:
+                        await asyncio.to_thread(
+                            research_service.requeue_interrupted_job,
+                            str(claimed["job_id"]),
+                        )
+                    except Exception:
+                        pass
+                    await self._sleep_or_stop(stop, interval)
                 continue
-            try:
-                await asyncio.wait_for(stop.wait(), timeout=interval)
-            except TimeoutError:
-                pass
+            await self._sleep_or_stop(stop, interval)
+
+    @staticmethod
+    async def _sleep_or_stop(stop: asyncio.Event, interval: float) -> None:
+        if stop.is_set():
+            return
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=interval)
+        except TimeoutError:
+            pass
 
 
 worker = ResearchWorker()

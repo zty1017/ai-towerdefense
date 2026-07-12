@@ -1239,7 +1239,11 @@ import {
       let job = null;
       try {
         job = await apiGet(path, 5000);
-      } catch {
+      } catch (error) {
+        if (/HTTP (404|410)\b/.test(String(error && error.message))) {
+          clearRememberedResearchJob(jobId);
+          throw new Error("这份旧试作记录已经失效，请重新提交构想。");
+        }
         // A short service interruption must not lose a workshop job. Keep the
         // player on the current screen and resume from the durable job id.
         await sleep(900);

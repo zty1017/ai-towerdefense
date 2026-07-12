@@ -920,6 +920,17 @@ def claim_job(job_id: str) -> dict[str, Any] | None:
     return dict(row) if row is not None else None
 
 
+def requeue_interrupted_job(job_id: str) -> None:
+    """Best-effort recovery when the worker fails outside workflow handling."""
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE research_jobs SET status = 'queued', player_state_message = ?, "
+            "updated_at = ?, completed_at = NULL "
+            "WHERE job_id = ? AND status = 'running'",
+            ("工坊暂时停顿，正在重新接续这份试作。", now_iso(), job_id),
+        )
+
+
 def _claimed_proposal(claimed: dict[str, Any]) -> dict[str, Any] | None:
     with db_cursor() as cur:
         cur.execute(

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import threading
 import time
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from app.db import db_cursor, now_iso
 from app.services import research_service
+from app.services.research_worker_service import ResearchWorker
 
 
 def _seed_session_and_proposal() -> tuple[str, dict]:
@@ -75,6 +77,48 @@ def test_confirm_same_proposal_is_idempotent(app_env, monkeypatch):
             (proposal["proposal_id"],),
         )
         assert cur.fetchone()["count"] == 1
+
+
+def test_schema_upgrade_preserves_duplicate_job_history(tmp_db_path, monkeypatch):
+    from app import db as db_module
+
+    monkeypatch.setenv("APP_DB_PATH", str(tmp_db_path))
+    db_module.reset_connection()
+    db_module.init_db(str(tmp_db_path))
+    with db_module.db_cursor() as cur:
+        cur.execute("DROP INDEX idx_research_jobs_proposal")
+        ts = now_iso()
+        cur.execute(
+            "INSERT INTO sessions (session_id, display_name, created_at, last_active_at) "
+            "VALUES (?, ?, ?, ?)",
+            ("upgrade-session", "upgrade", ts, ts),
+        )
+        cur.execute(
+            "INSERT INTO research_proposals "
+            "(proposal_id, session_id, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("duplicate-proposal", "upgrade-session", "confirmed", ts, ts),
+        )
+        for job_id, status in (("old-running", "running"), ("new-completed", "completed")):
+            cur.execute(
+                "INSERT INTO research_jobs "
+                "(job_id, session_id, proposal_id, status, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (job_id, "upgrade-session", "duplicate-proposal", status, ts, ts),
+            )
+
+    db_module.reset_connection()
+    db_module.init_db(str(tmp_db_path))
+    with db_module.db_cursor() as cur:
+        cur.execute(
+            "SELECT job_id, proposal_id FROM research_jobs ORDER BY job_id"
+        )
+        rows = cur.fetchall()
+    assert rows == [
+        {"job_id": "new-completed", "proposal_id": "duplicate-proposal"},
+        {"job_id": "old-running", "proposal_id": None},
+    ]
+    db_module.reset_connection()
 
 
 def test_claimed_job_failure_is_durable_and_player_safe(app_env, monkeypatch):
@@ -193,3 +237,54 @@ def test_lifespan_worker_runs_existing_workflows_end_to_end(app_env: Path, monke
         assert Path(current["runtime_package_path"]).is_file()
         assert Path(current["delivery_payload_path"]).is_file()
         assert len(current["trace_paths"]) == 2
+
+
+def test_worker_survives_transient_claim_failure(app_env: Path, monkeypatch):
+    calls = {"count": 0}
+    original_claim = research_service.claim_next_job
+
+    def flaky_claim():
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("temporary database pressure")
+        return original_claim()
+
+    monkeypatch.setattr(research_service, "claim_next_job", flaky_claim)
+    monkeypatch.setenv("AI_TD_RESEARCH_WORKER_MODE", "background")
+    monkeypatch.setenv("AI_TD_RESEARCH_WORKER_POLL_SECONDS", "0.01")
+
+    async def exercise():
+        worker = ResearchWorker()
+        await worker.start()
+        await asyncio.sleep(0.15)
+        assert worker._task is not None and not worker._task.done()
+        await worker.stop()
+
+    asyncio.run(exercise())
+    assert calls["count"] >= 2
+
+
+def test_worker_requeues_unexpected_finalization_failure(app_env: Path, monkeypatch):
+    session_id, _proposal, job = _enqueue(monkeypatch)
+    original_run = research_service.run_claimed_job
+    observed = threading.Event()
+
+    def fail_after_claim(claimed):
+        observed.set()
+        raise RuntimeError("unexpected finalization failure")
+
+    monkeypatch.setattr(research_service, "run_claimed_job", fail_after_claim)
+    monkeypatch.setenv("AI_TD_RESEARCH_WORKER_POLL_SECONDS", "0.01")
+
+    async def exercise():
+        worker = ResearchWorker()
+        await worker.start()
+        deadline = time.monotonic() + 1
+        while not observed.is_set() and time.monotonic() < deadline:
+            await asyncio.sleep(0.01)
+        await worker.stop()
+
+    asyncio.run(exercise())
+    monkeypatch.setattr(research_service, "run_claimed_job", original_run)
+    current = research_service.get_job(session_id, job["job_id"])
+    assert current["status"] == "queued"
