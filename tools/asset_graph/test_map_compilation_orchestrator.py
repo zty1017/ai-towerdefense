@@ -56,6 +56,8 @@ def test_compile_and_resume(tmp_path):
         }
         assert by_role["terrain_base"]["generation_mode"] == "image_to_image"
         assert by_role["terrain_base"]["generation_reference"]["usage"] == "camera_and_clearance_reference_only"
+        assert by_role["terrain_base"]["style_reference"]["usage"] == "world_style_and_render_finish_reference_only"
+        assert "no cartoon" in by_role["terrain_base"]["prompt_brief"]
         assert by_role["terrain_base"]["output_contract"]["size_tier"] == "1K"
         assert by_role["terrain_base"]["output_contract"]["ratio"] == "16:9"
         assert "pure-white studio background" in by_role["road_surface"]["prompt_brief"]

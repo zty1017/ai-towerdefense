@@ -7,6 +7,7 @@
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
     "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "visual_style_reference_path": "game_data/media/layered_maps/lamp_wick_store/backdrops/lamp_wick_store.reviewed_painted_backdrop.png",
     "logic_authority": "map_runtime_package",
     "style_authority": "developer_fixture"
   },

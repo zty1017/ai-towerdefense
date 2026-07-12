@@ -293,6 +293,18 @@ def _build_visual_handoff(
         prompt_pack,
     )
     common_negative = list(prompt_pack["prompts"][0]["negative_constraints"])
+    style_reference_path = _resolve(
+        str((style.get("source_refs") or {}).get("visual_style_reference_path") or "")
+    )
+    style_reference = (
+        {
+            "usage": "world_style_and_render_finish_reference_only",
+            "local_path": _rel(style_reference_path),
+            "sha256": _sha(style_reference_path),
+        }
+        if style_reference_path.is_file()
+        else None
+    )
     layer_specs = [
         {
             "role": "terrain_base",
@@ -302,10 +314,10 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "transform the reference into an uninhabited empty old Chinese courier-station terrain clean plate",
                 "environment": "natural stone and packed-earth ground, sparse damp vegetation, low ruined walls and modest timber buildings only along the outer perimeter; remove every diagram line, marker, circle, platform, route, symbol, person, creature, weapon and text",
-                "style": "polished hand-painted 2D tower-defense game environment with restrained pseudo-3D depth, late-Ming frontier material language, subtle dark-fantasy influence",
+                "style": "high-detail semi-realistic painterly 2D tower-defense environment with restrained pseudo-3D depth, realistic stone timber mud and vegetation materials, late-Ming frontier material language and subtle dark-fantasy influence; match the supplied style reference finish, palette, texture density and contrast; no cartoon, anime, cel shading, thick outlines or toy-like forms",
                 "lighting": "clear moonlit night with soft warm lantern ambience restricted to perimeter buildings, readable midtones and no magical glow",
                 "composition": "preserve only the reference camera framing and broad central clearance; elevated three-quarter top-down 16:9 view, central seventy percent open and low-detail, architecture confined to the outer twenty percent, no central focal object",
-                "quality": "production-ready clean background plate, crisp ground texture, low grain, no baked road, deployment pad, objective, unit, effect or UI",
+                "quality": "production-ready premium strategy-game background plate, detailed but readable materials, crisp ground texture, low grain, no flat-color illustration, no baked road, deployment pad, objective, unit, effect or UI",
             },
         },
         {
@@ -315,7 +327,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "one isolated reusable old Chinese courier-road material strip",
                 "environment": "a single dirt-and-worn-stone strip with soft irregular edges on a completely plain pure-white studio background",
-                "style": "polished hand-painted 2D game texture matching a late-Ming frontier outpost",
+                "style": "semi-realistic high-detail painterly 2D game texture matching the supplied late-Ming frontier style reference, with realistic material breakup and no cartoon outlines or cel shading",
                 "lighting": "neutral soft asset lighting without dramatic shadows or glow",
                 "composition": "elevated top-down view, one centered horizontal strip, generous white margin, no complete map or scenery",
                 "quality": "sharp clean cutout source, seamless material rhythm, no buildings, lamps, characters, signs, symbols, arrows, text or frame",
@@ -328,7 +340,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "one single empty low stone-and-timber tower foundation",
                 "environment": "an isolated flat construction base on a completely plain pure-white studio background",
-                "style": "understated late-Ming frontier craft rendered as a polished hand-painted 2D game component",
+                "style": "understated late-Ming frontier craft rendered as a semi-realistic high-detail painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
                 "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
                 "composition": "elevated top-down view, centered single object, compact oval footprint, generous white margin",
                 "quality": "sharp clean cutout source, empty and unoccupied, no tower, weapon, lantern, character, text, ring, scenery or frame",
@@ -341,7 +353,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "one compact protected-objective foundation with a clear bottom-center anchor",
                 "environment": "isolated on a pure-white studio background",
-                "style": "late-Ming frontier hand-painted 2D game component",
+                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
                 "lighting": "neutral soft asset lighting",
                 "composition": "elevated top-down view, centered single compact object",
                 "quality": "clean cutout source without health bars, halos, units, text or oversized monument forms",
@@ -354,7 +366,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "one restrained enemy entrance terrain marker",
                 "environment": "isolated on a pure-white studio background",
-                "style": "late-Ming frontier hand-painted 2D game component",
+                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
                 "lighting": "neutral dim asset lighting without magical glow",
                 "composition": "elevated top-down view, centered low-profile terrain object",
                 "quality": "clean cutout source without enemies, arrows, warning icons, text or large effects",
@@ -367,7 +379,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "a small grouped set of non-blocking frontier edge props",
                 "environment": "isolated on a pure-white studio background",
-                "style": "late-Ming frontier hand-painted 2D game components",
+                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game components matching the supplied style reference, without cartoon outlines or cel shading",
                 "lighting": "neutral soft asset lighting",
                 "composition": "elevated top-down view, separated compact objects with generous spacing",
                 "quality": "clean cutout source, no unit, tower, objective, projectile, UI icon, text or frame",
@@ -398,6 +410,7 @@ def _build_visual_handoff(
                     if spec["generation_mode"] == "image_to_image"
                     else None
                 ),
+                "style_reference": style_reference,
                 "control_reference": {
                     "usage": "reserved_zone_and_alignment_reference",
                     "local_path": sketch["control_sketch_png_path"],

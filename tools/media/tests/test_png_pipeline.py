@@ -28,6 +28,15 @@ def _sprite_with_noise() -> png_pipeline.PngImage:
 
 
 class PngPipelineTest(unittest.TestCase):
+    def test_center_crop_to_ratio_crops_square_to_widescreen(self) -> None:
+        image = png_pipeline.PngImage(8, 8, bytearray([255, 0, 0, 255] * 64))
+
+        cropped = png_pipeline.center_crop_to_ratio(image, 16 / 9)
+
+        self.assertEqual(cropped.width, 8)
+        self.assertEqual(cropped.height, 4)
+        self.assertEqual(len(cropped.pixels), 8 * 4 * 4)
+
     def test_keep_largest_alpha_component_removes_detached_noise(self) -> None:
         image = _sprite_with_noise()
         cleaned = png_pipeline.keep_largest_alpha_component(image)

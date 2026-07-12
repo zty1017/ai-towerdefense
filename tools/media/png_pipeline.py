@@ -473,6 +473,30 @@ def crop_and_pad(image: PngImage, *, padding: int = 24, alpha_threshold: int = 8
     return PngImage(out_w, out_h, out)
 
 
+def center_crop_to_ratio(image: PngImage, ratio: float) -> PngImage:
+    if ratio <= 0:
+        raise ValueError("ratio must be positive")
+    current = image.width / image.height
+    if abs(current - ratio) < 0.001:
+        return image
+    if current > ratio:
+        target_w = max(1, round(image.height * ratio))
+        target_h = image.height
+        x0 = (image.width - target_w) // 2
+        y0 = 0
+    else:
+        target_w = image.width
+        target_h = max(1, round(image.width / ratio))
+        x0 = 0
+        y0 = (image.height - target_h) // 2
+    out = bytearray(target_w * target_h * 4)
+    for y in range(target_h):
+        src = _idx(image.width, x0, y0 + y)
+        dst = _idx(target_w, 0, y)
+        out[dst : dst + target_w * 4] = image.pixels[src : src + target_w * 4]
+    return PngImage(target_w, target_h, out)
+
+
 def normalize_canvas(
     image: PngImage,
     *,
