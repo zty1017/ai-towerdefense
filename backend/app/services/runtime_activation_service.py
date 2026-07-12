@@ -37,6 +37,15 @@ class RuntimeActivationConflictError(RuntimeError):
     pass
 
 
+class RuntimeSchemaValidationUnavailable(RuntimeError):
+    """Raised when the JSON-Schema validator cannot run its gate.
+
+    This is a controlled, fail-closed signal: callers must treat it as a
+    blocked activation rather than letting the artifact through. It must never
+    be swallowed into an empty error list.
+    """
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         value = json.load(handle)
@@ -83,22 +92,56 @@ def _within(path: Path, root: Path) -> bool:
 
 
 def _schema_errors(value: dict[str, Any], schema_path: Path) -> list[str]:
+    """Validate ``value`` against the JSON-Schema at ``schema_path``.
+
+    Returns the list of human-readable validation errors. The gate is
+    fail-closed: if the validator dependency, a usable validator class, or the
+    schema file is unavailable, this raises ``RuntimeSchemaValidationUnavailable``
+    so the caller blocks activation instead of silently passing it. It never
+    returns an empty list to signal "valid" when validation could not run.
+    """
     try:
         import jsonschema  # type: ignore
-    except ImportError:
-        return []
+    except ImportError as exc:
+        raise RuntimeSchemaValidationUnavailable(
+            f"jsonschema dependency is not installed: {exc}"
+        ) from exc
     validator_cls = getattr(jsonschema, "Draft202012Validator", None) or getattr(
         jsonschema, "Draft7Validator", None
     )
     if validator_cls is None:
-        return []
-    validator = validator_cls(_load_json(schema_path))
+        raise RuntimeSchemaValidationUnavailable(
+            "jsonschema does not expose Draft202012Validator or Draft7Validator"
+        )
+    try:
+        schema = _load_json(schema_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise RuntimeSchemaValidationUnavailable(
+            f"schema file is not readable ({schema_path}): {exc}"
+        ) from exc
+    validator = validator_cls(schema)
     return [
         f"{'/'.join(map(str, error.absolute_path)) or '$'}: {error.message}"
         for error in sorted(
             validator.iter_errors(value), key=lambda item: list(item.absolute_path)
         )
     ]
+
+
+def _receipt_self_errors(receipt: dict[str, Any]) -> list[str]:
+    """Validate the activation receipt against its own schema.
+
+    Genuine structural errors are returned for the caller to escalate as a
+    conflict. If the validator infrastructure is unavailable, the error is
+    converted into a non-empty reason so the caller blocks activation rather
+    than failing open.
+    """
+    try:
+        return _schema_errors(
+            receipt, _SCHEMA_ROOT / "runtime_activation_receipt.v0.1.schema.json"
+        )
+    except RuntimeSchemaValidationUnavailable as exc:
+        return [f"runtime activation receipt schema validation unavailable: {exc}"]
 
 
 def _runtime_package_errors(package: dict[str, Any]) -> list[str]:
@@ -180,7 +223,10 @@ def _provider_promotion_gate(
         report = _load_json(report_path)
     except (OSError, ValueError, json.JSONDecodeError):
         return False, None, ["promotion report is unreadable"]
-    errors = _schema_errors(report, _PROMOTION_SCHEMA)
+    try:
+        errors = _schema_errors(report, _PROMOTION_SCHEMA)
+    except RuntimeSchemaValidationUnavailable as exc:
+        return False, None, [f"promotion report schema validation unavailable: {exc}"]
     if errors:
         return False, None, [f"promotion report schema failed: {errors[0]}"]
     decision = _json_object(report.get("decision"))
@@ -605,7 +651,12 @@ def _build_capability(
         capability["tool_id"] = tool_id_override
     elif requires_delivery:
         capability["tool_id"] = "sample"
-    errors = _schema_errors(capability, _CAPABILITY_SCHEMA)
+    try:
+        errors = _schema_errors(capability, _CAPABILITY_SCHEMA)
+    except RuntimeSchemaValidationUnavailable as exc:
+        raise ValueError(
+            f"battle object capability schema validation unavailable: {exc}"
+        ) from exc
     if errors:
         raise ValueError(f"battle object capability failed: {errors[0]}")
     return capability, warnings, gate_status
@@ -831,12 +882,14 @@ def apply_runtime_package(
     if blocked:
         receipt["blocked_reasons"] = list(dict.fromkeys(blocked))[:32]
         receipt["warnings"] = list(dict.fromkeys(warnings))[:32]
-        receipt_errors = _schema_errors(
-            receipt,
-            _SCHEMA_ROOT / "runtime_activation_receipt.v0.1.schema.json",
-        )
+        receipt_errors = _receipt_self_errors(receipt)
         if receipt_errors:
-            raise RuntimeActivationConflictError(receipt_errors[0])
+            # Schema infra unavailable at this stage means we can only store a
+            # blocked receipt; a genuine structural error is a backend conflict.
+            if any("schema validation unavailable" in item for item in receipt_errors):
+                receipt["blocked_reasons"] = list(dict.fromkeys(blocked + receipt_errors))[:32]
+            else:
+                raise RuntimeActivationConflictError(receipt_errors[0])
         _store_activation(
             activation_id=activation_id,
             session_id=session_id,
@@ -876,7 +929,7 @@ def apply_runtime_package(
     }
     receipt["rollback"] = {"supported": True, "status": "available", "rolled_back_at": None}
     receipt["safety"]["player_runtime_mutation_count"] = 1
-    receipt_errors = _schema_errors(receipt, _SCHEMA_ROOT / "runtime_activation_receipt.v0.1.schema.json")
+    receipt_errors = _receipt_self_errors(receipt)
     if receipt_errors:
         raise RuntimeActivationConflictError(receipt_errors[0])
     _store_activation(
