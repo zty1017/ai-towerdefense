@@ -2464,6 +2464,57 @@ test("strategic map projection merges compiled contributions with world and map 
   assert.doesNotMatch(root.innerHTML, /隐藏节点/);
 });
 
+test("strategic map reveals compiled catalog nodes as world progress changes", () => {
+  const map = {
+    display_name: "动态态势图",
+    nodes: [
+      {
+        stable_internal_id: "lamp_wick_store",
+        display_name: "灯芯仓",
+        kind: "resource_storage",
+        state: "controlled",
+        position: { x: 560, y: 440 },
+      },
+      {
+        stable_internal_id: "old_signal_tower",
+        display_name: "旧信号塔",
+        kind: "battle_hotspot",
+        state: "hidden",
+        position: { x: 1030, y: 430 },
+      },
+    ],
+  };
+  let world = {
+    map_nodes: [
+      { node_id: "old_signal_tower", status: "unknown", visibility: "hidden" },
+    ],
+  };
+  let selectedNodeId = "lamp_wick_store";
+  const projection = createStrategicMapProjection({
+    getMapData: () => map,
+    getRunWorldState: () => world,
+    getProfile: () => ({}),
+    getSelectedNodeId: () => selectedNodeId,
+    getCurrentNodeId: () => selectedNodeId,
+    fallbackNodeId: "lamp_wick_store",
+  });
+
+  assert.equal(projection.mapNodeVisible(map.nodes[1]), false);
+  world = {
+    map_nodes: [
+      { node_id: "old_signal_tower", status: "contested", visibility: "visible" },
+    ],
+  };
+  selectedNodeId = "old_signal_tower";
+  assert.equal(projection.mapNodeVisible(map.nodes[1]), true);
+  assert.equal(projection.nodeState(map.nodes[1]), "contested");
+  assert.equal(projection.selectedMapNode().stable_internal_id, "old_signal_tower");
+
+  const cameraBefore = fitStrategicMapCamera(map, (node) => node.stable_internal_id !== "old_signal_tower");
+  const cameraAfter = fitStrategicMapCamera(map, (node) => projection.mapNodeVisible(node));
+  assert.ok(cameraAfter.centerX > cameraBefore.centerX);
+});
+
 test("app flow orchestrator limits compiled navigation to registered player surfaces", () => {
   let view = "profile";
   const calls = [];

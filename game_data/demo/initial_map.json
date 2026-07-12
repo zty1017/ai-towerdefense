@@ -44,6 +44,24 @@
       "state": "controlled",
       "summary": "储存灯芯碎片与备品，是当前最关键的资源存储设施。",
       "icons": ["resource_storage", "lamp_ware"]
+    },
+    {
+      "stable_internal_id": "old_signal_tower",
+      "display_name": "旧信号塔",
+      "kind": "battle_hotspot",
+      "position": { "x": 1030, "y": 430 },
+      "state": "hidden",
+      "summary": "被长夜吞没的旧式信号塔。只有侦察与前线推进确认威胁后，才会在态势图上显形。",
+      "icons": ["battle_alert", "signal_tower"]
+    },
+    {
+      "stable_internal_id": "northern_road_crossing",
+      "display_name": "北路分潮口",
+      "kind": "scouting_point",
+      "position": { "x": 1080, "y": 170 },
+      "state": "hidden",
+      "summary": "北路影潮分流的观测点，现阶段只能确认一条模糊的行军轮廓。",
+      "icons": ["scouting_point", "dark_route"]
     }
   ],
   "supply_lines": [
@@ -54,6 +72,30 @@
       "to_node_id": "gray_lantern_station",
       "state": "active",
       "summary": "连接余灯中枢与灰灯驿站的主要补给通道。"
+    },
+    {
+      "stable_internal_id": "supply_line_gray_to_wick_store",
+      "display_name": "灰灯驿站至灯芯仓支线",
+      "from_node_id": "gray_lantern_station",
+      "to_node_id": "lamp_wick_store",
+      "state": "known",
+      "summary": "经驿站转向灯芯仓的短途补给支线。"
+    },
+    {
+      "stable_internal_id": "supply_line_wick_store_to_signal_tower",
+      "display_name": "灯芯仓至旧信号塔巡线",
+      "from_node_id": "lamp_wick_store",
+      "to_node_id": "old_signal_tower",
+      "state": "hidden",
+      "summary": "只有旧信号塔被侦察确认后才会显露的废弃巡线路径。"
+    },
+    {
+      "stable_internal_id": "supply_line_signal_tower_to_northern_crossing",
+      "display_name": "旧信号塔至北路分潮口",
+      "from_node_id": "old_signal_tower",
+      "to_node_id": "northern_road_crossing",
+      "state": "hidden",
+      "summary": "沿回光残迹延伸至北路分潮口的侦察路线。"
     }
   ],
   "dark_regions": [

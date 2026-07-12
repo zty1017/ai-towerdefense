@@ -2417,6 +2417,7 @@ import {
       }
     }
     state.selectedMapNodeId = currentNodeId();
+    resetStrategicMapCamera();
     setPlayerView("map");
     render();
   }
@@ -2481,7 +2482,8 @@ import {
         state.mapSyncStatus = "loading";
         renderMap();
         try {
-          await loadMap();
+          await Promise.all([loadMap(), loadCampaignRoute()]);
+          resetStrategicMapCamera();
           state.mapSyncStatus = "success";
         } catch {
           state.mapSyncStatus = "idle";
