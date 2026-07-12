@@ -57,7 +57,7 @@ def test_background_job_runs_closed_loop_and_activates_reviewed_visuals(
     result = service.process_job(job_path)
     assert result is not None
     assert result["status"] == "completed"
-    assert result["result"]["runtime_activated"] is True
+    assert result["result"]["visual_package_applied"] is True
     assert result["result"]["provider_call_count"] == 6
     assert activated == [(input_path, output_dir)]
 

@@ -76,7 +76,10 @@ def list_jobs() -> list[dict[str, Any]]:
                     "closed_loop_status": result.get("closed_loop_status"),
                     "provider_call_count": result.get("provider_call_count", 0),
                     "vision_review_call_count": result.get("vision_review_call_count", 0),
-                    "runtime_activated": result.get("runtime_activated", False),
+                    "visual_package_applied": result.get(
+                        "visual_package_applied",
+                        result.get("runtime_activated", False),
+                    ),
                 }
                 if result
                 else None,
@@ -126,13 +129,13 @@ def process_job(path: Path) -> dict[str, Any] | None:
             "vision_review_call_count": report.get("summary", {}).get(
                 "vision_review_call_count", 0
             ),
-            "runtime_activated": False,
+            "visual_package_applied": False,
         }
         if report.get("runtime_critical_roles_ready"):
             map_compilation_orchestrator.apply_reviewed_visuals(
                 Path(str(job["input_path"])), output_dir, report
             )
-            result["runtime_activated"] = True
+            result["visual_package_applied"] = True
             status = "completed"
         else:
             status = "blocked"
