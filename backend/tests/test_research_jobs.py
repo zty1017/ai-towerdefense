@@ -239,6 +239,14 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
         "required_before_promotion": False,
         "report_ref": None,
     }
+    simulation_ref = Path(promotion["gate_results"]["simulation_gate"]["report_ref"])
+    assert simulation_ref.name == "live_candidate_simulation_report.v0.1.json"
+    assert simulation_ref.exists()
+    simulation = json.loads(simulation_ref.read_text(encoding="utf-8"))
+    assert simulation["candidate_id"] == candidate["id"]
+    assert promotion["gate_results"]["simulation_gate"]["status"] == "passed"
+    assert simulation_ref != evidence_root / "validated_live_asset_candidate.json"
+    assert str(simulation_ref) not in job["trace_paths"]
     package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
     assert package["assets"][0]["display"]["name"] == "棱潮束灯塔"
     assert package["assets"][0]["gameplay_ref"]["path"].endswith(
@@ -260,6 +268,84 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
     )
     assert capability["display_name"] == "棱潮束灯塔"
     assert capability["behavior_abi"]["targeting"]["range_cells"] == 3.4
+
+
+def test_live_candidate_without_playable_impact_is_not_promoted(client, monkeypatch):
+    from app.services import live_asset_compile_service
+
+    candidate = {
+        "id": "asset_live_empty_support",
+        "lifecycle": "ephemeral",
+        "gameplay": {
+            "asset_type": "support_item",
+            "base_stats": {"activation_cost": 12, "cooldown": 8, "use_count": 1},
+            "effect_blocks": [{"type": "power_cost", "power_per_second": 2}],
+            "constraints": {"max_instances": 1},
+            "type_specific": {},
+        },
+        "presentation": {
+            "name": "空响灯芯",
+            "short_description": "尚未形成有效作用的试作品。",
+            "icon_prompt": "clean item icon",
+            "animation_card_prompt": "item animation card",
+            "visual_tags": ["灯芯"],
+        },
+        "provenance": {
+            "proposal_id": "rebound",
+            "mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "provider": "ark_deepseek_v4_flash",
+            "model": "deepseek-v4-flash",
+            "npc_ids": [],
+            "material_ids": [],
+            "validation_status": "pending",
+            "simulation_report_id": None,
+        },
+    }
+    monkeypatch.setattr(
+        live_asset_compile_service,
+        "compile_candidate",
+        lambda **_: {
+            "status": "live_validated",
+            "candidate": candidate,
+            "provenance": {
+                "mode": "live",
+                "profile": "ark_deepseek_v4_flash",
+                "model": "deepseek-v4-flash",
+                "provider_call_performed": True,
+                "raw_prompt_stored": False,
+                "raw_response_stored": False,
+            },
+        },
+    )
+
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent="做一个应急支援灯芯")
+    job_response = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    )
+    assert job_response.status_code == 200, job_response.text
+    job = job_response.json()
+    assert job["status"] == "failed"
+    report_path = Path(job["compiler_metadata"]["runtime_refs"]["promotion_report_path"])
+    promotion = json.loads(report_path.read_text(encoding="utf-8"))
+    simulation_ref = Path(promotion["gate_results"]["simulation_gate"]["report_ref"])
+    simulation = json.loads(simulation_ref.read_text(encoding="utf-8"))
+    assert simulation["candidate_id"] == candidate["id"]
+    assert "no_direct_impact" in simulation["balance_flags"]
+    assert promotion["decision"]["promotion_allowed"] is False
+    assert promotion["decision"]["promotion_decision"] == "blocked_validation_failed"
+    assert promotion["gate_results"]["simulation_gate"]["status"] == "failed"
+    assert simulation_ref.name == "live_candidate_simulation_report.v0.1.json"
+    assert all("mock_compile" not in str(path) for path in [simulation_ref])
+
+    activation = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activation.status_code == 200, activation.text
+    receipt = activation.json()["activation_receipt"]
+    assert receipt["status"] == "blocked"
+    assert receipt["runtime_effect"]["applied"] is False
 
 
 # ---------------------------------------------------------------------------

@@ -35,11 +35,17 @@ from . import (
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _ASSET_GRAPH_DIR = _REPO_ROOT / "tools" / "asset_graph"
+_CONTENT_PIPELINE_DIR = _REPO_ROOT / "tools" / "content_pipeline"
 _REGISTRY_PATH = _REPO_ROOT / "shared" / "asset_graph" / "node_registry.v0.1.json"
 _WORKFLOW_DIR = _REPO_ROOT / "examples" / "workflows"
 
 _MOCK_COMPILE_WORKFLOW = _WORKFLOW_DIR / "mvp_mock_asset_compile.workflow.json"
 _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.json"
+
+# Filename for the deterministic simulation report of the real provider-backed
+# live candidate. Distinct from any mock workflow simulation trace so the
+# promotion gate cannot mistake fixture evidence for live-candidate evidence.
+_LIVE_CANDIDATE_SIMULATION_REPORT_NAME = "live_candidate_simulation_report.v0.1.json"
 
 # All run artifacts land here, never inside the repo.
 _RUNS_ROOT = Path("/tmp/ai_compiled_td_backend_runs")
@@ -98,6 +104,20 @@ def _import_run_workflow():
     import run_workflow as rw  # noqa: WPS433 (deliberate lazy import)
 
     return rw
+
+
+def _import_simulate_asset_candidate():
+    """Import tools/content_pipeline/simulate_asset_candidate.py on demand.
+
+    Used to run the deterministic headless simulation against the real
+    provider-backed live candidate before the promotion report is written.
+    """
+    content_pipeline_str = str(_CONTENT_PIPELINE_DIR)
+    if content_pipeline_str not in sys.path:
+        sys.path.insert(0, content_pipeline_str)
+    import simulate_asset_candidate  # noqa: WPS433 (deliberate lazy import)
+
+    return simulate_asset_candidate
 
 
 def _sanitize_player_text(text: str) -> str:
@@ -249,7 +269,8 @@ def _compiler_metadata_for_job(
         "runtime_package_path": result.get("runtime_package_path"),
         "delivery_payload_path": result.get("delivery_payload_path"),
         "promotion_report_path": result.get("promotion_report_path"),
-        "reviewed_media_fallback_allowed": bool(result.get("promotion_report_path")),
+        "reviewed_media_fallback_allowed": bool(result.get("promotion_report_path"))
+        and not result.get("promotion_blocked"),
         "trace_count": len(result.get("trace_paths") or []),
     }
     metadata["core_artifacts"] = ai_core_artifact_service.research_job_core_artifacts(
@@ -572,16 +593,30 @@ def _run_two_workflows(
                 candidate_path=candidate_path,
             )
             promotion_report_path = None
+            promotion_blocked = False
             generation = as_dict(metadata.get("generation"))
             if generation.get("provider_call_performed") is True and candidate_path is not None:
-                promotion_report_path = live_asset_compile_service.write_promotion_report(
+                simulator = _import_simulate_asset_candidate()
+                simulation_report = simulator.simulate(
+                    compiled_candidate, simulator.DEFAULT_DURATION_SECONDS
+                )
+                simulation_report_path = job_dir / _LIVE_CANDIDATE_SIMULATION_REPORT_NAME
+                simulation_report_path.write_text(
+                    json.dumps(simulation_report, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                promotion_result = live_asset_compile_service.write_promotion_report(
                     package_path=Path(runtime_package_path),
                     candidate_path=candidate_path,
                     job_dir=job_dir,
                     created_at=now_iso(),
                     profile=str(generation.get("profile") or "unknown_profile"),
                     model=str(generation.get("model") or "unknown_model"),
+                    simulation_report=simulation_report,
+                    simulation_report_path=simulation_report_path,
                 )
+                promotion_report_path = promotion_result["path"]
+                promotion_blocked = not promotion_result["promotion_allowed"]
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             return {
                 "trace_paths": trace_paths,
@@ -592,14 +627,20 @@ def _run_two_workflows(
             }
     else:
         promotion_report_path = None
+        promotion_blocked = False
+
+    error: str | None = None
+    if promotion_blocked:
+        error = "live_candidate_simulation_blocked"
 
     return {
         "trace_paths": trace_paths,
         "runtime_package_path": runtime_package_path,
         "delivery_payload_path": delivery_payload_path,
         "promotion_report_path": str(promotion_report_path) if promotion_report_path else None,
+        "promotion_blocked": promotion_blocked,
         "ok": True,
-        "error": None,
+        "error": error,
     }
 
 
@@ -787,7 +828,12 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         },
     )
     completed_at = now_iso()
-    if result["ok"] and result["runtime_package_path"] and result["delivery_payload_path"]:
+    if (
+        result["ok"]
+        and result["runtime_package_path"]
+        and result["delivery_payload_path"]
+        and not result.get("promotion_blocked")
+    ):
         status = "completed"
         player_msg = _sanitize_player_text(
             f"试作封装完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"

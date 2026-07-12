@@ -20,6 +20,11 @@ _CONTENT_PIPELINE_DIR = _REPO_ROOT / "tools" / "content_pipeline"
 _EFFECT_REGISTRY = _REPO_ROOT / "shared" / "module_registry" / "effect_blocks.v0.1.json"
 _DEFAULT_PROFILE = "ark_deepseek_v4_flash"
 
+# Severe simulation flags that unconditionally block promotion. Mirrors
+# asset_promotion_policy.v0.1 SEVERE_SIMULATION_FLAGS so this service can apply
+# the policy without importing the content_pipeline module at runtime.
+_SEVERE_SIMULATION_FLAGS = frozenset({"no_direct_impact", "intel_asset_without_intel_effect"})
+
 
 def _dotenv_path() -> Path:
     configured = os.environ.get("AI_TD_ENV_FILE")
@@ -198,6 +203,39 @@ def _sha256(path: Path) -> str:
 def _write_json(path: Path, value: dict[str, Any]) -> Path:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _evaluate_live_candidate_simulation(
+    simulation_report: dict[str, Any],
+) -> tuple[list[str], list[str]]:
+    """Map a live candidate simulation report to (blockers, review_notes).
+
+    Mirrors asset_promotion_policy.v0.1: severe flags and the
+    ``utility_score < 0.12 and estimated_dps <= 0`` guard block promotion;
+    every other balance flag is recorded as a review-only note and does not
+    block on its own.
+    """
+    flags = [str(flag) for flag in _as_list(simulation_report.get("balance_flags"))]
+    blockers = [
+        f"severe_simulation_flag:{flag}"
+        for flag in flags
+        if flag in _SEVERE_SIMULATION_FLAGS
+    ]
+    utility = simulation_report.get("utility_score")
+    dps = simulation_report.get("estimated_dps")
+    if isinstance(utility, (int, float)) and isinstance(dps, (int, float)):
+        if float(utility) < 0.12 and float(dps) <= 0:
+            blockers.append("simulation_indicates_no_playable_impact")
+    review_notes = [
+        f"review_simulation_flag:{flag}"
+        for flag in flags
+        if flag not in _SEVERE_SIMULATION_FLAGS
+    ]
+    return blockers, review_notes
 
 
 def _write_provider_envelope(
@@ -381,10 +419,31 @@ def _write_staging_manifest(
 def write_promotion_report(
     *, package_path: Path, candidate_path: Path, job_dir: Path, created_at: str,
     profile: str, model: str,
-) -> Path:
-    """Write the explicit report consumed by the runtime activation gate."""
+    simulation_report: dict[str, Any],
+    simulation_report_path: Path,
+) -> dict[str, Any]:
+    """Write the explicit report consumed by the runtime activation gate.
+
+    The ``simulation_gate`` references the real deterministic simulation run
+    against the provider-backed live candidate (written to
+    ``simulation_report_path``). Promotion is only allowed when that simulation
+    raises no severe blockers; otherwise the report records a blocked decision
+    so the runtime activation gate cannot activate the candidate.
+    """
     package_hash = _sha256(package_path)
     candidate_hash = _sha256(candidate_path)
+    blockers, review_notes = _evaluate_live_candidate_simulation(simulation_report)
+    promotion_allowed = not blockers
+    simulation_gate_status = "passed" if promotion_allowed else "failed"
+    simulation_gate: dict[str, Any] = {
+        "status": simulation_gate_status,
+        "required_before_promotion": True,
+        "report_ref": str(simulation_report_path),
+    }
+    gate_notes = blockers + review_notes if not promotion_allowed else review_notes
+    if gate_notes:
+        simulation_gate["notes"] = gate_notes
+
     envelope_path = _write_provider_envelope(
         candidate_path=candidate_path,
         job_dir=job_dir,
@@ -400,6 +459,29 @@ def write_promotion_report(
     )
     staging_id = f"pstaging_{candidate_hash[:20]}"
     staged_artifact_id = f"live_candidate_{candidate_hash[:20]}_staged"
+
+    if promotion_allowed:
+        promotion_decision = "approved_for_runtime_package_build"
+        blocked_reason: str | None = None
+        required_next_actions = ["runtime_activation_apply_gate"]
+        decision_notes = ["Validated candidate was lowered to the declarative runtime ABI."]
+        review_result = "approved"
+        reviewed_notes = [
+            "Schema, ABI allowlist, simulation budget, and session binding passed."
+        ]
+    else:
+        promotion_decision = "blocked_validation_failed"
+        blocked_reason = "live_candidate_simulation_failed"
+        required_next_actions = ["repair_gameplay_core_before_player_delivery"]
+        decision_notes = [
+            "Live candidate simulation blocked promotion: "
+            + "; ".join(blockers)
+        ]
+        review_result = "blocked_pending_review"
+        reviewed_notes = [
+            "Live candidate simulation raised blocking flags; see simulation_gate notes."
+        ]
+
     report = {
         "schema_version": "provider_artifact_promotion_report.v0.1",
         "report_id": f"ppromo_{package_hash[:20]}",
@@ -420,19 +502,19 @@ def write_promotion_report(
             "temporary_url_policy": "local_ref_required",
         },
         "decision": {
-            "promotion_decision": "approved_for_runtime_package_build",
-            "promotion_allowed": True,
-            "blocked_reason": None,
-            "required_next_actions": ["runtime_activation_apply_gate"],
-            "notes": ["Validated candidate was lowered to the declarative runtime ABI."],
+            "promotion_decision": promotion_decision,
+            "promotion_allowed": promotion_allowed,
+            "blocked_reason": blocked_reason,
+            "required_next_actions": required_next_actions,
+            "notes": decision_notes,
         },
         "reviewed_artifacts": [{
             "staged_artifact_id": staged_artifact_id,
             "source_artifact_id": f"live_candidate_{candidate_hash[:20]}",
             "kind": "json_candidate",
             "path": str(candidate_path),
-            "review_result": "approved",
-            "notes": ["Schema, ABI allowlist, simulation budget, and session binding passed."],
+            "review_result": review_result,
+            "notes": reviewed_notes,
         }],
         "gate_results": {
             "source_staging_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(staging_path)},
@@ -440,7 +522,7 @@ def write_promotion_report(
             "media_gate": {"status": "not_applicable", "required_before_promotion": False, "report_ref": None},
             "semantic_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(candidate_path)},
             "human_review": {"status": "not_applicable", "required_before_promotion": False, "report_ref": None},
-            "simulation_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(candidate_path)},
+            "simulation_gate": simulation_gate,
         },
         "promotion_targets": {
             "target_kind": "runtime_package",
@@ -458,4 +540,11 @@ def write_promotion_report(
             "uses_temporary_url": False,
         },
     }
-    return _write_json(job_dir / "provider_artifact_promotion_report.json", report)
+    path = _write_json(job_dir / "provider_artifact_promotion_report.json", report)
+    return {
+        "path": path,
+        "promotion_allowed": promotion_allowed,
+        "blocked_reason": blocked_reason,
+        "blockers": blockers,
+        "review_notes": review_notes,
+    }
