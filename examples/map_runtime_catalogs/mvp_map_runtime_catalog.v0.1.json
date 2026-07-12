@@ -1,0 +1,68 @@
+{
+  "catalog_id": "mvp_map_runtime_catalog_v0_1",
+  "generated_at": "2026-07-07T00:00:00+00:00",
+  "schema_version": "map_runtime_catalog.v0.1",
+  "source_policy": {
+    "catalog_role": "developer_side_map_runtime_package_catalog",
+    "may_modify_map_runtime_package": false,
+    "player_default_runtime": false,
+    "runtime_fact_source": true
+  },
+  "summary": {
+    "node_count": 3,
+    "registered_schema_versions": ["map_runtime_package.v0.1", "map_runtime_package.v0.2"]
+  },
+  "entries": [
+    {
+      "node_id": "gray_lantern_station",
+      "authorization_status": "pending",
+      "quality_status": "reviewed",
+      "packages": {
+        "map_runtime_package.v0.1": {
+          "package_id": "map_pkg_gray_lantern_station_v0_1",
+          "path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+          "release_status": "published"
+        },
+        "map_runtime_package.v0.2": {
+          "package_id": "map_pkg_gray_lantern_station_v0_2",
+          "path": "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json",
+          "release_status": "published_for_gate_review"
+        }
+      }
+    },
+    {
+      "node_id": "lamp_wick_store",
+      "authorization_status": "pending",
+      "quality_status": "reviewed",
+      "packages": {
+        "map_runtime_package.v0.1": {
+          "package_id": "map_pkg_lamp_wick_store_v0_1",
+          "path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+          "release_status": "published"
+        },
+        "map_runtime_package.v0.2": {
+          "package_id": "map_pkg_lamp_wick_store_v0_2",
+          "path": "examples/map_runtime_packages_v02/mvp_wick_store_pressure.map_runtime_package_v02.json",
+          "release_status": "published_for_gate_review"
+        }
+      }
+    },
+    {
+      "node_id": "old_signal_tower",
+      "authorization_status": "pending",
+      "quality_status": "reviewed",
+      "packages": {
+        "map_runtime_package.v0.1": {
+          "package_id": "map_pkg_old_signal_tower_v0_1",
+          "path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+          "release_status": "published"
+        },
+        "map_runtime_package.v0.2": {
+          "package_id": "map_pkg_old_signal_tower_v0_2",
+          "path": "examples/map_runtime_packages_v02/mvp_old_signal_tower_pressure.map_runtime_package_v02.json",
+          "release_status": "published_for_gate_review"
+        }
+      }
+    }
+  ]
+}
