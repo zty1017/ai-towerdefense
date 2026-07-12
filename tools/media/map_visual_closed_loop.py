@@ -293,7 +293,6 @@ def run_role(
                 timeout=generation_timeout,
                 live=True,
                 credential_index=request_index + attempt - 1,
-                minimum_score=minimum_score,
             )
         except Exception as exc:
             raise MapVisualStageError("generation", exc) from exc

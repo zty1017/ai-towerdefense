@@ -261,3 +261,53 @@ def test_provider_failure_reports_generation_stage(tmp_path, monkeypatch):
             "error": "TypeError:external_call_failed",
         }
     ]
+
+
+def test_closed_loop_calls_candidate_generator_with_supported_contract(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+
+    def supported_generation(
+        request_pack_path,
+        request_pack,
+        request,
+        output_dir,
+        profile,
+        *,
+        size_override,
+        timeout,
+        live,
+        credential_index=0,
+    ):
+        candidate = output_dir / "candidate.png"
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        candidate.write_bytes(b"not-reviewed")
+        return {"candidate_path": str(candidate)}
+
+    monkeypatch.setattr(
+        closed_loop.candidate_generator,
+        "run_request",
+        supported_generation,
+    )
+    monkeypatch.setattr(
+        closed_loop,
+        "review_candidate",
+        lambda *_args, **_kwargs: {
+            "status": "failed",
+            "failed_checks": ["worldbook_style_fit"],
+        },
+    )
+    report = closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run",
+        tmp_path / "reviewed",
+        image_provider.PROFILES["agnes_image_flash"],
+        vision_review.PROFILES["agnes_multimodal_flash"],
+        max_attempts=1,
+        max_workers=1,
+    )
+    assert report["summary"]["provider_failure_count"] == 0
+    assert report["summary"]["attempt_count"] == 1
