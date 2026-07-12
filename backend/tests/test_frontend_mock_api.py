@@ -2147,6 +2147,14 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     map_payload = _payload(client.get(f"/api/sessions/{sid}/map"))
     assert map_payload["map"]["display_name"] == "余灯中枢态势图"
     assert map_payload["run_world_state"]["progress"]["phase"] == "first_defense"
+    map_catalog = {
+        item["stable_internal_id"]: item for item in map_payload["map"]["nodes"]
+    }
+    map_state = {
+        item["node_id"]: item for item in map_payload["run_world_state"]["map_nodes"]
+    }
+    assert map_catalog["old_signal_tower"]["state"] == "hidden"
+    assert map_state["old_signal_tower"]["visibility"] == "hidden"
 
     briefing = _payload(
         client.get(f"/api/sessions/{sid}/nodes/gray_lantern_station/briefing")
@@ -5668,6 +5676,19 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
 
     tower_route = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
     assert tower_route["campaign_router"]["current"]["node_id"] == "old_signal_tower"
+    progressed_map = _payload(client.get(f"/api/sessions/{sid}/map"))
+    progressed_nodes = {
+        item["node_id"]: item
+        for item in progressed_map["run_world_state"]["map_nodes"]
+    }
+    assert progressed_nodes["old_signal_tower"]["visibility"] in {
+        "scouted",
+        "visible",
+    }
+    assert progressed_nodes["old_signal_tower"]["status"] in {
+        "known",
+        "contested",
+    }
     tower_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/old_signal_tower/briefing"))
     assert tower_briefing["briefing"]["node_id"] == "old_signal_tower"
     tower = _payload(
