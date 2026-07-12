@@ -152,6 +152,53 @@ def test_closed_loop_promotes_only_after_critical_roles_pass(tmp_path, monkeypat
     assert any(alpha == 0 for alpha in road.pixels[3::4])
 
 
+def test_generated_terrain_can_reuse_reviewed_critical_components(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+    fallback = tmp_path / "canonical"
+    make_test_png(fallback / "textures/test_node.road_tile.png")
+    make_test_png(fallback / "textures/test_node.slot_tile.png")
+
+    def fake_generate(_pack_path, _pack, request, output_dir, _profile, **_kwargs):
+        path = output_dir / f"{request['role']}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        make_test_png(path, white_background=False)
+        return {"candidate_path": str(path)}
+
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", fake_generate)
+    monkeypatch.setattr(
+        closed_loop.vision_review,
+        "call_vision_model",
+        lambda *_args, **_kwargs: json.dumps(
+            {"score": 0.94, "checks": checks, "notes": []}
+        ),
+    )
+
+    report = closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run",
+        tmp_path / "reviewed",
+        image_provider.PROFILES["agnes_image_flash"],
+        vision_review.PROFILES["agnes_multimodal_flash"],
+        max_attempts=1,
+        max_workers=1,
+        reviewed_fallback_dir=fallback,
+    )
+
+    assert report["status"] == "runtime_visuals_ready"
+    assert report["runtime_critical_roles_ready"] is True
+    assert report["summary"]["reviewed_fallback_count"] == 2
+    assert {item["role"] for item in report["reviewed_fallbacks"]} == {
+        "road_surface",
+        "build_slot_platform",
+    }
+
+
 def test_failed_review_retries_with_repaired_prompt(tmp_path, monkeypatch):
     pack = request_pack()
     pack["requests"] = [pack["requests"][0]]

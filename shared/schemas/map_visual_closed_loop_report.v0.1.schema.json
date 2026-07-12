@@ -44,12 +44,14 @@
         "attempt_count": {"type": "integer", "minimum": 0},
         "provider_call_count": {"type": "integer", "minimum": 0},
         "vision_review_call_count": {"type": "integer", "minimum": 0},
-        "promotion_count": {"type": "integer", "minimum": 0}
+        "promotion_count": {"type": "integer", "minimum": 0},
+        "reviewed_fallback_count": {"type": "integer", "minimum": 0}
       }
     },
     "results": {"type": "array", "items": {"type": "object"}},
     "failures": {"type": "array", "items": {"type": "object"}},
     "promotions": {"type": "array", "items": {"type": "object"}},
+    "reviewed_fallbacks": {"type": "array", "items": {"type": "object"}},
     "reviewed_backdrop_source_dir": {"type": ["string", "null"]},
     "reviewed_texture_source_dir": {"type": ["string", "null"]},
     "reviewed_component_source_dir": {"type": ["string", "null"]},
