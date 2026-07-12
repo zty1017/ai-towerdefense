@@ -73,7 +73,11 @@ def _is_node_bound_layered_path(value: object, node_id: str, *, url: bool) -> bo
             ).parts
             layout = "generated"
         else:
-            return False
+            # Custom compiler roots are valid for isolated previews/tests. Root
+            # containment is enforced by the layered package validator; this
+            # helper only proves that the artifact is bound to maps/<node_id>.
+            tail = path.parts
+            layout = "generated"
     if len(tail) < 2 or any(part in {"", ".", ".."} for part in tail):
         return False
     try:
