@@ -45,7 +45,9 @@
         "provider_call_count": {"type": "integer", "minimum": 0},
         "vision_review_call_count": {"type": "integer", "minimum": 0},
         "promotion_count": {"type": "integer", "minimum": 0},
-        "reviewed_fallback_count": {"type": "integer", "minimum": 0}
+        "reviewed_fallback_count": {"type": "integer", "minimum": 0},
+        "cache_hit_count": {"type": "integer", "minimum": 0},
+        "cache_store_count": {"type": "integer", "minimum": 0}
       }
     },
     "results": {"type": "array", "items": {"type": "object"}},
@@ -66,7 +68,8 @@
         "raw_provider_response_stored": {"const": false},
         "automatic_promotion_scope": {"const": "reviewed_visual_staging_only"},
         "unreviewed_candidate_player_visible": {"const": false},
-        "minimum_vision_score": {"type": "number", "minimum": 0, "maximum": 1}
+        "minimum_vision_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "reviewed_candidate_cache_enabled": {"type": "boolean"}
       }
     }
   }

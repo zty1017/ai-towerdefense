@@ -3,6 +3,7 @@ from pathlib import Path
 
 from tools.media import image_provider
 from tools.media import map_visual_closed_loop as closed_loop
+from tools.media import map_visual_candidate_cache
 from tools.media import png_pipeline
 from tools.media import vision_review
 
@@ -398,3 +399,125 @@ def test_closed_loop_calls_candidate_generator_with_supported_contract(tmp_path,
     )
     assert report["summary"]["provider_failure_count"] == 0
     assert report["summary"]["attempt_count"] == 1
+
+
+def test_reviewed_candidate_cache_survives_across_runs(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+    calls = {"generate": 0, "review": 0}
+
+    def fake_generate(_pack_path, _pack, request, output_dir, _profile, **_kwargs):
+        calls["generate"] += 1
+        path = output_dir / f"{request['role']}.png"
+        make_test_png(path, white_background=False)
+        return {"candidate_path": str(path)}
+
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+
+    def fake_review(*_args, **_kwargs):
+        calls["review"] += 1
+        return json.dumps({"score": 0.94, "checks": checks, "notes": []})
+
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", fake_generate)
+    monkeypatch.setattr(closed_loop.vision_review, "call_vision_model", fake_review)
+    kwargs = {
+        "image_profile": image_provider.PROFILES["agnes_image_flash"],
+        "vision_profile": vision_review.PROFILES["agnes_multimodal_flash"],
+        "max_attempts": 1,
+        "max_workers": 1,
+        "cache_dir": tmp_path / "cache",
+    }
+    first = closed_loop.run_closed_loop(
+        pack_path, pack, tmp_path / "run_1", tmp_path / "reviewed_1", **kwargs
+    )
+    second = closed_loop.run_closed_loop(
+        pack_path, pack, tmp_path / "run_2", tmp_path / "reviewed_2", **kwargs
+    )
+
+    assert calls == {"generate": 1, "review": 1}
+    assert first["summary"]["cache_store_count"] == 1
+    assert second["summary"]["cache_hit_count"] == 1
+    assert second["summary"]["attempt_count"] == 0
+    assert second["summary"]["provider_call_count"] == 0
+    assert second["summary"]["vision_review_call_count"] == 0
+    assert second["results"][0]["cache"]["review"]["cache_review_reused"] is True
+
+
+def test_cache_policy_change_forces_fresh_generation(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+    calls = {"generate": 0}
+
+    def fake_generate(_pack_path, _pack, request, output_dir, _profile, **_kwargs):
+        calls["generate"] += 1
+        path = output_dir / f"{request['role']}.png"
+        make_test_png(path, white_background=False)
+        return {"candidate_path": str(path)}
+
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", fake_generate)
+    monkeypatch.setattr(
+        closed_loop.vision_review,
+        "call_vision_model",
+        lambda *_args, **_kwargs: json.dumps(
+            {"score": 0.99, "checks": checks, "notes": []}
+        ),
+    )
+    common = {
+        "image_profile": image_provider.PROFILES["agnes_image_flash"],
+        "vision_profile": vision_review.PROFILES["agnes_multimodal_flash"],
+        "max_attempts": 1,
+        "max_workers": 1,
+        "cache_dir": tmp_path / "cache",
+    }
+    closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run_1",
+        tmp_path / "reviewed_1",
+        minimum_score=0.78,
+        **common,
+    )
+    changed = closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run_2",
+        tmp_path / "reviewed_2",
+        minimum_score=0.95,
+        **common,
+    )
+
+    assert calls["generate"] == 2
+    assert changed["summary"]["cache_hit_count"] == 0
+
+
+def test_cache_rejects_tampered_candidate(tmp_path):
+    cache = map_visual_candidate_cache.CandidateCache(tmp_path / "cache")
+    candidate = tmp_path / "candidate.png"
+    make_test_png(candidate, white_background=False)
+    review = {"status": "passed", "failed_checks": [], "score": 1.0, "checks": {}}
+    stored = cache.store(
+        request_fingerprint_value="a" * 64,
+        review_policy_fingerprint_value="b" * 64,
+        candidate_path=candidate,
+        review=review,
+        source_prompt_sha256="c" * 64,
+        provenance={},
+    )
+    entry_path = Path(stored["cache_entry_path"])
+    entry_path.with_name("candidate.png").write_bytes(b"tampered")
+
+    assert (
+        cache.restore(
+            request_fingerprint_value="a" * 64,
+            review_policy_fingerprint_value="b" * 64,
+            output_path=tmp_path / "restored.png",
+        )
+        is None
+    )

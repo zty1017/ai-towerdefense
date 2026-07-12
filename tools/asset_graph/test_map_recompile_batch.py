@@ -50,6 +50,7 @@ def _fake_closed_loop_factory(critical_ready: bool):
         review_max_tokens: int = 1200,
         minimum_score: float = 0.78,
         reviewed_fallback_dir: Path | None = None,
+        cache_dir: Path | None = None,
     ) -> dict[str, Any]:
         node_id = str(pack.get("node_id") or "map")
         backdrops = reviewed_dir / "backdrops"
