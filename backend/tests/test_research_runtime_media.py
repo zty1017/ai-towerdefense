@@ -203,3 +203,55 @@ def test_failed_visual_review_persists_compact_diagnostic(tmp_path, monkeypatch)
     rendered = json.dumps(evidence, ensure_ascii=False)
     assert "temporary.invalid" not in rendered
     assert "test-key" not in rendered
+
+
+def test_transient_provider_errors_retry_within_one_visual_attempt(
+    tmp_path, monkeypatch
+):
+    from app.services import research_runtime_media_service as service
+
+    monkeypatch.setattr(service, "_mode", lambda: "live")
+    monkeypatch.setattr(service, "published_root", lambda: tmp_path / "published")
+    monkeypatch.setattr(service.image_provider, "load_dotenv", lambda _: None)
+    monkeypatch.setattr(service.vision_review, "load_dotenv", lambda _: None)
+    monkeypatch.setattr(service.image_provider, "get_api_key", lambda _: "test-key")
+    monkeypatch.setattr(service.vision_review, "get_api_key", lambda _: "test-key")
+    monkeypatch.setattr(service.time, "sleep", lambda _seconds: None)
+    credential_indices = []
+
+    def fake_generate(_profile, _prompt, **kwargs):
+        credential_indices.append(kwargs["credential_index"])
+        if len(credential_indices) < 3:
+            raise service.image_provider.TransientHttpError(503)
+        return {"data": [{"url": "https://temporary.invalid/image.png"}]}
+
+    def fake_download(_url, output_path, **_kwargs):
+        _source_png(output_path)
+        return output_path
+
+    monkeypatch.setattr(service.image_provider, "generate_image", fake_generate)
+    monkeypatch.setattr(service.image_provider, "download_image", fake_download)
+    monkeypatch.setattr(
+        service.vision_review,
+        "call_vision_model",
+        lambda *_args, **_kwargs: json.dumps(
+            {
+                "score": 0.95,
+                "checks": {key: True for key in service._REQUIRED_CHECKS},
+                "notes": [],
+            }
+        ),
+    )
+
+    result = service.compile_runtime_media(
+        candidate=_candidate(),
+        asset_kind="tower_blueprint",
+        session_id="session_test",
+        job_id="job_test",
+        job_dir=tmp_path / "job",
+    )
+
+    assert result["status"] == "passed"
+    assert credential_indices == [0, 1, 2]
+    evidence = json.loads(Path(result["evidence_path"]).read_text(encoding="utf-8"))
+    assert evidence["transport_retry_count"] == 2
