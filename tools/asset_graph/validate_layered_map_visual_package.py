@@ -149,8 +149,35 @@ def validate_backend_static_mount() -> list[str]:
     return errors
 
 
-def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
+def validate_generated_world_static_mount() -> list[str]:
+    try:
+        source = BACKEND_MAIN.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return [f"backend static mount source not found: {BACKEND_MAIN}"]
+    errors = []
+    if '"generated_worlds"' not in source:
+        errors.append("backend/app/main.py must register generated_worlds assets")
+    if "content/generated_world_media" not in source:
+        errors.append("generated_worlds mount must expose only generated world media")
+    return errors
+
+
+def validate_manifest(
+    manifest: dict[str, Any],
+    schema_path: Path,
+    *,
+    repository_root: Path = ROOT,
+    media_root: Path | None = None,
+    public_prefix: str = "/assets/layered_maps",
+    validate_static_mount: bool = True,
+) -> list[str]:
     errors: list[str] = []
+    repository_root = repository_root.resolve()
+    media_root = (media_root or (repository_root / "game_data/media/layered_maps")).resolve()
+    try:
+        local_prefix = media_root.relative_to(repository_root).as_posix().rstrip("/") + "/"
+    except ValueError:
+        return ["media_root must stay under repository_root"]
     errors.extend(validate_json_schema(manifest, schema_path))
     scan_forbidden_key_fragments(manifest, "", errors)
     scan_external_urls(manifest, "", errors)
@@ -177,12 +204,15 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
     for index, item in enumerate(media_items):
         role = item.get("role")
         local_path_value = item.get("local_path")
-        if not isinstance(local_path_value, str) or not local_path_value.startswith(
-            "game_data/media/layered_maps/"
-        ):
-            errors.append(f"media_assets[{index}].local_path must be under game_data/media/layered_maps")
+        if not isinstance(local_path_value, str) or not local_path_value.startswith(local_prefix):
+            errors.append(f"media_assets[{index}].local_path must be under {local_prefix}")
             continue
-        local_path = ROOT / local_path_value
+        local_path = (repository_root / local_path_value).resolve()
+        try:
+            local_relative = local_path.relative_to(media_root)
+        except ValueError:
+            errors.append(f"media_assets[{index}].local_path escapes media_root")
+            continue
         if local_path.suffix != ".png":
             errors.append(f"media_assets[{index}].local_path must point to a PNG")
         if not local_path.exists():
@@ -198,9 +228,7 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             continue
         if item.get("width") != width or item.get("height") != height:
             errors.append(f"media_assets[{index}].width/height must match PNG header")
-        expected_url = "/assets/layered_maps/" + local_path.relative_to(
-            ROOT / "game_data/media/layered_maps"
-        ).as_posix()
+        expected_url = public_prefix.rstrip("/") + "/" + local_relative.as_posix()
         if item.get("url") != expected_url:
             errors.append(f"media_assets[{index}].url must be {expected_url}")
         if role == "reviewed_painted_backdrop":
@@ -235,13 +263,11 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
             errors.append(f"media_assets[{index}].source_kind is not supported: {source_kind}")
         source_local_path = item.get("source_local_path")
         if source_kind in {"local_ai_exploration_texture", "local_ai_exploration_backdrop"}:
-            if not isinstance(source_local_path, str) or not source_local_path.startswith(
-                "game_data/media/layered_maps/_exploration/"
-            ):
+            if not isinstance(source_local_path, str) or not source_local_path.startswith(local_prefix):
                 errors.append(
                     f"media_assets[{index}].source_local_path must point to local exploration media"
                 )
-            elif not (ROOT / source_local_path).exists():
+            elif not (repository_root / source_local_path).exists():
                 errors.append(f"media_assets[{index}].source_local_path does not exist: {source_local_path}")
         if source_kind in {
             "compiled_reviewed_texture",
@@ -250,14 +276,14 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
         }:
             is_reviewed_staging = (
                 isinstance(source_local_path, str)
-                and source_local_path.startswith("game_data/media/layered_maps/")
+                and source_local_path.startswith(local_prefix)
                 and "/reviewed_visual_staging/" in source_local_path
             )
             if not is_reviewed_staging:
                 errors.append(
                     f"media_assets[{index}].source_local_path must point to map reviewed visual staging"
                 )
-            elif not (ROOT / source_local_path).exists():
+            elif not (repository_root / source_local_path).exists():
                 errors.append(f"media_assets[{index}].source_local_path does not exist: {source_local_path}")
 
     layer_items = [item for item in as_list(manifest.get("layers")) if isinstance(item, dict)]
@@ -271,12 +297,15 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
     for index, item in enumerate(layer_items):
         role = item.get("role")
         local_path_value = item.get("local_path")
-        if not isinstance(local_path_value, str) or not local_path_value.startswith(
-            "game_data/media/layered_maps/"
-        ):
-            errors.append(f"layers[{index}].local_path must be under game_data/media/layered_maps")
+        if not isinstance(local_path_value, str) or not local_path_value.startswith(local_prefix):
+            errors.append(f"layers[{index}].local_path must be under {local_prefix}")
             continue
-        local_path = ROOT / local_path_value
+        local_path = (repository_root / local_path_value).resolve()
+        try:
+            local_relative = local_path.relative_to(media_root)
+        except ValueError:
+            errors.append(f"layers[{index}].local_path escapes media_root")
+            continue
         if local_path.suffix != ".svg":
             errors.append(f"layers[{index}].local_path must point to an SVG")
         if not local_path.exists():
@@ -293,9 +322,7 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
         text_without_svg_namespace = text.replace("http://www.w3.org/2000/svg", "")
         if "http://" in text_without_svg_namespace or "https://" in text_without_svg_namespace:
             errors.append(f"layers[{index}].svg must not contain external URLs")
-        expected_url = "/assets/layered_maps/" + local_path.relative_to(
-            ROOT / "game_data/media/layered_maps"
-        ).as_posix()
+        expected_url = public_prefix.rstrip("/") + "/" + local_relative.as_posix()
         if item.get("url") != expected_url:
             errors.append(f"layers[{index}].url must be {expected_url}")
         quality = as_obj(item.get("quality"))
@@ -313,7 +340,10 @@ def validate_manifest(manifest: dict[str, Any], schema_path: Path) -> list[str]:
         errors.append("validation_report.player_default_safe must be true")
     if as_obj(manifest.get("validation_report")).get("external_generation_call_count") != 0:
         errors.append("validation_report.external_generation_call_count must be 0 for this offline fixture")
-    errors.extend(validate_backend_static_mount())
+    if validate_static_mount:
+        errors.extend(validate_backend_static_mount())
+    if public_prefix.startswith("/assets/generated_worlds"):
+        errors.extend(validate_generated_world_static_mount())
     return list(dict.fromkeys(errors))
 
 

@@ -10,7 +10,7 @@ Safety rules:
 1. Reject unknown top-level and nested keys for the v0.1 shape.
 2. Reject provider/trace/raw/secret-like fields anywhere.
 3. Reject external URLs anywhere.
-4. Keep visual layers local to /assets/map_visual_reference/.
+4. Keep visual layers in approved local /assets namespaces.
 5. Check all gameplay coordinates are inside the declared grid.
 6. Check build slots do not overlap path cells or objectives.
 
@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 try:
@@ -699,9 +700,15 @@ def validate_visual_layers(raw: Any, errors: list[str]) -> None:
         require_string(layer.get("layer_id"), f"{path}.layer_id", errors)
         require_enum(layer.get("role"), VISUAL_ROLES, f"{path}.role", errors)
         url = require_string(layer.get("url"), f"{path}.url", errors)
-        if url and not url.startswith("/assets/map_visual_reference/"):
-            errors.append(f"{path}.url must start with /assets/map_visual_reference/")
-        require_string(layer.get("local_path"), f"{path}.local_path", errors)
+        if url and not url.startswith(
+            ("/assets/map_visual_reference/", "/assets/layered_maps/", "/assets/generated_worlds/")
+        ):
+            errors.append(f"{path}.url must use an approved local asset namespace")
+        local_path = require_string(layer.get("local_path"), f"{path}.local_path", errors)
+        if local_path:
+            parts = Path(local_path).parts
+            if Path(local_path).is_absolute() or any(part in {"", ".", ".."} for part in parts):
+                errors.append(f"{path}.local_path must be a safe repository-relative path")
         require_int(layer.get("width"), f"{path}.width", errors, 1)
         require_int(layer.get("height"), f"{path}.height", errors, 1)
         sha = require_string(layer.get("sha256"), f"{path}.sha256", errors)

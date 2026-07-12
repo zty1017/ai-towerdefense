@@ -49,21 +49,42 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 def _is_node_bound_layered_path(value: object, node_id: str, *, url: bool) -> bool:
     text = str(value or "")
-    prefix = "/assets/layered_maps/" if url else "game_data/media/layered_maps/"
-    if not text.startswith(prefix):
-        return False
-    tail = PurePosixPath(text[len(prefix) :]).parts
+    if url:
+        if text.startswith("/assets/layered_maps/"):
+            tail = PurePosixPath(text[len("/assets/layered_maps/") :]).parts
+            layout = "layered"
+        elif text.startswith("/assets/generated_worlds/"):
+            tail = PurePosixPath(text[len("/assets/generated_worlds/") :]).parts
+            layout = "generated"
+        else:
+            return False
+    else:
+        path = PurePosixPath(text)
+        if path.is_absolute():
+            return False
+        if text.startswith("game_data/media/layered_maps/"):
+            tail = PurePosixPath(
+                text[len("game_data/media/layered_maps/") :]
+            ).parts
+            layout = "layered"
+        elif text.startswith("content/generated_world_media/"):
+            tail = PurePosixPath(
+                text[len("content/generated_world_media/") :]
+            ).parts
+            layout = "generated"
+        else:
+            return False
     if len(tail) < 2 or any(part in {"", ".", ".."} for part in tail):
         return False
-    if tail[0] == node_id:
-        return True
-    if not tail[0].startswith("_"):
-        return False
     try:
-        node_index = tail.index(node_id, 1)
+        node_index = tail.index(node_id)
     except ValueError:
         return False
-    return node_index < len(tail) - 1
+    if node_index >= len(tail) - 1:
+        return False
+    if layout == "generated":
+        return node_index > 0 and tail[node_index - 1] == "maps"
+    return node_index == 0 or (tail[0].startswith("_") and node_index > 0)
 
 
 def now_iso() -> str:
@@ -563,9 +584,11 @@ def _validate_visual_artifact(raw: Any, path: str, errors: list[str]) -> dict[st
     if role and role not in VISUAL_ROLES:
         errors.append(f"{path}.role={role!r} is not allowed")
     url = _require_string(artifact.get("url"), f"{path}.url", errors)
-    if url and not url.startswith(("/assets/map_visual_reference/", "/assets/layered_maps/")):
+    if url and not url.startswith(
+        ("/assets/map_visual_reference/", "/assets/layered_maps/", "/assets/generated_worlds/")
+    ):
         errors.append(
-            f"{path}.url must start with /assets/map_visual_reference/ or /assets/layered_maps/"
+            f"{path}.url must use a local reviewed asset namespace"
         )
     _require_string(artifact.get("local_path"), f"{path}.local_path", errors)
     _require_int(artifact.get("width"), f"{path}.width", errors, minimum=1)

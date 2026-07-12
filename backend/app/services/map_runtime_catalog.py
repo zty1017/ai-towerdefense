@@ -16,6 +16,7 @@ _ALLOWED_PACKAGE_DIRS = (
     Path("examples/map_runtime_packages"),
     Path("examples/map_runtime_packages_v02"),
     Path("content/generated_worlds"),
+    Path("content/generated_world_media"),
 )
 _ENTRY_KEYS = {"node_id", "authorization_status", "quality_status", "packages"}
 _PACKAGE_REF_KEYS = {"package_id", "path", "release_status"}
@@ -70,6 +71,7 @@ def _resolve_package_path(repo_root: Path, raw_path: str) -> Path:
 
 def _validate_package_ref(
     *, repo_root: Path, node_id: str, schema_version: str, value: Any,
+    quality_status: str,
 ) -> Path:
     if schema_version not in {_V01, _V02}:
         raise MapRuntimeCatalogError(
@@ -86,7 +88,11 @@ def _validate_package_ref(
         raise MapRuntimeCatalogError(f"catalog node {node_id!r} has no package_id")
     if not isinstance(raw_path, str) or not raw_path:
         raise MapRuntimeCatalogError(f"catalog node {node_id!r} has no package path")
-    allowed_statuses = {"published"} if schema_version == _V01 else {"published_for_gate_review"}
+    allowed_statuses = (
+        {"review_pending"}
+        if quality_status == "candidate"
+        else ({"published"} if schema_version == _V01 else {"published_for_gate_review"})
+    )
     if release_status not in allowed_statuses:
         raise MapRuntimeCatalogError(
             f"catalog node {node_id!r} package is not published: {release_status!r}"
@@ -129,8 +135,9 @@ def load_catalog(catalog_path: Path, repo_root: Path | None = None) -> dict[str,
         if node_id in seen:
             raise MapRuntimeCatalogError(f"duplicate node_id in catalog: {node_id}")
         seen.add(node_id)
-        if entry.get("quality_status") not in {"reviewed", "published"}:
-            raise MapRuntimeCatalogError(f"catalog node {node_id!r} is not reviewed")
+        quality_status = entry.get("quality_status")
+        if quality_status not in {"candidate", "reviewed", "published"}:
+            raise MapRuntimeCatalogError(f"catalog node {node_id!r} has invalid quality status")
         if entry.get("authorization_status") not in {"pending", "approved"}:
             raise MapRuntimeCatalogError(
                 f"catalog node {node_id!r} has invalid authorization status"
@@ -144,6 +151,7 @@ def load_catalog(catalog_path: Path, repo_root: Path | None = None) -> dict[str,
                 node_id=node_id,
                 schema_version=str(schema_version),
                 value=package_ref,
+                quality_status=str(quality_status),
             )
     return catalog
 
@@ -189,6 +197,8 @@ def build_package_index(
     for catalog_path in catalog_paths:
         catalog = load_catalog(catalog_path, root)
         for entry in catalog["entries"]:
+            if entry["quality_status"] == "candidate":
+                continue
             node_id = entry["node_id"]
             if node_id in owners:
                 raise MapRuntimeCatalogError(

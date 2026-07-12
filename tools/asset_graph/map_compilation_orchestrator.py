@@ -88,6 +88,13 @@ def _rel(path: Path) -> str:
         return str(path.resolve())
 
 
+def _artifact_ref(path: Path, repository_root: Path) -> str:
+    try:
+        return path.resolve().relative_to(repository_root.resolve()).as_posix()
+    except ValueError:
+        return _rel(path)
+
+
 def _schema(name: str) -> dict[str, Any] | None:
     path = SCHEMAS / name
     return _load(path) if path.exists() else None
@@ -474,7 +481,7 @@ def _build_visual_handoff(
     return generated_paths, request_pack
 
 
-def plan(input_path: Path, output_dir: Path) -> dict[str, Any]:
+def plan(input_path: Path, output_dir: Path, *, layered_root: Path | None = None) -> dict[str, Any]:
     value = _load(input_path)
     battle_path, style_path = _check_input(value, input_path)
     battle = _load(battle_path)
@@ -482,11 +489,12 @@ def plan(input_path: Path, output_dir: Path) -> dict[str, Any]:
     node_id = str(battle.get("node_id") or "")
     if not node_id or style.get("node_id") != node_id:
         raise MapCompilationError("battle config and MapStylePack must share a non-empty node_id")
+    allowed_root = (layered_root or LAYERED_ROOT).resolve()
     try:
-        output_dir.resolve().relative_to(LAYERED_ROOT.resolve())
+        output_dir.resolve().relative_to(allowed_root)
     except ValueError as exc:
         raise MapCompilationError(
-            f"output directory must stay under {LAYERED_ROOT.resolve()}"
+            f"output directory must stay under {allowed_root}"
         ) from exc
     if output_dir.name != node_id:
         raise MapCompilationError(
@@ -531,8 +539,13 @@ def compile_map(
     visual_review_profile: str = "agnes_multimodal_flash",
     visual_review_timeout: int = 180,
     visual_max_attempts: int = 2,
+    layered_root: Path | None = None,
+    artifact_repo_root: Path | None = None,
+    public_prefix: str = "/assets/layered_maps",
 ) -> dict[str, Any]:
-    compile_plan = plan(input_path, output_dir)
+    allowed_root = layered_root or LAYERED_ROOT
+    repository_root = artifact_repo_root or ROOT
+    compile_plan = plan(input_path, output_dir, layered_root=allowed_root)
     report_path = output_dir / "map_compilation_run_report.v0.1.json"
     if resume and report_path.exists():
         previous = _load(report_path)
@@ -566,7 +579,7 @@ def compile_map(
     started = time.monotonic()
     runtime = runtime_v02.build_map_runtime_package_v02(
         battle,
-        battle_config_path=_rel(battle_path),
+        battle_config_path=_artifact_ref(battle_path, repository_root),
         package_id=f"map_pkg_{battle['node_id']}_v0_2",
         created_at=created_at,
     )
@@ -622,7 +635,7 @@ def compile_map(
                 max_workers=visual_max_workers,
                 generation_timeout=visual_request_timeout,
                 review_timeout=visual_review_timeout,
-                reviewed_fallback_dir=LAYERED_ROOT / str(runtime.get("node_id") or ""),
+                reviewed_fallback_dir=allowed_root / str(runtime.get("node_id") or ""),
                 cache_dir=map_visual_closed_loop.resolve_cache_dir(),
             )
             closed_loop_report_path = Path(str(visual_generation_report["report_path"]))
@@ -652,17 +665,17 @@ def compile_map(
     render = render_plan.build_render_plan(
         runtime,
         style,
-        map_runtime_package_path=_rel(runtime_path),
-        map_style_pack_path=_rel(style_path),
+        map_runtime_package_path=_artifact_ref(runtime_path, repository_root),
+        map_style_pack_path=_artifact_ref(style_path, repository_root),
         created_at=created_at,
     )
     semantic = render_plan.build_consistency_report(
         runtime,
         style,
         render,
-        map_runtime_package_path=_rel(runtime_path),
-        map_style_pack_path=_rel(style_path),
-        procedural_map_render_plan_path=_rel(render_path),
+        map_runtime_package_path=_artifact_ref(runtime_path, repository_root),
+        map_style_pack_path=_artifact_ref(style_path, repository_root),
+        procedural_map_render_plan_path=_artifact_ref(render_path, repository_root),
         created_at=created_at,
     )
     render_errors = render_plan.validate_render_plan(render, _schema("procedural_map_render_plan.v0.1.schema.json"))
@@ -699,9 +712,17 @@ def compile_map(
         texture_source_dir=texture_dir,
         backdrop_source_dir=backdrop_dir,
         component_source_dir=component_dir,
+        public_root=allowed_root,
+        repository_root=repository_root,
+        public_prefix=public_prefix,
     )
     layered_errors = layered_validator.validate_manifest(
-        layered, SCHEMAS / "layered_map_visual_package.v0.1.schema.json"
+        layered,
+        SCHEMAS / "layered_map_visual_package.v0.1.schema.json",
+        repository_root=repository_root,
+        media_root=allowed_root,
+        public_prefix=public_prefix,
+        validate_static_mount=repository_root.resolve() == ROOT.resolve(),
     )
     if layered_errors:
         raise MapCompilationError(f"LayeredMapVisualPackage validation failed: {layered_errors[0]}")
@@ -715,12 +736,12 @@ def compile_map(
     _write(visual_manifest_path, visual_manifest)
     compiled = compile_package.build_map_compile_package(
         runtime,
-        map_runtime_package_path=_rel(runtime_path),
-        battle_config_path=_rel(battle_path),
+        map_runtime_package_path=_artifact_ref(runtime_path, repository_root),
+        battle_config_path=_artifact_ref(battle_path, repository_root),
         visual_reference_manifest=visual_manifest,
-        visual_reference_manifest_path=_rel(visual_manifest_path),
+        visual_reference_manifest_path=_artifact_ref(visual_manifest_path, repository_root),
         layered_visual_package=layered,
-        layered_visual_package_path=_rel(layered_path),
+        layered_visual_package_path=_artifact_ref(layered_path, repository_root),
         created_at=created_at,
     )
     compile_errors = compile_package.validate_package(
@@ -770,7 +791,7 @@ def compile_map(
         "completed_at": _now(),
         "status": "completed",
         "input_fingerprint": compile_plan["input_fingerprint"],
-        "input_ref": _rel(input_path),
+        "input_ref": _artifact_ref(input_path, repository_root),
         "worldbook_id": compile_plan["worldbook_id"],
         "node_id": compile_plan["node_id"],
         "stages": stages,
@@ -801,7 +822,11 @@ def compile_map(
                 and visual_generation_report.get("runtime_critical_roles_ready")
             ),
             "background_job_status": "pending" if background_job_path else "not_requested",
-            "background_job_ref": _rel(background_job_path) if background_job_path else None,
+            "background_job_ref": (
+                _artifact_ref(background_job_path, repository_root)
+                if background_job_path
+                else None
+            ),
         },
         "quality": {
             "runtime_truth_preserved": True,
@@ -824,6 +849,10 @@ def apply_reviewed_visuals(
     input_path: Path,
     output_dir: Path,
     visual_report: dict[str, Any],
+    *,
+    layered_root: Path | None = None,
+    artifact_repo_root: Path | None = None,
+    public_prefix: str = "/assets/layered_maps",
 ) -> dict[str, Any]:
     """Rebuild presentation artifacts after the background visual gate passes."""
     if not visual_report.get("runtime_critical_roles_ready"):
@@ -840,6 +869,8 @@ def apply_reviewed_visuals(
     runtime = _load(runtime_path)
     render = _load(render_path)
     created_at = str(value.get("created_at") or _now())
+    allowed_root = layered_root or output_dir.parent
+    repository_root = artifact_repo_root or ROOT
     started = time.monotonic()
 
     layered = layered_builder.build_package(
@@ -858,9 +889,17 @@ def apply_reviewed_visuals(
             if visual_report.get("reviewed_component_source_dir")
             else None
         ),
+        public_root=allowed_root,
+        repository_root=repository_root,
+        public_prefix=public_prefix,
     )
     layered_errors = layered_validator.validate_manifest(
-        layered, SCHEMAS / "layered_map_visual_package.v0.1.schema.json"
+        layered,
+        SCHEMAS / "layered_map_visual_package.v0.1.schema.json",
+        repository_root=repository_root,
+        media_root=allowed_root,
+        public_prefix=public_prefix,
+        validate_static_mount=repository_root.resolve() == ROOT.resolve(),
     )
     if layered_errors:
         raise MapCompilationError(f"LayeredMapVisualPackage validation failed: {layered_errors[0]}")
@@ -868,12 +907,14 @@ def apply_reviewed_visuals(
     _write(visual_manifest_path, visual_manifest)
     compiled = compile_package.build_map_compile_package(
         runtime,
-        map_runtime_package_path=_rel(runtime_path),
-        battle_config_path=_rel(battle_path),
+        map_runtime_package_path=_artifact_ref(runtime_path, repository_root),
+        battle_config_path=_artifact_ref(battle_path, repository_root),
         visual_reference_manifest=visual_manifest,
-        visual_reference_manifest_path=_rel(visual_manifest_path),
+        visual_reference_manifest_path=_artifact_ref(
+            visual_manifest_path, repository_root
+        ),
         layered_visual_package=layered,
-        layered_visual_package_path=_rel(layered_path),
+        layered_visual_package_path=_artifact_ref(layered_path, repository_root),
         created_at=created_at,
     )
     compile_errors = compile_package.validate_package(

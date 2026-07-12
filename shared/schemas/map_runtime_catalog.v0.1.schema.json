@@ -21,7 +21,7 @@
         "properties": {
           "node_id": {"type": "string", "minLength": 1},
           "authorization_status": {"enum": ["pending", "approved"]},
-          "quality_status": {"enum": ["reviewed", "published"]},
+          "quality_status": {"enum": ["candidate", "reviewed", "published"]},
           "packages": {
             "type": "object",
             "minProperties": 1,
@@ -32,7 +32,7 @@
               "properties": {
                 "package_id": {"type": "string", "minLength": 1},
                 "path": {"type": "string", "minLength": 1},
-                "release_status": {"enum": ["published", "published_for_gate_review"]}
+                "release_status": {"enum": ["review_pending", "published", "published_for_gate_review"]}
               }
             }
           }

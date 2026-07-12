@@ -109,16 +109,22 @@ def clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
 
 
-def rel(path: Path) -> str:
+def rel(path: Path, repository_root: Path | None = None) -> str:
+    root = (repository_root or ROOT).resolve()
     try:
-        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+        return path.resolve().relative_to(root).as_posix()
     except ValueError:
         return path.as_posix()
 
 
-def public_url(path: Path) -> str:
-    relative = path.resolve().relative_to((ROOT / "game_data/media/layered_maps").resolve())
-    return f"{PUBLIC_PREFIX}/{relative.as_posix()}"
+def public_url(
+    path: Path,
+    layered_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
+) -> str:
+    root = (layered_root or (ROOT / "game_data/media/layered_maps")).resolve()
+    relative = path.resolve().relative_to(root)
+    return f"{public_prefix.rstrip('/')}/{relative.as_posix()}"
 
 
 def sha256_file(path: Path) -> str:
@@ -557,6 +563,9 @@ def build_texture_assets(
     output_dir: Path,
     seed: str,
     texture_source_dir: Path | None = None,
+    public_root: Path | None = None,
+    repository_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
 ) -> tuple[dict[str, str], list[dict[str, Any]]]:
     textures_dir = output_dir / "textures"
     texture_refs: dict[str, str] = {}
@@ -590,9 +599,9 @@ def build_texture_assets(
                 "role": role,
                 "media_kind": "texture_atlas_png" if role == ROAD_DETAIL_ATLAS_ROLE else "texture_tile_png",
                 "source_kind": source_kind,
-                "source_local_path": rel(source_path) if source_path else "",
-                "url": public_url(path),
-                "local_path": rel(path),
+                "source_local_path": rel(source_path, repository_root) if source_path else "",
+                "url": public_url(path, public_root, public_prefix),
+                "local_path": rel(path, repository_root),
                 "width": width,
                 "height": height,
                 "sha256": sha256_file(path),
@@ -606,6 +615,9 @@ def build_backdrop_asset(
     node_id: str,
     output_dir: Path,
     backdrop_source_dir: Path | None = None,
+    public_root: Path | None = None,
+    repository_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
 ) -> tuple[str | None, list[dict[str, Any]]]:
     source_path = source_backdrop_path(backdrop_source_dir, node_id)
     if not source_path:
@@ -619,9 +631,9 @@ def build_backdrop_asset(
             "role": PAINTED_BACKDROP_ROLE,
             "media_kind": "map_backdrop_png",
             "source_kind": reviewed_source_kind(source_path, "backdrop"),
-            "source_local_path": rel(source_path),
-            "url": public_url(backdrop_path),
-            "local_path": rel(backdrop_path),
+            "source_local_path": rel(source_path, repository_root),
+            "url": public_url(backdrop_path, public_root, public_prefix),
+            "local_path": rel(backdrop_path, repository_root),
             "width": CANVAS_WIDTH,
             "height": CANVAS_HEIGHT,
             "sha256": sha256_file(backdrop_path),
@@ -634,6 +646,9 @@ def build_component_assets(
     node_id: str,
     output_dir: Path,
     component_source_dir: Path | None = None,
+    public_root: Path | None = None,
+    repository_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
 ) -> tuple[dict[str, str], list[dict[str, Any]]]:
     refs: dict[str, str] = {}
     assets: list[dict[str, Any]] = []
@@ -650,9 +665,9 @@ def build_component_assets(
                 "role": role,
                 "media_kind": "component_sprite_png",
                 "source_kind": "compiled_reviewed_component",
-                "source_local_path": rel(source_path),
-                "url": public_url(output_path),
-                "local_path": rel(output_path),
+                "source_local_path": rel(source_path, repository_root),
+                "url": public_url(output_path, public_root, public_prefix),
+                "local_path": rel(output_path, repository_root),
                 "width": 512,
                 "height": 512,
                 "sha256": sha256_file(output_path),
@@ -1863,15 +1878,25 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def layer_record(path: Path, role: str, order: int, source: str, *, player_default: bool = True) -> dict[str, Any]:
+def layer_record(
+    path: Path,
+    role: str,
+    order: int,
+    source: str,
+    *,
+    player_default: bool = True,
+    public_root: Path | None = None,
+    repository_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
+) -> dict[str, Any]:
     return {
         "layer_id": f"layer_{role}",
         "role": role,
         "order": order,
         "player_default": player_default,
         "source": source,
-        "url": public_url(path),
-        "local_path": rel(path),
+        "url": public_url(path, public_root, public_prefix),
+        "local_path": rel(path, repository_root),
         "width": CANVAS_WIDTH,
         "height": CANVAS_HEIGHT,
         "sha256": sha256_file(path),
@@ -1896,6 +1921,9 @@ def build_package(
     texture_source_dir: Path | None = None,
     backdrop_source_dir: Path | None = None,
     component_source_dir: Path | None = None,
+    public_root: Path | None = None,
+    repository_root: Path | None = None,
+    public_prefix: str = PUBLIC_PREFIX,
 ) -> dict[str, Any]:
     node_id = str(runtime_package.get("node_id") or style_pack.get("node_id") or "map")
     projection = build_projection(runtime_package)
@@ -1907,17 +1935,26 @@ def build_package(
         output_dir,
         str(runtime_package.get("package_id") or node_id),
         texture_source_dir=texture_source_dir,
+        public_root=public_root,
+        repository_root=repository_root,
+        public_prefix=public_prefix,
     )
     backdrop_ref, backdrop_assets = build_backdrop_asset(
         node_id,
         output_dir,
         backdrop_source_dir=backdrop_source_dir,
+        public_root=public_root,
+        repository_root=repository_root,
+        public_prefix=public_prefix,
     )
     media_assets.extend(backdrop_assets)
     component_refs, component_assets = build_component_assets(
         node_id,
         output_dir,
         component_source_dir=component_source_dir,
+        public_root=public_root,
+        repository_root=repository_root,
+        public_prefix=public_prefix,
     )
     media_assets.extend(component_assets)
     has_backdrop = bool(backdrop_ref)
@@ -2016,7 +2053,18 @@ def build_package(
             "non_blocking_decorations",
         }
         player_default = not (has_backdrop and role in non_default_roles_with_backdrop)
-        layer_records.append(layer_record(path, role, order, source, player_default=player_default))
+        layer_records.append(
+            layer_record(
+                path,
+                role,
+                order,
+                source,
+                player_default=player_default,
+                public_root=public_root,
+                repository_root=repository_root,
+                public_prefix=public_prefix,
+            )
+        )
 
     composite_path = composite_dir / f"{node_id}.layered_map.svg"
     write_text(
@@ -2029,7 +2077,17 @@ def build_package(
             component_refs=component_refs,
         ),
     )
-    layer_records.append(layer_record(composite_path, "composited", 100, "derived_composite"))
+    layer_records.append(
+        layer_record(
+            composite_path,
+            "composited",
+            100,
+            "derived_composite",
+            public_root=public_root,
+            repository_root=repository_root,
+            public_prefix=public_prefix,
+        )
+    )
 
     route_count = len([route for route in as_list(runtime_package.get("path_routes")) if isinstance(route, dict)])
     slot_count = len([slot for slot in as_list(runtime_package.get("build_slots")) if isinstance(slot, dict)])
@@ -2043,26 +2101,26 @@ def build_package(
         "node_id": node_id,
         "created_at": created_at,
         "source_refs": {
-            "map_runtime_package_path": rel(runtime_path),
-            "map_style_pack_path": rel(style_path),
-            "procedural_map_render_plan_path": rel(render_plan_path),
+            "map_runtime_package_path": rel(runtime_path, repository_root),
+            "map_style_pack_path": rel(style_path, repository_root),
+            "procedural_map_render_plan_path": rel(render_plan_path, repository_root),
         },
         "runtime_semantics_source": {
             "kind": "MapRuntimePackage",
             "id": str(runtime_package.get("package_id") or ""),
-            "path": rel(runtime_path),
+            "path": rel(runtime_path, repository_root),
             "authority": "runtime_semantic_truth",
         },
         "style_source": {
             "kind": "MapStylePack",
             "id": str(style_pack.get("style_pack_id") or ""),
-            "path": rel(style_path),
+            "path": rel(style_path, repository_root),
             "authority": "visual_style",
         },
         "render_plan_source": {
             "kind": "ProceduralMapRenderPlan",
             "id": str(render_plan.get("plan_id") or ""),
-            "path": rel(render_plan_path),
+            "path": rel(render_plan_path, repository_root),
             "authority": "presentation_plan",
         },
         "canvas": {

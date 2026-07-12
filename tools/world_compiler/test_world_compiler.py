@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 from tools.world_compiler import world_compiler
@@ -60,27 +59,38 @@ def test_provider_path_requires_explicit_flag():
 
 
 def test_compiled_world_can_drive_map_pipeline(tmp_path):
-    map_output = world_compiler.map_compilation_orchestrator.LAYERED_ROOT / "broken_cloud_bridge"
-    shutil.rmtree(map_output, ignore_errors=True)
-    try:
-        result = world_compiler.compile_candidate(
-            world_compiler._load(SEED),
-            world_compiler._load(CANDIDATE),
-            tmp_path,
-            provenance={
-                "generation_mode": "test_fixture",
-                "provider_call_performed": False,
-                "raw_prompt_stored": False,
-                "raw_response_stored": False,
-            },
-            compile_map=True,
-        )
-        map_report = result["manifest"]["map_compilation_report"]
-        assert map_report["status"] == "completed"
-        assert map_report["node_id"] == "broken_cloud_bridge"
-        assert map_report["quality"]["runtime_truth_preserved"] is True
-    finally:
-        shutil.rmtree(map_output, ignore_errors=True)
+    repo_map_output = world_compiler.map_compilation_orchestrator.LAYERED_ROOT / "broken_cloud_bridge"
+    assert not repo_map_output.exists()
+    output_root = tmp_path / "content" / "generated_worlds"
+    result = world_compiler.compile_candidate(
+        world_compiler._load(SEED),
+        world_compiler._load(CANDIDATE),
+        output_root,
+        provenance={
+            "generation_mode": "test_fixture",
+            "provider_call_performed": False,
+            "raw_prompt_stored": False,
+            "raw_response_stored": False,
+        },
+        compile_map=True,
+    )
+    map_report = result["manifest"]["map_compilation_report"]
+    assert map_report["status"] == "completed"
+    assert map_report["node_id"] == "broken_cloud_bridge"
+    assert map_report["quality"]["runtime_truth_preserved"] is True
+    assert not repo_map_output.exists()
+    assert (tmp_path / "content/generated_world_media/cloud_courier_realm/maps/broken_cloud_bridge").is_dir()
+    catalog_path = Path(result["manifest"]["map_runtime_catalog_path"])
+    assert catalog_path.is_file()
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    assert catalog["entries"][0]["quality_status"] == "candidate"
+    from backend.app.services import map_runtime_catalog
+
+    loaded = map_runtime_catalog.load_catalog(catalog_path, tmp_path)
+    assert loaded["entries"][0]["node_id"] == "broken_cloud_bridge"
+    v01, v02 = map_runtime_catalog.build_package_index([catalog_path], tmp_path)
+    assert v01 == {}
+    assert v02 == {}
 
 
 def test_provider_candidate_gets_one_bounded_repair(monkeypatch):
@@ -104,3 +114,34 @@ def test_provider_candidate_gets_one_bounded_repair(monkeypatch):
     )
     assert candidate["world_id"] == "cloud_courier_realm"
     assert provenance["attempt_count"] == 2
+
+
+def test_provider_loads_explicit_dotenv_before_first_call(tmp_path, monkeypatch):
+    dotenv = tmp_path / "authorized.env"
+    dotenv.write_text("ARK_API_KEY=test-only-key\n", encoding="utf-8")
+    observed = []
+    valid = world_compiler._load(CANDIDATE)
+
+    def load(path):
+        observed.append(("dotenv", path))
+        monkeypatch.setenv("ARK_API_KEY", "test-only-key")
+
+    def complete(*_args, **_kwargs):
+        observed.append(("provider", None))
+        return {
+            "choices": [
+                {"message": {"content": json.dumps(valid, ensure_ascii=False)}}
+            ]
+        }
+
+    monkeypatch.delenv("ARK_API_KEY", raising=False)
+    monkeypatch.setattr(world_compiler.adapter, "load_dotenv", load)
+    monkeypatch.setattr(world_compiler.adapter, "chat_completion", complete)
+    world_compiler.generate_candidate(
+        world_compiler._load(SEED),
+        profile_name="ark_deepseek_v4_flash",
+        allow_provider=True,
+        dotenv_path=dotenv,
+    )
+    assert observed[0] == ("dotenv", dotenv)
+    assert observed[1][0] == "provider"
