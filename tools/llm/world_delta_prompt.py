@@ -157,6 +157,7 @@ def build_user_prompt(
                 "npc_state",
                 "map_node_state",
             ],
+            "post_battle_live_policy": session_context.get("world_evolution_policy"),
         },
         "required_output": {
             "schema_version": "world_state_delta.v0.1",
@@ -352,6 +353,19 @@ def build_user_prompt(
             "sample_triggered": battle_result.get("sample_triggered"),
             "node_id": target_node_id,
             "sample_performance": battle_result.get("sample_performance"),
+            "protected_core_hp": battle_result.get("protected_core_hp"),
+            "optional_target_state": battle_result.get("optional_target_state"),
+            "deployed_objects": [
+                {
+                    "object_id": item.get("object_id"),
+                    "display_name": item.get("display_name"),
+                    "asset_kind": item.get("asset_kind"),
+                    "role": item.get("role"),
+                    "effect_summary": item.get("effect_summary"),
+                }
+                for item in (battle_result.get("deployed_objects") or [])
+                if isinstance(item, dict)
+            ][:16],
         },
         "session_context": {
             "player_origin": session_context.get("player_origin"),

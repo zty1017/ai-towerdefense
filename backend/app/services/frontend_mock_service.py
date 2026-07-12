@@ -21,6 +21,7 @@ from . import (
     generation_scheduler_service,
     map_render_plan_service,
     map_runtime_service,
+    post_battle_world_evolution_service,
     world_catalog_service,
 )
 
@@ -132,6 +133,27 @@ def _load_campaign_state(session_id: str) -> dict[str, Any]:
     return _load_json(_INITIAL_RUN_STATE)
 
 
+def _load_committed_world_evolution_deltas(session_id: str) -> list[dict[str, Any]]:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM battle_results WHERE session_id = ? ORDER BY id ASC",
+            (session_id,),
+        )
+        rows = cur.fetchall()
+    deltas: list[dict[str, Any]] = []
+    for row in rows:
+        payload = json.loads(row["payload"]) if row.get("payload") else {}
+        settlement = payload.get("settlement") if isinstance(payload, dict) else None
+        delta = (
+            settlement.get("world_evolution_delta")
+            if isinstance(settlement, dict)
+            else None
+        )
+        if isinstance(delta, dict):
+            deltas.append(delta)
+    return deltas
+
+
 def _save_campaign_state(session_id: str, payload: dict[str, Any]) -> None:
     ts = now_iso()
     with db_cursor() as cur:
@@ -139,6 +161,104 @@ def _save_campaign_state(session_id: str, payload: dict[str, Any]) -> None:
             "INSERT INTO campaign_state (session_id, payload, created_at, updated_at) "
             "VALUES (?, ?, ?, ?)",
             (session_id, _dump_payload(payload), ts, ts),
+        )
+
+
+def _battle_evolution_session_context(
+    session_id: str, state: dict[str, Any], node_id: str
+) -> dict[str, Any]:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM world_instance WHERE session_id = ? "
+            "ORDER BY id DESC LIMIT 1",
+            (session_id,),
+        )
+        row = cur.fetchone()
+    instance = json.loads(row["payload"]) if row and row.get("payload") else {}
+    selected = instance.get("selected_options") if isinstance(instance, dict) else {}
+    if not isinstance(selected, dict):
+        selected = {}
+    prior_events = [
+        str(event.get("summary"))[:240]
+        for event in state.get("event_log", [])[-8:]
+        if isinstance(event, dict) and event.get("summary")
+    ]
+    return {
+        "player_origin": selected.get("player_origin"),
+        "node_id": node_id,
+        "prior_events": prior_events,
+    }
+
+
+def _live_battle_result(
+    submitted: dict[str, Any],
+    *,
+    node_id: str,
+    battle_config: dict[str, Any],
+    deployed_assets: list[dict[str, Any]],
+) -> dict[str, Any]:
+    result = str(submitted.get("result") or "victory")
+    leaked = submitted.get("leaked_enemy_count", 0)
+    if not isinstance(leaked, int) or isinstance(leaked, bool):
+        leaked = 0
+    core_hp = submitted.get("protected_core_hp")
+    core_target = battle_config.get("core_target")
+    core_durability = (
+        core_target.get("durability") if isinstance(core_target, dict) else None
+    )
+    primary = _primary_deployed_asset(deployed_assets)
+    return {
+        "winner": "player" if result == "victory" else "enemy",
+        "result": result,
+        "core_damaged": (
+            isinstance(core_hp, int)
+            and not isinstance(core_hp, bool)
+            and isinstance(core_durability, int)
+            and core_hp < core_durability
+        ),
+        "protected_core_hp": core_hp,
+        "optional_target_state": submitted.get("optional_target_state"),
+        "enemies_leaked": leaked,
+        "waves_survived": len(
+            [wave for wave in battle_config.get("waves", []) if isinstance(wave, dict)]
+        ),
+        "sample_triggered": any(
+            asset.get("role") in {"sample", "compiled"} for asset in deployed_assets
+        ),
+        "node_id": node_id,
+        "sample_performance": primary.get("effect_summary") if primary else None,
+    }
+
+
+def _save_battle_settlement_and_state(
+    session_id: str,
+    *,
+    node_id: str,
+    submitted: dict[str, Any],
+    settlement: dict[str, Any],
+    state: dict[str, Any],
+    created_at: str,
+) -> None:
+    """Commit the player settlement and its final gated state atomically."""
+    with db_cursor() as cur:
+        cur.execute(
+            "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
+            (
+                session_id,
+                _dump_payload(
+                    {
+                        "node_id": node_id,
+                        "submitted_result": submitted,
+                        "settlement": settlement,
+                    }
+                ),
+                created_at,
+            ),
+        )
+        cur.execute(
+            "INSERT INTO campaign_state (session_id, payload, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?)",
+            (session_id, _dump_payload(state), created_at, created_at),
         )
 
 
@@ -774,6 +894,9 @@ def record_battle_result(
     previous_state = _load_campaign_state(session_id)
     if spec.get("after_state_path"):
         next_state = _load_json(spec["after_state_path"])
+        next_state = post_battle_world_evolution_service.replay_committed_deltas(
+            next_state, _load_committed_world_evolution_deltas(session_id)
+        )
     elif delta:
         next_state = _apply_delta_to_state(previous_state, delta)
     else:
@@ -845,22 +968,37 @@ def record_battle_result(
         "core_artifacts": core_artifacts,
         "run_world_state": next_state,
     }
-    with db_cursor() as cur:
-        cur.execute(
-            "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
-            (
-                session_id,
-                _dump_payload(
-                    {
-                        "node_id": node_id,
-                        "submitted_result": submitted,
-                        "settlement": settlement,
-                    }
-                ),
-                ts,
-            ),
-        )
-    _save_campaign_state(session_id, next_state)
+    evolution = post_battle_world_evolution_service.evolve_world(
+        deterministic_state=next_state,
+        battle_result=_live_battle_result(
+            submitted,
+            node_id=node_id,
+            battle_config=battle_config,
+            deployed_assets=deployed_assets,
+        ),
+        deployed_objects=deployed_assets,
+        session_context=_battle_evolution_session_context(session_id, next_state, node_id),
+    )
+    if evolution.get("applied") is True:
+        next_state = evolution["state"]
+        settlement["run_world_state"] = next_state
+        settlement["world_evolution_delta"] = evolution["delta"]
+        projection = evolution.get("projection")
+        if isinstance(projection, dict):
+            if projection.get("interlude_summary"):
+                settlement["interlude_summary"] = projection["interlude_summary"]
+            if projection.get("npc_feedback"):
+                settlement["npc_feedback"] = projection["npc_feedback"]
+            if isinstance(projection.get("next_task"), dict):
+                settlement["next_task"] = projection["next_task"]
+    _save_battle_settlement_and_state(
+        session_id,
+        node_id=node_id,
+        submitted=submitted,
+        settlement=settlement,
+        state=next_state,
+        created_at=ts,
+    )
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",
