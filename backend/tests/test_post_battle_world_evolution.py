@@ -333,3 +333,154 @@ def test_unsafe_live_text_never_reaches_settlement_or_saved_state(
         (session_id,),
     ).fetchone()[0]
     assert unsafe not in stored
+
+
+def _mock_delta_sequence(monkeypatch, deltas):
+    calls = {"count": 0}
+
+    def request(messages, *, timeout, max_tokens):
+        calls["count"] += 1
+        index = min(calls["count"], len(deltas)) - 1
+        return {
+            "choices": [
+                {"message": {"content": json.dumps(deltas[index], ensure_ascii=False)}}
+            ]
+        }
+
+    monkeypatch.setattr(evolution_service, "_request_provider_response", request)
+    return calls
+
+
+def _last_studio_diagnostic(raw_conn, session_id):
+    row = raw_conn.execute(
+        "SELECT payload FROM studio_logs WHERE session_id = ? ORDER BY id DESC LIMIT 1",
+        (session_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return json.loads(row[0])
+
+
+def test_null_related_task_id_repaired_on_second_attempt(
+    client, raw_conn, monkeypatch
+):
+    _enable_live(monkeypatch)
+    bad = _delta()
+    bad["operations"][2]["random_event"]["related_task_id"] = None
+    good = _delta()
+    calls = _mock_delta_sequence(monkeypatch, [bad, good])
+    session_id = _create_world(client)
+
+    settlement = _settle(client, session_id)["settlement"]
+
+    # Second attempt (repair) succeeds and the valid delta reaches the player.
+    assert calls["count"] == 2
+    assert settlement["world_evolution_delta"] == good
+    assert settlement["run_world_state"]["progress"]["phase"] == "post_first_defense"
+
+    diagnostic = _last_studio_diagnostic(raw_conn, session_id)
+    assert diagnostic is not None
+    assert diagnostic["kind"] == "post_battle_world_evolution"
+    assert diagnostic["diagnostic"]["attempt_count"] == 2
+    assert diagnostic["diagnostic"]["fallback_stage"] is None
+    assert diagnostic["diagnostic"]["error_codes"] == []
+
+    rendered = json.dumps(settlement, ensure_ascii=False)
+    rendered_delta = json.dumps(
+        settlement["world_evolution_delta"], ensure_ascii=False
+    )
+    assert "structure_invalid" not in rendered
+    assert "provider_error" not in rendered
+    assert "raw_prompt" not in rendered
+    assert "TimeoutError" not in rendered
+    assert '"related_task_id": null' not in rendered_delta
+
+
+def test_repair_failure_falls_back_deterministically(
+    client, raw_conn, monkeypatch
+):
+    _enable_live(monkeypatch)
+    bad = _delta()
+    bad["operations"][2]["random_event"]["related_task_id"] = None
+    # Both attempts return the same structurally invalid candidate.
+    calls = _mock_delta_sequence(monkeypatch, [bad, bad])
+    session_id = _create_world(client)
+
+    settlement = _settle(client, session_id)["settlement"]
+
+    assert calls["count"] == 2
+    assert "world_evolution_delta" not in settlement
+    assert settlement["run_world_state"]["progress"]["phase"] == "post_first_defense"
+
+    diagnostic = _last_studio_diagnostic(raw_conn, session_id)
+    assert diagnostic is not None
+    assert diagnostic["diagnostic"]["attempt_count"] == 2
+    assert diagnostic["diagnostic"]["fallback_stage"] in {
+        "structure",
+        "semantic",
+        "policy",
+        "apply",
+        "output_state",
+    }
+    assert diagnostic["diagnostic"]["error_codes"]
+
+    rendered = json.dumps(settlement, ensure_ascii=False)
+    assert "structure_invalid" not in rendered
+    assert "provider_error" not in rendered
+    assert "raw_prompt" not in rendered
+
+
+def test_diagnostic_contains_only_internal_codes_and_no_raw_content(
+    client, raw_conn, monkeypatch
+):
+    _enable_live(monkeypatch)
+    bad = _delta()
+    bad["operations"][2]["random_event"]["related_task_id"] = None
+    _mock_delta_sequence(monkeypatch, [bad, bad])
+    session_id = _create_world(client)
+    _settle(client, session_id)
+
+    diagnostic = _last_studio_diagnostic(raw_conn, session_id)
+    diag = diagnostic["diagnostic"]
+    # Only the compact internal fields, no prompt/response/credential/key.
+    assert set(diag.keys()) == {"attempt_count", "fallback_stage", "error_codes"}
+    for code in diag["error_codes"]:
+        assert code in {
+            "structure_invalid",
+            "semantic_invalid",
+            "policy_violation",
+            "apply_failed",
+            "output_state_invalid",
+        }
+    assert "raw_prompt" not in diagnostic
+    assert "raw_response" not in diagnostic
+    assert "api_key" not in diagnostic
+    assert "secret" not in diagnostic
+
+
+def test_player_settlement_omits_diagnostic_and_technical_terms(
+    client, raw_conn, monkeypatch
+):
+    _enable_live(monkeypatch)
+    bad = _delta()
+    bad["operations"][2]["random_event"]["related_task_id"] = None
+    good = _delta()
+    _mock_delta_sequence(monkeypatch, [bad, good])
+    session_id = _create_world(client)
+
+    response = _settle(client, session_id)
+    settlement = response["settlement"]
+    bundle = response["activated_runtime_bundle"]
+    rendered = json.dumps(
+        {"settlement": settlement, "bundle": bundle}, ensure_ascii=False
+    )
+
+    # No internal diagnostic leaks into the player-facing payload.
+    assert "fallback_stage" not in rendered
+    assert "attempt_count" not in rendered
+    assert "error_codes" not in rendered
+    assert "structure_invalid" not in rendered
+    assert "provider_error" not in rendered
+    # No raw provider artifact leaks.
+    assert "raw_prompt" not in rendered
+    assert "test-key-must-never-be-stored" not in rendered
