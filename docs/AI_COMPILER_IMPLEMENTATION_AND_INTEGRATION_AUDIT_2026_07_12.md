@@ -21,7 +21,7 @@
 | --- | --- | --- | --- | --- |
 | 玩家研发塔/陷阱/支援 | 已接真实文本 Provider | 已接候选校验、真实候选模拟、PromotionReport、激活门禁 | 已进入前端 hotbar 与战斗模拟 | **真实闭环** |
 | 研发对象行为 ABI | 由候选降低生成 | 白名单、数值裁剪、schema、包哈希复验 | 伤害、范围伤害、减速、范围支援可执行 | **真实闭环，能力集有限** |
-| 研发对象图片/动画 | 候选只生成视觉提示 | 当前使用 reviewed fallback media | 前端能显示，但不是本次实时生成图 | **半闭环** |
+| 研发对象图片/动画 | Agnes 生成对象本体并可基于首图修复 | 白底硬门禁、多模态审查、透明化、哈希发布；失败使用 reviewed fallback | 专属 icon/sprite 可随 ActivatedRuntimeBundle 进入战斗 | **真实图片闭环；动画待接** |
 | 战斗地图逻辑 | MapRuntimePackage/路径/塔位编译器已实现 | 结构、语义和对齐门禁已实现 | 三个 MVP 节点消费预编译包 | **开发期编译** |
 | 地图视觉 | Agnes 生图、视觉审查、修复重试已实现 | reviewed staging、组件 fallback、候选缓存已实现 | 默认消费预编译审核包 | **开发期真实闭环，非玩家实时** |
 | 世界实例 | World Compiler 支持真实 Provider 和地图编译 | 有候选 schema 与 manifest | Catalog 可加载已编译世界 | **工具链已接，当前无已生成世界实例** |
@@ -41,7 +41,9 @@
 
 真实候选随后通过独立模拟：估算 DPS `88`，无漏失，存在 `high_cost_efficiency` 复核警告但无阻断项。PromotionReport 的 `simulation_gate.report_ref` 指向该候选自己的 `live_candidate_simulation_report.v0.1.json`，不再借用固定 mock workflow 的模拟。
 
-激活后，RuntimeActivationReceipt 为 `activated`；ActivatedRuntimeBundle 和 FeatureSnapshot 中出现同一个 `compiled_tower_blueprint_*` object ID，前端战斗行为可读取 `damage.radius_cells` 执行范围伤害。媒体门禁诚实标记为 `degraded`，因为仍使用审核过的塔图 fallback。
+激活后，RuntimeActivationReceipt 为 `activated`；ActivatedRuntimeBundle 和 FeatureSnapshot 中出现同一个 `compiled_tower_blueprint_*` object ID，前端战斗行为可读取 `damage.radius_cells` 执行范围伤害。
+
+后续真实闭环又生成并激活“折光观测塔”：首图带有烙死的战斗特效，自动审查拒绝后以首图为参考执行去特效修复，第二张通过审查、透明化和发布哈希复验。最终 `behavior_abi` 与 `media` 两个激活门均为 `passed`。现场 confirm 耗时约 107 秒，因此前端后台研发请求上限提高到 180 秒；超时、审查失败或后处理失败仍只降级媒体，不阻断已通过玩法模拟的对象。
 
 ## 4. 本轮已修复
 
@@ -65,17 +67,13 @@ Provider 候选现在必须先运行自身的确定性模拟。严重 flag 或�
 
 ## 5. 仍存在的问题
 
-### P0/P1：玩家实时编译尚未生成专属视觉
-
-文本候选已决定名称、类型和行为，但 icon/sprite 仍使用 reviewed fallback。下一步应在研发倒计时期间异步生成视觉候选；超时或审查失败继续使用 fallback，不阻断玩法。
-
 ### P1：玩家研发并未完全走统一 AssetGraph
 
 真实 LLM 调用发生在 `live_asset_compile_service`；确认阶段再运行两个确定性 workflow，并对产物做降低。行为结果已经统一，但编排、trace 和模拟仍有两套入口。MVP 后应把真实候选生成与模拟封装成正式 DAG 节点，删除“固定 mock compile 作为真实编译证明”的语义。
 
-### P1：同步 Provider 调用影响交互延迟
+### P1：Provider 调用仍占用单次 HTTP 请求
 
-创建提案会在 HTTP 请求内等待文本模型，最长可达配置超时。比赛版本可接受短暂等待，但正式方案应返回研发 job，后台执行，并由前端轮询或事件流更新。
+创建提案和确认研发仍分别在 HTTP 请求内等待文本、图片和视觉审查。前端会先进入战斗并保留后台 Promise，比赛版本可用；正式方案仍应把 confirm 改为立即返回 running job，由后台 worker 执行，并由前端轮询或事件流更新。
 
 ### P1：Provider fallback 可观测性不足
 
@@ -95,7 +93,7 @@ Scheduler 已有授权、ledger、缓存、handoff 和 apply gate，但默认仍
 
 ## 6. 剩余开发顺序
 
-1. 给玩家研发补“异步视觉生成 + 超时 fallback”，并在前端显示本次候选的专属图标或明确的封装中状态。
+1. 把 confirm 的图片生成从长连接迁到真正的后台 research worker，保留现有 fallback 与晋升门禁。
 2. 把地图运行包服务改为 manifest/catalog 发现，先支持当前三个节点和一个新编译节点。
 3. 用真实 Provider 编译一个额外世界实例，完整验收 Catalog、开场、大地图、首关和研发对象。
 4. 只选一条剧情生长链接入真实 LLM：战后世界事件或下一节点任务，不同时铺开全部叙事对象。

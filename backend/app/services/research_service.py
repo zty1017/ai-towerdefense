@@ -29,6 +29,7 @@ from . import (
     battle_content_service,
     live_asset_compile_service,
     map_runtime_service,
+    research_runtime_media_service,
     world_catalog_service,
 )
 
@@ -271,6 +272,8 @@ def _compiler_metadata_for_job(
         "promotion_report_path": result.get("promotion_report_path"),
         "reviewed_media_fallback_allowed": bool(result.get("promotion_report_path"))
         and not result.get("promotion_blocked"),
+        "compiled_media_status": result.get("media_status") or "not_applicable",
+        "compiled_media_evidence_path": result.get("media_evidence_path"),
         "trace_count": len(result.get("trace_paths") or []),
     }
     metadata["core_artifacts"] = ai_core_artifact_service.research_job_core_artifacts(
@@ -445,6 +448,7 @@ def _personalize_compiled_artifacts(
     candidate_kind: str,
     compiled_candidate: dict[str, Any] | None = None,
     candidate_path: Path | None = None,
+    compiled_media_refs: dict[str, Any] | None = None,
 ) -> None:
     """Bind deterministic workflow output to this proposal's compiled object.
 
@@ -474,6 +478,8 @@ def _personalize_compiled_artifacts(
         "tags": identity["tags"],
     }
     asset["visual_recipes"] = identity["visual_recipes"]
+    if compiled_media_refs is not None:
+        asset["media_refs"] = compiled_media_refs
     if candidate_path is not None:
         asset["gameplay_ref"] = {
             "kind": "compiled_asset_candidate",
@@ -578,6 +584,28 @@ def _run_two_workflows(
                 compiled_candidate, Path(runtime_package_path).parent
             )
         try:
+            generation = as_dict(metadata.get("generation"))
+            provider_backed = (
+                generation.get("provider_call_performed") is True
+                and candidate_path is not None
+            )
+            media_result: dict[str, Any] = {
+                "status": "not_applicable",
+                "media_refs": None,
+                "evidence_path": None,
+                "published_ref": None,
+            }
+            if provider_backed:
+                media_result = research_runtime_media_service.compile_runtime_media(
+                    candidate=compiled_candidate,
+                    asset_kind=str(
+                        compiled_object.get("candidate_kind")
+                        or "temporary_trap_sample"
+                    ),
+                    session_id=session_id,
+                    job_id=job_id,
+                    job_dir=job_dir,
+                )
             _personalize_compiled_artifacts(
                 runtime_package_path=Path(runtime_package_path),
                 delivery_payload_path=Path(delivery_payload_path),
@@ -591,11 +619,15 @@ def _run_two_workflows(
                 ),
                 compiled_candidate=compiled_candidate or None,
                 candidate_path=candidate_path,
+                compiled_media_refs=(
+                    as_dict(media_result.get("media_refs"))
+                    if provider_backed
+                    else None
+                ),
             )
             promotion_report_path = None
             promotion_blocked = False
-            generation = as_dict(metadata.get("generation"))
-            if generation.get("provider_call_performed") is True and candidate_path is not None:
+            if provider_backed:
                 simulator = _import_simulate_asset_candidate()
                 simulation_report = simulator.simulate(
                     compiled_candidate, simulator.DEFAULT_DURATION_SECONDS
@@ -614,6 +646,7 @@ def _run_two_workflows(
                     model=str(generation.get("model") or "unknown_model"),
                     simulation_report=simulation_report,
                     simulation_report_path=simulation_report_path,
+                    media_result=media_result,
                 )
                 promotion_report_path = promotion_result["path"]
                 promotion_blocked = not promotion_result["promotion_allowed"]
@@ -639,6 +672,8 @@ def _run_two_workflows(
         "delivery_payload_path": delivery_payload_path,
         "promotion_report_path": str(promotion_report_path) if promotion_report_path else None,
         "promotion_blocked": promotion_blocked,
+        "media_status": media_result.get("status") if runtime_package_path and delivery_payload_path else "not_applicable",
+        "media_evidence_path": media_result.get("evidence_path") if runtime_package_path and delivery_payload_path else None,
         "ok": True,
         "error": error,
     }

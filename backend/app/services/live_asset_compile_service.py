@@ -421,6 +421,7 @@ def write_promotion_report(
     profile: str, model: str,
     simulation_report: dict[str, Any],
     simulation_report_path: Path,
+    media_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Write the explicit report consumed by the runtime activation gate.
 
@@ -459,6 +460,31 @@ def write_promotion_report(
     )
     staging_id = f"pstaging_{candidate_hash[:20]}"
     staged_artifact_id = f"live_candidate_{candidate_hash[:20]}_staged"
+    media_result = media_result if isinstance(media_result, dict) else {}
+    media_passed = media_result.get("status") == "passed"
+    media_evidence_path = media_result.get("evidence_path")
+    published_media_refs_value = media_result.get("published_refs")
+    if media_passed and isinstance(published_media_refs_value, list):
+        published_media_refs = [
+            item for item in published_media_refs_value if isinstance(item, dict)
+        ]
+    else:
+        published_media_ref = media_result.get("published_ref")
+        published_media_refs = (
+            [published_media_ref]
+            if media_passed and isinstance(published_media_ref, dict)
+            else []
+        )
+    media_gate = {
+        "status": "passed" if media_passed else "not_applicable",
+        "required_before_promotion": False,
+        "report_ref": str(media_evidence_path) if media_evidence_path else None,
+        "notes": [
+            "Object-specific media passed review and was published locally."
+            if media_passed
+            else "Reviewed runtime fallback media remains authorized."
+        ],
+    }
 
     if promotion_allowed:
         promotion_decision = "approved_for_runtime_package_build"
@@ -519,7 +545,7 @@ def write_promotion_report(
         "gate_results": {
             "source_staging_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(staging_path)},
             "local_ref_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(candidate_path)},
-            "media_gate": {"status": "not_applicable", "required_before_promotion": False, "report_ref": None},
+            "media_gate": media_gate,
             "semantic_gate": {"status": "passed", "required_before_promotion": True, "report_ref": str(candidate_path)},
             "human_review": {"status": "not_applicable", "required_before_promotion": False, "report_ref": None},
             "simulation_gate": simulation_gate,
@@ -528,7 +554,7 @@ def write_promotion_report(
             "target_kind": "runtime_package",
             "runtime_package_refs": [{"path": str(package_path), "kind": "runtime_package", "sha256": package_hash}],
             "world_transaction_refs": [],
-            "published_media_refs": [],
+            "published_media_refs": published_media_refs,
         },
         "safety_summary": {
             "provider_call_count_by_report": 0,
