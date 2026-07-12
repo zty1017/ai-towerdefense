@@ -47,6 +47,12 @@ def request_pack() -> dict:
                     "quality": "clean",
                 },
                 "prompt_brief": role,
+                "style_contract": {
+                    "worldbook_id": "cloud_mechanism_frontier",
+                    "theme_terms": ["cloud", "mechanical", "eastern", "storm"],
+                    "terrain_material_terms": ["cloud island"],
+                    "road_material_terms": ["cable road"],
+                },
                 "output_contract": {"size_tier": "1K", "ratio": "1:1"},
             }
         )
@@ -67,6 +73,19 @@ def test_repair_prompt_uses_controlled_mapping():
     assert "remove every human" in repaired["prompt_brief"]
     assert "unknown_external_instruction" not in repaired["prompt_brief"]
     assert repaired["prompt_brief"].startswith("Subject:")
+
+
+def test_style_repair_uses_request_contract_without_template_leakage():
+    request = request_pack()["requests"][0]
+    repaired = closed_loop.repaired_request(
+        request,
+        ["worldbook_style_fit", "semi_realistic_material_finish"],
+    )
+    prompt = repaired["prompt_brief"].lower()
+    assert "cloud_mechanism_frontier" in prompt
+    assert "cable road" in prompt
+    assert "late-ming" not in prompt
+    assert "courier" not in prompt
 
 
 def test_score_threshold_never_overrides_hard_checks():
