@@ -19,6 +19,7 @@ from .api import studio as studio_api
 from .config import get_app_title, get_app_version
 from .db import init_db
 from .services.map_visual_worker_service import worker as map_visual_worker
+from .services.research_worker_service import worker as research_worker
 from .services import research_runtime_media_service
 
 
@@ -41,9 +42,11 @@ async def lifespan(app: FastAPI):
     # Ensure the schema exists before serving any request.
     init_db()
     await map_visual_worker.start()
+    await research_worker.start()
     try:
         yield
     finally:
+        await research_worker.stop()
         await map_visual_worker.stop()
 
 

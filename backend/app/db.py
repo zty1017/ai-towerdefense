@@ -268,6 +268,22 @@ def init_db(path: str | None = None) -> None:
                 ON runtime_activations(status);
             """
         )
+        # Older builds could leave more than one historical job for a proposal.
+        # Preserve those audit rows but detach all except the newest canonical
+        # job before introducing the idempotency constraint.
+        cur.execute(
+            "UPDATE research_jobs SET proposal_id = NULL "
+            "WHERE proposal_id IS NOT NULL AND job_id NOT IN ("
+            "SELECT job_id FROM research_jobs AS candidate "
+            "WHERE candidate.proposal_id = research_jobs.proposal_id "
+            "ORDER BY CASE WHEN candidate.status = 'completed' THEN 0 ELSE 1 END, "
+            "candidate.updated_at DESC, candidate.job_id DESC LIMIT 1"
+            ")"
+        )
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_research_jobs_proposal "
+            "ON research_jobs(proposal_id)"
+        )
         conn.commit()
     finally:
         conn.close()
