@@ -25,6 +25,7 @@ except ImportError:  # pragma: no cover - direct script/import from tools path.
 REPORT_VERSION = "map_visual_closed_loop_report.v0.1"
 DEFAULT_MIN_VISION_SCORE = 0.78
 CRITICAL_ROLES = {"terrain_base", "road_surface", "build_slot_platform"}
+REVIEWED_FALLBACK_ROLES = {"road_surface", "build_slot_platform"}
 COMPONENT_ROLES = {
     "road_surface",
     "build_slot_platform",
@@ -305,6 +306,36 @@ def promote_candidate(node_id: str, role: str, source: Path, reviewed_dir: Path)
     }
 
 
+def reuse_reviewed_fallback(
+    node_id: str, role: str, source_dir: Path, reviewed_dir: Path
+) -> dict[str, Any] | None:
+    names = {
+        "road_surface": ("textures", f"{node_id}.road_tile.png", "road_tile.png"),
+        "build_slot_platform": ("textures", f"{node_id}.slot_tile.png", "slot_tile.png"),
+    }
+    spec = names.get(role)
+    if spec is None:
+        return None
+    folder, source_name, output_name = spec
+    source = source_dir / folder / source_name
+    if not source.is_file():
+        return None
+    output = reviewed_dir / folder / output_name
+    output.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, output)
+    image = png_pipeline.read_png(output)
+    return {
+        "role": role,
+        "source_path": str(source.resolve()),
+        "reviewed_path": str(output.resolve()),
+        "consumed_by_current_runtime": True,
+        "status": "reused_reviewed_fallback",
+        "width": image.width,
+        "height": image.height,
+        "sha256": sha256_file(output),
+    }
+
+
 def run_role(
     request_pack_path: Path,
     pack: dict[str, Any],
@@ -392,6 +423,7 @@ def run_closed_loop(
     review_timeout: int = 180,
     review_max_tokens: int = 1200,
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
+    reviewed_fallback_dir: Path | None = None,
 ) -> dict[str, Any]:
     requests = candidate_generator.selected_requests(pack, [])
     results_by_index: dict[int, dict[str, Any]] = {}
@@ -431,7 +463,21 @@ def run_closed_loop(
     results = [results_by_index[index] for index in sorted(results_by_index)]
     failures = [failures_by_index[index] for index in sorted(failures_by_index)]
     passed = {str(item["role"]): item for item in results if item["status"] == "passed"}
-    critical_ready = CRITICAL_ROLES.issubset(passed)
+    reviewed_fallbacks = []
+    if reviewed_fallback_dir is not None and "terrain_base" in passed:
+        for role in sorted(REVIEWED_FALLBACK_ROLES - set(passed)):
+            fallback = reuse_reviewed_fallback(
+                str(pack.get("node_id") or "map"),
+                role,
+                reviewed_fallback_dir,
+                reviewed_dir,
+            )
+            if fallback:
+                reviewed_fallbacks.append(fallback)
+    available_roles = set(passed) | {
+        str(item["role"]) for item in reviewed_fallbacks
+    }
+    critical_ready = CRITICAL_ROLES.issubset(available_roles)
     promotions = []
     if critical_ready:
         for role, result in passed.items():
@@ -443,6 +489,7 @@ def run_closed_loop(
                     reviewed_dir,
                 )
             )
+        promotions.extend(reviewed_fallbacks)
     report = {
         "schema_version": REPORT_VERSION,
         "node_id": pack.get("node_id"),
@@ -459,10 +506,12 @@ def run_closed_loop(
             "provider_call_count": sum(int(item.get("attempt_count") or 0) for item in results),
             "vision_review_call_count": sum(int(item.get("attempt_count") or 0) for item in results),
             "promotion_count": len(promotions),
+            "reviewed_fallback_count": len(reviewed_fallbacks),
         },
         "results": results,
         "failures": failures,
         "promotions": promotions,
+        "reviewed_fallbacks": reviewed_fallbacks,
         "reviewed_backdrop_source_dir": str((reviewed_dir / "backdrops").resolve()) if critical_ready else None,
         "reviewed_texture_source_dir": str((reviewed_dir / "textures").resolve()) if critical_ready else None,
         "reviewed_component_source_dir": (

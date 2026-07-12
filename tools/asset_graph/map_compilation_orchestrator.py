@@ -622,6 +622,7 @@ def compile_map(
                 max_workers=visual_max_workers,
                 generation_timeout=visual_request_timeout,
                 review_timeout=visual_review_timeout,
+                reviewed_fallback_dir=LAYERED_ROOT / str(runtime.get("node_id") or ""),
             )
             closed_loop_report_path = Path(str(visual_generation_report["report_path"]))
             closed_loop_errors = render_plan.validate_with_jsonschema(
