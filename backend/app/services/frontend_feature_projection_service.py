@@ -301,7 +301,18 @@ def _settlement_contributions(settlement: dict[str, Any] | None) -> list[dict[st
         )
     ]
     world_delta = _as_dict(settlement.get("world_delta"))
-    world_delta_summary = _safe_text(world_delta.get("summary"))
+    interlude_summary = _safe_text(settlement.get("interlude_summary"))
+    next_task = _as_dict(settlement.get("next_task"))
+    evolution_parts = [interlude_summary] if interlude_summary else []
+    if next_task.get("title"):
+        task_summary = _safe_text(next_task.get("summary"))
+        evolution_parts.append(
+            f"下一步：{_safe_text(next_task.get('title'), 120)}"
+            + (f"。{task_summary}" if task_summary else "")
+        )
+    world_delta_summary = _safe_text(" ".join(evolution_parts))
+    if not world_delta_summary:
+        world_delta_summary = _safe_text(world_delta.get("summary"))
     if not world_delta_summary:
         committed_events = _as_list(_as_dict(settlement.get("run_world_state")).get("event_log"))
         if committed_events:
