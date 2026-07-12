@@ -300,14 +300,54 @@ def test_provider_failure_reports_generation_stage(tmp_path, monkeypatch):
         max_attempts=1,
         max_workers=1,
     )
-    assert report["failures"] == [
-        {
-            "request_id": "request_1",
-            "role": "terrain_base",
-            "stage": "generation",
-            "error": "TypeError:external_call_failed",
-        }
-    ]
+    assert report["failures"] == []
+    assert report["results"][0]["status"] == "failed_after_retries"
+    assert report["results"][0]["attempts"][0]["status"] == "generation_error"
+    assert report["results"][0]["attempts"][0]["error"] == "TypeError:external_call_failed"
+
+
+def test_transient_generation_error_retries_with_next_credential(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+    credentials = []
+
+    def flaky_generate(_pack_path, _pack, request, output_dir, _profile, **kwargs):
+        credentials.append(kwargs["credential_index"])
+        if len(credentials) == 1:
+            raise RuntimeError("temporary provider failure")
+        path = output_dir / f"{request['role']}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        make_test_png(path, white_background=False)
+        return {"candidate_path": str(path)}
+
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", flaky_generate)
+    monkeypatch.setattr(
+        closed_loop.vision_review,
+        "call_vision_model",
+        lambda *_args, **_kwargs: json.dumps(
+            {"score": 0.94, "checks": checks, "notes": []}
+        ),
+    )
+    result = closed_loop.run_role(
+        pack_path,
+        pack,
+        pack["requests"][0],
+        tmp_path / "run",
+        image_provider.PROFILES["agnes_image_flash"],
+        vision_review.PROFILES["agnes_multimodal_flash"],
+        request_index=0,
+        max_attempts=2,
+        generation_timeout=1,
+        review_timeout=1,
+        review_max_tokens=300,
+    )
+    assert result["status"] == "passed"
+    assert result["attempt_count"] == 2
+    assert credentials == [0, 1]
 
 
 def test_closed_loop_calls_candidate_generator_with_supported_contract(tmp_path, monkeypatch):
