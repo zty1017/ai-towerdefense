@@ -76,6 +76,7 @@ def _delta(*, operations: list[dict[str, Any]] | None = None, summary: str | Non
 def _enable_live(monkeypatch):
     monkeypatch.setenv("AI_TD_LIVE_WORLD_EVOLUTION", "live")
     monkeypatch.setenv("ARK_API_KEY", "test-key-must-never-be-stored")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
 
 
 def _mock_delta_response(monkeypatch, delta, observed=None):
@@ -158,8 +159,8 @@ def test_live_success_uses_real_result_and_commits_player_projection(
     assert "test-key-must-never-be-stored" not in stored
 
 
-def test_default_mode_never_calls_provider(client, monkeypatch):
-    monkeypatch.delenv("AI_TD_LIVE_WORLD_EVOLUTION", raising=False)
+def test_explicit_off_mode_never_calls_provider(client, monkeypatch):
+    monkeypatch.setenv("AI_TD_LIVE_WORLD_EVOLUTION", "off")
     monkeypatch.setenv("ARK_API_KEY", "present-but-live-not-authorized")
 
     def forbidden(*args, **kwargs):
@@ -169,6 +170,64 @@ def test_default_mode_never_calls_provider(client, monkeypatch):
     settlement = _settle(client, _create_world(client))["settlement"]
     assert "world_evolution_delta" not in settlement
     assert settlement["run_world_state"]["progress"]["phase"] == "post_first_defense"
+
+
+def test_battle_run_id_makes_retry_idempotent(client, raw_conn, monkeypatch):
+    _enable_live(monkeypatch)
+    calls = {"count": 0}
+
+    def request(messages, *, timeout, max_tokens):
+        calls["count"] += 1
+        return {"choices": [{"message": {"content": json.dumps(_delta(), ensure_ascii=False)}}]}
+
+    monkeypatch.setattr(evolution_service, "_request_provider_response", request)
+    session_id = _create_world(client)
+    body = {
+        "result": "victory",
+        "protected_core_hp": 7,
+        "deployed_asset_ids": ["asset_mirror_lure_trap_001"],
+        "leaked_enemy_count": 2,
+        "battle_run_id": "battle-retry-demo-001",
+    }
+    first = _payload(
+        client.post(
+            f"/api/sessions/{session_id}/battles/gray_lantern_station/results",
+            json=body,
+        )
+    )
+    second = _payload(
+        client.post(
+            f"/api/sessions/{session_id}/battles/gray_lantern_station/results",
+            json=body,
+        )
+    )
+
+    assert second["settlement"] == first["settlement"]
+    assert calls["count"] == 1
+    count = raw_conn.execute(
+        "SELECT COUNT(*) FROM battle_results WHERE session_id = ?",
+        (session_id,),
+    ).fetchone()[0]
+    assert count == 1
+
+
+def test_auto_mode_loads_shared_worktree_dotenv(client, monkeypatch):
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.delenv("AI_TD_LIVE_WORLD_EVOLUTION", raising=False)
+    monkeypatch.delenv("ARK_API_KEY", raising=False)
+    adapter, *_ = evolution_service._modules()
+    observed = {}
+
+    def load_dotenv(path):
+        observed["dotenv"] = path
+        monkeypatch.setenv("ARK_API_KEY", "loaded-by-test")
+
+    monkeypatch.setattr(adapter, "load_dotenv", load_dotenv)
+    _mock_delta_response(monkeypatch, _delta())
+    settlement = _settle(client, _create_world(client))["settlement"]
+
+    assert observed["dotenv"].name == ".env"
+    assert settlement["world_evolution_delta"]["summary"].startswith("余烬尚温")
 
 
 def test_committed_live_append_survives_next_deterministic_campaign_baseline(

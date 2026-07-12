@@ -138,6 +138,7 @@ class BattleResultSubmitRequest(BaseModel):
     optional_target_state: Optional[str] = None
     deployed_asset_ids: list[str] = Field(default_factory=list)
     leaked_enemy_count: int = 0
+    battle_run_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
     notes: Optional[str] = None
 
 

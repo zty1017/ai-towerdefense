@@ -154,6 +154,24 @@ def _load_committed_world_evolution_deltas(session_id: str) -> list[dict[str, An
     return deltas
 
 
+def _load_battle_result_by_run_id(
+    session_id: str, battle_run_id: str | None
+) -> dict[str, Any] | None:
+    if not battle_run_id:
+        return None
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT payload FROM battle_results "
+            "WHERE session_id = ? AND idempotency_key = ? LIMIT 1",
+            (session_id, battle_run_id),
+        )
+        row = cur.fetchone()
+    if not row or not row.get("payload"):
+        return None
+    payload = json.loads(row["payload"])
+    return payload if isinstance(payload, dict) else None
+
+
 def _save_campaign_state(session_id: str, payload: dict[str, Any]) -> None:
     ts = now_iso()
     with db_cursor() as cur:
@@ -238,13 +256,15 @@ def _save_battle_settlement_and_state(
     settlement: dict[str, Any],
     state: dict[str, Any],
     created_at: str,
-) -> None:
+) -> bool:
     """Commit the player settlement and its final gated state atomically."""
     with db_cursor() as cur:
         cur.execute(
-            "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO battle_results "
+            "(session_id, idempotency_key, payload, created_at) VALUES (?, ?, ?, ?)",
             (
                 session_id,
+                submitted.get("battle_run_id"),
                 _dump_payload(
                     {
                         "node_id": node_id,
@@ -255,11 +275,14 @@ def _save_battle_settlement_and_state(
                 created_at,
             ),
         )
+        if cur.rowcount != 1:
+            return False
         cur.execute(
             "INSERT INTO campaign_state (session_id, payload, created_at, updated_at) "
             "VALUES (?, ?, ?, ?)",
             (session_id, _dump_payload(state), created_at, created_at),
         )
+    return True
 
 
 def _player_runtime_bundle(
@@ -845,10 +868,31 @@ def record_battle_result(
     result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     bundle = world_catalog_service.session_bundle(session_id)
+    submitted = result if isinstance(result, dict) else {}
+    battle_run_id = submitted.get("battle_run_id")
+    if not isinstance(battle_run_id, str):
+        battle_run_id = None
+    existing_result = _load_battle_result_by_run_id(session_id, battle_run_id)
+    if existing_result is not None:
+        existing_node_id = existing_result.get("node_id")
+        if existing_node_id != node_id:
+            raise FixtureNotFoundError(node_id)
+        state = _load_campaign_state(session_id)
+        return {
+            "session_id": session_id,
+            "mode": (
+                "frontend_mock_fixture"
+                if bundle["catalog_entry"]["world_id"] == "long_night_lanterns"
+                else "compiled_world_runtime"
+            ),
+            "settlement": existing_result.get("settlement"),
+            "activated_runtime_bundle": _player_runtime_bundle(
+                session_id, node_id=node_id, state=state
+            ),
+        }
     if bundle["catalog_entry"]["world_id"] != "long_night_lanterns":
         if node_id != bundle["catalog_entry"]["entry_node_id"]:
             raise FixtureNotFoundError(node_id)
-        submitted = result if isinstance(result, dict) else {}
         state = _load_campaign_state(session_id)
         settlement = {
             "node_id": node_id,
@@ -871,8 +915,9 @@ def record_battle_result(
         ts = now_iso()
         with db_cursor() as cur:
             cur.execute(
-                "INSERT INTO battle_results (session_id, payload, created_at) VALUES (?, ?, ?)",
-                (session_id, _dump_payload({"node_id": node_id, "submitted_result": submitted, "settlement": settlement}), ts),
+                "INSERT OR IGNORE INTO battle_results "
+                "(session_id, idempotency_key, payload, created_at) VALUES (?, ?, ?, ?)",
+                (session_id, battle_run_id, _dump_payload({"node_id": node_id, "submitted_result": submitted, "settlement": settlement}), ts),
             )
         return {
             "session_id": session_id,
@@ -901,7 +946,6 @@ def record_battle_result(
         next_state = _apply_delta_to_state(previous_state, delta)
     else:
         next_state = previous_state
-    submitted = result if isinstance(result, dict) else {}
     runtime_bundle = _player_runtime_bundle(session_id, node_id=node_id, state=previous_state)
     deployed_assets = _deployed_asset_summaries(
         submitted.get("deployed_asset_ids", [])
@@ -991,7 +1035,7 @@ def record_battle_result(
                 settlement["npc_feedback"] = projection["npc_feedback"]
             if isinstance(projection.get("next_task"), dict):
                 settlement["next_task"] = projection["next_task"]
-    _save_battle_settlement_and_state(
+    inserted = _save_battle_settlement_and_state(
         session_id,
         node_id=node_id,
         submitted=submitted,
@@ -999,6 +1043,11 @@ def record_battle_result(
         state=next_state,
         created_at=ts,
     )
+    if not inserted:
+        existing_result = _load_battle_result_by_run_id(session_id, battle_run_id)
+        if existing_result is not None:
+            next_state = _load_campaign_state(session_id)
+            settlement = existing_result.get("settlement") or settlement
     return {
         "session_id": session_id,
         "mode": "frontend_mock_fixture",

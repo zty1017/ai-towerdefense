@@ -117,13 +117,13 @@ uvicorn app.main:app --app-dir backend --reload
 
 ### 前端 Mock
 
-这些接口默认不调用 LLM、不调用图片 provider、不读取 `.env`。它们以已审查 fixture、mock pack 和媒体 manifest 跑完整 MVP 链路。`long_night_lanterns` 战后结算可由进程环境显式开启受控 live 世界演化：
+测试环境默认不调用 LLM 或图片 provider。正常运行时，`long_night_lanterns` 战后结算会在可用时自动读取主仓库 `.env`，并尝试受控 live 世界演化；缺少 key 或调用失败时无感回退到确定性结算。可用以下环境变量显式控制：
 
 ```bash
-AI_TD_LIVE_WORLD_EVOLUTION=live ARK_API_KEY=... uvicorn app.main:app
+AI_TD_LIVE_WORLD_EVOLUTION=live AI_TD_ENV_FILE=/path/to/.env uvicorn app.main:app
 ```
 
-该路径固定使用 `ark_deepseek_v4_flash`，可用 `AI_TD_WORLD_EVOLUTION_TIMEOUT`（默认 8 秒）和 `AI_TD_WORLD_EVOLUTION_MAX_TOKENS`（默认 4096）设置有界请求。确定性战役 delta 始终先推进；live 结果只有通过 WorldStateDelta 结构、语义、追加策略、apply 和输出状态复验后才会提交。未开启、缺 key、失败或超时时沿用确定性结算，玩家接口不暴露技术错误，也不保存 prompt、原始响应或 key。
+该路径固定使用 `ark_deepseek_v4_flash`；`AI_TD_LIVE_WORLD_EVOLUTION=off` 可关闭，`AI_TD_WORLD_EVOLUTION_TIMEOUT`（默认 8 秒）和 `AI_TD_WORLD_EVOLUTION_MAX_TOKENS`（默认 4096）用于设置有界请求。确定性战役 delta 始终先推进；live 结果只有通过 WorldStateDelta 结构、语义、追加策略、apply 和输出状态复验后才会提交。缺 key、失败或超时时沿用确定性结算，玩家接口不暴露技术错误，也不保存 prompt、原始响应或 key。
 
 | Method | Path | 说明 |
 | ------ | ---- | ----------- |

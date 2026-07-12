@@ -1,9 +1,10 @@
 """Guarded optional world evolution after deterministic battle settlement.
 
-The deterministic campaign delta is always computed by the caller first.  This
+The deterministic campaign delta is always computed by the caller first. This
 service may then append a small, validated live delta to that resulting state.
-It never reads ``.env`` and never returns or persists prompts, provider bodies,
-or credentials.
+Normal runtime can discover the shared worktree ``.env`` just like the other
+live compiler services, but prompts, provider bodies, and credentials are never
+returned or persisted.
 """
 
 from __future__ import annotations
@@ -74,8 +75,33 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _dotenv_path() -> Path:
+    configured = os.environ.get("AI_TD_ENV_FILE")
+    if configured:
+        return Path(configured).expanduser()
+    local = _REPO_ROOT / ".env"
+    if local.is_file():
+        return local
+    git_pointer = _REPO_ROOT / ".git"
+    if git_pointer.is_file():
+        try:
+            marker = git_pointer.read_text(encoding="utf-8").strip()
+            if marker.startswith("gitdir:"):
+                git_dir = Path(marker.partition(":")[2].strip()).resolve()
+                for parent in git_dir.parents:
+                    candidate = parent / ".env"
+                    if (parent / ".git").exists() and candidate.is_file():
+                        return candidate
+        except OSError:
+            pass
+    return local
+
+
 def _enabled() -> bool:
-    return os.environ.get("AI_TD_LIVE_WORLD_EVOLUTION", "off").strip().lower() == "live"
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return False
+    mode = os.environ.get("AI_TD_LIVE_WORLD_EVOLUTION", "auto").strip().lower()
+    return mode not in {"0", "false", "off", "disabled"}
 
 
 def _bounded_env_int(name: str, default: int, minimum: int, maximum: int) -> int:
@@ -271,9 +297,9 @@ def replay_committed_deltas(
 ) -> dict[str, Any]:
     """Replay previously gated append deltas over a later campaign baseline.
 
-    A cumulative deterministic fixture remains authoritative.  If a historical
-    live id now collides with that fixture, or any gate no longer passes, the
-    whole replay is discarded instead of overwriting future core content.
+    A cumulative deterministic fixture remains authoritative. Historical
+    deltas that no longer pass current gates are skipped individually, so one
+    stale append cannot erase other previously committed live content.
     """
     if not deltas:
         return deterministic_state
@@ -289,22 +315,24 @@ def replay_committed_deltas(
     try:
         for delta in deltas:
             if not isinstance(delta, dict):
-                return deterministic_state
+                continue
             if _dedupe(
                 [
                     *delta_validator.validate_with_jsonschema(delta),
                     *delta_validator.validate_world_delta(delta),
                 ]
             ):
-                return deterministic_state
+                continue
             registry = semantic_validator.build_reference_registry(state, _REVIEW_PACK)
             if semantic_validator.validate_world_delta_semantics(delta, state, registry):
-                return deterministic_state
+                continue
             if _controlled_policy_errors(delta, state, require_next_turn=False):
-                return deterministic_state
+                continue
+            previous_state = state
             state, apply_errors = applier.apply_delta(state, delta)
             if apply_errors:
-                return deterministic_state
+                state = previous_state
+                continue
         if _dedupe(
             [
                 *state_validator.validate_with_jsonschema(state),
@@ -337,6 +365,7 @@ def evolve_world(
         semantic_validator,
         prompt_helper,
     ) = _modules()
+    adapter.load_dotenv(_dotenv_path())
     profile = adapter.PROFILES[_PROFILE_NAME]
     if not os.environ.get(profile.env_key):
         return fallback

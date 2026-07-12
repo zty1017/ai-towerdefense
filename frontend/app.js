@@ -1421,6 +1421,10 @@ import {
         flowVisualSmoke: flowVisualSmokeMode(),
         spawnSchedule: buildSpawnSchedule(config),
       }),
+      battleRunId:
+        globalThis.crypto && typeof globalThis.crypto.randomUUID === "function"
+          ? globalThis.crypto.randomUUID()
+          : `battle_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
       selectedTool: null,
       draggingTool: null,
       dragPointer: null,
@@ -2353,9 +2357,10 @@ import {
             optional_target_state: state.battleOutcome.optional_target_state,
             deployed_asset_ids: state.battleOutcome.deployed_asset_ids,
             leaked_enemy_count: state.battleOutcome.leaked_enemy_count,
+            battle_run_id: battle.battleRunId,
             notes: "browser playable result",
           },
-          5000,
+          15000,
         );
         settlement = response.settlement || settlement;
         state.data.activatedRuntimeBundle =

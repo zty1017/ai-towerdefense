@@ -155,6 +155,7 @@ def init_db(path: str | None = None) -> None:
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
+                idempotency_key TEXT,
                 payload TEXT,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
@@ -267,6 +268,16 @@ def init_db(path: str | None = None) -> None:
             CREATE INDEX IF NOT EXISTS idx_runtime_activations_status
                 ON runtime_activations(status);
             """
+        )
+        battle_result_columns = {
+            row["name"]
+            for row in cur.execute("PRAGMA table_info(battle_results)").fetchall()
+        }
+        if "idempotency_key" not in battle_result_columns:
+            cur.execute("ALTER TABLE battle_results ADD COLUMN idempotency_key TEXT")
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_battle_results_idempotency "
+            "ON battle_results(session_id, idempotency_key)"
         )
         conn.commit()
     finally:
