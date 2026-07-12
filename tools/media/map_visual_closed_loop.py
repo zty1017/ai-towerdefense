@@ -370,7 +370,14 @@ def run_role(
                 credential_index=request_index + attempt - 1,
             )
         except Exception as exc:
-            raise MapVisualStageError("generation", exc) from exc
+            attempts.append(
+                {
+                    "attempt": attempt,
+                    "status": "generation_error",
+                    "error": f"{type(exc).__name__}:external_call_failed",
+                }
+            )
+            continue
         candidate_path = Path(str(generated["candidate_path"]))
         if not candidate_path.is_absolute():
             candidate_path = candidate_generator.ROOT / candidate_path
@@ -385,10 +392,20 @@ def run_role(
                 credential_index=request_index + attempt - 1,
             )
         except Exception as exc:
-            raise MapVisualStageError("vision_review", exc) from exc
+            attempts.append(
+                {
+                    "attempt": attempt,
+                    "status": "vision_review_error",
+                    "candidate_path": str(candidate_path.resolve()),
+                    "candidate_sha256": sha256_file(candidate_path),
+                    "error": f"{type(exc).__name__}:external_call_failed",
+                }
+            )
+            continue
         attempts.append(
             {
                 "attempt": attempt,
+                "status": "reviewed",
                 "candidate_path": str(candidate_path.resolve()),
                 "candidate_sha256": sha256_file(candidate_path),
                 "prompt_sha256": hashlib.sha256(str(current.get("prompt_brief") or "").encode("utf-8")).hexdigest(),
@@ -501,10 +518,21 @@ def run_closed_loop(
             "request_count": len(requests),
             "passed_count": len(passed),
             "failed_count": len(requests) - len(passed),
-            "provider_failure_count": len(failures),
+            "provider_failure_count": len(failures)
+            + sum(
+                1
+                for item in results
+                for attempt in item.get("attempts", [])
+                if str(attempt.get("status") or "").endswith("_error")
+            ),
             "attempt_count": sum(int(item.get("attempt_count") or 0) for item in results),
             "provider_call_count": sum(int(item.get("attempt_count") or 0) for item in results),
-            "vision_review_call_count": sum(int(item.get("attempt_count") or 0) for item in results),
+            "vision_review_call_count": sum(
+                1
+                for item in results
+                for attempt in item.get("attempts", [])
+                if attempt.get("status") in {"reviewed", "vision_review_error"}
+            ),
             "promotion_count": len(promotions),
             "reviewed_fallback_count": len(reviewed_fallbacks),
         },
