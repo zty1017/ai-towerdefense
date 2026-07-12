@@ -1,3 +1,14 @@
+import shutil
+from pathlib import Path
+
+from app.services import world_catalog_service
+from tools.asset_graph import map_compile_package
+from tools.world_compiler import world_compiler
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
 def _session(client) -> str:
     response = client.post("/api/sessions")
     assert response.status_code == 201
@@ -38,8 +49,10 @@ def test_world_instance_rejects_unknown_world(client):
 
 def test_generated_world_runs_catalog_to_battle_and_research(client, monkeypatch):
     generated_root = ROOT / "content/generated_worlds_test"
+    generated_media_root = ROOT / "content/generated_worlds_test_media"
     map_output = ROOT / "game_data/media/layered_maps/broken_cloud_bridge"
     shutil.rmtree(generated_root, ignore_errors=True)
+    shutil.rmtree(generated_media_root, ignore_errors=True)
     shutil.rmtree(map_output, ignore_errors=True)
     try:
         compiled = world_compiler.compile_candidate(
@@ -96,14 +109,20 @@ def test_generated_world_runs_catalog_to_battle_and_research(client, monkeypatch
         assert proposal.json()["compiler_metadata"]["context_package"]["worldbook_id"] == "cloud_courier_realm"
     finally:
         shutil.rmtree(generated_root, ignore_errors=True)
+        shutil.rmtree(generated_media_root, ignore_errors=True)
         shutil.rmtree(map_output, ignore_errors=True)
-import shutil
-from pathlib import Path
-
-from app.services import world_catalog_service
-from tools.world_compiler import world_compiler
 
 
-ROOT = Path(__file__).resolve().parents[2]
-
-
+def test_generated_map_node_binding_accepts_isolated_root_but_rejects_escapes():
+    check = map_compile_package._is_node_bound_layered_path
+    assert check(
+        "content/generated_worlds_test_media/demo/maps/node_a/composited.png",
+        "node_a",
+        url=False,
+    )
+    assert not check("/tmp/demo/maps/node_a/composited.png", "node_a", url=False)
+    assert not check(
+        "content/generated_worlds_test_media/../maps/node_a/composited.png",
+        "node_a",
+        url=False,
+    )
