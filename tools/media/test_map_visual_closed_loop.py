@@ -540,3 +540,50 @@ def test_cache_rejects_tampered_candidate(tmp_path):
         )
         is None
     )
+
+
+def test_transient_generation_retries_do_not_consume_visual_attempt(tmp_path, monkeypatch):
+    pack = request_pack()
+    pack["requests"] = [pack["requests"][0]]
+    pack_path = tmp_path / "pack.json"
+    pack_path.write_text(json.dumps(pack), encoding="utf-8")
+    calls = {"generate": 0}
+
+    def fake_generate(_pack_path, _pack, request, output_dir, _profile, **_kwargs):
+        calls["generate"] += 1
+        if calls["generate"] < 3:
+            raise image_provider.TransientHttpError(503)
+        path = output_dir / f"{request['role']}.png"
+        make_test_png(path, white_background=False)
+        return {"candidate_path": str(path)}
+
+    checks = {key: True for key in closed_loop.COMMON_CHECKS}
+    checks.update({key: True for key in closed_loop.ROLE_CHECKS["terrain_base"]})
+    monkeypatch.setattr(closed_loop.candidate_generator, "run_request", fake_generate)
+    monkeypatch.setattr(
+        closed_loop.vision_review,
+        "call_vision_model",
+        lambda *_args, **_kwargs: json.dumps(
+            {"score": 0.99, "checks": checks, "notes": []}
+        ),
+    )
+
+    report = closed_loop.run_closed_loop(
+        pack_path,
+        pack,
+        tmp_path / "run",
+        tmp_path / "reviewed",
+        image_provider.PROFILES["agnes_image_flash"],
+        vision_review.PROFILES["agnes_multimodal_flash"],
+        max_attempts=1,
+        max_workers=1,
+        max_transport_retries=2,
+        transport_backoff_base=0,
+        transport_backoff_cap=0,
+    )
+
+    assert calls["generate"] == 3
+    assert report["summary"]["attempt_count"] == 1
+    assert report["summary"]["provider_call_count"] == 3
+    assert report["summary"]["transport_retry_count"] == 2
+    assert report["results"][0]["attempts"][0]["transport_retry_count"] == 2

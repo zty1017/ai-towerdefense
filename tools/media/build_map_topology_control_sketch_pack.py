@@ -158,6 +158,54 @@ def draw_terrain_composition_png(path: Path, width: int, height: int) -> None:
     overlay.write_png(path, width, height, 2, rows)
 
 
+def draw_component_geometry_reference(
+    path: Path, role: str, width: int = 512, height: int = 512
+) -> None:
+    """Draw a neutral, text-free geometry template for one visual component.
+
+    These images constrain silhouette and occupancy only. They carry no world
+    semantics and are never published as player-facing media.
+    """
+    rows = make_canvas(width, height, (255, 255, 255))
+    cx, cy = width // 2, height // 2
+    dark = (72, 80, 86)
+    mid = (132, 142, 148)
+    light = (202, 210, 214)
+    if role == "road_surface":
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.2), cy), (int(width * 0.8), cy)],
+            int(height * 0.15), dark, 0.96,
+        )
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.2), cy), (int(width * 0.8), cy)],
+            int(height * 0.11), mid, 0.96,
+        )
+    elif role == "build_slot_platform":
+        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.2), dark, 0.96)
+        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.16), mid, 0.96)
+        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.1), light, 0.72)
+    elif role == "objective_foundation":
+        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.16), dark, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.02), int(width * 0.1), mid, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.06), int(width * 0.055), light, 0.96)
+    elif role == "spawn_marker":
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.38), cy), (int(width * 0.62), cy)],
+            int(height * 0.08), dark, 0.96,
+        )
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.41), cy), (int(width * 0.59), cy)],
+            int(height * 0.035), light, 0.9,
+        )
+    elif role == "non_blocking_decoration":
+        for offset, radius in ((-150, 58), (0, 74), (155, 48)):
+            overlay.draw_disc(rows, width, height, cx + offset, cy, radius, dark, 0.96)
+            overlay.draw_disc(rows, width, height, cx + offset, cy, max(12, radius - 18), mid, 0.94)
+    else:
+        raise ValueError(f"unsupported component reference role: {role}")
+    overlay.write_png(path, width, height, 2, rows)
+
+
 def svg_escape(value: Any) -> str:
     return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 

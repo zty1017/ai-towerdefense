@@ -392,6 +392,33 @@ def _build_visual_handoff(
         f"{lighting_contract['time_of_day']} lighting, {lighting_contract['contrast_policy']} contrast, "
         f"{lighting_contract['shadow_policy']} shadows, readable midtones, no unrequested magical glow"
     )
+    component_style = (
+        "high-detail semi-realistic painterly 2D game asset with restrained pseudo-3D depth; "
+        f"material and finish references only, drawn from {themes}, using {terrain_materials} and {road_materials}; "
+        f"palette anchors {palette_contract or 'from the supplied style pack'}; "
+        "these world terms describe material, texture and finish only, never a scene, setting, settlement, "
+        "architecture, building group or diorama prompt; "
+        "do not substitute a historical era, culture, architecture or technology absent from these terms; "
+        "no cartoon, anime, cel shading, thick outlines or toy-like forms"
+    )
+    component_negative_extra = [
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids",
+    ]
+    component_reference_paths: dict[str, Path] = {}
+    for role in (
+        "road_surface",
+        "build_slot_platform",
+        "objective_foundation",
+        "spawn_marker",
+        "non_blocking_decoration",
+    ):
+        path = control_dir / f"{runtime.get('node_id', 'map')}.{role}.geometry_reference.png"
+        topology_sketches.draw_component_geometry_reference(path, role)
+        component_reference_paths[role] = path
     style_reference_path = _resolve(
         str((style.get("source_refs") or {}).get("visual_style_reference_path") or "")
     )
@@ -422,73 +449,83 @@ def _build_visual_handoff(
         {
             "role": "road_surface", "output_kind": "tile_or_brush_atlas",
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "text_to_image",
+            "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"one isolated reusable road material strip made from {road_materials}",
-                "environment": "a single route-surface strip with soft irregular edges on a completely plain pure-white studio background",
-                "style": common_style,
+                "subject": f"one isolated reusable road material strip made from {road_materials}; any world terms are material modifiers only, not a scene",
+                "environment": "a single flat route-surface strip with soft irregular edges on a completely plain pure-white studio background; no terrain, no ground plate, no scenery",
+                "style": component_style,
                 "lighting": "neutral soft asset lighting without dramatic shadows or glow",
-                "composition": "elevated top-down view, one centered horizontal strip, generous white margin, no complete map or scenery",
-                "quality": "sharp clean cutout source, seamless material rhythm, no buildings, lamps, characters, signs, symbols, arrows, text or frame",
+                "composition": "strict elevated top-down orthographic view; exactly one centered horizontal strip; the strip occupies between 55% and 72% of canvas width and no more than 22% of canvas height; at least 14% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "quality": "sharp clean cutout source, seamless material rhythm; explicitly forbidden: buildings, building clusters, lamps, characters, people, signs, symbols, arrows, text, bridges, floating islands, frame, or any miniature scene",
             },
         },
         {
             "role": "build_slot_platform", "output_kind": "component_atlas",
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "text_to_image",
+            "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"one single empty low defense foundation based on {_joined(role_terms['build_slot_platform'], 'the build-slot prefab contract')}",
-                "environment": "an isolated flat construction base on a completely plain pure-white studio background",
-                "style": common_style,
+                "subject": f"one single empty low defense foundation based on {_joined(role_terms['build_slot_platform'], 'the build-slot prefab contract')}; any world terms are material modifiers only, not a scene",
+                "environment": "an isolated flat construction base on a completely plain pure-white studio background; no terrain, no ground plate, no scenery",
+                "style": component_style,
                 "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
-                "composition": "elevated top-down view, centered single object, compact oval footprint, generous white margin",
-                "quality": "sharp clean cutout source, empty and unoccupied, no tower, weapon, lantern, character, text, ring, scenery or frame",
+                "composition": "strict elevated top-down orthographic view; exactly one centered object; compact oval footprint occupying between 18% and 38% of canvas area; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "quality": "sharp clean cutout source, empty and unoccupied; explicitly forbidden: towers, weapons, lanterns, characters, people, building clusters, bridges, floating islands, text, rings, scenery, frame, or any miniature scene",
             },
         },
         {
             "role": "objective_foundation", "output_kind": "component_atlas",
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "text_to_image",
+            "generation_mode": "image_to_image",
             "sections": {
-                "subject": "one compact protected-objective foundation with a clear bottom-center anchor",
-                "environment": "isolated on a pure-white studio background",
-                "style": common_style + f"; objective form vocabulary: {_joined(role_terms['objective_foundation'], 'the objective prefab contract')}",
+                "subject": "one compact protected-objective foundation with a clear bottom-center anchor; any world terms are material modifiers only, not a scene",
+                "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
+                "style": component_style + f"; objective form vocabulary: {_joined(role_terms['objective_foundation'], 'the objective prefab contract')}",
                 "lighting": "neutral soft asset lighting",
-                "composition": "elevated top-down view, centered single compact object",
-                "quality": "clean cutout source without health bars, halos, units, text or oversized monument forms",
+                "composition": "strict elevated top-down orthographic view; exactly one centered compact object; footprint occupies between 15% and 32% of canvas area; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "quality": "clean cutout source; explicitly forbidden: health bars, halos, units, people, characters, text, oversized monuments, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
             },
         },
         {
             "role": "spawn_marker", "output_kind": "component_atlas",
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "text_to_image",
+            "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"one restrained enemy entrance terrain marker based on {_joined(role_terms['spawn_marker'], 'the spawn prefab contract')}",
-                "environment": "isolated on a pure-white studio background",
-                "style": common_style,
+                "subject": f"one restrained enemy entrance terrain marker based on {_joined(role_terms['spawn_marker'], 'the spawn prefab contract')}; any world terms are material modifiers only, not a scene",
+                "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
+                "style": component_style,
                 "lighting": "neutral dim asset lighting without magical glow",
-                "composition": "elevated top-down view, centered low-profile terrain object",
-                "quality": "clean cutout source without enemies, arrows, warning icons, text or large effects",
+                "composition": "strict elevated top-down orthographic view; exactly one centered low-profile object; footprint occupies between 8% and 22% of canvas area; at least 20% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "quality": "clean cutout source; explicitly forbidden: enemies, arrows, warning icons, people, characters, text, large effects, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
             },
         },
         {
             "role": "non_blocking_decoration", "output_kind": "component_atlas",
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "text_to_image",
+            "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"a small grouped set of non-blocking edge props based on {_joined(role_terms['non_blocking_decoration'], 'the decoration prefab contract')}",
-                "environment": "isolated on a pure-white studio background",
-                "style": common_style,
+                "subject": f"a small grouped set of non-blocking edge props based on {_joined(role_terms['non_blocking_decoration'], 'the decoration prefab contract')}; any world terms are material modifiers only, not a scene",
+                "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
+                "style": component_style,
                 "lighting": "neutral soft asset lighting",
-                "composition": "elevated top-down view, separated compact objects with generous spacing",
-                "quality": "clean cutout source, no unit, tower, objective, projectile, UI icon, text or frame",
+                "composition": "strict elevated top-down orthographic view; a small separated set of compact props, each occupying no more than 12% of canvas area and together no more than 45%; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "quality": "clean cutout source; explicitly forbidden: units, towers, objectives, projectiles, people, characters, UI icons, text, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
             },
         },
     ]
     requests = []
+    component_roles = {
+        "road_surface",
+        "build_slot_platform",
+        "objective_foundation",
+        "spawn_marker",
+        "non_blocking_decoration",
+    }
     for index, spec in enumerate(layer_specs, start=1):
         role = str(spec["role"])
         sections = dict(spec["sections"])
+        negative = list(common_negative)
+        if role in component_roles:
+            negative = [*negative, *component_negative_extra]
         requests.append(
             {
                 "request_id": f"map_layer_{runtime.get('node_id', 'map')}_{index:02d}_{role}",
@@ -498,19 +535,31 @@ def _build_visual_handoff(
                 "prompt_sections": sections,
                 "style_contract": contract,
                 "prompt_brief": _compose_visual_prompt(sections),
-                "negative_constraints": common_negative,
+                "negative_constraints": negative,
                 "generation_mode": spec["generation_mode"],
                 "output_contract": {"kind": spec["output_kind"], **spec["output"]},
                 "generation_reference": (
                     {
-                        "usage": "camera_and_clearance_reference_only",
-                        "local_path": sketch["terrain_composition_reference_path"],
-                        "sha256": sketch["terrain_composition_reference_sha256"],
+                        "usage": (
+                            "camera_and_clearance_reference_only"
+                            if role == "terrain_base"
+                            else "component_geometry_and_occupancy_reference_only"
+                        ),
+                        "local_path": (
+                            sketch["terrain_composition_reference_path"]
+                            if role == "terrain_base"
+                            else _rel(component_reference_paths[role])
+                        ),
+                        "sha256": (
+                            sketch["terrain_composition_reference_sha256"]
+                            if role == "terrain_base"
+                            else _sha(component_reference_paths[role])
+                        ),
                     }
                     if spec["generation_mode"] == "image_to_image"
                     else None
                 ),
-                "style_reference": style_reference,
+                "style_reference": style_reference if role == "terrain_base" else None,
                 "control_reference": {
                     "usage": "reserved_zone_and_alignment_reference",
                     "local_path": sketch["control_sketch_png_path"],
@@ -570,6 +619,7 @@ def _build_visual_handoff(
         _resolve(str(sketch["control_sketch_png_path"])),
         _resolve(str(sketch["control_sketch_svg_path"])),
         _resolve(str(sketch["terrain_composition_reference_path"])),
+        *component_reference_paths.values(),
     ]
     return generated_paths, request_pack
 

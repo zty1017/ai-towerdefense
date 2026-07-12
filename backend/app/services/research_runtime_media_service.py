@@ -41,6 +41,47 @@ _REQUIRED_CHECKS = (
     "world_style_fit",
 )
 
+# Bounded, check-specific correction directives used by the second repair pass.
+# Each directive is short and dedicated to one failed check rather than a fixed
+# block of text, so the repair actually targets what the vision review flagged.
+_REPAIR_DIRECTIVES = {
+    "single_isolated_object": "只保留正中央一个完整对象，移除其他任何物体、场景与背景",
+    "no_people_or_creatures": "擦除所有人物、人形、生物剪影与角色",
+    "no_text_or_watermark": "擦除所有文字、数字、书法、印章、水印与符号",
+    "no_baked_combat_effects": "擦除闪电、电弧、光环、法阵、射线、弹道、爆炸、火花、烟雾与粒子",
+    "complete_silhouette": "补全被裁切的主体外轮廓，使对象完整入镜",
+    "correct_game_camera": "恢复三分之二俯视等距游戏视角",
+    "asset_kind_match": "将主体修正为无人可进入的紧凑机械防御装置，底座明确",
+    "world_style_fit": "服从世界书材质语言，移除其他文明的标志性结构",
+}
+
+
+def _build_repair_directives(
+    failed_checks: list[str] | None, notes: list[str] | None
+) -> str:
+    """Build a bounded, dedicated correction clause from review failures.
+
+    Selects check-specific directives and a small number of truncated review
+    notes. Output is intentionally short and never echoes prompt or provider
+    bodies.
+    """
+    directives = [
+        _REPAIR_DIRECTIVES[check]
+        for check in (failed_checks or [])
+        if check in _REPAIR_DIRECTIVES
+    ]
+    clean_notes = [
+        str(item).strip()[:120]
+        for item in (notes or [])
+        if isinstance(item, str) and item.strip()
+    ][:4]
+    parts: list[str] = []
+    if directives:
+        parts.append("针对性纠正：" + "；".join(directives))
+    if clean_notes:
+        parts.append("审查备注参考：" + "；".join(clean_notes))
+    return "；".join(parts)
+
 
 def published_root() -> Path:
     configured = os.environ.get("AI_TD_GENERATED_RUNTIME_MEDIA_DIR")
@@ -106,8 +147,9 @@ def _world_style(candidate: dict[str, Any]) -> str:
     worldbook_id = str(provenance.get("worldbook_id") or "long_night_lanterns")
     if worldbook_id == "long_night_lanterns":
         return (
-            "中国古代边镇机关建筑：深色木构、青灰砖石、青铜灯械、榫卯结构、"
-            "瓦顶或上翘檐角；禁止欧洲城堡、哥特尖塔、西式城垛和现代科幻建筑"
+            "中国古代边镇器械材质：深色木构、青灰砖石、青铜灯械、榫卯结构；"
+            "仅允许小型防雨檐片，不得形成完整屋顶；禁止欧洲城堡、哥特尖塔、"
+            "西式城垛、楼阁和现代科幻建筑"
         )
     return "服从候选对象的世界书材质与建筑语言，不混入其他文明的标志性结构"
 
@@ -122,7 +164,12 @@ def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     return path
 
 
-def _prompt(candidate: dict[str, Any], asset_kind: str, attempt: int = 0) -> str:
+def _prompt(
+    candidate: dict[str, Any],
+    asset_kind: str,
+    attempt: int = 0,
+    repair_feedback: dict[str, Any] | None = None,
+) -> str:
     presentation = candidate.get("presentation")
     presentation = presentation if isinstance(presentation, dict) else {}
     visual_tags = presentation.get("visual_tags")
@@ -140,18 +187,33 @@ def _prompt(candidate: dict[str, Any], asset_kind: str, attempt: int = 0) -> str
     physical_style = _physical_style_hint(presentation)
     world_style = _world_style(candidate)
     kind_hint = {
-        "tower_blueprint": "一座完整的静止防御建筑道具，底座明确，适合放在固定平台",
+        "tower_blueprint": (
+            "一个无人可进入的紧凑机械防御装置，整体高度不超过底座宽度的两倍，"
+            "适合放在单个塔位；它不是建筑，不得出现门、窗、房间、台阶、城墙、"
+            "楼阁、宫殿、完整屋顶或可供人物活动的平台"
+        ),
         "temporary_trap_sample": "一个低矮的地面陷阱或临时机关，轮廓清楚",
         "field_device": "一个可部署的战场机关，底座稳定，轮廓清楚",
         "support_item": "一个可识别的战场支援道具，主体完整",
     }.get(asset_kind, "一个完整、可部署的塔防游戏对象")
     if attempt > 0:
+        repair_directives = _build_repair_directives(
+            list(repair_feedback.get("failed_checks") or [])
+            if isinstance(repair_feedback, dict)
+            else [],
+            list(repair_feedback.get("notes") or [])
+            if isinstance(repair_feedback, dict)
+            else [],
+        )
         return (
-            "编辑参考图，制作干净的游戏对象抠图源。只保留参考图正中央的主建筑或主道具，"
+            "编辑参考图，制作干净的游戏对象抠图源。只保留参考图正中央的主装置或主道具，"
             "保持它的基本造型、视角和材质。彻底擦除主体周围以及主体表面的闪电、电弧、光圈、法阵、"
             "射线、弹道、爆炸、火花、烟雾、碎石、漂浮物、阴影和地面，把擦除区域恢复为均匀纯白。"
             "对象必须静止、完整、未激活、未受攻击、未损坏。画面中只有一个对象，不要文字、人物、敌人或UI。"
-            f"世界风格硬约束：{world_style}。如果参考图有冲突的西式塔顶或城垛，改造成符合该风格的屋顶和结构。"
+            f"世界风格硬约束：{world_style}。如果参考图含有西式塔顶、城垛或大型屋顶，必须完整移除。"
+            "最终主体必须是无人可进入的紧凑机械装置，不是楼阁或建筑；彻底移除门、窗、房间、"
+            "台阶、城墙、完整屋顶、人物活动平台和大面积场景底座。"
+            f"{repair_directives}。"
             "纯白背景必须延伸到四角，对象外轮廓清晰且与白底完全分离。"
         )
     return (
@@ -163,6 +225,7 @@ def _prompt(candidate: dict[str, Any], asset_kind: str, attempt: int = 0) -> str
         "画面中只能有一个居中的完整对象，三分之二俯视等距游戏视角，完整轮廓和底座全部入镜，"
         "纯白无纹理背景，背景必须一直延伸到四角。高质量游戏贴图，清晰边缘，材质细节适中。"
         "严禁人物、怪物、动物、文字、数字、书法、印章、水印、UI、边框、场景、地面、建筑群；"
+        "严禁门、窗、房间、台阶、城墙、楼阁、宫殿、完整屋顶、桥梁、浮岛和可供人物活动的平台；"
         "严禁光环、法阵、闪电、电弧、射线、弹道、爆炸、火花、烟雾、粒子、漂浮碎片和任何已经烙在对象周围的战斗特效。"
     )
 
@@ -228,6 +291,9 @@ def _vision_gate(
         "score": score,
         "minimum_score": minimum,
         "checks": normalized_checks,
+        "failed_checks": [
+            key for key, passed in normalized_checks.items() if passed is not True
+        ],
         "notes": [str(item)[:240] for item in parsed.get("notes", [])[:6]]
         if isinstance(parsed.get("notes"), list) else [],
     }
@@ -256,7 +322,24 @@ def _process(raw_path: Path, output_path: Path) -> dict[str, Any]:
     return {"width": image.width, "height": image.height, "opaque_coverage": round(coverage, 4)}
 
 
-def _fallback(job_dir: Path, candidate_id: str, reason: str) -> dict[str, Any]:
+def _fallback(
+    job_dir: Path,
+    candidate_id: str,
+    reason: str,
+    diagnostic: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    compact_diagnostic = None
+    if isinstance(diagnostic, dict):
+        compact_diagnostic = {
+            "score": diagnostic.get("score"),
+            "minimum_score": diagnostic.get("minimum_score"),
+            "failed_checks": [
+                str(key)[:80]
+                for key, passed in (diagnostic.get("checks") or {}).items()
+                if passed is not True
+            ][:16],
+            "notes": [str(item)[:160] for item in (diagnostic.get("notes") or [])[:6]],
+        }
     evidence_path = _write_json(
         job_dir / "runtime_media" / "runtime_media_evidence.v0.1.json",
         {
@@ -264,6 +347,7 @@ def _fallback(job_dir: Path, candidate_id: str, reason: str) -> dict[str, Any]:
             "candidate_id": candidate_id,
             "status": "fallback",
             "reason": reason,
+            **({"visual_review": compact_diagnostic} if compact_diagnostic else {}),
             "stores_prompt_body": False,
             "stores_provider_body": False,
             "stores_secret": False,
@@ -297,12 +381,13 @@ def compile_runtime_media(
         max_attempts = max(1, min(2, int(os.environ.get("AI_TD_MEDIA_MAX_ATTEMPTS", "2"))))
         last_reason = "visual_review_failed"
         previous_raw_path: Path | None = None
+        last_review: dict[str, Any] | None = None
         for attempt in range(max_attempts):
             raw_path = work_dir / f"raw_candidate_attempt_{attempt + 1}.png"
             try:
                 response = image_provider.generate_image(
                     image_profile,
-                    _prompt(candidate, asset_kind, attempt),
+                    _prompt(candidate, asset_kind, attempt, last_review),
                     size="1K",
                     ratio="1:1",
                     input_images=(
@@ -335,6 +420,7 @@ def compile_runtime_media(
                 )
                 if not review["passed"]:
                     last_reason = "visual_review_failed"
+                    last_review = review
                     continue
                 break
             except TimeoutError:
@@ -343,7 +429,7 @@ def compile_runtime_media(
                 last_reason = type(exc).__name__
                 continue
         else:
-            return _fallback(job_dir, candidate_id, last_reason)
+            return _fallback(job_dir, candidate_id, last_reason, last_review)
 
         relative = Path(_safe_id(session_id, "session")) / _safe_id(job_id, "job") / f"{candidate_id}.png"
         published_path = published_root() / relative

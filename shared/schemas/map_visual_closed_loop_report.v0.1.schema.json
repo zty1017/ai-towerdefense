@@ -47,7 +47,8 @@
         "promotion_count": {"type": "integer", "minimum": 0},
         "reviewed_fallback_count": {"type": "integer", "minimum": 0},
         "cache_hit_count": {"type": "integer", "minimum": 0},
-        "cache_store_count": {"type": "integer", "minimum": 0}
+        "cache_store_count": {"type": "integer", "minimum": 0},
+        "transport_retry_count": {"type": "integer", "minimum": 0}
       }
     },
     "results": {"type": "array", "items": {"type": "object"}},
