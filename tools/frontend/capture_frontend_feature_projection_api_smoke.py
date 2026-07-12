@@ -44,6 +44,8 @@ def start_backend(port: int, db_path: Path) -> subprocess.Popen[str]:
     env["APP_DB_PATH"] = str(db_path)
     env["PYTHONPATH"] = str(ROOT / "backend")
     env["AI_TD_LIVE_COMPILATION"] = "off"
+    env["AI_TD_LIVE_MEDIA"] = "off"
+    env["AI_TD_LIVE_WORLD_EVOLUTION"] = "off"
     process = subprocess.Popen(
         [
             sys.executable,
