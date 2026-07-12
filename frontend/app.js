@@ -1254,7 +1254,7 @@ import {
             `/research/proposals/${encodeURIComponent(proposal.proposal_id)}/confirm`,
           ),
           {},
-          90000,
+          180000,
         )
           .then(async (job) => {
             state.research.job = job;

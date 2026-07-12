@@ -566,9 +566,13 @@ def _fallback_media(asset_kind: str) -> dict[str, Any]:
 
 
 def _published_path(url: str) -> Path | None:
+    from . import research_runtime_media_service
+
     prefixes = {
         "/assets/frontend_mock/processed/": _REPO_ROOT / "game_data/media/frontend_mock/processed",
         "/assets/frontend_runtime_mock/processed/": _REPO_ROOT / "game_data/media/frontend_runtime_mock/processed",
+        "/assets/frontend_runtime_mock/": _REPO_ROOT / "game_data/media/frontend_runtime_mock",
+        "/assets/generated_runtime/": research_runtime_media_service.published_root(),
     }
     for prefix, root in prefixes.items():
         if url.startswith(prefix):
@@ -583,10 +587,13 @@ def _package_media(asset: dict[str, Any]) -> dict[str, Any]:
     sprite = _json_object(media.get("sprite"))
     icon_path = _published_path(str(icon.get("url") or ""))
     sprite_path = _published_path(str(sprite.get("image") or ""))
+    atlas_path = _published_path(str(sprite.get("atlas") or ""))
     if not icon_path or not icon_path.is_file() or _sha256_file(icon_path) != icon.get("sha256"):
         raise ValueError("runtime icon is not a hash-matched published asset")
     if not sprite_path or not sprite_path.is_file():
         raise ValueError("runtime sprite is not a published asset")
+    if not atlas_path or not atlas_path.is_file() or atlas_path.suffix != ".json":
+        raise ValueError("runtime sprite atlas is not a published JSON manifest")
     return {"icon": icon, "sprite": sprite}
 
 

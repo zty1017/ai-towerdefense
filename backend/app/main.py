@@ -19,6 +19,7 @@ from .api import studio as studio_api
 from .config import get_app_title, get_app_version
 from .db import init_db
 from .services.map_visual_worker_service import worker as map_visual_worker
+from .services import research_runtime_media_service
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(frontend_mock_api.router)
     app.include_router(studio_api.router)
     _mount_frontend_mock_media(app)
+    _mount_generated_runtime_media(app)
     _mount_frontend(app)
     return app
 
@@ -80,6 +82,12 @@ def _mount_frontend_mock_media(app: FastAPI) -> None:
                     StaticFiles(directory=str(directory)),
                     name=f"{namespace}_{role_dir}",
                 )
+        if namespace == "frontend_runtime_mock" and media_dir.exists():
+            app.mount(
+                f"/assets/{namespace}",
+                StaticFiles(directory=str(media_dir)),
+                name=f"{namespace}_manifests",
+            )
     for namespace, directory in _STATIC_DIRECT_MEDIA_ROOTS.items():
         if directory.exists():
             app.mount(
@@ -87,6 +95,17 @@ def _mount_frontend_mock_media(app: FastAPI) -> None:
                 StaticFiles(directory=str(directory)),
                 name=namespace,
             )
+
+
+def _mount_generated_runtime_media(app: FastAPI) -> None:
+    """Serve only locally published, post-processed runtime object media."""
+    directory = research_runtime_media_service.published_root()
+    directory.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        "/assets/generated_runtime",
+        StaticFiles(directory=str(directory)),
+        name="generated_runtime_media",
+    )
 
 
 def _mount_frontend(app: FastAPI) -> None:

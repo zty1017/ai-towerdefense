@@ -155,8 +155,8 @@ def test_create_proposal_is_persisted(client, raw_conn: sqlite3.Connection):
     assert rows[0]["status"] == "proposed"
 
 
-def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
-    from app.services import live_asset_compile_service
+def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch, tmp_path):
+    from app.services import live_asset_compile_service, research_runtime_media_service
     from tools.dev.validate_provider_artifact_promotion_report import (
         validate_provider_artifact_promotion_report,
     )
@@ -213,6 +213,44 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
             },
         },
     )
+    published_root = tmp_path / "published_runtime"
+    published_path = published_root / "session" / "job" / "live_tower.png"
+    published_path.parent.mkdir(parents=True)
+    published_path.write_bytes(b"reviewed-runtime-media")
+    published_atlas_path = published_path.with_suffix(".atlas.json")
+    published_atlas_path.write_text("{}\n", encoding="utf-8")
+    media_sha = __import__("hashlib").sha256(published_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(
+        research_runtime_media_service, "published_root", lambda: published_root
+    )
+    monkeypatch.setattr(
+        research_runtime_media_service,
+        "compile_runtime_media",
+        lambda **_: {
+            "status": "passed",
+            "reason": None,
+            "media_refs": {
+                "icon": {
+                    "url": "/assets/generated_runtime/session/job/live_tower.png",
+                    "width": 512,
+                    "height": 512,
+                    "sha256": media_sha,
+                },
+                "sprite": {
+                    "texture_key": "runtime_live_tower",
+                    "atlas": "/assets/generated_runtime/session/job/live_tower.atlas.json",
+                    "image": "/assets/generated_runtime/session/job/live_tower.png",
+                },
+            },
+            "evidence_path": str(tmp_path / "runtime_media_evidence.json"),
+            "published_ref": {
+                "path": str(published_path),
+                "kind": "runtime_sprite",
+                "sha256": media_sha,
+            },
+        },
+    )
+    (tmp_path / "runtime_media_evidence.json").write_text("{}\n", encoding="utf-8")
 
     sid = _create_session(client)
     proposal = _create_proposal(client, sid, intent="做一座折射灯塔攻击并拖慢影潮")
@@ -245,6 +283,8 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
     simulation = json.loads(simulation_ref.read_text(encoding="utf-8"))
     assert simulation["candidate_id"] == candidate["id"]
     assert promotion["gate_results"]["simulation_gate"]["status"] == "passed"
+    assert promotion["gate_results"]["media_gate"]["status"] == "passed"
+    assert promotion["promotion_targets"]["published_media_refs"][0]["sha256"] == media_sha
     assert simulation_ref != evidence_root / "validated_live_asset_candidate.json"
     assert str(simulation_ref) not in job["trace_paths"]
     package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
@@ -268,6 +308,9 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch):
     )
     assert capability["display_name"] == "棱潮束灯塔"
     assert capability["behavior_abi"]["targeting"]["range_cells"] == 3.4
+    assert capability["media_refs"]["icon"]["url"].startswith(
+        "/assets/generated_runtime/"
+    )
 
 
 def test_live_candidate_without_playable_impact_is_not_promoted(client, monkeypatch):
