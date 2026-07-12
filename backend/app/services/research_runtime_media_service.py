@@ -13,6 +13,7 @@ import os
 import re
 import secrets
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -322,11 +323,49 @@ def _process(raw_path: Path, output_path: Path) -> dict[str, Any]:
     return {"width": image.width, "height": image.height, "opaque_coverage": round(coverage, 4)}
 
 
+def _generate_raw_candidate(
+    *,
+    image_profile: Any,
+    prompt: str,
+    input_images: list[str] | None,
+    raw_path: Path,
+    credential_index: int,
+    retry_counter: list[int],
+) -> None:
+    max_retries = max(
+        0, min(3, int(os.environ.get("AI_TD_MEDIA_TRANSPORT_RETRIES", "2")))
+    )
+    for retry_index in range(max_retries + 1):
+        try:
+            response = image_provider.generate_image(
+                image_profile,
+                prompt,
+                size="1K",
+                ratio="1:1",
+                input_images=input_images,
+                response_format="url",
+                timeout=int(os.environ.get("AI_TD_MEDIA_GENERATION_TIMEOUT", "45")),
+                credential_index=credential_index + retry_index,
+            )
+            image_provider.download_image(
+                image_provider.extract_image_url(response),
+                raw_path,
+                timeout=int(os.environ.get("AI_TD_MEDIA_DOWNLOAD_TIMEOUT", "20")),
+            )
+            return
+        except image_provider.TransientProviderError:
+            if retry_index >= max_retries:
+                raise
+            retry_counter[0] += 1
+            time.sleep(min(2.0 * (2**retry_index), 8.0))
+
+
 def _fallback(
     job_dir: Path,
     candidate_id: str,
     reason: str,
     diagnostic: dict[str, Any] | None = None,
+    transport_retry_count: int = 0,
 ) -> dict[str, Any]:
     compact_diagnostic = None
     if isinstance(diagnostic, dict):
@@ -347,6 +386,7 @@ def _fallback(
             "candidate_id": candidate_id,
             "status": "fallback",
             "reason": reason,
+            "transport_retry_count": max(0, int(transport_retry_count)),
             **({"visual_review": compact_diagnostic} if compact_diagnostic else {}),
             "stores_prompt_body": False,
             "stores_provider_body": False,
@@ -363,6 +403,7 @@ def compile_runtime_media(
 ) -> dict[str, Any]:
     """Compile one provider-backed candidate into reviewed local runtime media."""
     candidate_id = _safe_id(candidate.get("id"), "compiled_object")
+    transport_retry_counter = [0]
     if _mode() == "off":
         return _fallback(job_dir, candidate_id, "disabled")
     try:
@@ -385,24 +426,17 @@ def compile_runtime_media(
         for attempt in range(max_attempts):
             raw_path = work_dir / f"raw_candidate_attempt_{attempt + 1}.png"
             try:
-                response = image_provider.generate_image(
-                    image_profile,
-                    _prompt(candidate, asset_kind, attempt, last_review),
-                    size="1K",
-                    ratio="1:1",
+                _generate_raw_candidate(
+                    image_profile=image_profile,
+                    prompt=_prompt(candidate, asset_kind, attempt, last_review),
                     input_images=(
                         [image_provider.image_data_uri(previous_raw_path)]
                         if attempt > 0 and previous_raw_path is not None
                         else None
                     ),
-                    response_format="url",
-                    timeout=int(os.environ.get("AI_TD_MEDIA_GENERATION_TIMEOUT", "45")),
+                    raw_path=raw_path,
                     credential_index=attempt,
-                )
-                image_provider.download_image(
-                    image_provider.extract_image_url(response),
-                    raw_path,
-                    timeout=int(os.environ.get("AI_TD_MEDIA_DOWNLOAD_TIMEOUT", "20")),
+                    retry_counter=transport_retry_counter,
                 )
                 raw_image = png_pipeline.read_png(raw_path)
                 previous_raw_path = raw_path
@@ -424,12 +458,23 @@ def compile_runtime_media(
                     continue
                 break
             except TimeoutError:
-                return _fallback(job_dir, candidate_id, "TimeoutError")
+                return _fallback(
+                    job_dir,
+                    candidate_id,
+                    "TimeoutError",
+                    transport_retry_count=transport_retry_counter[0],
+                )
             except Exception as exc:
                 last_reason = type(exc).__name__
                 continue
         else:
-            return _fallback(job_dir, candidate_id, last_reason, last_review)
+            return _fallback(
+                job_dir,
+                candidate_id,
+                last_reason,
+                last_review,
+                transport_retry_counter[0],
+            )
 
         relative = Path(_safe_id(session_id, "session")) / _safe_id(job_id, "job") / f"{candidate_id}.png"
         published_path = published_root() / relative
@@ -477,6 +522,7 @@ def compile_runtime_media(
                 "deterministic_gate": deterministic,
                 "vision_gate": review,
                 "processed": processed,
+                "transport_retry_count": transport_retry_counter[0],
                 "published": {
                     "image": {"path": str(published_path), "url": url, "sha256": digest},
                     "atlas": {"path": str(atlas_path), "url": atlas_url, "sha256": atlas_digest},
@@ -499,4 +545,9 @@ def compile_runtime_media(
             ],
         }
     except Exception as exc:  # Provider/media failures must not abort gameplay.
-        return _fallback(job_dir, candidate_id, type(exc).__name__)
+        return _fallback(
+            job_dir,
+            candidate_id,
+            type(exc).__name__,
+            transport_retry_count=transport_retry_counter[0],
+        )
