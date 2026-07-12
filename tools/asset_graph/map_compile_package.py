@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 import re
 from datetime import datetime, timezone
+from pathlib import PurePosixPath
 from typing import Any
 
 
@@ -44,6 +45,25 @@ DATETIME_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
 )
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _is_node_bound_layered_path(value: object, node_id: str, *, url: bool) -> bool:
+    text = str(value or "")
+    prefix = "/assets/layered_maps/" if url else "game_data/media/layered_maps/"
+    if not text.startswith(prefix):
+        return False
+    tail = PurePosixPath(text[len(prefix) :]).parts
+    if len(tail) < 2 or any(part in {"", ".", ".."} for part in tail):
+        return False
+    if tail[0] == node_id:
+        return True
+    if not tail[0].startswith("_"):
+        return False
+    try:
+        node_index = tail.index(node_id, 1)
+    except ValueError:
+        return False
+    return node_index < len(tail) - 1
 
 
 def now_iso() -> str:
@@ -690,21 +710,18 @@ def validate_pure_python(package: dict[str, Any]) -> list[str]:
         _require_array(painted.get("visual_constraints"), "painted_visual_layer.visual_constraints", errors, minimum=1)
         node_id = str(package.get("node_id") or "")
         if isinstance(artifact, dict) and node_id:
-            expected_url_prefix = f"/assets/layered_maps/{node_id}/"
-            expected_path_prefix = f"game_data/media/layered_maps/{node_id}/"
-            if not str(artifact.get("url") or "").startswith(expected_url_prefix):
+            if not _is_node_bound_layered_path(artifact.get("url"), node_id, url=True):
                 errors.append(
                     "painted_visual_layer.artifact.url must bind the package node-specific layered map"
                 )
-            if not str(artifact.get("local_path") or "").startswith(expected_path_prefix):
+            if not _is_node_bound_layered_path(
+                artifact.get("local_path"), node_id, url=False
+            ):
                 errors.append(
                     "painted_visual_layer.artifact.local_path must bind the package node-specific layered map"
                 )
-            expected_package_prefix = (
-                f"game_data/media/layered_maps/{node_id}/"
-            )
-            if not str(source_refs.get("layered_visual_package_path") or "").startswith(
-                expected_package_prefix
+            if not _is_node_bound_layered_path(
+                source_refs.get("layered_visual_package_path"), node_id, url=False
             ):
                 errors.append(
                     "source_refs.layered_visual_package_path must bind the package node"

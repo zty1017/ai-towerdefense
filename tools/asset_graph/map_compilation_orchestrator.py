@@ -469,9 +469,16 @@ def plan(input_path: Path, output_dir: Path) -> dict[str, Any]:
     node_id = str(battle.get("node_id") or "")
     if not node_id or style.get("node_id") != node_id:
         raise MapCompilationError("battle config and MapStylePack must share a non-empty node_id")
-    expected = (LAYERED_ROOT / node_id).resolve()
-    if output_dir.resolve() != expected:
-        raise MapCompilationError(f"output directory must be {expected}")
+    try:
+        output_dir.resolve().relative_to(LAYERED_ROOT.resolve())
+    except ValueError as exc:
+        raise MapCompilationError(
+            f"output directory must stay under {LAYERED_ROOT.resolve()}"
+        ) from exc
+    if output_dir.name != node_id:
+        raise MapCompilationError(
+            f"output directory name must match node_id '{node_id}': {output_dir}"
+        )
     style_errors = _validate_style(style)
     if style_errors:
         raise MapCompilationError(f"MapStylePack validation failed: {style_errors[0]}")
