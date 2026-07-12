@@ -40,6 +40,9 @@ COMPONENT_ROLES = {
     "non_blocking_decoration",
 }
 DEFAULT_CACHE_DIR = candidate_generator.ROOT / "backend" / "data" / "map_visual_candidate_cache"
+DEFAULT_MAX_TRANSPORT_RETRIES = 4
+DEFAULT_TRANSPORT_BACKOFF_BASE = 2.0
+DEFAULT_TRANSPORT_BACKOFF_CAP = 16.0
 
 
 class MapVisualStageError(RuntimeError):
@@ -124,6 +127,47 @@ def compose_prompt(sections: dict[str, str]) -> str:
 def resolve_cache_dir() -> Path:
     configured = os.environ.get("AI_TD_MAP_VISUAL_CACHE_DIR")
     return Path(configured).expanduser() if configured else DEFAULT_CACHE_DIR
+
+
+def _transport_backoff_delay(attempt: int, base: float, cap: float) -> float:
+    return min(base * (2 ** attempt), cap)
+
+
+def generate_with_transport_retries(
+    run_once,
+    *,
+    max_retries: int = DEFAULT_MAX_TRANSPORT_RETRIES,
+    base_backoff: float = DEFAULT_TRANSPORT_BACKOFF_BASE,
+    max_backoff: float = DEFAULT_TRANSPORT_BACKOFF_CAP,
+    retry_count: list[int] | None = None,
+):
+    """Call ``run_once`` with bounded transport-layer retries and backoff.
+
+    Only :class:`image_provider.TransientProviderError` (identifiable transient
+    HTTP 429/500/502/503/504 and transport errors) is retried within the same
+    visual attempt; a transient 503 no longer consumes a visual repair attempt.
+    All other errors propagate immediately. ``retry_count`` is a one-element
+    list updated in place so callers can record the count even when the final
+    retry raises. Returns ``(result, transport_retry_count)`` on success.
+
+    No provider response body is retained: transient errors carry only the
+    status code or cause type, never the upstream payload.
+    """
+    if retry_count is None:
+        retry_count = [0]
+    retry_count[0] = 0
+    last_error: Exception | None = None
+    total_attempts = max(1, max_retries + 1)
+    for attempt in range(total_attempts):
+        try:
+            result = run_once()
+            return result, retry_count[0]
+        except image_provider.TransientProviderError as exc:
+            last_error = exc
+            if attempt + 1 < total_attempts:
+                retry_count[0] += 1
+                time.sleep(_transport_backoff_delay(attempt, base_backoff, max_backoff))
+    raise last_error  # type: ignore[misc]
 
 
 def required_review_checks(role: str) -> list[str]:
@@ -403,6 +447,9 @@ def run_role(
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
     credential_locks: list[threading.Lock] | None = None,
     candidate_cache: map_visual_candidate_cache.CandidateCache | None = None,
+    max_transport_retries: int = DEFAULT_MAX_TRANSPORT_RETRIES,
+    transport_backoff_base: float = DEFAULT_TRANSPORT_BACKOFF_BASE,
+    transport_backoff_cap: float = DEFAULT_TRANSPORT_BACKOFF_CAP,
 ) -> dict[str, Any]:
     current = copy.deepcopy(request)
     current.setdefault("worldbook_id", pack.get("worldbook_id"))
@@ -494,18 +541,25 @@ def run_role(
             if credential_locks
             else contextlib.nullcontext()
         )
+        transport_retry_count_holder = [0]
         try:
             with lock:
-                generated = candidate_generator.run_request(
-                    request_pack_path,
-                    pack,
-                    current,
-                    attempt_dir,
-                    image_profile,
-                    size_override=None,
-                    timeout=generation_timeout,
-                    live=True,
-                    credential_index=credential_index,
+                generated, transport_retry_count = generate_with_transport_retries(
+                    lambda: candidate_generator.run_request(
+                        request_pack_path,
+                        pack,
+                        current,
+                        attempt_dir,
+                        image_profile,
+                        size_override=None,
+                        timeout=generation_timeout,
+                        live=True,
+                        credential_index=credential_index,
+                    ),
+                    max_retries=max_transport_retries,
+                    base_backoff=transport_backoff_base,
+                    max_backoff=transport_backoff_cap,
+                    retry_count=transport_retry_count_holder,
                 )
         except Exception as exc:
             attempts.append(
@@ -513,6 +567,7 @@ def run_role(
                     "attempt": attempt,
                     "status": "generation_error",
                     "error": f"{type(exc).__name__}:external_call_failed",
+                    "transport_retry_count": transport_retry_count_holder[0],
                 }
             )
             if attempt < max_attempts:
@@ -552,6 +607,7 @@ def run_role(
                 "candidate_path": str(candidate_path.resolve()),
                 "candidate_sha256": sha256_file(candidate_path),
                 "prompt_sha256": hashlib.sha256(str(current.get("prompt_brief") or "").encode("utf-8")).hexdigest(),
+                "transport_retry_count": transport_retry_count,
                 "review": review,
             }
         )
@@ -611,6 +667,9 @@ def run_closed_loop(
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
     reviewed_fallback_dir: Path | None = None,
     cache_dir: Path | None = None,
+    max_transport_retries: int = DEFAULT_MAX_TRANSPORT_RETRIES,
+    transport_backoff_base: float = DEFAULT_TRANSPORT_BACKOFF_BASE,
+    transport_backoff_cap: float = DEFAULT_TRANSPORT_BACKOFF_CAP,
 ) -> dict[str, Any]:
     requests = candidate_generator.selected_requests(pack, [])
     credential_count = max(
@@ -643,6 +702,9 @@ def run_closed_loop(
                 minimum_score=minimum_score,
                 credential_locks=credential_locks,
                 candidate_cache=candidate_cache,
+                max_transport_retries=max_transport_retries,
+                transport_backoff_base=transport_backoff_base,
+                transport_backoff_cap=transport_backoff_cap,
             ): (index, request)
             for index, request in enumerate(requests)
         }
@@ -708,7 +770,12 @@ def run_closed_loop(
                 if str(attempt.get("status") or "").endswith("_error")
             ),
             "attempt_count": sum(int(item.get("attempt_count") or 0) for item in results),
-            "provider_call_count": sum(int(item.get("attempt_count") or 0) for item in results),
+            "provider_call_count": sum(
+                1 + int(attempt.get("transport_retry_count", 0))
+                for item in results
+                for attempt in item.get("attempts", [])
+                if attempt.get("status") in {"generation_error", "reviewed", "vision_review_error"}
+            ),
             "vision_review_call_count": sum(
                 1
                 for item in results
@@ -722,6 +789,11 @@ def run_closed_loop(
             ),
             "cache_store_count": sum(
                 1 for item in results if item.get("cache", {}).get("status") == "stored"
+            ),
+            "transport_retry_count": sum(
+                int(attempt.get("transport_retry_count", 0))
+                for item in results
+                for attempt in item.get("attempts", [])
             ),
         },
         "results": results,

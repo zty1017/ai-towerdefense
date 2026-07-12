@@ -34,6 +34,58 @@ class ImageProfile:
         return (self.env_key, *self.fallback_env_keys)
 
 
+TRANSIENT_HTTP_STATUS = frozenset({429, 500, 502, 503, 504})
+
+
+class TransientProviderError(RuntimeError):
+    """Base class for retryable transport-layer provider errors.
+
+    Carries no provider response body. The string form is a compact
+    ``stage:kind`` token so it can be recorded without retaining secrets or
+    upstream error payloads.
+    """
+
+
+class TransientHttpError(TransientProviderError):
+    """A retryable provider HTTP error (429/500/502/503/504).
+
+    Only the status code is retained; the response body is intentionally
+    discarded so retry reports and evidence never store upstream payloads.
+    """
+
+    def __init__(self, status_code: int, *, stage: str = "image_generation"):
+        self.status_code = int(status_code)
+        self.stage = stage
+        super().__init__(f"{stage}:transient_http_{self.status_code}")
+
+
+class TransientTransportError(TransientProviderError):
+    """A retryable transport-layer error (connection, DNS, timeout).
+
+    Wraps low-level ``URLError``/``TimeoutError`` causes without retaining
+    upstream response bodies.
+    """
+
+    def __init__(self, *, stage: str = "image_generation", cause_type: str = "transport"):
+        self.stage = stage
+        self.cause_type = cause_type or "transport"
+        super().__init__(f"{stage}:transient_transport:{self.cause_type}")
+
+
+class HttpError(RuntimeError):
+    """A non-transient provider HTTP error; carries the status code only."""
+
+    def __init__(self, status_code: int, *, stage: str = "image_generation"):
+        self.status_code = int(status_code)
+        self.stage = stage
+        super().__init__(f"{stage}:http_{self.status_code}")
+
+
+def is_transient_error(exc: BaseException) -> bool:
+    """Return True if ``exc`` is a retryable transport-layer provider error."""
+    return isinstance(exc, TransientProviderError)
+
+
 PROFILES: dict[str, ImageProfile] = {
     "agnes_image_flash": ImageProfile(
         name="agnes_image_flash",
@@ -214,9 +266,21 @@ def generate_image(
                 raise RuntimeError("empty response from image provider")
             return json.loads(body)
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        detail = body[:1000] if body else ""
-        raise RuntimeError(f"image provider HTTP {exc.code}: {detail}") from exc
+        # Read and discard the body: it must never be retained in errors or
+        # reports. Only the identifiable status code survives.
+        exc.read()
+        if exc.code in TRANSIENT_HTTP_STATUS:
+            raise TransientHttpError(exc.code, stage="image_generation") from exc
+        raise HttpError(exc.code, stage="image_generation") from exc
+    except urllib.error.URLError as exc:
+        cause_type = type(exc.reason).__name__ if exc.reason is not None else "URLError"
+        raise TransientTransportError(
+            stage="image_generation", cause_type=cause_type or "URLError"
+        ) from exc
+    except TimeoutError as exc:
+        raise TransientTransportError(
+            stage="image_generation", cause_type="TimeoutError"
+        ) from exc
 
 
 def extract_image_url(response: dict[str, Any]) -> str:
@@ -270,18 +334,33 @@ def download_image(
         raise RuntimeError(f"unsupported image URL scheme: {parsed.scheme!r}")
 
     req = urllib.request.Request(url, method="GET")
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        chunks: list[bytes] = []
-        total = 0
-        while True:
-            chunk = response.read(65536)
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > max_bytes:
-                raise RuntimeError("downloaded image exceeds maximum allowed size")
-            chunks.append(chunk)
-        image_bytes = b"".join(chunks)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            chunks: list[bytes] = []
+            total = 0
+            while True:
+                chunk = response.read(65536)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_bytes:
+                    raise RuntimeError("downloaded image exceeds maximum allowed size")
+                chunks.append(chunk)
+            image_bytes = b"".join(chunks)
+    except urllib.error.HTTPError as exc:
+        exc.read()
+        if exc.code in TRANSIENT_HTTP_STATUS:
+            raise TransientHttpError(exc.code, stage="image_download") from exc
+        raise HttpError(exc.code, stage="image_download") from exc
+    except urllib.error.URLError as exc:
+        cause_type = type(exc.reason).__name__ if exc.reason is not None else "URLError"
+        raise TransientTransportError(
+            stage="image_download", cause_type=cause_type or "URLError"
+        ) from exc
+    except TimeoutError as exc:
+        raise TransientTransportError(
+            stage="image_download", cause_type="TimeoutError"
+        ) from exc
 
     output_path.write_bytes(image_bytes)
     return output_path

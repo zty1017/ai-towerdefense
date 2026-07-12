@@ -62,7 +62,21 @@ def test_compile_and_resume(tmp_path):
         assert by_role["terrain_base"]["output_contract"]["ratio"] == "16:9"
         assert "pure-white studio background" in by_role["road_surface"]["prompt_brief"]
         assert "platform lantern foundation ring" in by_role["build_slot_platform"]["prompt_brief"]
-        assert by_role["road_surface"]["generation_mode"] == "text_to_image"
+        for role in {
+            "road_surface",
+            "build_slot_platform",
+            "objective_foundation",
+            "spawn_marker",
+            "non_blocking_decoration",
+        }:
+            request = by_role[role]
+            assert request["generation_mode"] == "image_to_image"
+            assert request["style_reference"] is None
+            reference = request["generation_reference"]
+            assert reference["usage"] == "component_geometry_and_occupancy_reference_only"
+            reference_path = orchestrator._resolve(reference["local_path"])
+            assert reference_path.is_file()
+            assert reference["sha256"] == orchestrator._sha(reference_path)
         assert by_role["road_surface"]["output_contract"]["transparent"] is True
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
         assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
