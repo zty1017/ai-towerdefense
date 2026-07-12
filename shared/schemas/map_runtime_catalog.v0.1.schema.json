@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_runtime_catalog.v0.1.schema.json",
+  "title": "Map Runtime Catalog v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "catalog_id", "generated_at", "source_policy", "summary", "entries"],
+  "properties": {
+    "schema_version": {"const": "map_runtime_catalog.v0.1"},
+    "catalog_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "source_policy": {"type": "object"},
+    "summary": {"type": "object"},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node_id", "authorization_status", "quality_status", "packages"],
+        "properties": {
+          "node_id": {"type": "string", "minLength": 1},
+          "authorization_status": {"enum": ["pending", "approved"]},
+          "quality_status": {"enum": ["reviewed", "published"]},
+          "packages": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["package_id", "path", "release_status"],
+              "properties": {
+                "package_id": {"type": "string", "minLength": 1},
+                "path": {"type": "string", "minLength": 1},
+                "release_status": {"enum": ["published", "published_for_gate_review"]}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

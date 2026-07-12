@@ -3,6 +3,11 @@
 MapRuntimePackage is the battle map runtime contract. This service owns the
 node -> reviewed package mapping and keeps map package loading separate from
 the broader frontend fixture service.
+
+Node registration is driven by a strict Map Runtime Catalog (see
+``map_runtime_catalog.py``) instead of hardcoded Python constants, so future
+AI-compiled maps can register without editing this module. The public function
+surface is unchanged.
 """
 
 from __future__ import annotations
@@ -11,44 +16,25 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .map_runtime_catalog import (
+    MapRuntimeCatalogError,
+    build_package_index,
+    discover_catalog_paths,
+)
+
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-
-_MAP_RUNTIME_PACKAGE_BY_NODE = {
-    "gray_lantern_station": (
-        _REPO_ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
-    ),
-    "lamp_wick_store": (
-        _REPO_ROOT
-        / "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json"
-    ),
-    "old_signal_tower": (
-        _REPO_ROOT
-        / "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json"
-    ),
-}
-
-_MAP_RUNTIME_PACKAGE_V02_BY_NODE = {
-    "gray_lantern_station": (
-        _REPO_ROOT
-        / "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json"
-    ),
-    "lamp_wick_store": (
-        _REPO_ROOT
-        / "examples/map_runtime_packages_v02/"
-        "mvp_wick_store_pressure.map_runtime_package_v02.json"
-    ),
-    "old_signal_tower": (
-        _REPO_ROOT
-        / "examples/map_runtime_packages_v02/"
-        "mvp_old_signal_tower_pressure.map_runtime_package_v02.json"
-    ),
-}
-
 _MAP_RUNTIME_ACTIVATION_AUTHORIZATION_REPORT = (
     _REPO_ROOT
     / "examples/review_packs/map_runtime_activation_authorization_report.v0.1.json"
 )
+
+try:
+    _MAP_RUNTIME_PACKAGE_BY_NODE, _MAP_RUNTIME_PACKAGE_V02_BY_NODE = build_package_index(
+        discover_catalog_paths(_REPO_ROOT), _REPO_ROOT
+    )
+except MapRuntimeCatalogError as exc:
+    raise RuntimeError(f"map runtime catalog validation failed: {exc}") from exc
 
 
 class MapRuntimePackageNotFoundError(LookupError):
