@@ -10,6 +10,7 @@ import pytest
 
 from app.db import db_cursor
 from app.main import create_app
+from app.services import runtime_activation_service
 from app.services.runtime_activation_service import _normalize_behavior
 from tools.frontend.validate_frontend_feature_snapshots import validate_bundle
 
@@ -176,6 +177,38 @@ def test_missing_promotion_evidence_blocks_without_runtime_mutation(app_env, mon
         assert receipt["runtime_effect"]["applied"] is False
         assert receipt["safety"]["player_runtime_mutation_count"] == 0
         assert any("promotion report" in item for item in receipt["blocked_reasons"])
+        assert body["activated_runtime_bundle"]["runtime_selection"][
+            "session_activation_ids"
+        ] == []
+
+    _run_api_scenario(monkeypatch, scenario)
+
+
+def test_unavailable_schema_validator_blocks_runtime_mutation(app_env, monkeypatch):
+    async def scenario(client: httpx.AsyncClient) -> None:
+        session_id = await _create_session(client)
+        job = await _compile_job(client, session_id)
+
+        def unavailable(*_args, **_kwargs):
+            raise runtime_activation_service.RuntimeSchemaValidationUnavailable(
+                "validator unavailable in test"
+            )
+
+        monkeypatch.setattr(runtime_activation_service, "_schema_errors", unavailable)
+        response = await client.post(
+            f"/api/sessions/{session_id}/research/jobs/{job['job_id']}/activate",
+            json={},
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        receipt = body["activation_receipt"]
+        assert receipt["status"] == "blocked"
+        assert receipt["runtime_effect"]["applied"] is False
+        assert receipt["safety"]["player_runtime_mutation_count"] == 0
+        assert any(
+            "schema validation unavailable" in reason
+            for reason in receipt["blocked_reasons"]
+        )
         assert body["activated_runtime_bundle"]["runtime_selection"][
             "session_activation_ids"
         ] == []
