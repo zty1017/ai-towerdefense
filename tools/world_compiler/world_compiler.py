@@ -23,6 +23,7 @@ for path in (LLM_DIR, ASSET_GRAPH_DIR):
 
 import adapter  # type: ignore  # noqa: E402
 import map_compilation_orchestrator  # type: ignore  # noqa: E402
+import map_runtime_package as runtime_v01  # type: ignore  # noqa: E402
 import procedural_map_render_plan  # type: ignore  # noqa: E402
 
 
@@ -153,10 +154,13 @@ def _messages(seed: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
-def generate_candidate(seed: dict[str, Any], *, profile_name: str, allow_provider: bool) -> tuple[dict[str, Any], dict[str, Any]]:
+def generate_candidate(
+    seed: dict[str, Any], *, profile_name: str, allow_provider: bool,
+    dotenv_path: Path | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     if not allow_provider:
         raise WorldCompilationError("provider generation requires explicit --allow-provider")
-    adapter.load_dotenv(ROOT / ".env")
+    adapter.load_dotenv(dotenv_path or (ROOT / ".env"))
     profile = adapter.PROFILES.get(profile_name)
     if profile is None:
         raise WorldCompilationError(f"unknown provider profile: {profile_name}")
@@ -545,9 +549,26 @@ def compile_candidate(
     map_input_path = _write(world_dir / "map_compilation_input.json", map_input)
     paths["map_compilation_input"] = map_input_path
     map_report = None
+    map_catalog_path: Path | None = None
+    map_quality_status = "not_compiled"
     if compile_map:
         node_id = _by_role(candidate, "battle_hotspot")["id"]
-        map_output = map_compilation_orchestrator.LAYERED_ROOT / node_id
+        portable_layout = (
+            output_root.name == "generated_worlds"
+            and output_root.parent.name == "content"
+        )
+        catalog_repo_root = (
+            output_root.parent.parent.resolve()
+            if portable_layout
+            else output_root.parent.resolve()
+        )
+        public_media_root = (
+            output_root.parent / "generated_world_media"
+            if portable_layout
+            else output_root.parent / f"{output_root.name}_media"
+        )
+        layered_root = public_media_root / candidate["world_id"] / "maps"
+        map_output = layered_root / node_id
         map_report = map_compilation_orchestrator.compile_map(
             map_input_path,
             map_output,
@@ -557,6 +578,97 @@ def compile_candidate(
             visual_max_attempts=map_visual_max_attempts,
             visual_max_workers=map_visual_max_workers,
             dotenv_path=dotenv_path,
+            layered_root=layered_root,
+            artifact_repo_root=catalog_repo_root,
+            public_prefix=f"/assets/generated_worlds/{candidate['world_id']}/maps",
+        )
+        provider_execution = map_report.get("provider_execution") or {}
+        visuals_reviewed = bool(
+            live_map_visuals
+            and portable_layout
+            and provider_execution.get("automatic_reviewed_staging_ready")
+            and not map_report.get("quality", {}).get("warnings")
+        )
+        map_quality_status = "reviewed" if visuals_reviewed else "candidate"
+        v02_path = map_output / "map_runtime_package.v0.2.json"
+        visual_manifest_path = map_output / "map_visual_reference_manifest.v0.1.json"
+        visual_manifest = _load(visual_manifest_path)
+        v01 = runtime_v01.build_map_runtime_package(
+            battle,
+            battle_config_path=_path_ref(battle_path),
+            visual_reference_manifest=visual_manifest if visuals_reviewed else None,
+            visual_reference_manifest_path=(
+                _path_ref(visual_manifest_path) if visuals_reviewed else None
+            ),
+            package_id=f"map_pkg_{node_id}_v0_1",
+            created_at=created_at,
+        )
+        v01_errors = runtime_v01.validate_package(
+            v01, _schema("map_runtime_package.v0.1.schema.json")
+        )
+        if v01_errors:
+            raise WorldCompilationError(
+                f"generated MapRuntimePackage v0.1 invalid: {v01_errors[0]}"
+            )
+        v01_path = _write(map_output / "map_runtime_package.v0.1.json", v01)
+
+        def catalog_ref(path: Path) -> str:
+            try:
+                return path.resolve().relative_to(catalog_repo_root).as_posix()
+            except ValueError:
+                return str(path.resolve())
+
+        catalog = {
+            "schema_version": "map_runtime_catalog.v0.1",
+            "catalog_id": f"generated_{candidate['world_id']}_map_runtime_catalog_v0_1",
+            "generated_at": created_at,
+            "source_policy": {
+                "catalog_role": "generated_world_map_runtime_catalog",
+                "runtime_fact_source": True,
+                "player_default_runtime": visuals_reviewed,
+                "visual_quality_status": map_quality_status,
+                "portable_runtime_layout": portable_layout,
+            },
+            "summary": {
+                "node_count": 1,
+                "registered_schema_versions": [
+                    "map_runtime_package.v0.1",
+                    "map_runtime_package.v0.2",
+                ],
+            },
+            "entries": [
+                {
+                    "node_id": node_id,
+                    "authorization_status": "pending",
+                    "quality_status": map_quality_status,
+                    "packages": {
+                        "map_runtime_package.v0.1": {
+                            "package_id": v01["package_id"],
+                            "path": catalog_ref(v01_path),
+                            "release_status": "published" if visuals_reviewed else "review_pending",
+                        },
+                        "map_runtime_package.v0.2": {
+                            "package_id": _load(v02_path)["package_id"],
+                            "path": catalog_ref(v02_path),
+                            "release_status": (
+                                "published_for_gate_review"
+                                if visuals_reviewed
+                                else "review_pending"
+                            ),
+                        },
+                    },
+                }
+            ],
+        }
+        catalog_errors = _schema_errors(
+            catalog, "map_runtime_catalog.v0.1.schema.json"
+        )
+        if catalog_errors:
+            raise WorldCompilationError(
+                f"generated map catalog invalid: {catalog_errors[0]}"
+            )
+        map_catalog_path = _write(
+            world_dir / f"{candidate['world_id']}.map_runtime_catalog.json", catalog
         )
     manifest = {
         "schema_version": "compiled_world_runtime_manifest.v0.1",
@@ -568,7 +680,13 @@ def compile_candidate(
         "suggested_research_intent": candidate["first_battle"]["suggested_research_intent"],
         "artifacts": {key: _path_ref(path) for key, path in paths.items()},
         "map_compilation_report": map_report,
-        "activation": {"world_catalog_ready": True, "runtime_truth": "map_runtime_package" if map_report else "battle_config_pending_map_compile"},
+        "map_runtime_catalog_path": _path_ref(map_catalog_path) if map_catalog_path else None,
+        "activation": {
+            "world_catalog_ready": True,
+            "map_runtime_ready": map_quality_status == "reviewed",
+            "map_quality_status": map_quality_status,
+            "runtime_truth": "map_runtime_package" if map_report else "battle_config_pending_map_compile",
+        },
     }
     manifest_path = _write(world_dir / "compiled_world_runtime_manifest.json", manifest)
     return {"manifest_path": _path_ref(manifest_path), "manifest": manifest}

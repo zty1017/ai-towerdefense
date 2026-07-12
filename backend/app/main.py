@@ -31,6 +31,7 @@ _STATIC_MEDIA_ROOTS = {
 }
 _STATIC_DIRECT_MEDIA_ROOTS = {
     "layered_maps": _REPO_ROOT / "game_data/media/layered_maps",
+    "generated_worlds": _REPO_ROOT / "content/generated_world_media",
     "map_components": _REPO_ROOT / "game_data/media/map_components",
     "map_visual_reference": _REPO_ROOT / "game_data/media/map_visual_reference",
 }

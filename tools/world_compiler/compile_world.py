@@ -55,7 +55,8 @@ def main() -> int:
             return 0
         else:
             candidate, provenance = generate_candidate(
-                seed, profile_name=args.profile, allow_provider=args.allow_provider
+                seed, profile_name=args.profile, allow_provider=args.allow_provider,
+                dotenv_path=args.dotenv.resolve() if args.dotenv else None,
             )
         errors = validate_candidate(candidate)
         if errors:
