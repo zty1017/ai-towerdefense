@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
 import hashlib
 import json
+import os
 import shutil
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
@@ -350,6 +354,7 @@ def run_role(
     review_timeout: int,
     review_max_tokens: int,
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
+    credential_locks: list[threading.Lock] | None = None,
 ) -> dict[str, Any]:
     current = copy.deepcopy(request)
     current.setdefault("worldbook_id", pack.get("worldbook_id"))
@@ -357,18 +362,25 @@ def run_role(
     accepted_path: Path | None = None
     for attempt in range(1, max(1, max_attempts) + 1):
         attempt_dir = output_dir / f"attempt_{attempt:02d}"
+        credential_index = request_index + attempt - 1
+        lock = (
+            credential_locks[credential_index % len(credential_locks)]
+            if credential_locks
+            else contextlib.nullcontext()
+        )
         try:
-            generated = candidate_generator.run_request(
-                request_pack_path,
-                pack,
-                current,
-                attempt_dir,
-                image_profile,
-                size_override=None,
-                timeout=generation_timeout,
-                live=True,
-                credential_index=request_index + attempt - 1,
-            )
+            with lock:
+                generated = candidate_generator.run_request(
+                    request_pack_path,
+                    pack,
+                    current,
+                    attempt_dir,
+                    image_profile,
+                    size_override=None,
+                    timeout=generation_timeout,
+                    live=True,
+                    credential_index=credential_index,
+                )
         except Exception as exc:
             attempts.append(
                 {
@@ -377,20 +389,23 @@ def run_role(
                     "error": f"{type(exc).__name__}:external_call_failed",
                 }
             )
+            if attempt < max_attempts:
+                time.sleep(min(2.0 * attempt, 4.0))
             continue
         candidate_path = Path(str(generated["candidate_path"]))
         if not candidate_path.is_absolute():
             candidate_path = candidate_generator.ROOT / candidate_path
         try:
-            review = review_candidate(
-                current,
-                candidate_path,
-                request_pack_path,
-                vision_profile,
-                timeout=review_timeout,
-                max_tokens=review_max_tokens,
-                credential_index=request_index + attempt - 1,
-            )
+            with lock:
+                review = review_candidate(
+                    current,
+                    candidate_path,
+                    request_pack_path,
+                    vision_profile,
+                    timeout=review_timeout,
+                    max_tokens=review_max_tokens,
+                    credential_index=credential_index,
+                )
         except Exception as exc:
             attempts.append(
                 {
@@ -401,6 +416,8 @@ def run_role(
                     "error": f"{type(exc).__name__}:external_call_failed",
                 }
             )
+            if attempt < max_attempts:
+                time.sleep(min(2.0 * attempt, 4.0))
             continue
         attempts.append(
             {
@@ -443,6 +460,11 @@ def run_closed_loop(
     reviewed_fallback_dir: Path | None = None,
 ) -> dict[str, Any]:
     requests = candidate_generator.selected_requests(pack, [])
+    credential_count = max(
+        1,
+        sum(1 for env_key in image_profile.env_keys if os.environ.get(env_key)),
+    )
+    credential_locks = [threading.Lock() for _ in range(credential_count)]
     results_by_index: dict[int, dict[str, Any]] = {}
     failures_by_index: dict[int, dict[str, Any]] = {}
     with ThreadPoolExecutor(max_workers=max(1, min(max_workers, len(requests) or 1))) as executor:
@@ -461,6 +483,7 @@ def run_closed_loop(
                 review_timeout=review_timeout,
                 review_max_tokens=review_max_tokens,
                 minimum_score=minimum_score,
+                credential_locks=credential_locks,
             ): (index, request)
             for index, request in enumerate(requests)
         }
