@@ -7,6 +7,7 @@
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
     "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "visual_style_reference_path": "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
     "logic_authority": "map_runtime_package",
     "style_authority": "developer_fixture"
   },

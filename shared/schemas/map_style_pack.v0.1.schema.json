@@ -108,6 +108,7 @@
       "properties": {
         "map_runtime_package_path": { "type": "string", "minLength": 1 },
         "worldbook_path": { "type": "string", "minLength": 1 },
+        "visual_style_reference_path": { "type": "string", "minLength": 1 },
         "logic_authority": { "type": "string", "const": "map_runtime_package" },
         "style_authority": {
           "type": "string",

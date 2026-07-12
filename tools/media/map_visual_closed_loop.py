@@ -45,6 +45,9 @@ COMMON_CHECKS = (
     "no_people_or_creatures",
     "no_text_symbols_or_watermark",
     "worldbook_style_fit",
+    "target_style_reference_match",
+    "semi_realistic_material_finish",
+    "no_cartoon_or_cel_shading",
     "correct_game_camera",
     "no_baked_ui_or_combat_effects",
 )
@@ -70,6 +73,9 @@ REPAIR_TEXT = {
     "no_people_or_creatures": "remove every human, humanoid, creature, silhouette and character-like statue",
     "no_text_symbols_or_watermark": "remove every inscription, pseudo-text, symbol, sign, watermark and emblem",
     "worldbook_style_fit": "use restrained late-Ming Chinese frontier materials and architecture with only subtle dark-fantasy influence",
+    "target_style_reference_match": "match the supplied style reference palette, material detail, texture density, contrast and rendering finish",
+    "semi_realistic_material_finish": "use semi-realistic premium strategy-game materials with fine stone timber earth and vegetation detail",
+    "no_cartoon_or_cel_shading": "remove cartoon line art, anime styling, cel shading, thick outlines, flat-color illustration and toy-like forms",
     "correct_game_camera": "use a consistent elevated three-quarter top-down game camera",
     "no_baked_ui_or_combat_effects": "remove UI, selection rings, health bars, beams, explosions, magic circles and combat action",
     "central_playable_clearance": "make the central seventy percent calm, open, low-detail and free of focal objects",
@@ -115,18 +121,22 @@ def build_review_prompt(request: dict[str, Any]) -> str:
         "worldbook_id": request.get("worldbook_id"),
         "required_checks": required,
         "intended_visual": request.get("prompt_sections", {}),
+        "style_reference_present": isinstance(request.get("style_reference"), dict),
     }
     return (
         "你是严格的 2D/伪3D 塔防地图分层素材审查器。只判断图片是否满足指定 role，"
         "不要因为画面好看而放宽要求。所有 required_checks 都必须明确判断。\n"
         "只输出合法 JSON 对象，字段为 score、checks、notes。score 是 0 到 1 的数字；"
         "checks 是对象，键必须覆盖 required_checks，值只能是 true 或 false；notes 是简短字符串数组。"
-        "看不清或不确定时填 false。不得输出 Markdown。\n"
+        "第一张图是待审候选；如果提供第二张图，它是只用于画风、材质细节、色调和完成度比较的基准图，"
+        "不得要求候选复制基准图布局。看不清或不确定时填 false。不得输出 Markdown。\n"
         f"审查上下文：{json.dumps(context, ensure_ascii=False)}"
     )
 
 
-def deterministic_issues(path: Path, role: str) -> tuple[list[str], dict[str, Any]]:
+def deterministic_issues(
+    path: Path, role: str, expected_ratio: float | None = None
+) -> tuple[list[str], dict[str, Any]]:
     try:
         image = png_pipeline.read_png(path)
     except (OSError, ValueError):
@@ -135,6 +145,11 @@ def deterministic_issues(path: Path, role: str) -> tuple[list[str], dict[str, An
     if image.width < 512 or image.height < 512:
         issues.append("deterministic_canvas_too_small")
     metrics: dict[str, Any] = {"width": image.width, "height": image.height}
+    if role == "terrain_base" and expected_ratio:
+        ratio = image.width / image.height
+        metrics["aspect_ratio"] = round(ratio, 4)
+        if abs(ratio - expected_ratio) > 0.04:
+            issues.append("deterministic_aspect_ratio_mismatch")
     if role in COMPONENT_ROLES:
         background = png_pipeline.estimate_background_rgb(image)
         luma = (background[0] * 299 + background[1] * 587 + background[2] * 114) // 1000
@@ -172,6 +187,7 @@ def normalize_vision_review(
 def review_candidate(
     request: dict[str, Any],
     candidate_path: Path,
+    request_pack_path: Path,
     profile: vision_review.VisionProfile,
     *,
     timeout: int,
@@ -179,7 +195,18 @@ def review_candidate(
     credential_index: int = 0,
     minimum_score: float = DEFAULT_MIN_VISION_SCORE,
 ) -> dict[str, Any]:
-    deterministic, metrics = deterministic_issues(candidate_path, str(request.get("role") or ""))
+    contract = request.get("output_contract")
+    contract = contract if isinstance(contract, dict) else {}
+    ratio_text = str(contract.get("ratio") or "")
+    expected_ratio = None
+    if ":" in ratio_text:
+        left, right = ratio_text.split(":", 1)
+        expected_ratio = int(left) / int(right)
+    deterministic, metrics = deterministic_issues(
+        candidate_path,
+        str(request.get("role") or ""),
+        expected_ratio,
+    )
     review_item = {
         "stable_internal_id": str(request.get("request_id") or "map_visual"),
         "media_role": str(request.get("role") or "unknown"),
@@ -187,10 +214,27 @@ def review_candidate(
         "width": metrics.get("width"),
         "height": metrics.get("height"),
     }
+    review_items = [review_item]
+    style_reference = request.get("style_reference")
+    if isinstance(style_reference, dict):
+        reference_path = candidate_generator.resolve_reference_path(
+            str(style_reference.get("local_path") or ""), request_pack_path
+        )
+        if candidate_generator.sha256_file(reference_path) != str(
+            style_reference.get("sha256") or ""
+        ):
+            raise ValueError("style reference sha256 mismatch")
+        review_items.append(
+            {
+                "stable_internal_id": "target_style_reference",
+                "media_role": "style_reference",
+                "local_path": reference_path,
+            }
+        )
     raw_text = vision_review.call_vision_model(
         profile,
         build_review_prompt(request),
-        [review_item],
+        review_items,
         max_tokens=max_tokens,
         timeout=timeout,
         credential_index=credential_index,
@@ -303,6 +347,7 @@ def run_role(
             review = review_candidate(
                 current,
                 candidate_path,
+                request_pack_path,
                 vision_profile,
                 timeout=review_timeout,
                 max_tokens=review_max_tokens,

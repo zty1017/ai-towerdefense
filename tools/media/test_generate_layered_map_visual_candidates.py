@@ -93,13 +93,19 @@ def test_agnes_payload_uses_official_tier_ratio_and_img2img_contract():
 
 def test_img2img_reference_is_verified_and_not_written_to_sidecar(tmp_path: Path):
     reference = tmp_path / "composition.png"
+    style_reference = tmp_path / "style.png"
     reference.write_bytes(b"not-a-real-png-but-valid-for-data-uri-test")
+    style_reference.write_bytes(b"style-reference")
     pack = request_pack()
     request = pack["requests"][0]
     request["generation_mode"] = "image_to_image"
     request["generation_reference"] = {
         "local_path": str(reference),
         "sha256": generator.sha256_file(reference),
+    }
+    request["style_reference"] = {
+        "local_path": str(style_reference),
+        "sha256": generator.sha256_file(style_reference),
     }
     request["output_contract"].update({"size_tier": "1K", "ratio": "16:9"})
     pack_path = tmp_path / "pack.json"
@@ -116,7 +122,7 @@ def test_img2img_reference_is_verified_and_not_written_to_sidecar(tmp_path: Path
     )
     sidecar = generator.load_json(Path(result["sidecar_path"]))
     assert sidecar["generation_mode"] == "image_to_image"
-    assert sidecar["input_image_count"] == 1
+    assert sidecar["input_image_count"] == 2
     assert sidecar["size"] == "1K"
     assert sidecar["ratio"] == "16:9"
     assert "base64" not in str(sidecar)

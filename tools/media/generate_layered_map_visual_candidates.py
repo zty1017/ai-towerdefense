@@ -19,6 +19,7 @@ if str(MEDIA_DIR) not in sys.path:
     sys.path.insert(0, str(MEDIA_DIR))
 
 import image_provider  # noqa: E402
+import png_pipeline  # noqa: E402
 
 
 PACK_VERSION = "map_layered_visual_generation_request_pack.v0.1"
@@ -106,14 +107,41 @@ def generation_inputs(request: dict[str, Any], request_pack_path: Path) -> tuple
         return mode, []
     if mode != "image_to_image":
         raise ValueError(f"unsupported generation_mode: {mode}")
-    reference = request.get("generation_reference")
-    if not isinstance(reference, dict):
+    generation_reference = request.get("generation_reference")
+    if not isinstance(generation_reference, dict):
         raise ValueError("image_to_image request has no generation_reference")
-    reference_path = resolve_reference_path(str(reference.get("local_path") or ""), request_pack_path)
-    expected_sha = str(reference.get("sha256") or "")
-    if not expected_sha or sha256_file(reference_path) != expected_sha:
-        raise ValueError("generation reference sha256 mismatch")
-    return mode, [image_provider.image_data_uri(reference_path)]
+    references = [
+        item
+        for item in (request.get("style_reference"), generation_reference)
+        if isinstance(item, dict)
+    ]
+    input_images = []
+    for reference in references:
+        reference_path = resolve_reference_path(
+            str(reference.get("local_path") or ""), request_pack_path
+        )
+        expected_sha = str(reference.get("sha256") or "")
+        if not expected_sha or sha256_file(reference_path) != expected_sha:
+            raise ValueError("generation reference sha256 mismatch")
+        input_images.append(image_provider.image_data_uri(reference_path))
+    return mode, input_images
+
+
+def normalize_full_frame_geometry(path: Path, request: dict[str, Any]) -> dict[str, int] | None:
+    contract = request.get("output_contract")
+    contract = contract if isinstance(contract, dict) else {}
+    if contract.get("kind") != "full_frame_backdrop":
+        return None
+    ratio_text = str(contract.get("ratio") or "")
+    if ":" not in ratio_text:
+        return None
+    left, right = ratio_text.split(":", 1)
+    ratio = int(left) / int(right)
+    image = png_pipeline.read_png(path)
+    cropped = png_pipeline.center_crop_to_ratio(image, ratio)
+    if (cropped.width, cropped.height) != (image.width, image.height):
+        png_pipeline.write_png(path, cropped)
+    return {"width": cropped.width, "height": cropped.height}
 
 
 def run_request(
@@ -153,7 +181,10 @@ def run_request(
         )
         image_url = image_provider.extract_image_url(response)
         image_provider.download_image(image_url, output_path, timeout=timeout)
+        normalized_dimensions = normalize_full_frame_geometry(output_path, request)
         provider_called = True
+    else:
+        normalized_dimensions = None
 
     sidecar = {
         "schema_version": "layered_map_visual_candidate.v0.1",
@@ -170,6 +201,7 @@ def run_request(
         "ratio": ratio,
         "generation_mode": generation_mode,
         "input_image_count": len(input_images),
+        "normalized_dimensions": normalized_dimensions,
         "generation_reference_sha256": (
             request.get("generation_reference", {}).get("sha256")
             if isinstance(request.get("generation_reference"), dict)
