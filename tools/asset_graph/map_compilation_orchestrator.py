@@ -196,17 +196,87 @@ def _compose_visual_prompt(sections: dict[str, str]) -> str:
     )
 
 
+def _identifier_terms(values: list[Any]) -> list[str]:
+    return [
+        str(value).replace("_", " ").strip()
+        for value in values
+        if str(value).strip()
+    ]
+
+
+def _material_terms(style: dict[str, Any], key: str) -> list[str]:
+    items = style.get(key)
+    if not isinstance(items, list):
+        return []
+    return _identifier_terms(
+        [item.get("material_id") for item in items if isinstance(item, dict)]
+    )
+
+
+def _prefab_terms(style: dict[str, Any], key: str) -> list[str]:
+    items = style.get(key)
+    if not isinstance(items, list):
+        return []
+    values: list[Any] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        values.append(item.get("prefab_id"))
+        visual_ref = item.get("visual_ref")
+        if isinstance(visual_ref, dict):
+            values.append(str(visual_ref.get("value") or "").rsplit(":", 1)[-1])
+    return list(dict.fromkeys(_identifier_terms(values)))
+
+
+def _visual_style_contract(style: dict[str, Any]) -> dict[str, Any]:
+    lighting = style.get("lighting") if isinstance(style.get("lighting"), dict) else {}
+    palette = style.get("palette") if isinstance(style.get("palette"), dict) else {}
+    return {
+        "worldbook_id": str(style.get("worldbook_id") or "unknown_world"),
+        "theme_terms": _identifier_terms(list(style.get("node_theme_tags") or [])),
+        "terrain_material_terms": _material_terms(style, "terrain_materials"),
+        "road_material_terms": _material_terms(style, "road_materials"),
+        "lighting": {
+            "time_of_day": str(lighting.get("time_of_day") or "neutral"),
+            "contrast_policy": str(lighting.get("contrast_policy") or "gameplay_readable"),
+            "shadow_policy": str(lighting.get("shadow_policy") or "soft"),
+            "intensity": lighting.get("intensity"),
+        },
+        "palette": {str(key): str(value) for key, value in palette.items()},
+        "role_terms": {
+            "build_slot_platform": _prefab_terms(style, "build_slot_platforms"),
+            "objective_foundation": _prefab_terms(style, "objective_prefabs"),
+            "spawn_marker": _prefab_terms(style, "spawn_prefabs"),
+            "non_blocking_decoration": list(
+                dict.fromkeys(
+                    [
+                        *_prefab_terms(style, "non_blocking_props"),
+                        *_prefab_terms(style, "decorative_props"),
+                    ]
+                )
+            ),
+        },
+    }
+
+
+def _joined(values: Any, fallback: str) -> str:
+    terms = [str(value) for value in values if str(value).strip()] if isinstance(values, list) else []
+    return ", ".join(terms) or fallback
+
+
 def _style_prompt_pack(
     runtime: dict[str, Any], style: dict[str, Any], *, runtime_path: Path
 ) -> dict[str, Any]:
-    tags = [str(item).replace("_", " ") for item in style.get("node_theme_tags", [])]
-    palette = style.get("palette") if isinstance(style.get("palette"), dict) else {}
-    lighting = style.get("lighting") if isinstance(style.get("lighting"), dict) else {}
+    contract = _visual_style_contract(style)
+    tags = contract["theme_terms"]
+    palette = contract["palette"]
+    lighting = contract["lighting"]
+    terrain = _joined(contract["terrain_material_terms"], "worldbook terrain materials")
     topology = topology_sketches.runtime_summary(runtime)
     prompt_sections = {
-        "subject": "an uninhabited old Chinese frontier courier-station environment plate",
-        "environment": f"quiet ground and boundary architecture shaped by {', '.join(tags) or 'the worldbook frontier'}",
-        "style": "polished hand-painted 2D game environment with restrained pseudo-3D depth and Chinese architectural language",
+        "subject": f"an uninhabited tower-defense environment plate for worldbook {contract['worldbook_id']}",
+        "environment": f"quiet {terrain} ground and boundary structures shaped only by {_joined(tags, 'the supplied world themes')}",
+        "style": f"polished semi-realistic hand-painted 2D game environment with restrained pseudo-3D depth; preserve exactly these world identity terms: {_joined(tags, 'the supplied world themes')}",
         "lighting": f"{lighting.get('time_of_day', 'night')} with {lighting.get('contrast_policy', 'clear gameplay readability')} and palette anchors {', '.join(str(value) for value in palette.values())}",
         "composition": "wide elevated three-quarter top-down view with the central playable area calm, open, and free of focal subjects",
         "quality": "production game background, crisp material separation, low grain, no narrative action or gameplay entities",
@@ -300,6 +370,28 @@ def _build_visual_handoff(
         prompt_pack,
     )
     common_negative = list(prompt_pack["prompts"][0]["negative_constraints"])
+    contract = _visual_style_contract(style)
+    themes = _joined(contract["theme_terms"], "the supplied worldbook themes")
+    terrain_materials = _joined(
+        contract["terrain_material_terms"], "the supplied terrain materials"
+    )
+    road_materials = _joined(
+        contract["road_material_terms"], "the supplied road materials"
+    )
+    lighting_contract = contract["lighting"]
+    palette_contract = ", ".join(contract["palette"].values())
+    role_terms = contract["role_terms"]
+    common_style = (
+        "high-detail semi-realistic painterly 2D tower-defense art with restrained pseudo-3D depth; "
+        f"world identity strictly limited to {themes}; material language uses {terrain_materials} and {road_materials}; "
+        f"palette anchors {palette_contract or 'from the supplied style pack'}; "
+        "do not substitute a historical era, culture, architecture or technology absent from these terms; "
+        "no cartoon, anime, cel shading, thick outlines or toy-like forms"
+    )
+    common_lighting = (
+        f"{lighting_contract['time_of_day']} lighting, {lighting_contract['contrast_policy']} contrast, "
+        f"{lighting_contract['shadow_policy']} shadows, readable midtones, no unrequested magical glow"
+    )
     style_reference_path = _resolve(
         str((style.get("source_refs") or {}).get("visual_style_reference_path") or "")
     )
@@ -319,10 +411,10 @@ def _build_visual_handoff(
             "output": {"width": 1280, "height": 720, "size_tier": "1K", "ratio": "16:9", "transparent": False},
             "generation_mode": "image_to_image",
             "sections": {
-                "subject": "transform the reference into an uninhabited empty old Chinese courier-station terrain clean plate",
-                "environment": "natural stone and packed-earth ground, sparse damp vegetation, low ruined walls and modest timber buildings only along the outer perimeter; remove every diagram line, marker, circle, platform, route, symbol, person, creature, weapon and text",
-                "style": "high-detail semi-realistic painterly 2D tower-defense environment with restrained pseudo-3D depth, realistic stone timber mud and vegetation materials, late-Ming frontier material language and subtle dark-fantasy influence; match the supplied style reference finish, palette, texture density and contrast; no cartoon, anime, cel shading, thick outlines or toy-like forms",
-                "lighting": "clear moonlit night with soft warm lantern ambience restricted to perimeter buildings, readable midtones and no magical glow",
+                "subject": f"transform the reference into an uninhabited empty terrain clean plate for worldbook {contract['worldbook_id']}",
+                "environment": f"terrain made from {terrain_materials}, with perimeter structures and natural details derived only from {themes}; remove every diagram line, marker, circle, platform, route, symbol, person, creature, weapon and text",
+                "style": common_style,
+                "lighting": common_lighting,
                 "composition": "preserve only the reference camera framing and broad central clearance; elevated three-quarter top-down 16:9 view, central seventy percent open and low-detail, architecture confined to the outer twenty percent, no central focal object",
                 "quality": "production-ready premium strategy-game background plate, detailed but readable materials, crisp ground texture, low grain, no flat-color illustration, no baked road, deployment pad, objective, unit, effect or UI",
             },
@@ -332,9 +424,9 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "text_to_image",
             "sections": {
-                "subject": "one isolated reusable old Chinese courier-road material strip",
-                "environment": "a single dirt-and-worn-stone strip with soft irregular edges on a completely plain pure-white studio background",
-                "style": "semi-realistic high-detail painterly 2D game texture matching the supplied late-Ming frontier style reference, with realistic material breakup and no cartoon outlines or cel shading",
+                "subject": f"one isolated reusable road material strip made from {road_materials}",
+                "environment": "a single route-surface strip with soft irregular edges on a completely plain pure-white studio background",
+                "style": common_style,
                 "lighting": "neutral soft asset lighting without dramatic shadows or glow",
                 "composition": "elevated top-down view, one centered horizontal strip, generous white margin, no complete map or scenery",
                 "quality": "sharp clean cutout source, seamless material rhythm, no buildings, lamps, characters, signs, symbols, arrows, text or frame",
@@ -345,9 +437,9 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "text_to_image",
             "sections": {
-                "subject": "one single empty low stone-and-timber tower foundation",
+                "subject": f"one single empty low defense foundation based on {_joined(role_terms['build_slot_platform'], 'the build-slot prefab contract')}",
                 "environment": "an isolated flat construction base on a completely plain pure-white studio background",
-                "style": "understated late-Ming frontier craft rendered as a semi-realistic high-detail painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
+                "style": common_style,
                 "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
                 "composition": "elevated top-down view, centered single object, compact oval footprint, generous white margin",
                 "quality": "sharp clean cutout source, empty and unoccupied, no tower, weapon, lantern, character, text, ring, scenery or frame",
@@ -360,7 +452,7 @@ def _build_visual_handoff(
             "sections": {
                 "subject": "one compact protected-objective foundation with a clear bottom-center anchor",
                 "environment": "isolated on a pure-white studio background",
-                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
+                "style": common_style + f"; objective form vocabulary: {_joined(role_terms['objective_foundation'], 'the objective prefab contract')}",
                 "lighting": "neutral soft asset lighting",
                 "composition": "elevated top-down view, centered single compact object",
                 "quality": "clean cutout source without health bars, halos, units, text or oversized monument forms",
@@ -371,9 +463,9 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "text_to_image",
             "sections": {
-                "subject": "one restrained enemy entrance terrain marker",
+                "subject": f"one restrained enemy entrance terrain marker based on {_joined(role_terms['spawn_marker'], 'the spawn prefab contract')}",
                 "environment": "isolated on a pure-white studio background",
-                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game component matching the supplied style reference, without cartoon outlines or cel shading",
+                "style": common_style,
                 "lighting": "neutral dim asset lighting without magical glow",
                 "composition": "elevated top-down view, centered low-profile terrain object",
                 "quality": "clean cutout source without enemies, arrows, warning icons, text or large effects",
@@ -384,9 +476,9 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "text_to_image",
             "sections": {
-                "subject": "a small grouped set of non-blocking frontier edge props",
+                "subject": f"a small grouped set of non-blocking edge props based on {_joined(role_terms['non_blocking_decoration'], 'the decoration prefab contract')}",
                 "environment": "isolated on a pure-white studio background",
-                "style": "semi-realistic high-detail late-Ming frontier painterly 2D game components matching the supplied style reference, without cartoon outlines or cel shading",
+                "style": common_style,
                 "lighting": "neutral soft asset lighting",
                 "composition": "elevated top-down view, separated compact objects with generous spacing",
                 "quality": "clean cutout source, no unit, tower, objective, projectile, UI icon, text or frame",
@@ -404,6 +496,7 @@ def _build_visual_handoff(
                 "status": "ready_for_provider_or_manual_generation",
                 "prompt_profile": "agnes_official_structured_prompt_v0_1",
                 "prompt_sections": sections,
+                "style_contract": contract,
                 "prompt_brief": _compose_visual_prompt(sections),
                 "negative_constraints": common_negative,
                 "generation_mode": spec["generation_mode"],

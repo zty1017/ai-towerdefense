@@ -48,7 +48,7 @@ def test_compile_and_resume(tmp_path):
         assert request_pack["node_id"] == "map_orchestrator_test_node"
         assert len(request_pack["requests"]) == 6
         by_role = {item["role"]: item for item in request_pack["requests"]}
-        assert "old Chinese courier-station" in by_role["terrain_base"]["prompt_brief"]
+        assert "old chinese post station" in by_role["terrain_base"]["prompt_brief"]
         assert by_role["terrain_base"]["prompt_brief"].startswith("Subject:")
         assert "central seventy percent open" in by_role["terrain_base"]["prompt_brief"]
         assert set(by_role["terrain_base"]["prompt_sections"]) == {
@@ -61,7 +61,7 @@ def test_compile_and_resume(tmp_path):
         assert by_role["terrain_base"]["output_contract"]["size_tier"] == "1K"
         assert by_role["terrain_base"]["output_contract"]["ratio"] == "16:9"
         assert "pure-white studio background" in by_role["road_surface"]["prompt_brief"]
-        assert "one single empty low stone-and-timber" in by_role["build_slot_platform"]["prompt_brief"]
+        assert "platform lantern foundation ring" in by_role["build_slot_platform"]["prompt_brief"]
         assert by_role["road_surface"]["generation_mode"] == "text_to_image"
         assert by_role["road_surface"]["output_contract"]["transparent"] is True
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
@@ -78,6 +78,45 @@ def test_compile_and_resume(tmp_path):
         assert resumed["resume"]["reused"] is True
     finally:
         shutil.rmtree(output, ignore_errors=True)
+
+
+def test_visual_handoff_isolated_by_style_pack(tmp_path):
+    runtime = orchestrator._load(
+        ROOT / "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json"
+    )
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    style["worldbook_id"] = "cloud_mechanism_frontier"
+    style["node_theme_tags"] = [
+        "cloud", "mechanical", "eastern", "sky", "wind", "bridge", "cable", "gear", "jade", "storm"
+    ]
+    style["terrain_materials"][0]["material_id"] = "cloud_island"
+    style["terrain_materials"][1]["material_id"] = "cloud_island_detail"
+    style["road_materials"][0]["material_id"] = "cable_road"
+    style["road_materials"][1]["material_id"] = "cable_road_edge"
+    style["lighting"]["time_of_day"] = "storm"
+    style["source_refs"].pop("visual_style_reference_path", None)
+    replacements = {
+        "build_slot_platforms": "mechanism_base",
+        "objective_prefabs": "sky_heart_city",
+        "spawn_prefabs": "wind_fissure",
+        "non_blocking_props": "cloud_gear_debris",
+        "decorative_props": "jade_cable_anchor",
+    }
+    for key, value in replacements.items():
+        style[key][0]["prefab_id"] = value
+        style[key][0]["visual_ref"] = {"kind": "procedural_shape", "value": f"compiled:cloud:{value}"}
+    runtime_path = tmp_path / "runtime.json"
+    orchestrator._write(runtime_path, runtime)
+    _, pack = orchestrator._build_visual_handoff(
+        runtime, style, runtime_path=runtime_path, output_dir=tmp_path / "map"
+    )
+    prompts = "\n".join(item["prompt_brief"].lower() for item in pack["requests"])
+    for expected in ("cloud", "mechanical", "cable road", "mechanism base", "storm"):
+        assert expected in prompts
+    for leaked in ("late-ming", "courier-station", "moonlit night", "lantern ambience"):
+        assert leaked not in prompts
 
 
 def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_path, monkeypatch):

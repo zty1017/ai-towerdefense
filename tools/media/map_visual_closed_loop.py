@@ -80,9 +80,9 @@ ROLE_CHECKS = {
 REPAIR_TEXT = {
     "no_people_or_creatures": "remove every human, humanoid, creature, silhouette and character-like statue",
     "no_text_symbols_or_watermark": "remove every inscription, pseudo-text, symbol, sign, watermark and emblem",
-    "worldbook_style_fit": "use restrained late-Ming Chinese frontier materials and architecture with only subtle dark-fantasy influence",
-    "target_style_reference_match": "match the supplied style reference palette, material detail, texture density, contrast and rendering finish",
-    "semi_realistic_material_finish": "use semi-realistic premium strategy-game materials with fine stone timber earth and vegetation detail",
+    "worldbook_style_fit": "restore the exact world identity, culture, technology and environment named by this request's style contract without importing another setting",
+    "target_style_reference_match": "match this request's style contract and supplied style reference palette, material detail, texture density, contrast and rendering finish",
+    "semi_realistic_material_finish": "use semi-realistic premium strategy-game detail for the materials named by this request's style contract",
     "no_cartoon_or_cel_shading": "remove cartoon line art, anime styling, cel shading, thick outlines, flat-color illustration and toy-like forms",
     "correct_game_camera": "use a consistent elevated three-quarter top-down game camera",
     "no_baked_ui_or_combat_effects": "remove UI, selection rings, health bars, beams, explosions, magic circles and combat action",
@@ -163,6 +163,7 @@ def build_review_prompt(request: dict[str, Any]) -> str:
         "worldbook_id": request.get("worldbook_id"),
         "required_checks": required,
         "intended_visual": request.get("prompt_sections", {}),
+        "style_contract": request.get("style_contract", {}),
         "style_reference_present": isinstance(request.get("style_reference"), dict),
     }
     return (
@@ -301,6 +302,15 @@ def repaired_request(request: dict[str, Any], failed_checks: list[str]) -> dict[
     sections = repaired.get("prompt_sections")
     sections = dict(sections) if isinstance(sections, dict) else {}
     corrections = [REPAIR_TEXT[check] for check in failed_checks if check in REPAIR_TEXT]
+    contract = repaired.get("style_contract")
+    if isinstance(contract, dict) and any(
+        check in {"worldbook_style_fit", "target_style_reference_match", "semi_realistic_material_finish"}
+        for check in failed_checks
+    ):
+        corrections.append(
+            "exact style contract: "
+            + json.dumps(contract, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        )
     if corrections:
         correction_text = "Correction pass: " + "; ".join(dict.fromkeys(corrections))
         sections["quality"] = f"{sections.get('quality', '')}; {correction_text}".strip("; ")
