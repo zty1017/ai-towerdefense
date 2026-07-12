@@ -2429,7 +2429,7 @@ import {
       leaked_enemy_count: battle.leaks,
       kills: battle.kills,
     };
-    renderLoading("整理战报");
+    renderLoading("整理战报与战后演化");
     let settlement = buildLocalSettlement(state.battleOutcome, finishedNodeId);
     if (isApiMode()) {
       try {
@@ -2444,7 +2444,7 @@ import {
             battle_run_id: battle.battleRunId,
             notes: "browser playable result",
           },
-          15000,
+          100000,
         );
         settlement = response.settlement || settlement;
         state.data.activatedRuntimeBundle =

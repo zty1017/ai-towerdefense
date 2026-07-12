@@ -285,6 +285,42 @@ def _save_battle_settlement_and_state(
     return True
 
 
+def _record_world_evolution_diagnostic(
+    session_id: str, diagnostic: dict[str, Any] | None
+) -> None:
+    """Persist the internal-only evolution diagnostic to studio_logs.
+
+    The diagnostic carries no player-facing content and never the raw prompt,
+    provider response, or credentials. It is written best-effort so a logging
+    failure can never break the player settlement.
+    """
+    if not isinstance(diagnostic, dict):
+        return
+    try:
+        with db_cursor() as cur:
+            cur.execute(
+                "INSERT INTO studio_logs (session_id, payload, created_at) "
+                "VALUES (?, ?, ?)",
+                (
+                    session_id,
+                    _dump_payload(
+                        {
+                            "kind": "post_battle_world_evolution",
+                            "diagnostic": {
+                                "attempt_count": diagnostic.get("attempt_count"),
+                                "fallback_stage": diagnostic.get("fallback_stage"),
+                                "error_codes": diagnostic.get("error_codes"),
+                            },
+                        }
+                    ),
+                    now_iso(),
+                ),
+            )
+    except Exception:
+        # Diagnostics are auxiliary; never fail the settlement over them.
+        pass
+
+
 def _player_runtime_bundle(
     session_id: str,
     *,
@@ -1023,6 +1059,9 @@ def record_battle_result(
         deployed_objects=deployed_assets,
         session_context=_battle_evolution_session_context(session_id, next_state, node_id),
     )
+    # The diagnostic is internal-only: record it for studio observability but
+    # never surface it through the player settlement or FeatureSnapshot.
+    _record_world_evolution_diagnostic(session_id, evolution.get("diagnostic"))
     if evolution.get("applied") is True:
         next_state = evolution["state"]
         settlement["run_world_state"] = next_state
