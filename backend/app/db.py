@@ -262,6 +262,8 @@ def init_db(path: str | None = None) -> None:
                 ON research_proposals(session_id);
             CREATE INDEX IF NOT EXISTS idx_research_jobs_session
                 ON research_jobs(session_id);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_research_jobs_proposal
+                ON research_jobs(proposal_id);
             CREATE INDEX IF NOT EXISTS idx_runtime_activations_session
                 ON runtime_activations(session_id);
             CREATE INDEX IF NOT EXISTS idx_runtime_activations_status

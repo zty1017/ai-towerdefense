@@ -49,9 +49,7 @@ class HealthResponse(BaseModel):
 # Research job / proposal models
 # ---------------------------------------------------------------------------
 
-# Status values a research job may hold over its lifecycle. MVP runs
-# synchronously to "completed" but the field is reserved for future async
-# workers.
+# Status values a durable research job may hold over its worker lifecycle.
 JOB_STATUSES = ("queued", "running", "completed", "failed", "delayed", "unstable")
 
 

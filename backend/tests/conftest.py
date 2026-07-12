@@ -18,6 +18,9 @@ def tmp_db_path(tmp_path: Path) -> Path:
 def app_env(tmp_db_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point APP_DB_PATH at a temp file and reset the cached connection."""
     monkeypatch.setenv("APP_DB_PATH", str(tmp_db_path))
+    # Legacy API tests intentionally keep synchronous completion. Dedicated
+    # worker tests explicitly select background mode and exercise real polling.
+    monkeypatch.setenv("AI_TD_RESEARCH_WORKER_MODE", "inline")
     # Reset module-level cached connection so the new env var takes effect.
     from app import db as db_module
 

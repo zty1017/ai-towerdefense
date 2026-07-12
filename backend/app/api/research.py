@@ -62,7 +62,7 @@ def create_proposal(
     response_model=ResearchJobResponse,
 )
 def confirm_proposal(session_id: str, proposal_id: str) -> ResearchJobResponse:
-    """Confirm a proposal and synchronously run the AssetGraph workflows."""
+    """Confirm a proposal and quickly return its durable background job."""
     _require_session(session_id)
     result = research_service.confirm_proposal(session_id, proposal_id)
     if isinstance(result, dict) and result.get("error") == "session_not_found":

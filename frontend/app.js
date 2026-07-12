@@ -560,6 +560,7 @@ import {
     try {
       await loadData();
       saveProfile();
+      resumeRememberedResearchJob();
       if (battleVisualSmokeMode() || battleDialogueSmokeMode()) {
         saveProfile({ worldCreated: true, completedBattle: false });
         state.battle = null;
@@ -1154,7 +1155,12 @@ import {
         // Resetting local progress is enough for the fallback path.
       }
     }
-    saveProfile({ worldCreated: false, completedBattle: false, staticCampaignStageIndex: 0 });
+    saveProfile({
+      worldCreated: false,
+      completedBattle: false,
+      staticCampaignStageIndex: 0,
+      pendingResearchJob: null,
+    });
     state.research = {
       status: "idle",
       proposal: null,
@@ -1207,6 +1213,92 @@ import {
     return proposal;
   }
 
+  function rememberResearchJob(job) {
+    if (!job || !job.job_id) return;
+    saveProfile({
+      pendingResearchJob: {
+        jobId: job.job_id,
+        proposalId: job.proposal_id || "",
+        nodeId: currentNodeId(),
+      },
+    });
+  }
+
+  function clearRememberedResearchJob(jobId = "") {
+    const pending = state.profile.pendingResearchJob || {};
+    if (jobId && pending.jobId && pending.jobId !== jobId) return;
+    saveProfile({ pendingResearchJob: null });
+  }
+
+  async function pollResearchJob(jobId, sessionId) {
+    const path = `/api/sessions/${encodeURIComponent(sessionId)}/research/jobs/${encodeURIComponent(jobId)}`;
+    while (
+      state.sessionId === sessionId &&
+      (state.profile.pendingResearchJob || {}).jobId === jobId
+    ) {
+      let job = null;
+      try {
+        job = await apiGet(path, 5000);
+      } catch {
+        // A short service interruption must not lose a workshop job. Keep the
+        // player on the current screen and resume from the durable job id.
+        await sleep(900);
+        continue;
+      }
+      if (
+        state.sessionId !== sessionId ||
+        (state.profile.pendingResearchJob || {}).jobId !== jobId
+      ) {
+        return null;
+      }
+      state.research.job = job;
+      if (job.status === "completed") return job;
+      if (job.status === "failed") {
+        clearRememberedResearchJob(jobId);
+        throw new Error("这份试作未能准备完成，请稍后重新尝试。");
+      }
+      await sleep(600);
+    }
+    return null;
+  }
+
+  function trackResearchJob(job) {
+    state.research.job = job;
+    state.research.status = "in_progress";
+    rememberResearchJob(job);
+    const jobId = job.job_id;
+    const sessionId = state.sessionId;
+    state.research.jobPromise = pollResearchJob(jobId, sessionId)
+      .then(async (completedJob) => {
+        if (!completedJob) return null;
+        state.research.job = completedJob;
+        try {
+          await loadFeatureRuntime(currentNodeId());
+        } catch {
+          // The completed job is authoritative; this view can refresh later.
+        }
+        return completedJob;
+      })
+      .catch((error) => {
+        state.research.job = null;
+        state.research.errorMessage =
+          error && error.message ? error.message : "这份试作尚未准备完成。";
+        return null;
+      });
+    return state.research.jobPromise;
+  }
+
+  function resumeRememberedResearchJob() {
+    if (!isApiMode() || state.research.jobPromise) return;
+    const pending = state.profile.pendingResearchJob || {};
+    if (!pending.jobId || !state.sessionId) return;
+    trackResearchJob({
+      job_id: pending.jobId,
+      proposal_id: pending.proposalId || "",
+      status: "queued",
+    });
+  }
+
   async function enterCurrentNode() {
     renderLoading("整理节点");
     if (isApiMode()) {
@@ -1249,27 +1341,14 @@ import {
           state.research.proposalIntent === intent
             ? existingProposal
             : await createResearchProposal(intent);
-        state.research.jobPromise = apiPost(
+        const queuedJob = await apiPost(
           sessionApiPath(
             `/research/proposals/${encodeURIComponent(proposal.proposal_id)}/confirm`,
           ),
           {},
-          180000,
-        )
-          .then(async (job) => {
-            state.research.job = job;
-            try {
-              await loadFeatureRuntime(currentNodeId());
-            } catch {
-              // Job completion is authoritative; projection refresh can recover later.
-            }
-            return job;
-          })
-          .catch((error) => {
-            state.research.job = null;
-            state.research.errorMessage = error && error.message ? error.message : "试作登记失败";
-            return null;
-          });
+          8000,
+        );
+        trackResearchJob(queuedJob);
       } catch (error) {
         state.research.status = state.research.proposal ? "proposed" : "idle";
         state.research.errorMessage = error && error.message ? error.message : "方案尚未完成";
@@ -1726,6 +1805,7 @@ import {
         }
         state.data.activatedRuntimeBundle =
           response.activated_runtime_bundle || state.data.activatedRuntimeBundle;
+        clearRememberedResearchJob(job.job_id);
         const activatedIds = response.activation_receipt.runtime_effect.activated_object_ids || [];
         const activatedObjects = ((state.data.activatedRuntimeBundle || {}).capabilities || {}).battle_objects || [];
         const activatedObject = activatedObjects.find((item) => activatedIds.includes(item.object_id));

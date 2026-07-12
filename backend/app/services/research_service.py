@@ -4,10 +4,9 @@ AssetGraph Kernel v0.1 deterministic workflow runner.
 This module is intentionally MVP-shaped:
 - ``create_proposal`` synthesizes a world-in-language proposal deterministically
   from the player's ``intent_text`` and ``node_id``. No real LLM is called.
-- ``confirm_proposal`` runs two AssetGraph workflows synchronously, lowers the
-  proposal into one of the allowlisted playable object kinds, and stores the
-  resulting artifact paths on a research job row. The job ends in ``completed``
-  (or ``failed``) immediately.
+- ``confirm_proposal`` idempotently enqueues one durable job per proposal.
+- the research worker atomically claims queued jobs, runs the two AssetGraph
+  workflows, and stores the resulting artifact paths.
 - ``get_job`` reads the row back.
 
 All workflow output is written under ``/tmp/ai_compiled_td_backend_runs`` so
@@ -18,6 +17,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import secrets
 import sys
 from pathlib import Path
@@ -790,7 +790,7 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
 
 
 def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
-    """Confirm a proposal: create a job and run both workflows synchronously."""
+    """Idempotently enqueue one durable compilation job for a proposal."""
     ts = now_iso()
     job_id = secrets.token_urlsafe(16)
     with db_cursor() as cur:
@@ -801,7 +801,7 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         )
         if cur.fetchone() is None:
             return {"error": "session_not_found"}
-        # Verify proposal exists, belongs to this session, and is not confirmed.
+        # Verify the proposal exists and belongs to this session.
         cur.execute(
             "SELECT proposal_id, node_id, intent_text, display_name, summary, "
             "status, payload FROM research_proposals "
@@ -811,21 +811,10 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         prow = cur.fetchone()
         if prow is None:
             return {"error": "proposal_not_found"}
-        proposal_payload = _proposal_payload(prow)
-        proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
-        if not proposal_metadata:
-            proposal_metadata = _compiler_metadata_for_proposal(
-                session_id=session_id,
-                proposal_id=proposal_id,
-                node_id=str(proposal_payload.get("node_id") or "gray_lantern_station"),
-                intent_text=str(proposal_payload.get("intent_text") or ""),
-                display_name="临时光幕方案",
-                proposal_summary="以灯光构筑的临时防线，为节点争取喘息。",
-            )
-        # Insert the job row in "running" state before executing workflows so
-        # that even a crash leaves an auditable record.
+        # The unique proposal index makes repeated or concurrent confirms return
+        # the original job instead of scheduling duplicate work.
         cur.execute(
-            "INSERT INTO research_jobs "
+            "INSERT OR IGNORE INTO research_jobs "
             "(job_id, session_id, proposal_id, status, player_state_message, "
             " runtime_package_path, delivery_payload_path, trace_paths, payload, "
             " created_at, updated_at, completed_at) "
@@ -834,34 +823,164 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
                 job_id,
                 session_id,
                 proposal_id,
-                "running",
-                "现场试作正在封装，请稍候。",
+                "queued",
+                "现场试作已登记，工坊很快开始准备。",
                 "[]",
                 "{}",
                 ts,
                 ts,
             ),
         )
+        inserted = cur.rowcount == 1
         cur.execute(
             "UPDATE research_proposals SET status = ?, updated_at = ? "
-            "WHERE proposal_id = ?",
-            ("confirmed", now_iso(), proposal_id),
+            "WHERE proposal_id = ? AND session_id = ?",
+            ("confirmed", now_iso(), proposal_id, session_id),
         )
+        cur.execute(
+            "SELECT job_id FROM research_jobs WHERE proposal_id = ? AND session_id = ?",
+            (proposal_id, session_id),
+        )
+        job_row = cur.fetchone()
+    assert job_row is not None
+    job_id = str(job_row["job_id"])
 
-    # Run the workflows outside the cursor block (no DB lock held during IO).
-    result = _run_two_workflows(
-        session_id,
-        job_id,
-        {
-            "proposal_id": prow["proposal_id"],
-            "node_id": prow["node_id"],
-            "intent_text": prow["intent_text"],
-            "display_name": prow["display_name"],
-            "summary": prow["summary"],
-            "compiler_metadata": proposal_metadata,
-            "compiled_candidate": as_dict(proposal_payload.get("compiled_candidate")),
-        },
-    )
+    # Explicit compatibility mode keeps older focused tests deterministic. It
+    # is never selected implicitly in production.
+    if research_worker_mode() == "inline":
+        claimed = claim_job(job_id)
+        if claimed is not None:
+            run_claimed_job(claimed)
+    elif inserted:
+        # Return the enqueue acknowledgement itself. This guarantees the first
+        # confirm cannot race an unusually fast worker and appear synchronous.
+        return {
+            "job_id": job_id,
+            "session_id": session_id,
+            "proposal_id": proposal_id,
+            "status": "queued",
+            "player_state_message": "现场试作已登记，工坊很快开始准备。",
+            "runtime_package_path": None,
+            "delivery_payload_path": None,
+            "trace_paths": [],
+            "compiler_metadata": {},
+            "created_at": ts,
+            "updated_at": ts,
+            "completed_at": None,
+        }
+    job = get_job(session_id, job_id)
+    assert job is not None
+    return job
+
+
+def research_worker_mode() -> str:
+    """Return the explicit worker mode; background is the production default."""
+    value = os.environ.get("AI_TD_RESEARCH_WORKER_MODE", "background")
+    return value.strip().lower()
+
+
+def recover_running_jobs() -> int:
+    """Return interrupted jobs to the durable queue during process startup."""
+    ts = now_iso()
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE research_jobs SET status = 'queued', player_state_message = ?, "
+            "updated_at = ?, completed_at = NULL WHERE status = 'running'",
+            ("工坊已重新接续这份试作，请稍候。", ts),
+        )
+        return cur.rowcount
+
+
+def claim_next_job() -> dict[str, Any] | None:
+    """Atomically claim the oldest queued job across competing processes."""
+    ts = now_iso()
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE research_jobs SET status = 'running', player_state_message = ?, "
+            "updated_at = ? WHERE job_id = ("
+            "SELECT job_id FROM research_jobs WHERE status = 'queued' "
+            "ORDER BY created_at, job_id LIMIT 1"
+            ") AND status = 'queued' RETURNING job_id, session_id, proposal_id, status",
+            ("工坊正在准备这份试作，请稍候。", ts),
+        )
+        row = cur.fetchone()
+    return dict(row) if row is not None else None
+
+
+def claim_job(job_id: str) -> dict[str, Any] | None:
+    """Atomically claim a specific queued job for explicit inline execution."""
+    with db_cursor() as cur:
+        cur.execute(
+            "UPDATE research_jobs SET status = 'running', player_state_message = ?, "
+            "updated_at = ? WHERE job_id = ? AND status = 'queued' "
+            "RETURNING job_id, session_id, proposal_id, status",
+            ("工坊正在准备这份试作，请稍候。", now_iso(), job_id),
+        )
+        row = cur.fetchone()
+    return dict(row) if row is not None else None
+
+
+def _claimed_proposal(claimed: dict[str, Any]) -> dict[str, Any] | None:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT proposal_id, node_id, intent_text, display_name, summary, payload "
+            "FROM research_proposals WHERE proposal_id = ? AND session_id = ?",
+            (claimed["proposal_id"], claimed["session_id"]),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    proposal_payload = _proposal_payload(row)
+    proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
+    if not proposal_metadata:
+        proposal_metadata = _compiler_metadata_for_proposal(
+            session_id=str(claimed["session_id"]),
+            proposal_id=str(row["proposal_id"]),
+            node_id=str(row["node_id"] or "gray_lantern_station"),
+            intent_text=str(row["intent_text"] or ""),
+            display_name=str(row["display_name"] or "临时光幕方案"),
+            proposal_summary=str(row["summary"] or "以灯光构筑的临时防线。"),
+            worldbook_id="long_night_lanterns",
+        )
+    return {
+        "proposal_id": row["proposal_id"],
+        "node_id": row["node_id"],
+        "intent_text": row["intent_text"],
+        "display_name": row["display_name"],
+        "summary": row["summary"],
+        "compiler_metadata": proposal_metadata,
+        "compiled_candidate": as_dict(proposal_payload.get("compiled_candidate")),
+    }
+
+
+def run_claimed_job(claimed: dict[str, Any]) -> dict[str, Any] | None:
+    """Execute and finalize a job previously moved to ``running`` by claim."""
+    session_id = str(claimed["session_id"])
+    job_id = str(claimed["job_id"])
+    proposal_id = str(claimed["proposal_id"])
+    proposal = _claimed_proposal(claimed)
+    if proposal is None:
+        result = {
+            "ok": False,
+            "error": "proposal missing while processing claimed job",
+            "trace_paths": [],
+            "runtime_package_path": None,
+            "delivery_payload_path": None,
+        }
+        proposal_metadata: dict[str, Any] = {}
+    else:
+        proposal_metadata = as_dict(proposal.get("compiler_metadata"))
+        try:
+            result = _run_two_workflows(session_id, job_id, proposal)
+        except Exception as exc:  # keep the durable worker alive after one bad job
+            result = {
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+                "trace_paths": [],
+                "runtime_package_path": None,
+                "delivery_payload_path": None,
+            }
+
     completed_at = now_iso()
     if (
         result["ok"]
@@ -871,7 +990,7 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
     ):
         status = "completed"
         player_msg = _sanitize_player_text(
-            f"试作封装完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"
+            f"试作准备完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"
         )
         compiler_metadata = _compiler_metadata_for_job(
             proposal_metadata=proposal_metadata,
@@ -907,7 +1026,8 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         cur.execute(
             "UPDATE research_jobs SET status = ?, player_state_message = ?, "
             "runtime_package_path = ?, delivery_payload_path = ?, trace_paths = ?, "
-            "payload = ?, updated_at = ?, completed_at = ? WHERE job_id = ?",
+            "payload = ?, updated_at = ?, completed_at = ? "
+            "WHERE job_id = ? AND status = 'running'",
             (
                 status,
                 player_msg,
