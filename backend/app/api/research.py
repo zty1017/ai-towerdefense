@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
-from ..db import db_cursor
 from ..models import (
     ResearchJobInfo,
     ResearchJobResponse,
@@ -23,22 +22,9 @@ from ..models import (
     RuntimeActivationResponse,
 )
 from ..services import frontend_mock_service, research_service, runtime_activation_service
+from ._session_guard import require_session as _require_session
 
 router = APIRouter()
-
-
-def _require_session(session_id: str) -> None:
-    """Raise 404 if the session does not exist."""
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT session_id FROM sessions WHERE session_id = ?",
-            (session_id,),
-        )
-        if cur.fetchone() is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"session not found: {session_id}",
-            )
 
 
 @router.post(

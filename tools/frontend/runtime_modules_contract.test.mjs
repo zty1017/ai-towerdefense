@@ -61,6 +61,7 @@ import { createBattleRoadRenderer } from "../../frontend/runtime/battle-road-ren
 import { createBattleSemanticRenderer } from "../../frontend/runtime/battle-semantic-renderer.js";
 import { createBattleTerrainRenderer } from "../../frontend/runtime/battle-terrain-renderer.js";
 import { createBattleWorldRenderer } from "../../frontend/runtime/battle-world-renderer.js";
+import { createBattleSceneryGenerator } from "../../frontend/runtime/battle-scenery-generator.js";
 import {
   finishToolDrag,
   onBattleCanvasClick,
@@ -70,6 +71,45 @@ import {
   advanceBattleStep,
   updateDefenses,
 } from "../../frontend/runtime/battle-simulation.js";
+
+function sceneryGeneratorForTests(battle = {}) {
+  const grid = { width_cells: 20, height_cells: 14 };
+  const routes = [
+    {
+      route_id: "main_route",
+      waypoints: [
+        { x: 1, y: 7 },
+        { x: 18, y: 7 },
+      ],
+    },
+  ];
+  const slot = { slot_id: "slot_a", position: { x: 5, y: 6 } };
+  const objective = { position: { x: 10, y: 3 } };
+  const sameCell = (left, right) => left.x === right.x && left.y === right.y;
+  return createBattleSceneryGenerator({
+    getBattle: () => battle,
+    getCurrentNodeId: () => "gray_lantern_station",
+    getMapRuntimePackage: () => ({
+      package_id: "map_runtime_test",
+      node_id: "gray_lantern_station",
+    }),
+    getMapGrid: () => grid,
+    getMapObjectives: () => ({ core_target: objective, optional_targets: [] }),
+    getMapStylePack: () => null,
+    getRoutes: () => routes,
+    getBuildSlots: () => [slot],
+    isCellInGrid: (cell) =>
+      cell.x >= 0 &&
+      cell.x < grid.width_cells &&
+      cell.y >= 0 &&
+      cell.y < grid.height_cells,
+    distanceToPath: (cell) => Math.abs(cell.y - 7),
+    slotAt: (cell) => sameCell(cell, slot.position),
+    colorFromStyle: (_token, fallback) => fallback,
+    rgbaFromStyle: (_token, _alpha, fallback) => fallback,
+    mapRenderPlanHasLayer: () => false,
+  });
+}
 
 function recordingCanvasContext() {
   const calls = [];
@@ -173,6 +213,39 @@ function battleConfigForTests(overrides = {}) {
     ...overrides,
   };
 }
+
+test("battle scenery generation is deterministic for one runtime package", () => {
+  const first = sceneryGeneratorForTests({}).terrainFeatureSet();
+  const second = sceneryGeneratorForTests({}).terrainFeatureSet();
+
+  assert.deepEqual(second, first);
+  assert.equal(first.key, "map_runtime_test:20x14");
+  assert.equal(first.scenicRidges.length, 8);
+  assert.equal(first.accessTrails.length, 1);
+  assert.ok(first.debris.length > 0);
+  assert.ok(first.roadsideProps.length > 0);
+});
+
+test("battle scenery caches results and keeps generated objects off protected cells", () => {
+  const battle = {};
+  const generator = sceneryGeneratorForTests(battle);
+  const first = generator.terrainFeatureSet();
+  const second = generator.terrainFeatureSet();
+
+  assert.equal(second, first);
+  assert.equal(battle.terrainFeatureSet, first);
+  for (const item of [...first.debris, ...first.landmarks]) {
+    const cell = { x: Math.round(item.x), y: Math.round(item.y) };
+    assert.notEqual(cell.y, 7);
+    assert.notDeepEqual(cell, { x: 5, y: 6 });
+    assert.notDeepEqual(cell, { x: 10, y: 3 });
+  }
+  for (const pool of first.darkPools) {
+    const cell = { x: Math.round(pool.x), y: Math.round(pool.y) };
+    assert.notEqual(cell.y, 7);
+    assert.notDeepEqual(cell, { x: 10, y: 3 });
+  }
+});
 
 test("runtime projection consumes battle_hotbar ABI cost and cooldown", () => {
   const projection = buildBattleToolProjection({

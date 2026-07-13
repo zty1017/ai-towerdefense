@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 import os
 
-from . import research_service
+from . import research_job_queue_service, research_service
 
 
 def enabled() -> bool:
-    return research_service.research_worker_mode() == "background"
+    return research_job_queue_service.worker_mode() == "background"
 
 
 class ResearchWorker:
@@ -20,7 +20,7 @@ class ResearchWorker:
     async def start(self) -> None:
         # Recovery is part of every application startup, including explicit
         # inline test mode, so no interrupted row remains permanently running.
-        await asyncio.to_thread(research_service.recover_running_jobs)
+        await asyncio.to_thread(research_job_queue_service.recover_running_jobs)
         if not enabled() or self._task is not None:
             return
         # A FastAPI app can be started again on a fresh event loop in tests or
@@ -62,7 +62,7 @@ class ResearchWorker:
         )
         while not stop.is_set():
             try:
-                claimed = await asyncio.to_thread(research_service.claim_next_job)
+                claimed = await asyncio.to_thread(research_job_queue_service.claim_next_job)
             except Exception:
                 await self._sleep_or_stop(stop, interval)
                 continue
@@ -74,7 +74,7 @@ class ResearchWorker:
                 except Exception:
                     try:
                         await asyncio.to_thread(
-                            research_service.requeue_interrupted_job,
+                            research_job_queue_service.requeue_interrupted_job,
                             str(claimed["job_id"]),
                         )
                     except Exception:

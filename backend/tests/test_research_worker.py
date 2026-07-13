@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from app.db import db_cursor, now_iso
-from app.services import research_service
+from app.services import research_job_queue_service, research_service
 from app.services.research_worker_service import ResearchWorker
 
 
@@ -241,7 +241,7 @@ def test_lifespan_worker_runs_existing_workflows_end_to_end(app_env: Path, monke
 
 def test_worker_survives_transient_claim_failure(app_env: Path, monkeypatch):
     calls = {"count": 0}
-    original_claim = research_service.claim_next_job
+    original_claim = research_job_queue_service.claim_next_job
 
     def flaky_claim():
         calls["count"] += 1
@@ -249,7 +249,7 @@ def test_worker_survives_transient_claim_failure(app_env: Path, monkeypatch):
             raise RuntimeError("temporary database pressure")
         return original_claim()
 
-    monkeypatch.setattr(research_service, "claim_next_job", flaky_claim)
+    monkeypatch.setattr(research_job_queue_service, "claim_next_job", flaky_claim)
     monkeypatch.setenv("AI_TD_RESEARCH_WORKER_MODE", "background")
     monkeypatch.setenv("AI_TD_RESEARCH_WORKER_POLL_SECONDS", "0.01")
 

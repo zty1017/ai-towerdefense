@@ -1,12 +1,12 @@
-"""Research job service: bridges the player-facing research API and the
-AssetGraph Kernel v0.1 deterministic workflow runner.
+"""Bridge the player-facing research API and the AssetGraph runtime pipeline.
 
 This module is intentionally MVP-shaped:
-- ``create_proposal`` synthesizes a world-in-language proposal deterministically
-  from the player's ``intent_text`` and ``node_id``. No real LLM is called.
+- ``create_proposal`` builds a stable world-in-language proposal shell and may
+  attach a validated live-model candidate; deterministic content remains the
+  safe fallback.
 - ``confirm_proposal`` idempotently enqueues one durable job per proposal.
-- the research worker atomically claims queued jobs, runs the two AssetGraph
-  workflows, and stores the resulting artifact paths.
+- the research worker uses the dedicated queue service, runs the AssetGraph
+  workflows and media gates, and stores the resulting artifact paths.
 - ``get_job`` reads the row back.
 
 All workflow output is written under ``/tmp/ai_compiled_td_backend_runs`` so
@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import hashlib
-import os
 import secrets
 import sys
 from pathlib import Path
@@ -29,6 +28,7 @@ from . import (
     battle_content_service,
     live_asset_compile_service,
     map_runtime_service,
+    research_job_queue_service,
     research_runtime_media_service,
     world_catalog_service,
 )
@@ -874,61 +874,28 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
 
 
 def research_worker_mode() -> str:
-    """Return the explicit worker mode; background is the production default."""
-    value = os.environ.get("AI_TD_RESEARCH_WORKER_MODE", "background")
-    return value.strip().lower()
+    """Compatibility facade for the durable research queue worker mode."""
+    return research_job_queue_service.worker_mode()
 
 
 def recover_running_jobs() -> int:
-    """Return interrupted jobs to the durable queue during process startup."""
-    ts = now_iso()
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE research_jobs SET status = 'queued', player_state_message = ?, "
-            "updated_at = ?, completed_at = NULL WHERE status = 'running'",
-            ("工坊已重新接续这份试作，请稍候。", ts),
-        )
-        return cur.rowcount
+    """Compatibility facade for startup recovery."""
+    return research_job_queue_service.recover_running_jobs()
 
 
 def claim_next_job() -> dict[str, Any] | None:
-    """Atomically claim the oldest queued job across competing processes."""
-    ts = now_iso()
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE research_jobs SET status = 'running', player_state_message = ?, "
-            "updated_at = ? WHERE job_id = ("
-            "SELECT job_id FROM research_jobs WHERE status = 'queued' "
-            "ORDER BY created_at, job_id LIMIT 1"
-            ") AND status = 'queued' RETURNING job_id, session_id, proposal_id, status",
-            ("工坊正在准备这份试作，请稍候。", ts),
-        )
-        row = cur.fetchone()
-    return dict(row) if row is not None else None
+    """Compatibility facade for claiming the next queued job."""
+    return research_job_queue_service.claim_next_job()
 
 
 def claim_job(job_id: str) -> dict[str, Any] | None:
-    """Atomically claim a specific queued job for explicit inline execution."""
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE research_jobs SET status = 'running', player_state_message = ?, "
-            "updated_at = ? WHERE job_id = ? AND status = 'queued' "
-            "RETURNING job_id, session_id, proposal_id, status",
-            ("工坊正在准备这份试作，请稍候。", now_iso(), job_id),
-        )
-        row = cur.fetchone()
-    return dict(row) if row is not None else None
+    """Compatibility facade for explicit inline job execution."""
+    return research_job_queue_service.claim_job(job_id)
 
 
 def requeue_interrupted_job(job_id: str) -> None:
-    """Best-effort recovery when the worker fails outside workflow handling."""
-    with db_cursor() as cur:
-        cur.execute(
-            "UPDATE research_jobs SET status = 'queued', player_state_message = ?, "
-            "updated_at = ?, completed_at = NULL "
-            "WHERE job_id = ? AND status = 'running'",
-            ("工坊暂时停顿，正在重新接续这份试作。", now_iso(), job_id),
-        )
+    """Compatibility facade for best-effort worker recovery."""
+    research_job_queue_service.requeue_interrupted_job(job_id)
 
 
 def _claimed_proposal(claimed: dict[str, Any]) -> dict[str, Any] | None:

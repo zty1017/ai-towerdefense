@@ -69,6 +69,7 @@ import { createBattleRoadRenderer } from "./runtime/battle-road-renderer.js";
 import { createBattleSemanticRenderer } from "./runtime/battle-semantic-renderer.js";
 import { createBattleTerrainRenderer } from "./runtime/battle-terrain-renderer.js";
 import { createBattleWorldRenderer } from "./runtime/battle-world-renderer.js";
+import { createBattleSceneryGenerator } from "./runtime/battle-scenery-generator.js";
 import { drawBattleFrame } from "./runtime/battle-renderer.js";
 import {
   addEffect as addBattleEffect,
@@ -407,6 +408,23 @@ import {
     finishBattle: (outcome) => finishBattle(outcome),
     drawBattle: () => drawBattle(),
     updateBattleDom: () => updateBattleDom(),
+  });
+  const battleSceneryGenerator = createBattleSceneryGenerator({
+    getBattle: () => state.battle,
+    getCurrentNodeId: () => currentNodeId(),
+    getMapRuntimePackage: () => mapRuntimePackage(),
+    getMapGrid: () => mapGrid(),
+    getMapObjectives: () => mapObjectives(),
+    getMapStylePack: () => mapStylePack(),
+    getRoutes: () => allPathRoutes(),
+    getBuildSlots: () => buildSlots(),
+    isCellInGrid: (cell) => isCellInGrid(cell),
+    distanceToPath: (cell) => distanceToPath(cell),
+    slotAt: (cell) => slotAt(cell),
+    colorFromStyle: (...args) => colorFromStyle(...args),
+    rgbaFromStyle: (...args) => rgbaFromStyle(...args),
+    mapRenderPlanHasLayer: (layerKind) => mapRenderPlanHasLayer(layerKind),
+    fallbackNodeId: NODE_ID,
   });
   const battleEntityRenderer = createBattleEntityRenderer({
     getBattle: () => state.battle,
@@ -1974,368 +1992,23 @@ import {
   }
 
   function runtimeMapSeed() {
-    const pkg = mapRuntimePackage();
-    return hashString(`${pkg.package_id || ""}|${pkg.node_id || currentNodeId() || NODE_ID}`);
+    return battleSceneryGenerator.runtimeMapSeed();
   }
 
   function hashString(value) {
-    let hash = 2166136261;
-    const text = String(value || "");
-    for (let i = 0; i < text.length; i += 1) {
-      hash ^= text.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
+    return battleSceneryGenerator.hashString(value);
   }
 
   function makeSeededRandom(seed) {
-    let value = seed >>> 0;
-    return () => {
-      value += 0x6d2b79f5;
-      let t = value;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+    return battleSceneryGenerator.makeSeededRandom(seed);
   }
 
   function battleNodeVisualProfile() {
-    const nodeId = String((mapRuntimePackage() || {}).node_id || currentNodeId() || NODE_ID);
-    const profiles = {
-      gray_lantern_station: {
-        soil: ["#23251a", "#18231e", "#111817", "#171118"],
-        patchPalette: [
-          "rgba(103,112,78,0.22)",
-          "rgba(118,97,58,0.18)",
-          "rgba(51,86,74,0.18)",
-          "rgba(92,78,56,0.20)",
-        ],
-        roadside: ["reed", "stone", "lamp_marker", "scrap"],
-        glow: "rgba(255,211,122,0.18)",
-      },
-      lamp_wick_store: {
-        soil: ["#252217", "#20251c", "#111918", "#18120f"],
-        patchPalette: [
-          "rgba(135,108,55,0.18)",
-          "rgba(95,118,74,0.17)",
-          "rgba(74,88,72,0.18)",
-          "rgba(118,77,47,0.14)",
-        ],
-        roadside: ["crate", "stone", "pipe", "lamp_marker"],
-        glow: "rgba(255,190,97,0.16)",
-      },
-      old_signal_tower: {
-        soil: ["#1d2221", "#1b2227", "#121617", "#18151b"],
-        patchPalette: [
-          "rgba(75,103,109,0.18)",
-          "rgba(100,88,67,0.17)",
-          "rgba(52,78,88,0.16)",
-          "rgba(96,72,93,0.13)",
-        ],
-        roadside: ["signal_stake", "stone", "scrap", "pipe"],
-        glow: "rgba(158,220,255,0.13)",
-      },
-    };
-    const fallback = profiles[nodeId] || profiles.gray_lantern_station;
-    const pack = mapStylePack();
-    if (!pack || pack.schema_version !== "map_style_pack.v0.1") return fallback;
-    return {
-      ...fallback,
-      soil: [
-        colorFromStyle("terrain_base", fallback.soil[0]),
-        colorFromStyle("terrain_detail", fallback.soil[1]),
-        colorFromStyle("road_base", fallback.soil[2]),
-        colorFromStyle("fog", fallback.soil[3]),
-      ],
-      patchPalette: [
-        rgbaFromStyle("terrain_detail", 0.2, fallback.patchPalette[0]),
-        rgbaFromStyle("road_base", 0.16, fallback.patchPalette[1]),
-        rgbaFromStyle("resource", 0.15, fallback.patchPalette[2]),
-        rgbaFromStyle("hazard", 0.13, fallback.patchPalette[3]),
-      ],
-      glow: rgbaFromStyle("accent", 0.18, fallback.glow),
-      road: {
-        shadow: rgbaFromStyle("hazard", 0.38, "rgba(18,13,10,0.54)"),
-        base: rgbaFromStyle("road_base", 0.86, "rgba(82,62,37,0.86)"),
-        crown: rgbaFromStyle("road_edge", 0.58, "rgba(143,112,64,0.64)"),
-        highlight: rgbaFromStyle("accent", 0.2, "rgba(201,169,103,0.18)"),
-        shoulderDark: rgbaFromStyle("terrain_base", 0.58, "rgba(61,69,46,0.62)"),
-        shoulderSoft: rgbaFromStyle("terrain_detail", 0.42, "rgba(33,41,32,0.46)"),
-        groundBlend: rgbaFromStyle("terrain_base", 0.36, "rgba(28,34,25,0.36)"),
-        edgeStain: rgbaFromStyle("road_base", 0.22, "rgba(111,77,56,0.22)"),
-        pebbleWarm: rgbaFromStyle("road_edge", 0.24, "rgba(196,164,102,0.24)"),
-        rut: rgbaFromStyle("road_base", 0.28, "rgba(62,45,27,0.24)"),
-        flow: rgbaFromStyle("accent", 0.14, "rgba(255,213,126,0.14)"),
-      },
-      platform: {
-        fillTop: rgbaFromStyle("build_slot", 0.48, "rgba(115,104,68,0.54)"),
-        stroke: rgbaFromStyle("build_slot", 0.34, "rgba(179,153,94,0.18)"),
-        active: rgbaFromStyle("accent", 0.68, "rgba(255,225,161,0.68)"),
-      },
-      objective: {
-        core: colorFromStyle("objective", "#ffd37a"),
-        optional: colorFromStyle("resource", "#9edcff"),
-      },
-      spawn: {
-        glow: colorFromStyle("spawn", "#8f7cff"),
-        stroke: rgbaFromStyle("spawn", 0.36, "rgba(187,166,255,0.36)"),
-      },
-      renderPlanLayersReady:
-        mapRenderPlanHasLayer("road_band") &&
-        mapRenderPlanHasLayer("build_slot_platform") &&
-        mapRenderPlanHasLayer("objective_foundation") &&
-        mapRenderPlanHasLayer("spawn_atmosphere"),
-    };
+    return battleSceneryGenerator.battleNodeVisualProfile();
   }
 
   function terrainFeatureSet() {
-    const battle = state.battle;
-    const grid = mapGrid();
-    const pkg = mapRuntimePackage();
-    const key = `${pkg.package_id || currentNodeId()}:${grid.width_cells}x${grid.height_cells}`;
-    if (battle && battle.terrainFeatureSet && battle.terrainFeatureSet.key === key) {
-      return battle.terrainFeatureSet;
-    }
-
-    const seed = runtimeMapSeed();
-    const rng = makeSeededRandom(seed ^ hashString("procedural-battlefield"));
-    const profile = battleNodeVisualProfile();
-    const palette = profile.patchPalette;
-    const bands = Array.from({ length: 8 }, (_, index) => ({
-      y: -0.08 + index * 0.155 + (rng() - 0.5) * 0.03,
-      height: 0.18 + rng() * 0.09,
-      lean: (rng() - 0.5) * 0.16,
-      alpha: 0.035 + rng() * 0.045,
-      warm: rng() > 0.48,
-    }));
-    const patches = Array.from({ length: 13 }, () => ({
-      x: rng(),
-      y: rng(),
-      rx: 0.12 + rng() * 0.22,
-      ry: 0.06 + rng() * 0.14,
-      rotation: (rng() - 0.5) * 0.9,
-      color: palette[Math.floor(rng() * palette.length)],
-      wobble: Array.from({ length: 9 }, () => 0.78 + rng() * 0.48),
-    }));
-    const specks = Array.from({ length: 260 }, () => ({
-      x: rng(),
-      y: rng(),
-      size: 0.7 + rng() * 2.8,
-      alpha: 0.05 + rng() * 0.13,
-      warm: rng() > 0.46,
-    }));
-    const debris = [];
-    let attempts = 0;
-    while (debris.length < 88 && attempts < 260) {
-      attempts += 1;
-      const x = rng() * (grid.width_cells + 1.6) - 0.8;
-      const y = rng() * (grid.height_cells + 1.6) - 0.8;
-      const cell = { x: Math.round(x), y: Math.round(y) };
-      if (!isCellInGrid(cell)) continue;
-      if (distanceToPath(cell) < 1.15 || slotAt(cell) || objectiveAtCell(cell)) continue;
-      debris.push({
-        x,
-        y,
-        dx: (rng() - 0.5) * 0.62,
-        dy: (rng() - 0.5) * 0.62,
-        size: 0.55 + rng() * 1.4,
-        rotation: rng() * Math.PI,
-        kind: rng() < 0.52 ? "stone" : rng() < 0.82 ? "reed" : "scrap",
-        shade: rng(),
-      });
-    }
-    const darkPools = [];
-    attempts = 0;
-    while (darkPools.length < 9 && attempts < 180) {
-      attempts += 1;
-      const x = rng() * grid.width_cells;
-      const y = rng() * grid.height_cells;
-      const cell = { x: Math.round(x), y: Math.round(y) };
-      if (!isCellInGrid(cell)) continue;
-      if (distanceToPath(cell) < 1.05 || objectiveAtCell(cell)) continue;
-      darkPools.push({
-        x,
-        y,
-        rx: 0.34 + rng() * 0.52,
-        ry: 0.18 + rng() * 0.28,
-        rotation: (rng() - 0.5) * 0.7,
-        alpha: 0.12 + rng() * 0.12,
-      });
-    }
-    const landmarks = [];
-    const landmarkKinds = ["collapsed_wall", "signal_scrap", "supply_cache", "lamp_relic"];
-    attempts = 0;
-    while (landmarks.length < 14 && attempts < 260) {
-      attempts += 1;
-      const x = Math.floor(rng() * grid.width_cells);
-      const y = Math.floor(rng() * grid.height_cells);
-      const cell = { x, y };
-      if (!isCellInGrid(cell)) continue;
-      if (distanceToPath(cell) < 1.2 || slotAt(cell) || objectiveAtCell(cell)) continue;
-      landmarks.push({
-        x: x + (rng() - 0.5) * 0.42,
-        y: y + (rng() - 0.5) * 0.42,
-        kind: landmarkKinds[Math.floor(rng() * landmarkKinds.length)],
-        scale: 0.78 + rng() * 0.48,
-        rotation: (rng() - 0.5) * 0.45,
-        warm: rng() > 0.58,
-      });
-    }
-    const wisps = Array.from({ length: 12 }, () => ({
-      edge: Math.floor(rng() * 4),
-      offset: rng(),
-      sway: rng(),
-      width: 38 + rng() * 88,
-      alpha: 0.035 + rng() * 0.045,
-    }));
-    const scenicRidges = buildScenicRidges(rng, grid);
-    const fieldEdgeProps = buildFieldEdgeProps(rng);
-    const roadsideProps = buildRoadsideProps(rng, profile);
-    const accessTrails = buildSlotAccessTrails();
-    const features = {
-      key,
-      seed,
-      profile,
-      bands,
-      patches,
-      specks,
-      debris,
-      darkPools,
-      landmarks,
-      scenicRidges,
-      fieldEdgeProps,
-      wisps,
-      roadsideProps,
-      accessTrails,
-    };
-    if (battle) battle.terrainFeatureSet = features;
-    return features;
-  }
-
-  function buildScenicRidges(rng, grid) {
-    const ridges = [];
-    const maxX = Math.max(1, grid.width_cells - 1);
-    const maxY = Math.max(1, grid.height_cells - 1);
-    const anchors = [
-      { x: -1.6, y: -0.4, w: 5.8, h: 1.4, side: "top" },
-      { x: maxX * 0.34, y: -1.1, w: 6.2, h: 1.25, side: "top" },
-      { x: maxX - 3.1, y: -0.5, w: 5.6, h: 1.35, side: "top" },
-      { x: maxX + 0.4, y: maxY * 0.18, w: 1.6, h: 4.6, side: "right" },
-      { x: maxX + 0.1, y: maxY * 0.58, w: 1.8, h: 4.2, side: "right" },
-      { x: maxX * 0.2, y: maxY + 0.4, w: 5.8, h: 1.55, side: "bottom" },
-      { x: maxX * 0.62, y: maxY + 0.2, w: 6.4, h: 1.5, side: "bottom" },
-      { x: -1.3, y: maxY * 0.52, w: 1.7, h: 4.4, side: "left" },
-    ];
-    for (const anchor of anchors) {
-      ridges.push({
-        x: anchor.x + (rng() - 0.5) * 0.8,
-        y: anchor.y + (rng() - 0.5) * 0.55,
-        width: anchor.w * (0.86 + rng() * 0.22),
-        height: anchor.h * (0.86 + rng() * 0.26),
-        side: anchor.side,
-        alpha: 0.18 + rng() * 0.16,
-        warm: rng() > 0.56,
-      });
-    }
-    return ridges;
-  }
-
-  function buildFieldEdgeProps(rng) {
-    const props = [];
-    const edgeCount = 8;
-    for (let i = 0; i < edgeCount; i += 1) {
-      const count = 4 + Math.floor(rng() * 3);
-      for (let j = 0; j < count; j += 1) {
-        if (rng() < 0.18) continue;
-        props.push({
-          edgeIndex: i,
-          t: (j + 0.16 + rng() * 0.68) / count,
-          angleJitter: (rng() - 0.5) * 0.5,
-          scale: 0.58 + rng() * 0.92,
-          kind: rng() < 0.42 ? "stone" : rng() < 0.76 ? "timber" : "reed",
-          alpha: 0.18 + rng() * 0.18,
-        });
-      }
-    }
-    return props;
-  }
-
-  function buildRoadsideProps(rng, profile) {
-    const props = [];
-    for (const route of allPathRoutes()) {
-      const waypoints = route.waypoints || [];
-      for (let i = 0; i < waypoints.length - 1; i += 1) {
-        const a = waypoints[i];
-        const b = waypoints[i + 1];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const len = Math.max(1, Math.hypot(dx, dy));
-        const nx = -dy / len;
-        const ny = dx / len;
-        const count = Math.max(2, Math.floor(len * 1.35));
-        for (let j = 0; j < count; j += 1) {
-          if (rng() < 0.18) continue;
-          const t = (j + 0.18 + rng() * 0.64) / count;
-          const side = rng() < 0.5 ? -1 : 1;
-          const kind = profile.roadside[Math.floor(rng() * profile.roadside.length)];
-          props.push({
-            routeId: route.route_id || "route",
-            x: a.x + dx * t + nx * side * (0.58 + rng() * 0.42),
-            y: a.y + dy * t + ny * side * (0.58 + rng() * 0.42),
-            kind,
-            scale: 0.68 + rng() * 0.52,
-            rotation: (rng() - 0.5) * 0.72,
-            warm: rng() > 0.45,
-          });
-        }
-      }
-    }
-    return props;
-  }
-
-  function buildSlotAccessTrails() {
-    const trails = [];
-    for (const slot of buildSlots()) {
-      const cell = slot.position || slot;
-      if (!isCellInGrid(cell)) continue;
-      const nearest = nearestPointOnRoutes(cell);
-      if (!nearest || nearest.distance > 1.65) continue;
-      trails.push({
-        slotId: slot.slot_id || `${cell.x},${cell.y}`,
-        from: { x: cell.x, y: cell.y },
-        to: { x: nearest.x, y: nearest.y },
-      });
-    }
-    return trails;
-  }
-
-  function nearestPointOnRoutes(cell) {
-    let best = null;
-    for (const route of allPathRoutes()) {
-      const points = route.waypoints || [];
-      for (let i = 0; i < points.length - 1; i += 1) {
-        const a = points[i];
-        const b = points[i + 1];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const lenSq = dx * dx + dy * dy;
-        if (!lenSq) continue;
-        const t = clamp(((cell.x - a.x) * dx + (cell.y - a.y) * dy) / lenSq, 0, 1);
-        const x = a.x + dx * t;
-        const y = a.y + dy * t;
-        const distance = Math.hypot(cell.x - x, cell.y - y);
-        if (!best || distance < best.distance) best = { x, y, distance };
-      }
-    }
-    return best;
-  }
-
-  function objectiveAtCell(cell) {
-    const objectives = mapObjectives();
-    const targets = [objectives.core_target, ...(objectives.optional_targets || [])].filter(Boolean);
-    return targets.some(
-      (target) => target.position && target.position.x === cell.x && target.position.y === cell.y,
-    );
+    return battleSceneryGenerator.terrainFeatureSet();
   }
 
   function drawBackdrop(ctx, m) {

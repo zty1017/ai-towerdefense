@@ -311,6 +311,7 @@ STATIC_VALIDATION_COMMANDS = [
     },
     {
         "name": "multinode_battle_settlement",
+        "timeout_seconds": 150,
         "command": [
             "python3",
             "tools/dev/validate_multinode_battle_settlement.py",
@@ -1402,12 +1403,15 @@ def run_validation_commands(profile: str = VALIDATION_PROFILE_FULL) -> list[dict
         raise ValueError(f"unknown validation profile: {profile}")
     results: list[dict[str, Any]] = []
     for entry in validation_commands():
+        command = list(entry["command"])
+        if command and command[0] == "python3":
+            command[0] = sys.executable
         results.append(
             run_command(
                 str(entry["name"]),
-                list(entry["command"]),
+                command,
                 root=ROOT,
-                timeout_seconds=45,
+                timeout_seconds=int(entry.get("timeout_seconds", 45)),
                 output_tail_limit=MAX_VALIDATION_OUTPUT_CHARS,
                 include_timestamps=False,
             )
