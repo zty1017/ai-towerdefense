@@ -1,6 +1,6 @@
 # AI 协作与 Git 治理
 
-Last updated: 2026-06-29
+Last updated: 2026-07-13
 
 ## 1. 基本原则
 
@@ -36,6 +36,18 @@ CodeBuddy 优先
 ```
 
 主代理默认不直接承担普通实现任务，除非任务很小、需要快速修补，或其他工具无法完成。
+
+### 当前冲刺覆盖规则
+
+以下规则覆盖本文后部较早的模型清单和调用建议：
+
+- CodeBuddy 当前只使用免费 `hy3`；每个边界清晰任务先尝试一次，遇到 `429` 或不可用立即回退，不等待额度恢复。
+- OpenCode 当前允许：`opencode/big-pickle`、`opencode/deepseek-v4-flash-free`、`opencode/hy3-free`、`opencode/mimo-v2.5-free`、`zhipuai-coding-plan/glm-5.2`、`deepseek/deepseek-v4-flash`、`deepseek/deepseek-v4-pro`。
+- 中低难度任务优先 CodeBuddy `hy3`，不可用时使用 OpenCode 免费模型；中高难度任务使用 `zhipuai-coding-plan/glm-5.2` 或 DeepSeek；极难、跨模块和高风险任务允许 Codex headless 在隔离 worktree 中执行。
+- 所有实现 worker 都在从 `develop` 派生的 `task/*` 或 `experiment/*` worktree 中工作；`main` 只做稳定展示与阶段冻结。
+- 外部 agent 可以读取和修改隔离 task worktree，但不得读取或修改 `.env`，不得提交密钥、原始 provider 响应或未审查候选资产。
+- 当前 OpenCode CLI 以工作目录作为项目目录，最小调用形式为 `cd <worktree> && opencode run -m <model> "<task>"`；不要依赖旧文档中的 `--dir`、`--format` 或过期 `volcengine-plan/*` 示例。
+- 队友 GitHub 并行探索遵循 `docs/TEAM_GITHUB_HANDOFF.md`，统一从 `develop` 派生并向 `develop` 提交 Draft PR。
 
 ## 2. 角色分工
 

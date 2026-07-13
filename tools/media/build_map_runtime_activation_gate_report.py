@@ -28,7 +28,7 @@ FRONTEND_VISUAL_CONTRACT = ROOT / "tools/frontend/validate_battle_visual_contrac
 MAP_RUNTIME_SERVICE = ROOT / "backend/app/services/map_runtime_service.py"
 MAP_RENDER_PLAN_SERVICE = ROOT / "backend/app/services/map_render_plan_service.py"
 FRONTEND_MOCK_SERVICE = ROOT / "backend/app/services/frontend_mock_service.py"
-FRONTEND_MOCK_API = ROOT / "backend/app/api/frontend_mock.py"
+GAMEPLAY_RUNTIME_API = ROOT / "backend/app/api/gameplay_runtime.py"
 OPT_IN_CONTRACT_REPORT = (
     ROOT / "examples/review_packs/map_runtime_v02_opt_in_contract_smoke_report.v0.1.json"
 )
@@ -109,9 +109,9 @@ def backend_selector_contract_prepared() -> dict[str, Any]:
         if FRONTEND_MOCK_SERVICE.exists()
         else ""
     )
-    frontend_mock_api = (
-        FRONTEND_MOCK_API.read_text(encoding="utf-8")
-        if FRONTEND_MOCK_API.exists()
+    gameplay_runtime_api = (
+        GAMEPLAY_RUNTIME_API.read_text(encoding="utf-8")
+        if GAMEPLAY_RUNTIME_API.exists()
         else ""
     )
     opt_in_report = load_json(OPT_IN_CONTRACT_REPORT) if OPT_IN_CONTRACT_REPORT.exists() else {}
@@ -123,8 +123,9 @@ def backend_selector_contract_prepared() -> dict[str, Any]:
         in render_plan_service,
         "config_aggregation_uses_runtime_selection": "runtime_selection" in frontend_mock_service
         and "load_map_render_plan_bundle_for_runtime_optional" in frontend_mock_service,
-        "map_render_plan_route_uses_runtime_selection": "runtime_selection" in frontend_mock_api
-        and "runtime_schema_version" in frontend_mock_api,
+        "map_render_plan_route_uses_runtime_selection": "runtime_selection"
+        in gameplay_runtime_api
+        and "runtime_schema_version" in gameplay_runtime_api,
         "approved_selector_smoke": int(
             opt_in_summary.get("approved_selector_selected_v02_count") or 0
         )

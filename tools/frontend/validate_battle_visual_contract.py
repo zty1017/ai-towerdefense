@@ -448,6 +448,7 @@ def validate_app_contract(errors: list[str]) -> None:
     battle_entity_renderer = runtime_sources.get("battle-entity-renderer.js", "")
     battle_deployment_renderer = runtime_sources.get("battle-deployment-renderer.js", "")
     battle_road_renderer = runtime_sources.get("battle-road-renderer.js", "")
+    battle_scenery_generator = runtime_sources.get("battle-scenery-generator.js", "")
     battle_semantic_renderer = runtime_sources.get("battle-semantic-renderer.js", "")
     battle_terrain_renderer = runtime_sources.get("battle-terrain-renderer.js", "")
     battle_world_renderer = runtime_sources.get("battle-world-renderer.js", "")
@@ -458,7 +459,11 @@ def validate_app_contract(errors: list[str]) -> None:
     backdrop = battle_terrain_renderer
     procedural_terrain = js_section(battle_terrain_renderer, "drawProceduralTerrain", "drawEdgeFog")
     path = js_section(battle_road_renderer, "drawPath", "drawSlotAccessTrails")
-    profile = js_section(app, "battleNodeVisualProfile", "terrainFeatureSet")
+    profile = js_section(
+        battle_scenery_generator,
+        "battleNodeVisualProfile",
+        "objectiveAtCell",
+    )
     metrics = js_section(battle_map_adapter, "computeBattleMetrics", "projectCell")
     update_battle = js_section(battle_orchestrator, "runBattleUpdate", "createBattleOrchestrator")
     spawn = js_section(battle_simulation, "spawnEnemies")
