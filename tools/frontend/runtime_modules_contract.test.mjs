@@ -71,6 +71,7 @@ import {
 import {
   advanceBattleStep,
   updateDefenses,
+  updateTraps,
 } from "../../frontend/runtime/battle-simulation.js";
 
 function sceneryGeneratorForTests(battle = {}) {
@@ -1747,6 +1748,58 @@ test("compiled chain targeting damages bounded linked enemies and draws each arc
   updateDefenses({ battle });
   assert.deepEqual(battle.enemies.map((enemy) => enemy.hp), [3, 3, 3, 5]);
   assert.equal(battle.effects.filter((effect) => effect.type === "beam").length, 3);
+});
+
+test("compiled trap applies one-shot area damage before its persistent slow field", () => {
+  const battle = {
+    elapsedMs: 1000,
+    resources: 20,
+    power: 8,
+    sampleDelivered: true,
+    sampleUses: 1,
+    cooldowns: {},
+    defenses: [],
+    traps: [],
+    effects: [],
+    enemies: [
+      { x: 2, y: 2, hp: 10, slowUntil: 0 },
+      { x: 3.2, y: 2, hp: 10, slowUntil: 0 },
+      { x: 5, y: 2, hp: 10, slowUntil: 0 },
+    ],
+    deployedAssetIds: [],
+  };
+  const tool = {
+    id: "sample",
+    name: "震荡绊索",
+    assetKind: "temporary_trap_sample",
+    objectId: "compiled_trap_alpha",
+    behaviorAbi: {
+      placement: { mode: "path_adjacent_or_slot" },
+      targeting: { radius_cells: 2 },
+      effect_blocks: [
+        { kind: "damage", amount: 32, radius_cells: 1.5 },
+        { kind: "slow", duration_ms: 1400, strength: 0.3 },
+      ],
+    },
+  };
+
+  assert.equal(
+    deployRuntimeTool({
+      battle,
+      cell: { x: 2, y: 2 },
+      tool,
+      canPlaceToolAt: () => true,
+      addEffect: () => {},
+      setBattleToast: () => {},
+    }),
+    true,
+  );
+  updateTraps({ battle });
+  assert.deepEqual(battle.enemies.map((enemy) => enemy.hp), [6, 6, 10]);
+  assert.ok(battle.enemies[0].slowUntil > battle.elapsedMs);
+  assert.ok(battle.enemies[1].slowUntil > battle.elapsedMs);
+  assert.equal(battle.enemies[2].slowUntil, 0);
+  assert.ok(battle.effects.some((effect) => effect.type === "burst"));
 });
 
 test("compiled sample slot consumes delivery charges without charging research materials twice", () => {

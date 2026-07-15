@@ -163,6 +163,8 @@ export function updateTraps({ battle }) {
     const activeDurationMs =
       Number(trap.activeDurationMs) > 0 ? Number(trap.activeDurationMs) : 7800;
     const slowDurationMs = Number(trap.slowDurationMs) > 0 ? Number(trap.slowDurationMs) : 900;
+    const damage = Math.max(0, Number(trap.damage) || 0);
+    const damageRadius = Math.max(triggerRadius, Number(trap.damageRadius) || 0);
     const color = trap.color || "#9edcff";
     if (trap.armed) {
       const enemy = nearestEnemy({ battle, x: trap.x, y: trap.y, radius: triggerRadius });
@@ -171,6 +173,14 @@ export function updateTraps({ battle }) {
         trap.activeUntil = battle.elapsedMs + activeDurationMs;
         addEffect(battle, "ring", trap.x, trap.y, color, 1100, 1.8);
         addEffect(battle, "aura", trap.x, trap.y, color, activeDurationMs, 1.5);
+        if (damage > 0) {
+          for (const impacted of battle.enemies) {
+            if (Math.hypot(impacted.x - trap.x, impacted.y - trap.y) > damageRadius) continue;
+            impacted.hp -= damage;
+            impacted.hitFlashUntil = battle.elapsedMs + 160;
+          }
+          addEffect(battle, "burst", trap.x, trap.y, color, 360, 0.85);
+        }
         addFloating(battle, trap.x, trap.y, "迟滞", "#b8f1ff");
       }
     }

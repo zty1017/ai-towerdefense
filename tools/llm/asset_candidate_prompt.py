@@ -77,10 +77,49 @@ def _registry_summary(registry: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
+def _runtime_execution_guidance(asset_type: str) -> dict[str, Any]:
+    common = {
+        "rule": "至少包含一个当前战斗运行时可执行的主效果，不能只依赖说明性或尚未接入的效果。",
+        "runtime_primary_effects": ["damage", "area_damage", "slow", "aura_buff"],
+    }
+    if asset_type == "support_item":
+        return {
+            **common,
+            "recommended_effects": ["area_damage", "slow"],
+            "numeric_hint": {
+                "area_damage.amount": "20..60",
+                "area_damage.radius": "48..120",
+                "slow.slow_ratio": "0.25..0.45",
+                "slow.duration": "2.0..5.0",
+                "base_stats.cooldown": "4.0..12.0",
+            },
+            "avoid_as_only_effect": ["mark_vulnerability", "power_cost", "scout_reveal"],
+        }
+    if asset_type == "temporary_mod":
+        return {
+            **common,
+            "recommended_effects": ["area_damage", "slow"],
+            "numeric_hint": {
+                "area_damage.amount": "20..60",
+                "area_damage.radius": "48..120",
+                "slow.slow_ratio": "0.25..0.5",
+                "slow.duration": "2.0..6.0",
+            },
+        }
+    if asset_type == "tower_blueprint":
+        return {
+            **common,
+            "recommended_effects": ["damage", "pierce_or_chain"],
+            "chain_rule": "玩家要求跳跃或连锁时，damage 与 pierce_or_chain 必须同时出现。",
+        }
+    return common
+
+
 def build_user_prompt(
     proposal: dict[str, Any],
     effect_registry: dict[str, Any],
 ) -> str:
+    intended_asset_type = str(proposal.get("intended_asset_type") or "")
     payload: dict[str, Any] = {
         "instruction": "根据以下研发提案和 effect 注册表，生成一个合法的 CompiledAssetCandidate v0.1。",
         "proposal": {
@@ -99,6 +138,7 @@ def build_user_prompt(
             "world_context": proposal.get("world_context"),
         },
         "effect_registry": _registry_summary(effect_registry),
+        "runtime_execution_guidance": _runtime_execution_guidance(intended_asset_type),
         "example_shape": {
             "id": "asset_light_slow_field",
             "lifecycle": "ephemeral",
