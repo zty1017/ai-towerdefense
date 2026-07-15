@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -71,7 +72,10 @@ def seed_report(
             continue
         role = str(request.get("role") or "")
         review = attempt["review"]
-        required = map_visual_closed_loop.required_review_checks(role)
+        required = map_visual_closed_loop.required_review_checks(
+            role,
+            has_style_reference=isinstance(request.get("style_reference"), dict),
+        )
         checks = review.get("checks") if isinstance(review.get("checks"), dict) else {}
         score = float(review.get("score") or 0)
         contract = request.get("output_contract")
@@ -98,6 +102,9 @@ def seed_report(
             review_policy_fingerprint_value=policy_fp,
             candidate_path=path,
             review=normalized_review,
+            base_prompt_sha256=hashlib.sha256(
+                str(request.get("prompt_brief") or "").encode("utf-8")
+            ).hexdigest(),
             source_prompt_sha256=str(attempt.get("prompt_sha256") or ""),
             provenance={
                 "node_id": pack.get("node_id"),

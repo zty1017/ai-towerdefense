@@ -50,7 +50,7 @@
     },
     "visual": {
       "type": "object", "additionalProperties": false,
-      "required": ["style_id", "style_name", "theme_tags", "palette", "time_of_day", "terrain_name", "road_name", "slot_name", "objective_name", "spawn_name"],
+      "required": ["style_id", "style_name", "theme_tags", "palette", "time_of_day", "terrain_name", "road_name", "slot_name", "objective_name", "spawn_name", "layer_briefs"],
       "properties": {
         "style_id": {"$ref": "#/$defs/id"}, "style_name": {"$ref": "#/$defs/short_text"},
         "theme_tags": {"type": "array", "minItems": 5, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
@@ -60,9 +60,24 @@
           "properties": {"terrain_base": {"$ref": "#/$defs/hex"}, "terrain_detail": {"$ref": "#/$defs/hex"}, "road_base": {"$ref": "#/$defs/hex"}, "road_edge": {"$ref": "#/$defs/hex"}, "build_slot": {"$ref": "#/$defs/hex"}, "objective": {"$ref": "#/$defs/hex"}, "spawn": {"$ref": "#/$defs/hex"}, "resource": {"$ref": "#/$defs/hex"}, "hazard": {"$ref": "#/$defs/hex"}, "fog": {"$ref": "#/$defs/hex"}, "accent": {"$ref": "#/$defs/hex"}}
         },
         "time_of_day": {"enum": ["dawn", "day", "dusk", "night", "storm"]},
-        "terrain_name": {"$ref": "#/$defs/id"}, "road_name": {"$ref": "#/$defs/id"}, "slot_name": {"$ref": "#/$defs/id"}, "objective_name": {"$ref": "#/$defs/id"}, "spawn_name": {"$ref": "#/$defs/id"}
+        "terrain_name": {"$ref": "#/$defs/id"}, "road_name": {"$ref": "#/$defs/id"}, "slot_name": {"$ref": "#/$defs/id"}, "objective_name": {"$ref": "#/$defs/id"}, "spawn_name": {"$ref": "#/$defs/id"},
+        "layer_briefs": {"$ref": "#/$defs/layer_briefs"}
       }
     },
+    "layer_briefs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rendering_style", "terrain_base", "road_surface", "build_slot_platform", "objective_foundation", "spawn_marker", "non_blocking_decoration"],
+      "properties": {
+        "rendering_style": {"$ref": "#/$defs/image_brief"},
+        "terrain_base": {"$ref": "#/$defs/image_brief"},
+        "road_surface": {"$ref": "#/$defs/image_brief"},
+        "build_slot_platform": {"$ref": "#/$defs/image_brief"},
+        "objective_foundation": {"$ref": "#/$defs/image_brief"},
+        "spawn_marker": {"$ref": "#/$defs/image_brief"},
+        "non_blocking_decoration": {"$ref": "#/$defs/image_brief"}
+      }
+    },
+    "image_brief": {"type": "string", "minLength": 16, "maxLength": 420},
     "opening": {
       "type": "object", "additionalProperties": false, "required": ["title", "text"],
       "properties": {"title": {"$ref": "#/$defs/short_text"}, "text": {"$ref": "#/$defs/text"}}

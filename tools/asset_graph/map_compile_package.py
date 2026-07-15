@@ -288,7 +288,9 @@ def _media_generation_provenance_gate(
         for item in media_assets
         if isinstance(item, dict)
     }
-    imported_ai_media = any(kind.startswith("local_ai_") for kind in source_kinds)
+    imported_ai_media = any(
+        kind.startswith(("local_ai_", "compiled_reviewed_")) for kind in source_kinds
+    )
     validation = (
         layered_visual_package.get("validation_report") or {}
         if isinstance(layered_visual_package, dict)

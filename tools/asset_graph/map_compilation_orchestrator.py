@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import sys
 import time
@@ -231,6 +232,11 @@ def _prefab_terms(style: dict[str, Any], key: str) -> list[str]:
 def _visual_style_contract(style: dict[str, Any]) -> dict[str, Any]:
     lighting = style.get("lighting") if isinstance(style.get("lighting"), dict) else {}
     palette = style.get("palette") if isinstance(style.get("palette"), dict) else {}
+    briefs = (
+        style.get("visual_generation_briefs")
+        if isinstance(style.get("visual_generation_briefs"), dict)
+        else {}
+    )
     return {
         "worldbook_id": str(style.get("worldbook_id") or "unknown_world"),
         "theme_terms": _identifier_terms(list(style.get("node_theme_tags") or [])),
@@ -243,6 +249,11 @@ def _visual_style_contract(style: dict[str, Any]) -> dict[str, Any]:
             "intensity": lighting.get("intensity"),
         },
         "palette": {str(key): str(value) for key, value in palette.items()},
+        "generation_briefs": {
+            str(key): str(value)
+            for key, value in briefs.items()
+            if isinstance(value, str) and value.strip()
+        },
         "role_terms": {
             "build_slot_platform": _prefab_terms(style, "build_slot_platforms"),
             "objective_foundation": _prefab_terms(style, "objective_prefabs"),
@@ -276,7 +287,7 @@ def _style_prompt_pack(
     prompt_sections = {
         "subject": f"an uninhabited tower-defense environment plate for worldbook {contract['worldbook_id']}",
         "environment": f"quiet {terrain} ground and boundary structures shaped only by {_joined(tags, 'the supplied world themes')}",
-        "style": f"polished semi-realistic hand-painted 2D game environment with restrained pseudo-3D depth; preserve exactly these world identity terms: {_joined(tags, 'the supplied world themes')}",
+        "style": f"polished production 2D game environment with semi-realistic material response, natural edges and restrained pseudo-3D depth; preserve exactly these world identity terms: {_joined(tags, 'the supplied world themes')}",
         "lighting": f"{lighting.get('time_of_day', 'night')} with {lighting.get('contrast_policy', 'clear gameplay readability')} and palette anchors {', '.join(str(value) for value in palette.values())}",
         "composition": "wide elevated three-quarter top-down view with the central playable area calm, open, and free of focal subjects",
         "quality": "production game background, crisp material separation, low grain, no narrative action or gameplay entities",
@@ -371,7 +382,6 @@ def _build_visual_handoff(
     )
     common_negative = list(prompt_pack["prompts"][0]["negative_constraints"])
     contract = _visual_style_contract(style)
-    themes = _joined(contract["theme_terms"], "the supplied worldbook themes")
     terrain_materials = _joined(
         contract["terrain_material_terms"], "the supplied terrain materials"
     )
@@ -381,24 +391,31 @@ def _build_visual_handoff(
     lighting_contract = contract["lighting"]
     palette_contract = ", ".join(contract["palette"].values())
     role_terms = contract["role_terms"]
-    common_style = (
-        "high-detail semi-realistic painterly 2D tower-defense art with restrained pseudo-3D depth; "
-        f"world identity strictly limited to {themes}; material language uses {terrain_materials} and {road_materials}; "
+    generation_briefs = contract["generation_briefs"]
+    # Rendering quality is engine-owned. World generation supplies culture and
+    # materials, but cannot inject style labels that push providers toward flat
+    # mobile-game or storybook illustration.
+    rendering_style = (
+        "high-end production game-environment rendering, semi-realistic physically coherent "
+        "materials, nuanced roughness, controlled micro-detail, natural unoutlined edges, "
+        "unified pseudo-3D scale and polished PC strategy-game screenshot finish"
+    )
+    world_motifs = _joined(contract["theme_terms"], "the supplied world identity")
+    terrain_substrate_style = (
+        f"{rendering_style}; "
         f"palette anchors {palette_contract or 'from the supplied style pack'}; "
-        "do not substitute a historical era, culture, architecture or technology absent from these terms; "
-        "no cartoon, anime, cel shading, thick outlines or toy-like forms"
+        "do not depict any named landmark, architecture, settlement, road, bridge, platform, cliff wall, "
+        "large vegetation cluster or complete scene; no cartoon, anime, cel shading, thick outlines or toy-like forms"
     )
     common_lighting = (
         f"{lighting_contract['time_of_day']} lighting, {lighting_contract['contrast_policy']} contrast, "
         f"{lighting_contract['shadow_policy']} shadows, readable midtones, no unrequested magical glow"
     )
     component_style = (
-        "high-detail semi-realistic painterly 2D game asset with restrained pseudo-3D depth; "
-        f"material and finish references only, drawn from {themes}, using {terrain_materials} and {road_materials}; "
+        "premium production game-asset rendering with semi-realistic readable materials, "
+        "unified pseudo-3D scale and polished PC-game detail; "
         f"palette anchors {palette_contract or 'from the supplied style pack'}; "
-        "these world terms describe material, texture and finish only, never a scene, setting, settlement, "
-        "architecture, building group or diorama prompt; "
-        "do not substitute a historical era, culture, architecture or technology absent from these terms; "
+        "render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; "
         "no cartoon, anime, cel shading, thick outlines or toy-like forms"
     )
     component_negative_extra = [
@@ -415,10 +432,17 @@ def _build_visual_handoff(
         "objective_foundation",
         "spawn_marker",
         "non_blocking_decoration",
+        "non_blocking_decoration_architecture",
+        "non_blocking_decoration_natural",
+        "non_blocking_decoration_debris",
+        "non_blocking_decoration_prop",
     ):
         path = control_dir / f"{runtime.get('node_id', 'map')}.{role}.geometry_reference.png"
         topology_sketches.draw_component_geometry_reference(path, role)
         component_reference_paths[role] = path
+    terrain_composition_reference = _resolve(
+        str(sketch["terrain_composition_reference_path"])
+    )
     style_reference_path = _resolve(
         str((style.get("source_refs") or {}).get("visual_style_reference_path") or "")
     )
@@ -434,29 +458,29 @@ def _build_visual_handoff(
     layer_specs = [
         {
             "role": "terrain_base",
-            "output_kind": "full_frame_backdrop",
-            "output": {"width": 1280, "height": 720, "size_tier": "1K", "ratio": "16:9", "transparent": False},
-            "generation_mode": "image_to_image",
+            "output_kind": "tile_or_material_atlas",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": False},
+            "generation_mode": "text_to_image",
             "sections": {
-                "subject": f"transform the reference into an uninhabited empty terrain clean plate for worldbook {contract['worldbook_id']}",
-                "environment": f"terrain made from {terrain_materials}, with perimeter structures and natural details derived only from {themes}; remove every diagram line, marker, circle, platform, route, symbol, person, creature, weapon and text",
-                "style": common_style,
-                "lighting": common_lighting,
-                "composition": "preserve only the reference camera framing and broad central clearance; elevated three-quarter top-down 16:9 view, central seventy percent open and low-detail, architecture confined to the outer twenty percent, no central focal object",
-                "quality": "production-ready premium strategy-game background plate, detailed but readable materials, crisp ground texture, low grain, no flat-color illustration, no baked road, deployment pad, objective, unit, effect or UI",
+                "subject": f"one seamless square PBR terrain albedo texture made only from {terrain_materials}",
+                "environment": f"the same ground material fills every pixel with uniform texel density; use only fine diffuse surface variation from {generation_briefs.get('terrain_base', terrain_materials)}, such as small weathering, tiny cracks, moisture specks, dust or short flat moss; no object or patch may occupy more than eight percent of the tile",
+                "style": f"photogrammetric high-end production game material rendering with semi-realistic physically coherent materials, controlled roughness and micro-detail, neutral albedo response and natural color variation; palette anchors {palette_contract or 'from the supplied style pack'}",
+                "lighting": "flat neutral top-down albedo capture with even exposure and no baked directional light, cast shadow, ambient occlusion vignette, bloom or highlight",
+                "composition": "strict orthographic macro material swatch filling all four edges at one uniform scale; no perspective, horizon, frame, border vegetation, wall, stairs, bridge, building, cliff, tree, rock pile, foreground prop, focal patch or recognizable symbol; absolutely no road, trail, route, lane, circle, ring, rune, deployment pad, socket, objective, spawn portal, unit or interaction marker",
+                "quality": "sharp low-grain near-seamless terrain texture source for deterministic material-field composition, uniform edge statistics and no baked scene, large object or semantic marking",
             },
         },
         {
             "role": "road_surface", "output_kind": "tile_or_brush_atlas",
-            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "image_to_image",
+            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": False},
+            "generation_mode": "text_to_image",
             "sections": {
-                "subject": f"one isolated reusable road material strip made from {road_materials}; any world terms are material modifiers only, not a scene",
-                "environment": "a single flat route-surface strip with soft irregular edges on a completely plain pure-white studio background; no terrain, no ground plate, no scenery",
-                "style": component_style,
-                "lighting": "neutral soft asset lighting without dramatic shadows or glow",
-                "composition": "strict elevated top-down orthographic view; exactly one centered horizontal strip; the strip occupies between 55% and 72% of canvas width and no more than 22% of canvas height; at least 14% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
-                "quality": "sharp clean cutout source, seamless material rhythm; explicitly forbidden: buildings, building clusters, lamps, characters, people, signs, symbols, arrows, text, bridges, floating islands, frame, or any miniature scene",
+                "subject": f"a flat matte game-environment paving albedo material swatch made from {road_materials}, using restrained medium-value colors from {world_motifs}",
+                "environment": "the requested road-surface material fills the entire rectangular image edge to edge; no white background, transparent margin, surrounding terrain, scenery, ground plate, decorative frame or border",
+                "style": f"{component_style}; derive only world identity and material category from these road material ids: {road_materials}; render a weathered matte paving surface appropriate to the world, using muted charcoal, gray-green and restrained palette colors; do not copy any luminous or magical wording from upstream content; no cyan, bright blue, glow, radiant cracks or luminous seams; ignore any shape, winding, strip, endpoint or scene implied by the material ids",
+                "lighting": "flat top-down albedo capture with neutral diffuse illumination, no cast shadows, perspective depth, dramatic highlights, bloom or emissive glow",
+                "composition": "strict orthographic top-down macro material swatch, not an object; continuous paving texture reaches all four edges; uniform repeatable rhythm without a unique center, endpoint, bend, curb, border or perspective horizon",
+                "quality": "sharp low-glare near-seamless texture source designed to be cropped to 2:1 and repeatedly filled along a deterministic vector path; medium contrast and matte surface are mandatory; this is a material sample, never a complete road object or scene",
             },
         },
         {
@@ -464,12 +488,12 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"one single empty low defense foundation based on {_joined(role_terms['build_slot_platform'], 'the build-slot prefab contract')}; any world terms are material modifiers only, not a scene",
+                "subject": f"one empty low defense foundation for {_joined(role_terms['build_slot_platform'], 'the build-slot prefab contract')} in a {world_motifs} world; build an irregular low weathered charcoal-stone foundation with a broken octagonal silhouette, restrained shallow carvings, an empty dark inset center and a darker outer rim",
                 "environment": "an isolated flat construction base on a completely plain pure-white studio background; no terrain, no ground plate, no scenery",
                 "style": component_style,
                 "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
-                "composition": "strict elevated top-down orthographic view; exactly one centered object; compact oval footprint occupying between 18% and 38% of canvas area; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
-                "quality": "sharp clean cutout source, empty and unoccupied; explicitly forbidden: towers, weapons, lanterns, characters, people, building clusters, bridges, floating islands, text, rings, scenery, frame, or any miniature scene",
+                "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered object; compact oval footprint occupying between 18% and 38% of canvas area; at least 18% pure-white margin on every edge; no horizon, map or complete scene",
+                "quality": "sharp clean high-contrast cutout source with a solid uninterrupted asymmetrical foundation silhouette, empty and unoccupied; gameplay readability overrides conflicting worldbook adjectives; explicitly forbidden: polished white jade, white or ivory main material, perfect circular disk, concentric rings, porcelain plate appearance, holes caused by background-colored material, towers, weapons, lanterns, characters, people, building clusters, bridges, floating islands, text, selection rings, scenery, frame, or any miniature scene",
             },
         },
         {
@@ -477,12 +501,12 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "image_to_image",
             "sections": {
-                "subject": "one compact protected-objective foundation with a clear bottom-center anchor; any world terms are material modifiers only, not a scene",
-                "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
-                "style": component_style + f"; objective form vocabulary: {_joined(role_terms['objective_foundation'], 'the objective prefab contract')}",
+                "subject": f"one complete compact protected battlefield ward anchor for {_joined(role_terms['objective_foundation'], 'the objective prefab contract')} in a {world_motifs} world; build one short solid opaque weathered monolith secured by restrained world-appropriate braces on a low irregular footing; the vertical core is sealed, inert and completely solid",
+                "environment": "isolated on a pure-white studio background; no terrain patch, mud puddle, floor tile, wooden deck, square base plate, surrounding scenery or detached props",
+                "style": component_style,
                 "lighting": "neutral soft asset lighting",
-                "composition": "strict elevated top-down orthographic view; exactly one centered compact object; footprint occupies between 15% and 32% of canvas area; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
-                "quality": "clean cutout source; explicitly forbidden: health bars, halos, units, people, characters, text, oversized monuments, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
+                "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered compact structure rooted on a low foundation; footprint occupies between 18% and 34% of canvas area and height stays below 48% of canvas; at least 18% pure-white margin on every edge; no horizon, map or complete scene",
+                "quality": "clean cutout source with a clear bottom-center anchor; a visible compact opaque vertical core above the low base is mandatory; the object must read as a protected gameplay objective, not an empty pad; explicitly forbidden: glass, transparent chamber, crystal, flame, furnace, lamp, glow, smoke, machinery, dome, roof, doorway, platform deck, health bars, units, people, text, oversized monuments, scenery, frame or any miniature scene",
             },
         },
         {
@@ -490,28 +514,109 @@ def _build_visual_handoff(
             "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
             "generation_mode": "image_to_image",
             "sections": {
-                "subject": f"one restrained enemy entrance terrain marker based on {_joined(role_terms['spawn_marker'], 'the spawn prefab contract')}; any world terms are material modifiers only, not a scene",
+                "subject": f"one restrained low-profile physical entrance marker based on {_joined(role_terms['spawn_marker'], 'the spawn prefab contract')}; motif vocabulary only: {generation_briefs.get('spawn_marker', world_motifs)}; depict inert material only, without portal activity or effects",
                 "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
                 "style": component_style,
                 "lighting": "neutral dim asset lighting without magical glow",
-                "composition": "strict elevated top-down orthographic view; exactly one centered low-profile object; footprint occupies between 8% and 22% of canvas area; at least 20% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
+                "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered low-profile object; footprint occupies between 8% and 22% of canvas area; at least 20% pure-white margin on every edge; no horizon, map or complete scene",
                 "quality": "clean cutout source; explicitly forbidden: enemies, arrows, warning icons, people, characters, text, large effects, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
             },
         },
-        {
-            "role": "non_blocking_decoration", "output_kind": "component_atlas",
-            "output": {"width": 1024, "height": 1024, "size_tier": "1K", "ratio": "1:1", "transparent": True},
-            "generation_mode": "image_to_image",
-            "sections": {
-                "subject": f"a small grouped set of non-blocking edge props based on {_joined(role_terms['non_blocking_decoration'], 'the decoration prefab contract')}; any world terms are material modifiers only, not a scene",
-                "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
-                "style": component_style,
-                "lighting": "neutral soft asset lighting",
-                "composition": "strict elevated top-down orthographic view; a small separated set of compact props, each occupying no more than 12% of canvas area and together no more than 45%; at least 18% pure-white margin on every edge; no perspective horizon, no map, no complete scene",
-                "quality": "clean cutout source; explicitly forbidden: units, towers, objectives, projectiles, people, characters, UI icons, text, building clusters, bridges, floating islands, scenery, frame, or any miniature scene",
-            },
-        },
     ]
+    decoration_terms = _joined(
+        role_terms["non_blocking_decoration"],
+        "the current world's border scenery vocabulary",
+    )
+    decoration_brief = str(
+        generation_briefs.get("non_blocking_decoration") or decoration_terms
+    )
+    decoration_items = [
+        item.strip(" ;,.")
+        for item in re.findall(
+            r"(?:^|\s)\d+\.\s*(.*?)(?=(?:\s+\d+\.)|$)",
+            decoration_brief,
+        )
+        if item.strip(" ;,.")
+    ]
+    fallback_decoration_items = [
+        "one short world-appropriate broken fence or wall fragment",
+        "one broken world-appropriate wheel, beam or machine fragment",
+        "one closed world-appropriate barrel, crate, urn or tied supply bundle",
+        "one isolated world-appropriate dead stump, shrub, reed tuft or rock",
+    ]
+    decoration_items = (
+        decoration_items[:4]
+        if len(decoration_items) >= 4
+        else fallback_decoration_items
+    )
+    # World prose often describes an object inside a scene (for example
+    # "half-submerged"). Component compilation must preserve the object while
+    # removing placement language that causes the provider to bake terrain into
+    # the reusable sprite.
+    decoration_items = [
+        re.sub(
+            r"\b(?:half[- ]submerged|partly[- ]submerged|half[- ]buried|partly[- ]buried)\b",
+            "detached weathered",
+            item,
+            flags=re.IGNORECASE,
+        )
+        for item in decoration_items
+    ]
+    decoration_specs = {
+        "non_blocking_decoration_architecture": (
+            f"exactly one isolated reusable asset depicting {decoration_items[0]}; show that named object only, "
+            "with no second prop category and no surrounding landscape"
+        ),
+        "non_blocking_decoration_natural": (
+            f"exactly one isolated reusable asset depicting {decoration_items[3]}; show that named natural "
+            "object only, with no fence, wheel, extra stone pile or surrounding landscape"
+        ),
+        "non_blocking_decoration_debris": (
+            f"exactly one isolated reusable asset depicting {decoration_items[1]}; show that named broken object "
+            "only; it rests directly on white with no rubble pile or manufactured base"
+        ),
+        "non_blocking_decoration_prop": (
+            f"exactly one isolated reusable asset depicting {decoration_items[2]}; show that named object only; "
+            "never add a wagon, cart, vehicle, building or gameplay device"
+        ),
+    }
+    for role, subject in decoration_specs.items():
+        layer_specs.append(
+            {
+                "role": role,
+                "output_kind": "component_atlas",
+                "output": {
+                    "width": 1024,
+                    "height": 1024,
+                    "size_tier": "1K",
+                    "ratio": "1:1",
+                    "transparent": True,
+                },
+                "generation_mode": "text_to_image",
+                "sections": {
+                    "subject": subject,
+                    "environment": (
+                        "isolated on a completely flat pure-white studio background; no terrain patch, "
+                        "square floor tile, shared base plate, surrounding scene or horizon"
+                    ),
+                    "style": component_style,
+                    "lighting": "neutral soft asset lighting with a restrained built-in contact shadow only",
+                    "composition": (
+                        "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one "
+                        "centered reusable object with a compact irregular silhouette; at least "
+                        "16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, "
+                        "platform, map, diorama or decorative frame"
+                    ),
+                    "quality": (
+                        "high-end production game prop with physically coherent PBR material response, one clean silhouette, "
+                        "a bottom-center anchor and no gameplay "
+                        "semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, "
+                        "spawn portals, multiple object categories, scene composition, soil patch, shared base, units, "
+                        "people, creatures, text, magic circles, glow, UI or large effects"
+                    ),
+                },
+            }
+        )
     requests = []
     component_roles = {
         "road_surface",
@@ -519,13 +624,39 @@ def _build_visual_handoff(
         "objective_foundation",
         "spawn_marker",
         "non_blocking_decoration",
+        "non_blocking_decoration_architecture",
+        "non_blocking_decoration_natural",
+        "non_blocking_decoration_debris",
+        "non_blocking_decoration_prop",
     }
     for index, spec in enumerate(layer_specs, start=1):
         role = str(spec["role"])
         sections = dict(spec["sections"])
+        role_contract = contract
+        if role in {
+            "road_surface",
+            "build_slot_platform",
+            "objective_foundation",
+            *decoration_specs.keys(),
+        }:
+            role_contract = {
+                **contract,
+                "generation_briefs": {role: sections["subject"]},
+            }
         negative = list(common_negative)
         if role in component_roles:
             negative = [*negative, *component_negative_extra]
+        generation_reference_path: Path | None = None
+        generation_reference_usage: str | None = None
+        if spec["generation_mode"] == "image_to_image":
+            if role == "terrain_base":
+                generation_reference_path = terrain_composition_reference
+                generation_reference_usage = (
+                    "neutral_open_center_and_edge_framing_geometry_only"
+                )
+            else:
+                generation_reference_path = component_reference_paths[role]
+                generation_reference_usage = "single_component_geometry_and_occupancy_only"
         requests.append(
             {
                 "request_id": f"map_layer_{runtime.get('node_id', 'map')}_{index:02d}_{role}",
@@ -533,30 +664,19 @@ def _build_visual_handoff(
                 "status": "ready_for_provider_or_manual_generation",
                 "prompt_profile": "agnes_official_structured_prompt_v0_1",
                 "prompt_sections": sections,
-                "style_contract": contract,
+                "style_contract": role_contract,
                 "prompt_brief": _compose_visual_prompt(sections),
                 "negative_constraints": negative,
                 "generation_mode": spec["generation_mode"],
+                "image_profile_candidates": ["agnes_image_flash", "agnes_image_20_flash"],
                 "output_contract": {"kind": spec["output_kind"], **spec["output"]},
                 "generation_reference": (
                     {
-                        "usage": (
-                            "camera_and_clearance_reference_only"
-                            if role == "terrain_base"
-                            else "component_geometry_and_occupancy_reference_only"
-                        ),
-                        "local_path": (
-                            sketch["terrain_composition_reference_path"]
-                            if role == "terrain_base"
-                            else _rel(component_reference_paths[role])
-                        ),
-                        "sha256": (
-                            sketch["terrain_composition_reference_sha256"]
-                            if role == "terrain_base"
-                            else _sha(component_reference_paths[role])
-                        ),
+                        "usage": generation_reference_usage,
+                        "local_path": _rel(generation_reference_path),
+                        "sha256": _sha(generation_reference_path),
                     }
-                    if spec["generation_mode"] == "image_to_image"
+                    if generation_reference_path is not None
                     else None
                 ),
                 "style_reference": style_reference if role == "terrain_base" else None,
@@ -840,7 +960,8 @@ def compile_map(
     component_dir = _resolve(str(visual_generation["reviewed_component_source_dir"]), base=input_path.parent) if visual_generation.get("reviewed_component_source_dir") else None
     if visual_generation_report and visual_generation_report.get("runtime_critical_roles_ready"):
         texture_dir = Path(str(visual_generation_report["reviewed_texture_source_dir"]))
-        backdrop_dir = Path(str(visual_generation_report["reviewed_backdrop_source_dir"]))
+        reviewed_backdrop_dir = visual_generation_report.get("reviewed_backdrop_source_dir")
+        backdrop_dir = Path(str(reviewed_backdrop_dir)) if reviewed_backdrop_dir else None
         reviewed_component_dir = visual_generation_report.get("reviewed_component_source_dir")
         component_dir = Path(str(reviewed_component_dir)) if reviewed_component_dir else None
     layered = layered_builder.build_package(
@@ -858,6 +979,14 @@ def compile_map(
         public_root=allowed_root,
         repository_root=repository_root,
         public_prefix=public_prefix,
+        external_generation_call_count=(
+            (
+                int((visual_generation_report or {}).get("summary", {}).get("provider_call_count") or 0)
+                + int((visual_generation_report or {}).get("summary", {}).get("cache_hit_count") or 0)
+            )
+            if (visual_generation_report or {}).get("runtime_critical_roles_ready")
+            else 0
+        ),
     )
     layered_errors = layered_validator.validate_manifest(
         layered,
@@ -870,7 +999,15 @@ def compile_map(
     if layered_errors:
         raise MapCompilationError(f"LayeredMapVisualPackage validation failed: {layered_errors[0]}")
     warnings = []
-    if not any(item.get("role") == "reviewed_painted_backdrop" for item in layered.get("media_assets", [])):
+    has_reviewed_terrain_visual = any(
+        item.get("role") in {"reviewed_painted_backdrop", "terrain_tile"}
+        and str(item.get("source_kind") or "").startswith(
+            ("local_ai_", "compiled_reviewed_")
+        )
+        for item in layered.get("media_assets", [])
+        if isinstance(item, dict)
+    )
+    if not has_reviewed_terrain_visual:
         warnings.append("reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only")
     stages.append(_stage("layered_map_visual_package", started, [layered_path], warnings))
 
@@ -1026,7 +1163,11 @@ def apply_reviewed_visuals(
         output_dir=output_dir,
         created_at=created_at,
         texture_source_dir=Path(str(visual_report["reviewed_texture_source_dir"])),
-        backdrop_source_dir=Path(str(visual_report["reviewed_backdrop_source_dir"])),
+        backdrop_source_dir=(
+            Path(str(visual_report["reviewed_backdrop_source_dir"]))
+            if visual_report.get("reviewed_backdrop_source_dir")
+            else None
+        ),
         component_source_dir=(
             Path(str(visual_report["reviewed_component_source_dir"]))
             if visual_report.get("reviewed_component_source_dir")
@@ -1035,6 +1176,10 @@ def apply_reviewed_visuals(
         public_root=allowed_root,
         repository_root=repository_root,
         public_prefix=public_prefix,
+        external_generation_call_count=(
+            int(visual_report.get("summary", {}).get("provider_call_count") or 0)
+            + int(visual_report.get("summary", {}).get("cache_hit_count") or 0)
+        ),
     )
     layered_errors = layered_validator.validate_manifest(
         layered,
@@ -1092,6 +1237,12 @@ def apply_reviewed_visuals(
     report["quality"]["player_visual_status"] = compiled.get("validation_report", {}).get(
         "gate_status"
     )
+    report["quality"]["warnings"] = [
+        warning
+        for warning in report.get("quality", {}).get("warnings", [])
+        if warning
+        != "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+    ]
     refreshed = {
         str(path.resolve()): _output_ref(path, path.stem)
         for path in (layered_path, visual_manifest_path, compile_path)

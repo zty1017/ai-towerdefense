@@ -13,7 +13,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-import asset_media_prompt
+try:
+    from . import asset_media_prompt
+except ImportError:  # pragma: no cover - direct script execution.
+    import asset_media_prompt  # type: ignore[no-redef]
 
 
 VISUAL_IDENTITY_VERSION = "visual_identity_spec.v0.1"

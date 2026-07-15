@@ -96,6 +96,15 @@ PROFILES: dict[str, ImageProfile] = {
         model="agnes-image-2.1-flash",
         default_size="1024x1024",
     ),
+    "agnes_image_20_flash": ImageProfile(
+        name="agnes_image_20_flash",
+        env_key="AGNES_API_KEY",
+        fallback_env_keys=("AGNES_API_KEY_2", "AGNES_API_KEY_3"),
+        base_url="https://apihub.agnes-ai.com/v1",
+        path="/images/generations",
+        model="agnes-image-2.0-flash",
+        default_size="1024x1024",
+    ),
     "glm_image": ImageProfile(
         name="glm_image",
         env_key="GLM_API_KEY",

@@ -3,12 +3,74 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from tools.asset_graph import build_layered_map_visual_package as visual_package
 from tools.asset_graph import map_compilation_orchestrator as orchestrator
 
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "examples/map_compilation_inputs/long_night_first_battle.map_compilation_input.json"
 OUTPUT = ROOT / "game_data/media/layered_maps/gray_lantern_station"
+
+
+def test_style_values_enforce_playfield_contrast_for_pale_world_palette():
+    style = visual_package.style_values(
+        {
+            "palette": {
+                "terrain_base": "#B8C9B8",
+                "road_base": "#C4C8C0",
+                "road_edge": "#9BA39A",
+                "build_slot": "#E8E0D0",
+                "accent": "#C89B3C",
+            }
+        }
+    )
+
+    assert visual_package.color_luma(style["terrain_base"]) - visual_package.color_luma(
+        style["road_base"]
+    ) >= 36
+    assert visual_package.color_luma(style["build_slot"]) < visual_package.color_luma(
+        style["terrain_base"]
+    )
+
+
+def test_road_material_recipe_is_selected_from_compiled_visual_brief():
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "dark aged wood planks with moss"}}
+    ) == "wood"
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "weathered granite paving stones"}}
+    ) == "stone"
+
+
+def test_slot_material_recipe_is_selected_from_compiled_visual_brief():
+    assert visual_package.classify_slot_material(
+        {
+            "visual_generation_briefs": {
+                "build_slot_platform": "reinforced composite base with four anchor points"
+            }
+        }
+    ) == "tech"
+    assert visual_package.classify_slot_material(
+        {"visual_generation_briefs": {"build_slot_platform": "weathered stone plinth"}}
+    ) == "stone"
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "riveted steel alloy deck panels"}}
+    ) == "metal"
+    assert visual_package.classify_road_material(
+        {
+            "visual_generation_briefs": {
+                "road_surface": "weathered stone slabs with mossy cracks"
+            },
+            "road_materials": [{"material_id": "legacy_stone_plank_road"}],
+        }
+    ) == "stone"
+
+
+def test_material_stamps_follow_rounded_route_tangents():
+    points = visual_package.smooth_route_points([(0, 0), (100, 0), (100, 100)])
+    samples = visual_package.route_screen_samples(points, 40)
+
+    assert any(8 < sample["angle"] < 82 for sample in samples)
 
 
 def test_plan_is_side_effect_free():
@@ -46,38 +108,56 @@ def test_compile_and_resume(tmp_path):
             handoff_dir / "map_layered_visual_generation_request_pack.v0.1.json"
         )
         assert request_pack["node_id"] == "map_orchestrator_test_node"
-        assert len(request_pack["requests"]) == 6
+        assert len(request_pack["requests"]) == 9
         by_role = {item["role"]: item for item in request_pack["requests"]}
-        assert "old chinese post station" in by_role["terrain_base"]["prompt_brief"]
+        assert "wet ruin moss" in by_role["terrain_base"]["prompt_brief"]
         assert by_role["terrain_base"]["prompt_brief"].startswith("Subject:")
-        assert "central seventy percent open" in by_role["terrain_base"]["prompt_brief"]
+        assert "seamless square PBR terrain albedo texture" in by_role["terrain_base"]["prompt_brief"]
         assert set(by_role["terrain_base"]["prompt_sections"]) == {
             "subject", "environment", "style", "lighting", "composition", "quality"
         }
-        assert by_role["terrain_base"]["generation_mode"] == "image_to_image"
-        assert by_role["terrain_base"]["generation_reference"]["usage"] == "camera_and_clearance_reference_only"
+        assert by_role["terrain_base"]["generation_mode"] == "text_to_image"
+        assert by_role["terrain_base"]["generation_reference"] is None
         assert by_role["terrain_base"]["style_reference"]["usage"] == "world_style_and_render_finish_reference_only"
-        assert "no cartoon" in by_role["terrain_base"]["prompt_brief"]
+        assert "absolutely no road, trail, route, lane" in by_role["terrain_base"]["prompt_brief"]
+        assert "high-end production game material rendering" in by_role["terrain_base"]["prompt_brief"]
+        assert "physically coherent materials" in by_role["terrain_base"]["prompt_brief"]
         assert by_role["terrain_base"]["output_contract"]["size_tier"] == "1K"
-        assert by_role["terrain_base"]["output_contract"]["ratio"] == "16:9"
-        assert "pure-white studio background" in by_role["road_surface"]["prompt_brief"]
+        assert by_role["terrain_base"]["output_contract"]["ratio"] == "1:1"
+        assert "fills the entire rectangular image edge to edge" in by_role["road_surface"]["prompt_brief"]
+        assert "deterministic vector path" in by_role["road_surface"]["prompt_brief"]
+        assert "faint blue luminescent lines" not in str(by_role["road_surface"]["style_contract"])
         assert "platform lantern foundation ring" in by_role["build_slot_platform"]["prompt_brief"]
+        assert "polished white jade" not in str(by_role["build_slot_platform"]["style_contract"])
         for role in {
-            "road_surface",
             "build_slot_platform",
             "objective_foundation",
             "spawn_marker",
-            "non_blocking_decoration",
         }:
             request = by_role[role]
             assert request["generation_mode"] == "image_to_image"
             assert request["style_reference"] is None
-            reference = request["generation_reference"]
-            assert reference["usage"] == "component_geometry_and_occupancy_reference_only"
-            reference_path = orchestrator._resolve(reference["local_path"])
-            assert reference_path.is_file()
-            assert reference["sha256"] == orchestrator._sha(reference_path)
-        assert by_role["road_surface"]["output_contract"]["transparent"] is True
+            assert request["generation_reference"] is not None
+        assert by_role["road_surface"]["generation_mode"] == "text_to_image"
+        assert by_role["road_surface"]["generation_reference"] is None
+        assert by_role["road_surface"]["image_profile_candidates"] == [
+            "agnes_image_flash", "agnes_image_20_flash"
+        ]
+        assert {
+            "non_blocking_decoration_architecture",
+            "non_blocking_decoration_natural",
+            "non_blocking_decoration_debris",
+            "non_blocking_decoration_prop",
+        }.issubset(by_role)
+        for role in {
+            "non_blocking_decoration_architecture",
+            "non_blocking_decoration_natural",
+            "non_blocking_decoration_debris",
+            "non_blocking_decoration_prop",
+        }:
+            assert by_role[role]["generation_mode"] == "text_to_image"
+        assert by_role["road_surface"]["output_contract"]["transparent"] is False
+        assert by_role["road_surface"]["output_contract"]["ratio"] == "1:1"
         assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
         assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
         job = orchestrator._load(
@@ -127,7 +207,7 @@ def test_visual_handoff_isolated_by_style_pack(tmp_path):
         runtime, style, runtime_path=runtime_path, output_dir=tmp_path / "map"
     )
     prompts = "\n".join(item["prompt_brief"].lower() for item in pack["requests"])
-    for expected in ("cloud", "mechanical", "cable road", "mechanism base", "storm"):
+    for expected in ("cloud island", "cable road", "mechanism base", "storm"):
         assert expected in prompts
     for leaked in ("late-ming", "courier-station", "moonlit night", "lantern ambience"):
         assert leaked not in prompts
@@ -187,9 +267,9 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
             "runtime_critical_roles_ready": True,
             "runtime_critical_roles": ["build_slot_platform", "road_surface", "terrain_base"],
             "summary": {
-                "request_count": 6, "passed_count": 6, "failed_count": 0,
-                "provider_failure_count": 0, "attempt_count": 6,
-                "provider_call_count": 6, "vision_review_call_count": 6,
+                "request_count": 5, "passed_count": 5, "failed_count": 0,
+                "provider_failure_count": 0, "attempt_count": 5,
+                "provider_call_count": 5, "vision_review_call_count": 5,
                 "promotion_count": 6,
             },
             "results": [],
@@ -217,8 +297,8 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
     shutil.rmtree(output, ignore_errors=True)
     try:
         report = orchestrator.compile_map(input_path, output, live_visuals=True)
-        assert calls == [(6, 3)]
-        assert report["provider_execution"]["call_count"] == 6
+        assert calls == [(9, 3)]
+        assert report["provider_execution"]["call_count"] == 5
         assert report["provider_execution"]["candidate_generation_status"] == "runtime_visuals_ready"
         assert report["provider_execution"]["reviewed_local_media_imported"] is True
         assert report["provider_execution"]["automatic_reviewed_staging_ready"] is True
@@ -228,7 +308,10 @@ def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_pa
         composite = (output / "composited/map_orchestrator_live_test_node.layered_map.svg").read_text()
         assert 'data-objective-part="reviewed-component"' in composite
         assert 'data-spawn-part="reviewed-component"' in composite
+        assert 'href="#componentSpawnMarker"' in composite
         assert 'data-decoration="reviewed-component"' in composite
+        assert '#componentNonBlockingDecoration0' in composite
+        assert 'data-decoration-variant=' in composite
     finally:
         shutil.rmtree(output, ignore_errors=True)
 

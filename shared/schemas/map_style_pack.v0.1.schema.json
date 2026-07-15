@@ -45,6 +45,7 @@
       "uniqueItems": true
     },
     "palette": { "$ref": "#/$defs/palette" },
+    "visual_generation_briefs": { "$ref": "#/$defs/visual_generation_briefs" },
     "lighting": { "$ref": "#/$defs/lighting" },
     "terrain_materials": {
       "type": "array",
@@ -101,6 +102,28 @@
     "validation_report": { "$ref": "#/$defs/validation_report" }
   },
   "$defs": {
+    "visual_generation_briefs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rendering_style",
+        "terrain_base",
+        "road_surface",
+        "build_slot_platform",
+        "objective_foundation",
+        "spawn_marker",
+        "non_blocking_decoration"
+      ],
+      "properties": {
+        "rendering_style": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "terrain_base": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "road_surface": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "build_slot_platform": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "objective_foundation": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "spawn_marker": { "type": "string", "minLength": 16, "maxLength": 420 },
+        "non_blocking_decoration": { "type": "string", "minLength": 16, "maxLength": 420 }
+      }
+    },
     "source_refs": {
       "type": "object",
       "additionalProperties": false,

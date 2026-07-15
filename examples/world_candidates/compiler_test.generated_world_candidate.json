@@ -42,7 +42,16 @@
     "road_name": "suspension_track",
     "slot_name": "windwheel_socket",
     "objective_name": "sky_anchor_core",
-    "spawn_name": "storm_breach"
+    "spawn_name": "storm_breach",
+    "layer_briefs": {
+      "rendering_style": "Premium production game-environment art with semi-realistic weathered materials, restrained eastern fantasy ornament, natural edges, elevated three-quarter top-down camera and coherent soft daylight.",
+      "terrain_base": "Continuous pale blue-gray cloudstone paving with subtle age stains and fine mineral grain, nearly flat and traversable, without roads, structures, platforms, landmarks, cliffs, trees or scenic focal objects.",
+      "road_surface": "One reusable narrow suspension-track surface strip made from dark bronze slats and weathered timber inlays, irregular soft edges, isolated as a top-down game asset.",
+      "build_slot_platform": "One empty low octagonal cloudstone foundation with a restrained bronze rim and windwheel socket details, compact footprint, no mounted tower, glow or selection ring.",
+      "objective_foundation": "One compact sky-anchor core foundation built from carved cloudstone and aged bronze braces, readable bottom-center anchor, no surrounding buildings or effects.",
+      "spawn_marker": "One low-profile storm breach marker formed by cracked dark cloudstone and a shallow recessed vent, compact and unlit, without enemies, warning symbols or effects.",
+      "non_blocking_decoration": "A separated set of small weathered bronze wind vanes, short timber posts and loose cloudstone fragments, each compact and suitable for edge decoration without blocking movement."
+    }
   },
   "opening_cards": [
     {"title": "云海失衡", "text": "第七条定风索在清晨断裂，整座机城向风暴侧倾。"},
