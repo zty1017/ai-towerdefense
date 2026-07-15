@@ -1,4 +1,4 @@
-# Compiler 黑客松提交清单
+# AI Tower Dense 黑客松提交清单
 
 截止时间：2026-07-15
 
@@ -6,7 +6,7 @@
 
 | 序号 | 材料 | 约束 | 当前状态 | 文件或待填内容 |
 | --- | --- | --- | --- | --- |
-| 01 | 作品标题 | 文本 | 已准备 | `Compiler：AI 驱动的塔防游戏内容编译器` |
+| 01 | 作品标题 | 文本 | 已准备 | `AI Tower Dense` |
 | 02 | 作品描述 | 背景、玩法、亮点 | 已准备 | `submission/FORM_COPY.md` |
 | 03 | 作品海报 | 16:9，单图不超过 5MB | 已生成并检查 | `submission/generated/compiler_project_poster_16x9.jpg` |
 | 11 | 项目源代码 | 单个 ZIP，不超过 512MB | 已生成并验证（152MB） | `Compiler-source.zip` |
