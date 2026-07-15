@@ -116,6 +116,25 @@ python3 -m venv .venv
 
 浏览器访问 `http://127.0.0.1:8001/frontend/index.html`。
 
+### 真实 AI 编译演示验收
+
+以下命令会把三个最小世界内构想发送给外部文本 Provider，依次验证连锁塔、伤害减速陷阱和伤害减速支援道具的生成、模拟、晋升、激活与运行时行为。输出报告已脱敏，不保存原始提示词、响应、密钥或 session/job 标识。
+
+```bash
+.venv/bin/python tools/demo/run_live_compiler_showcase.py \
+  --output /tmp/live_compiler_showcase.v0.1.json \
+  --dotenv .env \
+  --profile ark_deepseek_v4_flash \
+  --media-mode off \
+  --max-attempts 2 \
+  --allow-provider
+
+.venv/bin/python tools/demo/validate_live_compiler_showcase_report.py \
+  /tmp/live_compiler_showcase.v0.1.json
+```
+
+`--media-mode off` 只验证文本、行为和安全激活，图片使用 reviewed fallback；需要真实图片时可显式改为 `live`，但不建议在限时现场演示中把视觉 Provider 延迟放入主链路。
+
 ## API
 
 ### 基础
