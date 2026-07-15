@@ -1,5 +1,6 @@
 import { queryFlag } from "./runtime/api-client.js";
 import { createAppFlowOrchestrator } from "./runtime/app-flow-orchestrator.js";
+import { createAudioDirector } from "./runtime/audio-director.js";
 import { DEFAULT_WORLD_CONFIG, NODE_ID } from "./runtime/content-registry.js";
 import { createFrontendDataRuntime } from "./runtime/frontend-data-runtime.js";
 import { createFrontendMediaCatalog } from "./runtime/frontend-media-catalog.js";
@@ -156,6 +157,20 @@ import {
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
   const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+  const audioDirector = createAudioDirector({
+    windowRef: window,
+    documentRef: document,
+    storage: window.localStorage,
+    musicByScene: {
+      profile: new URL("./assets/audio/music/asianoriental2.ogg", import.meta.url).href,
+      "world-config": new URL("./assets/audio/music/asianoriental2.ogg", import.meta.url).href,
+      opening: new URL("./assets/audio/music/orien.ogg", import.meta.url).href,
+      map: new URL("./assets/audio/music/asianoriental2.ogg", import.meta.url).href,
+      workshop: new URL("./assets/audio/music/asianoriental2.ogg", import.meta.url).href,
+      battle: new URL("./assets/audio/music/orien.ogg", import.meta.url).href,
+      settlement: new URL("./assets/audio/music/asianoriental2.ogg", import.meta.url).href,
+    },
+  });
 
   function loadProfile() {
     try {
@@ -398,6 +413,13 @@ import {
     isSimulationHeld: () => battleVisualHoldMode(),
     advanceBattleStep,
     onSampleDelivered: () => handleBattleSampleDelivered(),
+    onBattleEvents: ({ events }) => {
+      if (events.spawned) void audioDirector.play("wave");
+      if (events.kills) void audioDirector.play("kill");
+      if (events.leaks) void audioDirector.play("leak");
+      if (events.attack) void audioDirector.play("attack");
+      if (events.trapTriggered) void audioDirector.play("trap");
+    },
     spawnEnemies: ({ battle }) => spawnEnemiesStep({ battle, routeForSpawn, pathWaypoints }),
     updateEnemies: ({ battle, dt }) => updateEnemiesStep({ battle, dt, enemyWaypoints }),
     updateDefenses: ({ battle }) => updateDefensesStep({ battle }),
@@ -626,7 +648,10 @@ import {
           <h1 class="screen-title">${safeText(title)}</h1>
           ${subtitle ? `<p class="screen-subtitle">${safeText(subtitle)}</p>` : ""}
         </div>
-        ${dataBadge()}
+        <div class="header-actions">
+          <button class="ghost-button audio-button" data-action="toggle-audio" aria-label="${safeText(audioDirector.controlLabel())}">${safeText(audioDirector.controlLabel())}</button>
+          ${dataBadge()}
+        </div>
       </header>
     `;
   }
@@ -883,6 +908,7 @@ import {
   }
 
   function setPlayerView(view) {
+    audioDirector.setScene(view);
     return appFlowOrchestrator.setCurrentView(view);
   }
 
@@ -1396,6 +1422,7 @@ import {
             </div>
             <div class="battle-status" id="battleStats"></div>
             <div class="battle-controls">
+              <button class="ghost-button audio-button" data-action="toggle-audio" aria-label="${safeText(audioDirector.controlLabel())}">${safeText(audioDirector.controlLabel())}</button>
               <button class="ghost-button" data-action="toggle-pause" id="pauseButton">暂停</button>
               <button class="ghost-button" data-action="cycle-speed" id="speedButton">1x</button>
             </div>
@@ -1746,7 +1773,7 @@ import {
   }
 
   function placeBasicDefense(cell) {
-    return placeBasicDefenseAction({
+    const deployed = placeBasicDefenseAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("basic", battleToolProjection()),
@@ -1754,10 +1781,12 @@ import {
       addEffect,
       setBattleToast,
     });
+    if (deployed) void audioDirector.play("deploy");
+    return deployed;
   }
 
   function placeSampleTrap(cell) {
-    return placeSampleTrapAction({
+    const deployed = placeSampleTrapAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("sample", battleToolProjection()),
@@ -1765,10 +1794,12 @@ import {
       addEffect,
       setBattleToast,
     });
+    if (deployed) void audioDirector.play("trap");
+    return deployed;
   }
 
   function useSupportPulse(cell) {
-    return useSupportPulseAction({
+    const deployed = useSupportPulseAction({
       battle: state.battle,
       cell,
       tool: findBattleToolProjection("support", battleToolProjection()),
@@ -1776,18 +1807,26 @@ import {
       addFloating,
       setBattleToast,
     });
+    if (deployed) void audioDirector.play("support");
+    return deployed;
   }
 
   function deployRuntimeTool(toolId, cell) {
-    return deployRuntimeToolAction({
+    const tool = findBattleToolProjection(toolId, battleToolProjection());
+    const deployed = deployRuntimeToolAction({
       battle: state.battle,
       cell,
-      tool: findBattleToolProjection(toolId, battleToolProjection()),
+      tool,
       canPlaceToolAt,
       addEffect,
       addFloating,
       setBattleToast,
     });
+    if (deployed) {
+      const kind = assetKindForToolId(toolId, battleToolProjection());
+      void audioDirector.play(kind === "support_item" ? "support" : kind === "tower_blueprint" ? "deploy" : "trap");
+    }
+    return deployed;
   }
 
   function setBattleToast(text) {
@@ -1861,6 +1900,7 @@ import {
       }
     }
     setBattleToast(`样品完成：${displayName} x${state.battle ? state.battle.sampleUses : 2}`);
+    void audioDirector.play("sample_ready");
     if (!flowVisualSmokeMode()) {
       showDialogue(
         presentation.npcDisplayName,
@@ -2094,6 +2134,7 @@ import {
     battle.finishing = true;
     battle.paused = true;
     battle.loopActive = false;
+    void audioDirector.play(result === "victory" ? "victory" : "defeat");
     state.battleOutcome = {
       result: result === "victory" ? "victory" : "defeat",
       protected_core_hp: Math.max(0, battle.coreHp),
@@ -2194,6 +2235,14 @@ import {
     "reset-demo": () => resetDemo(),
     settings: () => {
         renderError(state.dataMode === "api" ? "当前使用中枢档案。重置演示可重新开始。" : "当前使用本机档案。");
+    },
+    "toggle-audio": async (target) => {
+        await audioDirector.toggleMuted();
+        document.querySelectorAll(".audio-button").forEach((button) => {
+          button.textContent = audioDirector.controlLabel();
+          button.setAttribute("aria-label", audioDirector.controlLabel());
+        });
+        if (target && typeof target.blur === "function") target.blur();
     },
     "select-creativity": (target) => {
         state.selectedOptions.creativity_mode = target.dataset.value;

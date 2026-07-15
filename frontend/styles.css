@@ -126,6 +126,19 @@ button:disabled {
   max-width: 1360px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.audio-button {
+  min-width: 76px;
+  white-space: nowrap;
+}
+
 .brand-stack {
   min-width: 0;
 }
@@ -1844,6 +1857,11 @@ details.evidence-drawer summary {
 
   .screen-header {
     display: grid;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .workshop-context-bar {
