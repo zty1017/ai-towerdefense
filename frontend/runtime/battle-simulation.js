@@ -102,6 +102,8 @@ export function updateDefenses({ battle }) {
     const attackRange = Number(defense.range) > 0 ? Number(defense.range) : 2.6;
     const damage = Number(defense.damage) > 0 ? Number(defense.damage) : 1;
     const splashRadius = Math.max(0, Number(defense.splashRadius) || 0);
+    const maxTargets = Math.max(1, Math.min(8, Math.round(Number(defense.maxTargets) || 1)));
+    const chainRadius = Math.max(0.5, Math.min(5, Number(defense.chainRadius) || 2.4));
     const color = defense.attackColor || "#ffd37a";
     if (battle.elapsedMs < defense.shotAt + attackIntervalMs) continue;
     const target = nearestEnemy({ battle, x: defense.x, y: defense.y, radius: attackRange });
@@ -113,12 +115,33 @@ export function updateDefenses({ battle }) {
             enemy.hp > 0 && Math.hypot(enemy.x - target.x, enemy.y - target.y) <= splashRadius,
         )
       : [target];
+    while (splashRadius <= 0 && impacted.length < maxTargets) {
+      const origin = impacted[impacted.length - 1];
+      let next = null;
+      let nextDistance = Infinity;
+      for (const enemy of battle.enemies) {
+        if (enemy.hp <= 0 || impacted.includes(enemy)) continue;
+        const distance = Math.hypot(enemy.x - origin.x, enemy.y - origin.y);
+        if (distance <= chainRadius && distance < nextDistance) {
+          next = enemy;
+          nextDistance = distance;
+        }
+      }
+      if (!next) break;
+      impacted.push(next);
+    }
     for (const enemy of impacted) {
       enemy.hp -= damage;
       enemy.hitFlashUntil = battle.elapsedMs + 160;
     }
     addEffect(battle, "muzzle", defense.x, defense.y, color, 220, 0.75);
     addBeam(battle, defense.x, defense.y, target.x, target.y, color);
+    for (let index = 1; index < impacted.length; index += 1) {
+      const previous = impacted[index - 1];
+      const chained = impacted[index];
+      addBeam(battle, previous.x, previous.y, chained.x, chained.y, color);
+      addEffect(battle, "burst", chained.x, chained.y, color, 220, 0.48);
+    }
     addEffect(
       battle,
       splashRadius > 0 ? "ring" : "burst",

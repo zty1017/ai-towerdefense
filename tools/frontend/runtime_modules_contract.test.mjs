@@ -1721,6 +1721,34 @@ test("damage radius from behavior ABI applies one impact to every nearby enemy",
   assert.ok(battle.effects.some((effect) => effect.type === "ring"));
 });
 
+test("compiled chain targeting damages bounded linked enemies and draws each arc", () => {
+  const battle = {
+    elapsedMs: 1000,
+    defenses: [{
+      x: 2,
+      y: 2,
+      until: 5000,
+      shotAt: 0,
+      attackIntervalMs: 760,
+      range: 4,
+      damage: 2,
+      maxTargets: 3,
+      chainRadius: 1.6,
+    }],
+    enemies: [
+      { id: "primary", x: 4, y: 2, hp: 5 },
+      { id: "chain-a", x: 5.2, y: 2.2, hp: 5 },
+      { id: "chain-b", x: 6.4, y: 2.1, hp: 5 },
+      { id: "outside", x: 8.6, y: 2, hp: 5 },
+    ],
+    effects: [],
+  };
+
+  updateDefenses({ battle });
+  assert.deepEqual(battle.enemies.map((enemy) => enemy.hp), [3, 3, 3, 5]);
+  assert.equal(battle.effects.filter((effect) => effect.type === "beam").length, 3);
+});
+
 test("compiled sample slot consumes delivery charges without charging research materials twice", () => {
   const battle = {
     resources: 40,
