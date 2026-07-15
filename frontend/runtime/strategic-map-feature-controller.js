@@ -1,3 +1,31 @@
+const WORLD_TONES = {
+  xianxia_cloud_frontier: {
+    matrix: "1.02 0.04 0 0 0.01  0.01 1.10 0.03 0 0.03  0 0.08 1.02 0 0.04  0 0 0 1 0",
+    veil: "rgba(76,184,158,.10)",
+  },
+  stonewind_border_march: {
+    matrix: "1.08 0.04 0 0 0.03  0.02 0.96 0 0 0.01  0 0.01 0.82 0 0  0 0 0 1 0",
+    veil: "rgba(174,126,63,.12)",
+  },
+  stellar_anchor: {
+    matrix: "0.78 0.05 0.08 0 0.01  0 0.98 0.08 0 0.03  0.04 0.10 1.22 0 0.08  0 0 0 1 0",
+    veil: "rgba(39,126,176,.13)",
+  },
+};
+
+const WORLD_BACKDROPS = {
+  xianxia_cloud_frontier: "/assets/map_visual_reference/strategic_xianxia_cloud_frontier.v0.1.jpg",
+  stonewind_border_march: "/assets/map_visual_reference/strategic_stonewind_border_march.v0.1.jpg",
+  stellar_anchor: "/assets/map_visual_reference/strategic_stellar_anchor.v0.1.jpg",
+};
+
+function worldTone(worldbookId) {
+  return WORLD_TONES[worldbookId] || {
+    matrix: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0",
+    veil: "rgba(0,0,0,0)",
+  };
+}
+
 export function createStrategicMapFeatureController({
   root,
   projection,
@@ -18,6 +46,7 @@ export function createStrategicMapFeatureController({
     });
     const zoomPercent = Math.round(activeCamera.zoom * 100);
     const syncStatus = runtime.mapSyncStatus ? runtime.mapSyncStatus() : "idle";
+    const tone = worldTone(map.worldbook_id || map.worldbook_template_id);
     const lines = (map.supply_lines || [])
       .map((line) => {
         const from = byId.get(line.from_node_id);
@@ -35,7 +64,10 @@ export function createStrategicMapFeatureController({
     const dark = (map.dark_regions || []).map(presentation.darkRegionMarkup).join("");
     const threats = (map.threat_edges || []).map(presentation.threatEdgeMarkup).join("");
     presentation.markerPreloadUrls().forEach((url) => presentation.getImage(url));
-    const backdropUrl = presentation.assetUrl("/assets/map_visual_reference/strategic_region_map_clean_v0_1.png");
+    const worldbookId = map.worldbook_id || map.worldbook_template_id;
+    const backdropUrl = presentation.assetUrl(
+      WORLD_BACKDROPS[worldbookId] || "/assets/map_visual_reference/strategic_region_map_clean_v0_1.png",
+    );
     const terrain = `
       <defs>
         <radialGradient id="strategicFocusGlow" cx="35%" cy="52%" r="40%">
@@ -56,9 +88,11 @@ export function createStrategicMapFeatureController({
         <filter id="strategicSoftGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="8" /></filter>
         <filter id="strategicRegionBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="22" /></filter>
         <filter id="strategicThreatBlur" x="-35%" y="-45%" width="170%" height="190%"><feGaussianBlur stdDeviation="10" /></filter>
+        <filter id="strategicWorldTone" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${tone.matrix}" /></filter>
       </defs>
       <rect x="0" y="0" width="1280" height="720" fill="#060908" />
-      <image href="${presentation.safeText(backdropUrl)}" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice" class="strategic-map-backdrop" />
+      <image href="${presentation.safeText(backdropUrl)}" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice" class="strategic-map-backdrop" filter="url(#strategicWorldTone)" />
+      <rect x="0" y="0" width="1280" height="720" fill="${tone.veil}" />
       <rect x="0" y="0" width="1280" height="720" fill="url(#strategicVignette)" />
       <ellipse cx="410" cy="380" rx="330" ry="225" fill="url(#strategicFocusGlow)" />
       <ellipse cx="1080" cy="600" rx="310" ry="190" fill="url(#strategicColdFog)" />
