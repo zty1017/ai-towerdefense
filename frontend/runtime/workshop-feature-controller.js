@@ -165,6 +165,25 @@ export function createWorkshopFeatureController({
     const participants = contributions.filter((item) => item.kind === "participant_notice");
     const materialNotices = contributions.filter((item) => item.kind === "material_notice");
     const primaryTarget = targets[0] || {};
+    const participantPayload = asObject(participants[0] && participants[0].payload);
+    const briefingNpcIds = asList(briefing.npcs_present);
+    const compiledNpc = asList(state.data.npcs).find((item) => {
+      const id = item && (item.stable_internal_id || item.npc_id || item.id);
+      return briefingNpcIds.includes(id);
+    }) || {};
+    const participantId =
+      participantPayload.npc_id ||
+      compiledNpc.stable_internal_id ||
+      compiledNpc.npc_id ||
+      compiledNpc.id ||
+      "";
+    const participantName =
+      participantPayload.display_name || compiledNpc.display_name || "节点联络人";
+    const participantSummary =
+      compiledNpc.voice ||
+      compiledNpc.player_summary ||
+      participantPayload.summary ||
+      "先说明你要解决的战场问题，我会判断现场条件是否支撑试作。";
     const proposalKinds = {
       tower_blueprint: "固定防御装置",
       temporary_trap_sample: "路径试作陷阱",
@@ -198,10 +217,10 @@ export function createWorkshopFeatureController({
               </div>
               <div class="workshop-bench-info">
                 <div class="workshop-npc-note">
-                  <div class="workshop-npc-avatar">${imageTag(npcPortraitUrl("npc_workshop_mentor"), "在场评审者")}</div>
+                  <div class="workshop-npc-avatar">${imageTag(npcPortraitUrl(participantId), participantName)}</div>
                   <div>
-                    <span>${safeText((participants[0] && participants[0].payload.display_name) || "驿站守灯人")}</span>
-                    <p>${safeText((participants[0] && participants[0].payload.summary) || "先说明你要解决的战场问题，我会判断现场条件是否支撑试作。")}</p>
+                    <span>${safeText(participantName)}</span>
+                    <p>${safeText(participantSummary)}</p>
                   </div>
                 </div>
                 <div class="workshop-material-shelf">

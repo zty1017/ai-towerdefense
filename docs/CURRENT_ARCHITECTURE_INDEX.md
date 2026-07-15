@@ -1,6 +1,6 @@
 # 当前架构文档索引
 
-Last updated: 2026-07-13
+Last updated: 2026-07-15
 
 本文档是当前项目设计、决策、架构与验收材料的入口。
 
@@ -9,6 +9,7 @@ Last updated: 2026-07-13
 事实源层级：
 
 - 本索引用于导航、阅读顺序和优先级路由。
+- `docs/AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md` 用于产品理念、玩家侧 AI 原生定位以及比赛版本 / 后续规划边界。
 - `docs/AI_COMPILATION_SYSTEM_V0_1.md` 用于 AI 编译系统的概念、边界、权限和生命周期事实源。
 - 具体字段、op 白名单、semantic gate、运行命令和校验行为，以 `shared/schemas/`、`tools/` 和对应专题文档为字段级事实源。
 
@@ -31,6 +32,9 @@ Last updated: 2026-07-13
 CURRENT_ARCHITECTURE_INDEX.md
   -> 找入口、读顺序、事实源优先级
 
+AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md
+  -> 产品理念、AI 原生玩法定位、比赛版本与后续规划边界
+
 AI_COMPILATION_SYSTEM_V0_1.md
   -> 概念、边界、权限、生命周期
 
@@ -47,16 +51,31 @@ shared/schemas/ + tools/ + 专题文档
 截至本索引更新时间，当前有效主线是：
 
 ```text
-通用 AI 驱动塔防系统
+通用 AI 原生塔防系统
   -> 玩家自然语言 / 世界书 / 战斗上下文
   -> 受控 AI 编译
   -> AssetGraph DAG / 有界 ReAct 节点
   -> Schema / 白名单 / 预算 / 语义门 / 媒体门禁
-  -> 可玩资产、任务、事件、剧情节点、世界状态变化
-  -> 前端运行时通过稳定 API 消费实时编译结果，并以 reviewed fixture 安全兜底
+  -> 比赛版本：塔、陷阱、支援道具的可执行行为闭环与 Session 激活
+  -> 开发期编译：三种扩展世界、地图结构和分层表现包
+  -> 运行时通过稳定 API 消费已激活 / 已审查结果，并以 reviewed fallback 安全兜底
 ```
 
 《长夜灯火》只是 MVP 世界书模板，不是项目本体名称。
+
+### 1.1 比赛版本能力边界
+
+已实现：
+
+- 自然语言研发提案，以及塔、陷阱、支援道具从结构化候选、校验、确定性模拟、评分、晋升到前端行为的真实闭环。
+- 真实 Provider 接入、多 Provider fallback、失败后的 reviewed / deterministic 降级，以及匿名 Session 的显式激活、隔离、回执和回滚边界。
+- 仙侠、西幻、科幻三个由真实 Provider 生成的世界实例，可进入档案、世界配置、开场、战略地图、节点 / 工坊、首战与结算页面链路。
+- 地图结构、运行包与分层表现编译；玩家默认消费已审查表现包或 reviewed fallback，地图图片不拥有路线、塔位、目标或碰撞真值。
+
+后续规划：
+
+- 剧情、任务、随机事件、科技树和长期世界演化的更深实时 Provider 接入与玩家侧动态消费。
+- 当前这些方向已有不同程度的 Schema、确定性状态投影、受控 delta、fixture 或 review-only evidence；它们证明安全边界和演进路径，不等于比赛版本已完成全实时 AI 生成。
 
 ## 2. 先读顺序
 
@@ -66,29 +85,33 @@ shared/schemas/ + tools/ + 专题文档
    - 项目运行入口、后端 API、验证命令。
 2. `docs/CURRENT_ARCHITECTURE_INDEX.md`
    - 当前文档导航和有效性说明。
-3. `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
+3. `docs/AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md`
+   - AI 从开发工具进入玩家玩法的产品理念，以及比赛版本与后续规划边界。
+4. `docs/PROJECT_ARCHITECTURE_AND_GOVERNANCE.md`
    - 产品定位、架构分层、执行与审查治理基线。
-4. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
+5. `docs/AI_COMPILATION_SYSTEM_V0_1.md`
    - AI 编译系统总架构：Context Engine、Object Compiler、World Transaction System，以及作为横切控制面的 Generation Scheduler。
-5. `docs/GENERATION_SCHEDULER_V0_1.md`
+6. `docs/GENERATION_SCHEDULER_V0_1.md`
    - Generation Scheduler 的字段级计划包、延迟等级、fallback 和预生成边界。
-6. `docs/RUNTIME_ACTIVATION_BRIDGE_V0_1.md`
+7. `docs/RUNTIME_ACTIVATION_BRIDGE_V0_1.md`
    - 编译产物经过最终门禁进入会话运行时的幂等激活、回滚和前端热更新边界。
-7. `docs/DEMO_VERTICAL_SLICE.md`
+8. `docs/DEMO_VERTICAL_SLICE.md`
    - MVP 演示主路径。
-8. `docs/FRONTEND_MOCK_API_V0_1.md`
+9. `docs/FRONTEND_MOCK_API_V0_1.md`
    - 当前前端应接入的 mock API。
-9. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
+10. `docs/FRONTEND_RUNTIME_MOCK_ART_KIT_V0_1.md`
    - 前端战斗运行时 mock 美术包：敌人、目标物、基础防御件、NPC 头像、地图 token 和程序化特效。
-10. `docs/WORKER_TASK_PACK_V0_1.md`
+11. `docs/WORKER_TASK_PACK_V0_1.md`
    - CodeBuddy / OpenCode / Codex headless / 人类 worker 的可验证任务包格式。
-11. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
+12. `docs/MVP_REVIEW_HANDOFF_V0_1.md`
    - 当前审查交付入口。
 
 ## 3. 当前有效设计文档
 
 ### 产品与前端
 
+- `docs/AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md`
+  - 产品理念文档：定义“像 Vibe Coding 一样编译玩家意图”的 AI 原生玩法定位，说明开发者提供 Capability ABI / Schema / 预算 / 模拟 / 激活门的可控内核，并严格区分比赛版本已实现能力与后续规划。它不替代任何字段级事实源。
 - `docs/DEMO_VERTICAL_SLICE.md`
   - MVP 录屏和玩家体验主路径。
 - `docs/FRONTEND_PRODUCT_AND_TECH_DECISION.md`

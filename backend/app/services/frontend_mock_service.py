@@ -585,6 +585,9 @@ def _apply_delta_to_state(state: dict[str, Any], delta: dict[str, Any]) -> dict[
 def _compiled_world_initial_state(bundle: dict[str, Any]) -> dict[str, Any]:
     world_map = bundle["map"]
     worldbook = bundle["worldbook"]
+    briefing = bundle["briefing"]
+    entry_node_id = bundle["catalog_entry"]["entry_node_id"]
+    present_npcs = set(briefing.get("npcs_present") or [])
     return {
         "schema_version": "run_world_state.v0.1",
         "worldbook_id": world_map["worldbook_id"],
@@ -603,7 +606,18 @@ def _compiled_world_initial_state(bundle: dict[str, Any]) -> dict[str, Any]:
             for resource_id, item in worldbook.get("resource_mapping", {}).items()
         ],
         "npcs": [
-            {"npc_id": item.get("stable_internal_id"), "display_name": item.get("display_name")}
+            {
+                "npc_id": item.get("stable_internal_id"),
+                "display_name": item.get("display_name"),
+                "player_summary": item.get("voice") or item.get("role"),
+                "gameplay_roles": ["field_review"],
+                "availability": "available",
+                **(
+                    {"location_node_id": entry_node_id}
+                    if item.get("stable_internal_id") in present_npcs
+                    else {}
+                ),
+            }
             for item in worldbook.get("npc_archetypes", [])
         ],
         "flags": {"compiled_world_instance": True},
@@ -724,6 +738,7 @@ def get_node_briefing(session_id: str, node_id: str) -> dict[str, Any]:
             for key, value in worldbook.get("resource_mapping", {}).items()
         ]
         npcs = list(worldbook.get("npc_archetypes") or [])
+        battle_config = bundle["battle_config"]
         return {
             "session_id": session_id,
             "mode": "compiled_world_runtime",
@@ -812,7 +827,7 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
     if bundle["catalog_entry"]["world_id"] != "long_night_lanterns":
         if node_id != bundle["catalog_entry"]["entry_node_id"]:
             raise FixtureNotFoundError(node_id)
-        pack = _load_frontend_pack()
+        battle_config = bundle["battle_config"]
         map_package = bundle["map_runtime_package"]
         render_bundle = {
             "node_id": node_id,
@@ -825,7 +840,7 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
             "session_id": session_id,
             "mode": "compiled_world_runtime",
             "node_id": node_id,
-            "battle_config": bundle["battle_config"],
+            "battle_config": battle_config,
             "map_runtime_package": map_package,
             "runtime_selection": {
                 "selection_mode": "compiled_world_manifest",
@@ -836,8 +851,8 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
             },
             "map_render_plan_bundle": render_bundle,
             "layered_map_visual_package": bundle["layered_map_visual_package"],
-            "toolbar_assets": _battle_toolbar_assets(pack),
-            "sample_delivery_asset": _asset_for_sample_delivery(pack),
+            "toolbar_assets": [],
+            "sample_delivery_asset": battle_config.get("sample_asset"),
             "activated_runtime_bundle": _player_runtime_bundle(session_id, node_id=node_id),
             **frontend_media_service.frontend_media_payload(),
             **frontend_media_service.runtime_art_payload(),
