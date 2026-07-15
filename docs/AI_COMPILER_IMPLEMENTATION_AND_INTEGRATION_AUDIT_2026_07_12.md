@@ -67,9 +67,9 @@ Provider 候选现在必须先运行自身的确定性模拟。严重 flag 或�
 
 ## 5. 仍存在的问题
 
-### P1：玩家研发并未完全走统一 AssetGraph
+### 已修复：真实候选复用固定 mock compile 证据
 
-真实 LLM 调用发生在 `live_asset_compile_service`；确认阶段再运行两个确定性 workflow，并对产物做降低。行为结果已经统一，但编排、trace 和模拟仍有两套入口。MVP 后应把真实候选生成与模拟封装成正式 DAG 节点，删除“固定 mock compile 作为真实编译证明”的语义。
+真实 LLM 调用仍由 `live_asset_compile_service` 负责受控 Provider 边界，但 Provider 候选进入确认阶段后，已改走 `runtime_safe_candidate_validation` DAG：`load_candidate -> validate_candidate -> simulate -> score -> promotion -> summary`。固定 mock compile 只保留为无 Provider 候选时的确定性 fallback，不再作为真实候选的编译证明。RuntimePackage 的通用壳与 lowering 仍是后续可继续统一的边界。
 
 ### P1：Provider 调用仍占用单次 HTTP 请求
 

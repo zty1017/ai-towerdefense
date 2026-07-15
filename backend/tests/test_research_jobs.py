@@ -173,7 +173,7 @@ def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch, t
             "base_stats": {"build_cost": 17, "range": 3.4, "cooldown_ms": 1200},
             "effect_blocks": [
                 {"type": "damage", "amount": 13, "damage_type": "light"},
-                {"type": "slow", "duration_ms": 1400, "slow_ratio": 0.24},
+                {"type": "slow", "duration": 1.4, "slow_ratio": 0.24},
             ],
             "constraints": {"max_instances": 2},
             "type_specific": {"tower_slot": "standard"},

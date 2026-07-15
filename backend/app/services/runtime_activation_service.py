@@ -372,6 +372,13 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
                 effect["amount"] = _clamp(raw_effect.get("amount"), 8, 0, 320)
                 damage_type = str(raw_effect.get("damage_type") or "light")
                 effect["damage_type"] = damage_type if damage_type in {"light", "physical", "arcane"} else "light"
+                if raw_effect.get("max_targets") is not None:
+                    effect["max_targets"] = int(
+                        _clamp(raw_effect["max_targets"], 1, 1, 8)
+                    )
+                    effect["chain_radius_cells"] = _clamp(
+                        raw_effect.get("chain_radius_cells"), 2.4, 0.5, 5
+                    )
             if kind == "slow":
                 effect["duration_ms"] = int(_clamp(raw_effect.get("duration_ms"), 1200, 0, 15000))
                 effect["strength"] = _clamp(raw_effect.get("strength"), 0.2, 0, 1)
@@ -420,6 +427,8 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
     gameplay = _json_object(value.get("gameplay")) or value
     stats = _json_object(gameplay.get("base_stats"))
     effects: list[dict[str, Any]] = []
+    chain_targets = 1
+    chain_radius_cells = 2.4
     for index, raw in enumerate(_json_list(gameplay.get("effect_blocks"))):
         raw = _json_object(raw)
         kind = str(raw.get("kind") or raw.get("effect_type") or raw.get("type") or "")
@@ -435,6 +444,11 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
                     raw.get("radius_cells", raw.get("radius")), 1
                 )
             effects.append(effect)
+        elif kind == "pierce_or_chain":
+            chain_targets = int(_clamp(raw.get("max_targets"), 2, 2, 8))
+            chain_radius_cells = _cells(
+                raw.get("chain_radius_cells", raw.get("radius", 2.4)), 2.4
+            )
         elif kind == "slow":
             effects.append({
                 "effect_id": _safe_id(raw.get("effect_id"), f"compiled_slow_{index}"),
@@ -461,6 +475,13 @@ def _normalize_behavior(value: dict[str, Any], asset_kind: str) -> dict[str, Any
                 "duration_ms": int(_clamp(raw.get("duration_ms"), 4000, 0, 15000)),
                 "strength": _clamp(raw.get("strength", raw.get("ratio")), 0.2, 0, 1),
             })
+    if chain_targets > 1:
+        damage_effect = next(
+            (effect for effect in effects if effect.get("kind") == "damage"), None
+        )
+        if damage_effect is not None:
+            damage_effect["max_targets"] = chain_targets
+            damage_effect["chain_radius_cells"] = chain_radius_cells
     if not effects:
         raise ValueError("compiled gameplay has no supported effect block")
     fallback = _fallback_behavior(asset_kind)

@@ -263,6 +263,7 @@ def test_compiled_candidate_stats_and_effects_lower_into_runtime_behavior():
             "effect_blocks": [
                 {"type": "area_damage", "amount": 64, "radius": 96},
                 {"type": "slow", "slow_ratio": 0.35, "duration": 1.8},
+                {"type": "pierce_or_chain", "max_targets": 3},
             ],
         }
     }
@@ -272,5 +273,7 @@ def test_compiled_candidate_stats_and_effects_lower_into_runtime_behavior():
     assert normalized["targeting"]["range_cells"] == 3
     assert normalized["effect_blocks"][0]["amount"] == 64
     assert normalized["effect_blocks"][0]["radius_cells"] == 2
+    assert normalized["effect_blocks"][0]["max_targets"] == 3
+    assert normalized["effect_blocks"][0]["chain_radius_cells"] == 2.4
     assert normalized["effect_blocks"][1]["strength"] == 0.35
     assert normalized["effect_blocks"][1]["duration_ms"] == 1800

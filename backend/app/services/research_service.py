@@ -41,6 +41,9 @@ _REGISTRY_PATH = _REPO_ROOT / "shared" / "asset_graph" / "node_registry.v0.1.jso
 _WORKFLOW_DIR = _REPO_ROOT / "examples" / "workflows"
 
 _MOCK_COMPILE_WORKFLOW = _WORKFLOW_DIR / "mvp_mock_asset_compile.workflow.json"
+_LIVE_CANDIDATE_WORKFLOW = (
+    _WORKFLOW_DIR / "runtime_safe_candidate_validation.workflow.json"
+)
 _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.json"
 
 # Filename for the deterministic simulation report of the real provider-backed
@@ -259,8 +262,8 @@ def _compiler_metadata_for_job(
         "local_gates": [
             "intent_classification",
             "proposal_synthesis",
-            "assetgraph_mock_compile_workflow",
-            "assetgraph_delivery_workflow",
+            "assetgraph_candidate_validation_workflow",
+            "assetgraph_runtime_packaging_workflow",
             "runtime_package_artifact",
             "delivery_payload_artifact",
         ],
@@ -481,10 +484,13 @@ def _personalize_compiled_artifacts(
     if compiled_media_refs is not None:
         asset["media_refs"] = compiled_media_refs
     if candidate_path is not None:
+        packaged_candidate_path = runtime_package_path.parent / candidate_path.name
+        if packaged_candidate_path.resolve() != candidate_path.resolve():
+            packaged_candidate_path.write_bytes(candidate_path.read_bytes())
         asset["gameplay_ref"] = {
             "kind": "compiled_asset_candidate",
-            "path": str(candidate_path),
-            "sha256": hashlib.sha256(candidate_path.read_bytes()).hexdigest(),
+            "path": str(packaged_candidate_path),
+            "sha256": hashlib.sha256(packaged_candidate_path.read_bytes()).hexdigest(),
         }
     asset["battle_availability"] = {
         "surfaces": ["battle_hotbar"],
@@ -529,16 +535,55 @@ def _run_two_workflows(
     runtime_package_path: str | None = None
     delivery_payload_path: str | None = None
     error: str | None = None
+    candidate_policy_blocked = False
+    compiled_candidate = as_dict(proposal.get("compiled_candidate"))
+    candidate_path = (
+        live_asset_compile_service.write_candidate(compiled_candidate, job_dir)
+        if compiled_candidate
+        else None
+    )
 
-    # Workflow 1: mock asset compile (proof the AI compile pipeline runs).
-    wf_mock = _load_workflow(_MOCK_COMPILE_WORKFLOW)
-    mock_out = job_dir / "mock_compile"
-    trace_mock = rw.run_workflow(wf_mock, registry, mock_out)
-    mock_trace_path = mock_out / wf_mock["workflow_id"] / "execution_trace.json"
-    if mock_trace_path.exists():
-        trace_paths.append(str(mock_trace_path))
-    if trace_mock.get("status") != "passed":
-        error = f"mock_compile workflow did not pass: {trace_mock.get('error', '')}"
+    # Workflow 1 validates the actual provider-backed candidate. The stable
+    # deterministic graph remains the fallback when no live candidate exists.
+    if candidate_path is not None:
+        wf_candidate = _load_workflow(_LIVE_CANDIDATE_WORKFLOW)
+        for node in wf_candidate.get("nodes", []):
+            if node.get("id") == "load_candidate":
+                node.setdefault("params", {})["path"] = str(candidate_path)
+        candidate_out = job_dir / "candidate_validation"
+    else:
+        wf_candidate = _load_workflow(_MOCK_COMPILE_WORKFLOW)
+        candidate_out = job_dir / "deterministic_fallback"
+    trace_candidate = rw.run_workflow(wf_candidate, registry, candidate_out)
+    candidate_trace_path = (
+        candidate_out / wf_candidate["workflow_id"] / "execution_trace.json"
+    )
+    if candidate_trace_path.exists():
+        trace_paths.append(str(candidate_trace_path))
+    if trace_candidate.get("status") != "passed":
+        node_runs = trace_candidate.get("node_runs")
+        if not isinstance(node_runs, list):
+            node_runs = []
+        failed_runs = [
+            run
+            for run in node_runs
+            if isinstance(run, dict) and run.get("status") == "failed"
+        ]
+        candidate_policy_blocked = (
+            len(failed_runs) == 1
+            and failed_runs[0].get("node_id") == "promotion"
+            and all(
+                not isinstance(run, dict)
+                or run.get("node_id") == "promotion"
+                or run.get("status") == "passed"
+                for run in node_runs
+            )
+        )
+    if trace_candidate.get("status") != "passed" and not candidate_policy_blocked:
+        error = (
+            "candidate validation workflow did not pass: "
+            f"{trace_candidate.get('error', '')}"
+        )
         return {
             "trace_paths": trace_paths,
             "runtime_package_path": None,
@@ -577,12 +622,6 @@ def _run_two_workflows(
     if runtime_package_path and delivery_payload_path:
         metadata = as_dict(proposal.get("compiler_metadata"))
         compiled_object = as_dict(metadata.get("compiled_object"))
-        compiled_candidate = as_dict(proposal.get("compiled_candidate"))
-        candidate_path = None
-        if compiled_candidate:
-            candidate_path = live_asset_compile_service.write_candidate(
-                compiled_candidate, Path(runtime_package_path).parent
-            )
         try:
             generation = as_dict(metadata.get("generation"))
             provider_backed = (
@@ -649,7 +688,10 @@ def _run_two_workflows(
                     media_result=media_result,
                 )
                 promotion_report_path = promotion_result["path"]
-                promotion_blocked = not promotion_result["promotion_allowed"]
+                promotion_blocked = (
+                    candidate_policy_blocked
+                    or not promotion_result["promotion_allowed"]
+                )
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             return {
                 "trace_paths": trace_paths,

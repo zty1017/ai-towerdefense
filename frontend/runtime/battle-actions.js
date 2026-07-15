@@ -113,6 +113,16 @@ function damageRadiusCells(tool) {
   return safeNumber(damage && damage.radius_cells, 0, 0, 8);
 }
 
+function damageMaxTargets(tool) {
+  const damage = firstEffectOf(tool, "damage");
+  return Math.round(safeNumber(damage && damage.max_targets, 1, 1, 8));
+}
+
+function damageChainRadiusCells(tool) {
+  const damage = firstEffectOf(tool, "damage");
+  return safeNumber(damage && damage.chain_radius_cells, 2.4, 0.5, 5);
+}
+
 function slowDurationMs(tool, fallback = 1800) {
   const slow = firstEffectOf(tool, "slow");
   return safeNumber(slow && slow.duration_ms, fallback, 0, 10000);
@@ -201,6 +211,8 @@ export function placeBasicDefense({
     range: targetRadius(tool, 2.6),
     damage: normalizedDamage(tool, 1),
     splashRadius: damageRadiusCells(tool),
+    maxTargets: damageMaxTargets(tool),
+    chainRadius: damageChainRadiusCells(tool),
     attackIntervalMs: 760,
     attackColor: effectColor(tool, "#ffd37a"),
   });
@@ -350,6 +362,8 @@ export function deployRuntimeTool({
       range: targetRadius(tool, 2.6),
       damage: normalizedDamage(tool, 1),
       splashRadius: damageRadiusCells(tool),
+      maxTargets: damageMaxTargets(tool),
+      chainRadius: damageChainRadiusCells(tool),
       attackIntervalMs: 760,
       attackColor: effectColor(tool, "#ffd37a"),
     });
