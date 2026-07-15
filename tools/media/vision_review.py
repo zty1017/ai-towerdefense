@@ -19,7 +19,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import media_review
+try:
+    from . import media_review
+except ImportError:  # pragma: no cover - direct script execution.
+    import media_review  # type: ignore[no-redef]
 
 
 REPORT_VERSION = "media_vision_review_report.v0.1"
@@ -60,6 +63,13 @@ PROFILES: dict[str, VisionProfile] = {
         model="agnes-2.0-flash",
         supports_json_object=False,
         fallback_env_keys=("AGNES_API_KEY_2", "AGNES_API_KEY_3"),
+    ),
+    "ark_kimi_k2_6": VisionProfile(
+        name="ark_kimi_k2_6",
+        env_key="ARK_API_KEY",
+        base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+        model="kimi-k2.6",
+        supports_json_object=False,
     ),
 }
 

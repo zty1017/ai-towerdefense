@@ -122,6 +122,15 @@ def validate_candidate(candidate: dict[str, Any]) -> list[str]:
         errors.append("generated ids must be unique inside a world candidate")
     if candidate.get("first_battle", {}).get("route_shape") not in ROUTE_TEMPLATES:
         errors.append("first_battle.route_shape is not supported")
+    rendering_style = str(
+        candidate.get("visual", {}).get("layer_briefs", {}).get("rendering_style") or ""
+    ).lower()
+    if any(term in rendering_style for term in ("cel-shad", "cell-shad", "anime", "cartoon")):
+        errors.append(
+            "visual.layer_briefs.rendering_style must contain only a positive premium "
+            "production game-environment description with realistic material response; remove every "
+            "negative-style clause and every forbidden style label"
+        )
     _scan_player_text(candidate, "", errors)
     return list(dict.fromkeys(errors))
 
@@ -132,6 +141,17 @@ SYSTEM_PROMPT = """你是塔防游戏世界实例编译器的创意前端。把�
 所有玩家可见文本使用自然的世界内中文，不出现 AI、provider、schema、prompt、compiler、token、trace、mock 等技术词。
 世界必须适合塔防：明确主城、危机战斗点、研发设施、资源仓；敌人至少包含快群体与基础单位；玩家构想可被世界内设施试作成防御塔、陷阱或支援道具。
 不要复写示例世界。稳定 ID 使用小写 snake_case，名称与描述应鲜明、可视化、便于美术生成。"""
+
+ID_FIELD_PROMPT = """字段命名硬约束：凡 schema 引用 id 的字段都必须使用小写 snake_case，不能填写中文显示名。
+尤其是 visual.style_id、visual.theme_tags 的每一项、visual.terrain_name、visual.road_name、visual.slot_name、visual.objective_name、visual.spawn_name 都是内部 ID；只有 visual.style_name 是玩家可见中文名。"""
+
+VISUAL_LAYER_PROMPT = """visual.layer_briefs 是交给图像模型的英文材质与文化词汇简报，不是构图指令、内部 ID 或完整场景描述。
+- rendering_style 必须只写正向的 premium production game-environment art 描述，强调半写实材质响应、自然边缘、克制细节、统一比例和伪 3D 俯视镜头。不要使用 hand-painted、mobile game、storybook、board game、concept sketch 等容易诱发扁平插画或卡通化的风格标签；不要写任何 "no ..."、"without ..." 或负向排除句，也不要复述禁用风格的英文名称。
+- terrain_base 只描述连续、近乎平坦、可通行的低语义地表材质；严禁道路、建筑、基地、平台、地标、悬崖、树群、人物和完整风景。
+- road_surface 只描述可平铺的路面材质、颜色和表面细节，不得出现 winding、path shape、strip、bridge、endpoint 或周边场景。
+- build_slot_platform 只描述一个空置低矮基座；objective_foundation 只描述物理底座，不得扩写其承载的建筑；spawn_marker 只描述低矮物理标记。三者都不得包含光、火、烟、传送门或角色。
+- non_blocking_decoration 只列出四种可拆分景观 prefab 的材质与形制，不能描述完整场景、地面或氛围特效。
+每条简报都要使用具体材质和形制词，避免只复述 theme tag；不得写坐标、路径布局、塔位数量或 UI。"""
 
 
 def _messages(seed: dict[str, Any]) -> list[dict[str, str]]:
@@ -149,7 +169,7 @@ def _messages(seed: dict[str, Any]) -> list[dict[str, str]]:
         "output_schema": schema,
     }
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": f"{SYSTEM_PROMPT}\n{ID_FIELD_PROMPT}\n{VISUAL_LAYER_PROMPT}"},
         {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
     ]
 
@@ -169,7 +189,7 @@ def generate_candidate(
     messages = _messages(seed)
     candidate: dict[str, Any] | None = None
     errors: list[str] = []
-    max_attempts = max(1, min(2, int(os.environ.get("AI_TD_WORLD_MAX_ATTEMPTS", "2"))))
+    max_attempts = max(1, min(3, int(os.environ.get("AI_TD_WORLD_MAX_ATTEMPTS", "3"))))
     for attempt in range(1, max_attempts + 1):
         response = adapter.chat_completion(
             profile,
@@ -464,6 +484,7 @@ def _style_pack(candidate: dict[str, Any], battle_path: Path, worldbook_path: Pa
         "worldbook_id": candidate["world_id"], "node_id": node["id"], "created_at": created_at,
         "source_refs": {"map_runtime_package_path": "generated_by_map_compilation_input", "worldbook_path": _path_ref(worldbook_path), "logic_authority": "map_runtime_package", "style_authority": "reviewed_ai_proposal"},
         "node_theme_tags": visual["theme_tags"], "palette": visual["palette"],
+        "visual_generation_briefs": visual["layer_briefs"],
         "lighting": {"time_of_day": visual["time_of_day"], "contrast_policy": "high_path_readability", "shadow_policy": "soft_blob", "intensity": 0.74},
         "terrain_materials": [
             {"material_id": visual["terrain_name"], "role": "terrain_base", "base_color": visual["palette"]["terrain_base"], "texture_policy": "procedural_only"},

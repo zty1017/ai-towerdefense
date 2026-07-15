@@ -70,7 +70,8 @@
         "automatic_promotion_scope": {"const": "reviewed_visual_staging_only"},
         "unreviewed_candidate_player_visible": {"const": false},
         "minimum_vision_score": {"type": "number", "minimum": 0, "maximum": 1},
-        "reviewed_candidate_cache_enabled": {"type": "boolean"}
+        "reviewed_candidate_cache_enabled": {"type": "boolean"},
+        "optional_visual_roles_attempted": {"type": "boolean"}
       }
     }
   }

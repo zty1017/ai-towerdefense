@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
@@ -147,13 +148,25 @@ def draw_control_png(path: Path, package: dict[str, Any], width: int, height: in
 def draw_terrain_composition_png(path: Path, width: int, height: int) -> None:
     """Build a marker-free reference for terrain framing, not map semantics."""
     rows = make_canvas(width, height, (170, 178, 164))
-    edge_x = max(1, int(width * 0.18))
-    edge_y = max(1, int(height * 0.18))
+    anchors = (
+        (-width * 0.03, -height * 0.04),
+        (width * 1.03, -height * 0.04),
+        (-width * 0.03, height * 1.04),
+        (width * 1.03, height * 1.04),
+    )
+    radius_x = max(1.0, width * 0.29)
+    radius_y = max(1.0, height * 0.34)
     for y in range(height):
         for x in range(width):
-            distance = min(x / edge_x, (width - 1 - x) / edge_x, y / edge_y, (height - 1 - y) / edge_y)
-            if distance < 1:
-                strength = min(0.58, (1 - max(0.0, distance)) * 0.58)
+            strength = 0.0
+            for anchor_x, anchor_y in anchors:
+                distance = math.hypot(
+                    (x - anchor_x) / radius_x,
+                    (y - anchor_y) / radius_y,
+                )
+                if distance < 1:
+                    strength = max(strength, (1 - distance) * 0.58)
+            if strength > 0:
                 overlay.blend_pixel(rows, width, height, x, y, (54, 62, 58), strength)
     overlay.write_png(path, width, height, 2, rows)
 
@@ -181,13 +194,24 @@ def draw_component_geometry_reference(
             int(height * 0.11), mid, 0.96,
         )
     elif role == "build_slot_platform":
-        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.2), dark, 0.96)
-        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.16), mid, 0.96)
-        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.1), light, 0.72)
+        half = int(width * 0.18)
+        overlay.draw_square(rows, width, height, cx, cy, half, dark, 0.96)
+        overlay.draw_square(rows, width, height, cx - int(width * 0.01), cy, int(width * 0.10), mid, 0.96)
+        overlay.draw_polyline(
+            rows, width, height,
+            [(cx - int(width * 0.15), cy - int(height * 0.03)), (cx - int(width * 0.04), cy + int(height * 0.01))],
+            max(2, int(width * 0.006)), light, 0.80,
+        )
+        overlay.draw_polyline(
+            rows, width, height,
+            [(cx + int(width * 0.05), cy - int(height * 0.10)), (cx + int(width * 0.14), cy - int(height * 0.04))],
+            max(2, int(width * 0.005)), light, 0.72,
+        )
     elif role == "objective_foundation":
         overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.16), dark, 0.96)
-        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.02), int(width * 0.1), mid, 0.96)
-        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.06), int(width * 0.055), light, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.08), int(width * 0.1), mid, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.19), int(width * 0.072), light, 0.96)
+        overlay.draw_disc(rows, width, height, cx, cy - int(height * 0.29), int(width * 0.055), dark, 0.96)
     elif role == "spawn_marker":
         overlay.draw_polyline(
             rows, width, height, [(int(width * 0.38), cy), (int(width * 0.62), cy)],
@@ -201,6 +225,22 @@ def draw_component_geometry_reference(
         for offset, radius in ((-150, 58), (0, 74), (155, 48)):
             overlay.draw_disc(rows, width, height, cx + offset, cy, radius, dark, 0.96)
             overlay.draw_disc(rows, width, height, cx + offset, cy, max(12, radius - 18), mid, 0.94)
+    elif role == "non_blocking_decoration_architecture":
+        for offset_x, offset_y, radius in ((-64, 24, 54), (0, -8, 70), (66, 18, 48)):
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y - 12, max(14, radius - 22), mid, 0.94)
+    elif role == "non_blocking_decoration_natural":
+        for offset_x, offset_y, radius in ((-52, 24, 52), (8, -28, 76), (66, 32, 42)):
+            overlay.draw_disc(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+            overlay.draw_disc(rows, width, height, cx + offset_x, cy + offset_y - 8, max(12, radius - 22), mid, 0.94)
+    elif role == "non_blocking_decoration_debris":
+        for offset_x, offset_y, radius in ((-70, 24, 34), (-30, -12, 38), (15, 18, 42), (58, -6, 32), (78, 34, 24)):
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+    elif role == "non_blocking_decoration_prop":
+        overlay.draw_square(rows, width, height, cx - 12, cy - 24, 62, dark, 0.96)
+        overlay.draw_square(rows, width, height, cx - 12, cy - 42, 38, mid, 0.96)
+        overlay.draw_disc(rows, width, height, cx + 62, cy + 30, 30, dark, 0.96)
+        overlay.draw_disc(rows, width, height, cx - 78, cy + 34, 24, dark, 0.96)
     else:
         raise ValueError(f"unsupported component reference role: {role}")
     overlay.write_png(path, width, height, 2, rows)

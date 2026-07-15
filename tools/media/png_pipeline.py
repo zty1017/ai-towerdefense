@@ -497,6 +497,121 @@ def center_crop_to_ratio(image: PngImage, ratio: float) -> PngImage:
     return PngImage(target_w, target_h, out)
 
 
+def center_crop_fraction(image: PngImage, fraction: float, *, ratio: float | None = None) -> PngImage:
+    """Crop an inner material sample, optionally enforcing an aspect ratio."""
+
+    if not 0 < fraction <= 1:
+        raise ValueError("fraction must be in (0, 1]")
+    target_w = max(1, round(image.width * fraction))
+    target_h = max(1, round(image.height * fraction))
+    if ratio is not None:
+        if ratio <= 0:
+            raise ValueError("ratio must be positive")
+        if target_w / target_h > ratio:
+            target_w = max(1, round(target_h * ratio))
+        else:
+            target_h = max(1, round(target_w / ratio))
+    x0 = (image.width - target_w) // 2
+    y0 = (image.height - target_h) // 2
+    out = bytearray(target_w * target_h * 4)
+    for y in range(target_h):
+        src = _idx(image.width, x0, y0 + y)
+        dst = _idx(target_w, 0, y)
+        out[dst : dst + target_w * 4] = image.pixels[src : src + target_w * 4]
+    return PngImage(target_w, target_h, out)
+
+
+def center_crop_dimensions(image: PngImage, width: int, height: int) -> PngImage:
+    if width <= 0 or height <= 0:
+        raise ValueError("crop dimensions must be positive")
+    if width > image.width or height > image.height:
+        raise ValueError("crop dimensions exceed source image")
+    x0 = (image.width - width) // 2
+    y0 = (image.height - height) // 2
+    out = bytearray(width * height * 4)
+    for y in range(height):
+        src = _idx(image.width, x0, y0 + y)
+        dst = _idx(width, 0, y)
+        out[dst : dst + width * 4] = image.pixels[src : src + width * 4]
+    return PngImage(width, height, out)
+
+
+def mirrored_seamless_tile(
+    image: PngImage, *, target_ratio: float | None = None
+) -> PngImage:
+    """Mirror a center sample so opposite edges match exactly when tiled."""
+
+    sample_w = max(1, image.width // 2)
+    sample_h = max(1, image.height // 2)
+    if target_ratio is not None:
+        if target_ratio <= 0:
+            raise ValueError("target_ratio must be positive")
+        sample_h = min(sample_h, max(1, int(sample_w / target_ratio)))
+        sample_w = min(sample_w, max(1, round(sample_h * target_ratio)))
+    x0 = (image.width - sample_w) // 2
+    y0 = (image.height - sample_h) // 2
+    sample_pixels = bytearray(sample_w * sample_h * 4)
+    for y in range(sample_h):
+        src = _idx(image.width, x0, y0 + y)
+        dst = _idx(sample_w, 0, y)
+        sample_pixels[dst : dst + sample_w * 4] = image.pixels[
+            src : src + sample_w * 4
+        ]
+    sample = PngImage(sample_w, sample_h, sample_pixels)
+    out_w, out_h = sample_w * 2, sample_h * 2
+    out = bytearray(out_w * out_h * 4)
+    for y in range(out_h):
+        sy = y if y < sample_h else out_h - 1 - y
+        for x in range(out_w):
+            sx = x if x < sample_w else out_w - 1 - x
+            src = _idx(sample_w, sx, sy)
+            dst = _idx(out_w, x, y)
+            out[dst : dst + 4] = sample.pixels[src : src + 4]
+    return PngImage(out_w, out_h, out)
+
+
+def edge_blended_seamless_tile(
+    image: PngImage, *, blend_fraction: float = 0.14
+) -> PngImage:
+    """Blend opposite borders while preserving the material's central variation."""
+
+    if not 0 < blend_fraction <= 0.5:
+        raise ValueError("blend_fraction must be in (0, 0.5]")
+    out = PngImage(image.width, image.height, bytearray(image.pixels))
+
+    def smoothstep(value: float) -> float:
+        return value * value * (3.0 - 2.0 * value)
+
+    def blend_pair(first: int, second: int, amount: float) -> None:
+        for channel in range(4):
+            left = out.pixels[first + channel]
+            right = out.pixels[second + channel]
+            average = (left + right) / 2
+            out.pixels[first + channel] = round(average * (1 - amount) + left * amount)
+            out.pixels[second + channel] = round(average * (1 - amount) + right * amount)
+
+    blend_x = max(2, round(image.width * blend_fraction))
+    for y in range(image.height):
+        for x in range(blend_x):
+            amount = smoothstep(x / (blend_x - 1))
+            blend_pair(
+                _idx(image.width, x, y),
+                _idx(image.width, image.width - 1 - x, y),
+                amount,
+            )
+
+    blend_y = max(2, round(image.height * blend_fraction))
+    for x in range(image.width):
+        for y in range(blend_y):
+            amount = smoothstep(y / (blend_y - 1))
+            blend_pair(
+                _idx(image.width, x, y),
+                _idx(image.width, x, image.height - 1 - y),
+                amount,
+            )
+    return out
+
+
 def normalize_canvas(
     image: PngImage,
     *,

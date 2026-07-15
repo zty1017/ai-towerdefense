@@ -175,6 +175,20 @@ def mix_hex(left: str, right: str, ratio: float) -> str:
     )
 
 
+def scale_hex(value: str, factor: float) -> str:
+    red, green, blue = hex_to_rgb(value)
+    return "#{:02X}{:02X}{:02X}".format(
+        round(clamp(red * factor, 0, 255)),
+        round(clamp(green * factor, 0, 255)),
+        round(clamp(blue * factor, 0, 255)),
+    )
+
+
+def color_luma(value: str) -> float:
+    red, green, blue = hex_to_rgb(value)
+    return red * 0.299 + green * 0.587 + blue * 0.114
+
+
 def rgba(hex_color: str, alpha: float) -> str:
     r, g, b = hex_to_rgb(hex_color)
     return f"rgba({r},{g},{b},{clamp(alpha, 0, 1):.3f})"
@@ -342,6 +356,92 @@ def fit_resize_png(
             pixels.append(sample_bilinear(sx, sy))
     if soften_strength > 0:
         pixels = soften_pixels(target_width, target_height, pixels, soften_strength)
+    write_png_rgba(output_path, target_width, target_height, pixels)
+
+
+def synthesize_material_field_png(
+    source_path: Path,
+    output_path: Path,
+    target_width: int,
+    target_height: int,
+    *,
+    seed: str,
+) -> None:
+    """Build one non-repeating terrain field from a reviewed material source.
+
+    A small periodic SVG pattern exposes an obvious checkerboard, while simply
+    stretching a square source makes stones and moss read as giant map props.
+    Mirrored, gently warped sampling keeps the material scale game-readable and
+    removes hard seams without asking an image model to decide map geometry.
+    """
+
+    source_width, source_height, source_pixels = read_png_rgba(source_path)
+    def sample(source_x: float, source_y: float) -> tuple[int, int, int, int]:
+        source_x %= source_width
+        source_y %= source_height
+        x0 = int(math.floor(source_x))
+        y0 = int(math.floor(source_y))
+        x1 = (x0 + 1) % source_width
+        y1 = (y0 + 1) % source_height
+        tx = source_x - x0
+        ty = source_y - y0
+        top_left = source_pixels[y0 * source_width + x0]
+        top_right = source_pixels[y0 * source_width + x1]
+        bottom_left = source_pixels[y1 * source_width + x0]
+        bottom_right = source_pixels[y1 * source_width + x1]
+        result = []
+        for channel in range(4):
+            top = top_left[channel] * (1 - tx) + top_right[channel] * tx
+            bottom = bottom_left[channel] * (1 - tx) + bottom_right[channel] * tx
+            result.append(round(top * (1 - ty) + bottom * ty))
+        return result[0], result[1], result[2], result[3]
+
+    phase_cache: dict[tuple[int, int], tuple[float, float]] = {}
+
+    def lattice_phase(cell_x: int, cell_y: int) -> tuple[float, float]:
+        key = (cell_x, cell_y)
+        if key not in phase_cache:
+            digest = hashlib.sha256(f"{seed}:{cell_x}:{cell_y}".encode("utf-8")).digest()
+            phase_cache[key] = (
+                int.from_bytes(digest[0:4], "big") / 0xFFFFFFFF * source_width,
+                int.from_bytes(digest[4:8], "big") / 0xFFFFFFFF * source_height,
+            )
+        return phase_cache[key]
+
+    def smoothstep(value: float) -> float:
+        return value * value * (3.0 - 2.0 * value)
+
+    patch_size = 300.0
+    material_scale_x = source_width / 420.0
+    material_scale_y = source_height / 360.0
+    pixels: list[tuple[int, int, int, int]] = []
+    for y in range(target_height):
+        cell_y = math.floor(y / patch_size)
+        blend_y = smoothstep((y / patch_size) - cell_y)
+        for x in range(target_width):
+            cell_x = math.floor(x / patch_size)
+            blend_x = smoothstep((x / patch_size) - cell_x)
+            samples: list[tuple[tuple[int, int, int, int], float]] = []
+            for offset_y, weight_y in ((0, 1 - blend_y), (1, blend_y)):
+                for offset_x, weight_x in ((0, 1 - blend_x), (1, blend_x)):
+                    phase_x, phase_y = lattice_phase(
+                        cell_x + offset_x, cell_y + offset_y
+                    )
+                    samples.append(
+                        (
+                            sample(
+                                x * material_scale_x + phase_x,
+                                y * material_scale_y + phase_y,
+                            ),
+                            weight_x * weight_y,
+                        )
+                    )
+            pixels.append(
+                tuple(
+                    round(sum(sample_value[channel] * weight for sample_value, weight in samples))
+                    for channel in range(4)
+                )
+            )
     write_png_rgba(output_path, target_width, target_height, pixels)
 
 
@@ -571,12 +671,15 @@ def build_texture_assets(
     texture_refs: dict[str, str] = {}
     media_assets: list[dict[str, Any]] = []
     sizes = {
-        "terrain_tile": (256, 256),
+        # A reviewed terrain source is consumed as one full-frame material
+        # field. Repeating a 256px tile made high-quality candidates visibly
+        # degrade into a checkerboard at runtime.
+        "terrain_tile": (CANVAS_WIDTH, CANVAS_HEIGHT),
         "terrain_detail_tile": (256, 256),
         "road_tile": (256, 128),
         "road_edge_tile": (192, 96),
         ROAD_DETAIL_ATLAS_ROLE: (384, 192),
-        "slot_tile": (192, 96),
+        "slot_tile": (192, 192),
         "shadow_overlay_tile": (256, 256),
         "fog_overlay_tile": (256, 256),
         "light_overlay_tile": (256, 256),
@@ -588,7 +691,16 @@ def build_texture_assets(
         source_path = source_texture_path(texture_source_dir, role)
         source_kind = "procedural_texture"
         if source_path:
-            fit_resize_png(source_path, path, width, height)
+            if role == "terrain_tile":
+                synthesize_material_field_png(
+                    source_path,
+                    path,
+                    width,
+                    height,
+                    seed=f"{seed}:{node_id}:terrain-field",
+                )
+            else:
+                fit_resize_png(source_path, path, width, height)
             source_kind = reviewed_source_kind(source_path, "texture")
         else:
             write_png_rgba(path, width, height, make_texture_pixels(role, width, height, style, rng, node_id))
@@ -722,7 +834,7 @@ def project_cell(position: dict[str, Any], projection: dict[str, float]) -> tupl
     )
 
 
-def smooth_route(points: list[tuple[float, float]], radius_limit: float = 54) -> str:
+def smooth_route(points: list[tuple[float, float]], radius_limit: float = 118) -> str:
     if not points:
         return ""
     if len(points) < 3:
@@ -734,7 +846,7 @@ def smooth_route(points: list[tuple[float, float]], radius_limit: float = 54) ->
         next_x, next_y = points[index + 1]
         d1 = math.hypot(cur_x - prev_x, cur_y - prev_y)
         d2 = math.hypot(next_x - cur_x, next_y - cur_y)
-        radius = min(radius_limit, d1 * 0.34, d2 * 0.34)
+        radius = min(radius_limit, d1 * 0.46, d2 * 0.46)
         if radius <= 1:
             tokens.append(f"L {cur_x:.1f} {cur_y:.1f}")
             continue
@@ -747,6 +859,70 @@ def smooth_route(points: list[tuple[float, float]], radius_limit: float = 54) ->
     last_x, last_y = points[-1]
     tokens.append(f"L {last_x:.1f} {last_y:.1f}")
     return " ".join(tokens)
+
+
+def catmull_rom_route(points: list[tuple[float, float]], tension: float = 0.72) -> str:
+    """Build a smooth route that still passes through every logical waypoint."""
+
+    if not points:
+        return ""
+    if len(points) < 3:
+        return "M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in points)
+    scale = max(0.0, min(1.0, tension)) / 6.0
+    tokens = [f"M {points[0][0]:.1f} {points[0][1]:.1f}"]
+    for index in range(len(points) - 1):
+        p0 = points[index - 1] if index > 0 else points[index]
+        p1 = points[index]
+        p2 = points[index + 1]
+        p3 = points[index + 2] if index + 2 < len(points) else p2
+        c1 = (p1[0] + (p2[0] - p0[0]) * scale, p1[1] + (p2[1] - p0[1]) * scale)
+        c2 = (p2[0] - (p3[0] - p1[0]) * scale, p2[1] - (p3[1] - p1[1]) * scale)
+        tokens.append(
+            f"C {c1[0]:.1f} {c1[1]:.1f} {c2[0]:.1f} {c2[1]:.1f} {p2[0]:.1f} {p2[1]:.1f}"
+        )
+    return " ".join(tokens)
+
+
+def smooth_route_points(
+    points: list[tuple[float, float]],
+    radius_limit: float = 118,
+    curve_steps: int = 10,
+) -> list[tuple[float, float]]:
+    """Return dense points following the same rounded corners as smooth_route."""
+
+    if len(points) < 3:
+        return list(points)
+    result = [points[0]]
+    for index in range(1, len(points) - 1):
+        prev_x, prev_y = points[index - 1]
+        cur_x, cur_y = points[index]
+        next_x, next_y = points[index + 1]
+        d1 = math.hypot(cur_x - prev_x, cur_y - prev_y)
+        d2 = math.hypot(next_x - cur_x, next_y - cur_y)
+        radius = min(radius_limit, d1 * 0.46, d2 * 0.46)
+        if radius <= 1 or d1 <= 1 or d2 <= 1:
+            result.append((cur_x, cur_y))
+            continue
+        entry = (
+            cur_x - ((cur_x - prev_x) / d1) * radius,
+            cur_y - ((cur_y - prev_y) / d1) * radius,
+        )
+        exit_point = (
+            cur_x + ((next_x - cur_x) / d2) * radius,
+            cur_y + ((next_y - cur_y) / d2) * radius,
+        )
+        result.append(entry)
+        for step in range(1, max(2, curve_steps) + 1):
+            t = step / max(2, curve_steps)
+            inv = 1 - t
+            result.append(
+                (
+                    inv * inv * entry[0] + 2 * inv * t * cur_x + t * t * exit_point[0],
+                    inv * inv * entry[1] + 2 * inv * t * cur_y + t * t * exit_point[1],
+                )
+            )
+    result.append(points[-1])
+    return result
 
 
 def render_plan_layers(render_plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -830,7 +1006,7 @@ def nearest_route_sample_to_point(
     for route in as_list(runtime_package.get("path_routes")):
         if not isinstance(route, dict):
             continue
-        points = route_screen_points(route, projection)
+        points = smooth_route_points(route_screen_points(route, projection))
         count = road_sample_count(points, spacing=24, minimum=18, maximum=72)
         for sample in route_screen_samples(points, count):
             distance = math.hypot(sample["x"] - x, sample["y"] - y)
@@ -870,7 +1046,7 @@ def objectives(runtime_package: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def style_values(style_pack: dict[str, Any]) -> dict[str, str]:
-    return {
+    values = {
         "terrain_base": palette(style_pack, "terrain_base", "#23302B"),
         "terrain_detail": palette(style_pack, "terrain_detail", "#4F5A45"),
         "road_base": palette(style_pack, "road_base", "#766C55"),
@@ -883,6 +1059,72 @@ def style_values(style_pack: dict[str, Any]) -> dict[str, str]:
         "fog": palette(style_pack, "fog", "#87908A"),
         "accent": palette(style_pack, "accent", "#E5D48A"),
     }
+    terrain_luma = color_luma(values["terrain_base"])
+    road_luma = color_luma(values["road_base"])
+    if abs(terrain_luma - road_luma) < 24 or (
+        terrain_luma >= 130 and road_luma > terrain_luma - 62
+    ):
+        road_tone = scale_hex(values["road_base"], 0.60)
+        accent_tone = scale_hex(values["accent"], 0.54)
+        values["road_base"] = mix_hex(road_tone, accent_tone, 0.16)
+        values["road_edge"] = mix_hex(
+            scale_hex(values["road_edge"], 0.54),
+            values["road_base"],
+            0.24,
+        )
+    if color_luma(values["build_slot"]) > terrain_luma - 12:
+        values["build_slot"] = mix_hex(
+            scale_hex(values["build_slot"], 0.58),
+            values["road_edge"],
+            0.30,
+        )
+    return values
+
+
+def classify_road_material(style_pack: dict[str, Any]) -> str:
+    briefs = as_obj(style_pack.get("visual_generation_briefs"))
+    hints = [
+        str(briefs.get("road_surface") or "").lower(),
+        str(style_pack.get("road_materials") or "").lower(),
+    ]
+    for hint in hints:
+        if not hint:
+            continue
+        if any(term in hint for term in ("metal", "steel", "iron", "alloy", "金属", "钢板")):
+            return "metal"
+        if any(term in hint for term in ("stone", "slab", "paving", "granite", "cobble", "石板", "石路")):
+            return "stone"
+        if any(term in hint for term in ("wood", "wooden", "timber", "plank", "boardwalk", "栈道", "木板")):
+            return "wood"
+        if any(term in hint for term in ("dirt", "earth", "mud", "soil", "尘土", "泥土")):
+            return "earth"
+    return "stone"
+
+
+def classify_slot_material(style_pack: dict[str, Any]) -> str:
+    briefs = as_obj(style_pack.get("visual_generation_briefs"))
+    hint = " ".join(
+        str(value or "")
+        for value in (
+            briefs.get("build_slot_platform"),
+            style_pack.get("build_slot_platforms"),
+        )
+    ).lower()
+    if any(
+        term in hint
+        for term in (
+            "metal",
+            "alloy",
+            "composite",
+            "reinforced",
+            "anchor point",
+            "金属",
+            "合金",
+            "复合材料",
+        )
+    ):
+        return "tech"
+    return "stone"
 
 
 def texture_pattern_defs(texture_refs: dict[str, str] | None) -> str:
@@ -890,7 +1132,7 @@ def texture_pattern_defs(texture_refs: dict[str, str] | None) -> str:
         return ""
     parts: list[str] = []
     pattern_specs = (
-        ("terrainTexture", "terrain_tile", 256, 256, 0.34, 0, 0, 256, 256),
+        ("terrainTexture", "terrain_tile", CANVAS_WIDTH, CANVAS_HEIGHT, 1.0, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT),
         ("terrainDetailTexture", "terrain_detail_tile", 256, 256, 0.40, 0, 0, 256, 256),
         ("roadTexture", "road_tile", 256, 128, 0.58, 0, 0, 256, 128),
         ("roadEdgeTexture", "road_edge_tile", 192, 96, 0.48, 0, 0, 192, 96),
@@ -898,7 +1140,7 @@ def texture_pattern_defs(texture_refs: dict[str, str] | None) -> str:
         ("roadAtlasPebble", ROAD_DETAIL_ATLAS_ROLE, 96, 48, 0.66, 96, 0, 384, 192),
         ("roadAtlasCrack", ROAD_DETAIL_ATLAS_ROLE, 96, 48, 0.58, 192, 0, 384, 192),
         ("roadAtlasPlatform", ROAD_DETAIL_ATLAS_ROLE, 96, 48, 0.64, 288, 0, 384, 192),
-        ("slotTexture", "slot_tile", 192, 96, 0.62, 0, 0, 192, 96),
+        ("slotTexture", "slot_tile", 192, 192, 0.82, 0, 0, 192, 192),
         ("shadowOverlayTexture", "shadow_overlay_tile", 256, 256, 0.54, 0, 0, 256, 256),
         ("fogOverlayTexture", "fog_overlay_tile", 256, 256, 0.42, 0, 0, 256, 256),
         ("lightOverlayTexture", "light_overlay_tile", 256, 256, 0.44, 0, 0, 256, 256),
@@ -914,6 +1156,15 @@ def texture_pattern_defs(texture_refs: dict[str, str] | None) -> str:
                 "    </pattern>",
             ]
         )
+    slot_href = texture_refs.get("slot_tile")
+    if slot_href:
+        parts.extend(
+            [
+                '    <symbol id="componentBuildSlotPlatform" viewBox="0 0 192 192" overflow="visible">',
+                f'      <image href="{svg_escape(slot_href)}" x="0" y="0" width="192" height="192"/>',
+                "    </symbol>",
+            ]
+        )
     return "\n".join(parts)
 
 
@@ -923,7 +1174,6 @@ def component_symbol_defs(component_refs: dict[str, str] | None) -> str:
     symbols = {
         "objective_foundation": "componentObjectiveFoundation",
         "spawn_marker": "componentSpawnMarker",
-        "non_blocking_decoration": "componentNonBlockingDecoration",
     }
     parts: list[str] = []
     for role, symbol_id in symbols.items():
@@ -937,6 +1187,16 @@ def component_symbol_defs(component_refs: dict[str, str] | None) -> str:
                 "    </symbol>",
             ]
         )
+    decoration_href = component_refs.get("non_blocking_decoration")
+    if decoration_href:
+        for index, (offset_x, offset_y) in enumerate(((0, 0), (-256, 0), (0, -256), (-256, -256))):
+            parts.extend(
+                [
+                    f'    <symbol id="componentNonBlockingDecoration{index}" viewBox="0 0 256 256" overflow="hidden">',
+                    f'      <image href="{svg_escape(decoration_href)}" x="{offset_x}" y="{offset_y}" width="512" height="512"/>',
+                    "    </symbol>",
+                ]
+            )
     return "\n".join(parts)
 
 
@@ -973,6 +1233,11 @@ def svg_defs(
 {component_symbol_defs(component_refs)}
     <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000000" flood-opacity="0.30"/>
+    </filter>
+    <filter id="roadOrganicEdge" x="-12%" y="-24%" width="124%" height="148%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.022" numOctaves="2" seed="17" result="roadNoise"/>
+      <feDisplacementMap in="SourceGraphic" in2="roadNoise" scale="9" xChannelSelector="R" yChannelSelector="G" result="brokenRoad"/>
+      <feGaussianBlur in="brokenRoad" stdDeviation="0.45"/>
     </filter>
     <filter id="lampBloom" x="-80%" y="-80%" width="260%" height="260%">
       <feGaussianBlur stdDeviation="5" result="blur"/>
@@ -1016,7 +1281,7 @@ def route_paths(runtime_package: dict[str, Any], projection: dict[str, float]) -
             continue
         points = route_screen_points(route, projection)
         if len(points) >= 2:
-            paths.append((route, smooth_route(points)))
+            paths.append((route, catmull_rom_route(points)))
     return paths
 
 
@@ -1080,6 +1345,7 @@ def terrain_layer(
     style: dict[str, str],
     rng: random.Random,
     backdrop_ref: str | None = None,
+    material_field: bool = False,
 ) -> str:
     if backdrop_ref:
         return "\n".join(
@@ -1088,7 +1354,16 @@ def terrain_layer(
                 f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="{mix_hex(style["terrain_base"], "#020403", 0.70)}"/>',
                 f'    <image href="{svg_escape(backdrop_ref)}" x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" preserveAspectRatio="none"/>',
                 f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="{rgba(style["terrain_base"], 0.06)}"/>',
-                f'    <ellipse cx="{CANVAS_WIDTH * 0.52:.1f}" cy="{CANVAS_HEIGHT * 0.50:.1f}" rx="{CANVAS_WIDTH * 0.62:.1f}" ry="{CANVAS_HEIGHT * 0.38:.1f}" fill="none" stroke="#000000" stroke-width="120" opacity="0.11"/>',
+                "  </g>",
+            ]
+        )
+    if material_field:
+        return "\n".join(
+            [
+                '  <g id="terrain_base" data-layer-role="terrain_base" data-visual-source="compiled-reviewed-material-field">',
+                f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="{mix_hex(style["terrain_base"], "#020403", 0.32)}"/>',
+                f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="url(#terrainTexture)" opacity="0.92"/>',
+                f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="{rgba(style["terrain_base"], 0.08)}" style="mix-blend-mode:color"/>',
                 "  </g>",
             ]
         )
@@ -1167,7 +1442,7 @@ def road_layer(
     lines = ['  <g id="road_band" data-layer-role="road_band" filter="url(#softShadow)">']
     for route, path_data in route_paths(runtime_package, projection):
         route_id = svg_escape(route.get("route_id") or "route")
-        points = route_screen_points(route, projection)
+        points = smooth_route_points(route_screen_points(route, projection))
         road_width = visible_road_width(render_plan, route, projection)
         lines.extend(
             [
@@ -1265,8 +1540,8 @@ def road_shadow_layer(
         road_width = visible_road_width(render_plan, route, projection)
         lines.extend(
             [
-                f'    <path d="{path_data}" fill="none" stroke="#000000" stroke-width="{road_width * 1.16:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.075" data-route="{route_id}"/>',
-                f'    <path d="{path_data}" fill="none" stroke="url(#shadowOverlayTexture)" stroke-width="{road_width * 0.92:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.095" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="#000000" stroke-width="{road_width * 1.04:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.045" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="url(#shadowOverlayTexture)" stroke-width="{road_width * 0.88:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.060" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
             ]
         )
     lines.append("  </g>")
@@ -1283,13 +1558,12 @@ def road_edge_layer(
     lines = ['  <g id="road_edge" data-layer-role="road_edge">']
     for route, path_data in route_paths(runtime_package, projection):
         route_id = svg_escape(route.get("route_id") or "route")
-        points = route_screen_points(route, projection)
+        points = smooth_route_points(route_screen_points(route, projection))
         road_width = visible_road_width(render_plan, route, projection)
         lines.extend(
             [
-                f'    <path d="{path_data}" fill="none" stroke="{rgba(style["terrain_detail"], 0.10)}" stroke-width="{road_width * 1.02:.1f}" stroke-linecap="round" stroke-linejoin="round" data-route="{route_id}"/>',
-                f'    <path d="{path_data}" fill="none" stroke="url(#roadEdgeTexture)" stroke-width="{road_width * 0.86:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.16" data-route="{route_id}"/>',
-                f'    <path d="{path_data}" fill="none" stroke="{rgba(mix_hex(style["road_base"], "#120B07", 0.42), 0.13)}" stroke-width="{road_width * 0.64:.1f}" stroke-linecap="round" stroke-linejoin="round" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="{rgba(style["terrain_detail"], 0.075)}" stroke-width="{road_width * 1.04:.1f}" stroke-linecap="round" stroke-linejoin="round" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="url(#roadEdgeTexture)" stroke-width="{road_width * 0.94:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.11" filter="url(#roadOrganicEdge)" style="mix-blend-mode:multiply" data-route="{route_id}"/>',
             ]
         )
         edge_colors = [
@@ -1298,7 +1572,7 @@ def road_edge_layer(
             mix_hex(style["road_edge"], style["resource"], 0.22),
             mix_hex(style["road_edge"], "#090704", 0.36),
         ]
-        edge_count = road_sample_count(points, spacing=max(10, road_width * 0.28), minimum=34, maximum=112)
+        edge_count = road_sample_count(points, spacing=max(18, road_width * 0.48), minimum=18, maximum=64)
         for index, sample in enumerate(route_screen_samples(points, edge_count)):
             for side in (-1, 1):
                 if rng.random() < 0.16:
@@ -1308,7 +1582,7 @@ def road_edge_layer(
                 x = sample["x"] + sample["nx"] * normal_offset + sample["dx"] * along_jitter
                 y = sample["y"] + sample["ny"] * normal_offset + sample["dy"] * along_jitter
                 color = edge_colors[(index + (0 if side < 0 else 1)) % len(edge_colors)]
-                opacity = rng.uniform(0.18, 0.42)
+                opacity = rng.uniform(0.10, 0.24)
                 if rng.random() < 0.62:
                     rx = road_width * rng.uniform(0.06, 0.16)
                     ry = road_width * rng.uniform(0.025, 0.075)
@@ -1321,7 +1595,7 @@ def road_edge_layer(
                     lines.append(
                         f'    <rect x="{x - block_w / 2:.1f}" y="{y - block_h / 2:.1f}" width="{block_w:.1f}" height="{block_h:.1f}" rx="{block_h * 0.42:.1f}" fill="url(#roadAtlasCrack)" opacity="{opacity:.3f}" stroke="{rgba(color, 0.18)}" stroke-width="1.0" transform="rotate({sample["angle"] + rng.uniform(-22, 22):.1f} {x:.1f} {y:.1f})" data-route="{route_id}" data-road-edge-prop="broken-curb"/>'
                     )
-        berm_count = road_sample_count(points, spacing=max(28, road_width * 0.70), minimum=10, maximum=36)
+        berm_count = road_sample_count(points, spacing=max(42, road_width * 0.96), minimum=6, maximum=22)
         for index, sample in enumerate(route_screen_samples(points, berm_count)):
             for side in (-1, 1):
                 if rng.random() < 0.30:
@@ -1345,20 +1619,108 @@ def road_surface_layer(
     projection: dict[str, float],
     style: dict[str, str],
     rng: random.Random,
+    material_kind: str = "stone",
+    clean_material_field: bool = False,
 ) -> str:
-    lines = ['  <g id="road_surface" data-layer-role="road_surface">']
+    if clean_material_field:
+        lines = [
+            '  <g id="road_surface" data-layer-role="road_surface" data-visual-source="reviewed-material-brush">'
+        ]
+        for route, path_data in route_paths(runtime_package, projection):
+            route_id = svg_escape(route.get("route_id") or "route")
+            road_width = visible_road_width(render_plan, route, projection)
+            lines.extend(
+                [
+                    f'    <path d="{path_data}" fill="none" stroke="#0B0907" stroke-width="{road_width * 1.10:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.16" filter="url(#roadOrganicEdge)" data-route="{route_id}" data-road-brush="contact-shadow"/>',
+                    f'    <path d="{path_data}" fill="none" stroke="{rgba(mix_hex(style["terrain_detail"], style["road_edge"], 0.28), 0.34)}" stroke-width="{road_width * 1.02:.1f}" stroke-linecap="round" stroke-linejoin="round" filter="url(#roadOrganicEdge)" data-route="{route_id}" data-road-brush="soft-shoulder"/>',
+                    f'    <path d="{path_data}" fill="none" stroke="url(#roadTexture)" stroke-width="{road_width * 0.84:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.82" filter="url(#roadOrganicEdge)" data-route="{route_id}" data-road-brush="continuous-reviewed-material"/>',
+                    f'    <path d="{path_data}" fill="none" stroke="{rgba(style["road_base"], 0.16)}" stroke-width="{road_width * 0.62:.1f}" stroke-linecap="round" stroke-linejoin="round" data-route="{route_id}" data-road-brush="tone-unifier"/>',
+                ]
+            )
+        lines.append("  </g>")
+        return "\n".join(lines)
+
+    blend_style = "mix-blend-mode:multiply" if material_kind in {"stone", "earth", "wood"} else "mix-blend-mode:normal"
+    lines = [f'  <g id="road_surface" data-layer-role="road_surface" style="{blend_style}">']
+    bright_terrain = color_luma(style["terrain_base"]) >= 178
     for route, path_data in route_paths(runtime_package, projection):
         route_id = svg_escape(route.get("route_id") or "route")
         points = route_screen_points(route, projection)
         road_width = visible_road_width(render_plan, route, projection)
+        base_alpha = {
+            "wood": 0.13,
+            "metal": 0.34,
+            "stone": 0.12,
+            "earth": 0.11,
+        }.get(material_kind, 0.16)
+        if bright_terrain:
+            base_alpha += 0.08
+        base_width = {
+            "wood": 0.72,
+            "metal": 0.72,
+            "stone": 0.78,
+            "earth": 0.82,
+        }.get(material_kind, 0.76)
+        wash_width = 0.68 if material_kind in {"wood", "metal"} else 0.74
+        texture_width = 0.62 if material_kind in {"wood", "metal"} else 0.70
+        wash_alpha = 0.14 if material_kind == "metal" else (0.08 if material_kind == "wood" else 0.08)
+        texture_alpha = 0.22 if material_kind == "metal" else (0.24 if material_kind == "wood" else 0.24)
+        if bright_terrain:
+            wash_alpha += 0.03
+            texture_alpha += 0.06
         lines.extend(
             [
-                f'    <path d="{path_data}" fill="none" stroke="{rgba(mix_hex(style["road_base"], style["road_edge"], 0.12), 0.16)}" stroke-width="{road_width * 0.52:.1f}" stroke-linecap="round" stroke-linejoin="round" data-route="{route_id}"/>',
-                f'    <path d="{path_data}" fill="none" stroke="url(#roadWash)" stroke-width="{road_width * 0.44:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.13" data-route="{route_id}"/>',
-                f'    <path d="{path_data}" fill="none" stroke="url(#roadTexture)" stroke-width="{road_width * 0.36:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="0.11" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="{rgba(mix_hex(style["road_base"], style["road_edge"], 0.12), base_alpha)}" stroke-width="{road_width * base_width:.1f}" stroke-linecap="round" stroke-linejoin="round" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="url(#roadWash)" stroke-width="{road_width * wash_width:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="{wash_alpha:.2f}" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
+                f'    <path d="{path_data}" fill="none" stroke="url(#roadTexture)" stroke-width="{road_width * texture_width:.1f}" stroke-linecap="round" stroke-linejoin="round" opacity="{texture_alpha:.2f}" filter="url(#roadOrganicEdge)" data-route="{route_id}"/>',
             ]
         )
-        patch_count = road_sample_count(points, spacing=max(9, road_width * 0.22), minimum=58, maximum=168)
+        if material_kind == "wood":
+            seam_count = road_sample_count(
+                points,
+                spacing=max(20, road_width * 0.58),
+                minimum=14,
+                maximum=48,
+            )
+            wood_dark = mix_hex(style["road_edge"], "#211A14", 0.68)
+            for sample in route_screen_samples(points, seam_count):
+                half = road_width * rng.uniform(0.28, 0.34)
+                x1 = sample["x"] - sample["nx"] * half
+                y1 = sample["y"] - sample["ny"] * half
+                x2 = sample["x"] + sample["nx"] * half
+                y2 = sample["y"] + sample["ny"] * half
+                lines.append(
+                    f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{rgba(wood_dark, 0.13)}" stroke-width="0.8" data-route="{route_id}" data-road-brush="wood-seam"/>'
+                )
+        if material_kind == "metal":
+            seam_count = road_sample_count(
+                points,
+                spacing=max(28, road_width * 0.82),
+                minimum=12,
+                maximum=48,
+            )
+            metal_dark = mix_hex(style["road_edge"], "#172027", 0.66)
+            metal_light = mix_hex(style["road_base"], style["accent"], 0.24)
+            lines.append(
+                f'    <path d="{path_data}" fill="none" stroke="{rgba(metal_light, 0.20)}" stroke-width="{road_width * 0.48:.1f}" stroke-linecap="round" stroke-linejoin="round" data-route="{route_id}" data-road-brush="metal-continuous-highlight"/>'
+            )
+            for index, sample in enumerate(route_screen_samples(points, seam_count)):
+                x = sample["x"]
+                y = sample["y"]
+                half = road_width * rng.uniform(0.26, 0.31)
+                x1 = x - sample["nx"] * half
+                y1 = y - sample["ny"] * half
+                x2 = x + sample["nx"] * half
+                y2 = y + sample["ny"] * half
+                lines.extend(
+                    [
+                        f'    <line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{rgba(metal_dark, 0.46)}" stroke-width="1.4" data-route="{route_id}" data-road-brush="metal-panel-seam"/>',
+                        f'    <circle cx="{x1:.1f}" cy="{y1:.1f}" r="1.3" fill="{rgba(metal_light, 0.58)}" data-route="{route_id}" data-road-brush="metal-rivet"/>',
+                        f'    <circle cx="{x2:.1f}" cy="{y2:.1f}" r="1.3" fill="{rgba(metal_light, 0.58)}" data-route="{route_id}" data-road-brush="metal-rivet"/>',
+                    ]
+                )
+            continue
+        patch_count = road_sample_count(points, spacing=max(18, road_width * 0.42), minimum=24, maximum=82)
         for index, sample in enumerate(route_screen_samples(points, patch_count)):
             lane = rng.uniform(-0.24, 0.24)
             x = sample["x"] + sample["nx"] * lane * road_width + sample["dx"] * rng.uniform(-0.12, 0.12) * road_width
@@ -1368,7 +1730,7 @@ def road_surface_layer(
             fill = "url(#roadTexture)" if index % 4 else "url(#roadAtlasDust)"
             if index % 5 == 2:
                 fill = "url(#roadAtlasPebble)"
-            opacity = rng.uniform(0.26, 0.50)
+            opacity = rng.uniform(0.12, 0.28)
             angle = sample["angle"] + rng.uniform(-13, 13)
             if rng.random() < 0.34:
                 slab_w = rx * rng.uniform(1.10, 1.55)
@@ -1386,7 +1748,7 @@ def road_surface_layer(
             rgba(style["road_edge"], 0.14),
             rgba(style["accent"], 0.10),
         ]
-        brush_count = road_sample_count(points, spacing=max(9, road_width * 0.24), minimum=42, maximum=134)
+        brush_count = road_sample_count(points, spacing=max(20, road_width * 0.48), minimum=20, maximum=72)
         for index, sample in enumerate(route_screen_samples(points, brush_count)):
             lane = rng.uniform(-0.33, 0.33)
             x = sample["x"] + sample["nx"] * lane * road_width + sample["dx"] * rng.uniform(-0.14, 0.14) * road_width
@@ -1397,7 +1759,7 @@ def road_surface_layer(
             lines.append(
                 f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="url(#roadAtlasDust)" opacity="{0.22 + (index % 4) * 0.030:.3f}" stroke="{color}" stroke-width="0.6" transform="rotate({sample["angle"] + rng.uniform(-12, 12):.1f} {x:.1f} {y:.1f})" data-route="{route_id}" data-road-brush="surface"/>'
             )
-        intrusion_count = road_sample_count(points, spacing=max(12, road_width * 0.30), minimum=42, maximum=124)
+        intrusion_count = road_sample_count(points, spacing=max(22, road_width * 0.54), minimum=18, maximum=64)
         for index, sample in enumerate(route_screen_samples(points, intrusion_count)):
             for side in (-1, 1):
                 if rng.random() < 0.34:
@@ -1407,12 +1769,17 @@ def road_surface_layer(
                 y = sample["y"] + sample["ny"] * edge_offset + sample["dy"] * rng.uniform(-0.20, 0.20) * road_width
                 rx = road_width * rng.uniform(0.14, 0.40)
                 ry = road_width * rng.uniform(0.050, 0.18)
-                fill = "url(#terrainDetailTexture)" if index % 2 else rgba(style["terrain_base"], rng.uniform(0.22, 0.38))
-                opacity = rng.uniform(0.18, 0.34) if fill.startswith("url(") else 1.0
+                fill = "url(#terrainDetailTexture)" if index % 2 else rgba(
+                    style["terrain_detail"] if bright_terrain else style["terrain_base"],
+                    rng.uniform(0.08, 0.16) if bright_terrain else rng.uniform(0.22, 0.38),
+                )
+                opacity = (
+                    rng.uniform(0.08, 0.16) if bright_terrain else rng.uniform(0.18, 0.34)
+                ) if fill.startswith("url(") else 1.0
                 lines.append(
                     f'    <ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{rx:.1f}" ry="{ry:.1f}" fill="{fill}" opacity="{opacity:.3f}" transform="rotate({sample["angle"] + rng.uniform(-18, 18):.1f} {x:.1f} {y:.1f})" data-route="{route_id}" data-road-brush="terrain-intrusion"/>'
                 )
-        rut_count = road_sample_count(points, spacing=max(20, road_width * 0.48), minimum=14, maximum=52)
+        rut_count = road_sample_count(points, spacing=max(34, road_width * 0.74), minimum=8, maximum=32)
         for index, sample in enumerate(route_screen_samples(points, rut_count)):
             for side in (-1, 1):
                 if rng.random() < 0.24:
@@ -1433,6 +1800,8 @@ def build_slots_layer(
     render_plan: dict[str, Any],
     projection: dict[str, float],
     style: dict[str, str],
+    material_kind: str = "stone",
+    reviewed_component: bool = False,
 ) -> str:
     lines = ['  <g id="build_slots" data-layer-role="build_slots">']
     for index, slot in enumerate(as_list(runtime_package.get("build_slots"))):
@@ -1440,22 +1809,61 @@ def build_slots_layer(
             continue
         x, y = project_cell(slot["position"], projection)
         width_scale, height_scale = slot_footprint(render_plan, slot)
-        rx = projection["base_tile_w"] * 0.31 * width_scale
-        ry = projection["base_tile_h"] * 0.37 * height_scale
+        rx = projection["base_tile_w"] * 0.27 * width_scale
+        ry = projection["base_tile_h"] * 0.31 * height_scale
         slot_id = svg_escape(slot.get("slot_id") or f"slot_{index + 1}")
         nearest = nearest_route_sample_to_point(runtime_package, projection, x, y)
         angle = nearest["angle"] if nearest else 0.0
         slot_rng = random.Random(f"{slot_id}:platform")
         if nearest and nearest["distance"] <= projection["base_tile_w"] * 1.15:
-            connect_width = max(4, min(rx * 0.42, nearest["distance"] * 0.13))
+            connect_width = max(3, min(rx * 0.32, nearest["distance"] * 0.10))
             lines.append(
-                f'    <path d="M {nearest["x"]:.1f} {nearest["y"]:.1f} L {x:.1f} {y:.1f}" fill="none" stroke="url(#roadAtlasDust)" stroke-width="{connect_width:.1f}" stroke-linecap="round" opacity="0.13" data-slot="{slot_id}" data-slot-platform="footpath"/>'
+                f'    <path d="M {nearest["x"]:.1f} {nearest["y"]:.1f} L {x:.1f} {y:.1f}" fill="none" stroke="url(#roadAtlasDust)" stroke-width="{connect_width:.1f}" stroke-linecap="round" opacity="0.055" data-slot="{slot_id}" data-slot-platform="footpath"/>'
             )
+        if reviewed_component:
+            component_size = projection["base_tile_w"] * 0.96 * max(width_scale, height_scale)
+            lines.append(
+                f'    <use href="#componentBuildSlotPlatform" x="{x - component_size / 2:.1f}" y="{y - component_size * 0.54:.1f}" width="{component_size:.1f}" height="{component_size:.1f}" data-slot="{slot_id}" data-slot-platform="reviewed-component" data-visual-source="compiled-reviewed-component"/>'
+            )
+            continue
         angle_rad = math.radians(angle)
         ux = math.cos(angle_rad)
         uy = math.sin(angle_rad)
         vx = -uy
         vy = ux
+        if material_kind == "tech":
+            def tech_point(local_x: float, local_y: float) -> tuple[float, float]:
+                return (
+                    x + ux * local_x + vx * local_y,
+                    y + uy * local_x + vy * local_y,
+                )
+
+            outer = [
+                tech_point(-rx, -ry * 0.58),
+                tech_point(rx, -ry * 0.58),
+                tech_point(rx * 0.82, ry * 0.58),
+                tech_point(-rx * 0.82, ry * 0.58),
+            ]
+            inner = [
+                tech_point(-rx * 0.58, -ry * 0.34),
+                tech_point(rx * 0.58, -ry * 0.34),
+                tech_point(rx * 0.48, ry * 0.34),
+                tech_point(-rx * 0.48, ry * 0.34),
+            ]
+            outer_text = " ".join(f"{px:.1f},{py:.1f}" for px, py in outer)
+            inner_text = " ".join(f"{px:.1f},{py:.1f}" for px, py in inner)
+            plate = mix_hex(style["build_slot"], style["road_base"], 0.42)
+            lines.extend(
+                [
+                    f'    <polygon points="{outer_text}" fill="{rgba(plate, 0.38)}" stroke="{rgba(style["road_edge"], 0.30)}" stroke-width="1.0" data-slot="{slot_id}" data-slot-platform="reinforced-mount"/>',
+                    f'    <polygon points="{inner_text}" fill="{rgba(mix_hex(plate, "#111A20", 0.48), 0.30)}" stroke="{rgba(style["accent"], 0.12)}" stroke-width="0.7" data-slot="{slot_id}" data-slot-platform="empty-tech-inset"/>',
+                ]
+            )
+            for bolt_x, bolt_y in outer:
+                lines.append(
+                    f'    <circle cx="{bolt_x:.1f}" cy="{bolt_y:.1f}" r="1.0" fill="{rgba(style["accent"], 0.28)}" data-slot="{slot_id}" data-slot-platform="anchor-bolt"/>'
+                )
+            continue
         slab_points: list[str] = []
         slab_point_count = 9
         for point_index in range(slab_point_count):
@@ -1466,15 +1874,21 @@ def build_slots_layer(
             px = x + ux * local_x + vx * local_y
             py = y + uy * local_x + vy * local_y
             slab_points.append(f"{px:.1f},{py:.1f}")
-        slab_fill = rgba(mix_hex(style["road_edge"], style["terrain_base"], 0.52), 0.38)
+        inner_points: list[str] = []
+        for point in slab_points:
+            px_text, py_text = point.split(",", 1)
+            px = x + (float(px_text) - x) * 0.58
+            py = y + (float(py_text) - y) * 0.58
+            inner_points.append(f"{px:.1f},{py:.1f}")
+        slab_fill = rgba(mix_hex(style["road_edge"], style["terrain_base"], 0.66), 0.28)
         lines.extend(
             [
-                f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.12:.1f}" rx="{rx * 1.08:.1f}" ry="{ry * 0.58:.1f}" fill="#000000" opacity="0.22" data-slot="{slot_id}" data-slot-platform="ground-shadow"/>',
-                f'    <polygon points="{" ".join(slab_points)}" fill="{slab_fill}" stroke="{rgba(style["road_edge"], 0.34)}" stroke-width="1.2" data-slot="{slot_id}" data-slot-platform="broken-slab"/>',
-                f'    <polygon points="{" ".join(slab_points)}" fill="url(#roadAtlasPlatform)" opacity="0.66" data-slot="{slot_id}" data-slot-platform="stone-texture"/>',
+                f'    <polygon points="{" ".join(slab_points)}" fill="{slab_fill}" stroke="{rgba(style["road_edge"], 0.16)}" stroke-width="0.9" data-slot="{slot_id}" data-slot-platform="broken-slab"/>',
+                f'    <polygon points="{" ".join(slab_points)}" fill="url(#roadAtlasPlatform)" opacity="0.22" style="mix-blend-mode:multiply" data-slot="{slot_id}" data-slot-platform="stone-texture"/>',
+                f'    <polygon points="{" ".join(inner_points)}" fill="{rgba(mix_hex(style["build_slot"], style["terrain_base"], 0.28), 0.34)}" stroke="{rgba(style["accent"], 0.10)}" stroke-width="0.7" data-slot="{slot_id}" data-slot-platform="empty-inset"/>',
             ]
         )
-        stone_count = 10 + (index % 4)
+        stone_count = 1 + (index % 2)
         for stone_index in range(stone_count):
             theta = (math.tau * stone_index / stone_count) + slot_rng.uniform(-0.24, 0.24)
             radius = slot_rng.uniform(0.68, 1.16)
@@ -1488,17 +1902,6 @@ def build_slots_layer(
             fill = "url(#roadAtlasPlatform)" if stone_index % 3 else "url(#roadAtlasCrack)"
             lines.append(
                 f'    <rect x="{px - stone_w / 2:.1f}" y="{py - stone_h / 2:.1f}" width="{stone_w:.1f}" height="{stone_h:.1f}" rx="{stone_h * 0.32:.1f}" fill="{fill}" opacity="{slot_rng.uniform(0.62, 0.90):.3f}" stroke="{rgba(style["road_edge"], slot_rng.uniform(0.18, 0.36))}" stroke-width="0.9" transform="rotate({stone_angle:.1f} {px:.1f} {py:.1f})" data-slot="{slot_id}" data-slot-platform="ruin-stone"/>'
-            )
-        rubble_count = 6 + (index % 3)
-        for rubble_index in range(rubble_count):
-            local_x = slot_rng.uniform(-0.44, 0.44) * rx
-            local_y = slot_rng.uniform(-0.28, 0.30) * ry
-            px = x + ux * local_x + vx * local_y
-            py = y + uy * local_x + vy * local_y
-            rubble_rx = rx * slot_rng.uniform(0.045, 0.095)
-            rubble_ry = ry * slot_rng.uniform(0.040, 0.090)
-            lines.append(
-                f'    <ellipse cx="{px:.1f}" cy="{py:.1f}" rx="{rubble_rx:.1f}" ry="{rubble_ry:.1f}" fill="{rgba(style["accent"] if rubble_index == 0 else style["road_edge"], 0.16 if rubble_index == 0 else 0.34)}" opacity="{slot_rng.uniform(0.56, 0.84):.3f}" transform="rotate({angle + slot_rng.uniform(-24, 24):.1f} {px:.1f} {py:.1f})" data-slot="{slot_id}" data-slot-platform="loose-rubble"/>'
             )
     lines.append("  </g>")
     return "\n".join(lines)
@@ -1527,18 +1930,17 @@ def objectives_layer(
         post_gap = base_rx * 0.34
         plinth_fill = mix_hex(style["road_edge"], style["terrain_base"], 0.60)
         if component_ref:
-            image_size = projection["base_tile_w"] * (1.42 if is_core else 0.96)
+            image_size = projection["base_tile_w"] * (0.88 if is_core else 0.66)
             image_bottom = y + base_ry * 0.72
             lines.extend(
                 [
-                    f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.18:.1f}" rx="{base_rx * 1.06:.1f}" ry="{base_ry * 0.70:.1f}" fill="#000000" opacity="0.30" data-target="{target_id}" data-objective-part="shadow"/>',
                     f'    <use href="#componentObjectiveFoundation" x="{x - image_size / 2:.1f}" y="{image_bottom - image_size:.1f}" width="{image_size:.1f}" height="{image_size:.1f}" data-target="{target_id}" data-objective-part="reviewed-component" data-visual-source="compiled-reviewed-component"/>',
                 ]
             )
             continue
         lines.extend(
             [
-                f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.18:.1f}" rx="{base_rx * 1.06:.1f}" ry="{base_ry * 0.70:.1f}" fill="#000000" opacity="0.30" data-target="{target_id}" data-objective-part="shadow"/>',
+                f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.12:.1f}" rx="{base_rx * 0.72:.1f}" ry="{base_ry * 0.34:.1f}" fill="#000000" opacity="0.11" data-target="{target_id}" data-objective-part="fallback-contact-shadow"/>',
                 f'    <polygon points="{x - base_rx:.1f},{y - base_ry * 0.10:.1f} {x:.1f},{y - base_ry * 0.58:.1f} {x + base_rx:.1f},{y - base_ry * 0.10:.1f} {x + base_rx * 0.70:.1f},{y + base_ry * 0.46:.1f} {x:.1f},{y + base_ry * 0.70:.1f} {x - base_rx * 0.70:.1f},{y + base_ry * 0.46:.1f}" fill="{rgba(plinth_fill, 0.72)}" stroke="{rgba(style["road_edge"], 0.38)}" stroke-width="1.4" data-target="{target_id}" data-objective-part="stone-plinth"/>',
                 f'    <ellipse cx="{x:.1f}" cy="{y - base_ry * 0.10:.1f}" rx="{base_rx * 0.72:.1f}" ry="{base_ry * 0.36:.1f}" fill="url(#roadAtlasPlatform)" opacity="0.66" data-target="{target_id}" data-objective-part="plinth-texture"/>',
             ]
@@ -1584,18 +1986,15 @@ def spawn_layer(
         gate_w = projection["base_tile_w"] * 0.58
         gate_h = projection["base_tile_h"] * 0.70
         if component_ref:
-            image_size = projection["base_tile_w"] * 1.20
-            image_bottom = y + projection["base_tile_h"] * 0.30
-            lines.extend(
-                [
-                    f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.20:.1f}" rx="{gate_w * 0.94:.1f}" ry="{projection["base_tile_h"] * 0.28:.1f}" fill="#000000" opacity="0.34" data-spawn="{spawn_id}" data-spawn-part="shadow"/>',
-                    f'    <use href="#componentSpawnMarker" x="{x - image_size / 2:.1f}" y="{image_bottom - image_size:.1f}" width="{image_size:.1f}" height="{image_size:.1f}" data-spawn="{spawn_id}" data-spawn-part="reviewed-component" data-visual-source="compiled-reviewed-component"/>',
-                ]
+            image_size = projection["base_tile_w"] * 0.76
+            image_bottom = y + projection["base_tile_h"] * 0.18
+            lines.append(
+                f'    <use href="#componentSpawnMarker" x="{x - image_size / 2:.1f}" y="{image_bottom - image_size:.1f}" width="{image_size:.1f}" height="{image_size:.1f}" data-spawn="{spawn_id}" data-spawn-part="reviewed-component" data-visual-source="compiled-reviewed-component"/>'
             )
             continue
         lines.extend(
             [
-                f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.20:.1f}" rx="{gate_w * 0.94:.1f}" ry="{projection["base_tile_h"] * 0.28:.1f}" fill="#000000" opacity="0.34" data-spawn="{spawn_id}" data-spawn-part="shadow"/>',
+                f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.12:.1f}" rx="{gate_w * 0.54:.1f}" ry="{projection["base_tile_h"] * 0.14:.1f}" fill="#000000" opacity="0.12" data-spawn="{spawn_id}" data-spawn-part="fallback-contact-shadow"/>',
                 f'    <ellipse cx="{x:.1f}" cy="{y + projection["base_tile_h"] * 0.06:.1f}" rx="{gate_w * 0.56:.1f}" ry="{projection["base_tile_h"] * 0.20:.1f}" fill="{mix_hex(style["spawn"], "#050408", 0.72)}" opacity="0.76" data-spawn="{spawn_id}" data-spawn-part="mouth"/>',
                 f'    <path d="M {x - gate_w:.1f} {y + projection["base_tile_h"] * 0.04:.1f} C {x - gate_w * 0.74:.1f} {y - gate_h:.1f}, {x + gate_w * 0.74:.1f} {y - gate_h:.1f}, {x + gate_w:.1f} {y + projection["base_tile_h"] * 0.04:.1f}" fill="none" stroke="{rgba(style["road_edge"], 0.32)}" stroke-width="3.2" stroke-linecap="round" data-spawn="{spawn_id}" data-spawn-part="broken-arch"/>',
                 f'    <path d="M {x - gate_w * 0.64:.1f} {y + projection["base_tile_h"] * 0.02:.1f} C {x - gate_w * 0.42:.1f} {y - gate_h * 0.60:.1f}, {x + gate_w * 0.42:.1f} {y - gate_h * 0.60:.1f}, {x + gate_w * 0.64:.1f} {y + projection["base_tile_h"] * 0.02:.1f}" fill="none" stroke="{rgba(style["spawn"], 0.34)}" stroke-width="2.0" stroke-linecap="round" data-spawn="{spawn_id}" data-spawn-part="fog-arch"/>',
@@ -1700,11 +2099,25 @@ def non_blocking_decorations_layer(
     placed = 0
     attempts = 0
     if component_ref:
-        while placed < 18 and attempts < 180:
+        while placed < 10 and attempts < 220:
             attempts += 1
-            cell_x = rng.randrange(0, width_cells)
-            cell_y = rng.randrange(0, height_cells)
+            large_prefab = placed < 4
+            side = placed % 4 if large_prefab else rng.randrange(0, 4)
+            if side == 0:
+                cell_x, cell_y = rng.randrange(0, width_cells), rng.randrange(0, min(2, height_cells))
+            elif side == 1:
+                cell_x, cell_y = rng.randrange(0, width_cells), rng.randrange(max(0, height_cells - 2), height_cells)
+            elif side == 2:
+                cell_x, cell_y = rng.randrange(0, min(2, width_cells)), rng.randrange(0, height_cells)
+            else:
+                cell_x, cell_y = rng.randrange(max(0, width_cells - 2), width_cells), rng.randrange(0, height_cells)
             if (cell_x, cell_y) in reserved:
+                continue
+            clearance = 1 if large_prefab else 0
+            if any(
+                abs(cell_x - reserved_x) <= clearance and abs(cell_y - reserved_y) <= clearance
+                for reserved_x, reserved_y in reserved
+            ):
                 continue
             x, y = project_cell(
                 {"x": cell_x + rng.uniform(-0.32, 0.32), "y": cell_y + rng.uniform(-0.32, 0.32)},
@@ -1712,10 +2125,11 @@ def non_blocking_decorations_layer(
             )
             if x < 54 or x > CANVAS_WIDTH - 54 or y < 54 or y > CANVAS_HEIGHT - 34:
                 continue
-            size = rng.uniform(0.42, 0.72) * projection["base_tile_w"]
-            angle = rng.uniform(-12, 12)
+            size = rng.uniform(0.88, 1.34) * projection["base_tile_w"] if large_prefab else rng.uniform(0.32, 0.52) * projection["base_tile_w"]
+            angle = rng.uniform(-5, 5) if large_prefab else rng.uniform(-12, 12)
+            variant = placed % 4 if large_prefab else 2 + (placed % 2)
             lines.append(
-                f'    <use href="#componentNonBlockingDecoration" x="{x - size / 2:.1f}" y="{y - size * 0.82:.1f}" width="{size:.1f}" height="{size:.1f}" opacity="{rng.uniform(0.58, 0.82):.3f}" transform="rotate({angle:.1f} {x:.1f} {y:.1f})" data-decoration="reviewed-component" data-visual-source="compiled-reviewed-component"/>'
+                f'    <use href="#componentNonBlockingDecoration{variant}" x="{x - size / 2:.1f}" y="{y - size * 0.82:.1f}" width="{size:.1f}" height="{size:.1f}" opacity="{rng.uniform(0.72, 0.94):.3f}" transform="rotate({angle:.1f} {x:.1f} {y:.1f})" data-decoration="reviewed-component" data-decoration-variant="{variant}" data-visual-source="compiled-reviewed-component"/>'
             )
             placed += 1
         lines.append("  </g>")
@@ -1858,11 +2272,11 @@ def fog_weather_layer(
 
 
 def color_grade_layer(style: dict[str, str]) -> str:
+    shade_opacity = 0.085 if color_luma(style["terrain_base"]) >= 178 else 0.035
     return "\n".join(
         [
             '  <g id="color_grade" data-layer-role="color_grade">',
-            f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="#000000" opacity="0.035"/>',
-            f'    <ellipse cx="{CANVAS_WIDTH * 0.50:.1f}" cy="{CANVAS_HEIGHT * 0.48:.1f}" rx="{CANVAS_WIDTH * 0.62:.1f}" ry="{CANVAS_HEIGHT * 0.44:.1f}" fill="none" stroke="#000000" stroke-width="150" opacity="0.15"/>',
+            f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="#000000" opacity="{shade_opacity:.3f}"/>',
             f'    <rect x="0" y="0" width="{CANVAS_WIDTH}" height="{CANVAS_HEIGHT}" fill="{rgba(style["spawn"], 0.020)}"/>',
             "  </g>",
         ]
@@ -1924,6 +2338,7 @@ def build_package(
     public_root: Path | None = None,
     repository_root: Path | None = None,
     public_prefix: str = PUBLIC_PREFIX,
+    external_generation_call_count: int = 0,
 ) -> dict[str, Any]:
     node_id = str(runtime_package.get("node_id") or style_pack.get("node_id") or "map")
     projection = build_projection(runtime_package)
@@ -1958,13 +2373,53 @@ def build_package(
     )
     media_assets.extend(component_assets)
     has_backdrop = bool(backdrop_ref)
+    has_reviewed_terrain_material = any(
+        item.get("role") == "terrain_tile"
+        and str(item.get("source_kind") or "") != "procedural_texture"
+        for item in media_assets
+        if isinstance(item, dict)
+    )
+    has_reviewed_road_material = any(
+        item.get("role") == "road_tile"
+        and str(item.get("source_kind") or "") != "procedural_texture"
+        for item in media_assets
+        if isinstance(item, dict)
+    )
+    has_reviewed_slot_component = any(
+        item.get("role") == "slot_tile"
+        and str(item.get("source_kind") or "") != "procedural_texture"
+        for item in media_assets
+        if isinstance(item, dict)
+    )
 
-    terrain = terrain_layer(runtime_package, projection, style, rng, backdrop_ref=backdrop_ref)
+    terrain = terrain_layer(
+        runtime_package,
+        projection,
+        style,
+        rng,
+        backdrop_ref=backdrop_ref,
+        material_field=has_reviewed_terrain_material,
+    )
     terrain_detail = terrain_detail_layer(runtime_package, projection, style, rng)
     road_shadow = road_shadow_layer(runtime_package, render_plan, projection, style)
     road_edge = road_edge_layer(runtime_package, render_plan, projection, style, rng)
-    road_surface = road_surface_layer(runtime_package, render_plan, projection, style, rng)
-    slots = build_slots_layer(runtime_package, render_plan, projection, style)
+    road_surface = road_surface_layer(
+        runtime_package,
+        render_plan,
+        projection,
+        style,
+        rng,
+        classify_road_material(style_pack),
+        clean_material_field=has_reviewed_terrain_material and has_reviewed_road_material,
+    )
+    slots = build_slots_layer(
+        runtime_package,
+        render_plan,
+        projection,
+        style,
+        classify_slot_material(style_pack),
+        reviewed_component=has_reviewed_slot_component,
+    )
     objectives_group = objectives_layer(
         runtime_package, projection, style, component_refs.get("objective_foundation")
     )
@@ -1988,7 +2443,7 @@ def build_package(
             composite_opacity(road_shadow, 0.70),
             composite_opacity(road_edge, 0.92),
             composite_opacity(road_surface, 0.96),
-            composite_opacity(slots, 0.88),
+            composite_opacity(slots, 0.90),
             composite_opacity(objectives_group, 0.94),
             composite_opacity(spawn_group, 0.86),
             *(
@@ -1997,7 +2452,21 @@ def build_package(
                 else []
             ),
             composite_opacity(lighting, 0.74),
-            composite_opacity(fog_weather, 0.56),
+            composite_opacity(fog_weather, 0.30),
+            color_grade,
+        ]
+    elif has_reviewed_terrain_material:
+        composited_groups = [
+            terrain,
+            road_surface,
+            slots,
+            objectives_group,
+            spawn_group,
+            *(
+                [composite_opacity(decorations, 0.86)]
+                if component_refs.get("non_blocking_decoration")
+                else []
+            ),
             color_grade,
         ]
     else:
@@ -2188,7 +2657,7 @@ def build_package(
         "validation_report": {
             "gate_status": "passed",
             "player_default_safe": True,
-            "external_generation_call_count": 0,
+            "external_generation_call_count": max(0, int(external_generation_call_count)),
             "gates": [
                 {
                     "gate_id": "local_svg_artifacts_written",

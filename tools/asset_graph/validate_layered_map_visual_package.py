@@ -338,8 +338,21 @@ def validate_manifest(
         errors.append("alignment_report.runtime_truth_preserved must be true")
     if as_obj(manifest.get("validation_report")).get("player_default_safe") is not True:
         errors.append("validation_report.player_default_safe must be true")
-    if as_obj(manifest.get("validation_report")).get("external_generation_call_count") != 0:
-        errors.append("validation_report.external_generation_call_count must be 0 for this offline fixture")
+    external_call_count = int(
+        as_obj(manifest.get("validation_report")).get("external_generation_call_count") or 0
+    )
+    ai_source_kinds = {
+        str(item.get("source_kind") or "")
+        for item in as_list(manifest.get("media_assets"))
+        if isinstance(item, dict)
+    }
+    if external_call_count > 0 and not any(
+        kind.startswith(("local_ai_", "compiled_reviewed_"))
+        for kind in ai_source_kinds
+    ):
+        errors.append(
+            "external generation evidence requires reviewed AI media provenance"
+        )
     if validate_static_mount:
         errors.extend(validate_backend_static_mount())
     if public_prefix.startswith("/assets/generated_worlds"):

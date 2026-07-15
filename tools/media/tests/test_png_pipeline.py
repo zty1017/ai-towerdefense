@@ -37,6 +37,52 @@ class PngPipelineTest(unittest.TestCase):
         self.assertEqual(cropped.height, 4)
         self.assertEqual(len(cropped.pixels), 8 * 4 * 4)
 
+    def test_center_crop_fraction_extracts_inner_widescreen_sample(self) -> None:
+        image = png_pipeline.PngImage(12, 12, bytearray([255, 0, 0, 255] * 144))
+
+        cropped = png_pipeline.center_crop_fraction(image, 0.75, ratio=2.0)
+
+        self.assertEqual((cropped.width, cropped.height), (9, 4))
+
+    def test_mirrored_seamless_tile_matches_opposite_edges(self) -> None:
+        pixels = bytearray()
+        for y in range(4):
+            for x in range(8):
+                pixels.extend((x * 20, y * 30, 0, 255))
+        tiled = png_pipeline.mirrored_seamless_tile(
+            png_pipeline.PngImage(8, 4, pixels)
+        )
+
+        self.assertEqual((tiled.width, tiled.height), (8, 4))
+        for y in range(tiled.height):
+            left = (y * tiled.width) * 4
+            right = (y * tiled.width + tiled.width - 1) * 4
+            self.assertEqual(tiled.pixels[left : left + 4], tiled.pixels[right : right + 4])
+        for x in range(tiled.width):
+            top = x * 4
+            bottom = ((tiled.height - 1) * tiled.width + x) * 4
+            self.assertEqual(tiled.pixels[top : top + 4], tiled.pixels[bottom : bottom + 4])
+
+    def test_edge_blended_seamless_tile_matches_edges_without_mirroring_center(self) -> None:
+        pixels = bytearray()
+        for y in range(10):
+            for x in range(20):
+                pixels.extend((x * 10, y * 20, (x + y) * 5, 255))
+        source = png_pipeline.PngImage(20, 10, pixels)
+
+        tiled = png_pipeline.edge_blended_seamless_tile(source, blend_fraction=0.2)
+
+        for y in range(tiled.height):
+            left = (y * tiled.width) * 4
+            right = (y * tiled.width + tiled.width - 1) * 4
+            self.assertEqual(tiled.pixels[left : left + 4], tiled.pixels[right : right + 4])
+        for x in range(tiled.width):
+            top = x * 4
+            bottom = ((tiled.height - 1) * tiled.width + x) * 4
+            self.assertEqual(tiled.pixels[top : top + 4], tiled.pixels[bottom : bottom + 4])
+        center = ((tiled.height // 2) * tiled.width + tiled.width // 2) * 4
+        self.assertEqual(tiled.pixels[center : center + 4], source.pixels[center : center + 4])
+
     def test_keep_largest_alpha_component_removes_detached_noise(self) -> None:
         image = _sprite_with_noise()
         cleaned = png_pipeline.keep_largest_alpha_component(image)

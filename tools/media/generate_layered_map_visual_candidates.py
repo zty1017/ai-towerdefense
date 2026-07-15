@@ -18,8 +18,11 @@ MEDIA_DIR = Path(__file__).resolve().parent
 if str(MEDIA_DIR) not in sys.path:
     sys.path.insert(0, str(MEDIA_DIR))
 
-import image_provider  # noqa: E402
-import png_pipeline  # noqa: E402
+try:
+    from . import image_provider, png_pipeline
+except ImportError:  # pragma: no cover - direct script execution.
+    import image_provider  # type: ignore[no-redef]  # noqa: E402
+    import png_pipeline  # type: ignore[no-redef]  # noqa: E402
 
 
 PACK_VERSION = "map_layered_visual_generation_request_pack.v0.1"
@@ -84,7 +87,7 @@ def output_spec(
     if override:
         size = image_provider.validate_size(override)
         return size, ratio if size.endswith("K") else None
-    if profile.name.startswith("agnes_") and contract.get("size_tier"):
+    if profile.model == "agnes-image-2.1-flash" and contract.get("size_tier"):
         size = image_provider.validate_size(str(contract["size_tier"]))
         return size, image_provider.validate_ratio(ratio or "1:1")
     size = f"{int(contract.get('width') or 1024)}x{int(contract.get('height') or 1024)}"

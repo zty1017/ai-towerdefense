@@ -91,6 +91,24 @@ def test_agnes_payload_uses_official_tier_ratio_and_img2img_contract():
     assert "response_format" not in {key for key in payload if key != "extra_body"}
 
 
+def test_agnes_20_uses_exact_output_contract_without_tier_ratio():
+    request = {
+        "output_contract": {
+            "width": 1024,
+            "height": 683,
+            "size_tier": "1K",
+            "ratio": "3:2",
+        }
+    }
+    size, ratio = generator.output_spec(
+        request,
+        None,
+        image_provider.PROFILES["agnes_image_20_flash"],
+    )
+    assert size == "1024x683"
+    assert ratio is None
+
+
 def test_img2img_reference_is_verified_and_not_written_to_sidecar(tmp_path: Path):
     reference = tmp_path / "composition.png"
     style_reference = tmp_path / "style.png"

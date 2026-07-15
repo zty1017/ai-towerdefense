@@ -16,6 +16,25 @@ def test_seed_and_candidate_validate():
     assert world_compiler.validate_candidate(world_compiler._load(CANDIDATE)) == []
 
 
+def test_candidate_validation_rejects_cel_shaded_runtime_style():
+    candidate = world_compiler._load(CANDIDATE)
+    candidate["visual"]["layer_briefs"]["rendering_style"] = "soft cel-shading anime game art"
+    errors = world_compiler.validate_candidate(candidate)
+    assert any("production game-environment" in error for error in errors)
+
+
+def test_rendering_style_error_does_not_reinject_forbidden_style_tokens():
+    candidate = world_compiler._load(CANDIDATE)
+    candidate["visual"]["layer_briefs"]["rendering_style"] = "premium hand-painted, no cartoon"
+
+    errors = world_compiler.validate_candidate(candidate)
+
+    style_error = next(error for error in errors if error.startswith("visual.layer_briefs.rendering_style"))
+    assert "cartoon" not in style_error
+    assert "anime" not in style_error
+    assert "cel-shad" not in style_error
+
+
 def test_candidate_lowers_to_complete_world_package(tmp_path):
     result = world_compiler.compile_candidate(
         world_compiler._load(SEED),
@@ -43,6 +62,7 @@ def test_candidate_lowers_to_complete_world_package(tmp_path):
     assert len(battle["paths"][0]["waypoints"]) == 6
     style = json.loads(Path(manifest["artifacts"]["map_style_pack"]).read_text())
     assert style["source_refs"]["style_authority"] == "reviewed_ai_proposal"
+    assert "cloudstone paving" in style["visual_generation_briefs"]["terrain_base"]
 
 
 def test_provider_path_requires_explicit_flag():
@@ -56,6 +76,17 @@ def test_provider_path_requires_explicit_flag():
         assert "--allow-provider" in str(exc)
     else:
         raise AssertionError("provider path must remain guarded")
+
+
+def test_provider_prompt_distinguishes_visual_ids_from_display_names():
+    messages = world_compiler._messages(world_compiler._load(SEED))
+    system_prompt = messages[0]["content"]
+    assert "visual.slot_name" in system_prompt
+    assert "小写 snake_case" in system_prompt
+    assert "只有 visual.style_name 是玩家可见中文名" in system_prompt
+    assert "visual.layer_briefs" in system_prompt
+    assert "不是构图指令" in system_prompt
+    assert "不能描述完整场景" in system_prompt
 
 
 def test_compiled_world_can_drive_map_pipeline(tmp_path):
