@@ -1,0 +1,65 @@
+{
+  "schema_version": "map_topology_control_sketch_pack.v0.1",
+  "pack_id": "map_topology_luoxia_plank_v0_1",
+  "runtime_package_dir": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank",
+  "output_dir": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control",
+  "status": "control_sketches_ready_review_only",
+  "summary": {
+    "sketch_count": 1,
+    "ready_count": 1,
+    "blocked_count": 0,
+    "status_counts": {
+      "control_sketch_ready": 1
+    },
+    "target_size": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "sketches": [
+    {
+      "node_id": "luoxia_plank",
+      "status": "control_sketch_ready",
+      "runtime_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+      "control_sketch_png_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.png",
+      "control_sketch_svg_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.svg",
+      "terrain_composition_reference_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.terrain_composition_reference.png",
+      "png_sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+      "terrain_composition_reference_sha256": "0f46da5e8c6a14ab269bfa1828f2f6a5e56450ee35216da8b3f1d345596eedff",
+      "svg_sha256": "dd5d2d272d5287c7af03a82722cb6d3a1f1e82c192c4364681bc2a0c7ea1dfe1",
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "runtime_summary": {
+        "grid": {
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16,
+          "height_cells": 9,
+          "cell_size": 64
+        },
+        "path_route_count": 1,
+        "build_slot_count": 8,
+        "spawn_point_count": 1,
+        "objective_count": 2
+      },
+      "usage_policy": [
+        "developer_reference_only",
+        "not_player_visible",
+        "not_a_published_visual_layer",
+        "image_provider_reference_or_manual_paintover_input"
+      ],
+      "composition_constraints": [
+        "preserve route directions and branch structure",
+        "keep build pads near routes but visually empty",
+        "keep objectives compact and readable",
+        "do not include characters, enemies, projectiles, UI, arrows, or text in generated painted map"
+      ]
+    }
+  ],
+  "policy": [
+    "Control sketches are compile-time references only.",
+    "Generated candidates must preserve MapRuntimePackage topology.",
+    "No control sketch is a published player visual layer."
+  ]
+}

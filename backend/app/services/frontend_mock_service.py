@@ -871,6 +871,66 @@ def get_battle_config(session_id: str, node_id: str) -> dict[str, Any]:
     }
 
 
+def get_map_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
+    if bundle["catalog_entry"]["world_id"] == "long_night_lanterns":
+        return map_runtime_service.get_map_runtime_package(session_id, node_id)
+    if node_id != bundle["catalog_entry"]["entry_node_id"]:
+        raise FixtureNotFoundError(node_id)
+    map_package = bundle["map_runtime_package"]
+    return {
+        "session_id": session_id,
+        "mode": "compiled_world_runtime",
+        "node_id": node_id,
+        "map_runtime_package": map_package,
+        "runtime_selection": {
+            "selection_mode": "compiled_world_manifest",
+            "selected_schema_version": map_package.get("schema_version"),
+            "selected_package_id": map_package.get("package_id"),
+            "activation_applied": True,
+            "fallback_reasons": [],
+        },
+    }
+
+
+def get_map_render_plan(session_id: str, node_id: str) -> dict[str, Any]:
+    bundle = world_catalog_service.session_bundle(session_id)
+    if bundle["catalog_entry"]["world_id"] == "long_night_lanterns":
+        runtime_payload = map_runtime_service.get_map_runtime_package(session_id, node_id)
+        runtime_selection = runtime_payload["runtime_selection"]
+        return map_render_plan_service.get_map_render_plan_bundle(
+            session_id,
+            node_id,
+            runtime_schema_version=runtime_selection.get("selected_schema_version"),
+            runtime_selection=runtime_selection,
+        )
+    if node_id != bundle["catalog_entry"]["entry_node_id"]:
+        raise FixtureNotFoundError(node_id)
+    map_package = bundle["map_runtime_package"]
+    runtime_selection = {
+        "selection_mode": "compiled_world_manifest",
+        "selected_schema_version": map_package.get("schema_version"),
+        "selected_package_id": map_package.get("package_id"),
+        "activation_applied": True,
+        "fallback_reasons": [],
+    }
+    return {
+        "session_id": session_id,
+        "mode": "compiled_world_runtime",
+        "node_id": node_id,
+        "map_render_plan_bundle": {
+            "node_id": node_id,
+            "refs": {},
+            "map_style_pack": bundle["map_style_pack"],
+            "procedural_map_render_plan": bundle["map_render_plan"],
+            "semantic_visual_consistency_report": bundle[
+                "semantic_visual_consistency_report"
+            ],
+        },
+        "runtime_selection": runtime_selection,
+    }
+
+
 def get_runtime_package(session_id: str, node_id: str) -> dict[str, Any]:
     try:
         runtime_package = battle_content_service.load_runtime_package(node_id)

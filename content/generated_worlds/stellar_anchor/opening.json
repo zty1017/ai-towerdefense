@@ -1,0 +1,73 @@
+{
+  "opening_version": "opening.v0.1",
+  "worldbook_id": "stellar_anchor",
+  "display_name": "星锚轨道站·开场",
+  "total_duration_ms": 36000,
+  "skippable": true,
+  "replayable": true,
+  "segments": [
+    {
+      "stable_internal_id": "opening_segment_01",
+      "display_name": "星锚建立",
+      "kind": "black_screen_text",
+      "duration_ms": 9000,
+      "lines": [
+        "轨道电梯在异星拔地而起，环形殖民设施环绕基座。能源与资源源源不断，但警报从轨道深处传来——入侵者正在接近。"
+      ],
+      "visual": {
+        "bg": "#000000",
+        "text_color": "#dddddd",
+        "fade_in_ms": 800
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_02",
+      "display_name": "警报响起",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "传感器探测到大批无人机与装甲平台从轨道降下，目标直指电梯基座。你必须将现有的工业设施改装为防御工事。",
+      "visual": {
+        "scene": "compiled_world_card_1",
+        "location_label": "电梯基座中心",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_03",
+      "display_name": "防线构筑",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "在工程师的协助下，模块化防御塔、场发生器与冷却陷阱开始部署。利用合金与能量线，在关键走廊建立交叉火力网。",
+      "visual": {
+        "scene": "compiled_world_card_2",
+        "location_label": "电梯基座中心",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_04",
+      "display_name": "第一波逼近",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "虫群无人机率先抵达，它们从环形走廊的西侧涌入。快速部署基础防御，保护核心枢纽不被突破。",
+      "visual": {
+        "scene": "compiled_world_card_3",
+        "location_label": "环形走廊交汇点",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    }
+  ],
+  "landing": {
+    "target_page": "world_map",
+    "target_node_id": "elevator_center",
+    "initial_quest": "前往环形走廊交汇点应对第一场危机。",
+    "hint": "点击环形走廊交汇点进入第一场战斗。"
+  }
+}

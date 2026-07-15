@@ -1,0 +1,190 @@
+{
+  "schema_version": "generated_world_candidate.v0.1",
+  "world_id": "stellar_anchor",
+  "display_name": "星锚轨道站",
+  "tagline": "在轨道电梯的基座上，用模块与能量线构筑防线",
+  "summary": "一座异星轨道电梯的基座与环形殖民设施，能源、冷却、物流和信号设施必须转化为塔防玩法。玩家使用模块、合金、场发生器与无人设备试作新防御资产，保护核心枢纽免受从轨道入侵的敌人。",
+  "tone_voice": "明快而克制的硬表面科幻，强调模块化建筑、能量线路和工业通廊，不带黑暗绝望感，突出理性与效率。",
+  "naming_style": "中文科技名，如‘场能模块’、‘冷却塔’、‘合金板’、‘信号中继器’，避免拟人化或魔法感。",
+  "phase_terms": {
+    "preparation": "整备阶段",
+    "battle": "交战阶段",
+    "resolution": "结算阶段"
+  },
+  "resources": [
+    {
+      "id": "energy",
+      "display_name": "能源",
+      "summary": "从轨道电梯的太阳能阵列和聚变核心提取的稳定电力，用于驱动防御设施和场发生器。"
+    },
+    {
+      "id": "alloy",
+      "display_name": "合金",
+      "summary": "从殖民设施回收的高强度钛合金与碳纤维复合材料，用于建造防御塔和结构加固。"
+    },
+    {
+      "id": "coolant",
+      "display_name": "冷却液",
+      "summary": "用于给高功率设备和能量武器散热的惰性液体，消耗后需从管道网络补充。"
+    },
+    {
+      "id": "signal_module",
+      "display_name": "信号模块",
+      "summary": "包含天线、传感器和处理器的模块化组件，用于部署无人设备、干扰器和通信中继。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "elevator_center",
+      "display_name": "电梯基座中心",
+      "summary": "轨道电梯的主控节点，连接地面与轨道环，是玩家主城，保护这里的核心处理器。",
+      "role": "main_city"
+    },
+    {
+      "id": "ring_crossing",
+      "display_name": "环形走廊交汇点",
+      "summary": "殖民设施环状结构的关键连接点，多条能量管道与物流通道在此交汇，是敌人进攻的必经之路。",
+      "role": "battle_hotspot"
+    },
+    {
+      "id": "field_lab",
+      "display_name": "场发生器实验室",
+      "summary": "专门研究力场、护盾与能量操控的设施，玩家可在此试作新防御塔和支援道具。",
+      "role": "research_facility"
+    },
+    {
+      "id": "resource_depot",
+      "display_name": "合金与冷却液仓库",
+      "summary": "储存大量合金板和冷却液的大型仓库，保障资源供给，但需要防御线路保护。",
+      "role": "resource_storage"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "swarm_drone",
+      "display_name": "快速虫群无人机",
+      "summary": "成群的小型高速无人机，从轨道空降，擅长快速突破防线，但个体脆弱。",
+      "archetype": "fast_swarm"
+    },
+    {
+      "id": "shell_grunt",
+      "display_name": "标准攻壳兵",
+      "summary": "装备轻甲和能量护盾的步兵单位，匀速推进，平衡性良好。",
+      "archetype": "basic"
+    },
+    {
+      "id": "heavy_platform",
+      "display_name": "重型装甲平台",
+      "summary": "用厚合金板加固的自行移动平台，携带重型武器，速度缓慢但极难摧毁。",
+      "archetype": "armored_slow"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "station_commander",
+      "display_name": "轨道站指挥官",
+      "role": "总指挥",
+      "voice": "轨道站的安全由你负责，每一个模块都可能是胜负手。资源要精打细算，别让敌人靠近核心。"
+    },
+    {
+      "id": "chief_engineer",
+      "display_name": "首席工程师",
+      "role": "研发主管",
+      "voice": "场发生器实验有了新进展，试试这个模块组合——冷却液配能量管道，能造出范围减速场。"
+    },
+    {
+      "id": "logistics_officer",
+      "display_name": "后勤官",
+      "role": "资源调度",
+      "voice": "合金和冷却液正在从仓库调运，但线路可能被切断。保护好运输通道，我们就能持续生产。"
+    }
+  ],
+  "visual": {
+    "style_id": "stellar_anchor_style",
+    "style_name": "星锚工业科幻",
+    "theme_tags": [
+      "orbital_elevator",
+      "modular_architecture",
+      "energy_conduits",
+      "industrial_corridor",
+      "alien_terrain",
+      "hard_surface",
+      "metallic",
+      "blue_accent",
+      "cool_lighting"
+    ],
+    "palette": {
+      "terrain_base": "#6B6B6B",
+      "terrain_detail": "#8B7D6B",
+      "road_base": "#4A4A4A",
+      "road_edge": "#7A7A6A",
+      "build_slot": "#B0B0B0",
+      "objective": "#D4A574",
+      "spawn": "#A0522D",
+      "resource": "#3A6EA5",
+      "hazard": "#E85D3A",
+      "fog": "#C0C8D0",
+      "accent": "#4FC3F7"
+    },
+    "time_of_day": "dusk",
+    "terrain_name": "alien_rock",
+    "road_name": "industrial_corridor",
+    "slot_name": "module_pad",
+    "objective_name": "core_hub",
+    "spawn_name": "invasion_point",
+    "layer_briefs": {
+      "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge highlights, restrained detail density, unified scale, and a pseudo-3D oblique camera. Hard surface metals and composites rendered with subtle roughness and anisotropy, soft shadows from directionally lit environment, and a clean, non-repetitive tiling structure.",
+      "terrain_base": "Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings.",
+      "road_surface": "Precast concrete slabs with metal joint strips, slightly weathered surface, subtle directional grooves for drainage, occasional small patch repairs, neutral grey tone with light mineral speckling.",
+      "build_slot_platform": "Hexagonal metal platform, 0.5m tall, with four bolt holes and a central power socket, brushed steel finish with chamfered edges, no additional equipment or lighting.",
+      "objective_foundation": "Large circular foundation ring, reinforced concrete and steel, with anchor points for a superstructure, surface texture of formwork seams and embedded bolts, no building or mechanism on top.",
+      "spawn_marker": "Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.",
+      "non_blocking_decoration": "1. Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings). 2. Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish). 3. Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast). 4. Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel)."
+    }
+  },
+  "opening_cards": [
+    {
+      "title": "星锚建立",
+      "text": "轨道电梯在异星拔地而起，环形殖民设施环绕基座。能源与资源源源不断，但警报从轨道深处传来——入侵者正在接近。"
+    },
+    {
+      "title": "警报响起",
+      "text": "传感器探测到大批无人机与装甲平台从轨道降下，目标直指电梯基座。你必须将现有的工业设施改装为防御工事。"
+    },
+    {
+      "title": "防线构筑",
+      "text": "在工程师的协助下，模块化防御塔、场发生器与冷却陷阱开始部署。利用合金与能量线，在关键走廊建立交叉火力网。"
+    },
+    {
+      "title": "第一波逼近",
+      "text": "虫群无人机率先抵达，它们从环形走廊的西侧涌入。快速部署基础防御，保护核心枢纽不被突破。"
+    }
+  ],
+  "player_origins": [
+    {
+      "id": "orbital_engineer",
+      "display_name": "轨道工程师",
+      "summary": "熟悉轨道站能源与冷却系统，能更高效地调配资源，建造设施时消耗降低10%。"
+    },
+    {
+      "id": "security_advisor",
+      "display_name": "安全顾问",
+      "summary": "精通战场态势，初始获得一个额外的防御塔蓝图，并提升友军防御塔的射程。"
+    },
+    {
+      "id": "logistics_expert",
+      "display_name": "物流专家",
+      "summary": "擅长资源调度，资源存储上限提升20%，且资源采集速度提高15%。"
+    }
+  ],
+  "first_battle": {
+    "display_name": "环形走廊突破战",
+    "summary": "第一波敌人从环形走廊西侧入侵，快速虫群无人机试图通过工业通廊直奔电梯基座。玩家需要部署基础防御。",
+    "route_shape": "east_west_switchback",
+    "core_name": "电梯基座中心",
+    "optional_target_name": "冷却塔节点",
+    "enemy_traits": "快速虫群无人机：高移速、低血量，优先攻击未设防的管道节点。",
+    "approach_direction": "自西向东，沿走廊迂回前进",
+    "suggested_research_intent": "建议研发‘聚焦能量模块’——将能源转化为高伤害激光塔，对付低血量群敌非常有效。"
+  }
+}

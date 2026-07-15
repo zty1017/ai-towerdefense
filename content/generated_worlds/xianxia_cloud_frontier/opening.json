@@ -1,0 +1,73 @@
+{
+  "opening_version": "opening.v0.1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "display_name": "云海断峰关·开场",
+  "total_duration_ms": 36000,
+  "skippable": true,
+  "replayable": true,
+  "segments": [
+    {
+      "stable_internal_id": "opening_segment_01",
+      "display_name": "云海之上",
+      "kind": "black_screen_text",
+      "duration_ms": 9000,
+      "lines": [
+        "远古宗门在浮空山间以灵脉栈道相连，如今宗门已逝，但妖物从云海深处涌现。"
+      ],
+      "visual": {
+        "bg": "#000000",
+        "text_color": "#dddddd",
+        "fade_in_ms": 800
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_02",
+      "display_name": "断峰告急",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "天阙峰是最后一座完整的主峰，一旦失守，妖物将侵入人间。",
+      "visual": {
+        "scene": "compiled_world_card_1",
+        "location_label": "天阙峰",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_03",
+      "display_name": "守山者",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "你继承了一枚残缺的阵盘，必须在灵脉上布置符阵，试作新的防御。",
+      "visual": {
+        "scene": "compiled_world_card_2",
+        "location_label": "天阙峰",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_04",
+      "display_name": "灵脉之力",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "灵石、符纸、玄铁、云芝——这些是试作防御的基础，收集它们，研究新的阵器。",
+      "visual": {
+        "scene": "compiled_world_card_3",
+        "location_label": "落霞栈道",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    }
+  ],
+  "landing": {
+    "target_page": "world_map",
+    "target_node_id": "tianque_peak",
+    "initial_quest": "前往落霞栈道应对第一场危机。",
+    "hint": "点击落霞栈道进入第一场战斗。"
+  }
+}

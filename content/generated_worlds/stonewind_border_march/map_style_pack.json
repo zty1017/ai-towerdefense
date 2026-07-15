@@ -1,0 +1,220 @@
+{
+  "schema_version": "map_style_pack.v0.1",
+  "style_pack_id": "style_stonewind_border_march_fen_pass_v0_1",
+  "worldbook_id": "stonewind_border_march",
+  "node_id": "fen_pass",
+  "created_at": "2026-07-15T08:10:11Z",
+  "source_refs": {
+    "map_runtime_package_path": "generated_by_map_compilation_input",
+    "worldbook_path": "content/generated_worlds/stonewind_border_march/worldbook.json",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "reviewed_ai_proposal"
+  },
+  "node_theme_tags": [
+    "stone_fortress",
+    "marshland",
+    "western_fantasy",
+    "fog",
+    "ruins",
+    "wooden_palisade",
+    "alchemy_flask",
+    "cold_dawn",
+    "warm_firelight",
+    "cobblestone"
+  ],
+  "palette": {
+    "terrain_base": "#4B5D4A",
+    "terrain_detail": "#3A4A3A",
+    "road_base": "#6B5B4A",
+    "road_edge": "#5A4E3C",
+    "build_slot": "#7A7060",
+    "objective": "#8A7A5A",
+    "spawn": "#5A4A3A",
+    "resource": "#C8A84C",
+    "hazard": "#8A3A2A",
+    "fog": "#B0B8A0",
+    "accent": "#D0A040"
+  },
+  "visual_generation_briefs": {
+    "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge wear, restrained detail, unified scale, and a pseudo-3D oblique camera. Subsurface scattering on organic surfaces, crisp stone normals, volumetric fog, and warm point light sources create depth and atmosphere.",
+    "terrain_base": "Continuous low-lying wetland with patchy dull green grass, dark brown peat soil, and scattered shallow water puddles reflecting overcast sky.",
+    "road_surface": "Worn cobblestone setts in muted grey-brown, embedded in dried mud, with occasional moss-filled cracks and faint wheel ruts.",
+    "build_slot_platform": "Low circular stone platform, one step high, made of rough-hewn granite blocks, slightly uneven surface, no mortar visible.",
+    "objective_foundation": "Square stone pedestal with chiseled edges, its top surface a single slab of slate, lightly weathered, no inscriptions.",
+    "spawn_marker": "Low mound of cracked earth and dark soil, circumference about three paces, no vegetation, surface shows fine fissures glowing faintly amber.",
+    "non_blocking_decoration": "1. Moss-covered fallen log, split lengthwise, dark bark with patches of pale lichen. 2. Rusted iron cage, waist-high, bars twisted, embedded in muddy ground. 3. Stone well with broken rim, interior dark, rope absent. 4. Wooden cart wheel, half-buried, spokes cracked, iron rim rusted."
+  },
+  "lighting": {
+    "time_of_day": "dusk",
+    "contrast_policy": "high_path_readability",
+    "shadow_policy": "soft_blob",
+    "intensity": 0.74
+  },
+  "terrain_materials": [
+    {
+      "material_id": "marsh_grassland",
+      "role": "terrain_base",
+      "base_color": "#4B5D4A",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "marsh_grassland_detail",
+      "role": "terrain_detail",
+      "base_color": "#3A4A3A",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_materials": [
+    {
+      "material_id": "cobblestone_mud_path",
+      "role": "road_band",
+      "base_color": "#6B5B4A",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "cobblestone_mud_path_edge",
+      "role": "road_edge",
+      "base_color": "#5A4E3C",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_edge_rules": {
+    "edge_style": "soft_embedded",
+    "shoulder_width_cells": 0.25,
+    "direction_cue_policy": "embedded_marks"
+  },
+  "build_slot_platforms": [
+    {
+      "prefab_id": "stonewind_border_march_stone_platform",
+      "role": "build_slot_platform",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:stone_platform"
+      }
+    }
+  ],
+  "objective_prefabs": [
+    {
+      "prefab_id": "stonewind_border_march_ancient_pedestal",
+      "role": "objective_foundation",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:ancient_pedestal"
+      }
+    }
+  ],
+  "spawn_prefabs": [
+    {
+      "prefab_id": "stonewind_border_march_cracked_earth_spawn",
+      "role": "spawn_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:cracked_earth_spawn"
+      }
+    }
+  ],
+  "resource_prefabs": [
+    {
+      "prefab_id": "stonewind_border_march_resource_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:resource_marker"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "stonewind_border_march_hazard_marker",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:hazard_marker"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "stonewind_border_march_blocking_prop",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:blocking_prop"
+      }
+    }
+  ],
+  "non_blocking_props": [
+    {
+      "prefab_id": "stonewind_border_march_edge_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "edge_decoration_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:edge_decoration"
+      }
+    }
+  ],
+  "decorative_props": [
+    {
+      "prefab_id": "stonewind_border_march_ambient_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stonewind_border_march:ambient_decoration"
+      }
+    }
+  ],
+  "atmosphere_layers": [
+    {
+      "layer_id": "compiled_edge_atmosphere",
+      "role": "fog",
+      "opacity": 0.24,
+      "placement_policy": "map_edges_only"
+    }
+  ],
+  "postprocess": {
+    "contrast_boost": 0.3,
+    "saturation": 0.92,
+    "vignette": 0.16
+  },
+  "readability_rules": {
+    "minimum_path_contrast": 0.42,
+    "build_slot_marker_policy": "diegetic_platform",
+    "objective_marker_policy": "diegetic_foundation",
+    "spawn_marker_policy": "diegetic_portal",
+    "no_baked_ui_text": true,
+    "no_baked_enemy_or_tower": true,
+    "debug_layers_player_default_allowed": false
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "style_only": true,
+    "gates": [
+      {
+        "gate_id": "style_only_visual_boundary",
+        "status": "passed",
+        "summary": "Generated style controls appearance only; runtime map remains authoritative."
+      },
+      {
+        "gate_id": "player_readability_boundary",
+        "status": "passed",
+        "summary": "Path, slots, objectives, and spawn remain readable and diegetic."
+      }
+    ]
+  }
+}

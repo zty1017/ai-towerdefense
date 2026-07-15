@@ -1,0 +1,59 @@
+{
+  "opening_version": "opening.v0.1",
+  "worldbook_id": "stonewind_border_march",
+  "display_name": "石风边境领·开场",
+  "total_duration_ms": 27000,
+  "skippable": true,
+  "replayable": true,
+  "segments": [
+    {
+      "stable_internal_id": "opening_segment_01",
+      "display_name": "边境的呼唤",
+      "kind": "black_screen_text",
+      "duration_ms": 9000,
+      "lines": [
+        "王国的西陲，腐烂沼泽与荒芜石原的交界处，石风边境领已经孤独坚守了百年。如今，腐化气息从沼泽深处蔓延，沉睡的敌人再次苏醒。"
+      ],
+      "visual": {
+        "bg": "#000000",
+        "text_color": "#dddddd",
+        "fade_in_ms": 800
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_02",
+      "display_name": "最后的补给",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "灰矿场重新开工，炼金工坊的灯火彻夜不熄。指挥官阿尔德里克召集所有能战斗的人——我们得在下一波攻势前准备好。",
+      "visual": {
+        "scene": "compiled_world_card_1",
+        "location_label": "石风堡",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    },
+    {
+      "stable_internal_id": "opening_segment_03",
+      "display_name": "试作防御",
+      "kind": "animated_card",
+      "duration_ms": 9000,
+      "narration": "米拉在工坊里摆弄着符文石与炼金草的组合，声称能造出‘喷火的铁盒子’。老洛恩默默地在木栈道上钉下削尖的木桩。每一份材料都珍贵。",
+      "visual": {
+        "scene": "compiled_world_card_2",
+        "location_label": "腐沼隘口",
+        "camera": "slow_zoom_in",
+        "particles": "world_ambient"
+      },
+      "audio": "ambient.world_theme"
+    }
+  ],
+  "landing": {
+    "target_page": "world_map",
+    "target_node_id": "stonewind_keep",
+    "initial_quest": "前往腐沼隘口应对第一场危机。",
+    "hint": "点击腐沼隘口进入第一场战斗。"
+  }
+}

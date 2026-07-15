@@ -1,0 +1,137 @@
+{
+  "map_version": "initial_map.v0.1",
+  "worldbook_id": "stellar_anchor",
+  "display_name": "电梯基座中心态势图",
+  "summary": "在轨道电梯的基座上，用模块与能量线构筑防线",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "projection": "pseudo3d_oblique"
+  },
+  "nodes": [
+    {
+      "stable_internal_id": "elevator_center",
+      "display_name": "电梯基座中心",
+      "kind": "main_city",
+      "position": {
+        "x": 300,
+        "y": 390
+      },
+      "state": "controlled",
+      "summary": "轨道电梯的主控节点，连接地面与轨道环，是玩家主城，保护这里的核心处理器。",
+      "icons": [
+        "main_city"
+      ]
+    },
+    {
+      "stable_internal_id": "ring_crossing",
+      "display_name": "环形走廊交汇点",
+      "kind": "battle_hotspot",
+      "position": {
+        "x": 930,
+        "y": 310
+      },
+      "state": "crisis_active",
+      "summary": "殖民设施环状结构的关键连接点，多条能量管道与物流通道在此交汇，是敌人进攻的必经之路。",
+      "icons": [
+        "battle_hotspot"
+      ]
+    },
+    {
+      "stable_internal_id": "field_lab",
+      "display_name": "场发生器实验室",
+      "kind": "research_facility",
+      "position": {
+        "x": 500,
+        "y": 245
+      },
+      "state": "available",
+      "summary": "专门研究力场、护盾与能量操控的设施，玩家可在此试作新防御塔和支援道具。",
+      "icons": [
+        "research_facility"
+      ]
+    },
+    {
+      "stable_internal_id": "resource_depot",
+      "display_name": "合金与冷却液仓库",
+      "kind": "resource_storage",
+      "position": {
+        "x": 590,
+        "y": 485
+      },
+      "state": "controlled",
+      "summary": "储存大量合金板和冷却液的大型仓库，保障资源供给，但需要防御线路保护。",
+      "icons": [
+        "resource_storage"
+      ]
+    }
+  ],
+  "supply_lines": [
+    {
+      "stable_internal_id": "supply_elevator_center_to_ring_crossing",
+      "display_name": "电梯基座中心至环形走廊交汇点通路",
+      "from_node_id": "elevator_center",
+      "to_node_id": "ring_crossing",
+      "state": "active",
+      "summary": "当前唯一可靠的前线支援通路。"
+    }
+  ],
+  "dark_regions": [
+    {
+      "stable_internal_id": "unknown_stellar_anchor_edge",
+      "display_name": "未探明区域",
+      "polygon": [
+        {
+          "x": 700,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 720
+        },
+        {
+          "x": 700,
+          "y": 720
+        }
+      ],
+      "state": "hidden",
+      "summary": "尚未被当前势力掌握的区域。"
+    }
+  ],
+  "threat_edges": [
+    {
+      "stable_internal_id": "threat_ring_crossing",
+      "display_name": "迫近威胁",
+      "position": {
+        "x": 1120,
+        "y": 590
+      },
+      "direction": "northwest",
+      "severity": "high",
+      "summary": "自西向东，沿走廊迂回前进"
+    }
+  ],
+  "floating_events": [
+    {
+      "stable_internal_id": "event_ring_crossing_distress",
+      "display_name": "环形走廊交汇点急报",
+      "kind": "distress_call",
+      "anchor_node_id": "ring_crossing",
+      "summary": "第一波敌人从环形走廊西侧入侵，快速虫群无人机试图通过工业通廊直奔电梯基座。玩家需要部署基础防御。"
+    }
+  ],
+  "legend_token_map": {
+    "main_city": "主城",
+    "battle_hotspot": "战斗热点",
+    "research_facility": "设施",
+    "resource_storage": "资源存储节点",
+    "supply_line": "补给线",
+    "dark_region": "未知区",
+    "threat_edge": "移动威胁",
+    "floating_event": "悬浮事件"
+  }
+}

@@ -79,6 +79,9 @@ def test_generated_world_runs_catalog_to_battle_and_research(client, monkeypatch
             item for item in catalog["worlds"] if item["world_id"] == "cloud_courier_realm"
         )
         assert generated["status"] == "ready"
+        assert generated["preview_url"].startswith(
+            "/assets/generated_worlds/cloud_courier_realm/maps/broken_cloud_bridge/"
+        )
 
         session_id = _session(client)
         created = client.post(
@@ -97,6 +100,24 @@ def test_generated_world_runs_catalog_to_battle_and_research(client, monkeypatch
         )
         assert battle.status_code == 200, battle.text
         assert battle.json()["payload"]["map_runtime_package"]["schema_version"] == "map_runtime_package.v0.2"
+
+        map_runtime = client.get(
+            f"/api/sessions/{session_id}/battles/broken_cloud_bridge/map-runtime-package"
+        )
+        assert map_runtime.status_code == 200, map_runtime.text
+        assert (
+            map_runtime.json()["payload"]["runtime_selection"]["selection_mode"]
+            == "compiled_world_manifest"
+        )
+
+        map_render_plan = client.get(
+            f"/api/sessions/{session_id}/battles/broken_cloud_bridge/map-render-plan"
+        )
+        assert map_render_plan.status_code == 200, map_render_plan.text
+        assert (
+            map_render_plan.json()["payload"]["runtime_selection"]["selection_mode"]
+            == "compiled_world_manifest"
+        )
 
         proposal = client.post(
             f"/api/sessions/{session_id}/research/proposals",

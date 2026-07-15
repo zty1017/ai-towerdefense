@@ -1,0 +1,38 @@
+{
+  "schema_version": "map_runtime_catalog.v0.1",
+  "catalog_id": "generated_stellar_anchor_map_runtime_catalog_v0_1",
+  "generated_at": "2026-07-15T08:10:16Z",
+  "source_policy": {
+    "catalog_role": "generated_world_map_runtime_catalog",
+    "runtime_fact_source": true,
+    "player_default_runtime": false,
+    "visual_quality_status": "candidate",
+    "portable_runtime_layout": true
+  },
+  "summary": {
+    "node_count": 1,
+    "registered_schema_versions": [
+      "map_runtime_package.v0.1",
+      "map_runtime_package.v0.2"
+    ]
+  },
+  "entries": [
+    {
+      "node_id": "ring_crossing",
+      "authorization_status": "pending",
+      "quality_status": "candidate",
+      "packages": {
+        "map_runtime_package.v0.1": {
+          "package_id": "map_pkg_ring_crossing_v0_1",
+          "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.1.json",
+          "release_status": "review_pending"
+        },
+        "map_runtime_package.v0.2": {
+          "package_id": "map_pkg_ring_crossing_v0_2",
+          "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json",
+          "release_status": "review_pending"
+        }
+      }
+    }
+  ]
+}

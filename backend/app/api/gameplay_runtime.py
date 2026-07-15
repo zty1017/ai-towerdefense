@@ -230,7 +230,9 @@ def get_map_runtime_package(session_id: str, node_id: str) -> FrontendMockPayloa
     """Return the runtime-safe logical map package for a mock battle node."""
     _require_session(session_id)
     try:
-        data = map_runtime_service.get_map_runtime_package(session_id, node_id)
+        data = frontend_mock_service.get_map_runtime_package(session_id, node_id)
+    except FixtureNotFoundError as exc:
+        raise _fixture_404(exc) from exc
     except MapRuntimePackageNotFoundError as exc:
         raise _map_runtime_fixture_404(exc) from exc
     return _payload(session_id, data)
@@ -244,13 +246,9 @@ def get_map_render_plan(session_id: str, node_id: str) -> FrontendMockPayloadRes
     """Return the reviewed procedural map render plan bundle for a battle node."""
     _require_session(session_id)
     try:
-        runtime_selection = map_runtime_service.map_runtime_activation_selection(node_id)
-        data = map_render_plan_service.get_map_render_plan_bundle(
-            session_id,
-            node_id,
-            runtime_schema_version=runtime_selection.get("selected_schema_version"),
-            runtime_selection=runtime_selection,
-        )
+        data = frontend_mock_service.get_map_render_plan(session_id, node_id)
+    except FixtureNotFoundError as exc:
+        raise _fixture_404(exc) from exc
     except MapRuntimePackageNotFoundError as exc:
         raise _map_runtime_fixture_404(exc) from exc
     except MapRenderPlanNotFoundError as exc:

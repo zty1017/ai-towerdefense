@@ -1,0 +1,124 @@
+{
+  "battle_config_version": "first_battle.v0.1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "node_id": "luoxia_plank",
+  "display_name": "初试符阵",
+  "grid": {
+    "projection": "pseudo3d_oblique",
+    "width_cells": 16,
+    "height_cells": 9,
+    "cell_size": 64
+  },
+  "paths": [
+    {
+      "stable_internal_id": "path_luoxia_plank_main",
+      "display_name": "主路径",
+      "waypoints": [
+        {
+          "x": 15,
+          "y": 4
+        },
+        {
+          "x": 11,
+          "y": 4
+        },
+        {
+          "x": 11,
+          "y": 2
+        },
+        {
+          "x": 6,
+          "y": 2
+        },
+        {
+          "x": 6,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 6
+        }
+      ],
+      "entry_label": "东侧云海",
+      "exit_label": "天阙峰"
+    }
+  ],
+  "core_target": {
+    "stable_internal_id": "target_node_core",
+    "display_name": "天阙峰",
+    "position": {
+      "x": 0,
+      "y": 6
+    },
+    "durability": 10
+  },
+  "optional_targets": [
+    {
+      "stable_internal_id": "target_optional_facility",
+      "display_name": "落霞栈道",
+      "position": {
+        "x": 4,
+        "y": 2
+      },
+      "durability": 4
+    }
+  ],
+  "waves": [
+    {
+      "wave_index": 1,
+      "display_name": "第一波·飞蝗",
+      "enemy_archetype": "flying_locust",
+      "count": 6,
+      "spawn_interval_ms": 1200,
+      "speed_cells_per_sec": 1.8,
+      "durability": 2,
+      "delay_before_wave_ms": 3000
+    },
+    {
+      "wave_index": 2,
+      "display_name": "第二波·游荡石傀",
+      "enemy_archetype": "wandering_stone_golem",
+      "count": 5,
+      "spawn_interval_ms": 1700,
+      "speed_cells_per_sec": 1.15,
+      "durability": 4,
+      "delay_before_wave_ms": 7000
+    }
+  ],
+  "basic_defense": {
+    "stable_internal_id": "basic_defense_xianxia_cloud_frontier",
+    "display_name": "基础防线",
+    "summary": "使用本地常见材料搭建的临时防线。",
+    "uses_per_battle": 3,
+    "duration_ms": 4000
+  },
+  "sample_asset": {
+    "stable_internal_id": "compiled_sample_pending",
+    "asset_kind": "temporary_trap_sample",
+    "template_id": "temporary_trap_sample",
+    "lifecycle_state": "ephemeral",
+    "display_name": "待完成试作品",
+    "uses_per_battle": 2,
+    "requires_delivery": true,
+    "delivery_state": "research_in_progress",
+    "delivery_delay_ms": 30000,
+    "delivery_progress_messages": [
+      "现场试作中。",
+      "结构校准中。",
+      "样品封装中。",
+      "正在送达战场。"
+    ],
+    "effect_summary": "效果将在玩家提出构想后编译。",
+    "visual_recipes": [
+      "ring_pulse",
+      "aura_field",
+      "sprite_flash"
+    ]
+  },
+  "victory_condition": "守住天阙峰至所有波次结束。",
+  "failure_condition": "天阙峰耐久归零。",
+  "post_battle": {
+    "on_victory": "节点守住，世界状态与下一条线索发生变化。",
+    "on_failure": "记录试作品表现，局势恶化但体验继续。"
+  }
+}
