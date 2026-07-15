@@ -550,7 +550,7 @@ import {
       return presentation.introDialogue;
     },
     resolvePortraitUrl: (portraitId) =>
-      mediaUrl(portraitId, "portrait", true) || mediaUrl(portraitId, "icon", true),
+      npcPortraitUrl(portraitId) || mediaUrl(portraitId, "icon", true),
     buildHudViewModel: () => battleHudViewModel(),
     renderToolbar: (tools) => battleToolsMarkup(tools),
     imageTag: (url, alt) => imageTag(url, alt),
@@ -1096,6 +1096,14 @@ import {
   }
 
   function materialName(id) {
+    const compiledMaterial = (state.data.materials || []).find(
+      (item) =>
+        item &&
+        (item.material_id || item.resource_id || item.stable_internal_id) === id,
+    );
+    if (compiledMaterial && compiledMaterial.display_name) {
+      return compiledMaterial.display_name;
+    }
     const names = {
       lamp_shard: "灯芯碎片",
       conductor_filament: "导线丝",
@@ -1109,12 +1117,17 @@ import {
   }
 
   function npcPortraitUrl(npcId) {
+    if (/^(?:https?:|data:|\/)/.test(String(npcId || ""))) {
+      return resolveAssetUrl(npcId);
+    }
     if (npcId === "npc_workshop_mentor") {
       return mediaUrl("npc_workshop_mentor_portrait", "portrait", true);
     }
     const portraitId = battlePresentation().npcPortraitId;
     if (portraitId) {
-      return mediaUrl(portraitId, "portrait", true);
+      return /^(?:https?:|data:|\/)/.test(String(portraitId))
+        ? resolveAssetUrl(portraitId)
+        : mediaUrl(portraitId, "portrait", true);
     }
     return "";
   }
@@ -1584,9 +1597,7 @@ import {
         ...mediaPreloadUrls(`defense_${basicDefense.stable_internal_id}`, "defense_sprite", true),
       );
     }
-    if (presentation.npcPortraitId) {
-      preloadUrls.push(mediaUrl(presentation.npcPortraitId, "portrait", true));
-    }
+    if (presentation.npcPortraitId) preloadUrls.push(npcPortraitUrl(presentation.npcPortraitId));
     preloadUrls.push(npcPortraitUrl("npc_workshop_mentor"));
     preloadUrls.forEach((url) => getImage(url));
   }
