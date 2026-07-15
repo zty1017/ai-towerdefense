@@ -1,0 +1,248 @@
+{
+  "schema_version": "compiled_world_runtime_manifest.v0.1",
+  "world_id": "stonewind_border_march",
+  "display_name": "石风边境领",
+  "tagline": "沼泽与荒原之间的最后堡垒",
+  "created_at": "2026-07-15T08:10:11Z",
+  "seed": {
+    "seed_id": "western_fantasy_border_march",
+    "sha256": "e84d48e45428fe62ecfd728b9eb340b8fb7c3e1301b3659768b11b9c13c60fea"
+  },
+  "generation": {
+    "generation_mode": "provider_generated",
+    "profile": "ark_deepseek_v4_flash",
+    "model": "deepseek-v4-flash",
+    "provider_call_performed": true,
+    "attempt_count": 1,
+    "raw_prompt_stored": false,
+    "raw_response_stored": false
+  },
+  "entry_node_id": "fen_pass",
+  "suggested_research_intent": "优先研发简易陷阱（木刺陷阱）和符文箭塔，以应对快速蜂群；同时储备炼金爆炸药剂对付行尸群。",
+  "artifacts": {
+    "worldbook": "content/generated_worlds/stonewind_border_march/worldbook.json",
+    "world_instance_config": "content/generated_worlds/stonewind_border_march/world_instance_config.json",
+    "opening": "content/generated_worlds/stonewind_border_march/opening.json",
+    "initial_map": "content/generated_worlds/stonewind_border_march/initial_map.json",
+    "first_crisis_node": "content/generated_worlds/stonewind_border_march/first_crisis_node.json",
+    "first_battle_config": "content/generated_worlds/stonewind_border_march/first_battle_config.json",
+    "map_style_pack": "content/generated_worlds/stonewind_border_march/map_style_pack.json",
+    "candidate": "content/generated_worlds/stonewind_border_march/generated_world_candidate.json",
+    "map_compilation_input": "content/generated_worlds/stonewind_border_march/map_compilation_input.json"
+  },
+  "map_compilation_report": {
+    "schema_version": "map_compilation_run_report.v0.1",
+    "run_id": "maprun_946d4642ca4371ad33b9",
+    "created_at": "2026-07-15T08:10:11Z",
+    "completed_at": "2026-07-15T08:10:18Z",
+    "status": "completed",
+    "input_fingerprint": "946d4642ca4371ad33b9bc058a2fa2b9f31acb31b3f8f04a9caf83a77b5262e6",
+    "input_ref": "content/generated_worlds/stonewind_border_march/map_compilation_input.json",
+    "worldbook_id": "stonewind_border_march",
+    "node_id": "fen_pass",
+    "stages": [
+      {
+        "stage_id": "map_runtime_package",
+        "status": "passed",
+        "duration_ms": 3,
+        "output_paths": [
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json"
+        ],
+        "warnings": []
+      },
+      {
+        "stage_id": "visual_generation_handoff",
+        "status": "passed",
+        "duration_ms": 4386,
+        "output_paths": [
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.topology_control_sketch.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.topology_control_sketch.svg",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.terrain_composition_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.road_surface.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.build_slot_platform.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.objective_foundation.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.spawn_marker.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_architecture.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_natural.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_debris.geometry_reference.png",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_prop.geometry_reference.png"
+        ],
+        "warnings": [
+          "provider_execution_and_candidate_review_are_pending"
+        ]
+      },
+      {
+        "stage_id": "render_plan_and_semantic_consistency",
+        "status": "passed",
+        "duration_ms": 2,
+        "output_paths": [
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/procedural_map_render_plan.v0.1.json",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/semantic_visual_consistency_report.v0.1.json"
+        ],
+        "warnings": []
+      },
+      {
+        "stage_id": "layered_map_visual_package",
+        "status": "passed",
+        "duration_ms": 2582,
+        "output_paths": [
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/layered_map_visual_package.v0.1.json"
+        ],
+        "warnings": [
+          "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+        ]
+      },
+      {
+        "stage_id": "map_compile_package",
+        "status": "passed",
+        "duration_ms": 2,
+        "output_paths": [
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_visual_reference_manifest.v0.1.json",
+          "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_compile_package.v0.2.json"
+        ],
+        "warnings": []
+      }
+    ],
+    "output_refs": [
+      {
+        "kind": "map_runtime_package.v0.2",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json",
+        "sha256": "1ba40f6127dcfba699676209f7c609e6efc3c4b5d9d6a45a8f296a354d1bdd5c"
+      },
+      {
+        "kind": "map_topology_control_sketch_pack.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+        "sha256": "2d0ccc6d1304e9eb399610aa8e8552b18f25122d75ffe88e0e6c0350f9b11b53"
+      },
+      {
+        "kind": "topology_constrained_map_prompt_pack.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+        "sha256": "da065ea64e678556906b3a5ab7528096d1e751072ec6de3a62b9fc5ccdbe5bb1"
+      },
+      {
+        "kind": "map_layered_visual_generation_request_pack.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+        "sha256": "d65f990d9410a10291476096d4cdab17caa24fbf2607510e0357d66e46f728e5"
+      },
+      {
+        "kind": "fen_pass.topology_control_sketch",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.topology_control_sketch.png",
+        "sha256": "aaab04e88fb03b828dd107037100355dd607bf993a701bd53c081109cca0fb0c"
+      },
+      {
+        "kind": "fen_pass.topology_control_sketch",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.topology_control_sketch.svg",
+        "sha256": "2444143a168ed3a571390f1d4e818bd96484187b30bc4611337c916184381927"
+      },
+      {
+        "kind": "fen_pass.terrain_composition_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.terrain_composition_reference.png",
+        "sha256": "0f46da5e8c6a14ab269bfa1828f2f6a5e56450ee35216da8b3f1d345596eedff"
+      },
+      {
+        "kind": "fen_pass.road_surface.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.road_surface.geometry_reference.png",
+        "sha256": "0e3a6ebf6b56fb20f5058d917094a684bc69da759bd3dec799efc92f047bc7b8"
+      },
+      {
+        "kind": "fen_pass.build_slot_platform.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.build_slot_platform.geometry_reference.png",
+        "sha256": "9ee19dc4e558c692ddb2447721c169ed9733ab89a1b0b5f16b06dd7afdc29ce1"
+      },
+      {
+        "kind": "fen_pass.objective_foundation.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.objective_foundation.geometry_reference.png",
+        "sha256": "676dcca39591c9913cf9fe7abac5be4678c9b141b1fc42bae50a038ee70f91e7"
+      },
+      {
+        "kind": "fen_pass.spawn_marker.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.spawn_marker.geometry_reference.png",
+        "sha256": "e72d2efe569b84c04ebf4cdf42c8a52b00e353afa9adcbd757406852e49eebf6"
+      },
+      {
+        "kind": "fen_pass.non_blocking_decoration.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration.geometry_reference.png",
+        "sha256": "35e3256fac275af9fc664bbeb674167e99df6741773c245ecb8a2fd957a9f1d7"
+      },
+      {
+        "kind": "fen_pass.non_blocking_decoration_architecture.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_architecture.geometry_reference.png",
+        "sha256": "591fc9b9aef30cdc46c38a049a04262fd3eb80b8e1c98cb287379c3d27704c02"
+      },
+      {
+        "kind": "fen_pass.non_blocking_decoration_natural.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_natural.geometry_reference.png",
+        "sha256": "884ca42b9d8e25f27b284845c59abaaf7c13208c7c50293e1c2bfc88cfaa816e"
+      },
+      {
+        "kind": "fen_pass.non_blocking_decoration_debris.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_debris.geometry_reference.png",
+        "sha256": "18ba975b660156efe8f18b5f1d2f498d888045962fcd6c4970b785b2c7bf030d"
+      },
+      {
+        "kind": "fen_pass.non_blocking_decoration_prop.geometry_reference",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/control/fen_pass.non_blocking_decoration_prop.geometry_reference.png",
+        "sha256": "4aed3a125e17e30186e3989b3243b9e0e6d7d93bee30f185b45a67f2dde68adc"
+      },
+      {
+        "kind": "procedural_map_render_plan.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/procedural_map_render_plan.v0.1.json",
+        "sha256": "247ab4545d0a939986fdba1a430da42ff929013356c874670c5d9fbd22426d0f"
+      },
+      {
+        "kind": "semantic_visual_consistency_report.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/semantic_visual_consistency_report.v0.1.json",
+        "sha256": "458129467dc490fe6930b8d3966f0bf25f5c41d9451782188ddb3115a3136ffe"
+      },
+      {
+        "kind": "layered_map_visual_package.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layered_map_visual_package.v0.1.json",
+        "sha256": "3a3590942242c5d1f731c9e61dd8fd42ca67a99fb5ac640ec3aaab0b24ad4179"
+      },
+      {
+        "kind": "map_visual_reference_manifest.v0.1",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_visual_reference_manifest.v0.1.json",
+        "sha256": "b7428adbfbe5ded381b97432a3272c187a86beab401657c224b7a13bdc5e1d1d"
+      },
+      {
+        "kind": "map_compile_package.v0.2",
+        "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_compile_package.v0.2.json",
+        "sha256": "8cdab1c8b741b290333e287ffc3cb8e4a691f95d13704886b0632d4095ed3478"
+      }
+    ],
+    "provider_execution": {
+      "call_count": 0,
+      "handoff_requested": true,
+      "handoff_status": "request_pack_ready_review_only",
+      "reviewed_local_media_imported": false,
+      "candidate_generation_status": "not_requested",
+      "vision_review_call_count": 0,
+      "automatic_reviewed_staging_ready": false,
+      "background_job_status": "pending",
+      "background_job_ref": "content/generated_world_media/stonewind_border_march/maps/fen_pass/visual_handoff/map_visual_background_job.v0.1.json"
+    },
+    "quality": {
+      "runtime_truth_preserved": true,
+      "logic_visual_alignment": "passed",
+      "player_visual_status": "warning",
+      "warnings": [
+        "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+      ]
+    },
+    "resume": {
+      "reused": false,
+      "checked_at": null
+    }
+  },
+  "map_runtime_catalog_path": "content/generated_worlds/stonewind_border_march/stonewind_border_march.map_runtime_catalog.json",
+  "activation": {
+    "world_catalog_ready": true,
+    "map_runtime_ready": false,
+    "map_quality_status": "candidate",
+    "runtime_truth": "map_runtime_package"
+  }
+}

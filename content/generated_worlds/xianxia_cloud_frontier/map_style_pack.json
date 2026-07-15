@@ -1,0 +1,218 @@
+{
+  "schema_version": "map_style_pack.v0.1",
+  "style_pack_id": "style_xianxia_cloud_frontier_luoxia_plank_v0_1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "node_id": "luoxia_plank",
+  "created_at": "2026-07-15T08:10:15Z",
+  "source_refs": {
+    "map_runtime_package_path": "generated_by_map_compilation_input",
+    "worldbook_path": "content/generated_worlds/xianxia_cloud_frontier/worldbook.json",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "reviewed_ai_proposal"
+  },
+  "node_theme_tags": [
+    "cloud_sea",
+    "floating_peaks",
+    "spiritual_veins",
+    "ancient_talons",
+    "jade_mist",
+    "cliffside_bamboo",
+    "waterfall_glow",
+    "pagoda_eaves"
+  ],
+  "palette": {
+    "terrain_base": "#D4C9B0",
+    "terrain_detail": "#A8A08A",
+    "road_base": "#7B8D6E",
+    "road_edge": "#5A6B4A",
+    "build_slot": "#C8B88A",
+    "objective": "#8B7355",
+    "spawn": "#6B5B4A",
+    "resource": "#B8A48C",
+    "hazard": "#A0522D",
+    "fog": "#E0D8C8",
+    "accent": "#D4A853"
+  },
+  "visual_generation_briefs": {
+    "rendering_style": "Premium production game-environment art with semi-realistic materials, naturally weathered edges, restrained detail density, consistent scale, and a pseudo-3D oblique perspective that emphasizes depth and readability.",
+    "terrain_base": "Continuous, nearly flat traversable surface of fractured pale beige stone with subtle mossy green patina, fine crack lines, and scattered small pebbles.",
+    "road_surface": "Pavable surface of weathered jade-green planks with dark brown grain lines, slight age discoloration, and narrow gaps between planks revealing faint cyan glow from spiritual veins.",
+    "build_slot_platform": "Low empty octagonal platform of chiseled grey stone with a single raised circular inset, faintly weathered, no decorations or markings beyond geometric edges.",
+    "objective_foundation": "Solid rectangular stone foundation with stepped tiers, pale beige granite surface, clean edges, no structure above.",
+    "spawn_marker": "Low truncated stone pillar, roughly hewn, dark grey diorite, with a single shallow groove on top, no glow or symbols.",
+    "non_blocking_decoration": "1. Broken stone lantern with chipped edges, grey granite. 2. Small twisted pine sapling on a rocky outcrop, dark green foliage. 3. Stack of weathered roof tiles, terracotta brown. 4. Low bamboo thicket clump, pale green stems, no leaves."
+  },
+  "lighting": {
+    "time_of_day": "dawn",
+    "contrast_policy": "high_path_readability",
+    "shadow_policy": "soft_blob",
+    "intensity": 0.74
+  },
+  "terrain_materials": [
+    {
+      "material_id": "floating_rock",
+      "role": "terrain_base",
+      "base_color": "#D4C9B0",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "floating_rock_detail",
+      "role": "terrain_detail",
+      "base_color": "#A8A08A",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_materials": [
+    {
+      "material_id": "spiritual_plank",
+      "role": "road_band",
+      "base_color": "#7B8D6E",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "spiritual_plank_edge",
+      "role": "road_edge",
+      "base_color": "#5A6B4A",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_edge_rules": {
+    "edge_style": "soft_embedded",
+    "shoulder_width_cells": 0.25,
+    "direction_cue_policy": "embedded_marks"
+  },
+  "build_slot_platforms": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_talisman_platform",
+      "role": "build_slot_platform",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:talisman_platform"
+      }
+    }
+  ],
+  "objective_prefabs": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_peak_foundation",
+      "role": "objective_foundation",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:peak_foundation"
+      }
+    }
+  ],
+  "spawn_prefabs": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_rift_marker",
+      "role": "spawn_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:rift_marker"
+      }
+    }
+  ],
+  "resource_prefabs": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_resource_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:resource_marker"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_hazard_marker",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:hazard_marker"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_blocking_prop",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:blocking_prop"
+      }
+    }
+  ],
+  "non_blocking_props": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_edge_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "edge_decoration_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:edge_decoration"
+      }
+    }
+  ],
+  "decorative_props": [
+    {
+      "prefab_id": "xianxia_cloud_frontier_ambient_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:xianxia_cloud_frontier:ambient_decoration"
+      }
+    }
+  ],
+  "atmosphere_layers": [
+    {
+      "layer_id": "compiled_edge_atmosphere",
+      "role": "fog",
+      "opacity": 0.24,
+      "placement_policy": "map_edges_only"
+    }
+  ],
+  "postprocess": {
+    "contrast_boost": 0.3,
+    "saturation": 0.92,
+    "vignette": 0.16
+  },
+  "readability_rules": {
+    "minimum_path_contrast": 0.42,
+    "build_slot_marker_policy": "diegetic_platform",
+    "objective_marker_policy": "diegetic_foundation",
+    "spawn_marker_policy": "diegetic_portal",
+    "no_baked_ui_text": true,
+    "no_baked_enemy_or_tower": true,
+    "debug_layers_player_default_allowed": false
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "style_only": true,
+    "gates": [
+      {
+        "gate_id": "style_only_visual_boundary",
+        "status": "passed",
+        "summary": "Generated style controls appearance only; runtime map remains authoritative."
+      },
+      {
+        "gate_id": "player_readability_boundary",
+        "status": "passed",
+        "summary": "Path, slots, objectives, and spawn remain readable and diegetic."
+      }
+    ]
+  }
+}

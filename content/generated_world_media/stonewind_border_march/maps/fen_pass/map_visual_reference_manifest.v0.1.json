@@ -1,0 +1,26 @@
+{
+  "schema_version": "map_visual_reference_pack.v0.1",
+  "pack_id": "map_visual_reference_fen_pass_v0_1",
+  "source_map": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json",
+  "source_battle_config": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json",
+  "usage": {
+    "authority": "runtime_derived_control_reference",
+    "logic_source": "map_runtime_package_remains_authoritative",
+    "next_step": "provider media requires review and promotion before import"
+  },
+  "items": [
+    {
+      "role": "battle_control_sketch",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_surface.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_surface.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "245f56d3076185bc73a95d0d4731a3744e4e53c3d05a5fd0f375ee18bc88d023",
+      "authority": "reference_only",
+      "review_status": "derived_from_runtime_truth",
+      "player_visible_quality": "not_applicable",
+      "logic_alignment_status": "passed",
+      "source_kind": "procedural_runtime_control_layer"
+    }
+  ]
+}

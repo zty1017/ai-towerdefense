@@ -1,0 +1,54 @@
+{
+  "node_briefing_version": "first_crisis_node.v0.1",
+  "worldbook_id": "stonewind_border_march",
+  "node_id": "fen_pass",
+  "display_name": "腐沼隘口",
+  "summary": "第一波敌人从南方沼泽涌来，穿过腐沼隘口直奔石风堡。快速成群的地狱毒蜂打头阵，后方跟着零散的荒原行尸。",
+  "threat": {
+    "enemy_archetypes": [
+      "fen_stingers",
+      "waste_walkers"
+    ],
+    "enemy_traits": "沼地毒蜂成群结队、速度极快，但生命值低；荒原行尸缓慢但数量适中。",
+    "approach_direction": "南方沼泽",
+    "estimated_waves": 2
+  },
+  "protection_targets": [
+    {
+      "stable_internal_id": "target_node_core",
+      "display_name": "石风堡大门",
+      "kind": "core",
+      "summary": "节点的主要防守目标。",
+      "must_protect": true
+    },
+    {
+      "stable_internal_id": "target_optional_facility",
+      "display_name": "炼金工坊",
+      "kind": "facility",
+      "summary": "守住后可保留额外支援。",
+      "must_protect": false
+    }
+  ],
+  "available_materials": [
+    {
+      "material_id": "iron_ore",
+      "quantity": 3
+    },
+    {
+      "material_id": "alchemy_herb",
+      "quantity": 2
+    }
+  ],
+  "npcs_present": [
+    "commander_aldric"
+  ],
+  "facility_state": {
+    "alchemy_workshop": "available",
+    "summary": "炼金工坊可进行一次应急试作。"
+  },
+  "constraints": {
+    "research_budget": "本节点允许一次现场试作。",
+    "sample_delivery": "样品将在战斗中途送达。"
+  },
+  "player_action_hint": "优先研发简易陷阱（木刺陷阱）和符文箭塔，以应对快速蜂群；同时储备炼金爆炸药剂对付行尸群。"
+}

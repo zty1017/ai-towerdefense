@@ -1,0 +1,123 @@
+{
+  "worldbook_version": "worldbook.v0.1",
+  "worldbook_id": "stonewind_border_march",
+  "display_name": "石风边境领",
+  "summary": "王国西陲的边境守备领，被腐烂沼泽和荒芜石原包围。主城石风堡坐落在山脊之上，灰矿场、炼金工坊与巡林哨站构成三道防线。守军利用符文刻石、炼金药剂、木石机械和古代遗物试作防御装置，抵御从沼泽深处涌出的异界腐化之物。",
+  "tone_and_taboos": {
+    "voice": "厚重、坚韧、略带荒凉，但透着篝火般的温暖与希望。对话简洁有力，充满边境生存的粗粝感。",
+    "forbidden_terms_in_player_text": [
+      "AI",
+      "provider",
+      "schema",
+      "prompt",
+      "compiler",
+      "token",
+      "trace",
+      "mock"
+    ],
+    "naming_style": "西式地名，多用石、风、沼、灰、铁等物象，搭配堡、矿、岗、哨等功能词。"
+  },
+  "phase_mapping": {
+    "preparation": "整备时刻",
+    "battle": "守御时刻",
+    "resolution": "清算时刻"
+  },
+  "resource_mapping": {
+    "iron_ore": {
+      "display_name": "铁矿石",
+      "summary": "灰矿场开采的粗铁矿，用于锻造防御器械和加固建筑。"
+    },
+    "alchemy_herb": {
+      "display_name": "炼金草",
+      "summary": "沼泽边缘生长的发光草药，可提炼成爆炸药剂或治疗药膏。"
+    },
+    "rune_stone": {
+      "display_name": "符文石",
+      "summary": "刻有古代铭文的碎石，激活后可释放元素屏障或附着攻击。"
+    }
+  },
+  "node_mapping": {
+    "stonewind_keep": {
+      "display_name": "石风堡",
+      "role": "main_city"
+    },
+    "fen_pass": {
+      "display_name": "腐沼隘口",
+      "role": "battle_hotspot"
+    },
+    "alchemy_workshop": {
+      "display_name": "炼金工坊",
+      "role": "research_facility"
+    },
+    "ash_mine": {
+      "display_name": "灰矿场",
+      "role": "resource_storage"
+    }
+  },
+  "enemy_mapping": {
+    "fen_stingers": {
+      "display_name": "沼地毒蜂",
+      "summary": "从沼泽腐雾中诞生的飞行虫群，体型小、速度极快，成群袭击。",
+      "archetype": "fast_swarm"
+    },
+    "waste_walkers": {
+      "display_name": "荒原行尸",
+      "summary": "被腐化气息复活的边境死者，行动迟缓但数量众多，基础步兵。",
+      "archetype": "basic"
+    },
+    "stone_brutes": {
+      "display_name": "石甲巨怪",
+      "summary": "浑身覆盖风化岩石的巨型怪物，移动缓慢但护甲厚重。",
+      "archetype": "armored_slow"
+    }
+  },
+  "npc_archetypes": [
+    {
+      "stable_internal_id": "commander_aldric",
+      "display_name": "阿尔德里克指挥官",
+      "role": "城堡指挥官",
+      "voice": "头发花白的退伍军人，语气沉稳但焦急。‘边境的每一块石头都在颤抖，我们得守住。’"
+    },
+    {
+      "stable_internal_id": "mira_the_alchemist",
+      "display_name": "炼金术士米拉",
+      "role": "炼金工坊负责人",
+      "voice": "年轻而狂热，说话带着实验记录般的精确。‘只要再给我一束炼金草，就能让那火焰喷射器稳定运转。’"
+    },
+    {
+      "stable_internal_id": "old_lorne",
+      "display_name": "老洛恩",
+      "role": "巡林者向导",
+      "voice": "沉默寡言，偶尔用沙哑的嗓音给出最实用的建议。‘沼泽里的路会动，跟着石头上的苔藓走。’"
+    }
+  ],
+  "asset_naming_rules": {
+    "temporary_trap_sample": "西式地名，多用石、风、沼、灰、铁等物象，搭配堡、矿、岗、哨等功能词。",
+    "tower_blueprint": "西式地名，多用石、风、沼、灰、铁等物象，搭配堡、矿、岗、哨等功能词。"
+  },
+  "visual_rules": {
+    "palette": {
+      "terrain_base": "#4B5D4A",
+      "terrain_detail": "#3A4A3A",
+      "road_base": "#6B5B4A",
+      "road_edge": "#5A4E3C",
+      "build_slot": "#7A7060",
+      "objective": "#8A7A5A",
+      "spawn": "#5A4A3A",
+      "resource": "#C8A84C",
+      "hazard": "#8A3A2A",
+      "fog": "#B0B8A0",
+      "accent": "#D0A040"
+    },
+    "style": "石风边境"
+  },
+  "gameplay_tilt": {
+    "default_creativity": "stable",
+    "trap_sample_first": true,
+    "formal_research_institute_unlocked": false
+  },
+  "event_style": {
+    "opening": "黑屏文字与动画卡建立世界危机。",
+    "after_battle": "角色反馈与节点变化推动下一阶段。"
+  }
+}

@@ -96,7 +96,12 @@ def _generated_entry(manifest: dict[str, Any]) -> dict[str, Any]:
         "status": "ready" if ready else "compiling",
         "source": "ai_compiled_world",
         "entry_node_id": node_id,
-        "preview_url": f"/assets/layered_maps/{node_id}/composited/{node_id}.layered_map.svg" if ready else None,
+        "preview_url": (
+            f"/assets/generated_worlds/{manifest['world_id']}/maps/{node_id}/"
+            f"composited/{node_id}.layered_map.svg"
+            if ready
+            else None
+        ),
         "theme_tags": list(style.get("node_theme_tags") or [])[:5],
         "world_config": config,
     }

@@ -1,0 +1,70 @@
+{
+  "schema_version": "topology_constrained_map_prompt_pack.v0.1",
+  "pack_id": "map_prompt_luoxia_plank_v0_1",
+  "layout_plan_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+  "status": "prompt_pack_ready",
+  "summary": {
+    "prompt_count": 1,
+    "status_counts": {
+      "prompt_ready": 1
+    },
+    "primary_prompt_count": 1,
+    "fallback_prompt_count": 0
+  },
+  "prompts": [
+    {
+      "node_id": "luoxia_plank",
+      "status": "prompt_ready",
+      "primary_use": "topology_constrained_generation",
+      "topology_policy": "preserve_runtime_topology",
+      "recommendation_source": "map_style_pack_and_runtime_truth",
+      "runtime_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+      "runtime_topology_summary": {
+        "grid": {
+          "projection": "pseudo3d_oblique",
+          "width_cells": 16,
+          "height_cells": 9,
+          "cell_size": 64
+        },
+        "path_route_count": 1,
+        "build_slot_count": 8,
+        "spawn_point_count": 1,
+        "objective_count": 2
+      },
+      "prompt_sections": {
+        "subject": "an uninhabited tower-defense environment plate for worldbook xianxia_cloud_frontier",
+        "environment": "quiet floating rock, floating rock detail ground and boundary structures shaped only by cloud sea, floating peaks, spiritual veins, ancient talons, jade mist, cliffside bamboo, waterfall glow, pagoda eaves",
+        "style": "polished production 2D game environment with semi-realistic material response, natural edges and restrained pseudo-3D depth; preserve exactly these world identity terms: cloud sea, floating peaks, spiritual veins, ancient talons, jade mist, cliffside bamboo, waterfall glow, pagoda eaves",
+        "lighting": "dawn with high_path_readability and palette anchors #D4C9B0, #A8A08A, #7B8D6E, #5A6B4A, #C8B88A, #8B7355, #6B5B4A, #B8A48C, #A0522D, #E0D8C8, #D4A853",
+        "composition": "wide elevated three-quarter top-down view with the central playable area calm, open, and free of focal subjects",
+        "quality": "production game background, crisp material separation, low grain, no narrative action or gameplay entities"
+      },
+      "prompt_brief": "Subject: an uninhabited tower-defense environment plate for worldbook xianxia_cloud_frontier. Environment: quiet floating rock, floating rock detail ground and boundary structures shaped only by cloud sea, floating peaks, spiritual veins, ancient talons, jade mist, cliffside bamboo, waterfall glow, pagoda eaves. Style: polished production 2D game environment with semi-realistic material response, natural edges and restrained pseudo-3D depth; preserve exactly these world identity terms: cloud sea, floating peaks, spiritual veins, ancient talons, jade mist, cliffside bamboo, waterfall glow, pagoda eaves. Lighting: dawn with high_path_readability and palette anchors #D4C9B0, #A8A08A, #7B8D6E, #5A6B4A, #C8B88A, #8B7355, #6B5B4A, #B8A48C, #A0522D, #E0D8C8, #D4A853. Composition: wide elevated three-quarter top-down view with the central playable area calm, open, and free of focal subjects. Quality: production game background, crisp material separation, low grain, no narrative action or gameplay entities.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference"
+      ],
+      "required_review_gates": [
+        "worldbook_style_alignment",
+        "paths_visually_match_runtime_topology",
+        "objective_landmark_matches_runtime_policy",
+        "build_pads_distributed_near_routes",
+        "no_baked_units_towers_effects_or_ui",
+        "overlay_review_generated_before_promotion"
+      ]
+    }
+  ],
+  "policy": [
+    "This prompt pack is compiled from MapStylePack and MapRuntimePackage, not handwritten per node.",
+    "It is a provider handoff artifact and never a player runtime visual layer.",
+    "Generated candidates must pass alignment, visual review, promotion, and local publication gates."
+  ]
+}

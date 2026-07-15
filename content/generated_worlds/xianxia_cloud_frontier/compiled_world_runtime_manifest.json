@@ -1,0 +1,248 @@
+{
+  "schema_version": "compiled_world_runtime_manifest.v0.1",
+  "world_id": "xianxia_cloud_frontier",
+  "display_name": "云海断峰关",
+  "tagline": "灵脉为路，符阵为城",
+  "created_at": "2026-07-15T08:10:15Z",
+  "seed": {
+    "seed_id": "xianxia_cloud_frontier",
+    "sha256": "11ce322fca07c10cde95d1bc30c0b1f49686085b855cf24659e9947c28cee0fd"
+  },
+  "generation": {
+    "generation_mode": "provider_generated",
+    "profile": "ark_deepseek_v4_flash",
+    "model": "deepseek-v4-flash",
+    "provider_call_performed": true,
+    "attempt_count": 1,
+    "raw_prompt_stored": false,
+    "raw_response_stored": false
+  },
+  "entry_node_id": "luoxia_plank",
+  "suggested_research_intent": "研究一种能减速或定身的符箓，例如“凝霜符”以应对飞蝗群。",
+  "artifacts": {
+    "worldbook": "content/generated_worlds/xianxia_cloud_frontier/worldbook.json",
+    "world_instance_config": "content/generated_worlds/xianxia_cloud_frontier/world_instance_config.json",
+    "opening": "content/generated_worlds/xianxia_cloud_frontier/opening.json",
+    "initial_map": "content/generated_worlds/xianxia_cloud_frontier/initial_map.json",
+    "first_crisis_node": "content/generated_worlds/xianxia_cloud_frontier/first_crisis_node.json",
+    "first_battle_config": "content/generated_worlds/xianxia_cloud_frontier/first_battle_config.json",
+    "map_style_pack": "content/generated_worlds/xianxia_cloud_frontier/map_style_pack.json",
+    "candidate": "content/generated_worlds/xianxia_cloud_frontier/generated_world_candidate.json",
+    "map_compilation_input": "content/generated_worlds/xianxia_cloud_frontier/map_compilation_input.json"
+  },
+  "map_compilation_report": {
+    "schema_version": "map_compilation_run_report.v0.1",
+    "run_id": "maprun_dc52e4f7a97452319f27",
+    "created_at": "2026-07-15T08:10:15Z",
+    "completed_at": "2026-07-15T08:10:23Z",
+    "status": "completed",
+    "input_fingerprint": "dc52e4f7a97452319f278e62a71fa6720a37958dc0743a4a3df80e9c317f630d",
+    "input_ref": "content/generated_worlds/xianxia_cloud_frontier/map_compilation_input.json",
+    "worldbook_id": "xianxia_cloud_frontier",
+    "node_id": "luoxia_plank",
+    "stages": [
+      {
+        "stage_id": "map_runtime_package",
+        "status": "passed",
+        "duration_ms": 1,
+        "output_paths": [
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json"
+        ],
+        "warnings": []
+      },
+      {
+        "stage_id": "visual_generation_handoff",
+        "status": "passed",
+        "duration_ms": 4587,
+        "output_paths": [
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.svg",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.terrain_composition_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.road_surface.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.build_slot_platform.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.objective_foundation.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.spawn_marker.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_architecture.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_natural.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_debris.geometry_reference.png",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_prop.geometry_reference.png"
+        ],
+        "warnings": [
+          "provider_execution_and_candidate_review_are_pending"
+        ]
+      },
+      {
+        "stage_id": "render_plan_and_semantic_consistency",
+        "status": "passed",
+        "duration_ms": 4,
+        "output_paths": [
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/procedural_map_render_plan.v0.1.json",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/semantic_visual_consistency_report.v0.1.json"
+        ],
+        "warnings": []
+      },
+      {
+        "stage_id": "layered_map_visual_package",
+        "status": "passed",
+        "duration_ms": 2584,
+        "output_paths": [
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layered_map_visual_package.v0.1.json"
+        ],
+        "warnings": [
+          "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+        ]
+      },
+      {
+        "stage_id": "map_compile_package",
+        "status": "passed",
+        "duration_ms": 2,
+        "output_paths": [
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_visual_reference_manifest.v0.1.json",
+          "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_compile_package.v0.2.json"
+        ],
+        "warnings": []
+      }
+    ],
+    "output_refs": [
+      {
+        "kind": "map_runtime_package.v0.2",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+        "sha256": "ed79191e86ba83597caf9def169534c4654694b62c35353db2b89fe90ca9c046"
+      },
+      {
+        "kind": "map_topology_control_sketch_pack.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+        "sha256": "a75a2d026b4f861a78450c0e5ccbc4d5ea62e8f66d0fd9f9d768ee50415bcc3b"
+      },
+      {
+        "kind": "topology_constrained_map_prompt_pack.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+        "sha256": "874f0ec0f11ed444a75fe69edae8b60d20880bda124cd524e863e2c9795077f7"
+      },
+      {
+        "kind": "map_layered_visual_generation_request_pack.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+        "sha256": "d288018f390a4a733b1e021acef5692e128161adc04f81216bbc0b4cd789d4da"
+      },
+      {
+        "kind": "luoxia_plank.topology_control_sketch",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4"
+      },
+      {
+        "kind": "luoxia_plank.topology_control_sketch",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.topology_control_sketch.svg",
+        "sha256": "dd5d2d272d5287c7af03a82722cb6d3a1f1e82c192c4364681bc2a0c7ea1dfe1"
+      },
+      {
+        "kind": "luoxia_plank.terrain_composition_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.terrain_composition_reference.png",
+        "sha256": "0f46da5e8c6a14ab269bfa1828f2f6a5e56450ee35216da8b3f1d345596eedff"
+      },
+      {
+        "kind": "luoxia_plank.road_surface.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.road_surface.geometry_reference.png",
+        "sha256": "0e3a6ebf6b56fb20f5058d917094a684bc69da759bd3dec799efc92f047bc7b8"
+      },
+      {
+        "kind": "luoxia_plank.build_slot_platform.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.build_slot_platform.geometry_reference.png",
+        "sha256": "9ee19dc4e558c692ddb2447721c169ed9733ab89a1b0b5f16b06dd7afdc29ce1"
+      },
+      {
+        "kind": "luoxia_plank.objective_foundation.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.objective_foundation.geometry_reference.png",
+        "sha256": "676dcca39591c9913cf9fe7abac5be4678c9b141b1fc42bae50a038ee70f91e7"
+      },
+      {
+        "kind": "luoxia_plank.spawn_marker.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.spawn_marker.geometry_reference.png",
+        "sha256": "e72d2efe569b84c04ebf4cdf42c8a52b00e353afa9adcbd757406852e49eebf6"
+      },
+      {
+        "kind": "luoxia_plank.non_blocking_decoration.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration.geometry_reference.png",
+        "sha256": "35e3256fac275af9fc664bbeb674167e99df6741773c245ecb8a2fd957a9f1d7"
+      },
+      {
+        "kind": "luoxia_plank.non_blocking_decoration_architecture.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_architecture.geometry_reference.png",
+        "sha256": "591fc9b9aef30cdc46c38a049a04262fd3eb80b8e1c98cb287379c3d27704c02"
+      },
+      {
+        "kind": "luoxia_plank.non_blocking_decoration_natural.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_natural.geometry_reference.png",
+        "sha256": "884ca42b9d8e25f27b284845c59abaaf7c13208c7c50293e1c2bfc88cfaa816e"
+      },
+      {
+        "kind": "luoxia_plank.non_blocking_decoration_debris.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_debris.geometry_reference.png",
+        "sha256": "18ba975b660156efe8f18b5f1d2f498d888045962fcd6c4970b785b2c7bf030d"
+      },
+      {
+        "kind": "luoxia_plank.non_blocking_decoration_prop.geometry_reference",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/control/luoxia_plank.non_blocking_decoration_prop.geometry_reference.png",
+        "sha256": "4aed3a125e17e30186e3989b3243b9e0e6d7d93bee30f185b45a67f2dde68adc"
+      },
+      {
+        "kind": "procedural_map_render_plan.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/procedural_map_render_plan.v0.1.json",
+        "sha256": "5f7369125d27dbe255bc80514bdde7de22d42f1b6c52999258f5b46096b3065f"
+      },
+      {
+        "kind": "semantic_visual_consistency_report.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/semantic_visual_consistency_report.v0.1.json",
+        "sha256": "cd95df96b1dd7ee4a136525d2f564560bd0aaba779be4a920bc4cba3a36eb0ba"
+      },
+      {
+        "kind": "layered_map_visual_package.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layered_map_visual_package.v0.1.json",
+        "sha256": "d555e6aa3305931c5c84bc71b81d65cc94e38bc6ed55bbd952447495166ce9f6"
+      },
+      {
+        "kind": "map_visual_reference_manifest.v0.1",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_visual_reference_manifest.v0.1.json",
+        "sha256": "9efce0a92a5d18bfe002ce87443cf5924214934f7d82b3c749e63651d01bba29"
+      },
+      {
+        "kind": "map_compile_package.v0.2",
+        "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_compile_package.v0.2.json",
+        "sha256": "7fd49df6eb282fe593b6e7bdf569c5a7d9e34e26562a758de79491f72d17db72"
+      }
+    ],
+    "provider_execution": {
+      "call_count": 0,
+      "handoff_requested": true,
+      "handoff_status": "request_pack_ready_review_only",
+      "reviewed_local_media_imported": false,
+      "candidate_generation_status": "not_requested",
+      "vision_review_call_count": 0,
+      "automatic_reviewed_staging_ready": false,
+      "background_job_status": "pending",
+      "background_job_ref": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/visual_handoff/map_visual_background_job.v0.1.json"
+    },
+    "quality": {
+      "runtime_truth_preserved": true,
+      "logic_visual_alignment": "passed",
+      "player_visual_status": "warning",
+      "warnings": [
+        "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+      ]
+    },
+    "resume": {
+      "reused": false,
+      "checked_at": null
+    }
+  },
+  "map_runtime_catalog_path": "content/generated_worlds/xianxia_cloud_frontier/xianxia_cloud_frontier.map_runtime_catalog.json",
+  "activation": {
+    "world_catalog_ready": true,
+    "map_runtime_ready": false,
+    "map_quality_status": "candidate",
+    "runtime_truth": "map_runtime_package"
+  }
+}

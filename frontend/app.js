@@ -1148,6 +1148,7 @@ import {
         state.data.runWorldState = response.run_world_state;
         if (response.world_catalog) state.data.worldCatalog = response.world_catalog;
         applyWorldBundle(response.world_bundle);
+        await loadCampaignRoute();
       } catch {
         // Continue with loaded fixture content if the write path is unavailable.
       }

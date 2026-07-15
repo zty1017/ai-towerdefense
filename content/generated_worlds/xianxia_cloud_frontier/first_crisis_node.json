@@ -1,0 +1,54 @@
+{
+  "node_briefing_version": "first_crisis_node.v0.1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "node_id": "luoxia_plank",
+  "display_name": "落霞栈道",
+  "summary": "第一波妖物从东侧云海涌来，沿落霞栈道逼近天阙峰。",
+  "threat": {
+    "enemy_archetypes": [
+      "flying_locust",
+      "wandering_stone_golem"
+    ],
+    "enemy_traits": "飞蝗成群快速移动，石傀缓慢但坚固，注意优先处理飞蝗。",
+    "approach_direction": "东侧云海",
+    "estimated_waves": 2
+  },
+  "protection_targets": [
+    {
+      "stable_internal_id": "target_node_core",
+      "display_name": "天阙峰",
+      "kind": "core",
+      "summary": "节点的主要防守目标。",
+      "must_protect": true
+    },
+    {
+      "stable_internal_id": "target_optional_facility",
+      "display_name": "落霞栈道",
+      "kind": "facility",
+      "summary": "守住后可保留额外支援。",
+      "must_protect": false
+    }
+  ],
+  "available_materials": [
+    {
+      "material_id": "spirit_vein_shard",
+      "quantity": 3
+    },
+    {
+      "material_id": "talisman_paper",
+      "quantity": 2
+    }
+  ],
+  "npcs_present": [
+    "mountain_elder"
+  ],
+  "facility_state": {
+    "ningshuang_pavilion": "available",
+    "summary": "凝霜阁可进行一次应急试作。"
+  },
+  "constraints": {
+    "research_budget": "本节点允许一次现场试作。",
+    "sample_delivery": "样品将在战斗中途送达。"
+  },
+  "player_action_hint": "研究一种能减速或定身的符箓，例如“凝霜符”以应对飞蝗群。"
+}

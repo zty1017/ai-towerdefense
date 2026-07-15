@@ -1,0 +1,26 @@
+{
+  "schema_version": "map_visual_reference_pack.v0.1",
+  "pack_id": "map_visual_reference_ring_crossing_v0_1",
+  "source_map": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json",
+  "source_battle_config": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json",
+  "usage": {
+    "authority": "runtime_derived_control_reference",
+    "logic_source": "map_runtime_package_remains_authoritative",
+    "next_step": "provider media requires review and promotion before import"
+  },
+  "items": [
+    {
+      "role": "battle_control_sketch",
+      "url": "/assets/generated_worlds/stellar_anchor/maps/ring_crossing/layers/ring_crossing.road_surface.svg",
+      "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/layers/ring_crossing.road_surface.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c9ee78977bb48be9b78267fe46457c3dbb4e8595694c0716b635a271c5b97f21",
+      "authority": "reference_only",
+      "review_status": "derived_from_runtime_truth",
+      "player_visible_quality": "not_applicable",
+      "logic_alignment_status": "passed",
+      "source_kind": "procedural_runtime_control_layer"
+    }
+  ]
+}

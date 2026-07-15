@@ -1,0 +1,182 @@
+{
+  "schema_version": "generated_world_candidate.v0.1",
+  "world_id": "stonewind_border_march",
+  "display_name": "石风边境领",
+  "tagline": "沼泽与荒原之间的最后堡垒",
+  "summary": "王国西陲的边境守备领，被腐烂沼泽和荒芜石原包围。主城石风堡坐落在山脊之上，灰矿场、炼金工坊与巡林哨站构成三道防线。守军利用符文刻石、炼金药剂、木石机械和古代遗物试作防御装置，抵御从沼泽深处涌出的异界腐化之物。",
+  "tone_voice": "厚重、坚韧、略带荒凉，但透着篝火般的温暖与希望。对话简洁有力，充满边境生存的粗粝感。",
+  "naming_style": "西式地名，多用石、风、沼、灰、铁等物象，搭配堡、矿、岗、哨等功能词。",
+  "phase_terms": {
+    "preparation": "整备时刻",
+    "battle": "守御时刻",
+    "resolution": "清算时刻"
+  },
+  "resources": [
+    {
+      "id": "iron_ore",
+      "display_name": "铁矿石",
+      "summary": "灰矿场开采的粗铁矿，用于锻造防御器械和加固建筑。"
+    },
+    {
+      "id": "alchemy_herb",
+      "display_name": "炼金草",
+      "summary": "沼泽边缘生长的发光草药，可提炼成爆炸药剂或治疗药膏。"
+    },
+    {
+      "id": "rune_stone",
+      "display_name": "符文石",
+      "summary": "刻有古代铭文的碎石，激活后可释放元素屏障或附着攻击。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "stonewind_keep",
+      "display_name": "石风堡",
+      "summary": "边境领核心城堡，坐落在高地，指挥中心与最后防线。",
+      "role": "main_city"
+    },
+    {
+      "id": "fen_pass",
+      "display_name": "腐沼隘口",
+      "summary": "沼泽与荒原之间的狭窄通道，敌人最常突破的战场。",
+      "role": "battle_hotspot"
+    },
+    {
+      "id": "alchemy_workshop",
+      "display_name": "炼金工坊",
+      "summary": "位于旧矿坑内的实验室，研究炼金药剂与符文融合技术。",
+      "role": "research_facility"
+    },
+    {
+      "id": "ash_mine",
+      "display_name": "灰矿场",
+      "summary": "废弃多年的露天矿坑，如今重新开采，提供铁矿石和符文石原料。",
+      "role": "resource_storage"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "fen_stingers",
+      "display_name": "沼地毒蜂",
+      "summary": "从沼泽腐雾中诞生的飞行虫群，体型小、速度极快，成群袭击。",
+      "archetype": "fast_swarm"
+    },
+    {
+      "id": "waste_walkers",
+      "display_name": "荒原行尸",
+      "summary": "被腐化气息复活的边境死者，行动迟缓但数量众多，基础步兵。",
+      "archetype": "basic"
+    },
+    {
+      "id": "stone_brutes",
+      "display_name": "石甲巨怪",
+      "summary": "浑身覆盖风化岩石的巨型怪物，移动缓慢但护甲厚重。",
+      "archetype": "armored_slow"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "commander_aldric",
+      "display_name": "阿尔德里克指挥官",
+      "role": "城堡指挥官",
+      "voice": "头发花白的退伍军人，语气沉稳但焦急。‘边境的每一块石头都在颤抖，我们得守住。’"
+    },
+    {
+      "id": "mira_the_alchemist",
+      "display_name": "炼金术士米拉",
+      "role": "炼金工坊负责人",
+      "voice": "年轻而狂热，说话带着实验记录般的精确。‘只要再给我一束炼金草，就能让那火焰喷射器稳定运转。’"
+    },
+    {
+      "id": "old_lorne",
+      "display_name": "老洛恩",
+      "role": "巡林者向导",
+      "voice": "沉默寡言，偶尔用沙哑的嗓音给出最实用的建议。‘沼泽里的路会动，跟着石头上的苔藓走。’"
+    }
+  ],
+  "visual": {
+    "style_id": "stonewind_style",
+    "style_name": "石风边境",
+    "theme_tags": [
+      "stone_fortress",
+      "marshland",
+      "western_fantasy",
+      "fog",
+      "ruins",
+      "wooden_palisade",
+      "alchemy_flask",
+      "cold_dawn",
+      "warm_firelight",
+      "cobblestone"
+    ],
+    "palette": {
+      "terrain_base": "#4B5D4A",
+      "terrain_detail": "#3A4A3A",
+      "road_base": "#6B5B4A",
+      "road_edge": "#5A4E3C",
+      "build_slot": "#7A7060",
+      "objective": "#8A7A5A",
+      "spawn": "#5A4A3A",
+      "resource": "#C8A84C",
+      "hazard": "#8A3A2A",
+      "fog": "#B0B8A0",
+      "accent": "#D0A040"
+    },
+    "time_of_day": "dusk",
+    "terrain_name": "marsh_grassland",
+    "road_name": "cobblestone_mud_path",
+    "slot_name": "stone_platform",
+    "objective_name": "ancient_pedestal",
+    "spawn_name": "cracked_earth_spawn",
+    "layer_briefs": {
+      "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge wear, restrained detail, unified scale, and a pseudo-3D oblique camera. Subsurface scattering on organic surfaces, crisp stone normals, volumetric fog, and warm point light sources create depth and atmosphere.",
+      "terrain_base": "Continuous low-lying wetland with patchy dull green grass, dark brown peat soil, and scattered shallow water puddles reflecting overcast sky.",
+      "road_surface": "Worn cobblestone setts in muted grey-brown, embedded in dried mud, with occasional moss-filled cracks and faint wheel ruts.",
+      "build_slot_platform": "Low circular stone platform, one step high, made of rough-hewn granite blocks, slightly uneven surface, no mortar visible.",
+      "objective_foundation": "Square stone pedestal with chiseled edges, its top surface a single slab of slate, lightly weathered, no inscriptions.",
+      "spawn_marker": "Low mound of cracked earth and dark soil, circumference about three paces, no vegetation, surface shows fine fissures glowing faintly amber.",
+      "non_blocking_decoration": "1. Moss-covered fallen log, split lengthwise, dark bark with patches of pale lichen. 2. Rusted iron cage, waist-high, bars twisted, embedded in muddy ground. 3. Stone well with broken rim, interior dark, rope absent. 4. Wooden cart wheel, half-buried, spokes cracked, iron rim rusted."
+    }
+  },
+  "opening_cards": [
+    {
+      "title": "边境的呼唤",
+      "text": "王国的西陲，腐烂沼泽与荒芜石原的交界处，石风边境领已经孤独坚守了百年。如今，腐化气息从沼泽深处蔓延，沉睡的敌人再次苏醒。"
+    },
+    {
+      "title": "最后的补给",
+      "text": "灰矿场重新开工，炼金工坊的灯火彻夜不熄。指挥官阿尔德里克召集所有能战斗的人——我们得在下一波攻势前准备好。"
+    },
+    {
+      "title": "试作防御",
+      "text": "米拉在工坊里摆弄着符文石与炼金草的组合，声称能造出‘喷火的铁盒子’。老洛恩默默地在木栈道上钉下削尖的木桩。每一份材料都珍贵。"
+    }
+  ],
+  "player_origins": [
+    {
+      "id": "exiled_knight",
+      "display_name": "流亡骑士",
+      "summary": "因故被放逐的王国骑士，带着剑与盾来到边境，寻求赎罪。"
+    },
+    {
+      "id": "alchemy_apprentice",
+      "display_name": "炼金学徒",
+      "summary": "米拉身边的小助手，意外学会了调配爆裂药剂，梦想成为正式炼金术士。"
+    },
+    {
+      "id": "border_scout",
+      "display_name": "边境斥候",
+      "summary": "从小在沼泽和荒原中长大的猎人，熟悉每一条隐秘小径和陷阱。"
+    }
+  ],
+  "first_battle": {
+    "display_name": "腐沼隘口初战",
+    "summary": "第一波敌人从南方沼泽涌来，穿过腐沼隘口直奔石风堡。快速成群的地狱毒蜂打头阵，后方跟着零散的荒原行尸。",
+    "route_shape": "north_south_serpentine",
+    "core_name": "石风堡大门",
+    "optional_target_name": "炼金工坊",
+    "enemy_traits": "沼地毒蜂成群结队、速度极快，但生命值低；荒原行尸缓慢但数量适中。",
+    "approach_direction": "南方沼泽",
+    "suggested_research_intent": "优先研发简易陷阱（木刺陷阱）和符文箭塔，以应对快速蜂群；同时储备炼金爆炸药剂对付行尸群。"
+  }
+}

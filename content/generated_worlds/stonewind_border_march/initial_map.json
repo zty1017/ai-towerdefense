@@ -1,0 +1,137 @@
+{
+  "map_version": "initial_map.v0.1",
+  "worldbook_id": "stonewind_border_march",
+  "display_name": "石风堡态势图",
+  "summary": "沼泽与荒原之间的最后堡垒",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "projection": "pseudo3d_oblique"
+  },
+  "nodes": [
+    {
+      "stable_internal_id": "stonewind_keep",
+      "display_name": "石风堡",
+      "kind": "main_city",
+      "position": {
+        "x": 300,
+        "y": 390
+      },
+      "state": "controlled",
+      "summary": "边境领核心城堡，坐落在高地，指挥中心与最后防线。",
+      "icons": [
+        "main_city"
+      ]
+    },
+    {
+      "stable_internal_id": "fen_pass",
+      "display_name": "腐沼隘口",
+      "kind": "battle_hotspot",
+      "position": {
+        "x": 930,
+        "y": 310
+      },
+      "state": "crisis_active",
+      "summary": "沼泽与荒原之间的狭窄通道，敌人最常突破的战场。",
+      "icons": [
+        "battle_hotspot"
+      ]
+    },
+    {
+      "stable_internal_id": "alchemy_workshop",
+      "display_name": "炼金工坊",
+      "kind": "research_facility",
+      "position": {
+        "x": 500,
+        "y": 245
+      },
+      "state": "available",
+      "summary": "位于旧矿坑内的实验室，研究炼金药剂与符文融合技术。",
+      "icons": [
+        "research_facility"
+      ]
+    },
+    {
+      "stable_internal_id": "ash_mine",
+      "display_name": "灰矿场",
+      "kind": "resource_storage",
+      "position": {
+        "x": 590,
+        "y": 485
+      },
+      "state": "controlled",
+      "summary": "废弃多年的露天矿坑，如今重新开采，提供铁矿石和符文石原料。",
+      "icons": [
+        "resource_storage"
+      ]
+    }
+  ],
+  "supply_lines": [
+    {
+      "stable_internal_id": "supply_stonewind_keep_to_fen_pass",
+      "display_name": "石风堡至腐沼隘口通路",
+      "from_node_id": "stonewind_keep",
+      "to_node_id": "fen_pass",
+      "state": "active",
+      "summary": "当前唯一可靠的前线支援通路。"
+    }
+  ],
+  "dark_regions": [
+    {
+      "stable_internal_id": "unknown_stonewind_border_march_edge",
+      "display_name": "未探明区域",
+      "polygon": [
+        {
+          "x": 700,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 720
+        },
+        {
+          "x": 700,
+          "y": 720
+        }
+      ],
+      "state": "hidden",
+      "summary": "尚未被当前势力掌握的区域。"
+    }
+  ],
+  "threat_edges": [
+    {
+      "stable_internal_id": "threat_fen_pass",
+      "display_name": "迫近威胁",
+      "position": {
+        "x": 1120,
+        "y": 590
+      },
+      "direction": "northwest",
+      "severity": "high",
+      "summary": "南方沼泽"
+    }
+  ],
+  "floating_events": [
+    {
+      "stable_internal_id": "event_fen_pass_distress",
+      "display_name": "腐沼隘口急报",
+      "kind": "distress_call",
+      "anchor_node_id": "fen_pass",
+      "summary": "第一波敌人从南方沼泽涌来，穿过腐沼隘口直奔石风堡。快速成群的地狱毒蜂打头阵，后方跟着零散的荒原行尸。"
+    }
+  ],
+  "legend_token_map": {
+    "main_city": "主城",
+    "battle_hotspot": "战斗热点",
+    "research_facility": "设施",
+    "resource_storage": "资源存储节点",
+    "supply_line": "补给线",
+    "dark_region": "未知区",
+    "threat_edge": "移动威胁",
+    "floating_event": "悬浮事件"
+  }
+}

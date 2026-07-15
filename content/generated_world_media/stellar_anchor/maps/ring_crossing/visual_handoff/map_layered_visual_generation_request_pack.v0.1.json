@@ -1,0 +1,1169 @@
+{
+  "schema_version": "map_layered_visual_generation_request_pack.v0.1",
+  "pack_id": "map_layered_visual_requests_ring_crossing_v0_1",
+  "status": "request_pack_ready_review_only",
+  "node_id": "ring_crossing",
+  "worldbook_id": "stellar_anchor",
+  "source_refs": {
+    "map_runtime_package": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json",
+    "map_style_pack": "style_stellar_anchor_ring_crossing_v0_1",
+    "topology_control_pack": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+    "prompt_pack": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json"
+  },
+  "requests": [
+    {
+      "request_id": "map_layer_ring_crossing_01_terrain_base",
+      "role": "terrain_base",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "one seamless square PBR terrain albedo texture made only from alien rock, alien rock detail",
+        "environment": "the same ground material fills every pixel with uniform texel density; use only fine diffuse surface variation from Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings., such as small weathering, tiny cracks, moisture specks, dust or short flat moss; no object or patch may occupy more than eight percent of the tile",
+        "style": "photogrammetric high-end production game material rendering with semi-realistic physically coherent materials, controlled roughness and micro-detail, neutral albedo response and natural color variation; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7",
+        "lighting": "flat neutral top-down albedo capture with even exposure and no baked directional light, cast shadow, ambient occlusion vignette, bloom or highlight",
+        "composition": "strict orthographic macro material swatch filling all four edges at one uniform scale; no perspective, horizon, frame, border vegetation, wall, stairs, bridge, building, cliff, tree, rock pile, foreground prop, focal patch or recognizable symbol; absolutely no road, trail, route, lane, circle, ring, rune, deployment pad, socket, objective, spawn portal, unit or interaction marker",
+        "quality": "sharp low-grain near-seamless terrain texture source for deterministic material-field composition, uniform edge statistics and no baked scene, large object or semantic marking"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge highlights, restrained detail density, unified scale, and a pseudo-3D oblique camera. Hard surface metals and composites rendered with subtle roughness and anisotropy, soft shadows from directionally lit environment, and a clean, non-repetitive tiling structure.",
+          "terrain_base": "Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings.",
+          "road_surface": "Precast concrete slabs with metal joint strips, slightly weathered surface, subtle directional grooves for drainage, occasional small patch repairs, neutral grey tone with light mineral speckling.",
+          "build_slot_platform": "Hexagonal metal platform, 0.5m tall, with four bolt holes and a central power socket, brushed steel finish with chamfered edges, no additional equipment or lighting.",
+          "objective_foundation": "Large circular foundation ring, reinforced concrete and steel, with anchor points for a superstructure, surface texture of formwork seams and embedded bolts, no building or mechanism on top.",
+          "spawn_marker": "Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.",
+          "non_blocking_decoration": "1. Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings). 2. Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish). 3. Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast). 4. Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel)."
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: one seamless square PBR terrain albedo texture made only from alien rock, alien rock detail. Environment: the same ground material fills every pixel with uniform texel density; use only fine diffuse surface variation from Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings., such as small weathering, tiny cracks, moisture specks, dust or short flat moss; no object or patch may occupy more than eight percent of the tile. Style: photogrammetric high-end production game material rendering with semi-realistic physically coherent materials, controlled roughness and micro-detail, neutral albedo response and natural color variation; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7. Lighting: flat neutral top-down albedo capture with even exposure and no baked directional light, cast shadow, ambient occlusion vignette, bloom or highlight. Composition: strict orthographic macro material swatch filling all four edges at one uniform scale; no perspective, horizon, frame, border vegetation, wall, stairs, bridge, building, cliff, tree, rock pile, foreground prop, focal patch or recognizable symbol; absolutely no road, trail, route, lane, circle, ring, rune, deployment pad, socket, objective, spawn portal, unit or interaction marker. Quality: sharp low-grain near-seamless terrain texture source for deterministic material-field composition, uniform edge statistics and no baked scene, large object or semantic marking.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "tile_or_material_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": false
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_02_road_surface",
+      "role": "road_surface",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "a flat matte game-environment paving albedo material swatch made from industrial corridor, industrial corridor edge, using restrained medium-value colors from orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting",
+        "environment": "the requested road-surface material fills the entire rectangular image edge to edge; no white background, transparent margin, surrounding terrain, scenery, ground plate, decorative frame or border",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms; derive only world identity and material category from these road material ids: industrial corridor, industrial corridor edge; render a weathered matte paving surface appropriate to the world, using muted charcoal, gray-green and restrained palette colors; do not copy any luminous or magical wording from upstream content; no cyan, bright blue, glow, radiant cracks or luminous seams; ignore any shape, winding, strip, endpoint or scene implied by the material ids",
+        "lighting": "flat top-down albedo capture with neutral diffuse illumination, no cast shadows, perspective depth, dramatic highlights, bloom or emissive glow",
+        "composition": "strict orthographic top-down macro material swatch, not an object; continuous paving texture reaches all four edges; uniform repeatable rhythm without a unique center, endpoint, bend, curb, border or perspective horizon",
+        "quality": "sharp low-glare near-seamless texture source designed to be cropped to 2:1 and repeatedly filled along a deterministic vector path; medium contrast and matte surface are mandatory; this is a material sample, never a complete road object or scene"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "road_surface": "a flat matte game-environment paving albedo material swatch made from industrial corridor, industrial corridor edge, using restrained medium-value colors from orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: a flat matte game-environment paving albedo material swatch made from industrial corridor, industrial corridor edge, using restrained medium-value colors from orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting. Environment: the requested road-surface material fills the entire rectangular image edge to edge; no white background, transparent margin, surrounding terrain, scenery, ground plate, decorative frame or border. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms; derive only world identity and material category from these road material ids: industrial corridor, industrial corridor edge; render a weathered matte paving surface appropriate to the world, using muted charcoal, gray-green and restrained palette colors; do not copy any luminous or magical wording from upstream content; no cyan, bright blue, glow, radiant cracks or luminous seams; ignore any shape, winding, strip, endpoint or scene implied by the material ids. Lighting: flat top-down albedo capture with neutral diffuse illumination, no cast shadows, perspective depth, dramatic highlights, bloom or emissive glow. Composition: strict orthographic top-down macro material swatch, not an object; continuous paving texture reaches all four edges; uniform repeatable rhythm without a unique center, endpoint, bend, curb, border or perspective horizon. Quality: sharp low-glare near-seamless texture source designed to be cropped to 2:1 and repeatedly filled along a deterministic vector path; medium contrast and matte surface are mandatory; this is a material sample, never a complete road object or scene.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "tile_or_brush_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": false
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_03_build_slot_platform",
+      "role": "build_slot_platform",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "one empty low defense foundation for stellar anchor module pad, module pad in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build an irregular low weathered charcoal-stone foundation with a broken octagonal silhouette, restrained shallow carvings, an empty dark inset center and a darker outer rim",
+        "environment": "an isolated flat construction base on a completely plain pure-white studio background; no terrain, no ground plate, no scenery",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting with no aura, selection glow or magical light",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered object; compact oval footprint occupying between 18% and 38% of canvas area; at least 18% pure-white margin on every edge; no horizon, map or complete scene",
+        "quality": "sharp clean high-contrast cutout source with a solid uninterrupted asymmetrical foundation silhouette, empty and unoccupied; gameplay readability overrides conflicting worldbook adjectives; explicitly forbidden: polished white jade, white or ivory main material, perfect circular disk, concentric rings, porcelain plate appearance, holes caused by background-colored material, towers, weapons, lanterns, characters, people, building clusters, bridges, floating islands, text, selection rings, scenery, frame, or any miniature scene"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "build_slot_platform": "one empty low defense foundation for stellar anchor module pad, module pad in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build an irregular low weathered charcoal-stone foundation with a broken octagonal silhouette, restrained shallow carvings, an empty dark inset center and a darker outer rim"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: one empty low defense foundation for stellar anchor module pad, module pad in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build an irregular low weathered charcoal-stone foundation with a broken octagonal silhouette, restrained shallow carvings, an empty dark inset center and a darker outer rim. Environment: an isolated flat construction base on a completely plain pure-white studio background; no terrain, no ground plate, no scenery. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting with no aura, selection glow or magical light. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered object; compact oval footprint occupying between 18% and 38% of canvas area; at least 18% pure-white margin on every edge; no horizon, map or complete scene. Quality: sharp clean high-contrast cutout source with a solid uninterrupted asymmetrical foundation silhouette, empty and unoccupied; gameplay readability overrides conflicting worldbook adjectives; explicitly forbidden: polished white jade, white or ivory main material, perfect circular disk, concentric rings, porcelain plate appearance, holes caused by background-colored material, towers, weapons, lanterns, characters, people, building clusters, bridges, floating islands, text, selection rings, scenery, frame, or any miniature scene.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "image_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": {
+        "usage": "single_component_geometry_and_occupancy_only",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.build_slot_platform.geometry_reference.png",
+        "sha256": "9ee19dc4e558c692ddb2447721c169ed9733ab89a1b0b5f16b06dd7afdc29ce1"
+      },
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_04_objective_foundation",
+      "role": "objective_foundation",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "one complete compact protected battlefield ward anchor for stellar anchor core hub, core hub in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build one short solid opaque weathered monolith secured by restrained world-appropriate braces on a low irregular footing; the vertical core is sealed, inert and completely solid",
+        "environment": "isolated on a pure-white studio background; no terrain patch, mud puddle, floor tile, wooden deck, square base plate, surrounding scenery or detached props",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered compact structure rooted on a low foundation; footprint occupies between 18% and 34% of canvas area and height stays below 48% of canvas; at least 18% pure-white margin on every edge; no horizon, map or complete scene",
+        "quality": "clean cutout source with a clear bottom-center anchor; a visible compact opaque vertical core above the low base is mandatory; the object must read as a protected gameplay objective, not an empty pad; explicitly forbidden: glass, transparent chamber, crystal, flame, furnace, lamp, glow, smoke, machinery, dome, roof, doorway, platform deck, health bars, units, people, text, oversized monuments, scenery, frame or any miniature scene"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "objective_foundation": "one complete compact protected battlefield ward anchor for stellar anchor core hub, core hub in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build one short solid opaque weathered monolith secured by restrained world-appropriate braces on a low irregular footing; the vertical core is sealed, inert and completely solid"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: one complete compact protected battlefield ward anchor for stellar anchor core hub, core hub in a orbital elevator, modular architecture, energy conduits, industrial corridor, alien terrain, hard surface, metallic, blue accent, cool lighting world; build one short solid opaque weathered monolith secured by restrained world-appropriate braces on a low irregular footing; the vertical core is sealed, inert and completely solid. Environment: isolated on a pure-white studio background; no terrain patch, mud puddle, floor tile, wooden deck, square base plate, surrounding scenery or detached props. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered compact structure rooted on a low foundation; footprint occupies between 18% and 34% of canvas area and height stays below 48% of canvas; at least 18% pure-white margin on every edge; no horizon, map or complete scene. Quality: clean cutout source with a clear bottom-center anchor; a visible compact opaque vertical core above the low base is mandatory; the object must read as a protected gameplay objective, not an empty pad; explicitly forbidden: glass, transparent chamber, crystal, flame, furnace, lamp, glow, smoke, machinery, dome, roof, doorway, platform deck, health bars, units, people, text, oversized monuments, scenery, frame or any miniature scene.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "image_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": {
+        "usage": "single_component_geometry_and_occupancy_only",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.objective_foundation.geometry_reference.png",
+        "sha256": "676dcca39591c9913cf9fe7abac5be4678c9b141b1fc42bae50a038ee70f91e7"
+      },
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_05_spawn_marker",
+      "role": "spawn_marker",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "one restrained low-profile physical entrance marker based on stellar anchor invasion point, invasion point; motif vocabulary only: Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.; depict inert material only, without portal activity or effects",
+        "environment": "isolated on a pure-white studio background; no terrain, no ground plate, no scenery",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral dim asset lighting without magical glow",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered low-profile object; footprint occupies between 8% and 22% of canvas area; at least 20% pure-white margin on every edge; no horizon, map or complete scene",
+        "quality": "clean cutout source; explicitly forbidden: enemies, arrows, warning icons, people, characters, text, large effects, building clusters, bridges, floating islands, scenery, frame, or any miniature scene"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge highlights, restrained detail density, unified scale, and a pseudo-3D oblique camera. Hard surface metals and composites rendered with subtle roughness and anisotropy, soft shadows from directionally lit environment, and a clean, non-repetitive tiling structure.",
+          "terrain_base": "Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings.",
+          "road_surface": "Precast concrete slabs with metal joint strips, slightly weathered surface, subtle directional grooves for drainage, occasional small patch repairs, neutral grey tone with light mineral speckling.",
+          "build_slot_platform": "Hexagonal metal platform, 0.5m tall, with four bolt holes and a central power socket, brushed steel finish with chamfered edges, no additional equipment or lighting.",
+          "objective_foundation": "Large circular foundation ring, reinforced concrete and steel, with anchor points for a superstructure, surface texture of formwork seams and embedded bolts, no building or mechanism on top.",
+          "spawn_marker": "Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.",
+          "non_blocking_decoration": "1. Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings). 2. Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish). 3. Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast). 4. Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel)."
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: one restrained low-profile physical entrance marker based on stellar anchor invasion point, invasion point; motif vocabulary only: Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.; depict inert material only, without portal activity or effects. Environment: isolated on a pure-white studio background; no terrain, no ground plate, no scenery. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral dim asset lighting without magical glow. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered low-profile object; footprint occupies between 8% and 22% of canvas area; at least 20% pure-white margin on every edge; no horizon, map or complete scene. Quality: clean cutout source; explicitly forbidden: enemies, arrows, warning icons, people, characters, text, large effects, building clusters, bridges, floating islands, scenery, frame, or any miniature scene.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "image_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": {
+        "usage": "single_component_geometry_and_occupancy_only",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.spawn_marker.geometry_reference.png",
+        "sha256": "e72d2efe569b84c04ebf4cdf42c8a52b00e353afa9adcbd757406852e49eebf6"
+      },
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_06_non_blocking_decoration_architecture",
+      "role": "non_blocking_decoration_architecture",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "exactly one isolated reusable asset depicting Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings); show that named object only, with no second prop category and no surrounding landscape",
+        "environment": "isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting with a restrained built-in contact shadow only",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame",
+        "quality": "high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "non_blocking_decoration_architecture": "exactly one isolated reusable asset depicting Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings); show that named object only, with no second prop category and no surrounding landscape"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: exactly one isolated reusable asset depicting Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings); show that named object only, with no second prop category and no surrounding landscape. Environment: isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting with a restrained built-in contact shadow only. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame. Quality: high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_07_non_blocking_decoration_natural",
+      "role": "non_blocking_decoration_natural",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "exactly one isolated reusable asset depicting Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel); show that named natural object only, with no fence, wheel, extra stone pile or surrounding landscape",
+        "environment": "isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting with a restrained built-in contact shadow only",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame",
+        "quality": "high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "non_blocking_decoration_natural": "exactly one isolated reusable asset depicting Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel); show that named natural object only, with no fence, wheel, extra stone pile or surrounding landscape"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: exactly one isolated reusable asset depicting Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel); show that named natural object only, with no fence, wheel, extra stone pile or surrounding landscape. Environment: isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting with a restrained built-in contact shadow only. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame. Quality: high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_08_non_blocking_decoration_debris",
+      "role": "non_blocking_decoration_debris",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "exactly one isolated reusable asset depicting Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish); show that named broken object only; it rests directly on white with no rubble pile or manufactured base",
+        "environment": "isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting with a restrained built-in contact shadow only",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame",
+        "quality": "high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "non_blocking_decoration_debris": "exactly one isolated reusable asset depicting Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish); show that named broken object only; it rests directly on white with no rubble pile or manufactured base"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: exactly one isolated reusable asset depicting Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish); show that named broken object only; it rests directly on white with no rubble pile or manufactured base. Environment: isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting with a restrained built-in contact shadow only. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame. Quality: high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    },
+    {
+      "request_id": "map_layer_ring_crossing_09_non_blocking_decoration_prop",
+      "role": "non_blocking_decoration_prop",
+      "status": "ready_for_provider_or_manual_generation",
+      "prompt_profile": "agnes_official_structured_prompt_v0_1",
+      "prompt_sections": {
+        "subject": "exactly one isolated reusable asset depicting Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast); show that named object only; never add a wagon, cart, vehicle, building or gameplay device",
+        "environment": "isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon",
+        "style": "premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms",
+        "lighting": "neutral soft asset lighting with a restrained built-in contact shadow only",
+        "composition": "consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame",
+        "quality": "high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects"
+      },
+      "style_contract": {
+        "worldbook_id": "stellar_anchor",
+        "theme_terms": [
+          "orbital elevator",
+          "modular architecture",
+          "energy conduits",
+          "industrial corridor",
+          "alien terrain",
+          "hard surface",
+          "metallic",
+          "blue accent",
+          "cool lighting"
+        ],
+        "terrain_material_terms": [
+          "alien rock",
+          "alien rock detail"
+        ],
+        "road_material_terms": [
+          "industrial corridor",
+          "industrial corridor edge"
+        ],
+        "lighting": {
+          "time_of_day": "dusk",
+          "contrast_policy": "high_path_readability",
+          "shadow_policy": "soft_blob",
+          "intensity": 0.74
+        },
+        "palette": {
+          "terrain_base": "#6B6B6B",
+          "terrain_detail": "#8B7D6B",
+          "road_base": "#4A4A4A",
+          "road_edge": "#7A7A6A",
+          "build_slot": "#B0B0B0",
+          "objective": "#D4A574",
+          "spawn": "#A0522D",
+          "resource": "#3A6EA5",
+          "hazard": "#E85D3A",
+          "fog": "#C0C8D0",
+          "accent": "#4FC3F7"
+        },
+        "generation_briefs": {
+          "non_blocking_decoration_prop": "exactly one isolated reusable asset depicting Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast); show that named object only; never add a wagon, cart, vehicle, building or gameplay device"
+        },
+        "role_terms": {
+          "build_slot_platform": [
+            "stellar anchor module pad",
+            "module pad"
+          ],
+          "objective_foundation": [
+            "stellar anchor core hub",
+            "core hub"
+          ],
+          "spawn_marker": [
+            "stellar anchor invasion point",
+            "invasion point"
+          ],
+          "non_blocking_decoration": [
+            "stellar anchor edge decoration",
+            "edge decoration",
+            "stellar anchor ambient decoration",
+            "ambient decoration"
+          ]
+        }
+      },
+      "prompt_brief": "Subject: exactly one isolated reusable asset depicting Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast); show that named object only; never add a wagon, cart, vehicle, building or gameplay device. Environment: isolated on a completely flat pure-white studio background; no terrain patch, square floor tile, shared base plate, surrounding scene or horizon. Style: premium production game-asset rendering with semi-realistic readable materials, unified pseudo-3D scale and polished PC-game detail; palette anchors #6B6B6B, #8B7D6B, #4A4A4A, #7A7A6A, #B0B0B0, #D4A574, #A0522D, #3A6EA5, #E85D3A, #C0C8D0, #4FC3F7; render only the requested reusable asset, never a scene, setting, settlement, architecture group or diorama; no cartoon, anime, cel shading, thick outlines or toy-like forms. Lighting: neutral soft asset lighting with a restrained built-in contact shadow only. Composition: consistent elevated three-quarter top-down pseudo-3D game asset view; exactly one centered reusable object with a compact irregular silhouette; at least 16% pure-white margin on every edge; no circular disk, soil mound, puddle, floor tile, platform, map, diorama or decorative frame. Quality: high-end production game prop with physically coherent PBR material response, one clean silhouette, a bottom-center anchor and no gameplay semantics; explicitly forbidden: roads, paths, tower bases, deployment pads, objectives, spawn portals, multiple object categories, scene composition, soil patch, shared base, units, people, creatures, text, magic circles, glow, UI or large effects.",
+      "negative_constraints": [
+        "no_generic_western_castle_unless_worldbook_tags_request_it",
+        "no_baked_deployed_towers_or_enemies",
+        "no_baked_combat_effects_or_projectiles",
+        "no_people_humanoids_warriors_soldiers_or_character_silhouettes",
+        "no_weapons_battle_pose_combat_scene_or_story_action",
+        "no_magic_beams_auras_explosions_or_glowing_selection_rings",
+        "no_text_signs_talismans_letters_numbers_or_watermarks",
+        "no_ui_text_arrows_grid_or_route_markings",
+        "no_large_landmark_covering_runtime_combat_space",
+        "no_build_pad_or_objective_positions_invented_outside_reference",
+        "no_building_clusters_complexes_or_cityscapes",
+        "no_floating_islands_or_suspended_landmasses",
+        "no_bridges_viaducts_or_elevated_connectors",
+        "no_complete_scene_diorama_or_miniature_environment",
+        "no_people_characters_or_humanoids"
+      ],
+      "generation_mode": "text_to_image",
+      "image_profile_candidates": [
+        "agnes_image_flash",
+        "agnes_image_20_flash"
+      ],
+      "output_contract": {
+        "kind": "component_atlas",
+        "width": 1024,
+        "height": 1024,
+        "size_tier": "1K",
+        "ratio": "1:1",
+        "transparent": true
+      },
+      "generation_reference": null,
+      "style_reference": null,
+      "control_reference": {
+        "usage": "reserved_zone_and_alignment_reference",
+        "local_path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4",
+        "semantic_authority": false
+      },
+      "required_gates": [
+        "local_artifact_import",
+        "worldbook_style_review",
+        "cutout_or_texture_quality_review",
+        "runtime_overlay_alignment_review",
+        "explicit_promotion"
+      ]
+    }
+  ],
+  "assembly_contract": {
+    "semantic_authority": "map_runtime_package",
+    "layer_order": [
+      "terrain_base",
+      "road_surface",
+      "build_slot_platform",
+      "objective_foundation",
+      "spawn_marker",
+      "non_blocking_decoration",
+      "runtime_interaction_overlay"
+    ],
+    "forbid_image_to_semantic_inference": true,
+    "unreviewed_media_player_visible": false
+  },
+  "policy": [
+    "This pack records the previously manual layered visual generation handoff.",
+    "No request or provider output is a published player layer until review and promotion pass.",
+    "Roads, slots, objectives, and spawns are placed from runtime anchors, never recovered from pixels."
+  ]
+}
