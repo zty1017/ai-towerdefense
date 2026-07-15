@@ -47,6 +47,41 @@ def test_world_instance_rejects_unknown_world(client):
     assert response.status_code == 404
 
 
+def test_generated_world_player_projection_stays_world_bound(client):
+    session_id = _session(client)
+    created = client.post(
+        f"/api/sessions/{session_id}/world-instance",
+        json={"world_id": "xianxia_cloud_frontier", "selected_options": {}},
+    )
+    assert created.status_code == 201, created.text
+
+    briefing = client.get(f"/api/sessions/{session_id}/nodes/luoxia_plank/briefing")
+    assert briefing.status_code == 200, briefing.text
+    briefing_payload = briefing.json()["payload"]
+    assert [item["display_name"] for item in briefing_payload["materials"][:2]] == [
+        "灵脉碎片",
+        "符纸",
+    ]
+    assert briefing_payload["npcs"][0]["display_name"] == "守山长老"
+
+    battle = client.get(f"/api/sessions/{session_id}/battles/luoxia_plank/config")
+    assert battle.status_code == 200, battle.text
+    battle_payload = battle.json()["payload"]
+    assert battle_payload["battle_config"]["display_name"] == "落霞栈道"
+    assert battle_payload["battle_config"]["presentation"]["npc_display_name"] == "守山长老"
+    assert battle_payload["battle_config"]["presentation"]["npc_portrait_id"].endswith(
+        "xianxia_cloud_frontier.guardian_elder.v0.1.png"
+    )
+    assert battle_payload["sample_delivery_asset"]["stable_internal_id"] == "compiled_sample_pending"
+    composite = next(
+        item
+        for item in battle_payload["layered_map_visual_package"]["layers"]
+        if item.get("role") == "composited"
+    )
+    assert composite["source"] == "reviewed_ai_world_backdrop"
+    assert composite["url"].endswith("strategic_xianxia_cloud_frontier.v0.1.jpg")
+
+
 def test_generated_world_runs_catalog_to_battle_and_research(client, monkeypatch):
     generated_root = ROOT / "content/generated_worlds_test"
     generated_media_root = ROOT / "content/generated_worlds_test_media"

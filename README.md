@@ -1,19 +1,24 @@
 # AI-Compiled Tower Defense — Compiler MVP
 
-通用 AI 驱动塔防 / 游戏内容编译 MVP。
+通用 AI 原生塔防 / 游戏内容编译 MVP。
 
-本项目不是单一《长夜灯火》游戏。《长夜灯火》只是 MVP 世界书模板，用来验证：
+Compiler 的核心不是只用 AI 辅助开发，而是让 AI 原生进入玩家玩法。它借鉴 Vibe Coding：玩家用自然语言表达目标，系统把玩家意图、当前游玩状态和创造力编译成受控、可验证、可执行的游戏内容；开发者提供 Capability ABI、Schema、预算、模拟和激活门组成的可控内核。
+
+本项目不是单一《长夜灯火》游戏。《长夜灯火》只是 MVP 世界书模板。比赛版本当前验证的是：
 
 ```text
-玩家想法 / 世界书 / 战斗上下文
+玩家自然语言意图 / 世界书 / 当前 Session 状态
   -> 受控 AI 编译
-  -> 可玩资产、剧情节点、任务、随机事件和世界状态变化
-  -> 浏览器前端可演示的塔防体验
+  -> Capability ABI / Schema / 白名单 / 预算 / 确定性模拟
+  -> 晋升与 Session 激活
+  -> 可部署、可触发、可结算的塔、陷阱和支援道具
 ```
 
-当前后端是 FastAPI + SQLite。它提供匿名 session、研发提案 / job、前端 mock API、fixture-backed MVP 游玩链路和审查证据入口。不做真实注册登录，不收集 PII。
+比赛版本已经实现自然语言研发提案，打通塔、陷阱、支援道具的生成、验证、模拟、晋升、激活和前端行为闭环；已接真实 Provider 与多 Provider fallback，并按匿名 Session 隔离激活结果。仙侠、西幻、科幻三个真实 Provider 编译世界均可进入档案、世界配置、开场、战略地图、节点 / 工坊、首战与结算页面链路。地图结构、运行包和分层编译已经接通，玩家默认消费已审查表现包或 reviewed fallback。
 
-当前玩家研发、研发对象媒体和战后世界演化已经支持受控真实 provider 调用；缺少凭据、调用失败或门禁未通过时回退到 reviewed / deterministic 内容。地图视觉已有独立后台编译 worker，但玩家默认仍优先消费已审查的地图运行包。
+当前后端是 FastAPI + SQLite。它提供匿名 Session、研发提案 / job、前端运行时 API、比赛游玩链路和审查证据入口。不做真实注册登录，不收集 PII。玩家研发、研发对象媒体和战后世界演化已支持受控真实 Provider 调用；缺少凭据、调用失败或门禁未通过时回退到 reviewed / deterministic 内容。
+
+**能力边界：**比赛版本的实时玩家闭环集中在塔、陷阱和支援道具。三种扩展世界与地图是开发期真实编译后加载的运行包；剧情、任务、随机事件当前主要使用已审查内容与确定性状态投影。剧情、任务、随机事件、科技树和长期世界演化的更深实时接入属于后续规划。
 
 ## 文档入口
 
@@ -21,9 +26,10 @@
 
 ```text
 docs/CURRENT_ARCHITECTURE_INDEX.md
+docs/AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md
 ```
 
-这个文件标明哪些设计文档是当前有效事实源，哪些只是审查证据或历史记录。
+架构索引标明哪些设计文档是当前有效事实源，哪些只是审查证据或历史记录；理念文档说明 AI 如何从开发工具进入玩法本身，以及比赛版本与后续规划的边界。
 
 队友并行探索先读 `docs/TEAM_GITHUB_HANDOFF.md`。
 
@@ -34,6 +40,7 @@ docs/CURRENT_ARCHITECTURE_INDEX.md
 ```
 docs/
   CURRENT_ARCHITECTURE_INDEX.md
+  AI_NATIVE_GAME_DESIGN_PHILOSOPHY.md
   FRONTEND_MOCK_API_V0_1.md
   ASSET_GRAPH_COMPILER_V0_1.md
   MEDIA_ASSET_QUALITY_PIPELINE_V0_2.md

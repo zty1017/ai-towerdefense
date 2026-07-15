@@ -245,8 +245,13 @@ def _workshop_contributions(
                 source_refs=[f"run_world_state.npcs.{npc_id}"],
                 payload={
                     "npc_id": npc_id,
-                    "display_name": _safe_text(_NPC_NAMES.get(npc_id) or npc_id, 120),
-                    "summary": _safe_text("可参与当前节点的现场试作评审。"),
+                    "display_name": _safe_text(
+                        npc.get("display_name") or _NPC_NAMES.get(npc_id) or npc_id,
+                        120,
+                    ),
+                    "summary": _safe_text(
+                        npc.get("player_summary") or "可参与当前节点的现场试作评审。"
+                    ),
                     "node_id": npc_node,
                 },
             )
@@ -271,7 +276,11 @@ def _narrative_contributions(world: dict[str, Any]) -> list[dict[str, Any]]:
                 payload={
                     "beat_id": event_id,
                     "speaker_id": "world_narrator",
-                    "speaker_name": "长夜回响",
+                    "speaker_name": (
+                        "长夜回响"
+                        if world.get("worldbook_id") == "long_night_lanterns"
+                        else "世界回响"
+                    ),
                     "text": _safe_text(event.get("summary"), 1200),
                 },
             )
