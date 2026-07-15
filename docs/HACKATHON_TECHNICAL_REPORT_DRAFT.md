@@ -146,7 +146,7 @@ AI 只生成低语义地表材质和独立组件；道路沿结构化样条确�
 - 真实 Provider 候选的生成、DAG、晋升和激活烟测。
 - 塔、陷阱和支援道具三对象的统一真实 Provider 演示报告校验。
 
-2026-07-15 音频合入后，桌面与移动端的档案、世界配置、开场、大地图、工坊、战斗和结算共 14 张自动截图全部成功。
+2026-07-15 最终 release suite 已通过：真实 Chromium 捕获桌面与移动端主流程 14 张、多节点战斗 6 张，并完成 2 次拖拽部署；Generation Scheduler review-only pipeline 28 步、provider outbox 导入和 full evidence 同时通过。音频场景切换、静音状态和程序化 fallback 另有模块测试覆盖。
 
 ## 10. 当前边界与后续方向
 

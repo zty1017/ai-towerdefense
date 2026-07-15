@@ -27,6 +27,8 @@ docs/CURRENT_ARCHITECTURE_INDEX.md
 
 队友并行探索先读 `docs/TEAM_GITHUB_HANDOFF.md`。
 
+最终录屏和比赛提交按 `docs/HACKATHON_FINAL_DEMO_RUNBOOK.md` 执行。
+
 ## Layout
 
 ```
