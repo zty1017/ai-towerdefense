@@ -19,6 +19,8 @@ IGNORED_DIRS = {
     "node_modules",
 }
 IGNORED_PREFIXES = (
+    "release/",
+    "submission/final/",
     "submission/assets/screenshots/",
     "submission/generated/",
     "game_data/media/layered_maps/_exploration/",
