@@ -63,7 +63,7 @@ def build_poster(output: Path) -> Path:
     draw = ImageDraw.Draw(canvas)
     draw.rounded_rectangle((108, 94, 548, 142), radius=10, fill=(24, 42, 34, 235), outline=(68, 177, 163, 220), width=2)
     draw_text(draw, (132, 102), "VIBE PLAYING · AI 原生游戏", 27, "#a9e8d8")
-    draw_text(draw, (102, 184), "Compiler", 128, "#fff8df")
+    draw_text(draw, (102, 184), "AI Tower Dense", 104, "#fff8df")
     draw_text(draw, (108, 350), "从 Vibe Coding\n到 Vibe Playing", 55, "#f4e9c8", 14)
     draw_text(draw, (112, 514), "自然语言意图  →  结构化解析  →  校验与模拟  →  Session 激活", 26, "#ced8cb")
 
