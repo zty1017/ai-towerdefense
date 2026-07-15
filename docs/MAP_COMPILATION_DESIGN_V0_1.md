@@ -1,6 +1,6 @@
 # 地图编译设计采纳审查 v0.1
 
-Last updated: 2026-07-06
+最后更新：2026-07-14
 
 本文用于审查并项目化采纳外部 AI 给出的地图编译方案。该外部方案的核心建议是：
 
@@ -11,7 +11,97 @@ Last updated: 2026-07-06
 
 审查结论：方向采纳，结构改写。
 
-该方案与本项目当前证据一致：多轮 Agnes / text-fallback / topology-constrained 地图整图候选已经证明，图像模型会重构路径、塔位、目标和装饰布局；即使参考图和 overlay 能帮助审查，也不能让整图成为运行时事实源。因此，正式地图编译应从“AI 画一张地图”转为“结构化地图事实 + AI 生成风格和组件 + 程序确定性渲染”。
+## 当前实现状态（2026-07-14）
+
+### 质量复盘与 v0.2 决策
+
+仙侠、西幻、科幻三组真实编译证明，v0.1 虽然守住了玩法语义，却没有稳定守住最终观感。主要失败不是单一提示词问题，而是视觉职责划分不够严格：
+
+- `terrain_base` 仍让图像模型生成完整战场构图，模型会自行加入围墙、道路、基地、平台和强语义景观。
+- 确定性道路此前更接近统一描边，缺少与地表一致的材质颗粒、非规则边缘、侵蚀和遮挡关系。
+- 塔位、目标和装饰作为独立组件直接叠加时，容易出现统一椭圆阴影、比例不一致、色温不一致和底图已有物体重复等问题。
+- 上游世界编译器把 `hand-painted strategy-game art` 写成硬约束，实际会诱导部分模型输出扁平卡通插画。
+
+因此 v0.2 冻结以下边界：
+
+```text
+LogicMapIR
+  路线 / 塔位 / 目标 / 出生点 / 禁区 / 装饰允许区
+  唯一玩法权威，不接受图片反推
+
+VisualMaterialPack
+  地表材质 / 道路材质 / 道路边缘 / 塔基 / 地标 / 景观组件
+  AI 只生成可复用材质和独立组件，不决定地图坐标
+
+MapVisualCompositionPlan
+  材质 mask / 样条带 / 遮挡顺序 / 接触阴影 / 色调统一 / 运行时高亮
+  程序确定性执行
+
+MapVisualRuntimePackage
+  合成结果 + 强语义锚点 + 来源证据 + 质量门结果
+```
+
+运行时地图的正式合成顺序改为：
+
+```text
+低语义地表材质场
+  -> 边缘世界景观区
+  -> 道路 mask 与世界专属材质填充
+  -> 道路边缘侵蚀、车辙、碎石和地表回侵
+  -> 贴地塔位基础
+  -> 目标 / 出生点 / 必要地标
+  -> 克制的非阻挡装饰
+  -> 全局色调、局部接触阴影与雾光
+  -> 仅运行时显示的可交互高亮
+```
+
+AI 整图只能作为风格探索、远景或人工审查参考，不能直接成为路线、塔位或目标的玩家运行时事实。若整图背景包含无法可靠清除的道路、平台、目标、角色或强中心建筑，必须阻断晋升；不能依靠后续覆盖把错误“压住”。
+
+材质与组件的视觉晋升门至少包含：非卡通完成度、世界辨识度、透视一致、无玩法语义污染、可平铺或可抠图、色调可融合。自动审查通过仍不等于最终美术通过，黑客松演示使用的发布候选保留一次人工视觉终审。
+
+地图编译必须拆开说明，不能只用“已完成”概括：
+
+- 逻辑地图编译已接通：三张 MVP 战斗地图都有独立 `MapRuntimePackage`，路径、塔位、目标和出生点是结构化运行时事实。
+- 世界书风格与分层组装已接通：每个节点都有独立 `MapStylePack`、`ProceduralMapRenderPlan` 和 `LayeredMapVisualPackage`，前端消费节点专属分层合成图。
+- 编译证据绑定已修正：每个 `MapCompilePackage` 直接绑定对应节点的 `LayeredMapVisualPackage`，不再让三份编译包共用同一张通用背景。
+- 真实 AI 媒体闭环已接通：provider 调用、候选、角色专用多模态审查、受控修复、跨运行缓存、reviewed staging、确定性组装和 activation 均有本地证据。直接生成与缓存复用都会保留 AI 媒体来源；只有实际激活了 reviewed AI 媒体时，`ai_media_generation_provenance` 才能通过。
+- `provider_handoff=true` 会生成拓扑控制图、由 `MapStylePack` 派生的材质与组件简报，以及五类视觉请求。拓扑控制图只交给确定性合成器，不再作为 `terrain_base` 图像生成参考。`terrain_base` 改为 1:1 可平铺地表材质；塔位、目标和出生点仍是独立白底组件。旧世界整图不得作为新世界构图参考，避免跨世界文化污染。
+- 道路不再调用图像模型猜路线或生成整条路径。编译器从已审地表材质派生道路底材，再依据 LLM 编译的道路 brief 选择石、土、木或金属的材质参数，沿 `MapRuntimePackage.path_routes` 的受限样条确定性铺设。所有类别都先形成连续材质场；木和金属只增加克制接缝，不能再退化成逐节矩形轨道。
+- `--live-visuals` 已接入地图编译入口，`--live-map-visuals` 已接入世界编译入口。同步关键路径只处理地表材质与塔位底材，道路由已审地表确定性派生；目标、出生点和边缘景观属于可选异步增强，不能阻断先交付可玩地图。地表、派生道路和塔位三个运行关键层全部通过时，候选才会进入地图包内的 `reviewed_visual_staging`。未审或重试后仍失败的候选不会进入玩家运行包。
+- 合成器不再给塔位、目标、出生点或景观组件批量添加统一椭圆投影。组件自身可以保留克制的接触阴影，但阴影必须属于组件素材或角色专用渲染，不能成为所有对象共享的调试式底座。
+- 地图视觉默认改为后台自动执行：普通 `compile_map()` 在交付可玩 fallback 包后，会写入幂等 `MapVisualBackgroundJob`；FastAPI lifespan 中的轻量 worker 自动消费任务，完成生成、视觉审查、受控修复、最多两轮重试和 reviewed staging。关键视觉全部通过后，worker 只重建表现层、视觉清单与 `MapCompilePackage`，不改写 `MapRuntimePackage` 的路线、塔位、目标或出生点。开发者不再需要逐次手动运行 provider 命令。
+- 实时生成失败时仍允许交付结构正确的程序化候选包，但失败调用只记录在运行报告中，不得伪装成已激活 AI 媒体 provenance。
+
+当前准确口径是：
+
+```text
+结构化地图编译 + 世界书风格编译 + 分层运行包编译：已完成 MVP 闭环
+AI 媒体批量自动生成、专用视觉审查、受控提示修复重试、跨运行缓存：已接通
+地形、道路、塔位 reviewed staging 与地图包重新组装：已接通
+目标、出生点、装饰组件的表现绑定：已有结构与后处理能力，但 v0.2 默认作为异步增强；关键地图不得等待这些可选组件
+```
+
+### 交付前真实校准结论（2026-07-15）
+
+西幻 `mire_pass` 九角色真实闭环得到以下可复核结果：
+
+- 请求 9 类视觉角色，4 类命中跨运行缓存，10 次真实图像调用，7 次多模态审查，3 次网络重试。
+- 地表、道路派生、塔位、目标和出生点满足结构门禁；四类装饰仅车轮与石堆通过，木桩因携带方形地块、树桩因玩具化材质和错误相机被拒绝。
+- 只有四类装饰全部通过时才打包 `non_blocking_decoration` atlas；因此本轮失败对象和不完整装饰集没有进入地图合成。
+- 最终合成保持了路线、塔位、目标和出生点的结构对齐，但人工终审仍判定为不可发布：地表过空且尺度偏写实，道路像平滑描边，重复塔位平台像调试插槽，西幻世界辨识度不足。
+
+因此，`runtime_visuals_ready` 只表示“运行关键视觉可构成一个结构正确的地图包”，不等于“人工美术终审通过”。发布门必须额外记录 `human_visual_review=passed`；当前三世界实验图不得替换《长夜灯火》已审核演示地图。
+
+黑客松版本冻结以下表现策略：
+
+- 未部署塔位不永久烙入背景图；默认只保留极弱的地形基础，玩家拖拽工具或悬停时由运行时绘制范围与可部署高亮。
+- 主演示使用已经人工审核的《长夜灯火》地图包；新世界真实编译结果用于展示 DAG、缓存、审查、失败隔离和分层组装证据。
+- 后续地图视觉应增加独立边缘景观带或可遮挡场景组件，并先解决道路材质场、组件尺度和统一色调，再扩大世界数量；不能继续依靠完整底图上叠加语义图层。
+- `MapRuntimePackage`、视觉请求包和媒体候选都可自动产生，但发布到玩家 runtime 仍需一次人工视觉终审；这是当前模型稳定性下的产品门禁，不应伪装成零人工发布。
+
+这不影响玩家使用已发布地图，但演示时不能把历史人工触发、人工挑选的 AI 地图素材描述成实时自动生成。
+
+该方案与本项目当前证据一致：多轮 Agnes / text-fallback / topology-constrained 地图整图候选已经证明，图像模型会重构路径、塔位、目标和装饰布局；即使参考图和 overlay 能帮助审查，也不能让整图成为运行时事实源。逻辑控制图只约束确定性合成器，不再要求图像模型像素级服从。正式地图编译应从“AI 画一张地图”转为“结构化地图事实 + AI 生成低语义底材和独立组件 + 程序确定性渲染”。
 
 ## 0. 2026-07-06 外部 v0.3 附件复审结论
 
@@ -101,6 +191,48 @@ AI 不允许决定：
 - 塔位最终坐标。
 - 资源点、机关、防守点、碰撞区的最终语义。
 - 哪些图片可以进入玩家 runtime。
+
+当前 reviewed 组件绑定固定为：
+
+```text
+reviewed_visual_staging/components/objective_foundation.png
+  -> MapRuntimePackage.objectives 中的结构化目标锚点
+
+reviewed_visual_staging/components/spawn_marker.png
+  -> MapRuntimePackage.spawn_points 中的结构化出生点锚点
+
+reviewed_visual_staging/components/non_blocking_decoration.png
+  -> reserved_cells 之外的装饰允许区
+```
+
+`LayeredMapVisualPackage` 会把三类媒体登记为 `component_sprite_png / compiled_reviewed_component`，复制到节点专属本地包并嵌入最终 SVG。图片不能改变锚点、路径、碰撞、目标类型或出生逻辑。前端检测到 player-ready layered backdrop 后，会停止额外绘制旧目标、出生点和地标，避免双重叠图。
+
+正常开发和玩家流程不再手动执行下列命令。它仅保留为开发者诊断单个请求包时的旁路入口：
+
+```bash
+/home/zty/projects/ai-compiled-towerdefense/.venv/bin/python \
+  tools/media/map_visual_closed_loop.py \
+  --request-pack /tmp/ai_td_live_map_compile_v3/gray_lantern_station/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json \
+  --output-dir /tmp/ai_td_live_map_calibration/candidates \
+  --reviewed-dir /tmp/ai_td_live_map_calibration/reviewed \
+  --dotenv /home/zty/projects/ai-compiled-towerdefense/.env \
+  --image-profile agnes_image_flash \
+  --vision-profile agnes_multimodal_flash \
+  --max-attempts 2 \
+  --max-workers 3 \
+  --minimum-score 0.78 \
+  --live
+```
+
+该命令自动完成六层生成、多模态审查、受控修复、重试、后处理和 reviewed staging，并额外输出 `map_visual_calibration_summary.v0.1.json`。分数阈值不是唯一门禁：任一固定检查失败都会阻断晋升；单次校准不得自动降低默认阈值。
+
+后台任务状态只在 Studio 证据接口读取：
+
+```text
+GET /api/studio/map-visual-jobs
+```
+
+worker 默认随后端启动；测试环境自动关闭。部署时只有明确设置 `AI_TD_MAP_VISUAL_WORKER=off` 才会禁用。密钥只从 `AI_TD_ENV_FILE` 或仓库 `.env` 读取，不写入任务、报告或玩家接口。
 
 任何 AI 产物都必须进入 provider envelope / staging / promotion / media gate / runtime package 或 MapCompilePackage 审查链，不能直接被前端默认加载。
 

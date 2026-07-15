@@ -1,0 +1,54 @@
+{
+  "node_briefing_version": "first_crisis_node.v0.1",
+  "worldbook_id": "stellar_anchor",
+  "node_id": "ring_crossing",
+  "display_name": "环形走廊交汇点",
+  "summary": "第一波敌人从环形走廊西侧入侵，快速虫群无人机试图通过工业通廊直奔电梯基座。玩家需要部署基础防御。",
+  "threat": {
+    "enemy_archetypes": [
+      "swarm_drone",
+      "shell_grunt"
+    ],
+    "enemy_traits": "快速虫群无人机：高移速、低血量，优先攻击未设防的管道节点。",
+    "approach_direction": "自西向东，沿走廊迂回前进",
+    "estimated_waves": 2
+  },
+  "protection_targets": [
+    {
+      "stable_internal_id": "target_node_core",
+      "display_name": "电梯基座中心",
+      "kind": "core",
+      "summary": "节点的主要防守目标。",
+      "must_protect": true
+    },
+    {
+      "stable_internal_id": "target_optional_facility",
+      "display_name": "冷却塔节点",
+      "kind": "facility",
+      "summary": "守住后可保留额外支援。",
+      "must_protect": false
+    }
+  ],
+  "available_materials": [
+    {
+      "material_id": "energy",
+      "quantity": 3
+    },
+    {
+      "material_id": "alloy",
+      "quantity": 2
+    }
+  ],
+  "npcs_present": [
+    "station_commander"
+  ],
+  "facility_state": {
+    "field_lab": "available",
+    "summary": "场发生器实验室可进行一次应急试作。"
+  },
+  "constraints": {
+    "research_budget": "本节点允许一次现场试作。",
+    "sample_delivery": "样品将在战斗中途送达。"
+  },
+  "player_action_hint": "建议研发‘聚焦能量模块’——将能源转化为高伤害激光塔，对付低血量群敌非常有效。"
+}

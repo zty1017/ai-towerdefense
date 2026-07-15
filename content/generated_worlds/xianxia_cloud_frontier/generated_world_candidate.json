@@ -1,0 +1,183 @@
+{
+  "schema_version": "generated_world_candidate.v0.1",
+  "world_id": "xianxia_cloud_frontier",
+  "display_name": "云海断峰关",
+  "tagline": "灵脉为路，符阵为城",
+  "summary": "在破碎的浮空山之间，古代宗门留下的灵脉栈道成为唯一通路。玩家需守护主城“天阙峰”，利用符箓、阵器、灵材试作防御，抵御从云海深处涌来的妖物。",
+  "tone_voice": "清峻空灵，略带古意与危机感。叙事简练，多用山水意象与仙侠术语，营造东方玄幻的氛围。",
+  "naming_style": "融合仙侠山水术语，如凝霜、落霞、玄铁、青玉，以及古风称谓如阁、库、栈道、峰。",
+  "phase_terms": {
+    "preparation": "布阵",
+    "battle": "斗法",
+    "resolution": "收符"
+  },
+  "resources": [
+    {
+      "id": "spirit_vein_shard",
+      "display_name": "灵脉碎片",
+      "summary": "浮空山间流淌的灵脉结晶，是驱动阵法和符箓的核心能量。"
+    },
+    {
+      "id": "talisman_paper",
+      "display_name": "符纸",
+      "summary": "以灵木纤维制成的空白符纸，可承载符箓之力。"
+    },
+    {
+      "id": "dark_iron",
+      "display_name": "玄铁",
+      "summary": "断峰深处的铁矿石，质地坚硬，适合炼制阵器与机关。"
+    },
+    {
+      "id": "cloud_fungus",
+      "display_name": "云芝",
+      "summary": "生长在云海崖壁上的灵药，可用于炼制丹药或辅助符阵。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "tianque_peak",
+      "display_name": "天阙峰",
+      "summary": "最后一座完整的主峰，山顶建有古朴的宗门大殿，是玩家的主城。",
+      "role": "main_city"
+    },
+    {
+      "id": "luoxia_plank",
+      "display_name": "落霞栈道",
+      "summary": "东侧浮空山之间狭窄的灵脉栈道，妖物常从此处逼近，是最激烈的战斗热点。",
+      "role": "battle_hotspot"
+    },
+    {
+      "id": "ningshuang_pavilion",
+      "display_name": "凝霜阁",
+      "summary": "悬崖边的石质阁楼，内藏古代阵器图谱与灵材研究台，可试作新防御。",
+      "role": "research_facility"
+    },
+    {
+      "id": "qingyu_vault",
+      "display_name": "青玉库",
+      "summary": "山腹中的石室，储存着灵石、符纸、玄铁、云芝等资源，坚固且隐蔽。",
+      "role": "resource_storage"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "flying_locust",
+      "display_name": "飞蝗",
+      "summary": "云海深处涌出的妖化飞蝗，体型小、速度快，成群结队冲击防线。",
+      "archetype": "fast_swarm"
+    },
+    {
+      "id": "wandering_stone_golem",
+      "display_name": "游荡石傀",
+      "summary": "被妖气侵蚀的山石傀儡，行动缓慢但身躯坚固，以蛮力砸击。",
+      "archetype": "basic"
+    },
+    {
+      "id": "iron_armored_turtle",
+      "display_name": "铁甲龟鳌",
+      "summary": "身披玄铁硬壳的巨型龟鳌，移动极慢，但正面防御极高，需从后方或阵法削弱。",
+      "archetype": "armored_slow"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "mountain_elder",
+      "display_name": "守山长老",
+      "role": "宗门遗老",
+      "voice": "浮空山已摇摇欲坠，但只要你守住天阙峰，宗门传承便未断绝。"
+    },
+    {
+      "id": "market_steward",
+      "display_name": "坊市执事",
+      "role": "资源交易者",
+      "voice": "灵石、符纸、玄铁……云芝也有。别嫌贵，灵脉栈道上命比钱贵。"
+    }
+  ],
+  "visual": {
+    "style_id": "xianxia_cloud_frontier_style",
+    "style_name": "云山仙踪",
+    "theme_tags": [
+      "cloud_sea",
+      "floating_peaks",
+      "spiritual_veins",
+      "ancient_talons",
+      "jade_mist",
+      "cliffside_bamboo",
+      "waterfall_glow",
+      "pagoda_eaves"
+    ],
+    "palette": {
+      "terrain_base": "#D4C9B0",
+      "terrain_detail": "#A8A08A",
+      "road_base": "#7B8D6E",
+      "road_edge": "#5A6B4A",
+      "build_slot": "#C8B88A",
+      "objective": "#8B7355",
+      "spawn": "#6B5B4A",
+      "resource": "#B8A48C",
+      "hazard": "#A0522D",
+      "fog": "#E0D8C8",
+      "accent": "#D4A853"
+    },
+    "time_of_day": "dawn",
+    "terrain_name": "floating_rock",
+    "road_name": "spiritual_plank",
+    "slot_name": "talisman_platform",
+    "objective_name": "peak_foundation",
+    "spawn_name": "rift_marker",
+    "layer_briefs": {
+      "rendering_style": "Premium production game-environment art with semi-realistic materials, naturally weathered edges, restrained detail density, consistent scale, and a pseudo-3D oblique perspective that emphasizes depth and readability.",
+      "terrain_base": "Continuous, nearly flat traversable surface of fractured pale beige stone with subtle mossy green patina, fine crack lines, and scattered small pebbles.",
+      "road_surface": "Pavable surface of weathered jade-green planks with dark brown grain lines, slight age discoloration, and narrow gaps between planks revealing faint cyan glow from spiritual veins.",
+      "build_slot_platform": "Low empty octagonal platform of chiseled grey stone with a single raised circular inset, faintly weathered, no decorations or markings beyond geometric edges.",
+      "objective_foundation": "Solid rectangular stone foundation with stepped tiers, pale beige granite surface, clean edges, no structure above.",
+      "spawn_marker": "Low truncated stone pillar, roughly hewn, dark grey diorite, with a single shallow groove on top, no glow or symbols.",
+      "non_blocking_decoration": "1. Broken stone lantern with chipped edges, grey granite. 2. Small twisted pine sapling on a rocky outcrop, dark green foliage. 3. Stack of weathered roof tiles, terracotta brown. 4. Low bamboo thicket clump, pale green stems, no leaves."
+    }
+  },
+  "opening_cards": [
+    {
+      "title": "云海之上",
+      "text": "远古宗门在浮空山间以灵脉栈道相连，如今宗门已逝，但妖物从云海深处涌现。"
+    },
+    {
+      "title": "断峰告急",
+      "text": "天阙峰是最后一座完整的主峰，一旦失守，妖物将侵入人间。"
+    },
+    {
+      "title": "守山者",
+      "text": "你继承了一枚残缺的阵盘，必须在灵脉上布置符阵，试作新的防御。"
+    },
+    {
+      "title": "灵脉之力",
+      "text": "灵石、符纸、玄铁、云芝——这些是试作防御的基础，收集它们，研究新的阵器。"
+    }
+  ],
+  "player_origins": [
+    {
+      "id": "wandering_cultivator",
+      "display_name": "云游散修",
+      "summary": "无门无派，靠古符残卷自学阵术，擅长灵活应变。"
+    },
+    {
+      "id": "sect_orphan",
+      "display_name": "宗门遗孤",
+      "summary": "出身于已覆灭的流云宗，随身携带一本宗门阵器图谱，精通传统阵法。"
+    },
+    {
+      "id": "tianji_disciple",
+      "display_name": "天机阁弟子",
+      "summary": "擅长机关术，能将灵材转化为自动防御机傀，但阵术基础较弱。"
+    }
+  ],
+  "first_battle": {
+    "display_name": "初试符阵",
+    "summary": "第一波妖物从东侧云海涌来，沿落霞栈道逼近天阙峰。",
+    "route_shape": "east_west_switchback",
+    "core_name": "天阙峰",
+    "optional_target_name": "落霞栈道",
+    "enemy_traits": "飞蝗成群快速移动，石傀缓慢但坚固，注意优先处理飞蝗。",
+    "approach_direction": "东侧云海",
+    "suggested_research_intent": "研究一种能减速或定身的符箓，例如“凝霜符”以应对飞蝗群。"
+  }
+}

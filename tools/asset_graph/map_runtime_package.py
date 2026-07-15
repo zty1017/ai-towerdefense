@@ -10,7 +10,7 @@ Safety rules:
 1. Reject unknown top-level and nested keys for the v0.1 shape.
 2. Reject provider/trace/raw/secret-like fields anywhere.
 3. Reject external URLs anywhere.
-4. Keep visual layers local to /assets/map_visual_reference/.
+4. Keep visual layers in approved local /assets namespaces.
 5. Check all gameplay coordinates are inside the declared grid.
 6. Check build slots do not overlap path cells or objectives.
 
@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 try:
@@ -292,7 +293,7 @@ def _derive_build_slots(
     routes: list[dict[str, Any]],
     objectives: dict[str, Any],
     *,
-    max_slots: int = 12,
+    max_slots: int = 10,
 ) -> list[dict[str, Any]]:
     blocked = path_cells(routes)
     objective_points: set[tuple[int, int]] = set()
@@ -304,43 +305,88 @@ def _derive_build_slots(
             objective_points.add(_point_key(target.get("position", {})))
     blocked.update(objective_points)
 
+    ordered_route_cells: list[list[tuple[int, int]]] = []
+    for route in routes:
+        points = [_point_key(point) for point in route.get("waypoints", []) if isinstance(point, dict)]
+        cells: list[tuple[int, int]] = []
+        for start, end in zip(points, points[1:]):
+            segment = _segment_cells(start, end)
+            if cells and segment and cells[-1] == segment[0]:
+                segment = segment[1:]
+            cells.extend(segment)
+        if cells:
+            ordered_route_cells.append(cells)
+
+    total_route_cells = sum(len(cells) for cells in ordered_route_cells)
+    target_count = min(max_slots, max(4, total_route_cells // 3 + 1))
+    anchors: list[tuple[int, int, int, int]] = []
+    remaining = target_count
+    for route_index, cells in enumerate(ordered_route_cells):
+        routes_left = len(ordered_route_cells) - route_index
+        proportional = round(target_count * len(cells) / max(1, total_route_cells))
+        route_target = min(remaining - max(0, routes_left - 1), max(1, proportional))
+        for sample_index in range(route_target):
+            cell_index = round((sample_index + 1) * (len(cells) - 1) / (route_target + 1))
+            anchors.append((route_index, cell_index, *cells[cell_index]))
+        remaining -= route_target
+
     candidates: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
     slot_footprint = {"width_cells": 1, "height_cells": 1}
-    offsets = [
-        (0, -1),
-        (0, 1),
-        (-1, 0),
-        (1, 0),
-        (-1, -1),
-        (1, -1),
-        (-1, 1),
-        (1, 1),
-    ]
-    for route in routes:
-        for waypoint in route.get("waypoints", []):
-            wx, wy = _point_key(waypoint)
-            for ox, oy in offsets:
-                candidate = (wx + ox, wy + oy)
-                if candidate in seen or candidate in blocked:
-                    continue
-                if not _in_grid(candidate, grid):
+    for route_index, cell_index, wx, wy in anchors:
+        cells = ordered_route_cells[route_index]
+        previous = cells[max(0, cell_index - 1)]
+        following = cells[min(len(cells) - 1, cell_index + 1)]
+        dx = following[0] - previous[0]
+        dy = following[1] - previous[1]
+        normal_x = 0 if dy == 0 else (-1 if dy > 0 else 1)
+        normal_y = 0 if dx == 0 else (1 if dx > 0 else -1)
+        offsets = [
+            (normal_x, normal_y),
+            (-normal_x, -normal_y),
+            (normal_x + (1 if dx > 0 else -1 if dx < 0 else 0), normal_y + (1 if dy > 0 else -1 if dy < 0 else 0)),
+            (-normal_x + (1 if dx > 0 else -1 if dx < 0 else 0), -normal_y + (1 if dy > 0 else -1 if dy < 0 else 0)),
+            (0, -1),
+            (0, 1),
+            (-1, 0),
+            (1, 0),
+        ]
+        for ox, oy in dict.fromkeys(offsets):
+            candidate = (wx + ox, wy + oy)
+            if candidate in seen or candidate in blocked:
+                continue
+            if any(max(abs(candidate[0] - x), abs(candidate[1] - y)) < 2 for x, y in candidates):
+                continue
+            if not _in_grid(candidate, grid):
+                continue
+            _, _, road_band_gap = map_path_geometry.nearest_road_band_gap(
+                routes,
+                {"x": candidate[0], "y": candidate[1]},
+                slot_footprint,
+            )
+            if road_band_gap < -0.001:
+                continue
+            seen.add(candidate)
+            candidates.append(candidate)
+            break
+
+    if len(candidates) < 4:
+        for y in range(int(grid.get("height_cells", 1))):
+            for x in range(int(grid.get("width_cells", 1))):
+                candidate = (x, y)
+                if candidate in blocked or candidate in seen:
                     continue
                 _, _, road_band_gap = map_path_geometry.nearest_road_band_gap(
-                    routes,
-                    {"x": candidate[0], "y": candidate[1]},
-                    slot_footprint,
+                    routes, {"x": x, "y": y}, slot_footprint
                 )
                 if road_band_gap < -0.001:
                     continue
                 seen.add(candidate)
                 candidates.append(candidate)
-                if len(candidates) >= max_slots:
+                if len(candidates) >= 4:
                     break
-            if len(candidates) >= max_slots:
+            if len(candidates) >= 4:
                 break
-        if len(candidates) >= max_slots:
-            break
 
     slots: list[dict[str, Any]] = []
     for index, (x, y) in enumerate(candidates, start=1):
@@ -699,9 +745,15 @@ def validate_visual_layers(raw: Any, errors: list[str]) -> None:
         require_string(layer.get("layer_id"), f"{path}.layer_id", errors)
         require_enum(layer.get("role"), VISUAL_ROLES, f"{path}.role", errors)
         url = require_string(layer.get("url"), f"{path}.url", errors)
-        if url and not url.startswith("/assets/map_visual_reference/"):
-            errors.append(f"{path}.url must start with /assets/map_visual_reference/")
-        require_string(layer.get("local_path"), f"{path}.local_path", errors)
+        if url and not url.startswith(
+            ("/assets/map_visual_reference/", "/assets/layered_maps/", "/assets/generated_worlds/")
+        ):
+            errors.append(f"{path}.url must use an approved local asset namespace")
+        local_path = require_string(layer.get("local_path"), f"{path}.local_path", errors)
+        if local_path:
+            parts = Path(local_path).parts
+            if Path(local_path).is_absolute() or any(part in {"", ".", ".."} for part in parts):
+                errors.append(f"{path}.local_path must be a safe repository-relative path")
         require_int(layer.get("width"), f"{path}.width", errors, 1)
         require_int(layer.get("height"), f"{path}.height", errors, 1)
         sha = require_string(layer.get("sha256"), f"{path}.sha256", errors)

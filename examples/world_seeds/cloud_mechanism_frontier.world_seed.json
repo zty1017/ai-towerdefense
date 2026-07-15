@@ -1,0 +1,8 @@
+{
+  "schema_version": "world_generation_seed.v0.1",
+  "seed_id": "cloud_mechanism_frontier",
+  "creative_brief": "一个建立在漂浮云海与断裂天桥上的东方机关文明。风暴会改变补给线，玩家利用机关、风压与索道守卫移动城镇。",
+  "contrast_goal": "与长夜灯火的地面暗夜废墟形成明亮、高空、强风和机械运动感的明显差异。",
+  "avoid": ["直接复用灯塔、影潮、灯芯等名词", "现代科幻控制台", "西式蒸汽朋克拼贴"]
+}
+

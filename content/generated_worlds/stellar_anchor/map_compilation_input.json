@@ -1,0 +1,11 @@
+{
+  "schema_version": "map_compilation_input.v0.1",
+  "input_id": "map_input_stellar_anchor_first_battle",
+  "created_at": "2026-07-15T08:10:16Z",
+  "battle_config_path": "first_battle_config.json",
+  "map_style_pack_path": "map_style_pack.json",
+  "visual_generation": {
+    "provider_handoff": true,
+    "background_execution": true
+  }
+}

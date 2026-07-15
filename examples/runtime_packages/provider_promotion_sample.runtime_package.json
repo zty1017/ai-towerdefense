@@ -1,0 +1,98 @@
+{
+  "schema_version": "runtime_package.v0.1",
+  "package_id": "package_provider_promotion_sample_001",
+  "session_id": "session_provider_promotion_sample",
+  "worldbook_id": "long_night_lanterns",
+  "node_id": "gray_lantern_station",
+  "battle_display_name": "灰灯驿站·晋升样例",
+  "created_at": "2026-07-11T00:00:00Z",
+  "source_refs": {
+    "locked_manifest_id": "manifest_provider_promotion_sample_001",
+    "battle_config_version": "provider_promotion_sample.v0.1"
+  },
+  "assets": [
+    {
+      "stable_internal_id": "provider_promoted_lamp_tower_001",
+      "asset_kind": "tower_blueprint",
+      "lifecycle_state": "session_blueprint",
+      "display": {
+        "name": "引弧灯垒",
+        "summary": "将灯弧沿导线引向影潮，并在命中后造成短暂迟滞。",
+        "tags": ["防御塔", "灯弧", "迟滞"]
+      },
+      "gameplay_ref": {
+        "kind": "battle_behavior_abi",
+        "path": "examples/compiled_assets/provider_promotion_lamp_tower.behavior_abi.json",
+        "sha256": "01cc91cc35929794dd4f3ffe3720a36822f35895bd8b5691057412360c109346"
+      },
+      "media_refs": {
+        "icon": {
+          "url": "/assets/frontend_runtime_mock/processed/defense_basic_lantern_barricade_icon_2ee5d75e.png",
+          "width": 636,
+          "height": 636,
+          "sha256": "e7915d59ad90998a8a3c262072a197286fc2a096512cb609472414c838d33831"
+        },
+        "sprite": {
+          "texture_key": "provider_promoted_lamp_tower_001",
+          "atlas": "/assets/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+          "image": "/assets/frontend_runtime_mock/processed/defense_basic_lantern_barricade_defense_sprite_5a2da195.png"
+        }
+      },
+      "visual_recipes": [
+        {
+          "trigger": "on_attack",
+          "kind": "chain_arc",
+          "palette_token": "light.control.warm",
+          "color": "#f4c45f",
+          "secondary_color": "#9edcff",
+          "intensity": "medium",
+          "duration_ms": 360,
+          "max_links_from_effect": "damage.max_links",
+          "arc_style": "jagged",
+          "blend_mode": "additive"
+        }
+      ],
+      "battle_availability": {
+        "surfaces": ["battle_hotbar"],
+        "uses_per_battle": 3,
+        "requires_delivery": false,
+        "delivery_state": "sample_ready"
+      }
+    }
+  ],
+  "battle_context": {
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 16,
+      "height_cells": 9,
+      "cell_size": 64
+    },
+    "paths": [
+      {
+        "stable_internal_id": "path_main_road",
+        "display_name": "主路径",
+        "waypoints": [
+          {"x": 15, "y": 4},
+          {"x": 10, "y": 4},
+          {"x": 10, "y": 2},
+          {"x": 5, "y": 2},
+          {"x": 5, "y": 6},
+          {"x": 1, "y": 6}
+        ],
+        "entry_label": "影潮涌入方向",
+        "exit_label": "驿站核心方向"
+      }
+    ],
+    "core_target": {
+      "stable_internal_id": "target_node_core",
+      "display_name": "驿站核心",
+      "position": {"x": 0, "y": 6},
+      "durability": 10
+    },
+    "optional_targets": [],
+    "sample_delivery": {
+      "delivery_delay_ms": 0,
+      "delivery_progress_messages": ["蓝图已完成晋升。"]
+    }
+  }
+}

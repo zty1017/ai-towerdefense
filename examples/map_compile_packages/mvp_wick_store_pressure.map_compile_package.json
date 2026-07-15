@@ -3,11 +3,12 @@
   "package_id": "map_compile_lamp_wick_store_v0_2",
   "worldbook_id": "long_night_lanterns",
   "node_id": "lamp_wick_store",
-  "created_at": "2026-07-02T00:00:00Z",
+  "created_at": "2026-07-11T00:00:00Z",
   "source_refs": {
     "battle_config_path": "game_data/demo/wick_store_pressure_battle_config.json",
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
     "visual_reference_manifest_path": "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json",
+    "layered_visual_package_path": "game_data/media/layered_maps/lamp_wick_store/layered_map_visual_package.v0.1.json",
     "logic_authority": "map_runtime_package"
   },
   "logical_map_layer": {
@@ -92,7 +93,7 @@
       {
         "slot_id": "slot_01",
         "position": {
-          "x": 17,
+          "x": 16,
           "y": 3
         },
         "footprint": {
@@ -113,7 +114,7 @@
       {
         "slot_id": "slot_02",
         "position": {
-          "x": 17,
+          "x": 16,
           "y": 5
         },
         "footprint": {
@@ -134,7 +135,7 @@
       {
         "slot_id": "slot_03",
         "position": {
-          "x": 16,
+          "x": 14,
           "y": 3
         },
         "footprint": {
@@ -155,7 +156,7 @@
       {
         "slot_id": "slot_04",
         "position": {
-          "x": 16,
+          "x": 14,
           "y": 5
         },
         "footprint": {
@@ -176,8 +177,8 @@
       {
         "slot_id": "slot_05",
         "position": {
-          "x": 13,
-          "y": 5
+          "x": 12,
+          "y": 1
         },
         "footprint": {
           "width_cells": 1,
@@ -197,8 +198,8 @@
       {
         "slot_id": "slot_06",
         "position": {
-          "x": 12,
-          "y": 4
+          "x": 10,
+          "y": 3
         },
         "footprint": {
           "width_cells": 1,
@@ -218,8 +219,8 @@
       {
         "slot_id": "slot_07",
         "position": {
-          "x": 12,
-          "y": 3
+          "x": 7,
+          "y": 1
         },
         "footprint": {
           "width_cells": 1,
@@ -239,8 +240,8 @@
       {
         "slot_id": "slot_08",
         "position": {
-          "x": 14,
-          "y": 3
+          "x": 7,
+          "y": 5
         },
         "footprint": {
           "width_cells": 1,
@@ -260,7 +261,7 @@
       {
         "slot_id": "slot_09",
         "position": {
-          "x": 12,
+          "x": 5,
           "y": 5
         },
         "footprint": {
@@ -281,8 +282,8 @@
       {
         "slot_id": "slot_10",
         "position": {
-          "x": 14,
-          "y": 5
+          "x": 13,
+          "y": 6
         },
         "footprint": {
           "width_cells": 1,
@@ -302,8 +303,8 @@
       {
         "slot_id": "slot_11",
         "position": {
-          "x": 13,
-          "y": 1
+          "x": 9,
+          "y": 8
         },
         "footprint": {
           "width_cells": 1,
@@ -323,8 +324,8 @@
       {
         "slot_id": "slot_12",
         "position": {
-          "x": 14,
-          "y": 2
+          "x": 4,
+          "y": 8
         },
         "footprint": {
           "width_cells": 1,
@@ -447,15 +448,15 @@
     "authority": "published_visual_layer",
     "status": "published",
     "artifact": {
-      "artifact_id": "artifact_battle_runtime_background",
-      "role": "battle_runtime_background",
-      "url": "/assets/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
-      "local_path": "game_data/media/map_visual_reference/mvp_battle_runtime_background.v0.2.png",
+      "artifact_id": "artifact_lamp_wick_store_layered_map",
+      "role": "painted_visual_layer",
+      "url": "/assets/layered_maps/lamp_wick_store/composited/lamp_wick_store.layered_map.svg",
+      "local_path": "game_data/media/layered_maps/lamp_wick_store/composited/lamp_wick_store.layered_map.svg",
       "width": 1280,
       "height": 720,
-      "sha256": "1538eade96f4b2759f3e9e858134653d3b272dc1aabf70f690f128b4a7b3c3b0",
+      "sha256": "974f75ac61ad3313813fb324b628f259478d5a0dde557985c505fdd521854562",
       "authority": "published_visual_layer",
-      "review_status": "passed_player_visual_quality",
+      "review_status": "layered_visual_package_gates_passed",
       "player_visible_quality": "passed",
       "logic_alignment_status": "passed"
     },
@@ -567,12 +568,12 @@
         "checkpoint_id": "build_slot_08",
         "kind": "build_slot",
         "logic_position": {
-          "x": 17,
+          "x": 16,
           "y": 3
         },
         "expected_pixel": {
-          "x": 1069,
-          "y": 522
+          "x": 1026,
+          "y": 500
         }
       }
     ]
@@ -604,6 +605,16 @@
       "summary": "The published background is generated from the same logical projection as the runtime overlay."
     },
     {
+      "gate_id": "layered_visual_package_binding",
+      "status": "passed",
+      "summary": "The node-specific layered visual package is bound to this map compile package."
+    },
+    {
+      "gate_id": "ai_media_generation_provenance",
+      "status": "warning",
+      "summary": "Layered map uses reviewed local AI exploration media, but the executable compiler run does not contain provider-generation evidence; treat it as imported AI media."
+    },
+    {
       "gate_id": "no_ui_text_enemy_tower_in_painted_map",
       "status": "warning",
       "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled."
@@ -616,7 +627,7 @@
   ],
   "export_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
-    "frontend_default_visual_role": "battle_runtime_background"
+    "frontend_default_visual_role": "painted_visual_layer"
   },
   "validation_report": {
     "gate_status": "warning",
@@ -647,6 +658,16 @@
         "gate_id": "published_visual_logic_aligned",
         "status": "passed",
         "summary": "The published background is generated from the same logical projection as the runtime overlay."
+      },
+      {
+        "gate_id": "layered_visual_package_binding",
+        "status": "passed",
+        "summary": "The node-specific layered visual package is bound to this map compile package."
+      },
+      {
+        "gate_id": "ai_media_generation_provenance",
+        "status": "warning",
+        "summary": "Layered map uses reviewed local AI exploration media, but the executable compiler run does not contain provider-generation evidence; treat it as imported AI media."
       },
       {
         "gate_id": "no_ui_text_enemy_tower_in_painted_map",

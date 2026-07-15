@@ -19,7 +19,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import media_review
+try:
+    from . import media_review
+except ImportError:  # pragma: no cover - direct script execution.
+    import media_review  # type: ignore[no-redef]
 
 
 REPORT_VERSION = "media_vision_review_report.v0.1"
@@ -61,6 +64,13 @@ PROFILES: dict[str, VisionProfile] = {
         supports_json_object=False,
         fallback_env_keys=("AGNES_API_KEY_2", "AGNES_API_KEY_3"),
     ),
+    "ark_kimi_k2_6": VisionProfile(
+        name="ark_kimi_k2_6",
+        env_key="ARK_API_KEY",
+        base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+        model="kimi-k2.6",
+        supports_json_object=False,
+    ),
 }
 
 
@@ -90,11 +100,14 @@ def load_dotenv(path: Path) -> None:
             os.environ[key] = value
 
 
-def get_api_key(profile: VisionProfile) -> str:
-    for env_key in profile.env_keys:
-        key = os.environ.get(env_key)
-        if key and key.strip():
-            return key
+def get_api_key(profile: VisionProfile, credential_index: int = 0) -> str:
+    keys = [
+        key.strip()
+        for env_key in profile.env_keys
+        if (key := os.environ.get(env_key)) and key.strip()
+    ]
+    if keys:
+        return keys[max(0, credential_index) % len(keys)]
     env_names = " or ".join(profile.env_keys)
     raise RuntimeError(
         f"Missing environment variable: {env_names} "
@@ -288,8 +301,9 @@ def call_vision_model(
     *,
     max_tokens: int,
     timeout: int,
+    credential_index: int = 0,
 ) -> str:
-    api_key = get_api_key(profile)
+    api_key = get_api_key(profile, credential_index)
     url = profile.base_url.rstrip("/") + profile.path
     content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
     for idx, item in enumerate(review_items, start=1):

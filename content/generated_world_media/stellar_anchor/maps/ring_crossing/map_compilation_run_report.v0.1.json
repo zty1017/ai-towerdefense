@@ -1,0 +1,208 @@
+{
+  "schema_version": "map_compilation_run_report.v0.1",
+  "run_id": "maprun_767313e7092a6a8cefa9",
+  "created_at": "2026-07-15T08:10:16Z",
+  "completed_at": "2026-07-15T08:10:23Z",
+  "status": "completed",
+  "input_fingerprint": "767313e7092a6a8cefa9becb88f9abcdb1f7fde645dbed47f01a149b2a1e7040",
+  "input_ref": "content/generated_worlds/stellar_anchor/map_compilation_input.json",
+  "worldbook_id": "stellar_anchor",
+  "node_id": "ring_crossing",
+  "stages": [
+    {
+      "stage_id": "map_runtime_package",
+      "status": "passed",
+      "duration_ms": 1,
+      "output_paths": [
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json"
+      ],
+      "warnings": []
+    },
+    {
+      "stage_id": "visual_generation_handoff",
+      "status": "passed",
+      "duration_ms": 4614,
+      "output_paths": [
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.svg",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.terrain_composition_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.road_surface.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.build_slot_platform.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.objective_foundation.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.spawn_marker.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_architecture.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_natural.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_debris.geometry_reference.png",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_prop.geometry_reference.png"
+      ],
+      "warnings": [
+        "provider_execution_and_candidate_review_are_pending"
+      ]
+    },
+    {
+      "stage_id": "render_plan_and_semantic_consistency",
+      "status": "passed",
+      "duration_ms": 3,
+      "output_paths": [
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/procedural_map_render_plan.v0.1.json",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/semantic_visual_consistency_report.v0.1.json"
+      ],
+      "warnings": []
+    },
+    {
+      "stage_id": "layered_map_visual_package",
+      "status": "passed",
+      "duration_ms": 2470,
+      "output_paths": [
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/layered_map_visual_package.v0.1.json"
+      ],
+      "warnings": [
+        "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+      ]
+    },
+    {
+      "stage_id": "map_compile_package",
+      "status": "passed",
+      "duration_ms": 2,
+      "output_paths": [
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_visual_reference_manifest.v0.1.json",
+        "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_compile_package.v0.2.json"
+      ],
+      "warnings": []
+    }
+  ],
+  "output_refs": [
+    {
+      "kind": "map_runtime_package.v0.2",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_runtime_package.v0.2.json",
+      "sha256": "f0b82fba103642de050af4fd68342f86f890d0c4ec05a2b8b3bea80477b98286"
+    },
+    {
+      "kind": "map_topology_control_sketch_pack.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_topology_control_sketch_pack.v0.1.json",
+      "sha256": "b848087414061da656db905e4610378173613dba49b44d3f59cca5bae7075516"
+    },
+    {
+      "kind": "topology_constrained_map_prompt_pack.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/topology_constrained_map_prompt_pack.v0.1.json",
+      "sha256": "5ed9970206d0b7bcf6c0735b6658fed541357fb5a2c112abaa590f74c02a397a"
+    },
+    {
+      "kind": "map_layered_visual_generation_request_pack.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+      "sha256": "25d22daf32baea1d462b66269c9f1f1fd10aa039ca462309c5ba75c6e0f8a64a"
+    },
+    {
+      "kind": "ring_crossing.topology_control_sketch",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.png",
+      "sha256": "229a35e592a614bddf4a99e0b6526557d791311e9207b8ae77ab860b507990c4"
+    },
+    {
+      "kind": "ring_crossing.topology_control_sketch",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.topology_control_sketch.svg",
+      "sha256": "8adca875ea6f6d6f7e7df771ee8b0a6b9a9214aa22502e5924f2f0312433bf21"
+    },
+    {
+      "kind": "ring_crossing.terrain_composition_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.terrain_composition_reference.png",
+      "sha256": "0f46da5e8c6a14ab269bfa1828f2f6a5e56450ee35216da8b3f1d345596eedff"
+    },
+    {
+      "kind": "ring_crossing.road_surface.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.road_surface.geometry_reference.png",
+      "sha256": "0e3a6ebf6b56fb20f5058d917094a684bc69da759bd3dec799efc92f047bc7b8"
+    },
+    {
+      "kind": "ring_crossing.build_slot_platform.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.build_slot_platform.geometry_reference.png",
+      "sha256": "9ee19dc4e558c692ddb2447721c169ed9733ab89a1b0b5f16b06dd7afdc29ce1"
+    },
+    {
+      "kind": "ring_crossing.objective_foundation.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.objective_foundation.geometry_reference.png",
+      "sha256": "676dcca39591c9913cf9fe7abac5be4678c9b141b1fc42bae50a038ee70f91e7"
+    },
+    {
+      "kind": "ring_crossing.spawn_marker.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.spawn_marker.geometry_reference.png",
+      "sha256": "e72d2efe569b84c04ebf4cdf42c8a52b00e353afa9adcbd757406852e49eebf6"
+    },
+    {
+      "kind": "ring_crossing.non_blocking_decoration.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration.geometry_reference.png",
+      "sha256": "35e3256fac275af9fc664bbeb674167e99df6741773c245ecb8a2fd957a9f1d7"
+    },
+    {
+      "kind": "ring_crossing.non_blocking_decoration_architecture.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_architecture.geometry_reference.png",
+      "sha256": "591fc9b9aef30cdc46c38a049a04262fd3eb80b8e1c98cb287379c3d27704c02"
+    },
+    {
+      "kind": "ring_crossing.non_blocking_decoration_natural.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_natural.geometry_reference.png",
+      "sha256": "884ca42b9d8e25f27b284845c59abaaf7c13208c7c50293e1c2bfc88cfaa816e"
+    },
+    {
+      "kind": "ring_crossing.non_blocking_decoration_debris.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_debris.geometry_reference.png",
+      "sha256": "18ba975b660156efe8f18b5f1d2f498d888045962fcd6c4970b785b2c7bf030d"
+    },
+    {
+      "kind": "ring_crossing.non_blocking_decoration_prop.geometry_reference",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/control/ring_crossing.non_blocking_decoration_prop.geometry_reference.png",
+      "sha256": "4aed3a125e17e30186e3989b3243b9e0e6d7d93bee30f185b45a67f2dde68adc"
+    },
+    {
+      "kind": "procedural_map_render_plan.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/procedural_map_render_plan.v0.1.json",
+      "sha256": "a2afe96594a01f16ab7eb0524769a9d84111c49b49c6bd88569f847646854dd1"
+    },
+    {
+      "kind": "semantic_visual_consistency_report.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/semantic_visual_consistency_report.v0.1.json",
+      "sha256": "2b37cbe63321fad70447b4de52966002c73abdaa4fbb01a6b24b9cb5da131ab7"
+    },
+    {
+      "kind": "layered_map_visual_package.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/layered_map_visual_package.v0.1.json",
+      "sha256": "d8ed74927a426739e1337e0838ceb505bd8a47e35683f41eee21ad89302ea513"
+    },
+    {
+      "kind": "map_visual_reference_manifest.v0.1",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_visual_reference_manifest.v0.1.json",
+      "sha256": "9b0daab3c44150bf3e34a316b574bd9531a8975a8b6ce94dcba2ce6d8b155a1a"
+    },
+    {
+      "kind": "map_compile_package.v0.2",
+      "path": "content/generated_world_media/stellar_anchor/maps/ring_crossing/map_compile_package.v0.2.json",
+      "sha256": "a96b9e84071f8e474bb42e2f547388271400445dcc68d1e72a0dadb33ca3a53b"
+    }
+  ],
+  "provider_execution": {
+    "call_count": 0,
+    "handoff_requested": true,
+    "handoff_status": "request_pack_ready_review_only",
+    "reviewed_local_media_imported": false,
+    "candidate_generation_status": "not_requested",
+    "vision_review_call_count": 0,
+    "automatic_reviewed_staging_ready": false,
+    "background_job_status": "pending",
+    "background_job_ref": "content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_visual_background_job.v0.1.json"
+  },
+  "quality": {
+    "runtime_truth_preserved": true,
+    "logic_visual_alignment": "passed",
+    "player_visual_status": "warning",
+    "warnings": [
+      "reviewed_or_ai_painted_backdrop_missing; procedural_visual_is_fallback_only"
+    ]
+  },
+  "resume": {
+    "reused": false,
+    "checked_at": null
+  }
+}

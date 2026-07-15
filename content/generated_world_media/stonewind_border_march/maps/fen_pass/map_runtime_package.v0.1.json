@@ -1,0 +1,252 @@
+{
+  "schema_version": "map_runtime_package.v0.1",
+  "package_id": "map_pkg_fen_pass_v0_1",
+  "worldbook_id": "stonewind_border_march",
+  "node_id": "fen_pass",
+  "battle_config_version": "first_battle.v0.1",
+  "created_at": "2026-07-15T08:10:11Z",
+  "source_refs": {
+    "battle_config_path": "content/generated_worlds/stonewind_border_march/first_battle_config.json",
+    "logic_authority": "battle_config"
+  },
+  "grid": {
+    "projection": "pseudo3d_oblique",
+    "width_cells": 16,
+    "height_cells": 9,
+    "cell_size": 64
+  },
+  "path_routes": [
+    {
+      "route_id": "path_fen_pass_main",
+      "display_name": "主路径",
+      "waypoints": [
+        {
+          "x": 8,
+          "y": 0
+        },
+        {
+          "x": 8,
+          "y": 2
+        },
+        {
+          "x": 12,
+          "y": 2
+        },
+        {
+          "x": 12,
+          "y": 6
+        },
+        {
+          "x": 5,
+          "y": 6
+        },
+        {
+          "x": 5,
+          "y": 8
+        }
+      ],
+      "entry_label": "南方沼泽",
+      "exit_label": "石风堡大门"
+    }
+  ],
+  "build_slots": [
+    {
+      "slot_id": "slot_01",
+      "position": {
+        "x": 7,
+        "y": 3
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_02",
+      "position": {
+        "x": 11,
+        "y": 3
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_03",
+      "position": {
+        "x": 13,
+        "y": 3
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_04",
+      "position": {
+        "x": 11,
+        "y": 5
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_05",
+      "position": {
+        "x": 10,
+        "y": 7
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_06",
+      "position": {
+        "x": 8,
+        "y": 5
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    },
+    {
+      "slot_id": "slot_07",
+      "position": {
+        "x": 4,
+        "y": 5
+      },
+      "footprint": {
+        "width_cells": 1,
+        "height_cells": 1
+      },
+      "allowed_asset_kinds": [
+        "tower_blueprint",
+        "temporary_trap_sample",
+        "support_item"
+      ],
+      "placement_tags": [
+        "near_path",
+        "mvp_auto_derived"
+      ],
+      "visual_hint": "ground_plate"
+    }
+  ],
+  "objectives": {
+    "core_target": {
+      "target_id": "target_node_core",
+      "display_name": "石风堡大门",
+      "position": {
+        "x": 4,
+        "y": 8
+      },
+      "durability": 10
+    },
+    "optional_targets": [
+      {
+        "target_id": "target_optional_facility",
+        "display_name": "炼金工坊",
+        "position": {
+          "x": 10,
+          "y": 5
+        },
+        "durability": 4
+      }
+    ]
+  },
+  "spawn_points": [
+    {
+      "spawn_id": "spawn_path_fen_pass_main",
+      "route_id": "path_fen_pass_main",
+      "position": {
+        "x": 8,
+        "y": 0
+      },
+      "label": "南方沼泽"
+    }
+  ],
+  "visual_layers": [],
+  "runtime_hints": {
+    "drag_deploy_enabled": true,
+    "show_grid_policy": "hidden_until_drag",
+    "path_preview_policy": "subtle_highlight",
+    "target_marker_policy": "icon_overlay"
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "runtime_loadable": true,
+    "gates": [
+      {
+        "gate_id": "logic_first_map_contract",
+        "status": "passed",
+        "summary": "Routes, objectives, spawn points, and build slots are explicit runtime data."
+      }
+    ]
+  }
+}

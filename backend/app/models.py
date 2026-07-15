@@ -49,9 +49,7 @@ class HealthResponse(BaseModel):
 # Research job / proposal models
 # ---------------------------------------------------------------------------
 
-# Status values a research job may hold over its lifecycle. MVP runs
-# synchronously to "completed" but the field is reserved for future async
-# workers.
+# Status values a durable research job may hold over its worker lifecycle.
 JOB_STATUSES = ("queued", "running", "completed", "failed", "delayed", "unstable")
 
 
@@ -75,6 +73,7 @@ class ResearchProposalResponse(BaseModel):
     risk_note: str
     player_state_message: str
     compiler_metadata: dict[str, Any] = Field(default_factory=dict)
+    compiled_candidate: Optional[dict[str, Any]] = None
 
 
 class ResearchJobResponse(BaseModel):
@@ -97,6 +96,18 @@ class ResearchJobInfo(ResearchJobResponse):
     completed_at: Optional[datetime] = None
 
 
+class RuntimeActivationResponse(BaseModel):
+    """Result of applying or rolling back one session runtime patch."""
+
+    activation_receipt: dict[str, Any]
+    activated_runtime_bundle: dict[str, Any]
+
+
+class RuntimeActivationListResponse(BaseModel):
+    session_id: str
+    activation_receipts: list[dict[str, Any]] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Frontend mock API models
 # ---------------------------------------------------------------------------
@@ -106,6 +117,7 @@ class WorldInstanceCreateRequest(BaseModel):
     """Optional world-instance selections from the frontend start flow."""
 
     selected_options: dict[str, Any] = Field(default_factory=dict)
+    world_id: str = Field(default="long_night_lanterns", min_length=1, max_length=64)
 
 
 class FrontendMockPayloadResponse(BaseModel):
@@ -124,6 +136,7 @@ class BattleResultSubmitRequest(BaseModel):
     optional_target_state: Optional[str] = None
     deployed_asset_ids: list[str] = Field(default_factory=list)
     leaked_enemy_count: int = 0
+    battle_run_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
     notes: Optional[str] = None
 
 

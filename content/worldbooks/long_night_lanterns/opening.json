@@ -27,6 +27,7 @@
       "narration": "暗色大地图缓缓浮现，灯火稀疏。东方的影潮边缘正在逼近。",
       "visual": {
         "scene": "distant_map",
+        "location_label": "余灯中枢·东境",
         "camera": "slow_zoom_in",
         "particles": "ash_drift"
       },
@@ -40,6 +41,7 @@
       "narration": "灰灯驿站被标红。守灯人发来急报：高速影潮正在接近，请求立即支援。",
       "visual": {
         "scene": "crisis_alert",
+        "location_label": "灰灯驿站·急报",
         "highlight_node": "gray_lantern_station",
         "camera": "push_to_crisis",
         "particles": "alert_pulse"
@@ -54,6 +56,7 @@
       "narration": "你被唤醒为守灯技师。用有限材料临时改造防线，是你能做的事。",
       "visual": {
         "scene": "player_awakening",
+        "location_label": "守灯技师·唤醒",
         "camera": "slow_pull_back",
         "particles": "lantern_glow_rise"
       },

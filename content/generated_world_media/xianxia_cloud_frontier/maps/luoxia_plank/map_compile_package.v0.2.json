@@ -1,0 +1,524 @@
+{
+  "schema_version": "map_compile_package.v0.2",
+  "package_id": "map_compile_luoxia_plank_v0_2",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "node_id": "luoxia_plank",
+  "created_at": "2026-07-15T08:10:15Z",
+  "source_refs": {
+    "battle_config_path": "content/generated_worlds/xianxia_cloud_frontier/first_battle_config.json",
+    "map_runtime_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+    "visual_reference_manifest_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_visual_reference_manifest.v0.1.json",
+    "layered_visual_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layered_map_visual_package.v0.1.json",
+    "logic_authority": "map_runtime_package"
+  },
+  "logical_map_layer": {
+    "authority": "runtime_truth",
+    "grid": {
+      "projection": "pseudo3d_oblique",
+      "width_cells": 16,
+      "height_cells": 9,
+      "cell_size": 64
+    },
+    "path_route_count": 1,
+    "build_slot_count": 8,
+    "objective_count": 2,
+    "spawn_point_count": 1,
+    "path_routes": [
+      {
+        "route_id": "path_luoxia_plank_main",
+        "display_name": "主路径",
+        "waypoints": [
+          {
+            "x": 15,
+            "y": 4
+          },
+          {
+            "x": 11,
+            "y": 4
+          },
+          {
+            "x": 11,
+            "y": 2
+          },
+          {
+            "x": 6,
+            "y": 2
+          },
+          {
+            "x": 6,
+            "y": 6
+          },
+          {
+            "x": 1,
+            "y": 6
+          }
+        ],
+        "entry_label": "东侧云海",
+        "exit_label": "天阙峰"
+      }
+    ],
+    "build_slots": [
+      {
+        "slot_id": "slot_01",
+        "position": {
+          "x": 13,
+          "y": 3
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_02",
+        "position": {
+          "x": 10,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_03",
+        "position": {
+          "x": 10,
+          "y": 1
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_04",
+        "position": {
+          "x": 8,
+          "y": 1
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_05",
+        "position": {
+          "x": 5,
+          "y": 1
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_06",
+        "position": {
+          "x": 5,
+          "y": 4
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_07",
+        "position": {
+          "x": 5,
+          "y": 7
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      },
+      {
+        "slot_id": "slot_08",
+        "position": {
+          "x": 3,
+          "y": 5
+        },
+        "footprint": {
+          "width_cells": 1,
+          "height_cells": 1
+        },
+        "allowed_asset_kinds": [
+          "tower_blueprint",
+          "temporary_trap_sample",
+          "support_item"
+        ],
+        "placement_tags": [
+          "near_path",
+          "mvp_auto_derived"
+        ],
+        "visual_hint": "ground_plate"
+      }
+    ],
+    "objectives": {
+      "core_target": {
+        "target_id": "target_node_core",
+        "display_name": "天阙峰",
+        "position": {
+          "x": 0,
+          "y": 6
+        },
+        "durability": 10
+      },
+      "optional_targets": [
+        {
+          "target_id": "target_optional_facility",
+          "display_name": "落霞栈道",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "durability": 4
+        }
+      ]
+    },
+    "spawn_points": [
+      {
+        "spawn_id": "spawn_path_luoxia_plank_main",
+        "route_id": "path_luoxia_plank_main",
+        "position": {
+          "x": 15,
+          "y": 4
+        },
+        "label": "东侧云海"
+      }
+    ]
+  },
+  "control_layer": {
+    "authority": "reference_only",
+    "artifacts": [
+      {
+        "artifact_id": "artifact_battle_control_sketch",
+        "role": "battle_control_sketch",
+        "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_surface.svg",
+        "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_surface.svg",
+        "width": 1280,
+        "height": 720,
+        "sha256": "e1d3e189d2873c21dcf93597a4f1a5cc80e30b24c081e6332dddfbe068cdd7b1",
+        "authority": "reference_only",
+        "review_status": "derived_from_runtime_truth",
+        "player_visible_quality": "not_applicable",
+        "logic_alignment_status": "passed"
+      }
+    ],
+    "model_instruction_boundary": [
+      "Control images may guide composition but cannot define gameplay routes or build slots.",
+      "Generated map backgrounds must contain no UI, no text, no enemies, no deployed towers, and no obvious board frame.",
+      "Paths, tower bases, objectives, and threat entrances should be naturally embedded in the worldbook visual style."
+    ]
+  },
+  "painted_visual_layer": {
+    "authority": "published_visual_layer",
+    "status": "published",
+    "artifact": {
+      "artifact_id": "artifact_luoxia_plank_layered_map",
+      "role": "painted_visual_layer",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/composited/luoxia_plank.layered_map.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/composited/luoxia_plank.layered_map.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8768753678b8f3b23c67ccf1654265dd0d37c6563e4ae38d42a99ff2298f98fd",
+      "authority": "published_visual_layer",
+      "review_status": "layered_visual_package_gates_passed",
+      "player_visible_quality": "passed",
+      "logic_alignment_status": "passed"
+    },
+    "visual_constraints": [
+      "player-facing map only",
+      "no tactical UI baked into the image",
+      "no monsters or towers baked into the background",
+      "path and tower bases readable but diegetic",
+      "worldbook style must be visible"
+    ]
+  },
+  "alignment_layer": {
+    "authority": "runtime_overlay_alignment",
+    "reference_size": {
+      "width": 1280,
+      "height": 720
+    },
+    "projection": "pseudo3d_oblique",
+    "coordinate_mapping": "map_runtime_cell_to_visual_plane",
+    "max_pixel_error": 24,
+    "overlay_correction_policy": "subtle_runtime_overlay",
+    "alignment_status": "passed",
+    "checkpoints": [
+      {
+        "checkpoint_id": "route_start_01",
+        "kind": "route_start",
+        "logic_position": {
+          "x": 15,
+          "y": 4
+        },
+        "expected_pixel": {
+          "x": 1000,
+          "y": 553
+        }
+      },
+      {
+        "checkpoint_id": "route_turn_02",
+        "kind": "route_turn",
+        "logic_position": {
+          "x": 6,
+          "y": 2
+        },
+        "expected_pixel": {
+          "x": 664,
+          "y": 279
+        }
+      },
+      {
+        "checkpoint_id": "route_end_03",
+        "kind": "route_end",
+        "logic_position": {
+          "x": 1,
+          "y": 6
+        },
+        "expected_pixel": {
+          "x": 232,
+          "y": 254
+        }
+      },
+      {
+        "checkpoint_id": "objective_04",
+        "kind": "objective",
+        "logic_position": {
+          "x": 0,
+          "y": 6
+        },
+        "expected_pixel": {
+          "x": 184,
+          "y": 229
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_05",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 13,
+          "y": 3
+        },
+        "expected_pixel": {
+          "x": 952,
+          "y": 478
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_06",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 10,
+          "y": 5
+        },
+        "expected_pixel": {
+          "x": 712,
+          "y": 453
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_07",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 10,
+          "y": 1
+        },
+        "expected_pixel": {
+          "x": 904,
+          "y": 354
+        }
+      },
+      {
+        "checkpoint_id": "build_slot_08",
+        "kind": "build_slot",
+        "logic_position": {
+          "x": 8,
+          "y": 1
+        },
+        "expected_pixel": {
+          "x": 808,
+          "y": 304
+        }
+      }
+    ]
+  },
+  "quality_gates": [
+    {
+      "gate_id": "runtime_truth_source",
+      "status": "passed",
+      "summary": "Routes, build slots, objectives, and spawn points are copied from MapRuntimePackage, not inferred from pixels."
+    },
+    {
+      "gate_id": "control_layers_not_player_default",
+      "status": "passed",
+      "summary": "Control sketches and reference boards are reference_only and must remain debug/evidence material."
+    },
+    {
+      "gate_id": "published_visual_layer_present",
+      "status": "passed",
+      "summary": "A player-facing painted background exists."
+    },
+    {
+      "gate_id": "player_visual_quality_passed",
+      "status": "passed",
+      "summary": "The selected player-facing map layer passed visual quality review."
+    },
+    {
+      "gate_id": "published_visual_logic_aligned",
+      "status": "passed",
+      "summary": "The published background is generated from the same logical projection as the runtime overlay."
+    },
+    {
+      "gate_id": "layered_visual_package_binding",
+      "status": "passed",
+      "summary": "The node-specific layered visual package is bound to this map compile package."
+    },
+    {
+      "gate_id": "ai_media_generation_provenance",
+      "status": "warning",
+      "summary": "No AI-generated media source is recorded in the activated layered visual package."
+    },
+    {
+      "gate_id": "no_ui_text_enemy_tower_in_painted_map",
+      "status": "warning",
+      "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled."
+    },
+    {
+      "gate_id": "alignment_requires_runtime_overlay",
+      "status": "passed",
+      "summary": "Deterministic published background uses the runtime projection; subtle overlays are cosmetic rather than corrective."
+    }
+  ],
+  "export_refs": {
+    "map_runtime_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+    "frontend_default_visual_role": "painted_visual_layer"
+  },
+  "validation_report": {
+    "gate_status": "warning",
+    "runtime_truth_preserved": true,
+    "player_visual_safe": true,
+    "gates": [
+      {
+        "gate_id": "runtime_truth_source",
+        "status": "passed",
+        "summary": "Routes, build slots, objectives, and spawn points are copied from MapRuntimePackage, not inferred from pixels."
+      },
+      {
+        "gate_id": "control_layers_not_player_default",
+        "status": "passed",
+        "summary": "Control sketches and reference boards are reference_only and must remain debug/evidence material."
+      },
+      {
+        "gate_id": "published_visual_layer_present",
+        "status": "passed",
+        "summary": "A player-facing painted background exists."
+      },
+      {
+        "gate_id": "player_visual_quality_passed",
+        "status": "passed",
+        "summary": "The selected player-facing map layer passed visual quality review."
+      },
+      {
+        "gate_id": "published_visual_logic_aligned",
+        "status": "passed",
+        "summary": "The published background is generated from the same logical projection as the runtime overlay."
+      },
+      {
+        "gate_id": "layered_visual_package_binding",
+        "status": "passed",
+        "summary": "The node-specific layered visual package is bound to this map compile package."
+      },
+      {
+        "gate_id": "ai_media_generation_provenance",
+        "status": "warning",
+        "summary": "No AI-generated media source is recorded in the activated layered visual package."
+      },
+      {
+        "gate_id": "no_ui_text_enemy_tower_in_painted_map",
+        "status": "warning",
+        "summary": "MVP records this as a required visual review gate; automated computer-vision enforcement is not yet enabled."
+      },
+      {
+        "gate_id": "alignment_requires_runtime_overlay",
+        "status": "passed",
+        "summary": "Deterministic published background uses the runtime projection; subtle overlays are cosmetic rather than corrective."
+      }
+    ]
+  }
+}

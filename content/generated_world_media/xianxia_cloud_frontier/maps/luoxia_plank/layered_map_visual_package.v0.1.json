@@ -1,0 +1,472 @@
+{
+  "schema_version": "layered_map_visual_package.v0.1",
+  "package_id": "layered_map_visual_pkg_luoxia_plank_v0_1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "node_id": "luoxia_plank",
+  "created_at": "2026-07-15T08:10:15Z",
+  "source_refs": {
+    "map_runtime_package_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+    "map_style_pack_path": "content/generated_worlds/xianxia_cloud_frontier/map_style_pack.json",
+    "procedural_map_render_plan_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/procedural_map_render_plan.v0.1.json"
+  },
+  "runtime_semantics_source": {
+    "kind": "MapRuntimePackage",
+    "id": "map_pkg_luoxia_plank_v0_2",
+    "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/map_runtime_package.v0.2.json",
+    "authority": "runtime_semantic_truth"
+  },
+  "style_source": {
+    "kind": "MapStylePack",
+    "id": "style_xianxia_cloud_frontier_luoxia_plank_v0_1",
+    "path": "content/generated_worlds/xianxia_cloud_frontier/map_style_pack.json",
+    "authority": "visual_style"
+  },
+  "render_plan_source": {
+    "kind": "ProceduralMapRenderPlan",
+    "id": "render_plan_luoxia_plank_v0_1",
+    "path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/procedural_map_render_plan.v0.1.json",
+    "authority": "presentation_plan"
+  },
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "format": "svg"
+  },
+  "coordinate_projection": {
+    "projection": "pseudo3d_oblique",
+    "mapping": "frontend_battle_design_space",
+    "width_cells": 16,
+    "height_cells": 9,
+    "base_tile_w": 96.0,
+    "base_tile_h": 49.92,
+    "base_offset_x": 472.0,
+    "base_offset_y": 78.96
+  },
+  "usage_policy": [
+    "runtime_semantics_from_map_runtime_package",
+    "visual_package_is_presentation_only",
+    "no_pixel_to_semantic_inference",
+    "player_default_presentation_allowed",
+    "local_reviewed_artifact_only",
+    "no_raw_generation_payload",
+    "no_external_temporary_url",
+    "painted_backdrop_must_not_bake_build_slots",
+    "painted_backdrop_must_not_bake_path_routes"
+  ],
+  "media_assets": [
+    {
+      "asset_id": "luoxia_plank_terrain_tile",
+      "role": "terrain_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.terrain_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.terrain_tile.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "dfeca1731e43aa5542516de40b7d5522370c608dd1c691ed79b08cef0e0de778",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_terrain_detail_tile",
+      "role": "terrain_detail_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.terrain_detail_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.terrain_detail_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "18e9efa784e00b4c9cf8b867f4b4ee51abd1388154eebbb3a5489a044b39ce64",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_road_tile",
+      "role": "road_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_tile.png",
+      "width": 256,
+      "height": 128,
+      "sha256": "4fa779db30531253d32ae9ad7962d36d4946423b5ce84f6ae9a57ef43d27a6e0",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_road_edge_tile",
+      "role": "road_edge_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_edge_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_edge_tile.png",
+      "width": 192,
+      "height": 96,
+      "sha256": "ed07ab7adf2200a6124f2999d9affed9fc89ef94a8cdcf0b3bc6f7455b96c1f5",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_road_detail_atlas",
+      "role": "road_detail_atlas",
+      "media_kind": "texture_atlas_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_detail_atlas.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.road_detail_atlas.png",
+      "width": 384,
+      "height": 192,
+      "sha256": "20d592b0442cf9e15b042e5ab469231fc3785e00a397b72c614181eebf93cbcb",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_slot_tile",
+      "role": "slot_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.slot_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.slot_tile.png",
+      "width": 192,
+      "height": 192,
+      "sha256": "d155bc94756e2102b677e172089238535da446090e03cbf281a468c655a8acfe",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_shadow_overlay_tile",
+      "role": "shadow_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.shadow_overlay_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.shadow_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "2fb7cf9f338e3047b8cbcec4bf876a05a3f81c194a87f786f7c30c64ecb3fd79",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_fog_overlay_tile",
+      "role": "fog_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.fog_overlay_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.fog_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "da912d39d1f41c509538106f7c590322483d45c32f58e7dc527f3e4193ab1cd8",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "luoxia_plank_light_overlay_tile",
+      "role": "light_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.light_overlay_tile.png",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/textures/luoxia_plank.light_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "c6d66abb84f096620f193d353efa2a46f5038c0937fae5a59e5c7409b5952475",
+      "usage": "presentation_texture_only"
+    }
+  ],
+  "layers": [
+    {
+      "layer_id": "layer_terrain_base",
+      "role": "terrain_base",
+      "order": 0,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.terrain_base.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.terrain_base.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "4142b047ca63e428460cedbdb1957106c037658c2562e13cc4ef0c1e9506538f",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_terrain_detail",
+      "role": "terrain_detail",
+      "order": 5,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.terrain_detail.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.terrain_detail.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "13e770d114dfdd973a96f304946b51ea13c60e4492874fe978bc2f3f8c4c0695",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_shadow",
+      "role": "road_shadow",
+      "order": 10,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_shadow.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_shadow.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "7915f17762dcff998409964e1811802d0cbf1d85359151cad1ffbc41bdcf511e",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_edge",
+      "role": "road_edge",
+      "order": 12,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_edge.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_edge.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "075a8f558ebb3221593641afdc768ec439e12f8b52f64b245111e7647f5c70c8",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_surface",
+      "role": "road_surface",
+      "order": 14,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_surface.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.road_surface.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "e1d3e189d2873c21dcf93597a4f1a5cc80e30b24c081e6332dddfbe068cdd7b1",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_build_slots",
+      "role": "build_slots",
+      "order": 20,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.build_slots.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.build_slots.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "0733a9c2b751191a95db6c6e6451e9f9afd837045606e5754319484728ebe2ad",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_objectives",
+      "role": "objectives",
+      "order": 30,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.objectives.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.objectives.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "5b0322bfdc1dd9755e169488f90c253dfe40ca20f62ba39164ad5f6163856b56",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_spawn",
+      "role": "spawn",
+      "order": 40,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.spawn.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.spawn.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "b17265460590fca77c79ab7f71bf67c4bc9245227eb6c8fa7be00924d721cd5c",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_semantic_props",
+      "role": "semantic_props",
+      "order": 45,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.semantic_props.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.semantic_props.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "2061bcce77e89b95f4439df185771a606942217e107899ca3adb78e99ecdaf68",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_non_blocking_decorations",
+      "role": "non_blocking_decorations",
+      "order": 50,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.non_blocking_decorations.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.non_blocking_decorations.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c4e335de4bbacdb9ed751ed82588389ba4f440cb2e5435037bdb5860f178d094",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_lighting",
+      "role": "lighting",
+      "order": 60,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.lighting.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.lighting.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1f3847afd03188e8b3a3c0fe0de78afbfa5d664f0a140aea3467c699dc3e2825",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_fog_weather",
+      "role": "fog_weather",
+      "order": 70,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.fog_weather.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.fog_weather.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1d2c1d9d380cd601b4391981926229750611c5473d4f5283345ff574daf0cc36",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_color_grade",
+      "role": "color_grade",
+      "order": 90,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.color_grade.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/layers/luoxia_plank.color_grade.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "7884e16361cdf203360980afb96d6a06dba8b4d7e2884808798bc6d6cb8e6f2a",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_composited",
+      "role": "composited",
+      "order": 100,
+      "player_default": true,
+      "source": "derived_composite",
+      "url": "/assets/generated_worlds/xianxia_cloud_frontier/maps/luoxia_plank/composited/luoxia_plank.layered_map.svg",
+      "local_path": "content/generated_world_media/xianxia_cloud_frontier/maps/luoxia_plank/composited/luoxia_plank.layered_map.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8768753678b8f3b23c67ccf1654265dd0d37c6563e4ae38d42a99ff2298f98fd",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    }
+  ],
+  "alignment_report": {
+    "gate_status": "passed",
+    "runtime_truth_preserved": true,
+    "route_count": 1,
+    "build_slot_count": 8,
+    "objective_count": 2,
+    "spawn_count": 1,
+    "checks": [
+      {
+        "check_id": "projection_matches_frontend_design_space",
+        "status": "passed",
+        "summary": "Layer coordinates use the same base projection and offsets as the frontend battle canvas."
+      },
+      {
+        "check_id": "strong_semantics_drawn_from_runtime_package",
+        "status": "passed",
+        "summary": "Routes, build slots, objectives, and spawns are copied from MapRuntimePackage rather than inferred from pixels."
+      },
+      {
+        "check_id": "composite_keeps_runtime_overlay_available",
+        "status": "passed",
+        "summary": "The composite is presentation only; frontend interaction and collision still use structured runtime data."
+      },
+      {
+        "check_id": "reviewed_backdrop_does_not_override_runtime_semantics",
+        "status": "warning",
+        "summary": "No reviewed painted backdrop was supplied; SVG procedural layers provide the terrain presentation."
+      }
+    ]
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "player_default_safe": true,
+    "external_generation_call_count": 0,
+    "gates": [
+      {
+        "gate_id": "local_svg_artifacts_written",
+        "status": "passed",
+        "summary": "All layers and the composite are local SVG artifacts with sha256 checksums."
+      },
+      {
+        "gate_id": "no_external_runtime_dependency",
+        "status": "passed",
+        "summary": "The package does not require external media services at runtime."
+      },
+      {
+        "gate_id": "reviewed_painted_backdrop_localized",
+        "status": "warning",
+        "summary": "No painted backdrop source was supplied for this package."
+      },
+      {
+        "gate_id": "reviewed_components_bound_to_runtime_anchors",
+        "status": "warning",
+        "summary": "No reviewed component media was supplied; structured procedural components remain active."
+      }
+    ]
+  }
+}

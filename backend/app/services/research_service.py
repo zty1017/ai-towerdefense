@@ -1,12 +1,12 @@
-"""Research job service: bridges the player-facing research API and the
-AssetGraph Kernel v0.1 deterministic workflow runner.
+"""Bridge the player-facing research API and the AssetGraph runtime pipeline.
 
 This module is intentionally MVP-shaped:
-- ``create_proposal`` synthesizes a world-in-language proposal deterministically
-  from the player's ``intent_text`` and ``node_id``. No real LLM is called.
-- ``confirm_proposal`` runs two AssetGraph workflows synchronously and stores
-  the resulting artifact paths on a research job row. The job ends in
-  ``completed`` (or ``failed``) immediately.
+- ``create_proposal`` builds a stable world-in-language proposal shell and may
+  attach a validated live-model candidate; deterministic content remains the
+  safe fallback.
+- ``confirm_proposal`` idempotently enqueues one durable job per proposal.
+- the research worker uses the dedicated queue service, runs the AssetGraph
+  workflows and media gates, and stores the resulting artifact paths.
 - ``get_job`` reads the row back.
 
 All workflow output is written under ``/tmp/ai_compiled_td_backend_runs`` so
@@ -16,22 +16,40 @@ technical vocabulary listed in the worldbook and the task spec.
 from __future__ import annotations
 
 import json
+import hashlib
 import secrets
 import sys
 from pathlib import Path
 from typing import Any
 
 from ..db import db_cursor, now_iso
-from . import ai_core_artifact_service, battle_content_service, map_runtime_service
+from . import (
+    ai_core_artifact_service,
+    battle_content_service,
+    live_asset_compile_service,
+    map_runtime_service,
+    research_job_queue_service,
+    research_runtime_media_service,
+    world_catalog_service,
+)
 
 # Repo root (backend/app/services -> backend/app -> backend -> repo root).
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _ASSET_GRAPH_DIR = _REPO_ROOT / "tools" / "asset_graph"
+_CONTENT_PIPELINE_DIR = _REPO_ROOT / "tools" / "content_pipeline"
 _REGISTRY_PATH = _REPO_ROOT / "shared" / "asset_graph" / "node_registry.v0.1.json"
 _WORKFLOW_DIR = _REPO_ROOT / "examples" / "workflows"
 
 _MOCK_COMPILE_WORKFLOW = _WORKFLOW_DIR / "mvp_mock_asset_compile.workflow.json"
+_LIVE_CANDIDATE_WORKFLOW = (
+    _WORKFLOW_DIR / "runtime_safe_candidate_validation.workflow.json"
+)
 _TRAP_DELIVERY_WORKFLOW = _WORKFLOW_DIR / "mvp_temporary_trap_delivery.workflow.json"
+
+# Filename for the deterministic simulation report of the real provider-backed
+# live candidate. Distinct from any mock workflow simulation trace so the
+# promotion gate cannot mistake fixture evidence for live-candidate evidence.
+_LIVE_CANDIDATE_SIMULATION_REPORT_NAME = "live_candidate_simulation_report.v0.1.json"
 
 # All run artifacts land here, never inside the repo.
 _RUNS_ROOT = Path("/tmp/ai_compiled_td_backend_runs")
@@ -92,6 +110,20 @@ def _import_run_workflow():
     return rw
 
 
+def _import_simulate_asset_candidate():
+    """Import tools/content_pipeline/simulate_asset_candidate.py on demand.
+
+    Used to run the deterministic headless simulation against the real
+    provider-backed live candidate before the promotion report is written.
+    """
+    content_pipeline_str = str(_CONTENT_PIPELINE_DIR)
+    if content_pipeline_str not in sys.path:
+        sys.path.insert(0, content_pipeline_str)
+    import simulate_asset_candidate  # noqa: WPS433 (deliberate lazy import)
+
+    return simulate_asset_candidate
+
+
 def _sanitize_player_text(text: str) -> str:
     """Defensive scrub: strip any forbidden technical term from player text.
 
@@ -127,6 +159,10 @@ def _synthesize_proposal_fields(intent_text: str, node_id: str) -> dict[str, str
         display_name = "聚光刺击方案"
         summary = "聚焦灯光形成瞬时刺击，对单体影潮造成伤害。"
         risk_note = "射程有限，对密集影潮收益较低。"
+    elif any(kw in intent for kw in ("支援", "技能", "脉冲", "support")):
+        display_name = "守灯支援方案"
+        summary = "引燃储备灯芯形成短时脉冲，为一片战场提供应急支援。"
+        risk_note = "储备只能支撑一次释放，需要把握时机。"
     else:
         display_name = "临时光幕方案"
         summary = "以灯光构筑的临时防线，为节点争取喘息。"
@@ -161,6 +197,7 @@ def _compiler_metadata_for_proposal(
     intent_text: str,
     display_name: str,
     proposal_summary: str,
+    worldbook_id: str,
 ) -> dict[str, Any]:
     candidate_kind = _candidate_kind_from_intent(intent_text)
     battle_config_ref = battle_content_service.battle_config_ref(node_id)
@@ -191,7 +228,7 @@ def _compiler_metadata_for_proposal(
             "runtime_surfaces": ["battle_toolbar", "battle_delivery"],
         },
         "context_package": {
-            "worldbook_id": "long_night_lanterns",
+            "worldbook_id": worldbook_id,
             "node_id": node_id,
             "battle_config_ref": battle_config_ref,
             "map_runtime_package_ref": map_runtime_package_ref,
@@ -225,8 +262,8 @@ def _compiler_metadata_for_job(
         "local_gates": [
             "intent_classification",
             "proposal_synthesis",
-            "assetgraph_mock_compile_workflow",
-            "assetgraph_delivery_workflow",
+            "assetgraph_candidate_validation_workflow",
+            "assetgraph_runtime_packaging_workflow",
             "runtime_package_artifact",
             "delivery_payload_artifact",
         ],
@@ -235,6 +272,11 @@ def _compiler_metadata_for_job(
     metadata["runtime_refs"] = {
         "runtime_package_path": result.get("runtime_package_path"),
         "delivery_payload_path": result.get("delivery_payload_path"),
+        "promotion_report_path": result.get("promotion_report_path"),
+        "reviewed_media_fallback_allowed": bool(result.get("promotion_report_path"))
+        and not result.get("promotion_blocked"),
+        "compiled_media_status": result.get("media_status") or "not_applicable",
+        "compiled_media_evidence_path": result.get("media_evidence_path"),
         "trace_count": len(result.get("trace_paths") or []),
     }
     metadata["core_artifacts"] = ai_core_artifact_service.research_job_core_artifacts(
@@ -292,8 +334,192 @@ def _find_artifact_path(
     return None
 
 
+def _compiled_runtime_identity(
+    intent_text: str, candidate_kind: str, candidate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    intent = intent_text or ""
+    if candidate_kind == "tower_blueprint":
+        slowing = any(keyword in intent for keyword in ("拖慢", "减速", "迟滞", "slow"))
+        identity = {
+            "name": "迟光灯塔" if slowing else "聚光刺塔",
+            "tags": ["防御塔", "迟滞" if slowing else "打击", "试作蓝图"],
+            "lifecycle_state": "session_blueprint",
+            "uses_per_battle": 3,
+            "visual_recipes": [
+                {
+                    "trigger": "on_attack",
+                    "kind": "chain_arc",
+                    "palette_token": "light.control.warm",
+                    "color": "#f4c45f",
+                    "secondary_color": "#9edcff",
+                    "intensity": "medium",
+                    "duration_ms": 360,
+                    "max_links_from_effect": "damage.max_links",
+                    "arc_style": "jagged",
+                    "blend_mode": "additive",
+                }
+            ],
+        }
+    elif candidate_kind == "support_item":
+        identity = {
+            "name": "守灯脉冲",
+            "tags": ["支援", "范围", "一次性"],
+            "lifecycle_state": "ephemeral",
+            "uses_per_battle": 1,
+            "visual_recipes": [
+                {
+                    "trigger": "on_activate",
+                    "kind": "ring_pulse",
+                    "palette_token": "light.control.warm",
+                    "color": "#f4c45f",
+                    "secondary_color": "#ffffff",
+                    "intensity": "high",
+                    "radius": 128,
+                    "duration_ms": 720,
+                    "blend_mode": "additive",
+                },
+                {
+                    "trigger": "on_active",
+                    "kind": "aura_field",
+                    "palette_token": "light.control.warm",
+                    "color": "#f4c45f",
+                    "secondary_color": "#9edcff",
+                    "intensity": "medium",
+                    "radius": 120,
+                    "duration_ms": 1200,
+                    "particle_density": "low",
+                    "blend_mode": "additive",
+                },
+            ],
+        }
+    else:
+        identity = {
+            "name": "折光绊索",
+            "tags": ["陷阱", "减速", "试作品"],
+            "lifecycle_state": "ephemeral",
+            "uses_per_battle": 2,
+            "visual_recipes": [
+                {
+                    "trigger": "on_activate",
+                    "kind": "ring_pulse",
+                    "palette_token": "light.control.cold",
+                    "color": "#9edcff",
+                    "secondary_color": "#ffffff",
+                    "intensity": "medium",
+                    "radius": 96,
+                    "duration_ms": 900,
+                    "blend_mode": "additive",
+                },
+                {
+                    "trigger": "on_active",
+                    "kind": "aura_field",
+                    "palette_token": "light.control.cold",
+                    "color": "#9edcff",
+                    "secondary_color": "#cfeeff",
+                    "intensity": "medium",
+                    "radius": 96,
+                    "duration_ms": 1200,
+                    "particle_density": "low",
+                    "blend_mode": "additive",
+                },
+            ],
+        }
+    if candidate:
+        presentation = as_dict(candidate.get("presentation"))
+        gameplay = as_dict(candidate.get("gameplay"))
+        stats = as_dict(gameplay.get("base_stats"))
+        identity["name"] = _sanitize_player_text(str(presentation.get("name") or identity["name"]))[:48]
+        tags = presentation.get("visual_tags")
+        if isinstance(tags, list) and tags:
+            identity["tags"] = [_sanitize_player_text(str(item))[:24] for item in tags[:4]]
+        uses = stats.get("use_count", stats.get("charges"))
+        if isinstance(uses, (int, float)):
+            identity["uses_per_battle"] = max(1, min(5, int(uses)))
+        identity["lifecycle_state"] = str(candidate.get("lifecycle") or identity["lifecycle_state"])
+    return identity
+
+
+def _personalize_compiled_artifacts(
+    *,
+    runtime_package_path: Path,
+    delivery_payload_path: Path,
+    session_id: str,
+    proposal_id: str,
+    node_id: str,
+    intent_text: str,
+    proposal_summary: str,
+    candidate_kind: str,
+    compiled_candidate: dict[str, Any] | None = None,
+    candidate_path: Path | None = None,
+    compiled_media_refs: dict[str, Any] | None = None,
+) -> None:
+    """Bind deterministic workflow output to this proposal's compiled object.
+
+    The workflow remains the producer of the artifact envelope. This final
+    deterministic lowering step only selects allowlisted runtime fields; the
+    activation service still owns schema, behavior, media, and promotion gates.
+    """
+    identity = _compiled_runtime_identity(intent_text, candidate_kind, compiled_candidate)
+    suffix = hashlib.sha256(proposal_id.encode("utf-8")).hexdigest()[:10]
+    object_id = f"compiled_{candidate_kind}_{suffix}"
+
+    package = _load_json(runtime_package_path)
+    assets = package.get("assets") if isinstance(package.get("assets"), list) else []
+    if not assets or not isinstance(assets[0], dict):
+        raise ValueError("compiled runtime package has no primary asset")
+    asset = assets[0]
+    package["package_id"] = f"package_{suffix}"
+    package["session_id"] = session_id
+    package["node_id"] = node_id
+    package["source_refs"]["locked_manifest_id"] = f"manifest_{suffix}"
+    asset["stable_internal_id"] = object_id
+    asset["asset_kind"] = candidate_kind
+    asset["lifecycle_state"] = identity["lifecycle_state"]
+    asset["display"] = {
+        "name": identity["name"],
+        "summary": _sanitize_player_text(proposal_summary),
+        "tags": identity["tags"],
+    }
+    asset["visual_recipes"] = identity["visual_recipes"]
+    if compiled_media_refs is not None:
+        asset["media_refs"] = compiled_media_refs
+    if candidate_path is not None:
+        packaged_candidate_path = runtime_package_path.parent / candidate_path.name
+        if packaged_candidate_path.resolve() != candidate_path.resolve():
+            packaged_candidate_path.write_bytes(candidate_path.read_bytes())
+        asset["gameplay_ref"] = {
+            "kind": "compiled_asset_candidate",
+            "path": str(packaged_candidate_path),
+            "sha256": hashlib.sha256(packaged_candidate_path.read_bytes()).hexdigest(),
+        }
+    asset["battle_availability"] = {
+        "surfaces": ["battle_hotbar"],
+        "uses_per_battle": identity["uses_per_battle"],
+        "requires_delivery": True,
+        "delivery_state": "research_in_progress",
+    }
+    runtime_package_path.write_text(
+        json.dumps(package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+    delivery = _load_json(delivery_payload_path)
+    delivery["session_id"] = session_id
+    delivery["node_id"] = node_id
+    delivery["sample"] = {
+        "stable_internal_id": object_id,
+        "display_name": identity["name"],
+        "uses_per_battle": identity["uses_per_battle"],
+        "requires_delivery": True,
+        "delivery_state": "research_in_progress",
+        "delivery_delay_ms": 30000,
+    }
+    delivery_payload_path.write_text(
+        json.dumps(delivery, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+
 def _run_two_workflows(
-    session_id: str, job_id: str
+    session_id: str, job_id: str, proposal: dict[str, Any]
 ) -> dict[str, Any]:
     """Run both MVP workflows under the job's run directory.
 
@@ -309,16 +535,55 @@ def _run_two_workflows(
     runtime_package_path: str | None = None
     delivery_payload_path: str | None = None
     error: str | None = None
+    candidate_policy_blocked = False
+    compiled_candidate = as_dict(proposal.get("compiled_candidate"))
+    candidate_path = (
+        live_asset_compile_service.write_candidate(compiled_candidate, job_dir)
+        if compiled_candidate
+        else None
+    )
 
-    # Workflow 1: mock asset compile (proof the AI compile pipeline runs).
-    wf_mock = _load_workflow(_MOCK_COMPILE_WORKFLOW)
-    mock_out = job_dir / "mock_compile"
-    trace_mock = rw.run_workflow(wf_mock, registry, mock_out)
-    mock_trace_path = mock_out / wf_mock["workflow_id"] / "execution_trace.json"
-    if mock_trace_path.exists():
-        trace_paths.append(str(mock_trace_path))
-    if trace_mock.get("status") != "passed":
-        error = f"mock_compile workflow did not pass: {trace_mock.get('error', '')}"
+    # Workflow 1 validates the actual provider-backed candidate. The stable
+    # deterministic graph remains the fallback when no live candidate exists.
+    if candidate_path is not None:
+        wf_candidate = _load_workflow(_LIVE_CANDIDATE_WORKFLOW)
+        for node in wf_candidate.get("nodes", []):
+            if node.get("id") == "load_candidate":
+                node.setdefault("params", {})["path"] = str(candidate_path)
+        candidate_out = job_dir / "candidate_validation"
+    else:
+        wf_candidate = _load_workflow(_MOCK_COMPILE_WORKFLOW)
+        candidate_out = job_dir / "deterministic_fallback"
+    trace_candidate = rw.run_workflow(wf_candidate, registry, candidate_out)
+    candidate_trace_path = (
+        candidate_out / wf_candidate["workflow_id"] / "execution_trace.json"
+    )
+    if candidate_trace_path.exists():
+        trace_paths.append(str(candidate_trace_path))
+    if trace_candidate.get("status") != "passed":
+        node_runs = trace_candidate.get("node_runs")
+        if not isinstance(node_runs, list):
+            node_runs = []
+        failed_runs = [
+            run
+            for run in node_runs
+            if isinstance(run, dict) and run.get("status") == "failed"
+        ]
+        candidate_policy_blocked = (
+            len(failed_runs) == 1
+            and failed_runs[0].get("node_id") == "promotion"
+            and all(
+                not isinstance(run, dict)
+                or run.get("node_id") == "promotion"
+                or run.get("status") == "passed"
+                for run in node_runs
+            )
+        )
+    if trace_candidate.get("status") != "passed" and not candidate_policy_blocked:
+        error = (
+            "candidate validation workflow did not pass: "
+            f"{trace_candidate.get('error', '')}"
+        )
         return {
             "trace_paths": trace_paths,
             "runtime_package_path": None,
@@ -354,12 +619,105 @@ def _run_two_workflows(
     if dp_path is not None and dp_path.exists():
         delivery_payload_path = str(dp_path)
 
+    if runtime_package_path and delivery_payload_path:
+        metadata = as_dict(proposal.get("compiler_metadata"))
+        compiled_object = as_dict(metadata.get("compiled_object"))
+        try:
+            generation = as_dict(metadata.get("generation"))
+            provider_backed = (
+                generation.get("provider_call_performed") is True
+                and candidate_path is not None
+            )
+            media_result: dict[str, Any] = {
+                "status": "not_applicable",
+                "media_refs": None,
+                "evidence_path": None,
+                "published_ref": None,
+            }
+            if provider_backed:
+                media_result = research_runtime_media_service.compile_runtime_media(
+                    candidate=compiled_candidate,
+                    asset_kind=str(
+                        compiled_object.get("candidate_kind")
+                        or "temporary_trap_sample"
+                    ),
+                    session_id=session_id,
+                    job_id=job_id,
+                    job_dir=job_dir,
+                )
+            _personalize_compiled_artifacts(
+                runtime_package_path=Path(runtime_package_path),
+                delivery_payload_path=Path(delivery_payload_path),
+                session_id=session_id,
+                proposal_id=str(proposal.get("proposal_id") or "proposal"),
+                node_id=str(proposal.get("node_id") or "gray_lantern_station"),
+                intent_text=str(proposal.get("intent_text") or ""),
+                proposal_summary=str(proposal.get("summary") or "临时试作品。"),
+                candidate_kind=str(
+                    compiled_object.get("candidate_kind") or "temporary_trap_sample"
+                ),
+                compiled_candidate=compiled_candidate or None,
+                candidate_path=candidate_path,
+                compiled_media_refs=(
+                    as_dict(media_result.get("media_refs"))
+                    if provider_backed
+                    else None
+                ),
+            )
+            promotion_report_path = None
+            promotion_blocked = False
+            if provider_backed:
+                simulator = _import_simulate_asset_candidate()
+                simulation_report = simulator.simulate(
+                    compiled_candidate, simulator.DEFAULT_DURATION_SECONDS
+                )
+                simulation_report_path = job_dir / _LIVE_CANDIDATE_SIMULATION_REPORT_NAME
+                simulation_report_path.write_text(
+                    json.dumps(simulation_report, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                promotion_result = live_asset_compile_service.write_promotion_report(
+                    package_path=Path(runtime_package_path),
+                    candidate_path=candidate_path,
+                    job_dir=job_dir,
+                    created_at=now_iso(),
+                    profile=str(generation.get("profile") or "unknown_profile"),
+                    model=str(generation.get("model") or "unknown_model"),
+                    simulation_report=simulation_report,
+                    simulation_report_path=simulation_report_path,
+                    media_result=media_result,
+                )
+                promotion_report_path = promotion_result["path"]
+                promotion_blocked = (
+                    candidate_policy_blocked
+                    or not promotion_result["promotion_allowed"]
+                )
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            return {
+                "trace_paths": trace_paths,
+                "runtime_package_path": None,
+                "delivery_payload_path": None,
+                "ok": False,
+                "error": f"runtime lowering failed: {exc}",
+            }
+    else:
+        promotion_report_path = None
+        promotion_blocked = False
+
+    error: str | None = None
+    if promotion_blocked:
+        error = "live_candidate_simulation_blocked"
+
     return {
         "trace_paths": trace_paths,
         "runtime_package_path": runtime_package_path,
         "delivery_payload_path": delivery_payload_path,
+        "promotion_report_path": str(promotion_report_path) if promotion_report_path else None,
+        "promotion_blocked": promotion_blocked,
+        "media_status": media_result.get("status") if runtime_package_path and delivery_payload_path else "not_applicable",
+        "media_evidence_path": media_result.get("evidence_path") if runtime_package_path and delivery_payload_path else None,
         "ok": True,
-        "error": None,
+        "error": error,
     }
 
 
@@ -370,8 +728,45 @@ def _run_two_workflows(
 
 def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str, Any]:
     """Create a research proposal row and return its public representation."""
-    fields = _synthesize_proposal_fields(intent_text, node_id)
     proposal_id = secrets.token_urlsafe(16)
+    fields = _synthesize_proposal_fields(intent_text, node_id)
+    world_bundle = world_catalog_service.session_bundle(session_id)
+    worldbook = as_dict(world_bundle.get("worldbook"))
+    worldbook_id = str(worldbook.get("worldbook_id") or "long_night_lanterns")
+    if worldbook_id != "long_night_lanterns":
+        fields = {
+            "display_name": "现场试作方案",
+            "summary": _sanitize_player_text(f"围绕“{intent_text[:72]}”形成的本局临时装置。"),
+            "risk_note": "试作品的完整代价需要在实战中继续确认。",
+            "player_state_message": "现场试作方案已就绪，等待确认。",
+        }
+    world_context = {
+        "display_name": worldbook.get("display_name"),
+        "summary": worldbook.get("summary"),
+        "tone_and_taboos": worldbook.get("tone_and_taboos"),
+        "resource_mapping": worldbook.get("resource_mapping"),
+        "enemy_mapping": worldbook.get("enemy_mapping"),
+        "asset_naming_rules": worldbook.get("asset_naming_rules"),
+        "visual_rules": worldbook.get("visual_rules"),
+    }
+    candidate_kind = _candidate_kind_from_intent(intent_text)
+    live_result = live_asset_compile_service.compile_candidate(
+        proposal_id=proposal_id,
+        intent_text=intent_text,
+        worldbook_id=worldbook_id,
+        candidate_kind=candidate_kind,
+        display_name=fields["display_name"],
+        summary=fields["summary"],
+        world_context=world_context,
+    )
+    compiled_candidate = as_dict(live_result.get("candidate"))
+    if compiled_candidate:
+        fields.update(
+            {
+                key: _sanitize_player_text(value)
+                for key, value in live_asset_compile_service.player_fields(compiled_candidate).items()
+            }
+        )
     compiler_metadata = _compiler_metadata_for_proposal(
         session_id=session_id,
         proposal_id=proposal_id,
@@ -379,13 +774,23 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
         intent_text=intent_text,
         display_name=fields["display_name"],
         proposal_summary=fields["summary"],
+        worldbook_id=worldbook_id,
     )
+    provenance = as_dict(live_result.get("provenance"))
+    compiler_metadata["generation"] = provenance or {
+        "mode": "deterministic_fallback",
+        "provider_call_performed": False,
+        "fallback_reason": str(live_result.get("reason") or "not_requested"),
+        "raw_prompt_stored": False,
+        "raw_response_stored": False,
+    }
     ts = now_iso()
     payload = json.dumps(
         {
             "intent_text": intent_text,
             "node_id": node_id,
             "compiler_metadata": compiler_metadata,
+            "compiled_candidate": compiled_candidate or None,
         },
         ensure_ascii=False,
     )
@@ -421,12 +826,13 @@ def create_proposal(session_id: str, intent_text: str, node_id: str) -> dict[str
     data = dict(row)
     payload_obj = _proposal_payload(row)
     data["compiler_metadata"] = as_dict(payload_obj.get("compiler_metadata"))
+    data["compiled_candidate"] = as_dict(payload_obj.get("compiled_candidate")) or None
     data.pop("payload", None)
     return data
 
 
 def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
-    """Confirm a proposal: create a job and run both workflows synchronously."""
+    """Idempotently enqueue one durable compilation job for a proposal."""
     ts = now_iso()
     job_id = secrets.token_urlsafe(16)
     with db_cursor() as cur:
@@ -437,30 +843,20 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         )
         if cur.fetchone() is None:
             return {"error": "session_not_found"}
-        # Verify proposal exists, belongs to this session, and is not confirmed.
+        # Verify the proposal exists and belongs to this session.
         cur.execute(
-            "SELECT proposal_id, status, payload FROM research_proposals "
+            "SELECT proposal_id, node_id, intent_text, display_name, summary, "
+            "status, payload FROM research_proposals "
             "WHERE proposal_id = ? AND session_id = ?",
             (proposal_id, session_id),
         )
         prow = cur.fetchone()
         if prow is None:
             return {"error": "proposal_not_found"}
-        proposal_payload = _proposal_payload(prow)
-        proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
-        if not proposal_metadata:
-            proposal_metadata = _compiler_metadata_for_proposal(
-                session_id=session_id,
-                proposal_id=proposal_id,
-                node_id=str(proposal_payload.get("node_id") or "gray_lantern_station"),
-                intent_text=str(proposal_payload.get("intent_text") or ""),
-                display_name="临时光幕方案",
-                proposal_summary="以灯光构筑的临时防线，为节点争取喘息。",
-            )
-        # Insert the job row in "running" state before executing workflows so
-        # that even a crash leaves an auditable record.
+        # The unique proposal index makes repeated or concurrent confirms return
+        # the original job instead of scheduling duplicate work.
         cur.execute(
-            "INSERT INTO research_jobs "
+            "INSERT OR IGNORE INTO research_jobs "
             "(job_id, session_id, proposal_id, status, player_state_message, "
             " runtime_package_path, delivery_payload_path, trace_paths, payload, "
             " created_at, updated_at, completed_at) "
@@ -469,27 +865,152 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
                 job_id,
                 session_id,
                 proposal_id,
-                "running",
-                "现场试作正在封装，请稍候。",
+                "queued",
+                "现场试作已登记，工坊很快开始准备。",
                 "[]",
                 "{}",
                 ts,
                 ts,
             ),
         )
+        inserted = cur.rowcount == 1
         cur.execute(
             "UPDATE research_proposals SET status = ?, updated_at = ? "
-            "WHERE proposal_id = ?",
-            ("confirmed", now_iso(), proposal_id),
+            "WHERE proposal_id = ? AND session_id = ?",
+            ("confirmed", now_iso(), proposal_id, session_id),
         )
+        cur.execute(
+            "SELECT job_id FROM research_jobs WHERE proposal_id = ? AND session_id = ?",
+            (proposal_id, session_id),
+        )
+        job_row = cur.fetchone()
+    assert job_row is not None
+    job_id = str(job_row["job_id"])
 
-    # Run the workflows outside the cursor block (no DB lock held during IO).
-    result = _run_two_workflows(session_id, job_id)
+    # Explicit compatibility mode keeps older focused tests deterministic. It
+    # is never selected implicitly in production.
+    if research_worker_mode() == "inline":
+        claimed = claim_job(job_id)
+        if claimed is not None:
+            run_claimed_job(claimed)
+    elif inserted:
+        # Return the enqueue acknowledgement itself. This guarantees the first
+        # confirm cannot race an unusually fast worker and appear synchronous.
+        return {
+            "job_id": job_id,
+            "session_id": session_id,
+            "proposal_id": proposal_id,
+            "status": "queued",
+            "player_state_message": "现场试作已登记，工坊很快开始准备。",
+            "runtime_package_path": None,
+            "delivery_payload_path": None,
+            "trace_paths": [],
+            "compiler_metadata": {},
+            "created_at": ts,
+            "updated_at": ts,
+            "completed_at": None,
+        }
+    job = get_job(session_id, job_id)
+    assert job is not None
+    return job
+
+
+def research_worker_mode() -> str:
+    """Compatibility facade for the durable research queue worker mode."""
+    return research_job_queue_service.worker_mode()
+
+
+def recover_running_jobs() -> int:
+    """Compatibility facade for startup recovery."""
+    return research_job_queue_service.recover_running_jobs()
+
+
+def claim_next_job() -> dict[str, Any] | None:
+    """Compatibility facade for claiming the next queued job."""
+    return research_job_queue_service.claim_next_job()
+
+
+def claim_job(job_id: str) -> dict[str, Any] | None:
+    """Compatibility facade for explicit inline job execution."""
+    return research_job_queue_service.claim_job(job_id)
+
+
+def requeue_interrupted_job(job_id: str) -> None:
+    """Compatibility facade for best-effort worker recovery."""
+    research_job_queue_service.requeue_interrupted_job(job_id)
+
+
+def _claimed_proposal(claimed: dict[str, Any]) -> dict[str, Any] | None:
+    with db_cursor() as cur:
+        cur.execute(
+            "SELECT proposal_id, node_id, intent_text, display_name, summary, payload "
+            "FROM research_proposals WHERE proposal_id = ? AND session_id = ?",
+            (claimed["proposal_id"], claimed["session_id"]),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    proposal_payload = _proposal_payload(row)
+    proposal_metadata = as_dict(proposal_payload.get("compiler_metadata"))
+    if not proposal_metadata:
+        proposal_metadata = _compiler_metadata_for_proposal(
+            session_id=str(claimed["session_id"]),
+            proposal_id=str(row["proposal_id"]),
+            node_id=str(row["node_id"] or "gray_lantern_station"),
+            intent_text=str(row["intent_text"] or ""),
+            display_name=str(row["display_name"] or "临时光幕方案"),
+            proposal_summary=str(row["summary"] or "以灯光构筑的临时防线。"),
+            worldbook_id="long_night_lanterns",
+        )
+    return {
+        "proposal_id": row["proposal_id"],
+        "node_id": row["node_id"],
+        "intent_text": row["intent_text"],
+        "display_name": row["display_name"],
+        "summary": row["summary"],
+        "compiler_metadata": proposal_metadata,
+        "compiled_candidate": as_dict(proposal_payload.get("compiled_candidate")),
+    }
+
+
+def run_claimed_job(claimed: dict[str, Any]) -> dict[str, Any] | None:
+    """Execute and finalize a job previously moved to ``running`` by claim."""
+    session_id = str(claimed["session_id"])
+    job_id = str(claimed["job_id"])
+    proposal_id = str(claimed["proposal_id"])
+    proposal = _claimed_proposal(claimed)
+    if proposal is None:
+        result = {
+            "ok": False,
+            "error": "proposal missing while processing claimed job",
+            "trace_paths": [],
+            "runtime_package_path": None,
+            "delivery_payload_path": None,
+        }
+        proposal_metadata: dict[str, Any] = {}
+    else:
+        proposal_metadata = as_dict(proposal.get("compiler_metadata"))
+        try:
+            result = _run_two_workflows(session_id, job_id, proposal)
+        except Exception as exc:  # keep the durable worker alive after one bad job
+            result = {
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+                "trace_paths": [],
+                "runtime_package_path": None,
+                "delivery_payload_path": None,
+            }
+
     completed_at = now_iso()
-    if result["ok"] and result["runtime_package_path"] and result["delivery_payload_path"]:
+    if (
+        result["ok"]
+        and result["runtime_package_path"]
+        and result["delivery_payload_path"]
+        and not result.get("promotion_blocked")
+    ):
         status = "completed"
         player_msg = _sanitize_player_text(
-            f"试作封装完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"
+            f"试作准备完成，临时防线已送达{_node_display(_proposal_node_id(session_id, proposal_id))}。"
         )
         compiler_metadata = _compiler_metadata_for_job(
             proposal_metadata=proposal_metadata,
@@ -525,7 +1046,8 @@ def confirm_proposal(session_id: str, proposal_id: str) -> dict[str, Any]:
         cur.execute(
             "UPDATE research_jobs SET status = ?, player_state_message = ?, "
             "runtime_package_path = ?, delivery_payload_path = ?, trace_paths = ?, "
-            "payload = ?, updated_at = ?, completed_at = ? WHERE job_id = ?",
+            "payload = ?, updated_at = ?, completed_at = ? "
+            "WHERE job_id = ? AND status = 'running'",
             (
                 status,
                 player_msg,

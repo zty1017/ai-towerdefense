@@ -1,0 +1,219 @@
+{
+  "schema_version": "map_style_pack.v0.1",
+  "style_pack_id": "style_stellar_anchor_ring_crossing_v0_1",
+  "worldbook_id": "stellar_anchor",
+  "node_id": "ring_crossing",
+  "created_at": "2026-07-15T08:10:16Z",
+  "source_refs": {
+    "map_runtime_package_path": "generated_by_map_compilation_input",
+    "worldbook_path": "content/generated_worlds/stellar_anchor/worldbook.json",
+    "logic_authority": "map_runtime_package",
+    "style_authority": "reviewed_ai_proposal"
+  },
+  "node_theme_tags": [
+    "orbital_elevator",
+    "modular_architecture",
+    "energy_conduits",
+    "industrial_corridor",
+    "alien_terrain",
+    "hard_surface",
+    "metallic",
+    "blue_accent",
+    "cool_lighting"
+  ],
+  "palette": {
+    "terrain_base": "#6B6B6B",
+    "terrain_detail": "#8B7D6B",
+    "road_base": "#4A4A4A",
+    "road_edge": "#7A7A6A",
+    "build_slot": "#B0B0B0",
+    "objective": "#D4A574",
+    "spawn": "#A0522D",
+    "resource": "#3A6EA5",
+    "hazard": "#E85D3A",
+    "fog": "#C0C8D0",
+    "accent": "#4FC3F7"
+  },
+  "visual_generation_briefs": {
+    "rendering_style": "Premium production game-environment art with semi-realistic material response, natural edge highlights, restrained detail density, unified scale, and a pseudo-3D oblique camera. Hard surface metals and composites rendered with subtle roughness and anisotropy, soft shadows from directionally lit environment, and a clean, non-repetitive tiling structure.",
+    "terrain_base": "Fine-grained alien regolith with volcanic ash texture, subtle color variation from pale grey to dusty brown, slight micro-topography from small craters and ridges, no vegetation, structures, or markings.",
+    "road_surface": "Precast concrete slabs with metal joint strips, slightly weathered surface, subtle directional grooves for drainage, occasional small patch repairs, neutral grey tone with light mineral speckling.",
+    "build_slot_platform": "Hexagonal metal platform, 0.5m tall, with four bolt holes and a central power socket, brushed steel finish with chamfered edges, no additional equipment or lighting.",
+    "objective_foundation": "Large circular foundation ring, reinforced concrete and steel, with anchor points for a superstructure, surface texture of formwork seams and embedded bolts, no building or mechanism on top.",
+    "spawn_marker": "Low trapezoidal marker, painted with hazard stripes in yellow and black, embedded in the ground, made of weather-resistant polymer with a slight sheen, no glow or particles.",
+    "non_blocking_decoration": "1. Cargo container stack (2x2x1m, grey metal, stack of two, with corner castings). 2. Cooling vent grate (1x1m, ribbed metal, recessed into floor, dark iron finish). 3. Antenna dish (1.5m tall, parabolic, white composite material, with a small support mast). 4. Pipeline junction (0.5m diameter, three-way, metallic blue with flanges and valve wheel)."
+  },
+  "lighting": {
+    "time_of_day": "dusk",
+    "contrast_policy": "high_path_readability",
+    "shadow_policy": "soft_blob",
+    "intensity": 0.74
+  },
+  "terrain_materials": [
+    {
+      "material_id": "alien_rock",
+      "role": "terrain_base",
+      "base_color": "#6B6B6B",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "alien_rock_detail",
+      "role": "terrain_detail",
+      "base_color": "#8B7D6B",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_materials": [
+    {
+      "material_id": "industrial_corridor",
+      "role": "road_band",
+      "base_color": "#4A4A4A",
+      "texture_policy": "procedural_only"
+    },
+    {
+      "material_id": "industrial_corridor_edge",
+      "role": "road_edge",
+      "base_color": "#7A7A6A",
+      "texture_policy": "procedural_only"
+    }
+  ],
+  "road_edge_rules": {
+    "edge_style": "soft_embedded",
+    "shoulder_width_cells": 0.25,
+    "direction_cue_policy": "embedded_marks"
+  },
+  "build_slot_platforms": [
+    {
+      "prefab_id": "stellar_anchor_module_pad",
+      "role": "build_slot_platform",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:module_pad"
+      }
+    }
+  ],
+  "objective_prefabs": [
+    {
+      "prefab_id": "stellar_anchor_core_hub",
+      "role": "objective_foundation",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:core_hub"
+      }
+    }
+  ],
+  "spawn_prefabs": [
+    {
+      "prefab_id": "stellar_anchor_invasion_point",
+      "role": "spawn_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:invasion_point"
+      }
+    }
+  ],
+  "resource_prefabs": [
+    {
+      "prefab_id": "stellar_anchor_resource_marker",
+      "role": "resource_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:resource_marker"
+      }
+    }
+  ],
+  "hazard_prefabs": [
+    {
+      "prefab_id": "stellar_anchor_hazard_marker",
+      "role": "hazard_marker",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:hazard_marker"
+      }
+    }
+  ],
+  "blocking_props": [
+    {
+      "prefab_id": "stellar_anchor_blocking_prop",
+      "role": "blocking_prop",
+      "anchor_policy": "center",
+      "placement_policy": "semantic_anchor_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:blocking_prop"
+      }
+    }
+  ],
+  "non_blocking_props": [
+    {
+      "prefab_id": "stellar_anchor_edge_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "edge_decoration_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:edge_decoration"
+      }
+    }
+  ],
+  "decorative_props": [
+    {
+      "prefab_id": "stellar_anchor_ambient_decoration",
+      "role": "non_blocking_decoration",
+      "anchor_policy": "center",
+      "placement_policy": "allowed_zone_only",
+      "visual_ref": {
+        "kind": "procedural_shape",
+        "value": "compiled:stellar_anchor:ambient_decoration"
+      }
+    }
+  ],
+  "atmosphere_layers": [
+    {
+      "layer_id": "compiled_edge_atmosphere",
+      "role": "fog",
+      "opacity": 0.24,
+      "placement_policy": "map_edges_only"
+    }
+  ],
+  "postprocess": {
+    "contrast_boost": 0.3,
+    "saturation": 0.92,
+    "vignette": 0.16
+  },
+  "readability_rules": {
+    "minimum_path_contrast": 0.42,
+    "build_slot_marker_policy": "diegetic_platform",
+    "objective_marker_policy": "diegetic_foundation",
+    "spawn_marker_policy": "diegetic_portal",
+    "no_baked_ui_text": true,
+    "no_baked_enemy_or_tower": true,
+    "debug_layers_player_default_allowed": false
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "style_only": true,
+    "gates": [
+      {
+        "gate_id": "style_only_visual_boundary",
+        "status": "passed",
+        "summary": "Generated style controls appearance only; runtime map remains authoritative."
+      },
+      {
+        "gate_id": "player_readability_boundary",
+        "status": "passed",
+        "summary": "Path, slots, objectives, and spawn remain readable and diegetic."
+      }
+    ]
+  }
+}

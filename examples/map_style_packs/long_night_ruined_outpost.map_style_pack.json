@@ -7,13 +7,16 @@
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
     "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "visual_style_reference_path": "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
     "logic_authority": "map_runtime_package",
     "style_authority": "developer_fixture"
   },
   "node_theme_tags": [
-    "ruined_outpost",
-    "cold_lantern_light",
-    "wet_stone",
+    "old_chinese_post_station",
+    "official_road_lantern_yard",
+    "timber_tile_roof_ruins",
+    "stone_plinth_and_stele",
+    "talisman_lantern_ward",
     "dark_fog_edge",
     "tutorial_battle"
   ],
@@ -198,12 +201,12 @@
       {
         "gate_id": "style_only_visual_boundary",
         "status": "passed",
-        "summary": "This pack only defines materials, prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
+        "summary": "This pack defines old Chinese post-station materials, lantern-yard prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
       },
       {
         "gate_id": "player_readability_boundary",
         "status": "passed",
-        "summary": "Path, build slots, objective, and spawn markers remain readable without baked UI text or baked enemies/towers."
+        "summary": "Official-road paths, stone-plinth build slots, objective, and spawn markers remain readable without baked UI text or baked enemies/towers."
       }
     ]
   }

@@ -1,0 +1,383 @@
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+from tools.asset_graph import build_layered_map_visual_package as visual_package
+from tools.asset_graph import map_compilation_orchestrator as orchestrator
+
+
+ROOT = Path(__file__).resolve().parents[2]
+INPUT = ROOT / "examples/map_compilation_inputs/long_night_first_battle.map_compilation_input.json"
+OUTPUT = ROOT / "game_data/media/layered_maps/gray_lantern_station"
+
+
+def test_style_values_enforce_playfield_contrast_for_pale_world_palette():
+    style = visual_package.style_values(
+        {
+            "palette": {
+                "terrain_base": "#B8C9B8",
+                "road_base": "#C4C8C0",
+                "road_edge": "#9BA39A",
+                "build_slot": "#E8E0D0",
+                "accent": "#C89B3C",
+            }
+        }
+    )
+
+    assert visual_package.color_luma(style["terrain_base"]) - visual_package.color_luma(
+        style["road_base"]
+    ) >= 36
+    assert visual_package.color_luma(style["build_slot"]) < visual_package.color_luma(
+        style["terrain_base"]
+    )
+
+
+def test_road_material_recipe_is_selected_from_compiled_visual_brief():
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "dark aged wood planks with moss"}}
+    ) == "wood"
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "weathered granite paving stones"}}
+    ) == "stone"
+
+
+def test_slot_material_recipe_is_selected_from_compiled_visual_brief():
+    assert visual_package.classify_slot_material(
+        {
+            "visual_generation_briefs": {
+                "build_slot_platform": "reinforced composite base with four anchor points"
+            }
+        }
+    ) == "tech"
+    assert visual_package.classify_slot_material(
+        {"visual_generation_briefs": {"build_slot_platform": "weathered stone plinth"}}
+    ) == "stone"
+    assert visual_package.classify_road_material(
+        {"visual_generation_briefs": {"road_surface": "riveted steel alloy deck panels"}}
+    ) == "metal"
+    assert visual_package.classify_road_material(
+        {
+            "visual_generation_briefs": {
+                "road_surface": "weathered stone slabs with mossy cracks"
+            },
+            "road_materials": [{"material_id": "legacy_stone_plank_road"}],
+        }
+    ) == "stone"
+
+
+def test_material_stamps_follow_rounded_route_tangents():
+    points = visual_package.smooth_route_points([(0, 0), (100, 0), (100, 100)])
+    samples = visual_package.route_screen_samples(points, 40)
+
+    assert any(8 < sample["angle"] < 82 for sample in samples)
+
+
+def test_plan_is_side_effect_free():
+    result = orchestrator.plan(INPUT, OUTPUT)
+    assert result["node_id"] == "gray_lantern_station"
+    assert result["provider_calls"] == 0
+    assert result["provider_handoff_requested"] is True
+
+
+def test_compile_and_resume(tmp_path):
+    output = ROOT / "game_data/media/layered_maps/map_orchestrator_test_node"
+    input_value = orchestrator._load(INPUT)
+    battle = orchestrator._load(ROOT / "game_data/demo/first_battle_config.json")
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    battle["node_id"] = "map_orchestrator_test_node"
+    style["node_id"] = "map_orchestrator_test_node"
+    battle_path = tmp_path / "battle.json"
+    style_path = tmp_path / "style.json"
+    input_path = tmp_path / "input.json"
+    orchestrator._write(battle_path, battle)
+    orchestrator._write(style_path, style)
+    input_value["battle_config_path"] = str(battle_path)
+    input_value["map_style_pack_path"] = str(style_path)
+    orchestrator._write(input_path, input_value)
+    shutil.rmtree(output, ignore_errors=True)
+    try:
+        first = orchestrator.compile_map(input_path, output)
+        assert first["status"] == "completed"
+        assert first["quality"]["runtime_truth_preserved"] is True
+        assert first["provider_execution"]["handoff_status"] == "request_pack_ready_review_only"
+        handoff_dir = output / "visual_handoff"
+        request_pack = orchestrator._load(
+            handoff_dir / "map_layered_visual_generation_request_pack.v0.1.json"
+        )
+        assert request_pack["node_id"] == "map_orchestrator_test_node"
+        assert len(request_pack["requests"]) == 9
+        by_role = {item["role"]: item for item in request_pack["requests"]}
+        assert "wet ruin moss" in by_role["terrain_base"]["prompt_brief"]
+        assert by_role["terrain_base"]["prompt_brief"].startswith("Subject:")
+        assert "seamless square PBR terrain albedo texture" in by_role["terrain_base"]["prompt_brief"]
+        assert set(by_role["terrain_base"]["prompt_sections"]) == {
+            "subject", "environment", "style", "lighting", "composition", "quality"
+        }
+        assert by_role["terrain_base"]["generation_mode"] == "text_to_image"
+        assert by_role["terrain_base"]["generation_reference"] is None
+        assert by_role["terrain_base"]["style_reference"]["usage"] == "world_style_and_render_finish_reference_only"
+        assert "absolutely no road, trail, route, lane" in by_role["terrain_base"]["prompt_brief"]
+        assert "high-end production game material rendering" in by_role["terrain_base"]["prompt_brief"]
+        assert "physically coherent materials" in by_role["terrain_base"]["prompt_brief"]
+        assert by_role["terrain_base"]["output_contract"]["size_tier"] == "1K"
+        assert by_role["terrain_base"]["output_contract"]["ratio"] == "1:1"
+        assert "fills the entire rectangular image edge to edge" in by_role["road_surface"]["prompt_brief"]
+        assert "deterministic vector path" in by_role["road_surface"]["prompt_brief"]
+        assert "faint blue luminescent lines" not in str(by_role["road_surface"]["style_contract"])
+        assert "platform lantern foundation ring" in by_role["build_slot_platform"]["prompt_brief"]
+        assert "polished white jade" not in str(by_role["build_slot_platform"]["style_contract"])
+        for role in {
+            "build_slot_platform",
+            "objective_foundation",
+            "spawn_marker",
+        }:
+            request = by_role[role]
+            assert request["generation_mode"] == "image_to_image"
+            assert request["style_reference"] is None
+            assert request["generation_reference"] is not None
+        assert by_role["road_surface"]["generation_mode"] == "text_to_image"
+        assert by_role["road_surface"]["generation_reference"] is None
+        assert by_role["road_surface"]["image_profile_candidates"] == [
+            "agnes_image_flash", "agnes_image_20_flash"
+        ]
+        assert {
+            "non_blocking_decoration_architecture",
+            "non_blocking_decoration_natural",
+            "non_blocking_decoration_debris",
+            "non_blocking_decoration_prop",
+        }.issubset(by_role)
+        for role in {
+            "non_blocking_decoration_architecture",
+            "non_blocking_decoration_natural",
+            "non_blocking_decoration_debris",
+            "non_blocking_decoration_prop",
+        }:
+            assert by_role[role]["generation_mode"] == "text_to_image"
+        assert by_role["road_surface"]["output_contract"]["transparent"] is False
+        assert by_role["road_surface"]["output_contract"]["ratio"] == "1:1"
+        assert request_pack["assembly_contract"]["semantic_authority"] == "map_runtime_package"
+        assert request_pack["assembly_contract"]["forbid_image_to_semantic_inference"] is True
+        job = orchestrator._load(
+            handoff_dir / "map_visual_background_job.v0.1.json"
+        )
+        assert job["status"] == "pending"
+        assert job["request_pack_path"].endswith(
+            "map_layered_visual_generation_request_pack.v0.1.json"
+        )
+        assert first["provider_execution"]["background_job_status"] == "pending"
+        resumed = orchestrator.compile_map(input_path, output, resume=True)
+        assert resumed["resume"]["reused"] is True
+    finally:
+        shutil.rmtree(output, ignore_errors=True)
+
+
+def test_visual_handoff_isolated_by_style_pack(tmp_path):
+    runtime = orchestrator._load(
+        ROOT / "examples/map_runtime_packages_v02/mvp_first_battle.map_runtime_package_v02.json"
+    )
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    style["worldbook_id"] = "cloud_mechanism_frontier"
+    style["node_theme_tags"] = [
+        "cloud", "mechanical", "eastern", "sky", "wind", "bridge", "cable", "gear", "jade", "storm"
+    ]
+    style["terrain_materials"][0]["material_id"] = "cloud_island"
+    style["terrain_materials"][1]["material_id"] = "cloud_island_detail"
+    style["road_materials"][0]["material_id"] = "cable_road"
+    style["road_materials"][1]["material_id"] = "cable_road_edge"
+    style["lighting"]["time_of_day"] = "storm"
+    style["source_refs"].pop("visual_style_reference_path", None)
+    replacements = {
+        "build_slot_platforms": "mechanism_base",
+        "objective_prefabs": "sky_heart_city",
+        "spawn_prefabs": "wind_fissure",
+        "non_blocking_props": "cloud_gear_debris",
+        "decorative_props": "jade_cable_anchor",
+    }
+    for key, value in replacements.items():
+        style[key][0]["prefab_id"] = value
+        style[key][0]["visual_ref"] = {"kind": "procedural_shape", "value": f"compiled:cloud:{value}"}
+    runtime_path = tmp_path / "runtime.json"
+    orchestrator._write(runtime_path, runtime)
+    _, pack = orchestrator._build_visual_handoff(
+        runtime, style, runtime_path=runtime_path, output_dir=tmp_path / "map"
+    )
+    prompts = "\n".join(item["prompt_brief"].lower() for item in pack["requests"])
+    for expected in ("cloud island", "cable road", "mechanism base", "storm"):
+        assert expected in prompts
+    for leaked in ("late-ming", "courier-station", "moonlit night", "lantern ambience"):
+        assert leaked not in prompts
+
+
+def test_live_visual_stage_batches_all_requests_without_runtime_promotion(tmp_path, monkeypatch):
+    output = ROOT / "game_data/media/layered_maps/map_orchestrator_live_test_node"
+    input_value = orchestrator._load(INPUT)
+    battle = orchestrator._load(ROOT / "game_data/demo/first_battle_config.json")
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    battle["node_id"] = "map_orchestrator_live_test_node"
+    style["node_id"] = "map_orchestrator_live_test_node"
+    battle_path = tmp_path / "battle.json"
+    style_path = tmp_path / "style.json"
+    input_path = tmp_path / "input.json"
+    orchestrator._write(battle_path, battle)
+    orchestrator._write(style_path, style)
+    input_value["battle_config_path"] = str(battle_path)
+    input_value["map_style_pack_path"] = str(style_path)
+    orchestrator._write(input_path, input_value)
+    calls = []
+
+    def fake_closed_loop(_pack_path, pack, output_dir, reviewed_dir, *_profiles, **kwargs):
+        calls.append((len(pack["requests"]), kwargs["max_workers"]))
+        backdrops = reviewed_dir / "backdrops"
+        textures = reviewed_dir / "textures"
+        components = reviewed_dir / "components"
+        backdrops.mkdir(parents=True, exist_ok=True)
+        textures.mkdir(parents=True, exist_ok=True)
+        components.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+            backdrops / "map_orchestrator_live_test_node.reviewed_painted_backdrop.png",
+        )
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.road_tile.png",
+            textures / "road_tile.png",
+        )
+        shutil.copy2(
+            ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+            textures / "slot_tile.png",
+        )
+        for role in ("objective_foundation", "spawn_marker", "non_blocking_decoration"):
+            shutil.copy2(
+                ROOT / "game_data/media/layered_maps/gray_lantern_station/textures/gray_lantern_station.slot_tile.png",
+                components / f"{role}.png",
+            )
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_path = output_dir / "map_visual_closed_loop_report.v0.1.json"
+        report = {
+            "schema_version": "map_visual_closed_loop_report.v0.1",
+            "node_id": pack["node_id"],
+            "worldbook_id": pack["worldbook_id"],
+            "status": "runtime_visuals_ready",
+            "runtime_critical_roles_ready": True,
+            "runtime_critical_roles": ["build_slot_platform", "road_surface", "terrain_base"],
+            "summary": {
+                "request_count": 5, "passed_count": 5, "failed_count": 0,
+                "provider_failure_count": 0, "attempt_count": 5,
+                "provider_call_count": 5, "vision_review_call_count": 5,
+                "promotion_count": 6,
+            },
+            "results": [],
+            "failures": [],
+            "promotions": [],
+            "reviewed_backdrop_source_dir": str(backdrops),
+            "reviewed_texture_source_dir": str(textures),
+            "reviewed_component_source_dir": str(components),
+            "policy": {
+                "runtime_semantics_source": "MapRuntimePackage",
+                "image_to_semantic_inference": False,
+                "raw_prompt_stored": False,
+                "raw_provider_response_stored": False,
+                "automatic_promotion_scope": "reviewed_visual_staging_only",
+                "unreviewed_candidate_player_visible": False,
+                "minimum_vision_score": 0.78,
+            },
+        }
+        orchestrator._write(report_path, report)
+        return {**report, "report_path": str(report_path)}
+
+    monkeypatch.setattr(orchestrator.image_provider, "load_dotenv", lambda *_: None)
+    monkeypatch.setattr(orchestrator.vision_review, "load_dotenv", lambda *_: None)
+    monkeypatch.setattr(orchestrator.map_visual_closed_loop, "run_closed_loop", fake_closed_loop)
+    shutil.rmtree(output, ignore_errors=True)
+    try:
+        report = orchestrator.compile_map(input_path, output, live_visuals=True)
+        assert calls == [(9, 3)]
+        assert report["provider_execution"]["call_count"] == 5
+        assert report["provider_execution"]["candidate_generation_status"] == "runtime_visuals_ready"
+        assert report["provider_execution"]["reviewed_local_media_imported"] is True
+        assert report["provider_execution"]["automatic_reviewed_staging_ready"] is True
+        package = orchestrator._load(output / "layered_map_visual_package.v0.1.json")
+        media_roles = {item["role"] for item in package["media_assets"]}
+        assert {"objective_foundation", "spawn_marker", "non_blocking_decoration"}.issubset(media_roles)
+        composite = (output / "composited/map_orchestrator_live_test_node.layered_map.svg").read_text()
+        assert 'data-objective-part="reviewed-component"' in composite
+        assert 'data-spawn-part="reviewed-component"' in composite
+        assert 'href="#componentSpawnMarker"' in composite
+        assert 'data-decoration="reviewed-component"' in composite
+        assert '#componentNonBlockingDecoration0' in composite
+        assert 'data-decoration-variant=' in composite
+    finally:
+        shutil.rmtree(output, ignore_errors=True)
+
+
+def test_background_reviewed_visuals_rebuild_presentation_only(tmp_path):
+    output = ROOT / "game_data/media/layered_maps/map_orchestrator_activation_test_node"
+    input_value = orchestrator._load(INPUT)
+    battle = orchestrator._load(ROOT / "game_data/demo/first_battle_config.json")
+    style = orchestrator._load(
+        ROOT / "examples/map_style_packs/long_night_ruined_outpost.map_style_pack.json"
+    )
+    node_id = "map_orchestrator_activation_test_node"
+    battle["node_id"] = node_id
+    style["node_id"] = node_id
+    battle_path = tmp_path / "battle.json"
+    style_path = tmp_path / "style.json"
+    input_path = tmp_path / "input.json"
+    orchestrator._write(battle_path, battle)
+    orchestrator._write(style_path, style)
+    input_value["battle_config_path"] = str(battle_path)
+    input_value["map_style_pack_path"] = str(style_path)
+    orchestrator._write(input_path, input_value)
+    shutil.rmtree(output, ignore_errors=True)
+    try:
+        first = orchestrator.compile_map(input_path, output)
+        reviewed = output / "reviewed_visual_staging" / "test_job"
+        (reviewed / "backdrops").mkdir(parents=True)
+        (reviewed / "textures").mkdir()
+        (reviewed / "components").mkdir()
+        source = ROOT / "game_data/media/layered_maps/gray_lantern_station"
+        shutil.copy2(
+            source / "backdrops/gray_lantern_station.reviewed_painted_backdrop.png",
+            reviewed / "backdrops" / f"{node_id}.reviewed_painted_backdrop.png",
+        )
+        shutil.copy2(
+            source / "textures/gray_lantern_station.road_tile.png",
+            reviewed / "textures/road_tile.png",
+        )
+        shutil.copy2(
+            source / "textures/gray_lantern_station.slot_tile.png",
+            reviewed / "textures/slot_tile.png",
+        )
+        for role in ("objective_foundation", "spawn_marker", "non_blocking_decoration"):
+            shutil.copy2(
+                source / "textures/gray_lantern_station.slot_tile.png",
+                reviewed / "components" / f"{role}.png",
+            )
+        runtime_hash = orchestrator._sha(output / "map_runtime_package.v0.2.json")
+        activated = orchestrator.apply_reviewed_visuals(
+            input_path,
+            output,
+            {
+                "status": "runtime_visuals_ready",
+                "runtime_critical_roles_ready": True,
+                "reviewed_backdrop_source_dir": str(reviewed / "backdrops"),
+                "reviewed_texture_source_dir": str(reviewed / "textures"),
+                "reviewed_component_source_dir": str(reviewed / "components"),
+                "summary": {"provider_call_count": 6, "vision_review_call_count": 6},
+            },
+        )
+        assert first["provider_execution"]["background_job_status"] == "pending"
+        assert activated["provider_execution"]["background_job_status"] == "completed"
+        assert orchestrator._sha(output / "map_runtime_package.v0.2.json") == runtime_hash
+        package = orchestrator._load(output / "layered_map_visual_package.v0.1.json")
+        roles = {item["role"]: item for item in package["media_assets"]}
+        assert roles["reviewed_painted_backdrop"]["source_kind"] == "compiled_reviewed_backdrop"
+        assert roles["road_tile"]["source_kind"] == "compiled_reviewed_texture"
+    finally:
+        shutil.rmtree(output, ignore_errors=True)

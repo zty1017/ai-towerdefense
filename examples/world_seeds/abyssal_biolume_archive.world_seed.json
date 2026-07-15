@@ -1,0 +1,8 @@
+{
+  "schema_version": "world_generation_seed.v0.1",
+  "seed_id": "abyssal_biolume_archive",
+  "creative_brief": "一座沉入深海裂谷的活体档案城，居民培育发光菌群和珊瑚机械，抵御会吞噬记忆与地形的深渊生物。",
+  "contrast_goal": "形成潮湿、生物荧光、柔性有机结构和压迫水体的视觉与玩法，不沿用地表城镇语汇。",
+  "avoid": ["直接复用灯塔、影潮、灯芯等名词", "纯粹克苏鲁模仿", "现代潜艇军事界面"]
+}
+

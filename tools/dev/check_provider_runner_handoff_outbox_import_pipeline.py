@@ -62,19 +62,33 @@ def free_port() -> int:
 
 def project_python_command() -> tuple[list[str], dict[str, Any]]:
     """Return a Python command with project backend dependencies available."""
-    venv_python = ROOT / ".venv" / "bin" / "python"
-    if venv_python.exists():
-        return [str(venv_python)], {
-            "mode": "venv",
-            "uses_uv": False,
-            "python_path": str(venv_python),
-        }
-    if importlib.util.find_spec("uvicorn") is not None:
+    required_modules = ("fastapi", "jsonschema", "uvicorn")
+    if all(importlib.util.find_spec(module) is not None for module in required_modules):
         return [sys.executable], {
             "mode": "current-python",
             "uses_uv": False,
             "python_path": sys.executable,
         }
+
+    venv_python = ROOT / ".venv" / "bin" / "python"
+    if venv_python.exists():
+        probe = subprocess.run(
+            [
+                str(venv_python),
+                "-c",
+                "; ".join(f"import {module}" for module in required_modules),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if probe.returncode == 0:
+            return [str(venv_python)], {
+                "mode": "venv",
+                "uses_uv": False,
+                "python_path": str(venv_python),
+            }
     return ["uv", "run", "--extra", "dev", "python"], {
         "mode": "uv",
         "uses_uv": True,

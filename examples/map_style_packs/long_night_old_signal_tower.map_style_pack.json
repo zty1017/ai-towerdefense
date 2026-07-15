@@ -7,14 +7,16 @@
   "source_refs": {
     "map_runtime_package_path": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
     "worldbook_path": "content/worldbooks/long_night_lanterns/worldbook.md",
+    "visual_style_reference_path": "game_data/media/layered_maps/old_signal_tower/backdrops/old_signal_tower.reviewed_painted_backdrop.png",
     "logic_authority": "map_runtime_package",
     "style_authority": "developer_fixture"
   },
   "node_theme_tags": [
-    "old_signal_tower",
-    "copper_trench",
-    "resonant_glass",
-    "ridge_line",
+    "old_beacon_lantern_platform",
+    "mountain_pass_beacon_terrace",
+    "copper_talisman_trench",
+    "resonant_glass_chime",
+    "ridge_official_road",
     "return_light_pressure"
   ],
   "palette": {
@@ -198,12 +200,12 @@
       {
         "gate_id": "style_only_visual_boundary",
         "status": "passed",
-        "summary": "This pack only defines old signal tower materials, prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
+        "summary": "This pack defines old beacon-lantern platform materials, mountain pass terrace prefabs, atmosphere, and readability constraints; map semantics remain in MapRuntimePackage."
       },
       {
         "gate_id": "player_readability_boundary",
         "status": "passed",
-        "summary": "Ridge and copper trench routes, build slots, objectives, and spawn markers remain readable without baked UI text or baked enemies/towers."
+        "summary": "Ridge official-road and copper talisman trench routes, stone-plinth build slots, objectives, and spawn markers remain readable without baked UI text or baked enemies/towers."
       }
     ]
   }

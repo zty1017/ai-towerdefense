@@ -2147,6 +2147,14 @@ def test_world_instance_opening_map_and_briefing_flow(client, raw_conn: sqlite3.
     map_payload = _payload(client.get(f"/api/sessions/{sid}/map"))
     assert map_payload["map"]["display_name"] == "余灯中枢态势图"
     assert map_payload["run_world_state"]["progress"]["phase"] == "first_defense"
+    map_catalog = {
+        item["stable_internal_id"]: item for item in map_payload["map"]["nodes"]
+    }
+    map_state = {
+        item["node_id"]: item for item in map_payload["run_world_state"]["map_nodes"]
+    }
+    assert map_catalog["old_signal_tower"]["state"] == "hidden"
+    assert map_state["old_signal_tower"]["visibility"] == "hidden"
 
     briefing = _payload(
         client.get(f"/api/sessions/{sid}/nodes/gray_lantern_station/briefing")
@@ -5630,12 +5638,21 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     _payload(client.post(f"/api/sessions/{sid}/battles/gray_lantern_station/results"))
     wick_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/lamp_wick_store/briefing"))
     assert wick_briefing["briefing"]["node_id"] == "lamp_wick_store"
+    assert wick_briefing["briefing"]["available_materials"]
+    assert all(
+        item.get("material_id") and isinstance(item.get("quantity"), int)
+        for item in wick_briefing["briefing"]["available_materials"]
+    )
     wick_battle = _payload(client.get(f"/api/sessions/{sid}/battles/lamp_wick_store/config"))
     assert wick_battle["map_runtime_package"]["node_id"] == "lamp_wick_store"
     wick = _payload(
         client.post(
             f"/api/sessions/{sid}/battles/lamp_wick_store/results",
-            json={"result": "victory", "protected_core_hp": 6},
+            json={
+                "result": "victory",
+                "protected_core_hp": 6,
+                "deployed_asset_ids": ["asset_ash_burst_lantern"],
+            },
         )
     )
     wick_settlement = wick["settlement"]
@@ -5651,9 +5668,27 @@ def test_multinode_battle_results_advance_campaign_without_mislabeling(client):
     assert wick_settlement["run_world_state"]["progress"]["phase"] == (
         "post_wick_store_defense"
     )
+    assert wick_settlement["primary_sample_name"] == "灯灰爆鸣塔"
+    assert wick_settlement["primary_deployed_asset"]["object_id"] == (
+        "asset_ash_burst_lantern"
+    )
+    assert "范围" in wick_settlement["sample_performance"]
 
     tower_route = _payload(client.get(f"/api/sessions/{sid}/campaign-router"))
     assert tower_route["campaign_router"]["current"]["node_id"] == "old_signal_tower"
+    progressed_map = _payload(client.get(f"/api/sessions/{sid}/map"))
+    progressed_nodes = {
+        item["node_id"]: item
+        for item in progressed_map["run_world_state"]["map_nodes"]
+    }
+    assert progressed_nodes["old_signal_tower"]["visibility"] in {
+        "scouted",
+        "visible",
+    }
+    assert progressed_nodes["old_signal_tower"]["status"] in {
+        "known",
+        "contested",
+    }
     tower_briefing = _payload(client.get(f"/api/sessions/{sid}/nodes/old_signal_tower/briefing"))
     assert tower_briefing["briefing"]["node_id"] == "old_signal_tower"
     tower = _payload(

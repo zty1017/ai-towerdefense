@@ -1,0 +1,45 @@
+{
+  "schema_version": "battle_behavior_abi.v0.1",
+  "behavior_abi": {
+    "placement": {
+      "mode": "build_slot",
+      "slot_source": "map_runtime_package.build_slots"
+    },
+    "cost": {
+      "resource": "materials",
+      "amount": 24
+    },
+    "cooldown": {
+      "milliseconds": 1350
+    },
+    "targeting": {
+      "mode": "nearest_path_enemy",
+      "range_cells": 3.2,
+      "line_of_sight": false
+    },
+    "effect_blocks": [
+      {
+        "effect_id": "provider_lamp_arc_damage",
+        "kind": "damage",
+        "amount": 15,
+        "damage_type": "light"
+      },
+      {
+        "effect_id": "provider_lamp_arc_slow",
+        "kind": "slow",
+        "duration_ms": 900,
+        "strength": 0.16
+      }
+    ],
+    "ui_surfaces": [
+      "battle_hotbar",
+      "battle_tooltip",
+      "slot_inspector"
+    ],
+    "simulation_hooks": [
+      "on_place",
+      "on_attack_tick",
+      "on_wave_end"
+    ]
+  }
+}

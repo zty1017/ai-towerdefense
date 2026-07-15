@@ -155,6 +155,242 @@ def test_create_proposal_is_persisted(client, raw_conn: sqlite3.Connection):
     assert rows[0]["status"] == "proposed"
 
 
+def test_live_candidate_is_lowered_promoted_and_activated(client, monkeypatch, tmp_path):
+    from app.services import live_asset_compile_service, research_runtime_media_service
+    from tools.dev.validate_provider_artifact_promotion_report import (
+        validate_provider_artifact_promotion_report,
+    )
+    from tools.dev.validate_provider_artifact_staging_manifest import (
+        validate_provider_artifact_staging_manifest,
+    )
+    from tools.dev.validate_provider_output_envelope import validate_provider_output_envelope
+
+    candidate = {
+        "id": "asset_live_prism_tower",
+        "lifecycle": "session_blueprint",
+        "gameplay": {
+            "asset_type": "tower_blueprint",
+            "base_stats": {"build_cost": 17, "range": 3.4, "cooldown_ms": 1200},
+            "effect_blocks": [
+                {"type": "damage", "amount": 13, "damage_type": "light"},
+                {"type": "slow", "duration": 1.4, "slow_ratio": 0.24},
+            ],
+            "constraints": {"max_instances": 2},
+            "type_specific": {"tower_slot": "standard"},
+        },
+        "presentation": {
+            "name": "棱潮束灯塔",
+            "short_description": "折射灯束打击来敌，并留下短暂迟滞。",
+            "icon_prompt": "clean tower icon",
+            "animation_card_prompt": "tower animation card",
+            "visual_tags": ["棱镜", "束光", "迟滞"],
+        },
+        "provenance": {
+            "proposal_id": "rebound",
+            "mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "provider": "ark_deepseek_v4_flash",
+            "model": "deepseek-v4-flash",
+            "npc_ids": [],
+            "material_ids": [],
+            "validation_status": "pending",
+            "simulation_report_id": None,
+        },
+    }
+    monkeypatch.setattr(
+        live_asset_compile_service,
+        "compile_candidate",
+        lambda **_: {
+            "status": "live_validated",
+            "candidate": candidate,
+            "provenance": {
+                "mode": "live",
+                "profile": "ark_deepseek_v4_flash",
+                "model": "deepseek-v4-flash",
+                "provider_call_performed": True,
+                "raw_prompt_stored": False,
+                "raw_response_stored": False,
+            },
+        },
+    )
+    published_root = tmp_path / "published_runtime"
+    published_path = published_root / "session" / "job" / "live_tower.png"
+    published_path.parent.mkdir(parents=True)
+    published_path.write_bytes(b"reviewed-runtime-media")
+    published_atlas_path = published_path.with_suffix(".atlas.json")
+    published_atlas_path.write_text("{}\n", encoding="utf-8")
+    media_sha = __import__("hashlib").sha256(published_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(
+        research_runtime_media_service, "published_root", lambda: published_root
+    )
+    monkeypatch.setattr(
+        research_runtime_media_service,
+        "compile_runtime_media",
+        lambda **_: {
+            "status": "passed",
+            "reason": None,
+            "media_refs": {
+                "icon": {
+                    "url": "/assets/generated_runtime/session/job/live_tower.png",
+                    "width": 512,
+                    "height": 512,
+                    "sha256": media_sha,
+                },
+                "sprite": {
+                    "texture_key": "runtime_live_tower",
+                    "atlas": "/assets/generated_runtime/session/job/live_tower.atlas.json",
+                    "image": "/assets/generated_runtime/session/job/live_tower.png",
+                },
+            },
+            "evidence_path": str(tmp_path / "runtime_media_evidence.json"),
+            "published_ref": {
+                "path": str(published_path),
+                "kind": "runtime_sprite",
+                "sha256": media_sha,
+            },
+        },
+    )
+    (tmp_path / "runtime_media_evidence.json").write_text("{}\n", encoding="utf-8")
+
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent="做一座折射灯塔攻击并拖慢影潮")
+    assert proposal["display_name"] == "棱潮束灯塔"
+    assert proposal["compiled_candidate"] == candidate
+    assert proposal["compiler_metadata"]["generation"]["mode"] == "live"
+    job = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    ).json()
+    assert job["status"] == "completed"
+    report_path = Path(job["compiler_metadata"]["runtime_refs"]["promotion_report_path"])
+    assert report_path.exists()
+    evidence_root = report_path.parent
+    envelope = json.loads((evidence_root / "provider_output_envelope.json").read_text())
+    staging = json.loads(
+        (evidence_root / "provider_artifact_staging_manifest.json").read_text()
+    )
+    promotion = json.loads(report_path.read_text())
+    assert validate_provider_output_envelope(envelope) == []
+    assert validate_provider_artifact_staging_manifest(staging) == []
+    assert validate_provider_artifact_promotion_report(promotion) == []
+    assert promotion["gate_results"]["human_review"] == {
+        "status": "not_applicable",
+        "required_before_promotion": False,
+        "report_ref": None,
+    }
+    simulation_ref = Path(promotion["gate_results"]["simulation_gate"]["report_ref"])
+    assert simulation_ref.name == "live_candidate_simulation_report.v0.1.json"
+    assert simulation_ref.exists()
+    simulation = json.loads(simulation_ref.read_text(encoding="utf-8"))
+    assert simulation["candidate_id"] == candidate["id"]
+    assert promotion["gate_results"]["simulation_gate"]["status"] == "passed"
+    assert promotion["gate_results"]["media_gate"]["status"] == "passed"
+    assert promotion["promotion_targets"]["published_media_refs"][0]["sha256"] == media_sha
+    assert simulation_ref != evidence_root / "validated_live_asset_candidate.json"
+    assert str(simulation_ref) not in job["trace_paths"]
+    package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
+    assert package["assets"][0]["display"]["name"] == "棱潮束灯塔"
+    assert package["assets"][0]["gameplay_ref"]["path"].endswith(
+        "validated_live_asset_candidate.json"
+    )
+
+    activated = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activated.status_code == 200, activated.text
+    receipt = activated.json()["activation_receipt"]
+    assert receipt["status"] == "activated"
+    assert receipt["promotion"]["mode"] == "provider_promotion_report"
+    assert receipt["validation"]["behavior_abi"]["status"] == "passed", receipt["warnings"]
+    capability = next(
+        item
+        for item in activated.json()["activated_runtime_bundle"]["capabilities"]["battle_objects"]
+        if item["object_id"] in receipt["runtime_effect"]["activated_object_ids"]
+    )
+    assert capability["display_name"] == "棱潮束灯塔"
+    assert capability["behavior_abi"]["targeting"]["range_cells"] == 3.4
+    assert capability["media_refs"]["icon"]["url"].startswith(
+        "/assets/generated_runtime/"
+    )
+
+
+def test_live_candidate_without_playable_impact_is_not_promoted(client, monkeypatch):
+    from app.services import live_asset_compile_service
+
+    candidate = {
+        "id": "asset_live_empty_support",
+        "lifecycle": "ephemeral",
+        "gameplay": {
+            "asset_type": "support_item",
+            "base_stats": {"activation_cost": 12, "cooldown": 8, "use_count": 1},
+            "effect_blocks": [{"type": "power_cost", "power_per_second": 2}],
+            "constraints": {"max_instances": 1},
+            "type_specific": {},
+        },
+        "presentation": {
+            "name": "空响灯芯",
+            "short_description": "尚未形成有效作用的试作品。",
+            "icon_prompt": "clean item icon",
+            "animation_card_prompt": "item animation card",
+            "visual_tags": ["灯芯"],
+        },
+        "provenance": {
+            "proposal_id": "rebound",
+            "mode": "runtime_safe",
+            "worldbook_id": "long_night_lanterns",
+            "provider": "ark_deepseek_v4_flash",
+            "model": "deepseek-v4-flash",
+            "npc_ids": [],
+            "material_ids": [],
+            "validation_status": "pending",
+            "simulation_report_id": None,
+        },
+    }
+    monkeypatch.setattr(
+        live_asset_compile_service,
+        "compile_candidate",
+        lambda **_: {
+            "status": "live_validated",
+            "candidate": candidate,
+            "provenance": {
+                "mode": "live",
+                "profile": "ark_deepseek_v4_flash",
+                "model": "deepseek-v4-flash",
+                "provider_call_performed": True,
+                "raw_prompt_stored": False,
+                "raw_response_stored": False,
+            },
+        },
+    )
+
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent="做一个应急支援灯芯")
+    job_response = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    )
+    assert job_response.status_code == 200, job_response.text
+    job = job_response.json()
+    assert job["status"] == "failed"
+    report_path = Path(job["compiler_metadata"]["runtime_refs"]["promotion_report_path"])
+    promotion = json.loads(report_path.read_text(encoding="utf-8"))
+    simulation_ref = Path(promotion["gate_results"]["simulation_gate"]["report_ref"])
+    simulation = json.loads(simulation_ref.read_text(encoding="utf-8"))
+    assert simulation["candidate_id"] == candidate["id"]
+    assert "no_direct_impact" in simulation["balance_flags"]
+    assert promotion["decision"]["promotion_allowed"] is False
+    assert promotion["decision"]["promotion_decision"] == "blocked_validation_failed"
+    assert promotion["gate_results"]["simulation_gate"]["status"] == "failed"
+    assert simulation_ref.name == "live_candidate_simulation_report.v0.1.json"
+    assert all("mock_compile" not in str(path) for path in [simulation_ref])
+
+    activation = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activation.status_code == 200, activation.text
+    receipt = activation.json()["activation_receipt"]
+    assert receipt["status"] == "blocked"
+    assert receipt["runtime_effect"]["applied"] is False
+
+
 # ---------------------------------------------------------------------------
 # Confirm -> completed job
 # ---------------------------------------------------------------------------
@@ -202,6 +438,51 @@ def test_confirm_proposal_runs_workflows_and_produces_artifacts(client):
 
     # Player-facing message stays in world language.
     _assert_no_forbidden_terms(job["player_state_message"])
+
+
+@pytest.mark.parametrize(
+    ("intent", "asset_kind", "display_name", "placement_mode", "uses"),
+    [
+        ("做一座能攻击影潮的灯塔", "tower_blueprint", "聚光刺塔", "build_slot", 3),
+        ("在路口布置绊索陷阱", "temporary_trap_sample", "折光绊索", "path_adjacent_or_slot", 2),
+        ("释放一次守灯支援脉冲", "support_item", "守灯脉冲", "free_point", 1),
+    ],
+)
+def test_player_intent_compiles_to_distinct_playable_runtime_objects(
+    client, intent, asset_kind, display_name, placement_mode, uses
+):
+    sid = _create_session(client)
+    proposal = _create_proposal(client, sid, intent=intent)
+    job = client.post(
+        f"/api/sessions/{sid}/research/proposals/{proposal['proposal_id']}/confirm"
+    ).json()
+    assert job["status"] == "completed"
+
+    package = json.loads(Path(job["runtime_package_path"]).read_text(encoding="utf-8"))
+    asset = package["assets"][0]
+    assert package["session_id"] == sid
+    assert asset["asset_kind"] == asset_kind
+    assert asset["display"]["name"] == display_name
+    assert asset["battle_availability"]["uses_per_battle"] == uses
+
+    activation = client.post(
+        f"/api/sessions/{sid}/research/jobs/{job['job_id']}/activate"
+    )
+    assert activation.status_code == 200, activation.text
+    body = activation.json()
+    receipt = body["activation_receipt"]
+    assert receipt["status"] == "activated"
+    object_id = receipt["runtime_effect"]["activated_object_ids"][0]
+    capability = next(
+        item
+        for item in body["activated_runtime_bundle"]["capabilities"]["battle_objects"]
+        if item["object_id"] == object_id
+    )
+    assert capability["asset_kind"] == asset_kind
+    assert capability["display_name"] == display_name
+    assert capability["tool_id"] == "sample"
+    assert capability["lifecycle"]["max_uses"] == uses
+    assert capability["behavior_abi"]["placement"]["mode"] == placement_mode
 
 
 def test_confirm_proposal_marks_proposal_confirmed(client, raw_conn):

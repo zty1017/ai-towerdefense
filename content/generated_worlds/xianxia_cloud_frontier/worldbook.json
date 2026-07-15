@@ -1,0 +1,121 @@
+{
+  "worldbook_version": "worldbook.v0.1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "display_name": "云海断峰关",
+  "summary": "在破碎的浮空山之间，古代宗门留下的灵脉栈道成为唯一通路。玩家需守护主城“天阙峰”，利用符箓、阵器、灵材试作防御，抵御从云海深处涌来的妖物。",
+  "tone_and_taboos": {
+    "voice": "清峻空灵，略带古意与危机感。叙事简练，多用山水意象与仙侠术语，营造东方玄幻的氛围。",
+    "forbidden_terms_in_player_text": [
+      "AI",
+      "provider",
+      "schema",
+      "prompt",
+      "compiler",
+      "token",
+      "trace",
+      "mock"
+    ],
+    "naming_style": "融合仙侠山水术语，如凝霜、落霞、玄铁、青玉，以及古风称谓如阁、库、栈道、峰。"
+  },
+  "phase_mapping": {
+    "preparation": "布阵",
+    "battle": "斗法",
+    "resolution": "收符"
+  },
+  "resource_mapping": {
+    "spirit_vein_shard": {
+      "display_name": "灵脉碎片",
+      "summary": "浮空山间流淌的灵脉结晶，是驱动阵法和符箓的核心能量。"
+    },
+    "talisman_paper": {
+      "display_name": "符纸",
+      "summary": "以灵木纤维制成的空白符纸，可承载符箓之力。"
+    },
+    "dark_iron": {
+      "display_name": "玄铁",
+      "summary": "断峰深处的铁矿石，质地坚硬，适合炼制阵器与机关。"
+    },
+    "cloud_fungus": {
+      "display_name": "云芝",
+      "summary": "生长在云海崖壁上的灵药，可用于炼制丹药或辅助符阵。"
+    }
+  },
+  "node_mapping": {
+    "tianque_peak": {
+      "display_name": "天阙峰",
+      "role": "main_city"
+    },
+    "luoxia_plank": {
+      "display_name": "落霞栈道",
+      "role": "battle_hotspot"
+    },
+    "ningshuang_pavilion": {
+      "display_name": "凝霜阁",
+      "role": "research_facility"
+    },
+    "qingyu_vault": {
+      "display_name": "青玉库",
+      "role": "resource_storage"
+    }
+  },
+  "enemy_mapping": {
+    "flying_locust": {
+      "display_name": "飞蝗",
+      "summary": "云海深处涌出的妖化飞蝗，体型小、速度快，成群结队冲击防线。",
+      "archetype": "fast_swarm"
+    },
+    "wandering_stone_golem": {
+      "display_name": "游荡石傀",
+      "summary": "被妖气侵蚀的山石傀儡，行动缓慢但身躯坚固，以蛮力砸击。",
+      "archetype": "basic"
+    },
+    "iron_armored_turtle": {
+      "display_name": "铁甲龟鳌",
+      "summary": "身披玄铁硬壳的巨型龟鳌，移动极慢，但正面防御极高，需从后方或阵法削弱。",
+      "archetype": "armored_slow"
+    }
+  },
+  "npc_archetypes": [
+    {
+      "stable_internal_id": "mountain_elder",
+      "display_name": "守山长老",
+      "role": "宗门遗老",
+      "voice": "浮空山已摇摇欲坠，但只要你守住天阙峰，宗门传承便未断绝。"
+    },
+    {
+      "stable_internal_id": "market_steward",
+      "display_name": "坊市执事",
+      "role": "资源交易者",
+      "voice": "灵石、符纸、玄铁……云芝也有。别嫌贵，灵脉栈道上命比钱贵。"
+    }
+  ],
+  "asset_naming_rules": {
+    "temporary_trap_sample": "融合仙侠山水术语，如凝霜、落霞、玄铁、青玉，以及古风称谓如阁、库、栈道、峰。",
+    "tower_blueprint": "融合仙侠山水术语，如凝霜、落霞、玄铁、青玉，以及古风称谓如阁、库、栈道、峰。"
+  },
+  "visual_rules": {
+    "palette": {
+      "terrain_base": "#D4C9B0",
+      "terrain_detail": "#A8A08A",
+      "road_base": "#7B8D6E",
+      "road_edge": "#5A6B4A",
+      "build_slot": "#C8B88A",
+      "objective": "#8B7355",
+      "spawn": "#6B5B4A",
+      "resource": "#B8A48C",
+      "hazard": "#A0522D",
+      "fog": "#E0D8C8",
+      "accent": "#D4A853"
+    },
+    "style": "云山仙踪"
+  },
+  "gameplay_tilt": {
+    "default_creativity": "stable",
+    "trap_sample_first": true,
+    "formal_research_institute_unlocked": false
+  },
+  "event_style": {
+    "opening": "黑屏文字与动画卡建立世界危机。",
+    "after_battle": "角色反馈与节点变化推动下一阶段。"
+  }
+}

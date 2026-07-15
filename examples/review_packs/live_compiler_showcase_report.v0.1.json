@@ -1,0 +1,284 @@
+{
+  "case_count": 3,
+  "cases": [
+    {
+      "attempt_count": 1,
+      "behavior_abi": {
+        "cooldown": {
+          "milliseconds": 1500
+        },
+        "cost": {
+          "amount": 120.0,
+          "resource": "materials"
+        },
+        "effect_blocks": [
+          {
+            "amount": 30.0,
+            "chain_radius_cells": 2.4,
+            "damage_type": "light",
+            "effect_id": "compiled_damage_0",
+            "kind": "damage",
+            "max_targets": 3
+          }
+        ],
+        "placement": {
+          "mode": "build_slot",
+          "slot_source": "map_runtime_package.build_slots"
+        },
+        "simulation_hooks": [
+          "on_place",
+          "on_attack_tick",
+          "on_wave_end"
+        ],
+        "targeting": {
+          "line_of_sight": false,
+          "mode": "nearest_path_enemy",
+          "range_cells": 3.125
+        },
+        "ui_surfaces": [
+          "battle_hotbar",
+          "battle_tooltip",
+          "slot_inspector"
+        ]
+      },
+      "candidate_asset_type": "tower_blueprint",
+      "candidate_effect_types": [
+        "damage",
+        "pierce_or_chain"
+      ],
+      "candidate_id": "asset_light_jump_tower",
+      "case_id": "chain_tower",
+      "display_name": "光幕跳跃塔",
+      "evidence": {
+        "promotion_report_present": true,
+        "runtime_package_present": true,
+        "trace_count": 2
+      },
+      "expected_asset_kind": "tower_blueprint",
+      "gates": {
+        "behavior_abi": "passed",
+        "media": "degraded",
+        "package_schema": "passed",
+        "promotion": "passed",
+        "runtime_safety": "passed",
+        "semantic": "passed"
+      },
+      "generation": {
+        "mode": "live",
+        "model": "deepseek-v4-flash",
+        "profile": "ark_deepseek_v4_flash",
+        "provider_call_performed": true,
+        "raw_prompt_stored": false,
+        "raw_response_stored": false
+      },
+      "previous_attempt_failures": [],
+      "runtime_asset_kind": "tower_blueprint",
+      "runtime_effect_kinds": [
+        "damage"
+      ],
+      "runtime_mutation_count": 1,
+      "runtime_object_id": "compiled_tower_blueprint_e234535cdd",
+      "status": "passed",
+      "timing_seconds": {
+        "confirm_and_activation": 0.09,
+        "proposal": 17.86,
+        "total": 17.94
+      }
+    },
+    {
+      "attempt_count": 1,
+      "behavior_abi": {
+        "cooldown": {
+          "milliseconds": 30000
+        },
+        "cost": {
+          "amount": 10,
+          "resource": "light"
+        },
+        "effect_blocks": [
+          {
+            "amount": 35.0,
+            "damage_type": "light",
+            "effect_id": "compiled_damage_0",
+            "kind": "damage",
+            "radius_cells": 1.6666666666666667
+          },
+          {
+            "duration_ms": 3000,
+            "effect_id": "compiled_slow_1",
+            "kind": "slow",
+            "strength": 0.35
+          }
+        ],
+        "placement": {
+          "mode": "path_adjacent_or_slot",
+          "slot_source": "map_runtime_package.build_slots"
+        },
+        "simulation_hooks": [
+          "on_place",
+          "on_enemy_enter_radius",
+          "on_expire"
+        ],
+        "targeting": {
+          "mode": "path_area",
+          "radius_cells": 1.2
+        },
+        "ui_surfaces": [
+          "battle_hotbar",
+          "battle_tooltip"
+        ]
+      },
+      "candidate_asset_type": "temporary_mod",
+      "candidate_effect_types": [
+        "area_damage",
+        "slow"
+      ],
+      "candidate_id": "mod_light_snare",
+      "case_id": "slow_trap",
+      "display_name": "折光绊索",
+      "evidence": {
+        "promotion_report_present": true,
+        "runtime_package_present": true,
+        "trace_count": 2
+      },
+      "expected_asset_kind": "temporary_trap_sample",
+      "gates": {
+        "behavior_abi": "passed",
+        "media": "degraded",
+        "package_schema": "passed",
+        "promotion": "passed",
+        "runtime_safety": "passed",
+        "semantic": "passed"
+      },
+      "generation": {
+        "mode": "live",
+        "model": "deepseek-v4-flash",
+        "profile": "ark_deepseek_v4_flash",
+        "provider_call_performed": true,
+        "raw_prompt_stored": false,
+        "raw_response_stored": false
+      },
+      "previous_attempt_failures": [],
+      "runtime_asset_kind": "temporary_trap_sample",
+      "runtime_effect_kinds": [
+        "damage",
+        "slow"
+      ],
+      "runtime_mutation_count": 1,
+      "runtime_object_id": "compiled_temporary_trap_sample_ef1296fbb2",
+      "status": "passed",
+      "timing_seconds": {
+        "confirm_and_activation": 0.07,
+        "proposal": 12.79,
+        "total": 12.87
+      }
+    },
+    {
+      "attempt_count": 1,
+      "behavior_abi": {
+        "active_duration_ms": 4500,
+        "cooldown": {
+          "milliseconds": 8000
+        },
+        "cost": {
+          "amount": 12.0,
+          "resource": "materials"
+        },
+        "effect_blocks": [
+          {
+            "amount": 35.0,
+            "damage_type": "light",
+            "effect_id": "compiled_damage_0",
+            "kind": "damage",
+            "radius_cells": 1.6666666666666667
+          },
+          {
+            "duration_ms": 3000,
+            "effect_id": "compiled_slow_1",
+            "kind": "slow",
+            "strength": 0.35
+          }
+        ],
+        "placement": {
+          "allowed_area": "visible_battlefield",
+          "mode": "free_point",
+          "slot_source": "battle_canvas"
+        },
+        "simulation_hooks": [
+          "on_use",
+          "on_tick",
+          "on_expire"
+        ],
+        "targeting": {
+          "mode": "area_point",
+          "radius_cells": 2
+        },
+        "ui_surfaces": [
+          "battle_hotbar",
+          "battle_tooltip"
+        ]
+      },
+      "candidate_asset_type": "support_item",
+      "candidate_effect_types": [
+        "area_damage",
+        "slow"
+      ],
+      "candidate_id": "asset_light_delayed_field",
+      "case_id": "support_field",
+      "display_name": "折光迟滞脉冲",
+      "evidence": {
+        "promotion_report_present": true,
+        "runtime_package_present": true,
+        "trace_count": 2
+      },
+      "expected_asset_kind": "support_item",
+      "gates": {
+        "behavior_abi": "passed",
+        "media": "degraded",
+        "package_schema": "passed",
+        "promotion": "passed",
+        "runtime_safety": "passed",
+        "semantic": "passed"
+      },
+      "generation": {
+        "mode": "live",
+        "model": "deepseek-v4-flash",
+        "profile": "ark_deepseek_v4_flash",
+        "provider_call_performed": true,
+        "raw_prompt_stored": false,
+        "raw_response_stored": false
+      },
+      "previous_attempt_failures": [],
+      "runtime_asset_kind": "support_item",
+      "runtime_effect_kinds": [
+        "damage",
+        "slow"
+      ],
+      "runtime_mutation_count": 1,
+      "runtime_object_id": "compiled_support_item_8502c90099",
+      "status": "passed",
+      "timing_seconds": {
+        "confirm_and_activation": 0.06,
+        "proposal": 11.52,
+        "total": 11.58
+      }
+    }
+  ],
+  "execution_mode": "live_provider_inline_research_worker",
+  "failed_count": 0,
+  "generated_at": "2026-07-15T06:49:30.519458+00:00",
+  "media_mode": "off",
+  "passed_count": 3,
+  "report_id": "live_compiler_showcase_report_v0_1",
+  "safety_summary": {
+    "runner_reads_dotenv": true,
+    "runtime_mutation_count": 3,
+    "stores_raw_prompt": false,
+    "stores_raw_response": false,
+    "successful_provider_call_count": 3,
+    "world_state_mutation_count": 0
+  },
+  "schema_version": "live_compiler_showcase_report.v0.1",
+  "status": "passed",
+  "total_seconds": 43.32
+}

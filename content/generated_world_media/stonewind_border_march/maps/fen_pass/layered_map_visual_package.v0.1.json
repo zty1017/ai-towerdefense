@@ -1,0 +1,472 @@
+{
+  "schema_version": "layered_map_visual_package.v0.1",
+  "package_id": "layered_map_visual_pkg_fen_pass_v0_1",
+  "worldbook_id": "stonewind_border_march",
+  "node_id": "fen_pass",
+  "created_at": "2026-07-15T08:10:11Z",
+  "source_refs": {
+    "map_runtime_package_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json",
+    "map_style_pack_path": "content/generated_worlds/stonewind_border_march/map_style_pack.json",
+    "procedural_map_render_plan_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/procedural_map_render_plan.v0.1.json"
+  },
+  "runtime_semantics_source": {
+    "kind": "MapRuntimePackage",
+    "id": "map_pkg_fen_pass_v0_2",
+    "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/map_runtime_package.v0.2.json",
+    "authority": "runtime_semantic_truth"
+  },
+  "style_source": {
+    "kind": "MapStylePack",
+    "id": "style_stonewind_border_march_fen_pass_v0_1",
+    "path": "content/generated_worlds/stonewind_border_march/map_style_pack.json",
+    "authority": "visual_style"
+  },
+  "render_plan_source": {
+    "kind": "ProceduralMapRenderPlan",
+    "id": "render_plan_fen_pass_v0_1",
+    "path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/procedural_map_render_plan.v0.1.json",
+    "authority": "presentation_plan"
+  },
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "format": "svg"
+  },
+  "coordinate_projection": {
+    "projection": "pseudo3d_oblique",
+    "mapping": "frontend_battle_design_space",
+    "width_cells": 16,
+    "height_cells": 9,
+    "base_tile_w": 96.0,
+    "base_tile_h": 49.92,
+    "base_offset_x": 472.0,
+    "base_offset_y": 78.96
+  },
+  "usage_policy": [
+    "runtime_semantics_from_map_runtime_package",
+    "visual_package_is_presentation_only",
+    "no_pixel_to_semantic_inference",
+    "player_default_presentation_allowed",
+    "local_reviewed_artifact_only",
+    "no_raw_generation_payload",
+    "no_external_temporary_url",
+    "painted_backdrop_must_not_bake_build_slots",
+    "painted_backdrop_must_not_bake_path_routes"
+  ],
+  "media_assets": [
+    {
+      "asset_id": "fen_pass_terrain_tile",
+      "role": "terrain_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.terrain_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.terrain_tile.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "33d25c3ceb2adc69c76452f6571c0801f3f4a417b3e8bd78f72f1ed17dd207fa",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_terrain_detail_tile",
+      "role": "terrain_detail_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.terrain_detail_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.terrain_detail_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "6c7994ffdd23512fa9ed1ab6135d32eed1da9404c7af992ec288007143216e5e",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_road_tile",
+      "role": "road_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_tile.png",
+      "width": 256,
+      "height": 128,
+      "sha256": "20d86ac97e99fc93443a6457846d749c817ee9e2bed23743310c37a8ecdf178e",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_road_edge_tile",
+      "role": "road_edge_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_edge_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_edge_tile.png",
+      "width": 192,
+      "height": 96,
+      "sha256": "bbbf86faa12d34e80616377b240201476e7c9dae1fcdf5c5961941d99f1ea5f6",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_road_detail_atlas",
+      "role": "road_detail_atlas",
+      "media_kind": "texture_atlas_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_detail_atlas.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.road_detail_atlas.png",
+      "width": 384,
+      "height": 192,
+      "sha256": "88af1acc99234913e595afed6f391224e0f528f8b9be2c405cd993202cb622fd",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_slot_tile",
+      "role": "slot_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.slot_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.slot_tile.png",
+      "width": 192,
+      "height": 192,
+      "sha256": "02f084b86f4d5bf224f8b97055fdd48438124f2ed6f13fd727aa17ab97e6e009",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_shadow_overlay_tile",
+      "role": "shadow_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.shadow_overlay_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.shadow_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "f58830b6ad6442126d033ad476e215c0e26f30e902d848d44d1732947beec7cc",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_fog_overlay_tile",
+      "role": "fog_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.fog_overlay_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.fog_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "2928c2aa9124f34a1afa5235df788fe3df3274348c5bb004645a2594cfcb835b",
+      "usage": "presentation_texture_only"
+    },
+    {
+      "asset_id": "fen_pass_light_overlay_tile",
+      "role": "light_overlay_tile",
+      "media_kind": "texture_tile_png",
+      "source_kind": "procedural_texture",
+      "source_local_path": "",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/textures/fen_pass.light_overlay_tile.png",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/textures/fen_pass.light_overlay_tile.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "fae42db9eb9258aa20203aef4eb501c496ee0d329222f743fb802af29c8379aa",
+      "usage": "presentation_texture_only"
+    }
+  ],
+  "layers": [
+    {
+      "layer_id": "layer_terrain_base",
+      "role": "terrain_base",
+      "order": 0,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.terrain_base.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.terrain_base.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8ba0b13926ccc7fdf8cc708f05e37d0f0ea38d84330403027d54fdd20a3faed3",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_terrain_detail",
+      "role": "terrain_detail",
+      "order": 5,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.terrain_detail.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.terrain_detail.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a4859b09633452c9d801d594064562c9622b001487ffceada5814008fb5f90f4",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_shadow",
+      "role": "road_shadow",
+      "order": 10,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_shadow.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_shadow.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "43910a07a66f3934f47419afb8288a38495cdcd63ffb8619ab282e6bf7f7c4f9",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_edge",
+      "role": "road_edge",
+      "order": 12,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_edge.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_edge.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "052e32885ee56758384b2d577bfb6504789f01b0def9a7ea91572947e7c929e1",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_road_surface",
+      "role": "road_surface",
+      "order": 14,
+      "player_default": true,
+      "source": "procedural_map_render_plan",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_surface.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.road_surface.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "245f56d3076185bc73a95d0d4731a3744e4e53c3d05a5fd0f375ee18bc88d023",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_build_slots",
+      "role": "build_slots",
+      "order": 20,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.build_slots.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.build_slots.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "6b2046a80b9fab210062e9d0828f7caa345b672514836a57727d5c43aa35c267",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_objectives",
+      "role": "objectives",
+      "order": 30,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.objectives.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.objectives.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c996fb7da3d2f8e5a7a0831932914a55295f9aadaac326d550c808b9c569f8ad",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_spawn",
+      "role": "spawn",
+      "order": 40,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.spawn.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.spawn.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "b30715a83b0c1d3385b51abdb71c358dab83dc33ca4dfb00b46a66071de43005",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_semantic_props",
+      "role": "semantic_props",
+      "order": 45,
+      "player_default": true,
+      "source": "map_runtime_package",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.semantic_props.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.semantic_props.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "fa7b530dcf9deed6a11a86cbbc3477ab41f755e04ed5979f0b0aad31527c9c56",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_non_blocking_decorations",
+      "role": "non_blocking_decorations",
+      "order": 50,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.non_blocking_decorations.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.non_blocking_decorations.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "60928850e8a8f12a5b74019adbc084f09924e7c71bc390828325fcdb9d1d7fb2",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_lighting",
+      "role": "lighting",
+      "order": 60,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.lighting.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.lighting.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "bf7afc6f91e2917044bee162c387e534cac8d3e670b9dd3893796e3e49a2e7d1",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_fog_weather",
+      "role": "fog_weather",
+      "order": 70,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.fog_weather.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.fog_weather.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3e14a125cf5a47df3cbbe658740bdbf497da115554ab502decb41d3f01255f7d",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_color_grade",
+      "role": "color_grade",
+      "order": 90,
+      "player_default": true,
+      "source": "map_style_pack",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/layers/fen_pass.color_grade.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/layers/fen_pass.color_grade.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3cd86df6c2fc4de52af03d78306e73c4960d8e606dd6ec9a8ac55598da5709c6",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    },
+    {
+      "layer_id": "layer_composited",
+      "role": "composited",
+      "order": 100,
+      "player_default": true,
+      "source": "derived_composite",
+      "url": "/assets/generated_worlds/stonewind_border_march/maps/fen_pass/composited/fen_pass.layered_map.svg",
+      "local_path": "content/generated_world_media/stonewind_border_march/maps/fen_pass/composited/fen_pass.layered_map.svg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "587980df7ad93119395fb5268733307a951ffe9cca9ce7301d0dd30e94837c8d",
+      "quality": {
+        "gate_status": "passed",
+        "alignment_status": "passed",
+        "player_visible_quality": "passed"
+      }
+    }
+  ],
+  "alignment_report": {
+    "gate_status": "passed",
+    "runtime_truth_preserved": true,
+    "route_count": 1,
+    "build_slot_count": 7,
+    "objective_count": 2,
+    "spawn_count": 1,
+    "checks": [
+      {
+        "check_id": "projection_matches_frontend_design_space",
+        "status": "passed",
+        "summary": "Layer coordinates use the same base projection and offsets as the frontend battle canvas."
+      },
+      {
+        "check_id": "strong_semantics_drawn_from_runtime_package",
+        "status": "passed",
+        "summary": "Routes, build slots, objectives, and spawns are copied from MapRuntimePackage rather than inferred from pixels."
+      },
+      {
+        "check_id": "composite_keeps_runtime_overlay_available",
+        "status": "passed",
+        "summary": "The composite is presentation only; frontend interaction and collision still use structured runtime data."
+      },
+      {
+        "check_id": "reviewed_backdrop_does_not_override_runtime_semantics",
+        "status": "warning",
+        "summary": "No reviewed painted backdrop was supplied; SVG procedural layers provide the terrain presentation."
+      }
+    ]
+  },
+  "validation_report": {
+    "gate_status": "passed",
+    "player_default_safe": true,
+    "external_generation_call_count": 0,
+    "gates": [
+      {
+        "gate_id": "local_svg_artifacts_written",
+        "status": "passed",
+        "summary": "All layers and the composite are local SVG artifacts with sha256 checksums."
+      },
+      {
+        "gate_id": "no_external_runtime_dependency",
+        "status": "passed",
+        "summary": "The package does not require external media services at runtime."
+      },
+      {
+        "gate_id": "reviewed_painted_backdrop_localized",
+        "status": "warning",
+        "summary": "No painted backdrop source was supplied for this package."
+      },
+      {
+        "gate_id": "reviewed_components_bound_to_runtime_anchors",
+        "status": "warning",
+        "summary": "No reviewed component media was supplied; structured procedural components remain active."
+      }
+    ]
+  }
+}

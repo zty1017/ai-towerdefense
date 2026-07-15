@@ -1,0 +1,137 @@
+{
+  "map_version": "initial_map.v0.1",
+  "worldbook_id": "xianxia_cloud_frontier",
+  "display_name": "天阙峰态势图",
+  "summary": "灵脉为路，符阵为城",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "projection": "pseudo3d_oblique"
+  },
+  "nodes": [
+    {
+      "stable_internal_id": "tianque_peak",
+      "display_name": "天阙峰",
+      "kind": "main_city",
+      "position": {
+        "x": 300,
+        "y": 390
+      },
+      "state": "controlled",
+      "summary": "最后一座完整的主峰，山顶建有古朴的宗门大殿，是玩家的主城。",
+      "icons": [
+        "main_city"
+      ]
+    },
+    {
+      "stable_internal_id": "luoxia_plank",
+      "display_name": "落霞栈道",
+      "kind": "battle_hotspot",
+      "position": {
+        "x": 930,
+        "y": 310
+      },
+      "state": "crisis_active",
+      "summary": "东侧浮空山之间狭窄的灵脉栈道，妖物常从此处逼近，是最激烈的战斗热点。",
+      "icons": [
+        "battle_hotspot"
+      ]
+    },
+    {
+      "stable_internal_id": "ningshuang_pavilion",
+      "display_name": "凝霜阁",
+      "kind": "research_facility",
+      "position": {
+        "x": 500,
+        "y": 245
+      },
+      "state": "available",
+      "summary": "悬崖边的石质阁楼，内藏古代阵器图谱与灵材研究台，可试作新防御。",
+      "icons": [
+        "research_facility"
+      ]
+    },
+    {
+      "stable_internal_id": "qingyu_vault",
+      "display_name": "青玉库",
+      "kind": "resource_storage",
+      "position": {
+        "x": 590,
+        "y": 485
+      },
+      "state": "controlled",
+      "summary": "山腹中的石室，储存着灵石、符纸、玄铁、云芝等资源，坚固且隐蔽。",
+      "icons": [
+        "resource_storage"
+      ]
+    }
+  ],
+  "supply_lines": [
+    {
+      "stable_internal_id": "supply_tianque_peak_to_luoxia_plank",
+      "display_name": "天阙峰至落霞栈道通路",
+      "from_node_id": "tianque_peak",
+      "to_node_id": "luoxia_plank",
+      "state": "active",
+      "summary": "当前唯一可靠的前线支援通路。"
+    }
+  ],
+  "dark_regions": [
+    {
+      "stable_internal_id": "unknown_xianxia_cloud_frontier_edge",
+      "display_name": "未探明区域",
+      "polygon": [
+        {
+          "x": 700,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 500
+        },
+        {
+          "x": 1280,
+          "y": 720
+        },
+        {
+          "x": 700,
+          "y": 720
+        }
+      ],
+      "state": "hidden",
+      "summary": "尚未被当前势力掌握的区域。"
+    }
+  ],
+  "threat_edges": [
+    {
+      "stable_internal_id": "threat_luoxia_plank",
+      "display_name": "迫近威胁",
+      "position": {
+        "x": 1120,
+        "y": 590
+      },
+      "direction": "northwest",
+      "severity": "high",
+      "summary": "东侧云海"
+    }
+  ],
+  "floating_events": [
+    {
+      "stable_internal_id": "event_luoxia_plank_distress",
+      "display_name": "落霞栈道急报",
+      "kind": "distress_call",
+      "anchor_node_id": "luoxia_plank",
+      "summary": "第一波妖物从东侧云海涌来，沿落霞栈道逼近天阙峰。"
+    }
+  ],
+  "legend_token_map": {
+    "main_city": "主城",
+    "battle_hotspot": "战斗热点",
+    "research_facility": "设施",
+    "resource_storage": "资源存储节点",
+    "supply_line": "补给线",
+    "dark_region": "未知区",
+    "threat_edge": "移动威胁",
+    "floating_event": "悬浮事件"
+  }
+}

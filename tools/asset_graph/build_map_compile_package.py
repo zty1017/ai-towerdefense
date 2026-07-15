@@ -19,6 +19,7 @@ from validation_common import load_json, write_json  # noqa: E402
 
 DEFAULT_RUNTIME_PACKAGE = ROOT / "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json"
 DEFAULT_VISUAL_MANIFEST = ROOT / "game_data/media/map_visual_reference/map_visual_reference_manifest.v0.1.json"
+DEFAULT_LAYERED_VISUAL_PACKAGE = ROOT / "game_data/media/layered_maps/gray_lantern_station/layered_map_visual_package.v0.1.json"
 DEFAULT_OUTPUT = ROOT / "examples/map_compile_packages/mvp_first_battle.map_compile_package.json"
 
 
@@ -49,6 +50,11 @@ def main() -> int:
         help="Battle config path recorded in source_refs.",
     )
     parser.add_argument(
+        "--layered-visual-package",
+        default=str(DEFAULT_LAYERED_VISUAL_PACKAGE),
+        help="Activated node-specific LayeredMapVisualPackage JSON path.",
+    )
+    parser.add_argument(
         "--output",
         default=str(DEFAULT_OUTPUT),
         help="Output MapCompilePackage path.",
@@ -62,13 +68,17 @@ def main() -> int:
 
     runtime_path = Path(args.runtime_package)
     visual_manifest_path = Path(args.visual_manifest)
+    layered_visual_package_path = Path(args.layered_visual_package)
     output_path = Path(args.output)
     runtime_package = load_json(runtime_path)
     visual_manifest = load_json(visual_manifest_path)
+    layered_visual_package = load_json(layered_visual_package_path)
     if not isinstance(runtime_package, dict):
         raise SystemExit("runtime package root must be an object")
     if not isinstance(visual_manifest, dict):
         raise SystemExit("visual manifest root must be an object")
+    if not isinstance(layered_visual_package, dict):
+        raise SystemExit("layered visual package root must be an object")
 
     package = mcp.build_map_compile_package(
         runtime_package,
@@ -76,6 +86,8 @@ def main() -> int:
         battle_config_path=args.battle_config,
         visual_reference_manifest=visual_manifest,
         visual_reference_manifest_path=rel(visual_manifest_path),
+        layered_visual_package=layered_visual_package,
+        layered_visual_package_path=rel(layered_visual_package_path),
         created_at=args.created_at,
     )
     write_json(output_path, package)

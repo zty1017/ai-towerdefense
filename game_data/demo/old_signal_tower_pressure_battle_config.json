@@ -2,6 +2,8 @@
   "battle_config_version": "old_signal_tower_pressure_battle.v0.1",
   "worldbook_id": "long_night_lanterns",
   "node_id": "old_signal_tower",
+  "artifact_track": "demo-precompiled",
+  "activated_runtime_object_ids": [],
   "display_name": "旧信号塔·回光压力",
   "grid": {
     "projection": "pseudo3d_oblique",
@@ -100,6 +102,42 @@
     "template_id": "tower_blueprint",
     "lifecycle_state": "session_blueprint",
     "display_name": "回光棱镜中继塔",
+    "toolbar_effect_label": "显形·减速",
+    "runtime_behavior_abi": {
+      "placement": {
+        "mode": "build_slot",
+        "slot_source": "map_runtime_package.build_slots",
+        "required_tags": ["tower_slot"]
+      },
+      "cooldown": { "milliseconds": 1500 },
+      "targeting": {
+        "mode": "nearest_path_enemy",
+        "range_cells": 3.2,
+        "line_of_sight": false
+      },
+      "effect_blocks": [
+        {
+          "effect_id": "echo_prism_damage",
+          "kind": "damage",
+          "amount": 8,
+          "damage_type": "light"
+        },
+        {
+          "effect_id": "echo_prism_slow",
+          "kind": "slow",
+          "duration_ms": 1600,
+          "strength": 0.28
+        },
+        {
+          "effect_id": "echo_prism_reveal",
+          "kind": "reveal",
+          "duration_ms": 1800,
+          "radius_cells": 2.4
+        }
+      ],
+      "ui_surfaces": ["battle_hotbar", "battle_tooltip", "slot_inspector"],
+      "simulation_hooks": ["on_place", "on_attack_tick", "on_wave_end"]
+    },
     "uses_per_battle": 2,
     "requires_delivery": false,
     "delivery_state": "sample_ready",
@@ -113,6 +151,22 @@
   },
   "victory_condition": "守住旧信号塔基座，并尽量保住回光玻片夹具。",
   "failure_condition": "旧信号塔基座耐久归零。",
+  "presentation": {
+    "npc_portrait_id": "",
+    "npc_display_name": "旧信号塔巡灯使",
+    "intro_dialogue": {
+      "name": "旧信号塔巡灯使",
+      "line": "北脊和铜槽方向都在显形。回光棱镜中继塔已封装，部署在塔基附近。",
+      "portrait_id": ""
+    },
+    "tactical_hints": {
+      "enemy_weakness": "锁塔重影耐久高，但回光显形后更容易集中打击。",
+      "npc_advice_before_sample": "保住回光玻片夹具，否则显形范围会收缩。",
+      "npc_advice_after_sample": "回光棱镜中继塔压在塔基，能同时覆盖北脊和铜槽两路。",
+      "field_condition": "旧塔区域回光反射强，显形和减速效果有加成。"
+    },
+    "sample_delivered_text": "回光棱镜中继塔已就绪。"
+  },
   "post_battle": {
     "on_victory": "旧信号塔短暂稳定，回流方向被记录为下一阶段测标线索。",
     "on_failure": "旧塔回光失稳，但仍记录中继塔对显形和减速的表现。"

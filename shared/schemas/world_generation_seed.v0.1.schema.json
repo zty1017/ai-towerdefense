@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/world_generation_seed.v0.1.schema.json",
+  "title": "WorldGenerationSeed v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "seed_id", "creative_brief", "contrast_goal"],
+  "properties": {
+    "schema_version": {"const": "world_generation_seed.v0.1"},
+    "seed_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,47}$"},
+    "creative_brief": {"type": "string", "minLength": 20, "maxLength": 600},
+    "contrast_goal": {"type": "string", "minLength": 10, "maxLength": 300},
+    "avoid": {"type": "array", "items": {"type": "string", "minLength": 1}, "maxItems": 12}
+  }
+}
+

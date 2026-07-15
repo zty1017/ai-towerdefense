@@ -1,0 +1,515 @@
+{
+  "schema_version": "activated_runtime_bundle.mvp.v0.1",
+  "bundle_id": "activated_runtime_bundle_mvp_long_night_lanterns_v0_1",
+  "runtime_type": "ActivatedRuntimeBundle",
+  "snapshot_type": "RuntimeSnapshot",
+  "feature_snapshot_type": "FeatureSnapshot",
+  "fixture_scope": {
+    "example_only": true,
+    "description": "P0 前端重构护栏示例包，用于验证运行时消费边界；MVP 三节点只是样例数据，不是长期字段契约。",
+    "non_contract_fields": [
+      "selected_node_ids",
+      "sample_node_refs",
+      "fixture_stage_count",
+      "run_state_paths"
+    ]
+  },
+  "activation_authority": "backend_or_published_artifact",
+  "frontend_role": "consume_only",
+  "activation_receipt": {
+    "activation_id": "activation_mvp_static_runtime_001",
+    "status": "activated_fixture",
+    "activated_at": "2026-07-08T00:00:00Z",
+    "worldbook_id": "long_night_lanterns",
+    "player_visible_default": true,
+    "runtime_safe_scan": "passed"
+  },
+  "runtime_selection": {
+    "selection_id": "runtime_selection_mvp_three_node_static",
+    "activation_applied": true,
+    "selected_schema_version": "activated_runtime_bundle.mvp.v0.1",
+    "selected_node_ids": [
+      "gray_lantern_station",
+      "lamp_wick_store",
+      "old_signal_tower"
+    ],
+    "default_node_id": "gray_lantern_station",
+    "fallback_node_id": "gray_lantern_station"
+  },
+  "package_refs": {
+    "frontend_mock_pack": {
+      "schema_version": "frontend_mock_pack.v0.1",
+      "ref": "examples/frontend_mock/frontend_mock_pack.v0.1.json",
+      "hash": "sha256:dc7b31532e2a7b29de653099b1ff61a3a5177168eef957f188c490ea59910a31"
+    },
+    "runtime_packages": [
+      {
+        "node_id": "gray_lantern_station",
+        "display_name": "灰灯驿站",
+        "schema_version": "runtime_package.v0.1",
+        "ref": "examples/runtime_packages/mvp_demo.runtime_package.json",
+        "hash": "sha256:d60fe202037fec1afd035aff90bc3e5d6d09352269f62d1fef8b6a53d6167b60"
+      },
+      {
+        "node_id": "lamp_wick_store",
+        "display_name": "灯芯仓",
+        "schema_version": "runtime_package.v0.1",
+        "ref": "examples/runtime_packages/mvp_wick_store_pressure.runtime_package.json",
+        "hash": "sha256:0417d78adec0b2831e3f5854ddf397617f16e4e9ad39d809c66c476725aa7f62"
+      },
+      {
+        "node_id": "old_signal_tower",
+        "display_name": "旧信号塔",
+        "schema_version": "runtime_package.v0.1",
+        "ref": "examples/runtime_packages/mvp_old_signal_tower.runtime_package.json",
+        "hash": "sha256:792e4a1e44a851b064798faaeb314defb08a61d74a2844a3dee16db246890a27"
+      }
+    ],
+    "map_runtime_packages": [
+      {
+        "node_id": "gray_lantern_station",
+        "schema_version": "map_runtime_package.v0.1",
+        "ref": "examples/map_runtime_packages/mvp_first_battle.map_runtime_package.json",
+        "hash": "sha256:0fc0354d871c62c87ce1aa87e2728b6daba88c7d3cb3a1724cee0304630e0472"
+      },
+      {
+        "node_id": "lamp_wick_store",
+        "schema_version": "map_runtime_package.v0.1",
+        "ref": "examples/map_runtime_packages/mvp_wick_store_pressure.map_runtime_package.json",
+        "hash": "sha256:057ad47e5bfba5185d37c9f0aea7966d852971b8955e0bb0331b0294e1417e23"
+      },
+      {
+        "node_id": "old_signal_tower",
+        "schema_version": "map_runtime_package.v0.1",
+        "ref": "examples/map_runtime_packages/mvp_old_signal_tower_pressure.map_runtime_package.json",
+        "hash": "sha256:936026b8504bff9ef1c0b2ff506e2bafd05351eb171e45866c9a18d67d28a8e8"
+      }
+    ],
+    "media_refs": [
+      {
+        "kind": "runtime_art_atlas",
+        "schema_version": "frontend_runtime_art_atlas_manifest.v0.1",
+        "ref": "game_data/media/frontend_runtime_mock/frontend_runtime_art_atlas_manifest.v0.1.json",
+        "hash": "sha256:85323a4cbc294aea9a83d5c3f7d46dd8d09039bcefd75d4c2a3da7650cca1cfb"
+      }
+    ]
+  },
+  "capabilities": {
+    "battle_objects": [
+      {
+        "schema_version": "battle_object_capability.v0.1",
+        "object_id": "basic_lantern_tower_001",
+        "display_name": "基础灯栏",
+        "asset_kind": "tower_blueprint",
+        "lifecycle": {
+          "deployable": true,
+          "upgradeable": false,
+          "stacking": "single_per_slot",
+          "expires": false
+        },
+        "behavior_abi": {
+          "placement": {
+            "mode": "build_slot",
+            "slot_source": "map_runtime_package.build_slots",
+            "required_tags": [
+              "tower_slot"
+            ]
+          },
+          "cost": {
+            "resource": "materials",
+            "amount": 20
+          },
+          "cooldown": {
+            "milliseconds": 800
+          },
+          "targeting": {
+            "mode": "nearest_path_enemy",
+            "range_cells": 2.5,
+            "line_of_sight": false
+          },
+          "effect_blocks": [
+            {
+              "effect_id": "lantern_pulse_damage",
+              "kind": "damage",
+              "amount": 8,
+              "damage_type": "light"
+            },
+            {
+              "effect_id": "short_reveal",
+              "kind": "reveal",
+              "duration_ms": 900,
+              "radius_cells": 1.5
+            }
+          ],
+          "ui_surfaces": [
+            "battle_hotbar",
+            "battle_tooltip",
+            "slot_inspector"
+          ],
+          "simulation_hooks": [
+            "on_place",
+            "on_attack_tick",
+            "on_wave_end"
+          ]
+        }
+      },
+      {
+        "schema_version": "battle_object_capability.v0.1",
+        "object_id": "sample_trap_7f3a",
+        "display_name": "折光绊索",
+        "asset_kind": "temporary_trap_sample",
+        "lifecycle": {
+          "deployable": true,
+          "upgradeable": false,
+          "stacking": "limited_charges",
+          "expires": true,
+          "max_uses": 3
+        },
+        "behavior_abi": {
+          "placement": {
+            "mode": "path_adjacent_or_slot",
+            "slot_source": "map_runtime_package.build_slots"
+          },
+          "cost": {
+            "resource": "light",
+            "amount": 12
+          },
+          "cooldown": {
+            "milliseconds": 1200
+          },
+          "targeting": {
+            "mode": "path_area",
+            "radius_cells": 1
+          },
+          "effect_blocks": [
+            {
+              "effect_id": "slow_shadow_tide",
+              "kind": "slow",
+              "duration_ms": 1800,
+              "strength": 0.35
+            }
+          ],
+          "ui_surfaces": [
+            "battle_hotbar",
+            "battle_tooltip"
+          ],
+          "simulation_hooks": [
+            "on_place",
+            "on_enemy_enter_radius",
+            "on_expire"
+          ]
+        }
+      },
+      {
+        "schema_version": "battle_object_capability.v0.1",
+        "object_id": "guardian_support_001",
+        "display_name": "守灯支援",
+        "asset_kind": "support_item",
+        "lifecycle": {
+          "deployable": true,
+          "upgradeable": false,
+          "stacking": "charges",
+          "expires": true,
+          "max_uses": 1
+        },
+        "behavior_abi": {
+          "placement": {
+            "mode": "free_point",
+            "slot_source": "battle_canvas",
+            "allowed_area": "visible_battlefield"
+          },
+          "cost": {
+            "resource": "materials",
+            "amount": 15
+          },
+          "cooldown": {
+            "milliseconds": 6000
+          },
+          "targeting": {
+            "mode": "area_point",
+            "radius_cells": 2
+          },
+          "effect_blocks": [
+            {
+              "effect_id": "temporary_guard_aura",
+              "kind": "aura",
+              "duration_ms": 5000,
+              "strength": 0.25
+            }
+          ],
+          "ui_surfaces": [
+            "battle_hotbar",
+            "battle_tooltip"
+          ],
+          "simulation_hooks": [
+            "on_place",
+            "on_tick",
+            "on_expire"
+          ]
+        }
+      },
+      {
+        "schema_version": "battle_object_capability.v0.1",
+        "object_id": "asset_light_slow_tower_001",
+        "display_name": "迟光灯塔",
+        "asset_kind": "tower_blueprint",
+        "lifecycle": {
+          "deployable": true,
+          "upgradeable": false,
+          "stacking": "single_per_slot",
+          "expires": false
+        },
+        "behavior_abi": {
+          "placement": {
+            "mode": "build_slot",
+            "slot_source": "map_runtime_package.build_slots",
+            "required_tags": [
+              "tower_slot"
+            ]
+          },
+          "cost": {
+            "resource": "materials",
+            "amount": 13
+          },
+          "cooldown": {
+            "milliseconds": 1500
+          },
+          "targeting": {
+            "mode": "nearest_path_enemy",
+            "range_cells": 3,
+            "line_of_sight": false
+          },
+          "effect_blocks": [
+            {
+              "effect_id": "slow_light_damage",
+              "kind": "damage",
+              "amount": 12,
+              "damage_type": "light"
+            },
+            {
+              "effect_id": "slow_light_field",
+              "kind": "slow",
+              "duration_ms": 1200,
+              "strength": 0.2
+            }
+          ],
+          "ui_surfaces": [
+            "battle_hotbar",
+            "battle_tooltip",
+            "slot_inspector"
+          ],
+          "simulation_hooks": [
+            "on_place",
+            "on_attack_tick",
+            "on_wave_end"
+          ]
+        }
+      }
+    ],
+    "battle_surface_ids": [
+      "battle_canvas",
+      "battle_hotbar",
+      "dialogue_modal",
+      "settlement_panel"
+    ]
+  },
+  "feature_gates": {
+    "dynamic_runtime_bundle": {
+      "enabled": true,
+      "reason": "已激活可部署的运行时样例，用于验证编译对象进入玩家战斗工具栏。"
+    },
+    "strategic_map_surface_contributions": {
+      "enabled": true,
+      "reason": "允许已激活的声明式任务与 NPC 投影进入战略地图白名单槽位。"
+    },
+    "battle_visual_smoke": {
+      "enabled": true,
+      "query_flag": "battleVisualSmoke"
+    },
+    "battle_dialogue_modal_smoke": {
+      "enabled": true,
+      "query_flag": "battleDialogueSmoke"
+    },
+    "fixture_static_three_node_campaign": {
+      "enabled": true,
+      "node_ids": [
+        "gray_lantern_station",
+        "lamp_wick_store",
+        "old_signal_tower"
+      ]
+    }
+  },
+  "feature_snapshots": {
+    "strategic_map": {
+      "schema_version": "frontend_feature_snapshot.v0.1",
+      "feature_id": "strategic_map",
+      "surface": "strategic_map",
+      "status": "active",
+      "required_gates": [
+        "strategic_map_surface_contributions"
+      ],
+      "consumes": [
+        "runtime_selection",
+        "map_projection",
+        "world_projection"
+      ],
+      "contributions": [
+        {
+          "schema_version": "frontend_surface_contribution.v0.1",
+          "contribution_id": "compiled_objective_gray_station_supply_watch",
+          "feature_id": "strategic_map",
+          "surface": "strategic_map",
+          "kind": "objective_card",
+          "slot": "objective_overlay",
+          "priority": 70,
+          "visibility": "player_visible",
+          "target_node_id": "gray_lantern_station",
+          "payload": {
+            "title": "补给线回响",
+            "summary": "中枢推演显示补线人正在接近，守住本轮可解锁新的材料替换线索。",
+            "status": "available",
+            "node_id": "gray_lantern_station"
+          }
+        },
+        {
+          "schema_version": "frontend_surface_contribution.v0.1",
+          "contribution_id": "compiled_participant_gray_station_wire_mender",
+          "feature_id": "strategic_map",
+          "surface": "strategic_map",
+          "kind": "node_participant",
+          "slot": "node_panel",
+          "priority": 60,
+          "visibility": "player_visible",
+          "target_node_id": "gray_lantern_station",
+          "payload": {
+            "npc_id": "npc_wire_mender_003",
+            "display_name": "补线人",
+            "summary": "可提供补给线抢修与材料替换建议。",
+            "node_id": "gray_lantern_station",
+            "gameplay_roles": [
+              "route_repair",
+              "material_adjustment"
+            ]
+          }
+        }
+      ]
+    },
+    "workshop": {
+      "schema_version": "frontend_feature_snapshot.v0.1",
+      "feature_id": "workshop",
+      "surface": "prototype_workshop",
+      "status": "active",
+      "required_gates": [
+        "dynamic_runtime_bundle"
+      ],
+      "consumes": [
+        "capabilities.battle_objects",
+        "feature_gates"
+      ],
+      "contributions": []
+    },
+    "battle": {
+      "schema_version": "frontend_feature_snapshot.v0.1",
+      "feature_id": "battle",
+      "surface": "battle_canvas",
+      "status": "active",
+      "required_gates": [
+        "dynamic_runtime_bundle"
+      ],
+      "consumes": [
+        "map_projection",
+        "media_projection",
+        "capabilities.battle_objects"
+      ],
+      "contributions": []
+    },
+    "narrative": {
+      "schema_version": "frontend_feature_snapshot.v0.1",
+      "feature_id": "narrative",
+      "surface": "dialogue_modal",
+      "status": "active",
+      "required_gates": [],
+      "consumes": [
+        "narrative_projection",
+        "world_projection"
+      ],
+      "contributions": []
+    },
+    "settlement": {
+      "schema_version": "frontend_feature_snapshot.v0.1",
+      "feature_id": "settlement",
+      "surface": "settlement_panel",
+      "status": "active",
+      "required_gates": [],
+      "consumes": [
+        "runtime_selection",
+        "world_projection"
+      ],
+      "contributions": []
+    }
+  },
+  "disabled_policy": {
+    "default_state": "disabled_until_explicit_activation",
+    "blocked_inputs": [
+      "failed_runtime_safe_scan",
+      "missing_hash",
+      "unknown_schema_version",
+      "unreviewed_media"
+    ],
+    "player_fallback": "continue_with_existing_static_runtime"
+  },
+  "rollback": {
+    "mode": "restore_previous_runtime_selection",
+    "state_keys": [
+      "runtime_selection",
+      "feature_gates"
+    ],
+    "player_visible_default": "existing_static_runtime"
+  },
+  "quarantine": {
+    "mode": "isolate_bundle_and_keep_player_default",
+    "status_values": [
+      "quarantined",
+      "rolled_back"
+    ],
+    "evidence_retention": "local_report_only"
+  },
+  "projections": {
+    "map_projection": {
+      "grid": "pseudo3d_oblique",
+      "sample_node_refs": [
+        "gray_lantern_station",
+        "lamp_wick_store",
+        "old_signal_tower"
+      ],
+      "authoritative_source": "map_runtime_package"
+    },
+    "package_projection": {
+      "fixture_stage_count": 3,
+      "hash_required": true
+    },
+    "media_projection": {
+      "atlas_mode": "spritesheet",
+      "layered_map_visuals": "optional_player_backdrop",
+      "fallback": "procedural_battle_canvas"
+    },
+    "effects_projection": {
+      "effect_catalog": "mvp_runtime_effect_catalog_v0_1",
+      "visual_blocks_only": true
+    },
+    "narrative_projection": {
+      "opening_dialogue_node_id": "gray_lantern_station",
+      "speaker_id": "npc_gray_lantern_keeper",
+      "modal_surface": "dialogue_modal"
+    },
+    "world_projection": {
+      "worldbook_id": "long_night_lanterns",
+      "run_state_paths": [
+        "examples/run_world_states/demo_initial.run_world_state.json",
+        "examples/run_world_states/demo_after_stage_03_northern_road.run_world_state.json",
+        "examples/run_world_states/demo_after_stage_05_old_signal_tower.run_world_state.json",
+        "examples/run_world_states/demo_after_stage_06_signal_resonance.run_world_state.json"
+      ]
+    }
+  }
+}

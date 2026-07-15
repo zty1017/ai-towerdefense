@@ -1,0 +1,54 @@
+{
+  "config_version": "world_instance_config.v0.1",
+  "worldbook_template_id": "stonewind_border_march",
+  "worldbook_display_name": "石风边境领",
+  "visual_style_id": "stonewind_style",
+  "visual_style_display_name": "石风边境",
+  "creativity_mode": {
+    "selected": "stable",
+    "options": [
+      {
+        "id": "stable",
+        "display_name": "稳健",
+        "summary": "优先采用已知可靠结构。"
+      },
+      {
+        "id": "experimental",
+        "display_name": "实验性",
+        "summary": "允许更大胆的现场试作与未知代价。"
+      }
+    ]
+  },
+  "player_origin": {
+    "selected": "exiled_knight",
+    "options": [
+      {
+        "id": "exiled_knight",
+        "display_name": "流亡骑士",
+        "summary": "因故被放逐的王国骑士，带着剑与盾来到边境，寻求赎罪。"
+      },
+      {
+        "id": "alchemy_apprentice",
+        "display_name": "炼金学徒",
+        "summary": "米拉身边的小助手，意外学会了调配爆裂药剂，梦想成为正式炼金术士。"
+      },
+      {
+        "id": "border_scout",
+        "display_name": "边境斥候",
+        "summary": "从小在沼泽和荒原中长大的猎人，熟悉每一条隐秘小径和陷阱。"
+      }
+    ]
+  },
+  "recommended_defaults": {
+    "creativity_mode": "stable",
+    "player_origin": "exiled_knight",
+    "visual_style_id": "stonewind_style"
+  },
+  "effects": {
+    "npc_address": "身份影响角色称呼与评审角度。",
+    "opening_text": "身份影响开场介入方式。",
+    "initial_materials": "身份影响开局资源侧重。",
+    "proposal_constraints": "创造性影响现场试作风险。"
+  },
+  "content_lifecycle_note": "本配置由世界实例编译器生成，后续演化必须服务玩法进度。"
+}

@@ -13,6 +13,8 @@
 
 当前后端是 FastAPI + SQLite。它提供匿名 session、研发提案 / job、前端 mock API、fixture-backed MVP 游玩链路和审查证据入口。不做真实注册登录，不收集 PII。
 
+当前玩家研发、研发对象媒体和战后世界演化已经支持受控真实 provider 调用；缺少凭据、调用失败或门禁未通过时回退到 reviewed / deterministic 内容。地图视觉已有独立后台编译 worker，但玩家默认仍优先消费已审查的地图运行包。
+
 ## 文档入口
 
 先读：
@@ -22,6 +24,10 @@ docs/CURRENT_ARCHITECTURE_INDEX.md
 ```
 
 这个文件标明哪些设计文档是当前有效事实源，哪些只是审查证据或历史记录。
+
+队友并行探索先读 `docs/TEAM_GITHUB_HANDOFF.md`。
+
+最终录屏和比赛提交按 `docs/HACKATHON_FINAL_DEMO_RUNBOOK.md` 执行。
 
 ## Layout
 
@@ -37,16 +43,22 @@ docs/
 backend/
   app/
     main.py
-    config.py        # env-based config, never reads .env
+    config.py        # 应用基础环境变量
     db.py            # sqlite3 connection + schema init
     models.py
     api/
       health.py
       sessions.py
       research.py
-      frontend_mock.py
+      frontend_mock.py             # 兼容聚合器
+      gameplay_runtime.py          # 玩家运行时 API
+      generation_scheduler.py      # 调度与证据 API
+      _frontend_runtime_common.py  # 公共响应与错误映射
     services/
       research_service.py
+      research_job_queue_service.py
+      research_worker_service.py
+      runtime_activation_service.py
       frontend_mock_service.py
   tests/
     conftest.py
@@ -74,22 +86,56 @@ tools/
 
 ## Configuration
 
-所有运行配置都通过环境变量读取，并带有安全默认值。后端不会读取 `.env`。
+基础配置直接读取环境变量。显式启用或自动探测的 live 编译服务会读取 `AI_TD_ENV_FILE`，未指定时尝试仓库根目录 `.env`；它们不会打印或保存 API key、原始 prompt 和 provider 原始响应。
+
+首次启动可从示例生成本地配置：
+
+```bash
+cp .env.example .env
+```
 
 | 变量 | 默认值 | 用途 |
 | ------------- | ----------------------------- | -------------------------------- |
 | `APP_DB_PATH` | `backend/data/app.db`         | SQLite database file path        |
 | `APP_TITLE`   | `AI-Compiled Tower Defense…`  | FastAPI app title                |
 | `APP_VERSION` | `0.1.0`                       | FastAPI app version              |
+| `AI_TD_ENV_FILE` | `.env` | live provider 凭据文件路径 |
+| `AI_TD_LIVE_COMPILATION` | `auto` | 玩家研发文本编译：`auto/live/off` |
+| `AI_TD_LIVE_MEDIA` | `auto` | 研发对象图像生成与审查：`auto/live/off` |
+| `AI_TD_LIVE_WORLD_EVOLUTION` | `auto` | 战后世界演化：`auto/live/off` |
+| `AI_TD_RESEARCH_WORKER_MODE` | `background` | 可恢复研发 job worker |
+| `AI_TD_MAP_VISUAL_WORKER` | `auto` | 地图视觉后台编译 worker |
 
 ## Running
 
 ```bash
-pip install -r requirements.txt
-uvicorn app.main:app --app-dir backend --reload
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app --app-dir backend --reload --port 8001
 ```
 
 服务启动时会自动创建 SQLite schema。
+
+浏览器访问 `http://127.0.0.1:8001/frontend/index.html`。
+
+### 真实 AI 编译演示验收
+
+以下命令会把三个最小世界内构想发送给外部文本 Provider，依次验证连锁塔、伤害减速陷阱和伤害减速支援道具的生成、模拟、晋升、激活与运行时行为。输出报告已脱敏，不保存原始提示词、响应、密钥或 session/job 标识。
+
+```bash
+.venv/bin/python tools/demo/run_live_compiler_showcase.py \
+  --output /tmp/live_compiler_showcase.v0.1.json \
+  --dotenv .env \
+  --profile ark_deepseek_v4_flash \
+  --media-mode off \
+  --max-attempts 2 \
+  --allow-provider
+
+.venv/bin/python tools/demo/validate_live_compiler_showcase_report.py \
+  /tmp/live_compiler_showcase.v0.1.json
+```
+
+`--media-mode off` 只验证文本、行为和安全激活，图片使用 reviewed fallback；需要真实图片时可显式改为 `live`，但不建议在限时现场演示中把视觉 Provider 延迟放入主链路。
 
 ## API
 
@@ -106,13 +152,23 @@ uvicorn app.main:app --app-dir backend --reload
 
 | Method | Path | 说明 |
 | ------ | ---- | ----------- |
-| POST | `/api/sessions/{session_id}/research/proposals` | Create a fixture-backed research proposal |
-| POST | `/api/sessions/{session_id}/research/proposals/{proposal_id}/confirm` | Confirm proposal and run deterministic workflows |
+| POST | `/api/sessions/{session_id}/research/proposals` | 创建受控研发提案；可使用真实文本编译并安全回退 |
+| POST | `/api/sessions/{session_id}/research/proposals/{proposal_id}/confirm` | 确认提案并进入可恢复后台编译队列 |
 | GET | `/api/sessions/{session_id}/research/jobs/{job_id}` | Read research job |
+| POST | `/api/sessions/{session_id}/research/jobs/{job_id}/activate` | Validate and apply a compiled battle-object patch to this session |
+| POST | `/api/sessions/{session_id}/generation-schedule/workers/apply-runtime-activation` | 校验 Scheduler 授权证据链并显式激活一个战斗运行包 |
+| GET | `/api/sessions/{session_id}/runtime/activations` | List session runtime activation receipts |
+| POST | `/api/sessions/{session_id}/runtime/activations/{activation_id}/rollback` | Roll back one session runtime patch |
 
 ### 前端 Mock
 
-这些接口不调用 LLM、不调用图片 provider、不读取 `.env`。它们只读取已审查 fixture、mock pack 和媒体 manifest，让前端先跑完整 MVP 链路。
+测试环境默认不调用 LLM 或图片 provider。正常运行时，`long_night_lanterns` 战后结算会在可用时自动读取主仓库 `.env`，并尝试受控 live 世界演化；缺少 key 或调用失败时无感回退到确定性结算。可用以下环境变量显式控制：
+
+```bash
+AI_TD_LIVE_WORLD_EVOLUTION=live AI_TD_ENV_FILE=/path/to/.env uvicorn app.main:app
+```
+
+该路径固定使用 `ark_deepseek_v4_flash`；`AI_TD_LIVE_WORLD_EVOLUTION=off` 可关闭，`AI_TD_WORLD_EVOLUTION_TIMEOUT`（默认 45 秒）和 `AI_TD_WORLD_EVOLUTION_MAX_TOKENS`（默认 4096）用于设置有界请求。确定性战役 delta 始终先推进；live 结果只有通过 WorldStateDelta 结构、语义、追加策略、apply 和输出状态复验后才会提交。缺 key、失败或超时时沿用确定性结算，玩家接口不暴露技术错误，也不保存 prompt、原始响应或 key。
 
 | Method | Path | 说明 |
 | ------ | ---- | ----------- |
@@ -132,6 +188,7 @@ uvicorn app.main:app --app-dir backend --reload
 | POST | `/api/sessions/{session_id}/generation-schedule/queue/{schedule_item_id}/fallback` | Select static fallback for a failed/review-blocked item |
 | POST | `/api/sessions/{session_id}/generation-schedule/workers/dry-run-step` | Process one queued scheduler item without providers |
 | POST | `/api/sessions/{session_id}/generation-schedule/workers/live-executor-guard` | Record a blocked live-provider intent without providers |
+| GET | `/api/sessions/{session_id}/runtime/feature-snapshots` | Read activated player-safe page projections; optional `node_id` narrows node-scoped contributions |
 | GET | `/api/sessions/{session_id}/map` | Read strategic map and session world state |
 | GET | `/api/sessions/{session_id}/nodes/{node_id}/briefing` | Read node briefing |
 | GET | `/api/sessions/{session_id}/battles/{node_id}/config` | Read battle config and toolbar assets |

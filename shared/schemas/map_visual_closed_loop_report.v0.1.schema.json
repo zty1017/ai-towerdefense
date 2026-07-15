@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-compiled-towerdefense.local/schemas/map_visual_closed_loop_report.v0.1.schema.json",
+  "title": "MapVisualClosedLoopReport v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "node_id",
+    "worldbook_id",
+    "status",
+    "runtime_critical_roles",
+    "runtime_critical_roles_ready",
+    "summary",
+    "results",
+    "failures",
+    "promotions",
+    "reviewed_backdrop_source_dir",
+    "reviewed_texture_source_dir",
+    "reviewed_component_source_dir",
+    "policy"
+  ],
+  "properties": {
+    "schema_version": {"const": "map_visual_closed_loop_report.v0.1"},
+    "node_id": {"type": "string", "minLength": 1},
+    "worldbook_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["runtime_visuals_ready", "blocked_after_retries"]},
+    "runtime_critical_roles": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["terrain_base", "road_surface", "build_slot_platform"]}
+    },
+    "runtime_critical_roles_ready": {"type": "boolean"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_count", "passed_count", "failed_count", "provider_failure_count", "attempt_count", "provider_call_count", "vision_review_call_count", "promotion_count"],
+      "properties": {
+        "request_count": {"type": "integer", "minimum": 0},
+        "passed_count": {"type": "integer", "minimum": 0},
+        "failed_count": {"type": "integer", "minimum": 0},
+        "provider_failure_count": {"type": "integer", "minimum": 0},
+        "attempt_count": {"type": "integer", "minimum": 0},
+        "provider_call_count": {"type": "integer", "minimum": 0},
+        "vision_review_call_count": {"type": "integer", "minimum": 0},
+        "promotion_count": {"type": "integer", "minimum": 0},
+        "reviewed_fallback_count": {"type": "integer", "minimum": 0},
+        "cache_hit_count": {"type": "integer", "minimum": 0},
+        "cache_store_count": {"type": "integer", "minimum": 0},
+        "transport_retry_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "results": {"type": "array", "items": {"type": "object"}},
+    "failures": {"type": "array", "items": {"type": "object"}},
+    "promotions": {"type": "array", "items": {"type": "object"}},
+    "reviewed_fallbacks": {"type": "array", "items": {"type": "object"}},
+    "reviewed_backdrop_source_dir": {"type": ["string", "null"]},
+    "reviewed_texture_source_dir": {"type": ["string", "null"]},
+    "reviewed_component_source_dir": {"type": ["string", "null"]},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_semantics_source", "image_to_semantic_inference", "raw_prompt_stored", "raw_provider_response_stored", "automatic_promotion_scope", "unreviewed_candidate_player_visible", "minimum_vision_score"],
+      "properties": {
+        "runtime_semantics_source": {"const": "MapRuntimePackage"},
+        "image_to_semantic_inference": {"const": false},
+        "raw_prompt_stored": {"const": false},
+        "raw_provider_response_stored": {"const": false},
+        "automatic_promotion_scope": {"const": "reviewed_visual_staging_only"},
+        "unreviewed_candidate_player_visible": {"const": false},
+        "minimum_vision_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "reviewed_candidate_cache_enabled": {"type": "boolean"},
+        "optional_visual_roles_attempted": {"type": "boolean"}
+      }
+    }
+  }
+}

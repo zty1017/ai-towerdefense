@@ -45,6 +45,18 @@ PLAYWRIGHT_BROWSER_GLOBS = (
     "/tmp/pw-browsers/chromium-*/chrome-linux64/chrome",
     "/tmp/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
 )
+PLAYWRIGHT_BROWSER_CACHE_PATTERNS = (
+    "chromium-*/chrome-linux64/chrome",
+    "chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
+)
+WSL_WINDOWS_BROWSER_PATHS = (
+    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    "/mnt/c/Program Files/Microsoft/Edge/Application/msedge.exe",
+    "/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "/mnt/c/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
+    "/mnt/c/Program Files (x86)/BraveSoftware/Brave-Browser/Application/brave.exe",
+)
 FLOW_STEPS = (
     {
         "step_id": "profile",
@@ -61,6 +73,7 @@ FLOW_STEPS = (
         "step_id": "opening",
         "label": "开场叙事",
         "click_selector": "[data-action='begin-world']",
+        "prepare_click_selector": "[data-action='opening-next']",
         "wait_selector": "[data-action='opening-skip']",
     },
     {
@@ -73,6 +86,7 @@ FLOW_STEPS = (
         "step_id": "workshop",
         "label": "现场试作工坊",
         "click_selector": "[data-action='enter-node']",
+        "prepare_click_selector": "[data-action='proposal-refresh']",
         "wait_selector": "[data-action='confirm-prototype']",
     },
     {
@@ -282,11 +296,25 @@ def browser_candidates(override: str | None) -> list[dict[str, str | None]]:
         for name in names
         if name
     ]
+    if override and not candidates[0]["path"] and Path(override).exists():
+        candidates[0]["path"] = override
     if not override:
         for pattern in PLAYWRIGHT_BROWSER_GLOBS:
             for path in sorted(Path("/").glob(pattern.lstrip("/"))):
                 if path.is_file():
                     candidates.append({"name": str(path), "path": str(path)})
+        for root in (Path.home() / ".cache/ms-playwright",):
+            for pattern in PLAYWRIGHT_BROWSER_CACHE_PATTERNS:
+                for path in sorted(root.glob(pattern)):
+                    if path.is_file():
+                        candidates.append({"name": str(path), "path": str(path)})
+        for path in WSL_WINDOWS_BROWSER_PATHS:
+            try:
+                is_file = Path(path).is_file()
+            except OSError:
+                is_file = False
+            if is_file:
+                candidates.append({"name": f"wsl-windows:{Path(path).name}", "path": path})
     seen = set()
     unique = []
     for candidate in candidates:
@@ -308,6 +336,28 @@ def find_browser(override: str | None) -> str | None:
     return None
 
 
+def is_windows_browser(browser: str) -> bool:
+    normalized = browser.lower().replace("\\", "/")
+    return normalized.endswith(".exe") or normalized.startswith("/mnt/c/")
+
+
+def path_for_browser_arg(path: Path, browser: str) -> str:
+    if not is_windows_browser(browser):
+        return str(path)
+    try:
+        result = subprocess.run(
+            ["wslpath", "-w", str(path)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return str(path)
+    converted = result.stdout.strip()
+    return converted or str(path)
+
+
 def wait_for_http_json(port: int, path: str, timeout: float = 10.0) -> Any:
     deadline = time.time() + timeout
     last_error: Exception | None = None
@@ -326,6 +376,29 @@ def wait_for_http_json(port: int, path: str, timeout: float = 10.0) -> Any:
     raise DevToolsProtocolError(f"Browser DevTools endpoint unavailable: {last_error}")
 
 
+def wait_for_devtools_page(port: int, timeout: float = 10.0) -> dict[str, Any]:
+    deadline = time.time() + timeout
+    last_payload: Any = None
+    last_error: Exception | None = None
+    while time.time() < deadline:
+        try:
+            last_payload = wait_for_http_json(
+                port,
+                "/json/list",
+                timeout=min(1.0, max(0.1, deadline - time.time())),
+            )
+        except Exception as exc:  # noqa: BLE001 - keep waiting for the browser page target.
+            last_error = exc
+            time.sleep(0.1)
+            continue
+        if isinstance(last_payload, list):
+            for tab in last_payload:
+                if isinstance(tab, dict) and tab.get("webSocketDebuggerUrl"):
+                    return tab
+        time.sleep(0.1)
+    raise DevToolsProtocolError(f"No DevTools page target found: {last_payload or last_error}")
+
+
 def launch_browser(browser: str, remote_port: int, user_data_dir: Path) -> subprocess.Popen[str]:
     cmd = [
         browser,
@@ -339,7 +412,7 @@ def launch_browser(browser: str, remote_port: int, user_data_dir: Path) -> subpr
         "--disable-extensions",
         "--no-sandbox",
         f"--remote-debugging-port={remote_port}",
-        f"--user-data-dir={user_data_dir}",
+        f"--user-data-dir={path_for_browser_arg(user_data_dir, browser)}",
         "about:blank",
     ]
     return subprocess.Popen(  # noqa: S603 - browser path is selected from local candidates.
@@ -467,12 +540,8 @@ def run_flow_for_viewport(
         proc = launch_browser(browser, remote_port, Path(tmp))
         cdp: CDPClient | None = None
         try:
-            tabs = wait_for_http_json(remote_port, "/json/list", timeout=timeout)
-            if not isinstance(tabs, list) or not tabs:
-                raise DevToolsProtocolError("No DevTools page target found")
-            websocket_url = tabs[0].get("webSocketDebuggerUrl")
-            if not websocket_url:
-                raise DevToolsProtocolError("Missing page WebSocket URL")
+            tab = wait_for_devtools_page(remote_port, timeout=timeout)
+            websocket_url = tab.get("webSocketDebuggerUrl")
             cdp = CDPClient(websocket_url)
             cdp.call("Page.enable")
             cdp.call("Runtime.enable")
@@ -503,6 +572,21 @@ def run_flow_for_viewport(
                     if not as_obj(click_result).get("ok"):
                         raise DevToolsProtocolError(
                             f"Click failed for {step_id}: {click_result}"
+                        )
+                if step.get("prepare_click_selector"):
+                    prepare_selector = str(step["prepare_click_selector"])
+                    prepare_wait = cdp.eval(
+                        js_wait_selector(prepare_selector, 9000),
+                        timeout_ms=10000,
+                    )
+                    if not as_obj(prepare_wait).get("ok"):
+                        raise DevToolsProtocolError(
+                            f"Prepare selector unavailable for {step_id}: {prepare_wait}"
+                        )
+                    prepare_click = cdp.eval(js_click(prepare_selector))
+                    if not as_obj(prepare_click).get("ok"):
+                        raise DevToolsProtocolError(
+                            f"Prepare click failed for {step_id}: {prepare_click}"
                         )
                 wait_selector = str(step["wait_selector"])
                 wait_timeout_ms = int(step.get("wait_timeout_ms") or 7000)

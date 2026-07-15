@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <image href="ring_crossing.topology_control_sketch.png" x="0" y="0" width="1280" height="720"/>
+  <g id="developer-labels" font-family="monospace" font-size="18" fill="#0f172a" stroke="#f8fafc" stroke-width="4" paint-order="stroke">
+    <text x="920.0" y="340.0">path_ring_crossing_main</text>
+    <text x="68.0" y="528.0">target_node_core</text>
+    <text x="388.0" y="208.0">target_optional_facility</text>
+  </g>
+</svg>

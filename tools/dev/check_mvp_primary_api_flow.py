@@ -387,6 +387,7 @@ def build_flow_report(base_url: str, generated_at: str) -> dict[str, Any]:
 def start_server(db_path: Path, port: int) -> subprocess.Popen[str]:
     env = os.environ.copy()
     env["APP_DB_PATH"] = str(db_path)
+    env["AI_TD_LIVE_COMPILATION"] = "off"
     env["NO_PROXY"] = "127.0.0.1,localhost"
     env["no_proxy"] = "127.0.0.1,localhost"
     pythonpath = str(BACKEND_ROOT)

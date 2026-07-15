@@ -155,6 +155,7 @@ def init_db(path: str | None = None) -> None:
             CREATE TABLE IF NOT EXISTS battle_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
+                idempotency_key TEXT,
                 payload TEXT,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
@@ -208,6 +209,20 @@ def init_db(path: str | None = None) -> None:
                 FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS runtime_activations (
+                activation_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                source_kind TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                rolled_back_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE,
+                UNIQUE (session_id, source_kind, source_id)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_world_instance_session
                 ON world_instance(session_id);
             CREATE INDEX IF NOT EXISTS idx_campaign_state_session
@@ -248,7 +263,37 @@ def init_db(path: str | None = None) -> None:
                 ON research_proposals(session_id);
             CREATE INDEX IF NOT EXISTS idx_research_jobs_session
                 ON research_jobs(session_id);
+            CREATE INDEX IF NOT EXISTS idx_runtime_activations_session
+                ON runtime_activations(session_id);
+            CREATE INDEX IF NOT EXISTS idx_runtime_activations_status
+                ON runtime_activations(status);
             """
+        )
+        # Older builds could leave more than one historical job for a proposal.
+        # Preserve those audit rows but detach all except the newest canonical
+        # job before introducing the idempotency constraint.
+        cur.execute(
+            "UPDATE research_jobs SET proposal_id = NULL "
+            "WHERE proposal_id IS NOT NULL AND job_id NOT IN ("
+            "SELECT job_id FROM research_jobs AS candidate "
+            "WHERE candidate.proposal_id = research_jobs.proposal_id "
+            "ORDER BY CASE WHEN candidate.status = 'completed' THEN 0 ELSE 1 END, "
+            "candidate.updated_at DESC, candidate.job_id DESC LIMIT 1"
+            ")"
+        )
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_research_jobs_proposal "
+            "ON research_jobs(proposal_id)"
+        )
+        battle_result_columns = {
+            row["name"]
+            for row in cur.execute("PRAGMA table_info(battle_results)").fetchall()
+        }
+        if "idempotency_key" not in battle_result_columns:
+            cur.execute("ALTER TABLE battle_results ADD COLUMN idempotency_key TEXT")
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_battle_results_idempotency "
+            "ON battle_results(session_id, idempotency_key)"
         )
         conn.commit()
     finally:

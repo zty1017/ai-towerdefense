@@ -1,0 +1,26 @@
+{
+  "schema_version": "map_visual_background_job.v0.1",
+  "job_id": "mapvis_25d22daf32baea1d462b",
+  "status": "pending",
+  "created_at": "2026-07-15T08:10:23Z",
+  "updated_at": "2026-07-15T08:10:23Z",
+  "request_fingerprint": "25d22daf32baea1d462b66269c9f1f1fd10aa039ca462309c5ba75c6e0f8a64a",
+  "input_path": "/home/zty/projects/ai-compiled-towerdefense-worktrees/task-playable-multiworld-showcase/content/generated_worlds/stellar_anchor/map_compilation_input.json",
+  "output_dir": "/home/zty/projects/ai-compiled-towerdefense-worktrees/task-playable-multiworld-showcase/content/generated_world_media/stellar_anchor/maps/ring_crossing",
+  "request_pack_path": "/home/zty/projects/ai-compiled-towerdefense-worktrees/task-playable-multiworld-showcase/content/generated_world_media/stellar_anchor/maps/ring_crossing/visual_handoff/map_layered_visual_generation_request_pack.v0.1.json",
+  "settings": {
+    "image_profile": "agnes_image_flash",
+    "vision_profile": "agnes_multimodal_flash",
+    "max_attempts": 2,
+    "max_workers": 3,
+    "generation_timeout": 240,
+    "review_timeout": 180
+  },
+  "result": null,
+  "failure": null,
+  "policy": {
+    "stores_secrets": false,
+    "stores_raw_prompts": false,
+    "runtime_activation_requires_reviewed_critical_roles": true
+  }
+}

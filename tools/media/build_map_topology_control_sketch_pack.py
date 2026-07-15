@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
@@ -144,6 +145,107 @@ def draw_control_png(path: Path, package: dict[str, Any], width: int, height: in
     overlay.write_png(path, width, height, 2, rows)
 
 
+def draw_terrain_composition_png(path: Path, width: int, height: int) -> None:
+    """Build a marker-free reference for terrain framing, not map semantics."""
+    rows = make_canvas(width, height, (170, 178, 164))
+    anchors = (
+        (-width * 0.03, -height * 0.04),
+        (width * 1.03, -height * 0.04),
+        (-width * 0.03, height * 1.04),
+        (width * 1.03, height * 1.04),
+    )
+    radius_x = max(1.0, width * 0.29)
+    radius_y = max(1.0, height * 0.34)
+    for y in range(height):
+        for x in range(width):
+            strength = 0.0
+            for anchor_x, anchor_y in anchors:
+                distance = math.hypot(
+                    (x - anchor_x) / radius_x,
+                    (y - anchor_y) / radius_y,
+                )
+                if distance < 1:
+                    strength = max(strength, (1 - distance) * 0.58)
+            if strength > 0:
+                overlay.blend_pixel(rows, width, height, x, y, (54, 62, 58), strength)
+    overlay.write_png(path, width, height, 2, rows)
+
+
+def draw_component_geometry_reference(
+    path: Path, role: str, width: int = 512, height: int = 512
+) -> None:
+    """Draw a neutral, text-free geometry template for one visual component.
+
+    These images constrain silhouette and occupancy only. They carry no world
+    semantics and are never published as player-facing media.
+    """
+    rows = make_canvas(width, height, (255, 255, 255))
+    cx, cy = width // 2, height // 2
+    dark = (72, 80, 86)
+    mid = (132, 142, 148)
+    light = (202, 210, 214)
+    if role == "road_surface":
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.2), cy), (int(width * 0.8), cy)],
+            int(height * 0.15), dark, 0.96,
+        )
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.2), cy), (int(width * 0.8), cy)],
+            int(height * 0.11), mid, 0.96,
+        )
+    elif role == "build_slot_platform":
+        half = int(width * 0.18)
+        overlay.draw_square(rows, width, height, cx, cy, half, dark, 0.96)
+        overlay.draw_square(rows, width, height, cx - int(width * 0.01), cy, int(width * 0.10), mid, 0.96)
+        overlay.draw_polyline(
+            rows, width, height,
+            [(cx - int(width * 0.15), cy - int(height * 0.03)), (cx - int(width * 0.04), cy + int(height * 0.01))],
+            max(2, int(width * 0.006)), light, 0.80,
+        )
+        overlay.draw_polyline(
+            rows, width, height,
+            [(cx + int(width * 0.05), cy - int(height * 0.10)), (cx + int(width * 0.14), cy - int(height * 0.04))],
+            max(2, int(width * 0.005)), light, 0.72,
+        )
+    elif role == "objective_foundation":
+        overlay.draw_disc(rows, width, height, cx, cy, int(width * 0.16), dark, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.08), int(width * 0.1), mid, 0.96)
+        overlay.draw_square(rows, width, height, cx, cy - int(height * 0.19), int(width * 0.072), light, 0.96)
+        overlay.draw_disc(rows, width, height, cx, cy - int(height * 0.29), int(width * 0.055), dark, 0.96)
+    elif role == "spawn_marker":
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.38), cy), (int(width * 0.62), cy)],
+            int(height * 0.08), dark, 0.96,
+        )
+        overlay.draw_polyline(
+            rows, width, height, [(int(width * 0.41), cy), (int(width * 0.59), cy)],
+            int(height * 0.035), light, 0.9,
+        )
+    elif role == "non_blocking_decoration":
+        for offset, radius in ((-150, 58), (0, 74), (155, 48)):
+            overlay.draw_disc(rows, width, height, cx + offset, cy, radius, dark, 0.96)
+            overlay.draw_disc(rows, width, height, cx + offset, cy, max(12, radius - 18), mid, 0.94)
+    elif role == "non_blocking_decoration_architecture":
+        for offset_x, offset_y, radius in ((-64, 24, 54), (0, -8, 70), (66, 18, 48)):
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y - 12, max(14, radius - 22), mid, 0.94)
+    elif role == "non_blocking_decoration_natural":
+        for offset_x, offset_y, radius in ((-52, 24, 52), (8, -28, 76), (66, 32, 42)):
+            overlay.draw_disc(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+            overlay.draw_disc(rows, width, height, cx + offset_x, cy + offset_y - 8, max(12, radius - 22), mid, 0.94)
+    elif role == "non_blocking_decoration_debris":
+        for offset_x, offset_y, radius in ((-70, 24, 34), (-30, -12, 38), (15, 18, 42), (58, -6, 32), (78, 34, 24)):
+            overlay.draw_square(rows, width, height, cx + offset_x, cy + offset_y, radius, dark, 0.96)
+    elif role == "non_blocking_decoration_prop":
+        overlay.draw_square(rows, width, height, cx - 12, cy - 24, 62, dark, 0.96)
+        overlay.draw_square(rows, width, height, cx - 12, cy - 42, 38, mid, 0.96)
+        overlay.draw_disc(rows, width, height, cx + 62, cy + 30, 30, dark, 0.96)
+        overlay.draw_disc(rows, width, height, cx - 78, cy + 34, 24, dark, 0.96)
+    else:
+        raise ValueError(f"unsupported component reference role: {role}")
+    overlay.write_png(path, width, height, 2, rows)
+
+
 def svg_escape(value: Any) -> str:
     return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
@@ -204,8 +306,10 @@ def build_sketch(package_path: Path, output_dir: Path, width: int, height: int) 
         }
     node_id = str(package.get("node_id") or package_path.stem)
     png_path = output_dir / f"{node_id}.topology_control_sketch.png"
+    composition_path = output_dir / f"{node_id}.terrain_composition_reference.png"
     svg_path = output_dir / f"{node_id}.topology_control_sketch.svg"
     draw_control_png(png_path, package, width, height)
+    draw_terrain_composition_png(composition_path, width, height)
     build_control_svg(svg_path, package, png_path, width, height)
     return {
         "node_id": node_id,
@@ -213,7 +317,9 @@ def build_sketch(package_path: Path, output_dir: Path, width: int, height: int) 
         "runtime_package_path": rel(package_path),
         "control_sketch_png_path": rel(png_path),
         "control_sketch_svg_path": rel(svg_path),
+        "terrain_composition_reference_path": rel(composition_path),
         "png_sha256": sha256_file(png_path),
+        "terrain_composition_reference_sha256": sha256_file(composition_path),
         "svg_sha256": sha256_file(svg_path),
         "dimensions": {"width": width, "height": height},
         "runtime_summary": runtime_summary(package),

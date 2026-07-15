@@ -1,0 +1,495 @@
+{
+  "schema_version": "frontend_runtime_contract_manifest.v0.1",
+  "manifest_id": "frontend_runtime_contract_manifest_v0_1",
+  "status": "p0_contract_frozen",
+  "scope": {
+    "player_runtime_surface": "frontend/index.html",
+    "default_behavior_change": false,
+    "purpose": "冻结玩家前端可消费的运行时入口、选择器和烟测 hook，为后续真实 AI 动态编译接入提供护栏。",
+    "browser_entry_contract": {
+      "script_type": "module",
+      "requires_http_static_server": true,
+      "minimum_browser": "modern_es_module_browser"
+    }
+  },
+  "public_runtime_entrypoints": {
+    "deep_links": [
+      {
+        "id": "default_player_entry",
+        "path": "/frontend/index.html",
+        "description": "玩家默认入口。"
+      },
+      {
+        "id": "static_battle_visual_smoke",
+        "path": "/frontend/index.html?static=1&battleVisualSmoke=1&battleVisualHold=1",
+        "description": "战斗画面截图烟测入口，冻结战斗时间。"
+      },
+      {
+        "id": "static_battle_dialogue_smoke",
+        "path": "/frontend/index.html?static=1&battleDialogueSmoke=1&nodeId=gray_lantern_station",
+        "description": "战斗开场剧情模态层烟测入口。"
+      },
+      {
+        "id": "static_flow_visual_smoke",
+        "path": "/frontend/index.html?static=1&flowVisualSmoke=1",
+        "description": "玩家主链路截图烟测入口。"
+      }
+    ],
+    "query_flags": [
+      {
+        "name": "static",
+        "kind": "boolean",
+        "public": true,
+        "effect": "强制读取仓库静态数据。"
+      },
+      {
+        "name": "staticMode",
+        "kind": "boolean",
+        "public": true,
+        "effect": "static 的兼容别名。"
+      },
+      {
+        "name": "apiBase",
+        "kind": "url",
+        "public": true,
+        "effect": "覆盖后端 API origin。"
+      },
+      {
+        "name": "nodeId",
+        "kind": "string",
+        "public": true,
+        "effect": "在静态烟测中选择 battle 节点。"
+      },
+      {
+        "name": "node",
+        "kind": "string",
+        "public": true,
+        "effect": "nodeId 的兼容别名。"
+      },
+      {
+        "name": "flowVisualSmoke",
+        "kind": "boolean",
+        "public": true,
+        "effect": "启用玩家主链路视觉烟测路径。"
+      },
+      {
+        "name": "battleVisualSmoke",
+        "kind": "boolean",
+        "public": true,
+        "effect": "启用战斗画面烟测 hook。"
+      },
+      {
+        "name": "battleVisualHold",
+        "kind": "boolean",
+        "public": true,
+        "effect": "仅在 battleVisualSmoke 下冻结战斗时间。"
+      },
+      {
+        "name": "battleDialogueSmoke",
+        "kind": "boolean",
+        "public": true,
+        "effect": "启用战斗剧情模态层烟测路径。"
+      },
+      {
+        "name": "mapVisualDebug",
+        "kind": "boolean",
+        "public": true,
+        "effect": "临时显示地图视觉调试辅助层。"
+      },
+      {
+        "name": "evidence",
+        "kind": "boolean",
+        "public": true,
+        "effect": "临时显示 evidence 辅助信息。"
+      }
+    ]
+  },
+  "selectors_contract": {
+    "root_selectors": [
+      "#app",
+      ".battle-shell",
+      ".battle-stage",
+      "#battleCanvas",
+      "#battleStats",
+      "#battleTasks",
+      "#battleInfo",
+      "#battleTools",
+      "#battleToast",
+      "#dialogueLayer",
+      ".battle-tools",
+      ".toolbar-card[data-tool]",
+      ".dialogue-overlay",
+      ".dialogue-box",
+      ".strategic-map",
+      "[data-map-camera-svg]",
+      "[data-map-camera-readout]"
+    ],
+    "data_actions": [
+      "continue",
+      "new-archive",
+      "reset-demo",
+      "settings",
+      "select-creativity",
+      "select-origin",
+      "begin-world",
+      "use-recommended",
+      "opening-skip",
+      "opening-next",
+      "select-map-node",
+      "map-zoom-out",
+      "map-zoom-in",
+      "map-camera-reset",
+      "enter-node",
+      "refresh-map",
+      "proposal-refresh",
+      "confirm-prototype",
+      "back-to-map",
+      "toggle-pause",
+      "cycle-speed",
+      "select-tool",
+      "close-dialogue",
+      "return-map",
+      "restart-battle"
+    ],
+    "data_tools": [
+      "basic",
+      "sample",
+      "support"
+    ],
+    "smoke_required_selectors": [
+      "#battleCanvas",
+      ".battle-shell",
+      ".battle-stage",
+      ".battle-tools",
+      ".toolbar-card[data-tool]",
+      ".dialogue-overlay",
+      "[data-action='close-dialogue']"
+    ]
+  },
+  "window_smoke_hooks": [
+    {
+      "name": "window.__AI_TD_BATTLE_SMOKE__.snapshot",
+      "installed_when": "battleVisualSmoke=1",
+      "returns": "RuntimeSnapshot-like battle state for smoke automation."
+    },
+    {
+      "name": "window.__AI_TD_BATTLE_SMOKE__.deploymentPoint",
+      "installed_when": "battleVisualSmoke=1",
+      "returns": "Canvas/client coordinates for a deployable battle slot."
+    }
+  ],
+  "runtime_type_names": [
+    "ActivatedRuntimeBundle",
+    "RuntimeBundle",
+    "RuntimeSnapshot",
+    "FeatureSnapshot",
+    "SurfaceContribution",
+    "BattleObjectCapability",
+    "RuntimeActivationReceipt"
+  ],
+  "runtime_contract_names": {
+    "ActivatedRuntimeBundle": "后端或发布流程已经激活、可被玩家前端接收的运行时包集合。",
+    "RuntimeBundle": "ActivatedRuntimeBundle 在前端只读缓存中的兼容简称。",
+    "RuntimeSnapshot": "前端基于已接收 bundle 为某一节点、页面或战斗生成的只读投影。",
+    "FeatureSnapshot": "战略图、工坊、战斗、剧情等功能各自消费的稳定子投影。",
+    "SurfaceContribution": "上游已激活领域对象面向既有页面白名单槽位生成的最小声明式展示投影，不复制完整领域事实，也不携带可执行代码。",
+    "BattleObjectCapability": "经过最终门禁、可由浏览器白名单解释器消费的战斗对象能力；只包含声明式 ABI 与已发布媒体引用。",
+    "RuntimeActivationReceipt": "后端会话级 apply gate 的审计回执；前端只能读取激活状态和对象 ID，不得修改或伪造。"
+  },
+  "runtime_contract_layers": {
+    "ActivatedRuntimeBundle": {
+      "owner": "backend_or_published_artifact",
+      "frontend_role": "consume_only",
+      "required_boundaries": [
+        "activation_receipt",
+        "runtime_selection",
+        "package_refs",
+        "capabilities",
+        "feature_snapshots",
+        "disabled_policy",
+        "rollback",
+        "quarantine",
+        "projections"
+      ]
+    },
+    "RuntimeSnapshot": {
+      "owner": "frontend_projection",
+      "frontend_role": "derive_readonly_projection",
+      "required_boundaries": [
+        "current_node",
+        "map_projection",
+        "loadout_projection",
+        "media_projection",
+        "world_projection",
+        "degradation_notices"
+      ]
+    },
+    "FeatureSnapshot": {
+      "owner": "feature_adapter",
+      "frontend_role": "feature_local_projection",
+      "required_boundaries": [
+        "strategic_map",
+        "workshop",
+        "battle",
+        "narrative",
+        "settlement"
+      ]
+    },
+    "BattleObjectCapability": {
+      "owner": "backend_runtime_activation_gate",
+      "frontend_role": "interpret_allowlisted_abi",
+      "required_boundaries": [
+        "lifecycle",
+        "behavior_abi",
+        "media_refs",
+        "source_runtime_ref"
+      ]
+    },
+    "RuntimeActivationReceipt": {
+      "owner": "backend_runtime_activation_gate",
+      "frontend_role": "consume_status_only",
+      "required_boundaries": [
+        "validation",
+        "promotion",
+        "runtime_effect",
+        "rollback",
+        "safety"
+      ]
+    }
+  },
+  "frontend_runtime_authority": {
+    "activation_authority": "backend_or_published_artifact",
+    "frontend_role": "consume_only",
+    "frontend_may": [
+      "validate_received_runtime",
+      "derive_snapshots",
+      "apply_local_degradation",
+      "keep_last_known_good"
+    ],
+    "frontend_must_not": [
+      "publish_runtime",
+      "promote_candidate",
+      "override_activation_receipt",
+      "infer_gameplay_from_images"
+    ]
+  },
+  "modular_migration_targets": [
+    {
+      "id": "runtime_bundle_loader",
+      "target_file": "frontend/runtime/frontend-data-runtime.js",
+      "status": "implemented",
+      "goal": "静态/API 数据源选择、匿名 session、三关路由和运行包加载已移出 app.js；runtime-safe 激活权仍在后端或发布产物。"
+    },
+    {
+      "id": "strategic_map_controller",
+      "target_file": "frontend/runtime/strategic-map-controller.js",
+      "status": "implemented",
+      "goal": "战略地图自适应取景、缩放、拖拽、边界约束和 DOM 相机接线已移出 app.js；节点、任务和战役语义仍由上层状态负责。"
+    },
+    {
+      "id": "strategic_map_projection",
+      "target_file": "frontend/runtime/strategic-map-projection.js",
+      "status": "implemented",
+      "goal": "把 Map 空间结构、RunWorldState 任务/事件/NPC 和已激活的白名单 surface contribution 合并为稳定战略图 FeatureSnapshot。"
+    },
+    {
+      "id": "strategic_map_feature_controller",
+      "target_file": "frontend/runtime/strategic-map-feature-controller.js",
+      "status": "implemented",
+      "goal": "战略图页面只消费投影 snapshot、相机接口和受控表现函数，不直接理解 AI 编译、网络加载或世界状态事务。"
+    },
+    {
+      "id": "battle_orchestrator",
+      "target_file": "frontend/runtime/battle-orchestrator.js",
+      "status": "implemented",
+      "goal": "战斗帧时钟、暂停/倍速、simulation 调用顺序、HUD 节流和胜负触发已移出 app.js；剧情、网络提交、结算与渲染通过上层回调接入。"
+    },
+    {
+      "id": "battle_dom_controller",
+      "target_file": "frontend/runtime/battle-dom-controller.js",
+      "status": "implemented",
+      "goal": "战斗 canvas 生命周期、HUD DOM 投影、对话暂停、工具选择和窗口 resize 接线已移出 app.js；controller 不拥有 simulation、部署规则或结算。"
+    },
+    {
+      "id": "battle_terrain_renderer",
+      "target_file": "frontend/runtime/battle-terrain-renderer.js",
+      "status": "implemented",
+      "goal": "reviewed 分层底图、程序化地形 fallback、组件纹理和边缘雾效已移出 app.js；模块只负责表现，不推导地图语义。"
+    },
+    {
+      "id": "battle_road_renderer",
+      "target_file": "frontend/runtime/battle-road-renderer.js",
+      "status": "implemented",
+      "goal": "道路肩部、路面笔刷、车辙、流向提示和路边组件已移出 app.js；路线与宽度继续来自 MapRuntimePackage / RenderPlan。"
+    },
+    {
+      "id": "battle_entity_renderer",
+      "target_file": "frontend/runtime/battle-entity-renderer.js",
+      "status": "implemented",
+      "goal": "敌人、运行时 sprite、战斗特效和拖拽预览已移出 app.js；模块只读取战斗快照，不拥有伤害、部署或结算规则。"
+    },
+    {
+      "id": "battle_deployment_renderer",
+      "target_file": "frontend/runtime/battle-deployment-renderer.js",
+      "status": "implemented",
+      "goal": "部署平台、可建造台地和工具预览已移出 app.js；动态工具通过运行时媒体标识绘制，模块不拥有部署规则。"
+    },
+    {
+      "id": "battle_semantic_renderer",
+      "target_file": "frontend/runtime/battle-semantic-renderer.js",
+      "status": "implemented",
+      "goal": "资源点、危险区、防御锚点和阻塞区表现已移出 app.js；所有空间语义仍只来自 MapRuntimePackage。"
+    },
+    {
+      "id": "battle_world_renderer",
+      "target_file": "frontend/runtime/battle-world-renderer.js",
+      "status": "implemented",
+      "goal": "目标、出生入口、地标和已部署对象绘制已移出 app.js；编译防御塔优先按对象媒体引用绘制，缺失时才使用基础回退。"
+    },
+    {
+      "id": "battle_map_adapter",
+      "target_file": "frontend/runtime/battle-map-adapter.js",
+      "status": "implemented",
+      "goal": "MapRuntimePackage 的网格、路线、目标、部署位和强语义，以及战斗画布投影、命中检测与路径查询已集中到可注入适配层；对象 ABI 继续由独立投影适配器负责。"
+    },
+    {
+      "id": "onboarding_feature_controller",
+      "target_file": "frontend/runtime/onboarding-feature-controller.js",
+      "status": "implemented",
+      "goal": "本地档案、世界实例配置和预制开场的页面投影已从 app.js 抽离；跨页导航仍由应用编排层决定。"
+    },
+    {
+      "id": "workshop_feature_controller",
+      "target_file": "frontend/runtime/workshop-feature-controller.js",
+      "status": "implemented",
+      "goal": "节点危机、玩家构想、提案与材料条件的页面投影已独立；只消费已激活 proposal/participant/material 白名单贡献，真实研发提交和后台任务仍由应用编排层负责。"
+    },
+    {
+      "id": "settlement_feature_controller",
+      "target_file": "frontend/runtime/settlement-feature-controller.js",
+      "status": "implemented",
+      "goal": "战报、NPC 反馈、世界变化和本地降级结算已独立；只消费已激活 result_summary/world_delta 白名单贡献，世界进度提交、路由推进和证据请求仍由应用编排层负责。"
+    },
+    {
+      "id": "narrative_feature_projection",
+      "target_file": "frontend/runtime/narrative-feature-projection.js",
+      "status": "implemented",
+      "goal": "剧情节拍只从已激活 dialogue_queue 获取；战斗开场只接受显式绑定当前节点的节拍，历史或无目标节拍不会抢占当前对话。"
+    },
+    {
+      "id": "root_event_router",
+      "target_file": "frontend/runtime/root-event-router.js",
+      "status": "implemented",
+      "goal": "根节点 click/pointer/wheel/input 与窗口级拖放生命周期已集中注册，通过注入命令表分发；路由器不拥有玩法状态或页面跳转规则。"
+    },
+    {
+      "id": "app_flow_orchestrator",
+      "target_file": "frontend/runtime/app-flow-orchestrator.js",
+      "status": "implemented",
+      "goal": "集中管理已注册玩家页面的渲染与切换，并把编译 surface 映射限制在现有 map/workshop/battle/settlement/opening 页面；未知 surface 不可注入新路由。"
+    },
+    {
+      "id": "battle_runtime_projection_adapter",
+      "target_file": "frontend/runtime/runtime-projection-adapter.js",
+      "status": "active",
+      "goal": "把 ActivatedRuntimeBundle 的战斗对象能力投影为工具栏只读数据，保留旧战斗规则 fallback。"
+    },
+    {
+      "id": "battle_rules",
+      "target_file": "frontend/runtime/battle-rules.js",
+      "status": "active",
+      "goal": "把出生调度、路径选择/采样、部署槽位、占用、工具就绪和初始战斗状态构建抽成无 DOM 状态的纯规则模块。"
+    },
+    {
+      "id": "feature_gate_registry",
+      "target_file": "frontend/runtime/feature_gates.js",
+      "status": "implemented",
+      "goal": "集中验证 ActivatedRuntimeBundle 激活、安全扫描、隔离与 FeatureSnapshot gate；只放行白名单 surface contribution，并过滤任意 HTML、脚本、样式和未知组件类型。"
+    },
+    {
+      "id": "smoke_contract_harness",
+      "target_file": "tools/frontend",
+      "status": "active",
+      "goal": "把浏览器截图和模态层 smoke report 变成可复验产物。"
+    },
+    {
+      "id": "api_client",
+      "target_file": "frontend/runtime/api-client.js",
+      "status": "active",
+      "goal": "把 fetch、payload unwrap 和公开 query flag 解析作为无状态运行时基础工具。"
+    },
+    {
+      "id": "content_registry",
+      "target_file": "frontend/runtime/content-registry.js",
+      "status": "active",
+      "goal": "集中维护静态内容路径、节点路径、静态战役步骤和默认世界配置。"
+    },
+    {
+      "id": "media_resolver",
+      "target_file": "frontend/runtime/media-resolver.js",
+      "status": "active",
+      "goal": "集中维护 manifest item 读取和静态资产 URL 映射。"
+    },
+    {
+      "id": "frontend_media_catalog",
+      "target_file": "frontend/runtime/frontend-media-catalog.js",
+      "status": "implemented",
+      "goal": "集中维护 atlas 帧选择、图片缓存、编译对象媒体、地图组件、战略标记和分层底图查询；通过回调读取只读快照，不拥有全局状态、DOM、网络或玩法决策。"
+    }
+  ],
+  "runtime_safe_policy": {
+    "policy_id": "frontend_runtime_safe_policy_v0_1",
+    "applies_to": [
+      "ActivatedRuntimeBundle",
+      "RuntimeBundle",
+      "RuntimeSnapshot",
+      "FeatureSnapshot",
+      "activated runtime bundle fixtures",
+      "player-facing frontend reports"
+    ],
+    "forbidden_terms": [
+      "provider",
+      "model",
+      "raw_prompt",
+      "full_trace",
+      "raw_json",
+      "api_key",
+      "secret",
+      ".env",
+      "executor_request",
+      "authorization_header",
+      "bearer_token"
+    ],
+    "scanner_exempt_paths": [
+      "$.runtime_safe_policy.forbidden_terms"
+    ],
+    "rule": "除本 policy 声明本身外，上述词不得出现在玩家前端 runtime、fixture、smoke report 或默认 UI 可消费字段中。",
+    "failure_behavior": "validator 返回 1，并阻止该产物作为玩家前端 runtime 输入。"
+  },
+  "runtime_bundle_fixture": {
+    "path": "examples/frontend_runtime/activated_runtime_bundle.mvp.v0.1.json",
+    "schema_version": "activated_runtime_bundle.mvp.v0.1"
+  },
+  "smoke_report_validators": [
+    {
+      "report": "battle_visual_smoke_report.v0.1.json",
+      "validator": "tools/frontend/validate_battle_visual_smoke_report.py"
+    },
+    {
+      "report": "battle_drag_interaction_smoke_report.v0.1.json",
+      "validator": "tools/frontend/validate_battle_drag_interaction_smoke_report.py"
+    },
+    {
+      "report": "frontend_flow_visual_smoke_report.v0.1.json",
+      "validator": "tools/frontend/validate_frontend_flow_visual_smoke_report.py"
+    },
+    {
+      "report": "frontend_multinode_visual_smoke_report.v0.1.json",
+      "validator": "tools/frontend/validate_frontend_multinode_visual_smoke_report.py"
+    },
+    {
+      "report": "strategic_map_interaction_smoke_report.v0.1.json",
+      "validator": "tools/frontend/validate_strategic_map_interaction_smoke_report.py"
+    }
+  ]
+}

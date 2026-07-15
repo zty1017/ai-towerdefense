@@ -1,0 +1,54 @@
+{
+  "config_version": "world_instance_config.v0.1",
+  "worldbook_template_id": "xianxia_cloud_frontier",
+  "worldbook_display_name": "云海断峰关",
+  "visual_style_id": "xianxia_cloud_frontier_style",
+  "visual_style_display_name": "云山仙踪",
+  "creativity_mode": {
+    "selected": "stable",
+    "options": [
+      {
+        "id": "stable",
+        "display_name": "稳健",
+        "summary": "优先采用已知可靠结构。"
+      },
+      {
+        "id": "experimental",
+        "display_name": "实验性",
+        "summary": "允许更大胆的现场试作与未知代价。"
+      }
+    ]
+  },
+  "player_origin": {
+    "selected": "wandering_cultivator",
+    "options": [
+      {
+        "id": "wandering_cultivator",
+        "display_name": "云游散修",
+        "summary": "无门无派，靠古符残卷自学阵术，擅长灵活应变。"
+      },
+      {
+        "id": "sect_orphan",
+        "display_name": "宗门遗孤",
+        "summary": "出身于已覆灭的流云宗，随身携带一本宗门阵器图谱，精通传统阵法。"
+      },
+      {
+        "id": "tianji_disciple",
+        "display_name": "天机阁弟子",
+        "summary": "擅长机关术，能将灵材转化为自动防御机傀，但阵术基础较弱。"
+      }
+    ]
+  },
+  "recommended_defaults": {
+    "creativity_mode": "stable",
+    "player_origin": "wandering_cultivator",
+    "visual_style_id": "xianxia_cloud_frontier_style"
+  },
+  "effects": {
+    "npc_address": "身份影响角色称呼与评审角度。",
+    "opening_text": "身份影响开场介入方式。",
+    "initial_materials": "身份影响开局资源侧重。",
+    "proposal_constraints": "创造性影响现场试作风险。"
+  },
+  "content_lifecycle_note": "本配置由世界实例编译器生成，后续演化必须服务玩法进度。"
+}
