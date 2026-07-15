@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createAppFlowOrchestrator } from "../../frontend/runtime/app-flow-orchestrator.js";
+import { createAudioDirector } from "../../frontend/runtime/audio-director.js";
 import {
   assetKindForToolId,
   buildBattleToolProjection,
@@ -133,6 +134,109 @@ function recordingCanvasContext() {
     },
   });
 }
+
+function fakeAudioContext(calls) {
+  const audioParam = () => ({
+    value: 0,
+    cancelScheduledValues: (...args) => calls.push(["cancel", ...args]),
+    setTargetAtTime: (...args) => calls.push(["target", ...args]),
+    setValueAtTime: (...args) => calls.push(["set", ...args]),
+    exponentialRampToValueAtTime: (...args) => calls.push(["ramp", ...args]),
+  });
+  const connectable = (kind) => ({
+    connect: () => calls.push([`${kind}:connect`]),
+  });
+  return {
+    currentTime: 0,
+    destination: {},
+    state: "running",
+    createGain: () => ({ ...connectable("gain"), gain: audioParam() }),
+    createOscillator: () => ({
+      ...connectable("oscillator"),
+      frequency: audioParam(),
+      start: (...args) => calls.push(["oscillator:start", ...args]),
+      stop: (...args) => calls.push(["oscillator:stop", ...args]),
+      type: "sine",
+    }),
+    resume: async () => calls.push(["resume"]),
+  };
+}
+
+test("audio director switches scenes, synthesizes cues, and persists mute state", async () => {
+  const calls = [];
+  const listeners = new Map();
+  const values = new Map();
+  let intervalMs = 0;
+  const director = createAudioDirector({
+    createContext: fakeAudioContext(calls),
+    documentRef: {
+      addEventListener: (name, callback) => listeners.set(name, callback),
+    },
+    windowRef: {
+      setInterval: (_callback, ms) => {
+        intervalMs = ms;
+        return 7;
+      },
+      clearInterval: (id) => calls.push(["clearInterval", id]),
+    },
+    storage: {
+      getItem: (key) => values.get(key) || null,
+      setItem: (key, value) => values.set(key, value),
+    },
+  });
+
+  director.setScene("battle");
+  assert.equal(await director.unlock(), true);
+  assert.equal(intervalMs, 760);
+  assert.equal(await director.play("deploy"), true);
+  assert.ok(calls.some(([name]) => name === "oscillator:start"));
+  assert.equal(await director.toggleMuted(), true);
+  assert.equal(director.controlLabel(), "开启声音");
+  assert.equal(values.get("ai_compiled_td_audio_muted_v1"), "1");
+  assert.ok(listeners.has("pointerdown"));
+  assert.ok(listeners.has("keydown"));
+});
+
+test("audio director prefers packaged scene music and switches tracks without synthesis", async () => {
+  const calls = [];
+  const tracks = new Map();
+  const director = createAudioDirector({
+    createContext: fakeAudioContext(calls),
+    documentRef: { addEventListener: () => {} },
+    windowRef: {
+      setInterval: () => 1,
+      clearInterval: () => {},
+    },
+    storage: { getItem: () => null, setItem: () => {} },
+    musicByScene: { map: "/music/map.ogg", battle: "/music/battle.ogg" },
+    createMediaElement: (url) => {
+      const track = {
+        paused: true,
+        play: async () => {
+          track.paused = false;
+          calls.push(["media:play", url]);
+        },
+        pause: () => {
+          track.paused = true;
+          calls.push(["media:pause", url]);
+        },
+      };
+      tracks.set(url, track);
+      return track;
+    },
+  });
+
+  director.setScene("map");
+  assert.equal(await director.unlock(), true);
+  assert.ok(calls.some(([name, url]) => name === "media:play" && url === "/music/map.ogg"));
+  assert.equal(calls.some(([name]) => name === "oscillator:start"), false);
+
+  director.setScene("battle");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(calls.some(([name, url]) => name === "media:pause" && url === "/music/map.ogg"));
+  assert.ok(calls.some(([name, url]) => name === "media:play" && url === "/music/battle.ogg"));
+  assert.equal(tracks.get("/music/battle.ogg").paused, false);
+});
 
 function runtimeBundle(extraObjects = []) {
   return {
@@ -721,6 +825,44 @@ test("battle update orchestration preserves simulation order and outcome boundar
     "finish:victory",
   ]);
   assert.deepEqual(result, { updated: true, outcome: "victory", sampleDelivered: true });
+});
+
+test("battle update orchestration reports compact audio-ready event deltas", () => {
+  const observed = [];
+  const battle = {
+    loopActive: true,
+    spawned: 1,
+    kills: 2,
+    leaks: 0,
+    effects: [],
+    traps: [{ armed: true }],
+  };
+
+  runBattleUpdate({
+    battle,
+    dt: 16,
+    advanceBattleStep: () => ({ sampleDelivered: false }),
+    onSampleDelivered: () => {},
+    onBattleEvents: ({ events }) => observed.push(events),
+    spawnEnemies: () => { battle.spawned += 2; },
+    updateEnemies: () => {
+      battle.kills += 1;
+      battle.leaks += 1;
+    },
+    updateDefenses: () => battle.effects.push({ type: "beam" }),
+    updateTraps: () => { battle.traps[0].armed = false; },
+    updateEffects: () => {},
+    resolveBattleOutcome: () => null,
+    finishBattle: () => {},
+  });
+
+  assert.deepEqual(observed, [{
+    spawned: 2,
+    kills: 1,
+    leaks: 1,
+    attack: true,
+    trapTriggered: true,
+  }]);
 });
 
 test("frontend media catalog resolves compiled media, atlas frames, map layers, and cached images", () => {
